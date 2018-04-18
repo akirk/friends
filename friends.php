@@ -4,7 +4,7 @@
  * Plugin author: Alex Kirk
  * Version: 0.1
  *
- * Description: Decentralized Facebook.
+ * Description: Connect WordPresses through friendships and RSS.
  */
 
 class Friends {
