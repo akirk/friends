@@ -52,7 +52,7 @@ class Friends {
 		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
 		add_filter( 'user_row_actions',           array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users',  array( $this, 'handle_friend_request_approval' ), 10, 3 );
-		add_filter( 'bulk_actions-users',         array( $this, 'add_bulk_option_approve_friend_request' ) );
+		add_filter( 'bulk_actions-users',         array( $this, 'add_bulk_option_accept_friend_request' ) );
 
 		// REST
 		add_action( 'rest_api_init',              array( $this, 'add_api_routes' ) );
@@ -112,13 +112,31 @@ class Friends {
 		?><h1>Send Friend Request</h1><?php
 		if ( ! empty( $_POST ) ) {
 			$site_url = $_POST['site_url'];
+			$protocol = parse_url( $site_url, PHP_URL_SCHEME );
+			if ( ! $protocol ) {
+				$site_url = 'http://' . $site_url;
+			}
+
 			if ( is_string( $site_url ) && wp_http_validate_url( $site_url ) ) {
 				$response = wp_remote_post( $site_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request', array(
+					'timeout' => 45,
+					'redirection' => 5,
 					'body' => array( 'site_url' => site_url() ),
 				) );
+
+				$link = wp_remote_retrieve_header( $response, 'link' );
+				$wp_json = strpos( $link, 'wp-json/' );
+				if ( false !== $wp_json ) {
+					$site_url = substr( $link, 1, $wp_json - 1 );
+				}
+
 				if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 					$json = json_decode( wp_remote_retrieve_body( $response ) );
-					var_dump( $json );
+					if ( 'rest_no_route' === $json->code ) {
+						?><div id="message" class="updated error is-dismissible"><p>Site <?php echo esc_html( $site_url ); ?> doesn't have a compatible Friends plugin installed.</p></button></div><?php
+					} else {
+						?><div id="message" class="updated error is-dismissible"><p><?php var_dump( $json ); ?></p></button></div><?php
+				}
 				} else {
 					$json = json_decode( wp_remote_retrieve_body( $response ) );
 					$user_id = $this->create_user( $site_url, 'pending_friend_request' );
@@ -138,7 +156,7 @@ class Friends {
 
 		}
 		?><form method="post">
-			Site: <input type="url" name="site_url" value="http://" required />
+			Site: <input type="text" name="site_url" value="" required placeholder="Enter your friend's WordPress URL" size="90" />
 			<button>Request Friend</button>
 		</form><?php
 	}
@@ -148,13 +166,13 @@ class Friends {
 			return $actions;
 		}
 
-		$link = self_admin_url( wp_nonce_url( 'users.php?action=approve_friend_request&users[]=' . $user->ID ) );
-		$actions['user_approve_friend_request'] = '<a href="' . $link . '">' . __( 'Approve Friend Request', 'friends' ) . '</a>';
+		$link = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
+		$actions['user_accept_friend_request'] = '<a href="' . $link . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
 		return $actions;
 	}
 
 	public function handle_friend_request_approval( $sendback, $action, $users ) {
-		if ( $action !== 'approve_friend_request' ) {
+		if ( $action !== 'accept_friend_request' ) {
 			return false;
 		}
 		$accepted = 0;
@@ -171,8 +189,8 @@ class Friends {
 		wp_redirect( $sendback );
 	}
 
-	public function add_bulk_option_approve_friend_request( $actions ) {
-		$actions['approve_friend_request'] = 'Approve Friend Request';
+	public function add_bulk_option_accept_friend_request( $actions ) {
+		$actions['accept_friend_request'] = 'Accept Friend Request';
 		return $actions;
 	}
 
@@ -204,7 +222,7 @@ class Friends {
 		$user_id = get_option( 'friends_request_token_' . $token );
 		$user = false;
 		if ( $user_id ) {
-			new WP_User( $user_id );
+			$user = new WP_User( $user_id );
 		}
 
 		if ( ! $token || ! $user || is_wp_error( $user ) || ! $user->user_url ) {
@@ -278,6 +296,7 @@ class Friends {
 				)
 			);
 		}
+
 		$user = new WP_User( $user_id );
 		if ( $user->has_cap( 'friend' ) ) {
 			// Already a friend, was it deleted?
@@ -286,6 +305,12 @@ class Friends {
 				'friend' => $token,
 			);
 		}
+
+		if ( $user->has_cap( 'pending_friend_request' ) ) {
+			// Friend request was deleted on the other side and then re-initated.
+			$user->set_role( 'friend_request' );
+		}
+
 		$token = sha1( wp_generate_password( 50 ) );
 		update_user_meta( $user_id, 'friends_friend_request_token', $token );
 
@@ -386,6 +411,9 @@ class Friends {
 			$this->make_friend( $user_id, $json->friend );
 		} else {
 			$user->set_role( 'pending_friend_request' );
+			if ( isset( $json->friend_request_pending ) ) {
+				update_option( 'friends_request_token_' . $json->friend_request_pending, $user_id );
+			}
 		}
 	}
 
