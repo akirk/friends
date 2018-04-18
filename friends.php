@@ -57,10 +57,45 @@ class Friends {
 	}
 
 	public function register_admin_menu() {
-		add_menu_page( 'Friends', 'Friends', 'manage_options', 'send-friend-request', null, '', 3.731 );
-		add_submenu_page( 'linguine', 'Send Friend Request', 'Send Friend Request', 'manage_options', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
+		add_menu_page( 'Friends', 'Friends', 'manage_options', 'friends-feed', null, '', 3.731 );
+		add_submenu_page( 'friends-feed', 'Feed', 'Feed', 'manage_options', 'friends-feed', array( $this, 'render_admin_friends_feed' ) );
+		add_submenu_page( 'friends-feed', 'Send Friend Request', 'Send Friend Request', 'manage_options', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 	}
 
+	public function render_admin_friends_feed() {
+		?><h1>Feed</h1><?php
+
+		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+
+		if ( empty( $friends->get_results() ) ) {
+			return;
+		}
+
+		?><p><?php printf( _n( "You've got %d friend.", "You've got %d friends.", $friends->get_total() ), $friends->get_total() ); ?></p><?php
+
+		foreach ( $friends->get_results() as $user ) {
+			$token = get_user_meta( $user->ID, 'friends_token', true );
+			if ( ! $token ) {
+				continue;
+
+			}
+			$feed_url = $user->user_url . '/feed/?friend=' . get_user_meta( $user->ID, 'friends_token', true );
+			$feed = fetch_feed( $feed_url );
+			if ( is_wp_error( $feed ) ) {
+				continue;
+			}
+
+			foreach ( $feed->get_items() as $item ) {
+				$author = $item->get_author();
+
+				?><div class="friend-post">
+					<h2><a href="<?php echo esc_url( $item->get_link() ); ?>"><?php echo esc_html( $item->get_title() ); ?></a> by <?php echo esc_html( $author->get_name() ); ?></h2>
+
+					<p><?php echo $item->get_description(); ?></p>
+					</div><?php
+				}
+			}
+	}
 	public function render_admin_send_friend_request() {
 		if ( ! empty( $_POST ) ) {
 			$site = $_POST['site'];
@@ -69,7 +104,8 @@ class Friends {
 					'body' => array( 'site' => site_url() ),
 				) );
 				if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-					// TODO error handling
+					$json = json_decode( wp_remote_retrieve_body( $response ) );
+					var_dump( $json );
 				} else {
 					$json = json_decode( wp_remote_retrieve_body( $response ) );
 					if ( $json->success ) {
@@ -176,7 +212,7 @@ class Friends {
 			);
 		}
 		$site = $request->get_param( 'site' );
-		if ( is_string( $site ) && ! wp_http_validate_url( $site ) ) {
+		if ( ! is_string( $site ) || ! wp_http_validate_url( $site ) || $site === strtolower( site_url() ) ) {
 			return new WP_Error(
 				'friends_invalid_site',
 				'An invalid site was given.',
@@ -298,6 +334,7 @@ class Friends {
 			$json = json_decode( wp_remote_retrieve_body( $response ) );
 			if ( $json->success ) {
 				update_user_meta( $user_id, 'friends_token', $json->success );
+				update_option( 'friends_token_' . $json->success, $user_id );
 			}
 		}
 	}
@@ -340,7 +377,22 @@ class Friends {
 	public static function activate_plugin() {
 		self::setup_roles();
 	}
+
+	public static function deactivate_plugin() {
+		// TODO determine if we really want to delete all users.
+		return;
+
+		remove_role( 'friend' );
+		remove_role( 'friend_request' );
+
+		foreach ( wp_load_alloptions() as $name => $value ) {
+			if ( 'friends_' === substr( $name, 0, 8 ) ) {
+				delete_option( $name );
+			}
+		}
+	}
 }
 
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
+register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
