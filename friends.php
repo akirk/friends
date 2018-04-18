@@ -91,7 +91,7 @@ class Friends {
 				continue;
 
 			}
-			$feed_url = $user->user_url . '/feed/?friend=' . get_user_meta( $user->ID, 'friends_token', true );
+			$feed_url = rtrim( $user->user_url, '/' ) . '/feed/?friend=' . get_user_meta( $user->ID, 'friends_token', true );
 			$feed = fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
 				continue;
@@ -129,6 +129,7 @@ class Friends {
 				if ( false !== $wp_json ) {
 					$site_url = substr( $link, 1, $wp_json - 1 );
 				}
+				$site_url = rtrim( $site_url, '/' );
 
 				if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 					$json = json_decode( wp_remote_retrieve_body( $response ) );
