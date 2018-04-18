@@ -36,7 +36,7 @@ class Friends {
 
 		// Access control
 		add_action( 'set_user_role',              array( $this, 'update_friend_token' ), 10, 3 );
-		add_action( 'set_user_role',              array( $this, 'notify_friend_request_approved' ), 10, 3 );
+		add_action( 'set_user_role',              array( $this, 'notify_friend_request_accepted' ), 10, 3 );
 		add_action( 'delete_user',                array( $this, 'delete_friend_token' ) );
 
 		// Feed
@@ -109,34 +109,42 @@ class Friends {
 			}
 	}
 	public function render_admin_send_friend_request() {
+		?><h1>Send Friend Request</h1><?php
 		if ( ! empty( $_POST ) ) {
-			$site = $_POST['site'];
-			if ( is_string( $site ) && wp_http_validate_url( $site ) ) {
-				$response = wp_remote_post( $site . '/wp-json/' . self::REST_NAMESPACE . '/friend-request', array(
-					'body' => array( 'site' => site_url() ),
+			$site_url = $_POST['site_url'];
+			if ( is_string( $site_url ) && wp_http_validate_url( $site_url ) ) {
+				$response = wp_remote_post( $site_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request', array(
+					'body' => array( 'site_url' => site_url() ),
 				) );
 				if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 					$json = json_decode( wp_remote_retrieve_body( $response ) );
 					var_dump( $json );
 				} else {
 					$json = json_decode( wp_remote_retrieve_body( $response ) );
-					if ( $json->success ) {
-						update_option( 'friends_request_token_' . $json->success, $site );
-						// TODO nicer message
-						echo 'Friendship requested ' . $json->success;
+					$user_id = $this->create_user( $site_url, 'pending_friend_request' );
+					if ( is_wp_error( $user_id ) ) {
+						var_dump( $user_id );
+					} elseif ( isset( $json->friend_request_pending ) ) {
+						// TODO Improve message
+						?><div id="message" class="updated notice is-dismissible"><p>Friendship requested for site <?php echo esc_html( $site_url ); ?>, Token: <?php echo $json->friend_request_pending; ?></p></button></div><?php
+						update_option( 'friends_request_token_' . $json->friend_request_pending, $user_id );
+					} elseif ( isset( $json->friend ) ) {
+						$this->make_friend( $user_id, $json->friend );
+						// TODO Improve message
+						?><div id="message" class="updated notice is-dismissible"><p>You're now a friend of site <?php echo esc_html( $site_url ); ?></p></button></div><?php
 					}
 				}
 			}
 
 		}
-		?><h1>Send Friend Request</h1><form method="post">
-			Site: <input type="url" name="site" value="" required />
+		?><form method="post">
+			Site: <input type="url" name="site_url" value="http://" required />
 			<button>Request Friend</button>
 		</form><?php
 	}
 
 	public function user_row_actions( array $actions, WP_User $user ) {
-		if ( ! $user->has_cap( 'friend_request') ) {
+		if ( ! $user->has_cap( 'friend_request' ) ) {
 			return $actions;
 		}
 
@@ -149,17 +157,17 @@ class Friends {
 		if ( $action !== 'approve_friend_request' ) {
 			return false;
 		}
-		$approved = 0;
+		$accepted = 0;
 		foreach ( $users as $user_id ) {
 			$user = new WP_User( $user_id );
 			if ( ! is_wp_error( $user ) ) {
 				if ( $user->set_role( 'friend' ) ) {
-					$approved += 1;
+					$accepted += 1;
 				}
 			}
 		}
 
-		$sendback = add_query_arg( 'approved', $approved, $sendback );
+		$sendback = add_query_arg( 'accepted', $accepted, $sendback );
 		wp_redirect( $sendback );
 	}
 
@@ -173,9 +181,9 @@ class Friends {
 			'methods' => 'POST',
 			'callback' => array( $this, 'friend_request' ),
 		) );
-		register_rest_route( self::REST_NAMESPACE, 'friend-request-approved', array(
+		register_rest_route( self::REST_NAMESPACE, 'friend-request-accepted', array(
 			'methods' => 'POST',
-			'callback' => array( $this, 'friend_request_approved' ),
+			'callback' => array( $this, 'friend_request_accepted' ),
 		) );
 		register_rest_route( self::REST_NAMESPACE, 'hello', array(
 			'methods' => 'GET',
@@ -191,10 +199,15 @@ class Friends {
 		);
 	}
 
-	public function friend_request_approved( $request ) {
+	public function friend_request_accepted( $request ) {
 		$token = $request->get_param( 'token' );
-		$site = get_option( 'friends_request_token_' . $token );
-		if ( ! $token || ! $site ) {
+		$user_id = get_option( 'friends_request_token_' . $token );
+		$user = false;
+		if ( $user_id ) {
+			new WP_User( $user_id );
+		}
+
+		if ( ! $token || ! $user || is_wp_error( $user ) || ! $user->user_url ) {
 			return new WP_Error(
 				'friends_invalid_parameters',
 				'Not all necessary parameters were given.',
@@ -204,12 +217,22 @@ class Friends {
 			);
 		}
 
-		$user_id = $this->create_user( $site, 'friend', $request->get_param( 'name' ), $request->get_param( 'email' ) );
+		$user_login = $this->get_user_login_for_site_url( $user->user_url );
+		if ( $user_login !== $user->user_login ) {
+			return new WP_Error(
+				'friends_offer_no_longer_valid',
+				'The friendship offer is no longer valid.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
 
-		$token = get_user_meta( $user_id, 'friends_token', true );
+		$user->set_role( 'friend' );
+		$token = get_user_meta( $user->ID, 'friends_token', true );
 
 		return array(
-			'success' => $token,
+			'friend' => $token,
 		);
 	}
 
@@ -223,8 +246,8 @@ class Friends {
 				)
 			);
 		}
-		$site = $request->get_param( 'site' );
-		if ( ! is_string( $site ) || ! wp_http_validate_url( $site ) || $site === strtolower( site_url() ) ) {
+		$site_url = $request->get_param( 'site_url' );
+		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) || $site_url === strtolower( site_url() ) ) {
 			return new WP_Error(
 				'friends_invalid_site',
 				'An invalid site was given.',
@@ -234,7 +257,7 @@ class Friends {
 			);
 		}
 		// TODO: rate limit
-		$response = wp_safe_remote_get( $site . '/wp-json/' . self::REST_NAMESPACE . '/hello' );
+		$response = wp_safe_remote_get( $site_url . '/wp-json/' . self::REST_NAMESPACE . '/hello' );
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			return new WP_Error(
 				'friends_unsupported_site',
@@ -245,7 +268,7 @@ class Friends {
 			);
 		}
 
-		$user_id = $this->create_user( $site, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'email' ) );
+		$user_id = $this->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'email' ) );
 		if ( is_wp_error( $user_id ) ) {
 			return new WP_Error(
 				'friends_friend_request_failed',
@@ -255,30 +278,46 @@ class Friends {
 				)
 			);
 		}
-
+		$user = new WP_User( $user_id );
+		if ( $user->has_cap( 'friend' ) ) {
+			// Already a friend, was it deleted?
+			$token = get_user_meta( $user_id, 'friends_token', true );
+			return array(
+				'friend' => $token,
+			);
+		}
 		$token = sha1( wp_generate_password( 50 ) );
 		update_user_meta( $user_id, 'friends_friend_request_token', $token );
 
 		return array(
-			'success' => $token,
+			'friend_request_pending' => $token,
 		);
 	}
 
-	public function create_user( $site, $role, $name = null, $email = null ) {
-		if ( ! in_array( $role, array( 'friend', 'friend_request' ) ) ) {
+	private function get_user_login_for_site_url( $site_url ) {
+		$host = parse_url( $site_url, PHP_URL_HOST );
+		$path = parse_url( $site_url, PHP_URL_PATH );
+
+		$user_login = trim( preg_replace( '#[^a-z0-9]+#', '_', strtolower( $host . '_' . $path ) ), '_' );
+		return $user_login;
+	}
+
+	private function create_user( $site_url, $role, $name = null, $email = null ) {
+		if ( ! in_array( $role, array( 'pending_friend_request', 'friend_request' ) ) ) {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$host = parse_url( $site, PHP_URL_HOST );
-		$path = parse_url( $site, PHP_URL_PATH );
+		$user_login = $this->get_user_login_for_site_url( $site_url );
+		$user = get_user_by( 'login', $user_login );
+		if ( $user && ! is_wp_error( $user ) ) {
+			return $user->ID;
+		}
 
-		$user_login = trim( preg_replace( '#[^a-z0-9]+#', '_', strtolower( $host . '_' . $path ) ), '_' );
-		$password = wp_generate_password( 50 );
 		$userdata = array(
 		    'user_login' => $user_login,
 		    'nickname'   => $name,
 		    'user_email' => $email,
-		    'user_url'   => $site,
+		    'user_url'   => $site_url,
 		    'user_pass'  => wp_generate_password( 50 ),
 		    'role'       => $role,
 		);
@@ -327,7 +366,7 @@ class Friends {
 		return $incoming_user_id;
 	}
 
-	public function notify_friend_request_approved( $user_id, $new_role, $old_roles ) {
+	public function notify_friend_request_accepted( $user_id, $new_role, $old_roles ) {
 		if ( $new_role !== 'friend' ) {
 			return;
 		}
@@ -338,17 +377,29 @@ class Friends {
 		}
 
 		$user = new WP_User( $user_id );
-		$response = wp_safe_remote_post( $user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request-approved', array(
+		$response = wp_safe_remote_post( $user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request-accepted', array(
 			'body' => array( 'token' => $token ),
 		) );
 
-		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-			$json = json_decode( wp_remote_retrieve_body( $response ) );
-			if ( $json->success ) {
-				update_user_meta( $user_id, 'friends_token', $json->success );
-				update_option( 'friends_token_' . $json->success, $user_id );
-			}
+		$json = json_decode( wp_remote_retrieve_body( $response ) );
+		if ( isset( $json->friend ) ) {
+			$this->make_friend( $user_id, $json->friend );
+		} else {
+			$user->set_role( 'pending_friend_request' );
 		}
+	}
+
+	private function make_friend( $user_id, $token ) {
+		$user = new WP_User( $user_id );
+		if ( ! $user || is_wp_error( $user ) ) {
+			return $user;
+		}
+
+		$user->set_role( 'friend' );
+		update_user_meta( $user_id, 'friends_token', $token );
+		update_option( 'friends_token_' . $token, $user_id );
+
+		return true;
 	}
 
 	public function delete_friend_token( $user_id ) {
@@ -392,6 +443,13 @@ class Friends {
 		}
 		$friend_request->add_cap( 'friend_request' );
 		$friend_request->add_cap( 'level_0' );
+
+		$pending_friend_request = get_role( 'pending_friend_request' );
+		if ( ! $pending_friend_request ) {
+			$pending_friend_request = add_role( 'pending_friend_request', 'Pending Friend Request' );
+		}
+		$pending_friend_request->add_cap( 'pending_friend_request' );
+		$friend_request->add_cap( 'level_0' );
 	}
 
 	public static function activate_plugin() {
@@ -404,6 +462,7 @@ class Friends {
 
 		remove_role( 'friend' );
 		remove_role( 'friend_request' );
+		remove_role( 'pending_friend_request' );
 
 		foreach ( wp_load_alloptions() as $name => $value ) {
 			if ( 'friends_' === substr( $name, 0, 8 ) ) {
