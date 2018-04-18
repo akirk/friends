@@ -31,25 +31,30 @@ class Friends {
 	}
 
 	private function add_hooks() {
+		// Authentication
 		add_filter( 'determine_current_user',     array( $this, 'authenticate' ), 1 );
+
+		// Access control
+		add_action( 'set_user_role',              array( $this, 'update_friend_token' ), 10, 3 );
+		add_action( 'set_user_role',              array( $this, 'notify_friend_request_approved' ), 10, 3 );
+		add_action( 'delete_user',                array( $this, 'delete_friend_token' ) );
+
+		// Feed
 		add_filter( 'pre_get_posts',              array( $this, 'private_feed' ), 1 );
 		add_filter( 'private_title_format',       array( $this, 'private_title_format' ) );
 		add_filter( 'the_content_feed',           array( $this, 'feed_content' ), 90 );
 		add_filter( 'the_excerpt_rss',            array( $this, 'feed_content' ), 90 );
 		add_filter( 'comment_text_rss',           array( $this, 'feed_content' ), 90 );
 		add_filter( 'rss_use_excerpt',            array( $this, 'feed_use_excerpt' ), 90 );
+		add_filter( 'wp_feed_options',            array( $this, 'wp_feed_options' ), 10, 2 );
+
+		// Admin
+		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
 		add_filter( 'user_row_actions',           array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users',  array( $this, 'handle_friend_request_approval' ), 10, 3 );
-		add_filter( 'bulk_actions-users',         array( $this, 'add_bulk_option_approve_friend_request' ), 10, 1 );
-		add_filter( 'http_request_host_is_external', function( $in, $host ) {
-			if ( $host === 'friend1.rebam.com' ) return true;
-			if ( $host === 'friend2.rebam.com' ) return true;
-			return $in;
-		}, 10, 2 );
+		add_filter( 'bulk_actions-users',         array( $this, 'add_bulk_option_approve_friend_request' ) );
 
-		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
-		add_action( 'set_user_role',              array( $this, 'generate_feed_secret' ), 10, 3 );
-		add_action( 'set_user_role',              array( $this, 'notify_friend_request_approved' ), 10, 3 );
+		// REST
 		add_action( 'rest_api_init',              array( $this, 'add_api_routes' ) );
 	}
 
@@ -60,6 +65,13 @@ class Friends {
 		add_menu_page( 'Friends', 'Friends', 'manage_options', 'friends-feed', null, '', 3.731 );
 		add_submenu_page( 'friends-feed', 'Feed', 'Feed', 'manage_options', 'friends-feed', array( $this, 'render_admin_friends_feed' ) );
 		add_submenu_page( 'friends-feed', 'Send Friend Request', 'Send Friend Request', 'manage_options', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
+	}
+
+	public function wp_feed_options( $feed, $url ) {
+		// TODO: do allow caching again, this is just while testing.
+		if ( false !== strpos( $url, '?friend=' ) ) {
+			$feed->enable_cache( false );
+		}
 	}
 
 	public function render_admin_friends_feed() {
@@ -339,12 +351,20 @@ class Friends {
 		}
 	}
 
-	public function generate_feed_secret( $user_id, $new_role, $old_roles ) {
-
+	public function delete_friend_token( $user_id ) {
 		$current_secret = get_user_meta( $user_id, 'friends_token', true );
 		if ( $current_secret ) {
-			delete_option( 'friends_token_' . $secret );
+			delete_option( 'friends_token_' . $current_secret );
 		}
+
+		return $current_secret;
+	}
+
+	public function update_friend_token( $user_id, $new_role, $old_roles ) {
+		if ( $new_role === 'friend' && in_array( $new_role, $old_roles ) ) {
+			return;
+		}
+		$current_secret = $this->delete_friend_token( $user_id );
 
 		if ( $new_role !== 'friend' || in_array( $new_role, $old_roles ) ) {
 			return;
@@ -379,7 +399,7 @@ class Friends {
 	}
 
 	public static function deactivate_plugin() {
-		// TODO determine if we really want to delete all users.
+		// TODO determine if we really want to delete all authentications.
 		return;
 
 		remove_role( 'friend' );
