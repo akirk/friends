@@ -14,6 +14,6 @@ On each WordPress the the public and private posts of the respective friends can
 
 The Friends plugin is compatible with the WordPress mobile apps, so you can also post privately from them.
 
-![](img/explain-friends.gif)
+![](img/friends-animated.gif)
 
 You can send a friendship request to another WordPress that has this plugin installed. As soon as the friendship is established you can see the private posts on the other WordPress, pulled over using RSS feeds.
