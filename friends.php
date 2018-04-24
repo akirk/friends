@@ -27,7 +27,6 @@ class Friends {
 
 	public function __construct() {
 		$this->add_hooks();
-		$this->register_custom_post_types();
 	}
 
 	private function add_hooks() {
@@ -39,7 +38,7 @@ class Friends {
 		add_action( 'set_user_role',              array( $this, 'notify_friend_request_accepted' ), 10, 3 );
 		add_action( 'delete_user',                array( $this, 'delete_friend_token' ) );
 
-		// Feed
+		// RSS
 		add_filter( 'pre_get_posts',              array( $this, 'private_feed' ), 1 );
 		add_filter( 'private_title_format',       array( $this, 'private_title_format' ) );
 		add_filter( 'the_content_feed',           array( $this, 'feed_content' ), 90 );
@@ -47,6 +46,12 @@ class Friends {
 		add_filter( 'comment_text_rss',           array( $this, 'feed_content' ), 90 );
 		add_filter( 'rss_use_excerpt',            array( $this, 'feed_use_excerpt' ), 90 );
 		add_filter( 'wp_feed_options',            array( $this, 'wp_feed_options' ), 10, 2 );
+
+		// /friends/
+		add_filter( 'pre_get_posts',              array( $this, 'friend_posts_query' ), 2 );
+		add_filter( 'init',                       array( $this, 'add_routes' ) );
+		add_filter( 'init',                       array( $this, 'register_custom_post_types' ) );
+		add_filter( 'query_vars',                 array( $this, 'query_vars' ) );
 
 		// Admin
 		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
@@ -58,7 +63,32 @@ class Friends {
 		add_action( 'rest_api_init',              array( $this, 'add_api_routes' ) );
 	}
 
-	private function register_custom_post_types() {
+	public function register_custom_post_types() {
+		$labels = array(
+		  'name'               => 'Friend Post',
+		  'singular_name'      => 'Friend Post',
+		  'add_new'            => 'Add New', 'book',
+		  'add_new_item'       => 'Add New Friend Post',
+		  'edit_item'          => 'Edit Friend Post',
+		  'new_item'           => 'New Friend Post',
+		  'all_items'          => 'All Friend Posts',
+		  'view_item'          => 'View Friend Post',
+		  'search_items'       => 'Search Friend Posts',
+		  'not_found'          => 'No Friend Posts found',
+		  'not_found_in_trash' => 'No Friend Posts found in the Trash',
+		  'parent_item_colon'  => '',
+		  'menu_name'          => 'Friend Post'
+		);
+
+		$args = array(
+		    'labels'        => $labels,
+		    'description'   => "A friend's post",
+		    'public'        => true,
+		    'menu_position' => 5,
+		    'supports'      => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+		    'has_archive'   => true,
+		  );
+		register_post_type( 'friend_post', $args );
 	}
 
 	public function register_admin_menu() {
@@ -75,6 +105,8 @@ class Friends {
 	}
 
 	public function render_admin_friends_feed() {
+		$this->retrieve_friend_posts(); // TODO make cron
+		exit;
 		?><h1>Feed</h1><?php
 
 		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
@@ -103,11 +135,12 @@ class Friends {
 				?><div class="friend-post">
 					<h2><a href="<?php echo esc_url( $item->get_link() ); ?>"><?php echo esc_html( $item->get_title() ); ?></a> by <?php echo esc_html( $author->get_name() ); ?></h2>
 
-					<p><?php echo $item->get_description(); ?></p>
-					</div><?php
-				}
+				<p><?php echo $item->get_description(); ?></p>
+				</div><?php
 			}
+		}
 	}
+
 	public function render_admin_send_friend_request() {
 		?><h1>Send Friend Request</h1><?php
 		if ( ! empty( $_POST ) ) {
@@ -208,8 +241,74 @@ class Friends {
 			'methods' => 'GET',
 			'callback' => array( $this, 'verify_installation' ),
 		) );
+	}
 
-		return;
+	public static function add_routes() {
+		// add_rewrite_rule( 'friends/?([^/]*)', 'index.php?pagename=friends&friend=$matches[1]', 'top' );
+		add_rewrite_endpoint( 'friends', EP_ALL_ARCHIVES );
+		flush_rewrite_rules(); // TODO remove
+	}
+
+	public static function query_vars( $vars ) {
+		$vars[] = 'friend';
+		return $vars;
+	}
+
+	private function retrieve_friend_posts() {
+		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+
+		if ( empty( $friends->get_results() ) ) {
+			return;
+		}
+		foreach ( $friends->get_results() as $friend_user ) {
+			$token = get_user_meta( $friend_user->ID, 'friends_token', true );
+			if ( ! $token ) {
+				continue;
+			}
+
+			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/?friend=' . get_user_meta( $friend_user->ID, 'friends_token', true );
+			$feed = fetch_feed( $feed_url );
+
+			if ( is_wp_error( $feed ) ) {
+				continue;
+			}
+
+			$permalinks = array();
+			$existing_posts = new WP_Query( array(
+				'post_type' => 'friend_post',
+				'post_author' => $user->ID,
+			));
+			if ( $existing_posts->have_posts() ) {
+				while ( $existing_posts->have_posts() ) {
+					$existing_posts->the_post();
+					$permalink = get_post_meta( $existing_posts->post->ID, 'external_permalink', true );
+					$permalinks[ $permalink ] = $existing_posts->post->ID;
+				}
+				wp_reset_postdata();
+			}
+
+			foreach ( $feed->get_items() as $item ) {
+				$permalink = $item->get_permalink();
+
+				if ( isset( $permalinks[ $permalink ] ) ) {
+					continue;
+				}
+				$post_id = wp_insert_post( array(
+					'post_author' => $friend_user->ID,
+					'post_type'	=> 'friend_post',
+					'post_title' => $item->get_title(),
+					'post_date_gmt' => $item->get_gmdate( 'Y-m-d H:i:s' ),
+					'post_content' => $item->get_description(),
+					'post_status' => 'private',
+					'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+					// 'comment_count' => $item->get_comm
+				) );
+				if ( is_wp_error( $post_id ) ) {
+					continue;
+				}
+				update_post_meta( $post_id, 'external_permalink', $permalink );
+			}
+		}
 	}
 
 	public function verify_installation( $request ) {
@@ -371,15 +470,30 @@ class Friends {
 	    return $query;
 	}
 
+	public function friend_posts_query( $query ) {
+		if ( 'friends' === get_query_var( 'pagename' ) ) {
+			var_dump($query);exit;
+			$query->set( 'post_type', 'friend_post' );
+		}
+		return $query;
+	}
+
+
+
 	public function feed_content( $content ) {
 		return $content;
 	}
 
 	public function authenticate( $incoming_user_id ) {
+		// if ( ! isset( $_GET['friend'] ) || ! isset( $_GET['auth'] ) ) {
 		if ( ! isset( $_GET['friend'] ) ) {
 			return $incoming_user_id;
 		}
 
+		// $secret = get_option( 'friends_token_' . $_GET['friend'] );
+		// if ( ! $secret ) {
+		// 	return $incoming_user_id;
+		// }
 		$user_id = get_option( 'friends_token_' . $_GET['friend'] );
 		if ( $user_id ) {
 			settype( $user_id, 'int' );
@@ -483,10 +597,13 @@ class Friends {
 
 	public static function activate_plugin() {
 		self::setup_roles();
+		self::add_routes();
+		flush_rewrite_rules();
 	}
 
 	public static function deactivate_plugin() {
 		// TODO determine if we really want to delete all authentications.
+		flush_rewrite_rules();
 		return;
 
 		remove_role( 'friend' );
