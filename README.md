@@ -31,3 +31,11 @@ If someone has multiple WordPresses this actually allows to segment your friends
 ### What if the friend request is deleted or not accepted?
 
 You'll still see the public posts from the other WordPress, you've subscribed to its public RSS feed.
+
+### What's the point? If I want to post something privately I can use Facebook.
+
+Well, that's actually exactly the point. Facebook owns your data, with WordPress you can decide where you want to host it and have all the benefits of running open source software.
+
+### What happens if I modify or delete a post?
+
+There is a cache of your friends post in form of a Custom Post Type `friend_post` that is updated when you change a post.
