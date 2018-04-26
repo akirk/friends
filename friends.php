@@ -91,7 +91,7 @@ class Friends {
 			'description'   => "A friend's post",
 			'public'        => true,
 			'menu_position' => 5,
-			'supports'      => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+			'supports'      => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
 			'has_archive'   => true,
 		);
 		register_post_type( 'friend_post', $args );
@@ -232,7 +232,7 @@ class Friends {
 		foreach ( $friends->get_results() as $friend_user ) {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 
-			$token = get_user_meta( $friend_user->ID, 'friends_token', true );
+			$token = get_user_option( 'friends_token', $friend_user->ID );
 			if ( $token ) {
 				$feed_url .= '?friend=' . $token;
 			}
@@ -334,7 +334,7 @@ class Friends {
 		}
 
 		$user->set_role( 'friend' );
-		$token = get_user_meta( $user->ID, 'friends_token', true );
+		$token = get_user_option( 'friends_token', $user->ID );
 
 		return array(
 			'friend' => $token,
@@ -387,7 +387,7 @@ class Friends {
 		$user = new WP_User( $user_id );
 		if ( $user->has_cap( 'friend' ) ) {
 			// Already a friend, was it deleted?
-			$token = get_user_meta( $user_id, 'friends_token', true );
+			$token = get_user_option( 'friends_token', $user_id );
 			return array(
 				'friend' => $token,
 			);
@@ -399,7 +399,7 @@ class Friends {
 		}
 
 		$token = sha1( wp_generate_password( 50 ) );
-		update_user_meta( $user_id, 'friends_friend_request_token', $token );
+		update_user_option( $user_id, 'friends_friend_request_token', $token );
 
 		return array(
 			'friend_request_pending' => $token,
@@ -556,7 +556,7 @@ class Friends {
 		$user_id = get_option( 'friends_token_' . $_GET['friend_auth'] );
 		if ( $user_id ) {
 			settype( $user_id, 'int' );
-			if ( get_user_meta( $user_id, 'friends_token', true ) === $_GET['friend_auth' ] ) {
+			if ( get_user_option( 'friends_token', $user_id ) === $_GET['friend_auth' ] ) {
 				wp_set_auth_cookie( $user_id );
 				wp_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'] ), '', $_SERVER['REQUEST_URI'] ) );
 				exit;
@@ -570,7 +570,7 @@ class Friends {
 			$user_id = get_option( 'friends_token_' . $_GET['friend'] );
 			if ( $user_id ) {
 				settype( $user_id, 'int' );
-				if ( get_user_meta( $user_id, 'friends_token', true ) === $_GET['friend' ] ) {
+				if ( get_user_option( 'friends_token', $user_id ) === $_GET['friend' ] ) {
 					$this->authenticated = $user_id;
 					return $user_id;
 				}
@@ -585,7 +585,7 @@ class Friends {
 			return;
 		}
 
-		$token = get_user_meta( $user_id, 'friends_friend_request_token', true );
+		$token = get_user_option( 'friends_friend_request_token', $user_id );
 		if ( ! $token ) {
 			return;
 		}
@@ -613,7 +613,7 @@ class Friends {
 		}
 
 		$user->set_role( 'friend' );
-		update_user_meta( $user_id, 'friends_token', $token );
+		update_user_option( $user_id, 'friends_token', $token );
 		update_option( 'friends_token_' . $token, $user_id );
 
 		$this->retrieve_friend_posts();
@@ -622,7 +622,7 @@ class Friends {
 	}
 
 	public function delete_friend_token( $user_id ) {
-		$current_secret = get_user_meta( $user_id, 'friends_token', true );
+		$current_secret = get_user_option( 'friends_token', $user_id );
 		if ( $current_secret ) {
 			delete_option( 'friends_token_' . $current_secret );
 		}
@@ -641,7 +641,7 @@ class Friends {
 		}
 
 		$secret = sha1( wp_generate_password( 50 ) );
-		if ( update_user_meta( $user_id, 'friends_token', $secret, $current_secret ) ) {
+		if ( update_user_option( $user_id, 'friends_token', $secret ) ) {
 			update_option( 'friends_token_' . $secret, $user_id );
 		}
 	}
