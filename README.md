@@ -1,19 +1,29 @@
 # Friends for WordPress
 
-**Connect WordPresses through friendships and RSS**
+**Connect WordPresses and communicate privately with your friends**
 
-With the Friends plugin, you can add friends to your WordPress site. It will add a private `/friends/` page that holds a feed of your friends' posts.
+On your WordPress site you can post anything you wish to share with the world. But blogging only becomes really interesting if you interact with other people.
 
-A friendship is established between WordPress sites after a friend request is accepted.
+With the Friends plugin, you can establish a connection with your friends' WordPress sites by making and accepting friend requests.
 
-The feed of friends’ posts might be nice already but things get interesting when your friends write private posts.
+Let's look at an example:
 
-While the private posts remain invisible to random visitors of their sites, they appear on your `/friends/` page.
+You want to connect with your friend Matt and send a friend request to his WordPress. He accepts the friend reuqest–the connection is established.
 
-On each WordPress the the public and private posts of the respective friends can be seen.
+Actually you're now subscribed to his posts and he's now subscribed to your posts, so on your `/friends/` pages you'll both now see each others posts.
 
-The Friends plugin is compatible with the WordPress mobile apps, so you can also post privately from them.
+No big deal, this is just like subscribing to an RSS feed, right? It actually is, and that's also what's happening behind the scenes.
 
-![](img/friends-animated.gif)
+Things start to get more interesting if you bring private posts to the game.
 
-You can send a friendship request to another WordPress that has this plugin installed. As soon as the friendship is established you can see the private posts on the other WordPress, pulled over using RSS feeds.
+When you post something with the post status sent to "Private," while not visible to the random (logged-out) visitor of your site, it is shared with your friends.
+
+## Questions
+
+### Why is the friendship established between WordPress sites and not WordPress users?
+
+For one, this allows to stick with established WordPress configurations and terminologies. For example, you can use the WordPress mobile apps to post privately to your site.
+
+Secondly, a lot of WordPresses are like cell phones. Some are used by more than one person but mostly there is a 1:1 relationship between a WordPress blog and a person.
+
+If someone has multiple WordPresses this actually allows to segment your friendships. Close friends might want to follow all your blogs but you'd only add your photographer friends to your photoblog.
