@@ -34,6 +34,8 @@
 			</footer>
 		</article>
 	<?php endwhile; ?>
+	<?php the_posts_pagination(); ?>
+
 <script type="text/javascript">
 	jQuery( document ).on( 'click', 'a.auth-link', function() {
 		var $this = jQuery( this ), href = $this.attr( 'href' );

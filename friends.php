@@ -516,9 +516,13 @@ class Friends {
 		if ( 'friends' === get_query_var( 'pagename' ) && current_user_can( 'edit_posts' ) ) {
 			$query->set( 'pagename', null );
 			$query->set( 'page', null );
+
 			$query->is_page = false;
+			$query->is_singular = false;
+
 			$query->set( 'post_type', array( 'friend_post', 'post' ) );
-			$query->set( 'post_status', array( 'published', 'private' ) );
+			$query->set( 'post_status', array( 'publish', 'private' ) );
+
 			add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
 		}
 		return $query;
