@@ -223,7 +223,7 @@ class Friends {
 	}
 
 	private function retrieve_friend_posts( $debug = false ) {
-		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+		$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'pending_friend_request' ) ) );
 
 		if ( empty( $friends->get_results() ) ) {
 			return;
@@ -473,7 +473,7 @@ class Friends {
 			if ( current_user_can( 'edit_posts' ) ) {
 				$this->retrieve_friend_posts();
 
-				$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+				$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'pending_friend_request' ) ) );
 				if ( empty( $friends->get_results() ) ) {
 					return __DIR__ . '/templates/friends/no-friends.php';
 				}
