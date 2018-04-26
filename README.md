@@ -8,7 +8,7 @@ With the Friends plugin, you can establish a connection with your friends' WordP
 
 Let's look at an example:
 
-You want to connect with your friend Matt and send a friend request to his WordPress. He accepts the friend reuqest–the connection is established.
+You want to connect with your friend Matt and send a friend request to his WordPress. He accepts the friend request–the connection is established.
 
 Actually you're now subscribed to his posts and he's now subscribed to your posts, so on your `/friends/` pages you'll both now see each others posts.
 
