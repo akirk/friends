@@ -1,5 +1,6 @@
 <?php include __DIR__ . '/../header.php'; ?>
-    <h1>Posts by Your Friends</h1>
+    <h1>Friends</h1>
+	<?php include __DIR__ . '/editor.php'; ?>
 	<?php while ( have_posts() ) : the_post(); ?>
 		<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 			<header class="entry-header">

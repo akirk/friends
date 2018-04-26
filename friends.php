@@ -57,6 +57,7 @@ class Friends {
 		add_filter( 'get_edit_post_link',         array( $this, 'friend_post_edit_link' ), 10, 2 );
 		add_filter( 'template_include',           array( $this, 'template_override' ) );
 		add_filter( 'init',                       array( $this, 'register_custom_post_types' ) );
+		add_action( 'wp_ajax_friends_publish',    array( $this, 'frontend_publish_post' ) );
 
 		// Admin
 		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
@@ -466,6 +467,25 @@ class Friends {
 		return $query;
 	}
 
+	public function frontend_publish_post() {
+		if ( wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
+			$post_id = wp_insert_post( array(
+				'post_type'	        => 'post',
+				'post_title'        => $_POST['title'],
+				'post_content'      => $_POST['content'],
+				'post_status'       => $_POST['status'],
+			) );
+			$result = is_wp_error( $post_id ) ? 'error' : 'success';
+			if ( ! empty($_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) == 'xmlhttprequest' ) {
+				echo $result;
+			} else {
+				wp_redirect( $_SERVER['HTTP_REFERER'] );
+				exit;
+			}
+		}
+		return true;
+	}
+
 	public function template_override( $template ) {
 		global $wp_query;
 
@@ -474,9 +494,6 @@ class Friends {
 				$this->retrieve_friend_posts();
 
 				$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'pending_friend_request' ) ) );
-				if ( empty( $friends->get_results() ) ) {
-					return __DIR__ . '/templates/friends/no-friends.php';
-				}
 
 				if ( ! have_posts() ) {
 					return __DIR__ . '/templates/friends/no-posts.php';
