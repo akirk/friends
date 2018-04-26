@@ -46,9 +46,10 @@ class Friends {
 		add_filter( 'comment_text_rss',           array( $this, 'feed_content' ), 90 );
 		add_filter( 'rss_use_excerpt',            array( $this, 'feed_use_excerpt' ), 90 );
 		add_filter( 'wp_feed_options',            array( $this, 'wp_feed_options' ), 10, 2 );
-		add_action( 'rss_item',                   array( $this, 'additional_feed_data' ) );
-		add_action( 'rss2_item',                  array( $this, 'additional_feed_data' ) );
-
+		add_action( 'rss_item',                   array( $this, 'feed_gravatar' ) );
+		add_action( 'rss2_item',                  array( $this, 'feed_gravatar' ) );
+		add_action( 'rss_ns',                     array( $this, 'additional_feed_namespaces' ) );
+		add_action( 'rss2_ns',                    array( $this, 'additional_feed_namespaces' ) );
 
 		// /friends/
 		add_filter( 'pre_get_posts',              array( $this, 'friend_posts_query' ), 2 );
@@ -69,29 +70,29 @@ class Friends {
 
 	public function register_custom_post_types() {
 		$labels = array(
-		  'name'               => 'Friend Post',
-		  'singular_name'      => 'Friend Post',
-		  'add_new'            => 'Add New', 'book',
-		  'add_new_item'       => 'Add New Friend Post',
-		  'edit_item'          => 'Edit Friend Post',
-		  'new_item'           => 'New Friend Post',
-		  'all_items'          => 'All Friend Posts',
-		  'view_item'          => 'View Friend Post',
-		  'search_items'       => 'Search Friend Posts',
-		  'not_found'          => 'No Friend Posts found',
-		  'not_found_in_trash' => 'No Friend Posts found in the Trash',
-		  'parent_item_colon'  => '',
-		  'menu_name'          => 'Friend Post'
+			'name'               => 'Friend Post',
+			'singular_name'      => 'Friend Post',
+			'add_new'            => 'Add New', 'book',
+			'add_new_item'       => 'Add New Friend Post',
+			'edit_item'          => 'Edit Friend Post',
+			'new_item'           => 'New Friend Post',
+			'all_items'          => 'All Friend Posts',
+			'view_item'          => 'View Friend Post',
+			'search_items'       => 'Search Friend Posts',
+			'not_found'          => 'No Friend Posts found',
+			'not_found_in_trash' => 'No Friend Posts found in the Trash',
+			'parent_item_colon'  => '',
+			'menu_name'          => 'Friend Post'
 		);
 
 		$args = array(
-		    'labels'        => $labels,
-		    'description'   => "A friend's post",
-		    'public'        => true,
-		    'menu_position' => 5,
-		    'supports'      => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
-		    'has_archive'   => true,
-		  );
+			'labels'        => $labels,
+			'description'   => "A friend's post",
+			'public'        => true,
+			'menu_position' => 5,
+			'supports'      => array( 'title', 'editor', 'thumbnail', 'excerpt', 'comments' ),
+			'has_archive'   => true,
+		);
 		register_post_type( 'friend_post', $args );
 	}
 
@@ -104,6 +105,7 @@ class Friends {
 	public function refresh_friends_feed() {
 		$this->retrieve_friend_posts( true ); // TODO make cron
 	}
+
 	public function wp_feed_options( $feed, $url ) {
 		// TODO: do allow caching again, this is just while testing.
 		if ( false !== strpos( $url, '?friend=' ) ) {
@@ -140,7 +142,7 @@ class Friends {
 						?><div id="message" class="updated error is-dismissible"><p>Site <?php echo esc_html( $site_url ); ?> doesn't have a compatible Friends plugin installed.</p></button></div><?php
 					} else {
 						?><div id="message" class="updated error is-dismissible"><p><?php var_dump( $json ); ?></p></button></div><?php
-				}
+					}
 				} else {
 					$json = json_decode( wp_remote_retrieve_body( $response ) );
 					$user_id = $this->create_user( $site_url, 'pending_friend_request' );
@@ -161,9 +163,10 @@ class Friends {
 		}
 		?><form method="post">
 			<p>This will send a friend request to the WordPress site you can enter below. The other site also needs to have the friends plugin installed.</p>
-			Site: <input type="text" name="site_url" value="<?php if ( ! empty( $_GET['url'] ) ) echo esc_attr( $_GET['url'] ); ?>" required placeholder="Enter your friend's WordPress URL" size="90" />
+			<label>Site: <input type="text" name="site_url" value="<?php if ( ! empty( $_GET['url'] ) ) echo esc_attr( $_GET['url'] ); ?>" required placeholder="Enter your friend's WordPress URL" size="90" /></label>
 			<button>Initiate Friend Request</button>
-		</form><?php
+		</form>
+		<?php
 	}
 
 	public function user_row_actions( array $actions, WP_User $user ) {
@@ -233,7 +236,7 @@ class Friends {
 				$feed_url .= '?friend=' . $token;
 			}
 			if ( $debug ) {
-				var_dump( $feed_url );
+				echo nl2br( "Refreshing <a href=\"{$feed_url}\">{$friend_user->user_login}</span>\n" );
 			}
 			$feed = fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
@@ -257,7 +260,10 @@ class Friends {
 
 			foreach ( $feed->get_items() as $item ) {
 				$permalink = $item->get_permalink();
-				$gravatar = isset( $item->data['child']['']['gravatar'][0]['data'] ) ? $item->data['child']['']['gravatar'][0]['data'] : false;
+				$gravatar = isset( $item->data['child']['https://gravatar.com/rss/1.0/modules/gravatar']['url'][0]['data'] ) ? $item->data['child']['https://gravatar.com/rss/1.0/modules/gravatar']['url'][0]['data'] : false;
+
+				$comment_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
+
 				$author = $item->get_author();
 				if ( isset( $permalinks[ $permalink ] ) ) {
 					$post_id = $permalinks[ $permalink ];
@@ -267,27 +273,26 @@ class Friends {
 						'post_content'      => $item->get_content(),
 						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
 					) );
-
-					update_post_meta( $post_id, 'gravatar', $gravatar );
-					update_post_meta( $post_id, 'author', $author->name );
-					continue;
-				}
-				$post_id = wp_insert_post( array(
-					'post_author'       => $friend_user->ID,
-					'post_type'	        => 'friend_post',
-					'post_title'        => $item->get_title(),
-					'post_date_gmt'     => $item->get_gmdate( 'Y-m-d H:i:s' ),
-					'post_content'      => $item->get_content(),
-					'post_status'       => 'private',
-					'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
-					'guid'              => $permalink,
-					// 'comment_count'     => $item->get_comm
-				) );
-				if ( is_wp_error( $post_id ) ) {
-					continue;
+				} else {
+					$post_id = wp_insert_post( array(
+						'post_author'       => $friend_user->ID,
+						'post_type'	        => 'friend_post',
+						'post_title'        => $item->get_title(),
+						'post_date_gmt'     => $item->get_gmdate( 'Y-m-d H:i:s' ),
+						'post_content'      => $item->get_content(),
+						'post_status'       => 'private',
+						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+						'guid'              => $permalink,
+						'comment_count'     => $comment_count,
+					) );
+					if ( is_wp_error( $post_id ) ) {
+						continue;
+					}
 				}
 				update_post_meta( $post_id, 'gravatar', $gravatar );
 				update_post_meta( $post_id, 'author', $author->name );
+				global $wpdb;
+				$wpdb->update( $wpdb->posts, array( 'comment_count' => $comment_count ), array( 'ID' => $post_id ) );
 			}
 		}
 	}
@@ -420,12 +425,12 @@ class Friends {
 		}
 
 		$userdata = array(
-		    'user_login' => $user_login,
-		    'nickname'   => $name,
-		    'user_email' => $email,
-		    'user_url'   => $site_url,
-		    'user_pass'  => wp_generate_password( 50 ),
-		    'role'       => $role,
+			'user_login' => $user_login,
+			'nickname'   => $name,
+			'user_email' => $email,
+			'user_url'   => $site_url,
+			'user_pass'  => wp_generate_password( 50 ),
+			'role'       => $role,
 		);
 
 		return wp_insert_user( $userdata );
@@ -439,9 +444,13 @@ class Friends {
 		return false;
 	}
 
-	public function additional_feed_data() {
+	public function additional_feed_namespaces() {
+		echo '	xmlns:gravatar="https://gravatar.com/rss/1.0/modules/gravatar"';
+	}
+
+	public function feed_gravatar() {
 		global $post;
-		echo '<gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</gravatar>';
+		echo '<gravatar:url>' . esc_html( get_avatar_url( $post->post_author ) ) . '</gravatar:url>';
 	}
 
 	function private_feed( $query ) {
@@ -449,12 +458,12 @@ class Friends {
 			return $query;
 		}
 
-	    if ( ! $query->is_admin && $query->is_feed ) {
-	        $query->set( 'post_status', array( 'publish', 'private' ) );
-	        add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
-	    }
+		if ( ! $query->is_admin && $query->is_feed ) {
+			$query->set( 'post_status', array( 'publish', 'private' ) );
+			add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
+		}
 
-	    return $query;
+		return $query;
 	}
 
 	public function template_override( $template ) {
@@ -462,6 +471,8 @@ class Friends {
 
 		if ( 'friends' === $wp_query->query['pagename'] ) {
 			if ( current_user_can( 'edit_posts' ) ) {
+				$this->retrieve_friend_posts();
+
 				$friends = new WP_User_Query( array( 'role' => 'friend' ) );
 				if ( empty( $friends->get_results() ) ) {
 					return __DIR__ . '/templates/friends/no-friends.php';
@@ -476,7 +487,9 @@ class Friends {
 			if ( $wp_query->is_404 ) {
 				$wp_query->is_404 = false;
 				if ( current_user_can( 'friend' ) ) {
-					return __DIR__ . '/templates/friends/friend-visiting.php';
+					$user = wp_get_current_user();
+					wp_redirect( $user->user_url . '/friends/' );
+					exit;
 				}
 
 				return __DIR__ . '/templates/friends/logged-out.php';
@@ -504,8 +517,9 @@ class Friends {
 			$query->set( 'pagename', null );
 			$query->set( 'page', null );
 			$query->is_page = false;
-			$query->set( 'post_type', 'friend_post' );
-	        add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
+			$query->set( 'post_type', array( 'friend_post', 'post' ) );
+			$query->set( 'post_status', array( 'published', 'private' ) );
+			add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
 		}
 		return $query;
 	}
@@ -523,7 +537,7 @@ class Friends {
 			settype( $user_id, 'int' );
 			if ( get_user_meta( $user_id, 'friends_token', true ) === $_GET['friend_auth' ] ) {
 				wp_set_auth_cookie( $user_id );
-				wp_redirect( str_replace( '?friend_auth=' . $_GET['friend_auth'], '', $_SERVER['REQUEST_URI'] ) );
+				wp_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'] ), '', $_SERVER['REQUEST_URI'] ) );
 				exit;
 			}
 		}
@@ -531,7 +545,7 @@ class Friends {
 
 	public function authenticate( $incoming_user_id ) {
 		// TODO check if this should be improved with calculating atuh with a shared secret.
-		if ( ! isset( $_GET['friend'] ) ) {
+		if ( isset( $_GET['friend'] ) ) {
 			$user_id = get_option( 'friends_token_' . $_GET['friend'] );
 			if ( $user_id ) {
 				settype( $user_id, 'int' );
@@ -580,6 +594,8 @@ class Friends {
 		$user->set_role( 'friend' );
 		update_user_meta( $user_id, 'friends_token', $token );
 		update_option( 'friends_token_' . $token, $user_id );
+
+		$this->retrieve_friend_posts();
 
 		return true;
 	}

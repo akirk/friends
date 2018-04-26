@@ -30,12 +30,13 @@
     padding: 0;
   }
   article header h4 {
+    margin-top: .5em;
     margin-bottom: 1em;
     padding: 0;
   }
 
-  article header div.postmeta {
-    float: right;
+  article header span.post-meta {
+    font-size: 80%;
   }
 
   img.avatar {
