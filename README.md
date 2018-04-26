@@ -27,3 +27,7 @@ For one, this allows to stick with established WordPress configurations and term
 Secondly, a lot of WordPresses are like cell phones. Some are used by more than one person but mostly there is a 1:1 relationship between a WordPress blog and a person.
 
 If someone has multiple WordPresses this actually allows to segment your friendships. Close friends might want to follow all your blogs but you'd only add your photographer friends to your photoblog.
+
+### What if the friend request is deleted or not accepted?
+
+You'll still see the public posts from the other WordPress, you've subscribed to its public RSS feed.
