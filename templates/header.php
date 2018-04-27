@@ -30,10 +30,17 @@
     margin-bottom: 4em;
     padding: 0;
   }
-  article header h4 {
+  article header {
+    padding: 0 !important;
+  }
+  article header h4.entry-title {
     margin-top: .5em;
     margin-bottom: 1em;
+    margin-left: 0 !important;
     padding: 0;
+  }
+  div.entry-content {
+    float: none !important;
   }
 
   article header span.post-meta {

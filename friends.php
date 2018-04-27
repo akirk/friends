@@ -4,7 +4,7 @@
  * Plugin author: Alex Kirk
  * Version: 0.1
  *
- * Description: Connect WordPresses through friendships and RSS.
+ * Description: Private blogging with WordPress through friendships and RSS.
  */
 
 class Friends {
@@ -58,6 +58,7 @@ class Friends {
 		add_filter( 'template_include',           array( $this, 'template_override' ) );
 		add_filter( 'init',                       array( $this, 'register_custom_post_types' ) );
 		add_action( 'wp_ajax_friends_publish',    array( $this, 'frontend_publish_post' ) );
+		add_action( 'admin_bar_menu',             array( $this, 'admin_bar_friends_menu' ), 100 );
 
 		// Admin
 		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
@@ -465,6 +466,30 @@ class Friends {
 		}
 
 		return $query;
+	}
+
+	public function admin_bar_friends_menu( $wp_menu ) {
+		if ( ! current_user_can( 'edit_posts') ) {
+			return;
+		}
+		$wp_menu->add_menu( array(
+			'id'     => 'friends',
+			'parent' => 'site-name',
+			'title'  => esc_html__( 'Friends', 'friends' ),
+			'href'   => '/friends/',
+		) );
+		$wp_menu->add_menu( array(
+			'id'     => 'send-friend-request',
+			'parent' => 'friends',
+			'title'  => esc_html__( 'Send Friend Request', 'friends' ),
+			'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
+		) );
+		$wp_menu->add_menu( array(
+			'id'     => 'friends-requests',
+			'parent' => 'friends',
+			'title'  => esc_html__( 'Friends & Requests', 'friends' ),
+			'href'   => self_admin_url( 'users.php' ),
+		) );
 	}
 
 	public function frontend_publish_post() {

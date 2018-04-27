@@ -5,7 +5,7 @@
 		<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 			<header class="entry-header">
 				<?php if ( 'friend_post' === get_post_type() ) : ?>
-					<a href="<?php echo esc_url( get_the_author_url() ); ?>" class="author-avatar auth-link" data-token="<?php echo get_the_author_meta( 'friends_token' ); ?>">
+					<a href="<?php echo esc_url( get_the_author_url() ); ?>" class="author-avatar auth-link" data-token="<?php echo get_user_option( 'friends_token', get_the_author_ID() ); ?>">
 						<img src="<?php echo esc_url( get_post_meta( get_the_ID(), 'gravatar', true ) ); ?>" width="36" height="36" class="avatar"/>
 						<strong><?php echo esc_html( get_post_meta( get_the_ID(), 'author', true ) ); ?> @ <?php the_author() ?></strong>
 					</a>
@@ -17,13 +17,13 @@
 				<?php endif; ?>
 				<span class="post-meta">
 					<span class="post-date"><?php the_date(); ?></span>
-					<span class="post-comment"> &nbsp;|&nbsp; <a href="<?php comments_link(); ?>" class="auth-link" data-token="<?php echo get_the_author_meta( 'friends_token' ); ?>"><?php comments_number(); ?></a></span>
+					<span class="post-comment"> &nbsp;|&nbsp; <a href="<?php comments_link(); ?>" class="auth-link" data-token="<?php echo get_user_option( 'friends_token', get_the_author_ID() ); ?>"><?php comments_number(); ?></a></span>
 				<?php if ( 'friend_post' !== get_post_type() ) : ?>
 					<a href=""></a>
 				<?php endif; ?>
 				</span>
 
-				<h4 class="entry-title"><a href="<?php the_permalink(); ?>" rel="bookmark"<?php if ( 'friend_post' === get_post_type() ) echo ' class="auth-link" data-token="' . get_the_author_meta( 'friends_token' ) . '"'; ?>><?php the_title(); ?></a></h4>
+				<h4 class="entry-title"><a href="<?php the_permalink(); ?>" rel="bookmark"<?php if ( 'friend_post' === get_post_type() ) echo ' class="auth-link" data-token="' . get_user_option( 'friends_token', get_the_author_ID() ) . '"'; ?>><?php the_title(); ?></a></h4>
 			</header>
 
 			<div class="entry-content">
