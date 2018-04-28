@@ -19,7 +19,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="profile" href="http://gmpg.org/xfn/11">
 <link rel="stylesheet" type="text/css" media="all" href="<?php bloginfo( 'stylesheet_url' ); ?>" />
-
+<script src="/wp-includes/js/jquery/jquery.js"></script>
 <?php wp_head(); ?>
 <style type="text/css">
   #content {
