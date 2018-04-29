@@ -267,17 +267,23 @@ class Friends {
 	}
 
 	public function handle_bulk_friend_request_approval( $sendback, $action, $users ) {
-		if ( $action !== 'accept_friend_request' ) {
+		if ( 'accept_friend_request' !== $action ) {
 			return $sendback;
 		}
 
 		$accepted = 0;
 		foreach ( $users as $user_id ) {
 			$user = new WP_User( $user_id );
-			if ( ! is_wp_error( $user ) ) {
-				if ( $user->set_role( 'friend' ) ) {
-					$accepted += 1;
-				}
+			if ( ! $user || is_wp_error( $user ) ) {
+				continue;
+			}
+
+			if ( ! $user->has_cap( 'friend_request' ) ) {
+				continue;
+			}
+
+			if ( $user->set_role( 'friend' ) ) {
+				$accepted++;
 			}
 		}
 
@@ -286,17 +292,23 @@ class Friends {
 	}
 
 	public function handle_bulk_send_friend_request( $sendback, $action, $users ) {
-		if ( $action !== 'friend_request' ) {
+		if ( 'friend_request' !== $action ) {
 			return $sendback;
 		}
 
 		$sent = 0;
 		foreach ( $users as $user_id ) {
 			$user = new WP_User( $user_id );
-			if ( ! is_wp_error( $user ) ) {
-				if ( ! is_wp_error( $this->send_friend_request( $user->user_url ) ) ) {
-					$sent += 1;
-				}
+			if ( ! $user || is_wp_error( $user ) ) {
+				continue;
+			}
+
+			if ( ! $user->has_cap( 'subscription' ) ) {
+				continue;
+			}
+
+			if ( ! is_wp_error( $this->send_friend_request( $user->user_url ) ) ) {
+				$sent++;
 			}
 		}
 
@@ -305,8 +317,18 @@ class Friends {
 	}
 
 	public function add_user_bulk_options( $actions ) {
-		$actions['accept_friend_request'] = 'Accept Friend Request';
-		$actions['friend_request'] = 'Send Friend Request';
+		$friends = new WP_User_Query( array( 'role' => 'friend_request' ) );
+
+		if ( ! empty( $friends->get_results() ) ) {
+			$actions['accept_friend_request'] = 'Accept Friend Request';
+		}
+
+		$friends = new WP_User_Query( array( 'role' => 'subscription' ) );
+
+		if ( ! empty( $friends->get_results() ) ) {
+			$actions['friend_request'] = 'Send Friend Request';
+		}
+
 		return $actions;
 	}
 
