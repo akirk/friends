@@ -100,7 +100,7 @@ class Friends {
 		$args = array(
 			'labels'        => $labels,
 			'description'   => "A cached friend's post",
-			'public'        => true,
+			'public'        => apply_filters( 'friends_show_cached_posts', false ),
 			'menu_position' => 5,
 			'supports'      => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
 			'has_archive'   => true,
@@ -115,7 +115,7 @@ class Friends {
 	}
 
 	public function refresh_friends_feed() {
-		$this->retrieve_friend_posts( null, true ); // TODO make cron
+		$this->retrieve_friend_posts(); // TODO make cron
 	}
 
 	public function friends_refresh_feeds() {
@@ -366,7 +366,7 @@ class Friends {
 		) );
 	}
 
-	private function retrieve_friend_posts( WP_User $single_user = null, $debug = false ) {
+	private function retrieve_friend_posts( WP_User $single_user = null ) {
 		if ( $single_user ) {
 			$friends = array(
 				$single_user,
@@ -387,18 +387,17 @@ class Friends {
 			if ( $token ) {
 				$feed_url .= '?friend=' . $token;
 			}
-			if ( $debug ) {
-				echo nl2br( "Refreshing <a href=\"{$feed_url}\">{$friend_user->user_login}</a>\n" );
-			}
+			$feed_url = apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
+
 			$feed = fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
 				continue;
 			}
-			$this->process_friend_feed( $friend_user, $feed, $debug );
+			$this->process_friend_feed( $friend_user, $feed);
 		}
 	}
 
-	private function process_friend_feed( WP_User $friend_user, SimplePie $feed, $debug = false ) {
+	private function process_friend_feed( WP_User $friend_user, SimplePie $feed ) {
 		$remote_post_ids = array();
 		$existing_posts = new WP_Query( array(
 			'post_type' => self::FRIEND_POST_CACHE,
@@ -413,9 +412,9 @@ class Friends {
 			}
 			wp_reset_postdata();
 		}
-		if ( $debug ) {
-			var_dump($remote_post_ids);
-		}
+
+		do_action( 'friends_remote_post_ids', $remote_post_ids );
+
 		foreach ( $feed->get_items() as $item ) {
 			$permalink = $item->get_permalink();
 			// Fallback, when no friends plugin is installed.
