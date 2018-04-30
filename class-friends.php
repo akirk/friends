@@ -539,19 +539,17 @@ class Friends {
 	}
 
 	/**
-	 * Process the feed of a friend user.
+	 * Retrieve the remote post ids.
 	 *
 	 * @param  WP_User   $friend_user The friend user.
-	 * @param  SimplePie $feed        The RSS feed object of the friend user.
+	 * @return array A mapping of the remote post ids.
 	 */
-	private function process_friend_feed( WP_User $friend_user, SimplePie $feed ) {
+	private function get_remote_post_ids( WP_User $friend_user ) {
 		$remote_post_ids = array();
-		$existing_posts = new WP_Query(
-			array(
-				'post_type' => self::FRIEND_POST_CACHE,
-				'author' => $friend_user->ID,
-			)
-		);
+		$existing_posts = new WP_Query( array(
+			'post_type' => self::FRIEND_POST_CACHE,
+			'author' => $friend_user->ID,
+		));
 		if ( $existing_posts->have_posts() ) {
 			while ( $existing_posts->have_posts() ) {
 				$existing_posts->the_post();
@@ -563,6 +561,17 @@ class Friends {
 		}
 
 		do_action( 'friends_remote_post_ids', $remote_post_ids );
+		return $remote_post_ids;
+	}
+
+	/**
+	 * Process the feed of a friend user.
+	 *
+	 * @param  WP_User   $friend_user The friend user.
+	 * @param  SimplePie $feed        The RSS feed object of the friend user.
+	 */
+	private function process_friend_feed( WP_User $friend_user, SimplePie $feed ) {
+		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
 
 		foreach ( $feed->get_items() as $item ) {
 			$permalink = $item->get_permalink();
@@ -807,6 +816,28 @@ class Friends {
 
 		return array(
 			'friend_request_pending' => get_user_option( 'friends_friend_request_token', $user->ID ),
+		);
+	}
+
+	public function rest_friend_post_deleted( $request ) {
+		$token = $request->get_param( 'friend' );
+		$user_id = $this->verify_token( $token );
+		if ( ! $user_id ) {
+			return new WP_Error(
+				'friends_friend_request_failed',
+				'Could not respond to the friend request.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+		$friend_user = new WP_User( $user_id );
+		$post_id = $request->get_param( 'post_id' );
+		$permalink = $request->get_param( 'permalink' );
+		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
+
+		return array(
+			'deleted' => $post_id,
 		);
 	}
 
@@ -1105,18 +1136,34 @@ class Friends {
 	}
 
 	/**
+	 * Verify a friend token
+	 *
+	 * @param  string $token The token to verify.
+	 * @return int|bool The user id or false.
+	 */
+	protected function verify_token( $token ) {
+		$user_id = get_option( 'friends_token_' . $token );
+		if ( $user_id ) {
+			return false;
+		}
+		settype( $user_id, 'int' );
+		if ( get_user_option( 'friends_token', $user_id ) !== $token ) {
+			return false;
+		}
+
+		return $user_id;
+	}
+
+	/**
 	 * Log in a friend via URL parameter
 	 */
 	public function remote_login() {
 		if ( ! isset( $_GET['friend_auth'] ) ) {
 			return;
 		}
-		$user_id = get_option( 'friends_token_' . $_GET['friend_auth'] );
+
+		$user_id = $this->verify_token( $_GET['friend_auth'] );
 		if ( ! $user_id ) {
-			return;
-		}
-		settype( $user_id, 'int' );
-		if ( get_user_option( 'friends_token', $user_id ) !== $_GET['friend_auth'] ) {
 			return;
 		}
 		$user = new WP_User( $user_id );
@@ -1131,6 +1178,7 @@ class Friends {
 
 	/**
 	 * Authenticate a user for a feed.
+	 *
 	 * @param  int $incoming_user_id An already authenticated user.
 	 * @return int The new authenticated user.
 	 */
@@ -1139,13 +1187,8 @@ class Friends {
 			return $incoming_user_id;
 		}
 
-		$user_id = get_option( 'friends_token_' . $_GET['friend'] );
+		$user_id = $this->verify_token( $_GET['friend'] );
 		if ( ! $user_id ) {
-			return $incoming_user_id;
-		}
-
-		settype( $user_id, 'int' );
-		if ( get_user_option( 'friends_token', $user_id ) !== $_GET['friend'] ) {
 			return $incoming_user_id;
 		}
 
