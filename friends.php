@@ -66,9 +66,7 @@ class Friends {
 
 		// Cron
 		add_action( 'friends_refresh_feeds',      array( $this, 'cron_friends_refresh_feeds' ) );
-		if ( ! wp_next_scheduled( 'bl_cron_hook' ) ) {
-		    wp_schedule_event( time(), 'five_seconds', 'bl_cron_hook' );
-		}
+
 		// Admin
 		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
 		add_filter( 'user_row_actions',           array( $this, 'user_row_actions' ), 10, 2 );
