@@ -14,11 +14,15 @@ You want to connect with your friend Matt and send a friend request to his WordP
 
 Actually you're now subscribed to his posts and he's now subscribed to your posts, so on your `/friends/` pages you'll both now see each others posts.
 
+![Fetch friend posts](img/fetch-friend-posts.png)
+
 No big deal, this is just like subscribing to an RSS feed, right? It actually is, and that's also what's happening behind the scenes.
 
 Things start to get more interesting if you bring private posts to the game.
 
 When you post something with the post status sent to "Private," while not visible to the random (logged-out) visitor of your site, it is shared with your friends.
+
+![Network of friends](img/network-friends.png)
 
 ## Questions
 
