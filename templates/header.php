@@ -54,6 +54,10 @@
   form.friends-post-inline {
     margin: 2em 0;
   }
+
+  div.friends-sidebar {
+    float: right;
+  }
 </style>
 </head>
 

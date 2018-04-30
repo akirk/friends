@@ -61,6 +61,7 @@ class Friends {
 		add_filter( 'get_edit_post_link',         array( $this, 'friend_post_edit_link' ), 10, 2 );
 		add_filter( 'template_include',           array( $this, 'template_override' ) );
 		add_filter( 'init',                       array( $this, 'register_custom_post_types' ) );
+		add_filter( 'init',                       array( $this, 'register_friends_sidebar' ) );
 		add_action( 'wp_ajax_friends_publish',    array( $this, 'frontend_publish_post' ) );
 		add_action( 'admin_bar_menu',             array( $this, 'admin_bar_friends_menu' ), 100 );
 
@@ -105,6 +106,18 @@ class Friends {
 		);
 		register_post_type( self::FRIEND_POST_CACHE, $args );
 	}
+
+	public function register_friends_sidebar() {
+		register_sidebar( array(
+			'name' => 'Friends Sidebar',
+			'before_widget' => '<div class="friends-sidebar">',
+			'after_widget' => '</div>',
+			'before_title' => '<h3>',
+			'after_title' => '</h3>',
+		) );
+	}
+
+
 
 	public function register_admin_menu() {
 		add_menu_page( 'Friends', 'Friends', 'manage_options', 'send-friend-request', null, '', 3.731 );
