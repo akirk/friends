@@ -423,8 +423,11 @@ class Friends {
 			$item->{'post-status'} = 'publish';
 
 			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id' ) as $key ) {
-				if ( isset( $item->data['child'][self::XMLNS][$key][0]['data'] ) ) {
-					$item->{$key} = $item->data['child'][self::XMLNS][$key][0]['data'];
+				foreach ( array( self::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
+					if ( isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
+						$item->{$key} = $item->data['child'][ $xmlns ][ $key ][0]['data'];
+						continue;
+					}
 				}
 			}
 
