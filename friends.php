@@ -64,6 +64,11 @@ class Friends {
 		add_action( 'wp_ajax_friends_publish',    array( $this, 'frontend_publish_post' ) );
 		add_action( 'admin_bar_menu',             array( $this, 'admin_bar_friends_menu' ), 100 );
 
+		// Cron
+		add_action( 'friends_refresh_feeds',      array( $this, 'cron_friends_refresh_feeds' ) );
+		if ( ! wp_next_scheduled( 'bl_cron_hook' ) ) {
+		    wp_schedule_event( time(), 'five_seconds', 'bl_cron_hook' );
+		}
 		// Admin
 		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
 		add_filter( 'user_row_actions',           array( $this, 'user_row_actions' ), 10, 2 );
@@ -89,7 +94,7 @@ class Friends {
 			'not_found'          => 'No Friend Posts Items found',
 			'not_found_in_trash' => 'No Friend Posts Items found in the Trash',
 			'parent_item_colon'  => '',
-			'menu_name'          => 'Friend Post Cache'
+			'menu_name'          => 'Friend Post Cache',
 		);
 
 		$args = array(
@@ -110,7 +115,11 @@ class Friends {
 	}
 
 	public function refresh_friends_feed() {
-		$this->retrieve_friend_posts( true ); // TODO make cron
+		$this->retrieve_friend_posts( null, true ); // TODO make cron
+	}
+
+	public function friends_refresh_feeds() {
+		$this->retrieve_friend_posts();
 	}
 
 	public function wp_feed_options( $feed, $url ) {
@@ -133,7 +142,7 @@ class Friends {
 
 		$user = $this->create_user( $site_url, 'subscription' );
 		if ( ! is_wp_error( $user ) ) {
-			$this->retrieve_friend_posts();
+			$this->process_friend_feed( $user, $feed );
 		}
 		return $user;
 	}
@@ -147,23 +156,23 @@ class Friends {
 			'timeout' => 20,
 			'redirection' => 5,
 		) );
-		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			$json = json_decode( wp_remote_retrieve_body( $response ) );
-			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
-				if ( 'rest_no_route' === $json->code ) {
-					return $this->subscribe( $site_url );
-				}
-				return new WP_Error( $json->code, $json->message, $json->data );
-			}
 
-			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response', $response );
-		}
 		$link = wp_remote_retrieve_header( $response, 'link' );
 		$wp_json = strpos( $link, 'wp-json/' );
 		if ( false !== $wp_json ) {
 			$site_url = substr( $link, 1, $wp_json - 1 );
 		}
 		$site_url = rtrim( $site_url, '/' );
+
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			$json = json_decode( wp_remote_retrieve_body( $response ) );
+			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
+				if ( 'rest_no_route' !== $json->code ) {
+					return new WP_Error( $json->code, $json->message, $json->data );
+				}
+			}
+			return $this->subscribe( $site_url );
+		}
 
 		$user_login = $this->get_user_login_for_site_url( $site_url );
 		$user = get_user_by( 'login', $user_login );
@@ -199,7 +208,7 @@ class Friends {
 			} elseif ( isset( $json->friend ) ) {
 				$this->make_friend( $user, $json->friend );
 			}
-			$this->retrieve_friend_posts();
+			$this->retrieve_friend_posts( $user );
 		}
 
 		return $user;
@@ -247,15 +256,25 @@ class Friends {
 	}
 
 	public function user_row_actions( array $actions, WP_User $user ) {
-		if ( ! $user->has_cap( 'friend_request' ) && ! $user->has_cap( 'pending_friend_request' ) && ! $user->has_cap( 'friend' ) && ! $user->has_cap( 'subscription' ) ) {
+		if (
+			! $user->has_cap( 'friend_request' ) &&
+			! $user->has_cap( 'pending_friend_request' ) &&
+			! $user->has_cap( 'friend' ) &&
+			! $user->has_cap( 'subscription' )
+		) {
 			return $actions;
 		}
-		unset( $actions['edit' ] );
+		unset( $actions['edit'] );
 		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '">' . __( 'View' ) . '</a>';
 
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
+		}
+
+		if ( $user->has_cap( 'pending_friend_request' ) ) {
+			$link = self_admin_url( wp_nonce_url( 'users.php?action=friend_request&users[]=' . $user->ID ) );
+			$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
 		}
 
 		if ( $user->has_cap( 'subscription' ) ) {
@@ -288,7 +307,7 @@ class Friends {
 		}
 
 		$sendback = add_query_arg( 'accepted', $accepted, $sendback );
-		wp_redirect( $sendback );
+		wp_safe_redirect( $sendback );
 	}
 
 	public function handle_bulk_send_friend_request( $sendback, $action, $users ) {
@@ -313,7 +332,7 @@ class Friends {
 		}
 
 		$sendback = add_query_arg( 'sent', $sent, $sendback );
-		wp_redirect( $sendback );
+		wp_safe_redirect( $sendback );
 	}
 
 	public function add_user_bulk_options( $actions ) {
@@ -347,13 +366,21 @@ class Friends {
 		) );
 	}
 
-	private function retrieve_friend_posts( $debug = false ) {
-		$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'pending_friend_request', 'subscription' ) ) );
+	private function retrieve_friend_posts( WP_User $single_user = null, $debug = false ) {
+		if ( $single_user ) {
+			$friends = array(
+				$single_user,
+			);
+		} else {
+			$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'pending_friend_request', 'subscription' ) ) );
+			$friends = $friends->get_results();
 
-		if ( empty( $friends->get_results() ) ) {
-			return;
+			if ( empty( $friends ) ) {
+				return;
+			}
 		}
-		foreach ( $friends->get_results() as $friend_user ) {
+
+		foreach ( $friends as $friend_user ) {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 
 			$token = get_user_option( 'friends_token', $friend_user->ID );
@@ -367,78 +394,81 @@ class Friends {
 			if ( is_wp_error( $feed ) ) {
 				continue;
 			}
+			$this->process_friend_feed( $friend_user, $feed, $debug );
+		}
+	}
 
-			$remote_post_ids = array();
-			$existing_posts = new WP_Query( array(
-				'post_type' => self::FRIEND_POST_CACHE,
-				'author' => $friend_user->ID,
-			));
-			if ( $existing_posts->have_posts() ) {
-				while ( $existing_posts->have_posts() ) {
-					$existing_posts->the_post();
-					$remote_post_id = get_post_meta( $existing_posts->post->ID, 'remote_post_id', true );
-					$remote_post_ids[ $remote_post_id ] = $existing_posts->post->ID;
-					$remote_post_ids[ get_the_permalink() ] = $existing_posts->post->ID;
-				}
-				wp_reset_postdata();
+	private function process_friend_feed( WP_User $friend_user, SimplePie $feed, $debug = false ) {
+		$remote_post_ids = array();
+		$existing_posts = new WP_Query( array(
+			'post_type' => self::FRIEND_POST_CACHE,
+			'author' => $friend_user->ID,
+		));
+		if ( $existing_posts->have_posts() ) {
+			while ( $existing_posts->have_posts() ) {
+				$existing_posts->the_post();
+				$remote_post_id = get_post_meta( $existing_posts->post->ID, 'remote_post_id', true );
+				$remote_post_ids[ $remote_post_id ] = $existing_posts->post->ID;
+				$remote_post_ids[ get_the_permalink() ] = $existing_posts->post->ID;
 			}
-			if ( $debug ) {
-				var_dump($remote_post_ids);
+			wp_reset_postdata();
+		}
+		if ( $debug ) {
+			var_dump($remote_post_ids);
+		}
+		foreach ( $feed->get_items() as $item ) {
+			$permalink = $item->get_permalink();
+			// Fallback, when no friends plugin is installed.
+			$item->{'post-id'} = $permalink;
+			$item->{'post-status'} = 'publish';
+
+			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id' ) as $key ) {
+				if ( isset( $item->data['child'][self::XMLNS][$key][0]['data'] ) ) {
+					$item->{$key} = $item->data['child'][self::XMLNS][$key][0]['data'];
+				}
 			}
-			foreach ( $feed->get_items() as $item ) {
-				$permalink = $item->get_permalink();
-				// Fallback, when no friends plugin is installed.
-				$item->{'post-id'} = $permalink;
-				$item->{'post-status'} = 'publish';
 
-				foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id' ) as $key ) {
-					if ( isset( $item->data['child'][self::XMLNS][$key][0]['data'] ) ) {
-						$item->{$key} = $item->data['child'][self::XMLNS][$key][0]['data'];
-					}
-				}
+			$item->comments_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
 
-				$item->comments_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
-
-				$post_id = null;
-				if ( isset( $remote_post_ids[ $item->{'post-id'} ] ) ) {
-					$post_id = $remote_post_ids[ $item->{'post-id'} ];
-				}
-				if ( is_null( $post_id ) && isset( $remote_post_ids[ $permalink ] ) ) {
-					$post_id = $remote_post_ids[ $permalink ];
-				}
-				if ( ! is_null( $post_id ) ) {
-					wp_update_post( array(
-						'ID'                => $post_id,
-						'post_title'        => $item->get_title(),
-						'post_content'      => $item->get_content(),
-						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
-						'post_status'       => $item->{'post-status'},
-						'guid'              => $permalink,
-					) );
-				} else {
-					$post_id = wp_insert_post( array(
-						'post_author'       => $friend_user->ID,
-						'post_type'	        => self::FRIEND_POST_CACHE,
-						'post_title'        => $item->get_title(),
-						'post_date_gmt'     => $item->get_gmdate( 'Y-m-d H:i:s' ),
-						'post_content'      => $item->get_content(),
-						'post_status'       => $item->{'post-status'},
-						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
-						'guid'              => $permalink,
-						'comment_count'     => $item->comment_count,
-					) );
-					if ( is_wp_error( $post_id ) ) {
-						continue;
-					}
-				}
-				$author = $item->get_author();
-				update_post_meta( $post_id, 'author', $author->name );
-				update_post_meta( $post_id, 'gravatar', $item->gravatar );
-
-				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
-				global $wpdb;
-				$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
+			$post_id = null;
+			if ( isset( $remote_post_ids[ $item->{'post-id'} ] ) ) {
+				$post_id = $remote_post_ids[ $item->{'post-id'} ];
 			}
+			if ( is_null( $post_id ) && isset( $remote_post_ids[ $permalink ] ) ) {
+				$post_id = $remote_post_ids[ $permalink ];
+			}
+			if ( ! is_null( $post_id ) ) {
+				wp_update_post( array(
+					'ID'                => $post_id,
+					'post_title'        => $item->get_title(),
+					'post_content'      => $item->get_content(),
+					'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+					'post_status'       => $item->{'post-status'},
+					'guid'              => $permalink,
+				) );
+			} else {
+				$post_id = wp_insert_post( array(
+					'post_author'       => $friend_user->ID,
+					'post_type'         => self::FRIEND_POST_CACHE,
+					'post_title'        => $item->get_title(),
+					'post_date_gmt'     => $item->get_gmdate( 'Y-m-d H:i:s' ),
+					'post_content'      => $item->get_content(),
+					'post_status'       => $item->{'post-status'},
+					'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+					'guid'              => $permalink,
+					'comment_count'     => $item->comment_count,
+				) );
+				if ( is_wp_error( $post_id ) ) {
+					continue;
+				}
+			}
+			$author = $item->get_author();
+			update_post_meta( $post_id, 'author', $author->name );
+			update_post_meta( $post_id, 'gravatar', $item->gravatar );
+
+			update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
+			global $wpdb;
+			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 		}
 	}
 
@@ -551,8 +581,8 @@ class Friends {
 	}
 
 	private function get_user_login_for_site_url( $site_url ) {
-		$host = parse_url( $site_url, PHP_URL_HOST );
-		$path = parse_url( $site_url, PHP_URL_PATH );
+		$host = wp_parse_url( $site_url, PHP_URL_HOST );
+		$path = wp_parse_url( $site_url, PHP_URL_PATH );
 
 		$user_login = trim( preg_replace( '#[^a-z0-9.-]+#', '_', strtolower( $host . '_' . $path ) ), '_' );
 		return $user_login;
@@ -675,7 +705,7 @@ class Friends {
 			if ( ! empty($_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) == 'xmlhttprequest' ) {
 				echo $result;
 			} else {
-				wp_redirect( $_SERVER['HTTP_REFERER'] );
+				wp_safe_redirect( $_SERVER['HTTP_REFERER'] );
 				exit;
 			}
 		}
@@ -687,7 +717,9 @@ class Friends {
 
 		if ( 'friends' === $wp_query->query['pagename'] ) {
 			if ( current_user_can( 'edit_posts' ) ) {
-				$this->retrieve_friend_posts();
+				if ( isset( $_GET['refresh'] ) ) {
+					$this->retrieve_friend_posts( null, true );
+				}
 
 				$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'pending_friend_request' ) ) );
 
@@ -701,7 +733,7 @@ class Friends {
 				$wp_query->is_404 = false;
 				if ( current_user_can( 'friend' ) ) {
 					$user = wp_get_current_user();
-					wp_redirect( $user->user_url . '/friends/' );
+					wp_safe_redirect( $user->user_url . '/friends/' );
 					exit;
 				}
 
@@ -752,7 +784,7 @@ class Friends {
 			settype( $user_id, 'int' );
 			if ( get_user_option( 'friends_token', $user_id ) === $_GET['friend_auth' ] ) {
 				wp_set_auth_cookie( $user_id );
-				wp_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'] ), '', $_SERVER['REQUEST_URI'] ) );
+				wp_safe_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'] ), '', $_SERVER['REQUEST_URI'] ) );
 				exit;
 			}
 		}
@@ -775,7 +807,7 @@ class Friends {
 	}
 
 	public function notify_friend_request_accepted( $user_id, $new_role, $old_roles ) {
-		if ( $new_role !== 'friend' ) {
+		if ( 'friend' !== $new_role ) {
 			return;
 		}
 
@@ -810,7 +842,7 @@ class Friends {
 		update_user_option( $user->ID, 'friends_token', $token );
 		update_option( 'friends_token_' . $token, $user->ID );
 
-		$this->retrieve_friend_posts();
+		$this->retrieve_friend_posts( $user );
 
 		return true;
 	}
@@ -825,7 +857,7 @@ class Friends {
 	}
 
 	public function update_friend_request_token( $user_id, $new_role, $old_roles ) {
-		if ( $new_role !== 'friend_request' || in_array( $new_role, $old_roles ) ) {
+		if ( 'friend_request' !== $new_role || in_array( $new_role, $old_roles, true ) ) {
 			return;
 		}
 
@@ -834,12 +866,12 @@ class Friends {
 	}
 
 	public function update_friend_token( $user_id, $new_role, $old_roles ) {
-		if ( $new_role === 'friend' && in_array( $new_role, $old_roles ) ) {
+		if ( 'friend' === $new_role && in_array( $new_role, $old_roles, true ) ) {
 			return;
 		}
 		$current_secret = $this->delete_friend_token( $user_id );
 
-		if ( $new_role !== 'friend' ) {
+		if ( 'friend' !== $new_role ) {
 			return;
 		}
 
@@ -883,12 +915,18 @@ class Friends {
 
 	public static function activate_plugin() {
 		self::setup_roles();
+
+		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
+			wp_schedule_event( time(), 'hourly', 'cron_friends_refresh_feeds' );
+		}
 	}
 
 	public static function deactivate_plugin() {
-		// TODO determine if we really want to delete all authentications.
-		return;
+		$timestamp = wp_next_scheduled( 'cron_friends_refresh_feeds' );
+		wp_unschedule_event( $timestamp, 'cron_friends_refresh_feeds' );
+	}
 
+	public static function delete_friends_data() {
 		remove_role( 'friend' );
 		remove_role( 'friend_request' );
 		remove_role( 'pending_friend_request' );
@@ -898,6 +936,14 @@ class Friends {
 			if ( 'friends_' === substr( $name, 0, 8 ) ) {
 				delete_option( $name );
 			}
+		}
+
+		$friend_posts = new WP_Query( array(
+			'post_type' => self::FRIEND_POST_CACHE,
+		));
+
+		while ( $friend_posts->have_posts() ) {
+			wp_delete_post( $friend_posts->post->ID, true );
 		}
 	}
 }
