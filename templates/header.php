@@ -56,7 +56,12 @@
   }
 
   div.friends-sidebar {
-    float: right;
+    position: absolute;
+    right: 2em;
+  }
+
+  div.friends-widget {
+    margin-bottom: 2em;
   }
 </style>
 </head>

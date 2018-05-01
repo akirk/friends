@@ -1,6 +1,8 @@
 <?php include __DIR__ . '/../header.php'; ?>
 	<h1>Friends</h1>
-	<?php dynamic_sidebar( 'Friends Sidebar' ); ?>
+	<div class="friends-sidebar">
+		<?php dynamic_sidebar( 'Friends Sidebar' ); ?>
+	</div>
 	<?php include __DIR__ . '/editor.php'; ?>
 	<?php while ( have_posts() ) : the_post(); ?>
 		<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>

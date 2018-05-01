@@ -110,7 +110,7 @@ class Friends {
 	public function register_friends_sidebar() {
 		register_sidebar( array(
 			'name' => 'Friends Sidebar',
-			'before_widget' => '<div class="friends-sidebar">',
+			'before_widget' => '<div class="friends-widget">',
 			'after_widget' => '</div>',
 			'before_title' => '<h3>',
 			'after_title' => '</h3>',
@@ -961,6 +961,164 @@ class Friends {
 	}
 }
 
+class Friends_Widget_Refresh extends WP_Widget {
+	public function __construct() {
+		parent::__construct( 'friends-widget-refresh', __( 'Refresh Friend Posts', 'friends' ), array(
+			'description' => __( "Shows a refresh link to refetch your friends' posts.", 'friends' ),
+		) );
+	}
+
+	/**
+	 * Render the widget.
+	 *
+	 * @param array $args Sidebar arguments.
+	 * @param array $instance Widget instance settings.
+	 */
+	public function widget( $args, $instance ) {
+		$title = apply_filters( 'widget_title', $instance['title'] );
+		echo $args['before_widget'];
+		if ( ! empty( $title ) ) {
+			echo $args['before_title'] . $title . $args['after_title'];
+		}
+
+		echo '<a href="/friends/?refresh">' . __( 'Refresh', 'friends' ) . '</a>';
+
+		echo $args['after_widget'];
+	}
+
+
+	/**
+	 * Update widget configuration.
+	 *
+	 * @param array $new_instance New settings.
+	 * @param array $old_instance Old settings.
+	 * @return array Sanitized instance settings.
+	 */
+	public function update( $new_instance, $old_instance ) {
+		$instance = $this->defaults;
+
+		return $instance;
+	}
+
+	/**
+	 * Rgister this widget.
+	 */
+	public static function register() {
+		register_widget( __CLASS__ );
+	}
+}
+
+class Friends_Widget_Friend_List extends WP_Widget {
+	public function __construct() {
+		parent::__construct( 'friends-widget-friend-list', __( 'Friend List', 'friends' ), array(
+			'description' => __( 'Shows a list of your friends.', 'friends' ),
+		) );
+	}
+
+	/**
+	 * Render the widget.
+	 *
+	 * @param array $args Sidebar arguments.
+	 * @param array $instance Widget instance settings.
+	 */
+	public function widget( $args, $instance ) {
+		$title = apply_filters( 'widget_title', $instance['title'] );
+		echo $args['before_widget'];
+		if ( ! empty( $title ) ) {
+			echo $args['before_title'] . $title . $args['after_title'];
+		}
+
+		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+
+		echo '<span class="friend-count-message">';
+		printf( _n( 'You have %s friend:' , ' You have %s friends:', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' );
+		echo '</span>';
+
+		echo '<ul class="friend-list">';
+		foreach ( $friends->get_results() as $friend_user ) {
+			echo '<li><a href="' . esc_url( $friend_user->user_url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
+		}
+
+		echo '</ul>';
+
+		echo $args['after_widget'];
+	}
+
+
+	/**
+	 * Update widget configuration.
+	 *
+	 * @param array $new_instance New settings.
+	 * @param array $old_instance Old settings.
+	 * @return array Sanitized instance settings.
+	 */
+	public function update( $new_instance, $old_instance ) {
+		$instance = $this->defaults;
+
+		return $instance;
+	}
+
+	/**
+	 * Rgister this widget.
+	 */
+	public static function register() {
+		register_widget( __CLASS__ );
+	}
+}
+
+class Friends_Widget_Friend_Request extends WP_Widget {
+	public function __construct() {
+		parent::__construct( 'friends-widget-friend-request', __( 'Friend request', 'friends' ), array(
+			'description' => __( 'Send a friend request.', 'friends' ),
+		) );
+	}
+
+	/**
+	 * Render the widget.
+	 *
+	 * @param array $args Sidebar arguments.
+	 * @param array $instance Widget instance settings.
+	 */
+	public function widget( $args, $instance ) {
+		$title = apply_filters( 'widget_title', $instance['title'] );
+		echo $args['before_widget'];
+		if ( ! empty( $title ) ) {
+			echo $args['before_title'] . $title . $args['after_title'];
+		}
+
+		echo '<form action="">';
+		echo '<input type="text" name="site_url" size="10"/>';
+		echo '<button>Send Friend Request</button>';
+		echo '</form>';
+
+		echo $args['after_widget'];
+	}
+
+
+	/**
+	 * Update widget configuration.
+	 *
+	 * @param array $new_instance New settings.
+	 * @param array $old_instance Old settings.
+	 * @return array Sanitized instance settings.
+	 */
+	public function update( $new_instance, $old_instance ) {
+		$instance = $this->defaults;
+
+		return $instance;
+	}
+
+	/**
+	 * Rgister this widget.
+	 */
+	public static function register() {
+		register_widget( __CLASS__ );
+	}
+}
+
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
+add_action( 'widgets_init', array( 'Friends_Widget_Refresh', 'register' ) );
+add_action( 'widgets_init', array( 'Friends_Widget_Friend_List', 'register' ) );
+add_action( 'widgets_init', array( 'Friends_Widget_Friend_Request', 'register' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
