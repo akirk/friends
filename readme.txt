@@ -58,6 +58,9 @@ Well, that's actually exactly the point. Facebook owns your data, with WordPress
 There is a cache of your friends post in form of a Custom Post Type friend_post that is updated when you change a post. When you delete a post your friends' WordPresses are notified and they delete the cached post.
 
 == Screenshots ==
+
+1. An incoming Friend Request on the users page.
+2. The friend request has been accepted.
  
 == Changelog ==
 = 0.3 =
