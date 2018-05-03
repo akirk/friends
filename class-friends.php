@@ -1,53 +1,85 @@
 <?php
+/**
+ * Friends
+ *
+ * A plugin to connect WordPresses and communicate privately with your friends.
+ *
+ * @package Friends
+ * @since 0.3
+ */
+
+/**
+ * This is the class for the Friends Plugin.
+ *
+ * @package Friends
+ * @author Alex Kirk
+ */
 class Friends {
-	const VERSION = '0.2';
+	const VERSION = '0.3';
 	const REST_NAMESPACE = 'friends/v1';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const XMLNS = 'wordpress-plugin-friends:feed-additions:1';
+	/**
+	 * States whether this is an authenticated feed call.
+	 *
+	 * @var null
+	 */
 	private $feed_authenticated = null;
 
+	/**
+	 * Initialize the plugin
+	 */
 	public static function init() {
 		static::get_instance();
 	}
 
+	/**
+	 * Get the class singleton
+	 *
+	 * @return Friends A class instance.
+	 */
 	public static function get_instance() {
 		static $instance;
 		if ( ! isset( $instance ) ) {
 			$self = get_called_class();
-			$instance = new $self;
+			$instance = new $self();
 		}
 		return $instance;
 	}
 
+	/**
+	 * Constructor
+	 */
 	public function __construct() {
-		$this->add_hooks();
+		$this->register_hooks();
+		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+
 	}
 
-	private function add_hooks() {
-		// Authentication
+	/**
+	 * Register the WordPress hooks
+	 */
+	private function register_hooks() {
+		// Hooks for Authentication.
 		add_filter( 'determine_current_user',     array( $this, 'authenticate' ), 1 );
 
-		// Access control
+		// Hooks for Access control.
 		add_action( 'set_user_role',              array( $this, 'update_friend_token' ), 10, 3 );
 		add_action( 'set_user_role',              array( $this, 'update_friend_request_token' ), 10, 3 );
 		add_action( 'set_user_role',              array( $this, 'notify_friend_request_accepted' ), 10, 3 );
 		add_action( 'delete_user',                array( $this, 'delete_friend_token' ) );
 		add_action( 'init',                       array( $this, 'remote_login' ) );
 
-		// RSS
-		add_filter( 'pre_get_posts',              array( $this, 'private_feed' ), 1 );
+		// Hooks for RSS.
+		add_filter( 'pre_get_posts',              array( $this, 'private_feed_query' ), 1 );
 		add_filter( 'private_title_format',       array( $this, 'private_title_format' ) );
-		add_filter( 'the_content_feed',           array( $this, 'feed_content' ), 90 );
-		add_filter( 'the_excerpt_rss',            array( $this, 'feed_content' ), 90 );
-		add_filter( 'comment_text_rss',           array( $this, 'feed_content' ), 90 );
 		add_filter( 'pre_option_rss_use_excerpt', array( $this, 'feed_use_excerpt' ), 90 );
-		add_filter( 'wp_feed_options',            array( $this, 'wp_feed_options' ), 10, 2 );
-		add_action( 'rss_item',                   array( $this, 'feed_gravatar' ) );
-		add_action( 'rss2_item',                  array( $this, 'feed_gravatar' ) );
+		add_action( 'rss_item',                   array( $this, 'feed_additional_fields' ) );
+		add_action( 'rss2_item',                  array( $this, 'feed_additional_fields' ) );
 		add_action( 'rss_ns',                     array( $this, 'additional_feed_namespaces' ) );
 		add_action( 'rss2_ns',                    array( $this, 'additional_feed_namespaces' ) );
 
-		// /friends/
+		// Hooks for /friends/.
 		add_filter( 'pre_get_posts',              array( $this, 'friend_posts_query' ), 2 );
 		add_filter( 'post_type_link',             array( $this, 'friend_post_link' ), 10, 4 );
 		add_filter( 'get_edit_post_link',         array( $this, 'friend_post_edit_link' ), 10, 2 );
@@ -58,20 +90,23 @@ class Friends {
 		add_action( 'admin_bar_menu',             array( $this, 'admin_bar_friends_menu' ), 100 );
 		add_action( 'wp_enqueue_scripts',         array( $this, 'enqueue_scripts' ) );
 
-		// Cron
+		// Hooks for Cron.
 		add_action( 'friends_refresh_feeds',      array( $this, 'cron_friends_refresh_feeds' ) );
 
-		// Admin
+		// Hooks for Admin.
 		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
 		add_filter( 'user_row_actions',           array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users',  array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'handle_bulk_actions-users',  array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );
 		add_filter( 'bulk_actions-users',         array( $this, 'add_user_bulk_options' ) );
 
-		// REST
+		// Hooks for REST.
 		add_action( 'rest_api_init',              array( $this, 'add_rest_routes' ) );
 	}
 
+	/**
+	 * Registers the custom post types
+	 */
 	public function register_custom_post_types() {
 		$labels = array(
 			'name'               => 'Friend Post Cache',
@@ -100,50 +135,65 @@ class Friends {
 		register_post_type( self::FRIEND_POST_CACHE, $args );
 	}
 
+	/**
+	 * Registers the sidebar for the /friends page.
+	 */
 	public function register_friends_sidebar() {
-		register_sidebar( array(
-			'name' => 'Friends Sidebar',
-			'before_widget' => '<div class="friends-widget">',
-			'after_widget' => '</div>',
-			'before_title' => '<h3>',
-			'after_title' => '</h3>',
-		) );
+		register_sidebar(
+			array(
+				'name' => 'Friends Sidebar',
+				'before_widget' => '<div class="friends-widget">',
+				'after_widget' => '</div>',
+				'before_title' => '<h3>',
+				'after_title' => '</h3>',
+			)
+		);
 	}
 
-
-
+	/**
+	 * Registers the admin menus
+	 */
 	public function register_admin_menu() {
 		add_menu_page( 'Friends', 'Friends', 'manage_options', 'send-friend-request', null, '', 3.731 );
 		add_submenu_page( 'send-friend-request', 'Send Friend Request', 'Send Friend Request', 'manage_options', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
-		add_submenu_page( 'send-friend-request', 'Feed', 'Refresh', 'manage_options', 'refresh', array( $this, 'refresh_friends_feed' ) );
+		add_submenu_page( 'send-friend-request', 'Feed', 'Refresh', 'manage_options', 'refresh', array( $this, 'refresh_friend_posts' ) );
 	}
 
-	public function refresh_friends_feed() {
-		$this->retrieve_friend_posts(); // TODO make cron
-	}
-
-	public function friends_refresh_feeds() {
+	/**
+	 * Admin menu to refresh the friend posts.
+	 */
+	public function refresh_friend_posts() {
 		$this->retrieve_friend_posts();
 	}
 
-	public function wp_feed_options( $feed, $url ) {
-		// TODO: do allow caching again, this is just while testing.
-		if ( false !== strpos( $url, '?friend=' ) ) {
-			$feed->enable_cache( false );
-		}
+	/**
+	 * Cron function to refresh the feeds of the friends' blogs
+	 */
+	public function cron_friends_refresh_feeds() {
+		$this->retrieve_friend_posts();
 	}
 
-	public function subscribe( $site_url ) {
-		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) ) {
+	/**
+	 * Subscribe to a friends site without becoming a friend
+	 *
+	 * @param  string $feed_url The feed URL to subscribe to.
+	 * @return WP_User|WP_error $user The new associated user or an error object.
+	 */
+	public function subscribe( $feed_url ) {
+		if ( ! is_string( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
 			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
 		}
 
-		$feed_url = rtrim( $site_url, '/' ) . '/feed/';
 		$feed = fetch_feed( $feed_url );
 		if ( is_wp_error( $feed ) ) {
 			return $feed;
 		}
 
+		if ( '/feed/' === substr( $feed_url, -6 ) ) {
+			$site_url = substr( $feed_url, 0, -6 );
+		} else {
+			$site_url = $feed_url;
+		}
 		$user = $this->create_user( $site_url, 'subscription' );
 		if ( ! is_wp_error( $user ) ) {
 			$this->process_friend_feed( $user, $feed );
@@ -151,15 +201,23 @@ class Friends {
 		return $user;
 	}
 
+	/**
+	 * Send a friend request to another WordPress with the Friends plugin
+	 *
+	 * @param  string $site_url The site URL of the friend's WordPress.
+	 * @return WP_User|WP_error $user The new associated user or an error object.
+	 */
 	public function send_friend_request( $site_url ) {
 		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) ) {
 			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
 		}
 
-		$response = wp_safe_remote_get( $site_url . '/wp-json/' . self::REST_NAMESPACE . '/hello', array(
-			'timeout' => 20,
-			'redirection' => 5,
-		) );
+		$response = wp_safe_remote_get(
+			$site_url . '/wp-json/' . self::REST_NAMESPACE . '/hello', array(
+				'timeout' => 20,
+				'redirection' => 5,
+			)
+		);
 
 		$link = wp_remote_retrieve_header( $response, 'link' );
 		$wp_json = strpos( $link, 'wp-json/' );
@@ -175,7 +233,7 @@ class Friends {
 					return new WP_Error( $json->code, $json->message, $json->data );
 				}
 			}
-			return $this->subscribe( $site_url );
+			return $this->subscribe( $site_url . '/feed/' );
 		}
 
 		$user_login = $this->get_user_login_for_site_url( $site_url );
@@ -185,17 +243,22 @@ class Friends {
 			return $user;
 		}
 
-		$response = wp_remote_post( $site_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request', array(
-			'timeout' => 20,
-			'redirection' => 5,
-			'body' => array( 'site_url' => site_url() ),
-		) );
+		$response = wp_remote_post(
+			$site_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request', array(
+				'body' => array(
+					'site_url' => site_url(),
+					'signature' => $this->get_signature( site_url() ),
+				),
+				'timeout' => 20,
+				'redirection' => 5,
+			)
+		);
 
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			$json = json_decode( wp_remote_retrieve_body( $response ) );
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				if ( 'rest_no_route' === $json->code ) {
-					return $this->subscribe( $site_url );
+					return $this->subscribe( $site_url . '/feed/' );
 				}
 				return new WP_Error( $json->code, $json->message, $json->data );
 			}
@@ -218,47 +281,87 @@ class Friends {
 		return $user;
 	}
 
+	/**
+	 * Render the admin form for sending a friend request.
+	 */
 	public function render_admin_send_friend_request() {
-		?><h1><?php _e( 'Send Friend Request', 'friends' ); ?></h1><?php
-		if ( ! empty( $_POST ) ) {
+		$site_url = '';
+		?><h1><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></h1>
+		<?php
+		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
+
 			$site_url = $_POST['site_url'];
-			$protocol = parse_url( $site_url, PHP_URL_SCHEME );
+			$protocol = wp_parse_url( $site_url, PHP_URL_SCHEME );
 			if ( ! $protocol ) {
 				$site_url = 'http://' . $site_url;
 			}
 
 			$response = $this->send_friend_request( $site_url );
 			if ( is_wp_error( $response ) ) {
-				?><div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p></div><?php
+				?>
+				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p></div>
+				<?php
 			} elseif ( $response instanceof WP_User ) {
 				$user_link = '<a href="' . esc_url( $response->user_url ) . '">' . esc_html( $response->user_url ) . '</a>';
 				if ( $response->has_cap( 'pending_friend_request' ) ) {
-					?><div id="message" class="updated notice is-dismissible"><p><?php
-					printf( __( 'Friendship requested for site %s.', 'friends' ), $user_link );
-					?></p></div><?php
+					?>
+					<div id="message" class="updated notice is-dismissible"><p>
+					<?php
+					// translators: %s is a Site URL.
+					echo esc_html( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $user_link ) );
+					?>
+					</p></div>
+					<?php
 				} elseif ( $response->has_cap( 'friend' ) ) {
-					?><div id="message" class="updated notice is-dismissible"><p><?php
-					printf( __( "You're now a friend of site %s.", 'friends' ), $user_link );
-					?></p></div><?php
+					?>
+					<div id="message" class="updated notice is-dismissible"><p>
+					<?php
+					// translators: %s is a Site URL.
+					echo esc_html( sprintf( __( "You're now a friend of site %s.", 'friends' ), $user_link ) );
+					?>
+					</p></div>
+					<?php
 				} elseif ( $response->has_cap( 'subscription' ) ) {
-					?><div id="message" class="updated notice is-dismissible"><p><?php
-					printf( __( 'No friends plugin installed at %s. We subscribed you to their updates..', 'friends' ), $user_link );
-					?></p></div><?php
+					?>
+					<div id="message" class="updated notice is-dismissible"><p>
+					<?php
+					// translators: %s is a Site URL.
+					echo esc_html( sprintf( __( 'No friends plugin installed at %s. We subscribed you to their updates..', 'friends' ), $user_link ) );
+					?>
+					</p></div>
+					<?php
 				} else {
-					?><div id="message" class="updated notice is-dismissible"><p><?php
-					printf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $response->display_name );
-					?></p></div><?php
+					?>
+					<div id="message" class="updated notice is-dismissible"><p>
+					<?php
+					// translators: %s is a username.
+					echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $response->display_name ) );
+					?>
+					</p></div>
+					<?php
 				}
 			}
 		}
-		?><form method="post">
-			<p><?php _e( "This will send a friend request to the WordPress site you can enter below. If the other site doesn't have friends plugin installed, you'll be subscribed to that site.", 'friends' ); ?></p>
-			<label>Site: <input type="text" autofocus name="site_url" value="<?php if ( ! empty( $_GET['url'] ) ) echo esc_attr( $_GET['url'] ); ?>" required placeholder="Enter your friend's WordPress URL" size="90" /></label>
-			<button><?php esc_attr_x( 'Send Friend Request', 'button', 'friends' ); ?></button>
+		if ( ! empty( $_GET['url'] ) ) {
+			$site_url = $_GET['url'];
+		}
+		?>
+		<form method="post">
+			<?php wp_nonce_field( 'send-friend-request' ); ?>
+			<p><?php esc_html_e( "This will send a friend request to the WordPress site you can enter below. If the other site doesn't have friends plugin installed, you'll be subscribed to that site.", 'friends' ); ?></p>
+			<label><?php esc_html_e( 'Site:' ); ?> <input type="text" autofocus name="site_url" value="<?php echo esc_attr( $site_url ); ?>" required placeholder="Enter your friend's WordPress URL" size="90" /></label>
+			<button><?php echo esc_attr_x( 'Send Friend Request', 'button', 'friends' ); ?></button>
 		</form>
 		<?php
 	}
 
+	/**
+	 * Add actions to the user rows
+	 *
+	 * @param  array   $actions The existing actions.
+	 * @param  WP_User $user    The user in question.
+	 * @return array The extended actions.
+	 */
 	public function user_row_actions( array $actions, WP_User $user ) {
 		if (
 			! $user->has_cap( 'friend_request' ) &&
@@ -289,6 +392,13 @@ class Friends {
 		return $actions;
 	}
 
+	/**
+	 * Handle bulk friend request approvals on the user page
+	 *
+	 * @param  string $sendback The URL to send the user back to.
+	 * @param  string $action The requested action.
+	 * @param  array  $users The selected users.
+	 */
 	public function handle_bulk_friend_request_approval( $sendback, $action, $users ) {
 		if ( 'accept_friend_request' !== $action ) {
 			return $sendback;
@@ -314,6 +424,13 @@ class Friends {
 		wp_safe_redirect( $sendback );
 	}
 
+	/**
+	 * Handle bulk sending of friend requests on the user page
+	 *
+	 * @param  string $sendback The URL to send the user back to.
+	 * @param  string $action The requested action.
+	 * @param  array  $users The selected users.
+	 */
 	public function handle_bulk_send_friend_request( $sendback, $action, $users ) {
 		if ( 'friend_request' !== $action ) {
 			return $sendback;
@@ -339,6 +456,12 @@ class Friends {
 		wp_safe_redirect( $sendback );
 	}
 
+	/**
+	 * Add options to the Bulk dropdown on the users page
+	 *
+	 * @param array $actions The existing bulk options.
+	 * @return array The extended bulk options.
+	 */
 	public function add_user_bulk_options( $actions ) {
 		$friends = new WP_User_Query( array( 'role' => 'friend_request' ) );
 
@@ -355,21 +478,35 @@ class Friends {
 		return $actions;
 	}
 
+	/**
+	 * Add the REST API to send and receive friend requests
+	 */
 	public function add_rest_routes() {
-		register_rest_route( self::REST_NAMESPACE, 'friend-request', array(
-			'methods' => 'POST',
-			'callback' => array( $this, 'rest_friend_request' ),
-		) );
-		register_rest_route( self::REST_NAMESPACE, 'friend-request-accepted', array(
-			'methods' => 'POST',
-			'callback' => array( $this, 'rest_friend_request_accepted' ),
-		) );
-		register_rest_route( self::REST_NAMESPACE, 'hello', array(
-			'methods' => 'GET',
-			'callback' => array( $this, 'rest_hello' ),
-		) );
+		register_rest_route(
+			self::REST_NAMESPACE, 'friend-request', array(
+				'methods' => 'POST',
+				'callback' => array( $this, 'rest_friend_request' ),
+			)
+		);
+		register_rest_route(
+			self::REST_NAMESPACE, 'friend-request-accepted', array(
+				'methods' => 'POST',
+				'callback' => array( $this, 'rest_friend_request_accepted' ),
+			)
+		);
+		register_rest_route(
+			self::REST_NAMESPACE, 'hello', array(
+				'methods' => 'GET,POST',
+				'callback' => array( $this, 'rest_hello' ),
+			)
+		);
 	}
 
+	/**
+	 * Retrieve posts from a remote WordPress for a user or all friend users.
+	 *
+	 * @param  WP_User|null $single_user A single user or null to fetch all.
+	 */
 	private function retrieve_friend_posts( WP_User $single_user = null ) {
 		if ( $single_user ) {
 			$friends = array(
@@ -397,16 +534,24 @@ class Friends {
 			if ( is_wp_error( $feed ) ) {
 				continue;
 			}
-			$this->process_friend_feed( $friend_user, $feed);
+			$this->process_friend_feed( $friend_user, $feed );
 		}
 	}
 
+	/**
+	 * Process the feed of a friend user.
+	 *
+	 * @param  WP_User   $friend_user The friend user.
+	 * @param  SimplePie $feed        The RSS feed object of the friend user.
+	 */
 	private function process_friend_feed( WP_User $friend_user, SimplePie $feed ) {
 		$remote_post_ids = array();
-		$existing_posts = new WP_Query( array(
-			'post_type' => self::FRIEND_POST_CACHE,
-			'author' => $friend_user->ID,
-		));
+		$existing_posts = new WP_Query(
+			array(
+				'post_type' => self::FRIEND_POST_CACHE,
+				'author' => $friend_user->ID,
+			)
+		);
 		if ( $existing_posts->have_posts() ) {
 			while ( $existing_posts->have_posts() ) {
 				$existing_posts->the_post();
@@ -444,26 +589,30 @@ class Friends {
 				$post_id = $remote_post_ids[ $permalink ];
 			}
 			if ( ! is_null( $post_id ) ) {
-				wp_update_post( array(
-					'ID'                => $post_id,
-					'post_title'        => $item->get_title(),
-					'post_content'      => $item->get_content(),
-					'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
-					'post_status'       => $item->{'post-status'},
-					'guid'              => $permalink,
-				) );
+				wp_update_post(
+					array(
+						'ID'                => $post_id,
+						'post_title'        => $item->get_title(),
+						'post_content'      => $item->get_content(),
+						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+						'post_status'       => $item->{'post-status'},
+						'guid'              => $permalink,
+					)
+				);
 			} else {
-				$post_id = wp_insert_post( array(
-					'post_author'       => $friend_user->ID,
-					'post_type'         => self::FRIEND_POST_CACHE,
-					'post_title'        => $item->get_title(),
-					'post_date_gmt'     => $item->get_gmdate( 'Y-m-d H:i:s' ),
-					'post_content'      => $item->get_content(),
-					'post_status'       => $item->{'post-status'},
-					'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
-					'guid'              => $permalink,
-					'comment_count'     => $item->comment_count,
-				) );
+				$post_id = wp_insert_post(
+					array(
+						'post_author'       => $friend_user->ID,
+						'post_type'         => self::FRIEND_POST_CACHE,
+						'post_title'        => $item->get_title(),
+						'post_date_gmt'     => $item->get_gmdate( 'Y-m-d H:i:s' ),
+						'post_content'      => $item->get_content(),
+						'post_status'       => $item->{'post-status'},
+						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+						'guid'              => $permalink,
+						'comment_count'     => $item->comment_count,
+					)
+				);
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
@@ -478,13 +627,81 @@ class Friends {
 		}
 	}
 
-	public function rest_hello( $request ) {
+	/**
+	 * Get the signature for the text
+	 *
+	 * @param  string $text The text to be signed.
+	 * @return string The signature.
+	 */
+	private function get_signature( $text ) {
+		$i = wp_nonce_tick();
+
+		return substr( wp_hash( $i . '|' . $text, 'nonce' ), -12, 10 );
+	}
+
+	/**
+	 * Verify the signature for the text
+	 *
+	 * @param  string $signature The signature.
+	 * @param  string $text The text to verify.
+	 * @return bool Whether the signature was valid.
+	 */
+	private function verify_signature( $signature, $text ) {
+		$i = wp_nonce_tick();
+
+		// Signature generated 0-12 hours ago
+		$expected = substr( wp_hash( $i . '|' . $text, 'nonce' ), -12, 10 );
+		if ( hash_equals( $expected, $signature ) ) {
+			return 1;
+		}
+
+		// Signature generated 12-24 hours ago
+		$expected = substr( wp_hash( ( $i - 1 ) . '|' . $text, 'nonce' ), -12, 10 );
+		if ( hash_equals( $expected, $signature ) ) {
+			return 2;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Acknowledge via REST that the friends plugin had called.
+	 *
+	 * @param  WP_REST_Request $request The incoming request.
+	 * @return array The array to be returned via the REST API.
+	 */
+	public function rest_hello( WP_REST_Request $request ) {
+		if ( 'GET' === $request->get_method() ) {
+			return array(
+				'version' => self::VERSION,
+			);
+		}
+		$site_url = $request->get_param( 'site_url' );
+
+		if ( ! $this->verify_signature( $request->get_param( 'verify' ), site_url() ) ) {
+			return new WP_Error(
+				'friends_invalid_signature',
+				'An invalid signature was provided.',
+				array(
+					'status' => 403,
+				)
+			);
+
+		}
+
 		return array(
 			'version' => self::VERSION,
+			'verified' => true,
 		);
 	}
 
-	public function rest_friend_request_accepted( $request ) {
+	/**
+	 * Receive a notification via REST that a friend request was accepted
+	 *
+	 * @param  WP_REST_Request $request The incoming request.
+	 * @return array The array to be returned via the REST API.
+	 */
+	public function rest_friend_request_accepted( WP_REST_Request $request ) {
 		$token = $request->get_param( 'token' );
 		$user_id = get_option( 'friends_request_token_' . $token );
 		$user = false;
@@ -495,7 +712,7 @@ class Friends {
 		if ( ! $token || ! $user || is_wp_error( $user ) || ! $user->user_url ) {
 			return new WP_Error(
 				'friends_invalid_parameters',
-				'Not all necessary parameters were given.',
+				'Not all necessary parameters were provided.',
 				array(
 					'status' => 403,
 				)
@@ -521,35 +738,42 @@ class Friends {
 		);
 	}
 
-	public function rest_friend_request( $request ) {
-		if ( ! $request->get_param( 'name' ) || ! $request->get_param( 'email' ) ) {
-			if ( false ) return new WP_Error(
-				'friends_invalid_parameters',
-				'Not all necessary parameters were given.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
+	/**
+	 * Receive a friend request via REST
+	 *
+	 * @param  WP_REST_Request $request The incoming request.
+	 * @return array The array to be returned via the REST API.
+	 */
+	public function rest_friend_request( WP_REST_Request $request ) {
+		$signature = $request->get_param( 'signature' );
+
 		$site_url = $request->get_param( 'site_url' );
-		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) || $site_url === strtolower( site_url() ) ) {
+		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) || strtolower( site_url() ) === $site_url ) {
 			return new WP_Error(
 				'friends_invalid_site',
-				'An invalid site was given.',
+				'An invalid site was provided.',
 				array(
 					'status' => 403,
 				)
 			);
 		}
-		// TODO: rate limit
-		$response = wp_safe_remote_get( $site_url . '/wp-json/' . self::REST_NAMESPACE . '/hello', array(
-			'timeout' => 20,
-			'redirection' => 5,
-		) );
+		// TODO: rate limit.
+		$response = wp_safe_remote_post(
+			$site_url . '/wp-json/' . self::REST_NAMESPACE . '/hello', array(
+				'body' => array( 'verify' => $signature ),
+				'timeout' => 20,
+				'redirection' => 5,
+			)
+		);
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			$json = json_decode( wp_remote_retrieve_body( $response ) );
+			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
+				return new WP_Error( $json->code, $json->message, $json->data );
+			}
+
 			return new WP_Error(
 				'friends_unsupported_site',
-				'An unsupported site was given.',
+				'An unsupported site was provided.',
 				array(
 					'status' => 403,
 				)
@@ -586,6 +810,12 @@ class Friends {
 		);
 	}
 
+	/**
+	 * Convert a site URL to a username
+	 *
+	 * @param  string $site_url The site URL in question.
+	 * @return string The corresponding username.
+	 */
 	private function get_user_login_for_site_url( $site_url ) {
 		$host = wp_parse_url( $site_url, PHP_URL_HOST );
 		$path = wp_parse_url( $site_url, PHP_URL_PATH );
@@ -594,12 +824,23 @@ class Friends {
 		return $user_login;
 	}
 
+	/**
+	 * Create a WP_User with a specific Friends-related role
+	 *
+	 * @param  string $site_url The site URL for which to create the user.
+	 * @param  string $role     The role: subscription, pending_friend_request, friend_request, or friend.
+	 * @param  string $name     The user's nickname.
+	 * @param  string $email    The user e-mail address.
+	 * @return WP_User|WP_Error The created user or an error.
+	 */
 	private function create_user( $site_url, $role, $name = null, $email = null ) {
-		$role_rank = array_flip( array(
-			'subscription',
-			'pending_friend_request',
-			'friend_request',
-		) );
+		$role_rank = array_flip(
+			array(
+				'subscription',
+				'pending_friend_request',
+				'friend_request',
+			)
+		);
 		if ( ! isset( $role_rank[ $role ] ) ) {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
@@ -633,6 +874,12 @@ class Friends {
 		return new WP_User( $user_id );
 	}
 
+	/**
+	 * Remove the Private: when sending a private feed.
+	 *
+	 * @param  string $title_format The title format for a private post title.
+	 * @return string The modified title format for a private post title.
+	 */
 	public function private_title_format( $title_format ) {
 		if ( $this->feed_authenticated ) {
 			return '%s';
@@ -640,6 +887,12 @@ class Friends {
 		return $title_format;
 	}
 
+	/**
+	 * Disable excerpted feeds for friend feeds
+	 *
+	 * @param  boolean $feed_use_excerpt Whether to only have excerpts in feeds.
+	 * @return boolean The modified flag whether to have excerpts in feeds.
+	 */
 	public function feed_use_excerpt( $feed_use_excerpt ) {
 		if ( $this->feed_authenticated ) {
 			return 0;
@@ -648,13 +901,19 @@ class Friends {
 		return $feed_use_excerpt;
 	}
 
+	/**
+	 * Output an additional XMLNS for the feed.
+	 */
 	public function additional_feed_namespaces() {
 		if ( $this->feed_authenticated ) {
 			echo 'xmlns:friends="' . self::XMLNS . '"';
 		}
 	}
 
-	public function feed_gravatar() {
+	/**
+	 * Additional fields for the friends feed.
+	 */
+	public function feed_additional_fields() {
 		if ( $this->feed_authenticated ) {
 			global $post;
 			echo '<friends:gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</friends:gravatar>';
@@ -663,7 +922,13 @@ class Friends {
 		}
 	}
 
-	function private_feed( $query ) {
+	/**
+	 * Modify the main query for the friends feed
+	 *
+	 * @param  WP_Query $query The main query.
+	 * @return WP_Query The modified main query.
+	 */
+	function private_feed_query( WP_Query $query ) {
 		if ( ! $this->feed_authenticated ) {
 			return $query;
 		}
@@ -675,53 +940,75 @@ class Friends {
 		return $query;
 	}
 
-	public function admin_bar_friends_menu( $wp_menu ) {
-		if ( ! current_user_can( 'edit_posts') ) {
+	/**
+	 * Add a Friends menu to the admin bar
+	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
+	 */
+	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
 			return;
 		}
-		$wp_menu->add_menu( array(
-			'id'     => 'friends',
-			'parent' => 'site-name',
-			'title'  => esc_html__( 'Friends', 'friends' ),
-			'href'   => '/friends/',
-		) );
-		$wp_menu->add_menu( array(
-			'id'     => 'send-friend-request',
-			'parent' => 'friends',
-			'title'  => esc_html__( 'Send Friend Request', 'friends' ),
-			'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
-		) );
-		$wp_menu->add_menu( array(
-			'id'     => 'friends-requests',
-			'parent' => 'friends',
-			'title'  => esc_html__( 'Friends & Requests', 'friends' ),
-			'href'   => self_admin_url( 'users.php' ),
-		) );
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'friends',
+				'parent' => 'site-name',
+				'title'  => esc_html__( 'Friends', 'friends' ),
+				'href'   => '/friends/',
+			)
+		);
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'send-friend-request',
+				'parent' => 'friends',
+				'title'  => esc_html__( 'Send Friend Request', 'friends' ),
+				'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
+			)
+		);
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'friends-requests',
+				'parent' => 'friends',
+				'title'  => esc_html__( 'Friends & Requests', 'friends' ),
+				'href'   => self_admin_url( 'users.php' ),
+			)
+		);
 	}
 
+	/**
+	 * Reference our script for the /friends page
+	 */
 	public function enqueue_scripts() {
 		wp_enqueue_script( 'friends-js', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
 	}
 
+	/**
+	 * The Ajax function to be called upon posting from /friends
+	 */
 	public function frontend_publish_post() {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
-			$post_id = wp_insert_post( array(
-				'post_type'	        => 'post',
-				'post_title'        => $_POST['title'],
-				'post_content'      => $_POST['content'],
-				'post_status'       => $_POST['status'],
-			) );
+			$post_id = wp_insert_post(
+				array(
+					'post_type'         => 'post',
+					'post_title'        => $_POST['title'],
+					'post_content'      => $_POST['content'],
+					'post_status'       => $_POST['status'],
+				)
+			);
 			$result = is_wp_error( $post_id ) ? 'error' : 'success';
-			if ( ! empty($_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) == 'xmlhttprequest' ) {
+			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) == 'xmlhttprequest' ) {
 				echo $result;
 			} else {
 				wp_safe_redirect( $_SERVER['HTTP_REFERER'] );
 				exit;
 			}
 		}
-		return true;
 	}
 
+	/**
+	 * Load the template for /friends
+	 * @param  string $template The original template intended to load.
+	 * @return string The new template to be loaded.
+	 */
 	public function template_override( $template ) {
 		global $wp_query;
 
@@ -754,6 +1041,13 @@ class Friends {
 		return $template;
 	}
 
+	/**
+	 * Don't show the edit link for friend posts.
+	 *
+	 * @param  string $link    The edit link.
+	 * @param  int    $post_id The post id.
+	 * @return string|bool The edit link or false.
+	 */
 	public function friend_post_edit_link( $link, $post_id ) {
 		global $post;
 
@@ -763,10 +1057,27 @@ class Friends {
 		return $link;
 	}
 
-	public function friend_post_link( $post_link, $post, $leavename, $sample ) {
-		return get_the_guid( $post );
+	/**
+	 * Link friend posts to the remote site.
+	 *
+	 * @param string  $post_link The post's permalink.
+	 * @param WP_Post $post      The post in question.
+	 * @param bool    $leavename Whether to keep the post name.
+	 * @param bool    $sample    Is it a sample permalink.
+	 * @reeturn string The overriden post link.
+	 */
+	public function friend_post_link( $post_link, WP_Post $post, $leavename, $sample ) {
+		if ( self::FRIEND_POST_CACHE === $post->post_type ) {
+			return get_the_guid( $post );
+		}
 	}
 
+	/**
+	 * Modify the main query for the /friends page
+	 *
+	 * @param  WP_Query $query The main query.
+	 * @return WP_Query The modified main query.
+	 */
 	public function friend_posts_query( $query ) {
 		if ( 'friends' !== get_query_var( 'pagename' ) ) {
 			return $query;
@@ -793,41 +1104,69 @@ class Friends {
 		return $query;
 	}
 
-	public function feed_content( $content ) {
-		return $content;
-	}
-
+	/**
+	 * Log in a friend via URL parameter
+	 */
 	public function remote_login() {
 		if ( ! isset( $_GET['friend_auth'] ) ) {
 			return;
 		}
 		$user_id = get_option( 'friends_token_' . $_GET['friend_auth'] );
-		if ( $user_id ) {
-			settype( $user_id, 'int' );
-			if ( get_user_option( 'friends_token', $user_id ) === $_GET['friend_auth' ] ) {
-				wp_set_auth_cookie( $user_id );
-				wp_safe_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'] ), '', $_SERVER['REQUEST_URI'] ) );
-				exit;
-			}
+		if ( ! $user_id ) {
+			return;
 		}
+		settype( $user_id, 'int' );
+		if ( get_user_option( 'friends_token', $user_id ) !== $_GET['friend_auth'] ) {
+			return;
+		}
+		$user = new WP_User( $user_id );
+		if ( ! $user->has_cap( 'friend' ) ) {
+			return;
+		}
+
+		wp_set_auth_cookie( $user_id );
+		wp_safe_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'] ), '', $_SERVER['REQUEST_URI'] ) );
+		exit;
 	}
 
+	/**
+	 * Authenticate a user for a feed.
+	 * @param  int $incoming_user_id An already authenticated user.
+	 * @return int The new authenticated user.
+	 */
 	public function authenticate( $incoming_user_id ) {
-		// TODO check if this should be improved with calculating atuh with a shared secret.
-		if ( isset( $_GET['friend'] ) ) {
-			$user_id = get_option( 'friends_token_' . $_GET['friend'] );
-			if ( $user_id ) {
-				settype( $user_id, 'int' );
-				if ( get_user_option( 'friends_token', $user_id ) === $_GET['friend' ] ) {
-					$this->feed_authenticated = $user_id;
-					return $user_id;
-				}
-			}
+		if ( ! isset( $_GET['friend'] ) ) {
+			return $incoming_user_id;
 		}
 
-		return $incoming_user_id;
+		$user_id = get_option( 'friends_token_' . $_GET['friend'] );
+		if ( ! $user_id ) {
+			return $incoming_user_id;
+		}
+
+		settype( $user_id, 'int' );
+		if ( get_user_option( 'friends_token', $user_id ) !== $_GET['friend'] ) {
+			return $incoming_user_id;
+		}
+
+		$user = new WP_User( $user_id );
+		if ( ! $user->has_cap( 'friend' ) ) {
+			return $incoming_user_id;
+		}
+
+		$this->feed_authenticated = $user_id;
+		return $user_id;
 	}
 
+	/**
+	 * Notify the friend's site via REST about the accepted friend request.
+	 *
+	 * Accepting a friend request is simply setting the role to "friend".
+	 *
+	 * @param  int    $user_id   The user id.
+	 * @param  string $new_role  The new role.
+	 * @param  string $old_roles The old roles.
+	 */
 	public function notify_friend_request_accepted( $user_id, $new_role, $old_roles ) {
 		if ( 'friend' !== $new_role ) {
 			return;
@@ -840,9 +1179,13 @@ class Friends {
 		}
 
 		$user = new WP_User( $user_id );
-		$response = wp_safe_remote_post( $user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request-accepted', array(
-			'body' => array( 'token' => $token ),
-		) );
+		$response = wp_safe_remote_post(
+			$user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request-accepted', array(
+				'body' => array( 'token' => $token ),
+				'timeout' => 20,
+				'redirection' => 5,
+			)
+		);
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( isset( $json->friend ) ) {
@@ -855,6 +1198,13 @@ class Friends {
 		}
 	}
 
+	/**
+	 * Convert a user to a friend
+	 *
+	 * @param  WP_User $user  The user to become a friend of the blog.
+	 * @param  string  $token The remote token.
+	 * @return WP_User|WP_Error The user or an error.
+	 */
 	private function make_friend( WP_User $user, $token ) {
 		if ( ! $user || is_wp_error( $user ) ) {
 			return $user;
@@ -866,9 +1216,15 @@ class Friends {
 
 		$this->retrieve_friend_posts( $user );
 
-		return true;
+		return $user;
 	}
 
+	/**
+	 * Delete a friend token
+	 *
+	 * @param  int $user_id The user id.
+	 * @return The old token.
+	 */
 	public function delete_friend_token( $user_id ) {
 		$current_secret = get_user_option( 'friends_token', $user_id );
 		if ( $current_secret ) {
@@ -878,6 +1234,13 @@ class Friends {
 		return $current_secret;
 	}
 
+	/**
+	 * Update a friend request token
+	 *
+	 * @param  int    $user_id   The user id.
+	 * @param  string $new_role  The new role.
+	 * @param  string $old_roles The old roles.
+	 */
 	public function update_friend_request_token( $user_id, $new_role, $old_roles ) {
 		if ( 'friend_request' !== $new_role || in_array( $new_role, $old_roles, true ) ) {
 			return;
@@ -887,6 +1250,13 @@ class Friends {
 		update_user_option( $user_id, 'friends_friend_request_token', $token );
 	}
 
+	/**
+	 * Update the friend_token after changing roles
+	 *
+	 * @param  int    $user_id   The user id.
+	 * @param  string $new_role  The new role.
+	 * @param  string $old_roles The old roles.
+	 */
 	public function update_friend_token( $user_id, $new_role, $old_roles ) {
 		if ( 'friend' === $new_role && in_array( $new_role, $old_roles, true ) ) {
 			return;
@@ -903,6 +1273,9 @@ class Friends {
 		}
 	}
 
+	/**
+	 * Create the Friend user roles
+	 */
 	private static function setup_roles() {
 		$friend = get_role( 'friend' );
 		if ( ! $friend ) {
@@ -935,6 +1308,9 @@ class Friends {
 		$subscription->add_cap( 'level_0' );
 	}
 
+	/**
+	 * Actions to take upon plugin activation.
+	 */
 	public static function activate_plugin() {
 		self::setup_roles();
 
@@ -943,11 +1319,17 @@ class Friends {
 		}
 	}
 
+	/**
+	 * Actions to take upon plugin deactivation.
+	 */
 	public static function deactivate_plugin() {
 		$timestamp = wp_next_scheduled( 'cron_friends_refresh_feeds' );
 		wp_unschedule_event( $timestamp, 'cron_friends_refresh_feeds' );
 	}
 
+	/**
+	 * Delete all the data the plugin has stored in WordPress/
+	 */
 	public static function delete_friends_data() {
 		remove_role( 'friend' );
 		remove_role( 'friend_request' );
@@ -960,167 +1342,14 @@ class Friends {
 			}
 		}
 
-		$friend_posts = new WP_Query( array(
-			'post_type' => self::FRIEND_POST_CACHE,
-		));
+		$friend_posts = new WP_Query(
+			array(
+				'post_type' => self::FRIEND_POST_CACHE,
+			)
+		);
 
 		while ( $friend_posts->have_posts() ) {
 			wp_delete_post( $friend_posts->post->ID, true );
 		}
-	}
-}
-
-class Friends_Widget_Refresh extends WP_Widget {
-	public function __construct() {
-		parent::__construct( 'friends-widget-refresh', __( 'Refresh Friend Posts', 'friends' ), array(
-			'description' => __( "Shows a refresh link to refetch your friends' posts.", 'friends' ),
-		) );
-	}
-
-	/**
-	 * Render the widget.
-	 *
-	 * @param array $args Sidebar arguments.
-	 * @param array $instance Widget instance settings.
-	 */
-	public function widget( $args, $instance ) {
-		$title = apply_filters( 'widget_title', $instance['title'] );
-		echo $args['before_widget'];
-		if ( ! empty( $title ) ) {
-			echo $args['before_title'] . $title . $args['after_title'];
-		}
-
-		echo '<a href="/friends/?refresh">' . __( 'Refresh', 'friends' ) . '</a>';
-
-		echo $args['after_widget'];
-	}
-
-
-	/**
-	 * Update widget configuration.
-	 *
-	 * @param array $new_instance New settings.
-	 * @param array $old_instance Old settings.
-	 * @return array Sanitized instance settings.
-	 */
-	public function update( $new_instance, $old_instance ) {
-		$instance = $this->defaults;
-
-		return $instance;
-	}
-
-	/**
-	 * Rgister this widget.
-	 */
-	public static function register() {
-		register_widget( __CLASS__ );
-	}
-}
-
-class Friends_Widget_Friend_List extends WP_Widget {
-	public function __construct() {
-		parent::__construct( 'friends-widget-friend-list', __( 'Friend List', 'friends' ), array(
-			'description' => __( 'Shows a list of your friends.', 'friends' ),
-		) );
-	}
-
-	/**
-	 * Render the widget.
-	 *
-	 * @param array $args Sidebar arguments.
-	 * @param array $instance Widget instance settings.
-	 */
-	public function widget( $args, $instance ) {
-		$title = apply_filters( 'widget_title', $instance['title'] );
-		echo $args['before_widget'];
-		if ( ! empty( $title ) ) {
-			echo $args['before_title'] . $title . $args['after_title'];
-		}
-
-		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
-
-		echo '<span class="friend-count-message">';
-		printf( _n( 'You have %s friend:' , ' You have %s friends:', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' );
-		echo '</span>';
-
-		echo '<ul class="friend-list">';
-		foreach ( $friends->get_results() as $friend_user ) {
-			echo '<li><a href="' . esc_url( $friend_user->user_url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
-		}
-
-		echo '</ul>';
-
-		echo $args['after_widget'];
-	}
-
-
-	/**
-	 * Update widget configuration.
-	 *
-	 * @param array $new_instance New settings.
-	 * @param array $old_instance Old settings.
-	 * @return array Sanitized instance settings.
-	 */
-	public function update( $new_instance, $old_instance ) {
-		$instance = $this->defaults;
-
-		return $instance;
-	}
-
-	/**
-	 * Rgister this widget.
-	 */
-	public static function register() {
-		register_widget( __CLASS__ );
-	}
-}
-
-class Friends_Widget_Friend_Request extends WP_Widget {
-	public function __construct() {
-		parent::__construct( 'friends-widget-friend-request', __( 'Friend request', 'friends' ), array(
-			'description' => __( 'Send a friend request.', 'friends' ),
-		) );
-	}
-
-	/**
-	 * Render the widget.
-	 *
-	 * @param array $args Sidebar arguments.
-	 * @param array $instance Widget instance settings.
-	 */
-	public function widget( $args, $instance ) {
-		$title = apply_filters( 'widget_title', $instance['title'] );
-		echo $args['before_widget'];
-		if ( ! empty( $title ) ) {
-			echo $args['before_title'] . $title . $args['after_title'];
-		}
-
-		echo '<form action="">';
-		echo '<input type="text" name="site_url" size="10"/>';
-		echo '<button>Send Friend Request</button>';
-		echo '</form>';
-
-		echo $args['after_widget'];
-	}
-
-
-	/**
-	 * Update widget configuration.
-	 *
-	 * @param array $new_instance New settings.
-	 * @param array $old_instance Old settings.
-	 * @return array Sanitized instance settings.
-	 */
-	public function update( $new_instance, $old_instance ) {
-		$instance = $this->defaults;
-
-		return $instance;
-	}
-
-	/**
-	 * Rgister this widget.
-	 */
-	public static function register() {
-		register_widget( __CLASS__ );
 	}
 }
