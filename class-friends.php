@@ -102,6 +102,8 @@ class Friends {
 
 		// Hooks for REST.
 		add_action( 'rest_api_init',              array( $this, 'add_rest_routes' ) );
+		add_action( 'wp_trash_post',              array( $this, 'notify_friend_post_deleted' ) );
+		add_action( 'before_delete_post',         array( $this, 'notify_friend_post_deleted' ) );
 	}
 
 	/**
@@ -500,6 +502,12 @@ class Friends {
 				'callback' => array( $this, 'rest_hello' ),
 			)
 		);
+		register_rest_route(
+			self::REST_NAMESPACE, 'post-deleted', array(
+				'methods' => 'POST',
+				'callback' => array( $this, 'rest_friend_post_deleted' ),
+			)
+		);
 	}
 
 	/**
@@ -548,14 +556,16 @@ class Friends {
 		$remote_post_ids = array();
 		$existing_posts = new WP_Query( array(
 			'post_type' => self::FRIEND_POST_CACHE,
+			'post_status' => array( 'publish', 'private' ),
 			'author' => $friend_user->ID,
 		));
+
 		if ( $existing_posts->have_posts() ) {
 			while ( $existing_posts->have_posts() ) {
 				$existing_posts->the_post();
-				$remote_post_id = get_post_meta( $existing_posts->post->ID, 'remote_post_id', true );
-				$remote_post_ids[ $remote_post_id ] = $existing_posts->post->ID;
-				$remote_post_ids[ get_the_permalink() ] = $existing_posts->post->ID;
+				$remote_post_id = get_post_meta( get_the_ID(), 'remote_post_id', true );
+				$remote_post_ids[ $remote_post_id ] = get_the_ID();
+				$remote_post_ids[ get_the_permalink() ] = get_the_ID();
 			}
 			wp_reset_postdata();
 		}
@@ -819,6 +829,41 @@ class Friends {
 		);
 	}
 
+	/**
+	 * Notify friends of a deleted post
+	 *
+	 * @param  int $post_id The post id of the post that is deleted.
+	 */
+	public function notify_friend_post_deleted( $post_id ) {
+		$post = WP_Post::get_instance( $post_id );
+		if ( 'post' !== $post->post_type ) {
+			return;
+		}
+
+		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+		$friends = $friends->get_results();
+
+		if ( empty( $friends ) ) {
+			return;
+		}
+
+		foreach ( $friends as $friend_user ) {
+			$response = wp_safe_remote_post(
+				$friend_user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/post-deleted', array(
+					'body' => array( 'post_id' => $post_id, 'friend' => get_user_option( 'friends_token', $friend_user->ID ) ),
+					'timeout' => 20,
+					'redirection' => 5,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Receive a REST message that a post was deleted.
+	 *
+	 * @param  WP_REST_Request $request The incoming request.
+	 * @return array The array to be returned via the REST API.
+	 */
 	public function rest_friend_post_deleted( $request ) {
 		$token = $request->get_param( 'friend' );
 		$user_id = $this->verify_token( $token );
@@ -832,12 +877,26 @@ class Friends {
 			);
 		}
 		$friend_user = new WP_User( $user_id );
-		$post_id = $request->get_param( 'post_id' );
-		$permalink = $request->get_param( 'permalink' );
+		$remote_post_id = $request->get_param( 'post_id' );
 		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
 
+		$post_id = false;
+		if ( isset( $remote_post_ids[ $remote_post_id ] ) ) {
+			$post_id = $remote_post_ids[ $remote_post_id ];
+		}
+
+		if ( ! $post_id ) {
+			return array(
+				'deleted' => false,
+			);
+		}
+		$post = WP_Post::get_instance( $post_id );
+		if ( self::FRIEND_POST_CACHE === $post->post_type ) {
+			wp_delete_post( $post_id );
+		}
+
 		return array(
-			'deleted' => $post_id,
+			'deleted' => true,
 		);
 	}
 
@@ -1143,7 +1202,7 @@ class Friends {
 	 */
 	protected function verify_token( $token ) {
 		$user_id = get_option( 'friends_token_' . $token );
-		if ( $user_id ) {
+		if ( ! $user_id ) {
 			return false;
 		}
 		settype( $user_id, 'int' );
@@ -1388,6 +1447,7 @@ class Friends {
 		$friend_posts = new WP_Query(
 			array(
 				'post_type' => self::FRIEND_POST_CACHE,
+				'post_status' => array( 'publish', 'private' ),
 			)
 		);
 
