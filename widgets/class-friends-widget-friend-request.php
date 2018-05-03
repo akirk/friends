@@ -42,8 +42,8 @@ class Friends_Widget_Friend_Request extends WP_Widget {
 		?>
 		<form action="<?php echo esc_url( self_admin_url( 'admin.php?page=send-friend-request' ) ); ?>" method="post">
 		<?php wp_nonce_field( 'send-friend-request' ); ?>
-		<input type="text" name="site_url" size="10"/>
-		<button>Send Friend Request</button>
+		<input type="text" name="site_url" size="15" placeholder="<?php echo esc_attr_e( "Friend's URL", 'friends' ); ?>"/>
+		<button><?php echo esc_attr_e( 'Send Request', 'friends' ); ?></button>
 		</form>
 		<?php
 		echo $args['after_widget'];
