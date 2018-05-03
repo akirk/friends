@@ -44,4 +44,4 @@ Well, that's actually exactly the point. Facebook owns your data, with WordPress
 
 ### What happens if I modify or delete a post?
 
-There is a cache of your friends post in form of a Custom Post Type `friend_post` that is updated when you change a post.
+There is a cache of your friends post in form of a Custom Post Type `friend_post` that is updated when you change a post. When you delete a post your friends' WordPresses are notified and they delete the cached post.

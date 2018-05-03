@@ -1,3 +1,8 @@
+0.3
+===
+- Delete your cached posts on friends blogs when you delete them
+- Widgets
+
 0.2
 ===
 - Subscribe to WordPresses without Friends plugin
