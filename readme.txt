@@ -61,6 +61,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 1. An incoming Friend Request on the users page.
 2. The friend request has been accepted.
+3. On /friends/ your friends posts appear together with yours.
+4. Access the most important features using the site menu.
  
 == Changelog ==
 = 0.3 =
