@@ -66,7 +66,7 @@ class Friends {
 		// Hooks for Access control.
 		add_action( 'set_user_role',              array( $this, 'update_friend_token' ), 10, 3 );
 		add_action( 'set_user_role',              array( $this, 'update_friend_request_token' ), 10, 3 );
-		add_action( 'set_user_role',              array( $this, 'notify_friend_request_accepted' ), 10, 3 );
+		add_action( 'set_user_role',              array( $this, 'notify_remote_friend_request_accepted' ), 10, 3 );
 		add_action( 'delete_user',                array( $this, 'delete_friend_token' ) );
 		add_action( 'init',                       array( $this, 'remote_login' ) );
 
@@ -89,6 +89,7 @@ class Friends {
 		add_action( 'wp_ajax_friends_publish',    array( $this, 'frontend_publish_post' ) );
 		add_action( 'admin_bar_menu',             array( $this, 'admin_bar_friends_menu' ), 100 );
 		add_action( 'wp_enqueue_scripts',         array( $this, 'enqueue_scripts' ) );
+		add_action( 'set_user_role',              array( $this, 'retrieve_new_friends_posts' ), 10, 3 );
 
 		// Hooks for Cron.
 		add_action( 'friends_refresh_feeds',      array( $this, 'cron_friends_refresh_feeds' ) );
@@ -104,6 +105,11 @@ class Friends {
 		add_action( 'rest_api_init',              array( $this, 'add_rest_routes' ) );
 		add_action( 'wp_trash_post',              array( $this, 'notify_friend_post_deleted' ) );
 		add_action( 'before_delete_post',         array( $this, 'notify_friend_post_deleted' ) );
+
+		// Hooks for Notifications.
+		add_action( 'notify_new_friend_post',     array( $this, 'notify_new_friend_post' ) );
+		add_action( 'notify_new_friend_request',  array( $this, 'notify_new_friend_request' ) );
+		add_action( 'notify_accepted_friend_request',  array( $this, 'notify_accepted_friend_request' ) );
 	}
 
 	/**
@@ -165,6 +171,7 @@ class Friends {
 	 * Admin menu to refresh the friend posts.
 	 */
 	public function refresh_friend_posts() {
+		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 		$this->retrieve_friend_posts();
 	}
 
@@ -277,7 +284,6 @@ class Friends {
 			} elseif ( isset( $json->friend ) ) {
 				$this->make_friend( $user, $json->friend );
 			}
-			$this->retrieve_friend_posts( $user );
 		}
 
 		return $user;
@@ -310,7 +316,7 @@ class Friends {
 					<div id="message" class="updated notice is-dismissible"><p>
 					<?php
 					// translators: %s is a Site URL.
-					echo esc_html( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $user_link ) );
+					echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 					</p></div>
 					<?php
@@ -319,7 +325,7 @@ class Friends {
 					<div id="message" class="updated notice is-dismissible"><p>
 					<?php
 					// translators: %s is a Site URL.
-					echo esc_html( sprintf( __( "You're now a friend of site %s.", 'friends' ), $user_link ) );
+					echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 					</p></div>
 					<?php
@@ -328,7 +334,7 @@ class Friends {
 					<div id="message" class="updated notice is-dismissible"><p>
 					<?php
 					// translators: %s is a Site URL.
-					echo esc_html( sprintf( __( 'No friends plugin installed at %s. We subscribed you to their updates..', 'friends' ), $user_link ) );
+					echo wp_kses( sprintf( __( 'No friends plugin installed at %s. We subscribed you to their updates..', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 					</p></div>
 					<?php
@@ -445,7 +451,7 @@ class Friends {
 				continue;
 			}
 
-			if ( ! $user->has_cap( 'subscription' ) ) {
+			if ( ! $user->has_cap( 'subscription' ) && $user->has_cap( 'friend_request' ) ) {
 				continue;
 			}
 
@@ -581,6 +587,8 @@ class Friends {
 	 * @param  SimplePie $feed        The RSS feed object of the friend user.
 	 */
 	private function process_friend_feed( WP_User $friend_user, SimplePie $feed ) {
+		$new_friend = get_user_option( 'friends_new_friend', $friend_user->ID );
+
 		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
 
 		foreach ( $feed->get_items() as $item ) {
@@ -608,6 +616,7 @@ class Friends {
 				$post_id = $remote_post_ids[ $permalink ];
 			}
 			if ( ! is_null( $post_id ) ) {
+				$new_post = false;
 				wp_update_post(
 					array(
 						'ID'                => $post_id,
@@ -619,6 +628,7 @@ class Friends {
 					)
 				);
 			} else {
+				$new_post = true;
 				$post_id = wp_insert_post(
 					array(
 						'post_author'       => $friend_user->ID,
@@ -643,7 +653,113 @@ class Friends {
 			update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
+
+			$notify_users = apply_filters( 'notify_about_new_friend_post', $new_post && ! $new_friend, $friend_user, $post_id );
+			if ( $notify_users ) {
+				do_action( 'notify_new_friend_post', WP_Post::get_instance( $post_id ) );
+			}
 		}
+
+		if ( $new_friend ) {
+			update_user_option( $friend_user->ID, 'friends_new_friend', 0 );
+		}
+	}
+
+	/**
+	 * Notify the users of this site about a new friend request
+	 *
+	 * @param  WP_Post $post The new post by a friend.
+	 */
+	public function notify_new_friend_post( WP_Post $post ) {
+		$users = new WP_User_Query( array( 'role' => 'administrator' ) );
+		$users = $users->get_results();
+
+		foreach ( $users as $user ) {
+			if ( ! $user->user_email ) {
+				continue;
+			}
+
+			if ( ! apply_filters( 'notify_user_about_friend_post', true, $user, $post ) ) {
+				continue;
+			}
+
+			// TODO: Opt out of these e-mails.
+			$author = new WP_User( $post->post_author );
+			// translators: %s is a username.
+			$message = sprintf( __( 'Howdy, %s' ), $user->display_name ) . PHP_EOL . PHP_EOL;
+			// translators: %1$s is a username, %2$s is a URL.
+			$message .= sprintf( __( 'Your friend %1$s has posted something new: %2$s', 'friends' ), $author->display_name, site_url( '/friends/' . $post->ID . '/' ) ) . PHP_EOL . PHP_EOL;
+			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
+
+			// translators: %1$s is the blog name, %2$s is a post title.
+			wp_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Post: %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $post->post_title, ENT_QUOTES ) ), $message );
+		}
+	}
+
+	/**
+	 * Notify the users of this site about a new friend request
+	 *
+	 * @param  WP_User $friend_user The user requesting friendship.
+	 */
+	public function notify_new_friend_request( WP_User $friend_user ) {
+		$users = new WP_User_Query( array( 'role' => 'administrator' ) );
+		$users = $users->get_results();
+
+		foreach ( $users as $user ) {
+			if ( ! $user->user_email ) {
+				continue;
+			}
+
+			if ( ! apply_filters( 'notify_user_about_friend_request', true, $user, $friend_user ) ) {
+				continue;
+			}
+
+			// TODO: Opt out of these e-mails.
+			// translators: %s is a username.
+			$message = sprintf( __( 'Howdy, %s' ), $user->display_name ) . PHP_EOL . PHP_EOL;
+			// translators: %s is a username.
+			$message .= sprintf( __( 'You have received a new friend request from %s.', 'friends' ), $friend_user->display_name ) . PHP_EOL . PHP_EOL;
+			$message .= sprintf( __( 'Go to your admin page to review the request and approve or delete it.', 'friends' ), $user->display_name ) . PHP_EOL . PHP_EOL;
+			$message .= self_admin_url( 'users.php?role=friend_request' ) . PHP_EOL . PHP_EOL;
+			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
+
+			// translators: %1$s is the blog name, %2$s is a username.
+			wp_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Request from %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message );
+		}
+
+	}
+
+	/**
+	 * Notify the users of this site about an accepted friend request
+	 *
+	 * @param  WP_User $friend_user The user who accepted friendship.
+	 */
+	public function notify_accepted_friend_request( WP_User $friend_user ) {
+		$users = new WP_User_Query( array( 'role' => 'administrator' ) );
+		$users = $users->get_results();
+
+		foreach ( $users as $user ) {
+			if ( ! $user->user_email ) {
+				continue;
+			}
+
+			if ( ! apply_filters( 'notify_user_about_accepted_friend_request', true, $user, $friend_user ) ) {
+				continue;
+			}
+
+			// TODO: Opt out of these e-mails.
+			// translators: %s is a username.
+			$message = sprintf( __( 'Howdy, %s' ), $user->display_name ) . PHP_EOL . PHP_EOL;
+			// translators: %s is a username.
+			$message .= sprintf( __( '%s has accepted your friend request.', 'friends' ), $friend_user->display_name ) . PHP_EOL . PHP_EOL;
+			$message .= sprintf( __( 'Go to your friends page and look at their posts.', 'friends' ), $user->display_name ) . PHP_EOL . PHP_EOL;
+			$message .= site_url( '/friends/' ) . PHP_EOL . PHP_EOL;
+			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
+
+			// translators: %1$s is the blog name, %2$s is a username.
+			wp_mail( $user->user_email, sprintf( __( '[%1$s] %2$s accepted your Friend Request', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message );
+		}
+
 	}
 
 	/**
@@ -729,6 +845,7 @@ class Friends {
 		}
 
 		if ( ! $token || ! $user || is_wp_error( $user ) || ! $user->user_url ) {
+			var_dump($user_id);
 			return new WP_Error(
 				'friends_invalid_parameters',
 				'Not all necessary parameters were provided.',
@@ -752,6 +869,7 @@ class Friends {
 		$user->set_role( 'friend' );
 		$token = get_user_option( 'friends_token', $user->ID );
 
+		do_action( 'notify_accepted_friend_request', $user );
 		return array(
 			'friend' => $token,
 		);
@@ -776,6 +894,15 @@ class Friends {
 				)
 			);
 		}
+
+		$user = $this->get_user_for_site_url( $site_url );
+		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend_request' ) && get_user_option( 'friends_friend_request_token', $user->ID ) ) {
+			// Exit early and don't notify.
+			return array(
+				'friend_request_pending' => get_user_option( 'friends_friend_request_token', $user->ID ),
+			);
+		}
+
 		// TODO: rate limit.
 		$response = wp_safe_remote_post(
 			$site_url . '/wp-json/' . self::REST_NAMESPACE . '/hello', array(
@@ -784,6 +911,7 @@ class Friends {
 				'redirection' => 5,
 			)
 		);
+
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			$json = json_decode( wp_remote_retrieve_body( $response ) );
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
@@ -824,6 +952,7 @@ class Friends {
 			$user->set_role( 'friend_request' );
 		}
 
+		do_action( 'notify_new_friend_request', $user );
 		return array(
 			'friend_request_pending' => get_user_option( 'friends_friend_request_token', $user->ID ),
 		);
@@ -842,10 +971,6 @@ class Friends {
 
 		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
 		$friends = $friends->get_results();
-
-		if ( empty( $friends ) ) {
-			return;
-		}
 
 		foreach ( $friends as $friend_user ) {
 			$response = wp_safe_remote_post(
@@ -915,6 +1040,17 @@ class Friends {
 	}
 
 	/**
+	 * Checks whether a user already exists for a site URL.
+	 *
+	 * @param  string $site_url The site URL for which to create the user.
+	 * @return WP_User|false Whether the user already exists
+	 */
+	private function get_user_for_site_url( $site_url ) {
+		$user_login = $this->get_user_login_for_site_url( $site_url );
+		return get_user_by( 'login', $user_login );
+	}
+
+	/**
 	 * Create a WP_User with a specific Friends-related role
 	 *
 	 * @param  string $site_url The site URL for which to create the user.
@@ -935,8 +1071,7 @@ class Friends {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$user_login = $this->get_user_login_for_site_url( $site_url );
-		$user = get_user_by( 'login', $user_login );
+		$user = $this->get_user_for_site_url( $site_url );
 		if ( $user && ! is_wp_error( $user ) ) {
 			foreach ( $role_rank as $_role => $rank ) {
 				if ( $rank > $role_rank[ $role ] ) {
@@ -952,7 +1087,7 @@ class Friends {
 		}
 
 		$userdata = array(
-			'user_login' => $user_login,
+			'user_login' => $this->get_user_login_for_site_url( $site_url ),
 			'nickname'   => $name,
 			'user_email' => $email,
 			'user_url'   => $site_url,
@@ -961,6 +1096,9 @@ class Friends {
 		);
 
 		$user_id = wp_insert_user( $userdata );
+
+		update_user_option( $user_id, 'friends_new_friend', 1 );
+
 		return new WP_User( $user_id );
 	}
 
@@ -1018,7 +1156,7 @@ class Friends {
 	 * @param  WP_Query $query The main query.
 	 * @return WP_Query The modified main query.
 	 */
-	function private_feed_query( WP_Query $query ) {
+	public function private_feed_query( WP_Query $query ) {
 		if ( ! $this->feed_authenticated ) {
 			return $query;
 		}
@@ -1105,6 +1243,7 @@ class Friends {
 		if ( 'friends' === $wp_query->query['pagename'] ) {
 			if ( current_user_can( 'edit_posts' ) ) {
 				if ( isset( $_GET['refresh'] ) ) {
+					add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 					$this->retrieve_friend_posts( null, true );
 				}
 
@@ -1176,6 +1315,7 @@ class Friends {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return $query;
 		}
+
 		$page_id = get_query_var( 'page' );
 
 		$query->set( 'post_status', array( 'publish', 'private' ) );
@@ -1269,7 +1409,7 @@ class Friends {
 	 * @param  string $new_role  The new role.
 	 * @param  string $old_roles The old roles.
 	 */
-	public function notify_friend_request_accepted( $user_id, $new_role, $old_roles ) {
+	public function notify_remote_friend_request_accepted( $user_id, $new_role, $old_roles ) {
 		if ( 'friend' !== $new_role ) {
 			return;
 		}
@@ -1315,8 +1455,6 @@ class Friends {
 		$user->set_role( 'friend' );
 		update_user_option( $user->ID, 'friends_token', $token );
 		update_option( 'friends_token_' . $token, $user->ID );
-
-		$this->retrieve_friend_posts( $user );
 
 		return $user;
 	}
@@ -1372,6 +1510,19 @@ class Friends {
 		$secret = sha1( wp_generate_password( 50 ) );
 		if ( update_user_option( $user_id, 'friends_token', $secret ) ) {
 			update_option( 'friends_token_' . $secret, $user_id );
+		}
+	}
+
+	/**
+	 * Retrieve new friend's posts after changing roles
+	 *
+	 * @param  int    $user_id   The user id.
+	 * @param  string $new_role  The new role.
+	 * @param  string $old_roles The old roles.
+	 */
+	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
+		if ( 'friend' === $new_role ) {
+			$this->retrieve_friend_posts( new WP_User( $user_id ) );
 		}
 	}
 
