@@ -1,6 +1,7 @@
 0.4
 ===
 - Send notifications for friend request, accepted request and new posts.
+- Improve friend request security.
 
 0.3
 ===

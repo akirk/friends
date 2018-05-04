@@ -67,7 +67,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 == Changelog ==
 = 0.4 =
 - Send notifications for friend request, accepted request and new posts.
+- Improve friend request security.
 - Initial release on to the WordPress.org plugin directory.
+
 - 
 = 0.3 =
 - Delete your cached posts on friends blogs when you delete them.
