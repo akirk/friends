@@ -15,7 +15,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION = '0.3';
+	const VERSION = '0.4';
 	const REST_NAMESPACE = 'friends/v1';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const XMLNS = 'wordpress-plugin-friends:feed-additions:1';
@@ -53,7 +53,6 @@ class Friends {
 	public function __construct() {
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-
 	}
 
 	/**
@@ -218,7 +217,7 @@ class Friends {
 	 */
 	public function send_friend_request( $site_url ) {
 		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) ) {
-			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
+			return new WP_Error( 'invalid-url', 'An invalid URL was provided.' );
 		}
 
 		$response = wp_safe_remote_get(
@@ -231,6 +230,9 @@ class Friends {
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
 			$site_url = rtrim( $json->site_url, '/' );
+			if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) ) {
+				return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
+			}
 		} else {
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				if ( 'rest_no_route' !== $json->code ) {
@@ -271,7 +273,7 @@ class Friends {
 				return new WP_Error( $json->code, $json->message, $json->data );
 			}
 
-			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response', $response );
+			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response.', $response );
 		}
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
@@ -846,10 +848,10 @@ class Friends {
 			);
 		}
 
+		delete_option( 'friends_accept_token_' . $token );
+
 		$user->set_role( 'friend' );
 		$token = get_user_option( 'friends_token', $user->ID );
-
-		delete_option( 'friends_accept_token_' . $token );
 
 		do_action( 'notify_accepted_friend_request', $user );
 		return array(
@@ -915,11 +917,21 @@ class Friends {
 		}
 
 		$user = $this->get_user_for_site_url( $site_url );
-		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend_request' ) && get_user_option( 'friends_friend_request_token', $user->ID ) ) {
-			// Exit early and don't notify.
-			return array(
-				'friend_request_pending' => get_user_option( 'friends_friend_request_token', $user->ID ),
-			);
+		if ( $user && ! is_wp_error( $user ) ) {
+			if ( $user->has_cap( 'friend_request' ) && get_user_option( 'friends_friend_request_token', $user->ID ) ) {
+				// Exit early and don't notify.
+				return array(
+					'friend_request_pending' => get_user_option( 'friends_friend_request_token', $user->ID ),
+				);
+			}
+
+			if ( $user->has_cap( 'friend' ) ) {
+				// Already a friend, was it deleted?
+				$token = get_user_option( 'friends_token', $user->ID );
+				return array(
+					'friend' => $token,
+				);
+			}
 		}
 
 		$user_id = $this->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'email' ) );
@@ -932,21 +944,15 @@ class Friends {
 				)
 			);
 		}
-		update_user_option( $user_id, 'friends_accept_signature', $signature );
 
 		$user = new WP_User( $user_id );
-		if ( $user->has_cap( 'friend' ) ) {
-			// Already a friend, was it deleted?
-			$token = get_user_option( 'friends_token', $user_id );
-			return array(
-				'friend' => $token,
-			);
-		}
 
 		if ( $user->has_cap( 'pending_friend_request' ) ) {
 			// Friend request was deleted on the other side and then re-initated.
 			$user->set_role( 'friend_request' );
 		}
+
+		update_user_option( $user_id, 'friends_accept_signature', $signature );
 
 		do_action( 'notify_new_friend_request', $user );
 		return array(
@@ -971,7 +977,10 @@ class Friends {
 		foreach ( $friends as $friend_user ) {
 			$response = wp_safe_remote_post(
 				$friend_user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/post-deleted', array(
-					'body' => array( 'post_id' => $post_id, 'friend' => get_user_option( 'friends_token', $friend_user->ID ) ),
+					'body' => array(
+						'post_id' => $post_id,
+						'friend' => get_user_option( 'friends_token', $friend_user->ID ),
+					),
 					'timeout' => 20,
 					'redirection' => 5,
 				)
@@ -1454,6 +1463,8 @@ class Friends {
 		}
 
 		$user->set_role( 'friend' );
+		delete_option( 'friends_token_' . get_user_option( 'friends_token', $user->ID ) );
+
 		update_user_option( $user->ID, 'friends_token', $token );
 		update_option( 'friends_token_' . $token, $user->ID );
 
@@ -1461,16 +1472,20 @@ class Friends {
 	}
 
 	/**
-	 * Delete a friend token
+	 * Delete options associated with a user
 	 *
 	 * @param  int $user_id The user id.
 	 * @return The old token.
 	 */
 	public function delete_friend_token( $user_id ) {
 		$current_secret = get_user_option( 'friends_token', $user_id );
+
 		if ( $current_secret ) {
 			delete_option( 'friends_token_' . $current_secret );
+			delete_option( 'friends_accept_token_' . $current_secret );
 		}
+
+		delete_option( 'friends_request_token_' . sha1( get_usermeta( $user_id, 'user_url' ) ) );
 
 		return $current_secret;
 	}
@@ -1582,19 +1597,24 @@ class Friends {
 	}
 
 	/**
-	 * Delete all the data the plugin has stored in WordPress/
+	 * Delete all the data the plugin has stored in WordPress
 	 */
-	public static function delete_friends_data() {
+	public static function uninstall_plugin() {
+		$affected_users = new WP_User_Query( array( 'role__in' => array( 'friend', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
+		foreach ( $affected_users as $user ) {
+			delete_option( 'friends_token_' . get_user_option( 'friends_token', $user->ID ) );
+			delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
+			delete_option( 'friends_accept_token_' . get_user_option( 'friends_token', $user->ID ) );
+			delete_user_option( 'friends_token', $user->ID );
+			delete_user_option( 'friends_new_friend', $user->ID );
+			delete_user_option( 'friends_accept_signature', $user->ID );
+			delete_user_option( 'friends_friend_request_token', $user->ID );
+		}
+
 		remove_role( 'friend' );
 		remove_role( 'friend_request' );
 		remove_role( 'pending_friend_request' );
 		remove_role( 'subscription' );
-
-		foreach ( wp_load_alloptions() as $name => $value ) {
-			if ( 'friends_' === substr( $name, 0, 8 ) ) {
-				delete_option( $name );
-			}
-		}
 
 		$friend_posts = new WP_Query(
 			array(
