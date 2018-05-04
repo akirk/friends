@@ -556,7 +556,7 @@ class Friends {
 	/**
 	 * Retrieve the remote post ids.
 	 *
-	 * @param  WP_User   $friend_user The friend user.
+	 * @param  WP_User $friend_user The friend user.
 	 * @return array A mapping of the remote post ids.
 	 */
 	private function get_remote_post_ids( WP_User $friend_user ) {
@@ -927,9 +927,8 @@ class Friends {
 
 			if ( $user->has_cap( 'friend' ) ) {
 				// Already a friend, was it deleted?
-				$token = get_user_option( 'friends_token', $user->ID );
 				return array(
-					'friend' => $token,
+					'friend' => get_user_option( 'friends_token', $user->ID ),
 				);
 			}
 		}
@@ -1139,7 +1138,7 @@ class Friends {
 	 */
 	public function additional_feed_namespaces() {
 		if ( $this->feed_authenticated ) {
-			echo 'xmlns:friends="' . self::XMLNS . '"';
+			echo 'xmlns:friends="' . esc_attr( self::XMLNS ) . '"';
 		}
 	}
 
@@ -1175,6 +1174,7 @@ class Friends {
 
 	/**
 	 * Add a Friends menu to the admin bar
+	 *
 	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
 	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
@@ -1228,7 +1228,7 @@ class Friends {
 				)
 			);
 			$result = is_wp_error( $post_id ) ? 'error' : 'success';
-			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) == 'xmlhttprequest' ) {
+			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
 				echo $result;
 			} else {
 				wp_safe_redirect( $_SERVER['HTTP_REFERER'] );
@@ -1485,7 +1485,8 @@ class Friends {
 			delete_option( 'friends_accept_token_' . $current_secret );
 		}
 
-		delete_option( 'friends_request_token_' . sha1( get_usermeta( $user_id, 'user_url' ) ) );
+		$user = new WP_User( $user_id );
+		delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
 
 		return $current_secret;
 	}
@@ -1602,9 +1603,10 @@ class Friends {
 	public static function uninstall_plugin() {
 		$affected_users = new WP_User_Query( array( 'role__in' => array( 'friend', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {
-			delete_option( 'friends_token_' . get_user_option( 'friends_token', $user->ID ) );
+			$token = get_user_option( 'friends_token', $user->ID );
+			delete_option( 'friends_token_' . $token );
+			delete_option( 'friends_accept_token_' . $token );
 			delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
-			delete_option( 'friends_accept_token_' . get_user_option( 'friends_token', $user->ID ) );
 			delete_user_option( 'friends_token', $user->ID );
 			delete_user_option( 'friends_new_friend', $user->ID );
 			delete_user_option( 'friends_accept_signature', $user->ID );
