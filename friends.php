@@ -15,6 +15,7 @@ include __DIR__ . '/class-friends.php';
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
+register_uninstall_hook( __FILE__, array( 'Friends', 'delete_friends_data' ) );
 
 include __DIR__ . '/widgets/class-friends-widget-refresh.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Refresh', 'register' ) );
