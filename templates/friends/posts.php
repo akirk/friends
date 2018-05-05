@@ -1,4 +1,4 @@
-<?php include __DIR__ . '/../header.php'; ?>
+<?php get_header(); ?>
 	<h1><a href="<?php site_url( '/friends/' ); ?>">Friends</a></h1>
 	<div class="friends-sidebar">
 		<?php dynamic_sidebar( 'Friends Sidebar' ); ?>
@@ -42,4 +42,4 @@
 		</article>
 	<?php endwhile; ?>
 	<?php the_posts_pagination(); ?>
-<?php include __DIR__ . '/../footer.php'; ?>
+<?php get_footer(); ?>

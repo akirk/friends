@@ -27,6 +27,13 @@ class Friends {
 	private $feed_authenticated = null;
 
 	/**
+	 * Whether we are on the /friends page.
+	 *
+	 * @var boolean
+	 */
+	private $on_friends_page = false;
+
+	/**
 	 * Initialize the plugin
 	 */
 	public static function init() {
@@ -88,6 +95,7 @@ class Friends {
 		add_action( 'wp_ajax_friends_publish',    array( $this, 'frontend_publish_post' ) );
 		add_action( 'admin_bar_menu',             array( $this, 'admin_bar_friends_menu' ), 100 );
 		add_action( 'wp_enqueue_scripts',         array( $this, 'enqueue_scripts' ) );
+		add_filter( 'body_class',                 array( $this, 'add_body_class' ) );
 		add_action( 'set_user_role',              array( $this, 'retrieve_new_friends_posts' ), 10, 3 );
 
 		// Hooks for Cron.
@@ -1212,6 +1220,21 @@ class Friends {
 	 */
 	public function enqueue_scripts() {
 		wp_enqueue_script( 'friends-js', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
+		wp_enqueue_style( 'friends-css', plugin_dir_url( __FILE__ ) . 'friends.css' );
+	}
+
+	/**
+	 * Add a CSS class to the body
+	 *
+	 * @param array $classes The existing CSS classes.
+	 * @return array The modified CSS classes.
+	 */
+	public function add_body_class( $classes ) {
+		if ( $this->on_friends_page ) {
+			$classes[] = 'friends-page';
+		}
+
+		return $classes;
 	}
 
 	/**
@@ -1320,6 +1343,7 @@ class Friends {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return $query;
 		}
+		$this->on_friends_page = true;
 
 		$page_id = get_query_var( 'page' );
 

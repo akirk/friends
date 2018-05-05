@@ -71,6 +71,8 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			<li><a href="<?php echo esc_url( $friend_user->user_url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a></li>
 		<?php endforeach; ?>
 		</ul>
+
+		<a href="<?php echo self_admin_url( 'users.php' ); ?>"><?php _e( 'Manage Friends'); ?></a>
 		<?php
 		echo $args['after_widget'];
 	}

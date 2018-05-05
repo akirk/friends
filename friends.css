@@ -1,0 +1,51 @@
+.friends-page h1 a {
+  text-decoration: none;
+}
+.friends-page #branding {
+  display: none;
+}
+.friends-page #content {
+  padding: 2em;
+  max-width: 66%;
+}
+.friends-page article {
+  margin-bottom: 4em;
+  padding: 0;
+}
+.friends-page article header {
+  padding: 0 !important;
+}
+.friends-page article header h4.entry-title {
+  margin-top: .5em;
+  margin-bottom: 1em;
+  margin-left: 0 !important;
+  padding: 0;
+}
+.friends-page div.entry-content {
+  float: none !important;
+}
+
+.friends-page article header span.post-meta {
+  font-size: 80%;
+}
+
+.friends-page img.avatar {
+  border-radius: 100%;
+}
+
+.friends-page form.friends-post-inline {
+  margin: 2em 0;
+}
+
+.friends-page div.friends-sidebar {
+  position: absolute;
+  right: 2em;
+}
+
+.friends-page div.friends-widget {
+  margin-bottom: 2em;
+}
+
+#friend-request {
+  margin-bottom: 2em;
+}

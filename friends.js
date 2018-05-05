@@ -18,3 +18,15 @@ jQuery( document ).on( 'click', 'a.auth-link', function() {
 
 	$this.attr( 'href', href );
 } );
+
+jQuery( function( $ ) {
+	$( '#friend-request' ).on( 'submit', function() {
+		location.href = $( 'input[name=user_url]' ).val() + '/wp-admin/admin.php?page=send-friend-request&url=<?php echo esc_js( site_url() ); ?>';
+		return false;
+	})
+	$( 'input[name=user_url]' ).on( 'change', function() {
+		if ( ! this.value.match( /^https?:\/\// ) && this.value.match( /[a-z0-9-]+[.][a-z]+/i ) ) {
+			this.value = 'http://' + this.value;
+		}
+	})
+});
