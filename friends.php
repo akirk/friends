@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 0.4
+ * Version: 0.5
  *
  * Description: Connect WordPresses and communicate privately with your friends.
  *

@@ -5,7 +5,6 @@
  * A plugin to connect WordPresses and communicate privately with your friends.
  *
  * @package Friends
- * @since 0.3
  */
 
 /**
@@ -15,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION = '0.4';
+	const VERSION = '0.5';
 	const REST_NAMESPACE = 'friends/v1';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const XMLNS = 'wordpress-plugin-friends:feed-additions:1';
@@ -59,6 +58,9 @@ class Friends {
 	 */
 	public function __construct() {
 		$this->register_hooks();
+		if ( isset( $_GET['clean'] ) ) {
+			$this->cleanup_plugin_options();
+		}
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
 
@@ -72,7 +74,7 @@ class Friends {
 		// Hooks for Access control.
 		add_action( 'set_user_role',              array( $this, 'update_friend_token' ), 10, 3 );
 		add_action( 'set_user_role',              array( $this, 'update_friend_request_token' ), 10, 3 );
-		add_action( 'set_user_role',              array( $this, 'notify_remote_friend_request_accepted' ), 10, 3 );
+		add_action( 'set_user_role',              array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
 		add_action( 'delete_user',                array( $this, 'delete_friend_token' ) );
 		add_action( 'init',                       array( $this, 'remote_login' ) );
 
@@ -96,7 +98,7 @@ class Friends {
 		add_action( 'admin_bar_menu',             array( $this, 'admin_bar_friends_menu' ), 100 );
 		add_action( 'wp_enqueue_scripts',         array( $this, 'enqueue_scripts' ) );
 		add_filter( 'body_class',                 array( $this, 'add_body_class' ) );
-		add_action( 'set_user_role',              array( $this, 'retrieve_new_friends_posts' ), 10, 3 );
+		add_action( 'set_user_role',              array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 
 		// Hooks for Cron.
 		add_action( 'friends_refresh_feeds',      array( $this, 'cron_friends_refresh_feeds' ) );
@@ -144,6 +146,7 @@ class Friends {
 			'description'   => "A cached friend's post",
 			'public'        => apply_filters( 'friends_show_cached_posts', false ),
 			'menu_position' => 5,
+			'menu_icon'     => 'dashicons-groups',
 			'supports'      => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
 			'has_archive'   => true,
 		);
@@ -169,7 +172,7 @@ class Friends {
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
-		add_menu_page( 'Friends', 'Friends', 'manage_options', 'send-friend-request', null, '', 3.731 );
+		add_menu_page( 'Friends', 'Friends', 'manage_options', 'send-friend-request', null, 'dashicons-groups', 3.73);
 		add_submenu_page( 'send-friend-request', 'Send Friend Request', 'Send Friend Request', 'manage_options', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_submenu_page( 'send-friend-request', 'Feed', 'Refresh', 'manage_options', 'refresh', array( $this, 'refresh_friend_posts' ) );
 	}
@@ -547,7 +550,7 @@ class Friends {
 		foreach ( $friends as $friend_user ) {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 
-			$token = get_user_option( 'friends_token', $friend_user->ID );
+			$token = get_user_option( 'friends_out_token', $friend_user->ID );
 			if ( $token ) {
 				$feed_url .= '?friend=' . $token;
 			}
@@ -670,7 +673,7 @@ class Friends {
 		}
 
 		if ( $new_friend ) {
-			update_user_option( $friend_user->ID, 'friends_new_friend', 0 );
+			delete_user_option( $friend_user->ID, 'friends_new_friend' );
 		}
 	}
 
@@ -816,15 +819,16 @@ class Friends {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_request_accepted( WP_REST_Request $request ) {
-		$token = $request->get_param( 'token' );
+		$accept_token = $request->get_param( 'token' );
+		$out_token = $request->get_param( 'friend' );
 		$proof = $request->get_param( 'proof' );
-		$user_id = get_option( 'friends_accept_token_' . $token );
-		$user = false;
-		if ( $user_id ) {
-			$user = new WP_User( $user_id );
+		$friend_user_id = get_option( 'friends_accept_token_' . $accept_token );
+		$friend_user = false;
+		if ( $friend_user_id ) {
+			$friend_user = new WP_User( $friend_user_id );
 		}
 
-		if ( ! $token || ! $proof || ! $user || is_wp_error( $user ) || ! $user->user_url ) {
+		if ( ! $accept_token || ! $out_token || ! $proof || ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->user_url ) {
 			return new WP_Error(
 				'friends_invalid_parameters',
 				'Not all necessary parameters were provided.',
@@ -834,8 +838,8 @@ class Friends {
 			);
 		}
 
-		$signature = get_user_option( 'friends_accept_signature', $user_id );
-		if ( sha1( $token . $signature ) !== $proof ) {
+		$signature = get_user_option( 'friends_accept_signature', $friend_user_id );
+		if ( sha1( $accept_token . $signature ) !== $proof ) {
 			return new WP_Error(
 				'friends_invalid_proof',
 				'An invalid proof was provided.',
@@ -845,8 +849,8 @@ class Friends {
 			);
 		}
 
-		$user_login = $this->get_user_login_for_site_url( $user->user_url );
-		if ( $user_login !== $user->user_login ) {
+		$friend_user_login = $this->get_user_login_for_site_url( $friend_user->user_url );
+		if ( $friend_user_login !== $friend_user->user_login ) {
 			return new WP_Error(
 				'friends_offer_no_longer_valid',
 				'The friendship offer is no longer valid.',
@@ -856,14 +860,12 @@ class Friends {
 			);
 		}
 
-		delete_option( 'friends_accept_token_' . $token );
+		delete_option( 'friends_accept_token_' . $accept_token );
 
-		$user->set_role( 'friend' );
-		$token = get_user_option( 'friends_token', $user->ID );
-
-		do_action( 'notify_accepted_friend_request', $user );
+		$this->make_friend( $friend_user, $out_token );
+		do_action( 'notify_accepted_friend_request', $friend_user );
 		return array(
-			'friend' => $token,
+			'friend' => get_user_option( 'friends_in_token', $friend_user->ID ),
 		);
 	}
 
@@ -926,17 +928,17 @@ class Friends {
 
 		$user = $this->get_user_for_site_url( $site_url );
 		if ( $user && ! is_wp_error( $user ) ) {
-			if ( $user->has_cap( 'friend_request' ) && get_user_option( 'friends_friend_request_token', $user->ID ) ) {
+			if ( $user->has_cap( 'friend_request' ) && get_user_option( 'friends_request_token', $user->ID ) ) {
 				// Exit early and don't notify.
 				return array(
-					'friend_request_pending' => get_user_option( 'friends_friend_request_token', $user->ID ),
+					'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
 				);
 			}
 
 			if ( $user->has_cap( 'friend' ) ) {
 				// Already a friend, was it deleted?
 				return array(
-					'friend' => get_user_option( 'friends_token', $user->ID ),
+					'friend' => get_user_option( 'friends_in_token', $user->ID ),
 				);
 			}
 		}
@@ -963,7 +965,7 @@ class Friends {
 
 		do_action( 'notify_new_friend_request', $user );
 		return array(
-			'friend_request_pending' => get_user_option( 'friends_friend_request_token', $user->ID ),
+			'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
 		);
 	}
 
@@ -986,7 +988,7 @@ class Friends {
 				$friend_user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/post-deleted', array(
 					'body' => array(
 						'post_id' => $post_id,
-						'friend' => get_user_option( 'friends_token', $friend_user->ID ),
+						'friend' => get_user_option( 'friends_out_token', $friend_user->ID ),
 					),
 					'timeout' => 20,
 					'redirection' => 5,
@@ -1109,7 +1111,7 @@ class Friends {
 
 		$user_id = wp_insert_user( $userdata );
 
-		update_user_option( $user_id, 'friends_new_friend', 1 );
+		update_user_option( $user_id, 'friends_new_friend', true );
 
 		return new WP_User( $user_id );
 	}
@@ -1272,6 +1274,9 @@ class Friends {
 			if ( current_user_can( 'edit_posts' ) ) {
 				if ( isset( $_GET['refresh'] ) ) {
 					add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+					add_filter( 'wp_feed_options', function( $feed ) {
+						$feed->enable_cache( false );
+					} );
 					$this->retrieve_friend_posts( null, true );
 				}
 
@@ -1370,12 +1375,12 @@ class Friends {
 	 * @return int|bool The user id or false.
 	 */
 	protected function verify_token( $token ) {
-		$user_id = get_option( 'friends_token_' . $token );
+		$user_id = get_option( 'friends_in_token_' . $token );
 		if ( ! $user_id ) {
 			return false;
 		}
 		settype( $user_id, 'int' );
-		if ( get_user_option( 'friends_token', $user_id ) !== $token ) {
+		if ( get_user_option( 'friends_in_token', $user_id ) !== $token ) {
 			return false;
 		}
 
@@ -1443,8 +1448,8 @@ class Friends {
 			return;
 		}
 
-		$token = get_user_option( 'friends_friend_request_token', $user_id );
-		if ( ! $token ) {
+		$request_token = get_user_option( 'friends_request_token', $user_id );
+		if ( ! $request_token ) {
 			// We were accepted, so no need to notify the other.
 			return;
 		}
@@ -1452,17 +1457,25 @@ class Friends {
 		$user = new WP_User( $user_id );
 
 		$friend_request_token = get_option( 'friends_request_token_' . sha1( $user->user_url ) );
+		$in_token = $this->update_in_token( $user->ID );
+
 		$response = wp_safe_remote_post(
 			$user->user_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request-accepted', array(
 				'body' => array(
-					'token' => $token,
-					'proof' => sha1( $token . $friend_request_token ),
+					'token' => $request_token,
+					'friend' => $in_token,
+					'proof' => sha1( $request_token . $friend_request_token ),
 				),
 				'timeout' => 20,
 				'redirection' => 5,
 			)
 		);
 
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return;
+		}
+
+		delete_user_option( $user_id, 'friends_request_token' );
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( isset( $json->friend ) ) {
 			$this->make_friend( $user, $json->friend );
@@ -1478,19 +1491,16 @@ class Friends {
 	 * Convert a user to a friend
 	 *
 	 * @param  WP_User $user  The user to become a friend of the blog.
-	 * @param  string  $token The remote token.
+	 * @param  string  $out_token The token to talk to the remote.
 	 * @return WP_User|WP_Error The user or an error.
 	 */
-	private function make_friend( WP_User $user, $token ) {
+	private function make_friend( WP_User $user, $out_token ) {
 		if ( ! $user || is_wp_error( $user ) ) {
 			return $user;
 		}
 
+		update_user_option( $user->ID, 'friends_out_token', $out_token );
 		$user->set_role( 'friend' );
-		delete_option( 'friends_token_' . get_user_option( 'friends_token', $user->ID ) );
-
-		update_user_option( $user->ID, 'friends_token', $token );
-		update_option( 'friends_token_' . $token, $user->ID );
 
 		return $user;
 	}
@@ -1502,17 +1512,34 @@ class Friends {
 	 * @return The old token.
 	 */
 	public function delete_friend_token( $user_id ) {
-		$current_secret = get_user_option( 'friends_token', $user_id );
+		$current_secret = get_user_option( 'friends_in_token', $user_id );
 
 		if ( $current_secret ) {
-			delete_option( 'friends_token_' . $current_secret );
+			delete_option( 'friends_in_token_' . $current_secret );
 			delete_option( 'friends_accept_token_' . $current_secret );
 		}
 
 		$user = new WP_User( $user_id );
 		delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
 
+		// No need to delete user options as the user will be deleted.
+
 		return $current_secret;
+	}
+
+	/**
+	 * Update the friend_in_token
+	 *
+	 * @param  int $user_id The user_id to give an friend_in_token.
+	 * @return string The new friend_in_token.
+	 */
+	public function update_in_token( $user_id ) {
+		$in_token = sha1( wp_generate_password( 256 ) );
+		if ( update_user_option( $user_id, 'friends_in_token', $in_token ) ) {
+			update_option( 'friends_in_token_' . $in_token, $user_id );
+		}
+
+		return $in_token;
 	}
 
 	/**
@@ -1528,7 +1555,7 @@ class Friends {
 		}
 
 		$token = sha1( wp_generate_password( 256 ) );
-		update_user_option( $user_id, 'friends_friend_request_token', $token );
+		update_user_option( $user_id, 'friends_request_token', $token );
 	}
 
 	/**
@@ -1547,11 +1574,7 @@ class Friends {
 		if ( 'friend' !== $new_role ) {
 			return;
 		}
-
-		$secret = sha1( wp_generate_password( 256 ) );
-		if ( update_user_option( $user_id, 'friends_token', $secret ) ) {
-			update_option( 'friends_token_' . $secret, $user_id );
-		}
+		$this->update_in_token( $user_id );
 	}
 
 	/**
@@ -1563,6 +1586,7 @@ class Friends {
 	 */
 	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
 		if ( 'friend' === $new_role ) {
+			update_user_option( $user_id, 'friends_new_friend', true );
 			$this->retrieve_friend_posts( new WP_User( $user_id ) );
 		}
 	}
@@ -1622,19 +1646,31 @@ class Friends {
 	}
 
 	/**
+	 * Cleanup all the data the plugin has stored in WordPress
+	 */
+	public static function cleanup_plugin_options() {
+		foreach ( wp_load_alloptions() as $name => $value ) {
+			if ( 'friends_' === substr( $name, 0, 8 ) ) {
+				delete_option( $name );
+			}
+		}
+	}
+
+	/**
 	 * Delete all the data the plugin has stored in WordPress
 	 */
 	public static function uninstall_plugin() {
 		$affected_users = new WP_User_Query( array( 'role__in' => array( 'friend', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {
-			$token = get_user_option( 'friends_token', $user->ID );
-			delete_option( 'friends_token_' . $token );
-			delete_option( 'friends_accept_token_' . $token );
+			$in_token = get_user_option( 'friends_in_token', $user->ID );
+			delete_option( 'friends_in_token_' . $in_token );
+			delete_option( 'friends_accept_token_' . $in_token );
 			delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
-			delete_user_option( 'friends_token', $user->ID );
-			delete_user_option( 'friends_new_friend', $user->ID );
-			delete_user_option( 'friends_accept_signature', $user->ID );
-			delete_user_option( 'friends_friend_request_token', $user->ID );
+			delete_user_option( $user->ID, 'friends_out_token' );
+			delete_user_option( $user->ID, 'friends_in_token' );
+			delete_user_option( $user->ID, 'friends_new_friend' );
+			delete_user_option( $user->ID, 'friends_accept_signature' );
+			delete_user_option( $user->ID, 'friends_request_token' );
 		}
 
 		remove_role( 'friend' );
