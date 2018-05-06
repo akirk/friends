@@ -58,9 +58,6 @@ class Friends {
 	 */
 	public function __construct() {
 		$this->register_hooks();
-		if ( isset( $_GET['clean'] ) ) {
-			$this->cleanup_plugin_options();
-		}
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
 
@@ -205,7 +202,14 @@ class Friends {
 
 		$feed = fetch_feed( $feed_url );
 		if ( is_wp_error( $feed ) ) {
-			return $feed;
+			if ( '/feed/' === substr( $feed_url, -6 ) ) {
+				// Retry with the entered URL, maybe an RSS feed was entered.
+				$feed_url = substr( $feed_url, 0, -6 );
+			}
+			$feed = fetch_feed( $feed_url );
+			if ( is_wp_error( $feed ) ) {
+				return $feed;
+			}
 		}
 
 		if ( '/feed/' === substr( $feed_url, -6 ) ) {
@@ -216,6 +220,7 @@ class Friends {
 		$user = $this->create_user( $site_url, 'subscription' );
 		if ( ! is_wp_error( $user ) ) {
 			$this->process_friend_feed( $user, $feed );
+			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
 		}
 		return $user;
 	}
@@ -250,7 +255,8 @@ class Friends {
 					return new WP_Error( $json->code, $json->message, $json->data );
 				}
 			}
-			return $this->subscribe( $site_url . '/feed/' );
+
+			return $this->subscribe( $site_url );
 		}
 
 		$user = $this->get_user_for_site_url( $site_url );
@@ -548,7 +554,10 @@ class Friends {
 		}
 
 		foreach ( $friends as $friend_user ) {
-			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
+			$feed_url = get_user_option( 'friends_feed_url', $friend_user->ID );
+			if ( ! $feed_url ) {
+				$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
+			}
 
 			$token = get_user_option( 'friends_out_token', $friend_user->ID );
 			if ( $token ) {
@@ -1643,17 +1652,6 @@ class Friends {
 	public static function deactivate_plugin() {
 		$timestamp = wp_next_scheduled( 'cron_friends_refresh_feeds' );
 		wp_unschedule_event( $timestamp, 'cron_friends_refresh_feeds' );
-	}
-
-	/**
-	 * Cleanup all the data the plugin has stored in WordPress
-	 */
-	public static function cleanup_plugin_options() {
-		foreach ( wp_load_alloptions() as $name => $value ) {
-			if ( 'friends_' === substr( $name, 0, 8 ) ) {
-				delete_option( $name );
-			}
-		}
 	}
 
 	/**

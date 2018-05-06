@@ -61,6 +61,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.5 =
+- Use in/out tokens.
+
 = 0.4 =
 - Send notifications for friend request, accepted request and new posts.
 - Improve friend request security.
