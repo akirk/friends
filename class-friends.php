@@ -157,6 +157,7 @@ class Friends {
 		register_sidebar(
 			array(
 				'name' => 'Friends Sidebar',
+				'id' => 'friends-sidebar',
 				'before_widget' => '<div class="friends-widget">',
 				'after_widget' => '</div>',
 				'before_title' => '<h3>',
@@ -614,9 +615,18 @@ class Friends {
 
 		foreach ( $feed->get_items() as $item ) {
 			$permalink = $item->get_permalink();
+			$content = $item->get_content();
+
 			// Fallback, when no friends plugin is installed.
 			$item->{'post-id'} = $permalink;
 			$item->{'post-status'} = 'publish';
+			if ( ! isset( $item->comment_count ) ) {
+				$item->comment_count = 0;
+			}
+
+			if ( ! $content || ! $permalink ) {
+				continue;
+			}
 
 			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id' ) as $key ) {
 				foreach ( array( self::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
@@ -636,33 +646,22 @@ class Friends {
 			if ( is_null( $post_id ) && isset( $remote_post_ids[ $permalink ] ) ) {
 				$post_id = $remote_post_ids[ $permalink ];
 			}
+			$post_data = array(
+				'post_title'        => $item->get_title(),
+				'post_content'      => $item->get_content(),
+				'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+				'post_status'       => $item->{'post-status'},
+				'guid'              => $permalink,
+			);
 			if ( ! is_null( $post_id ) ) {
-				$new_post = false;
-				wp_update_post(
-					array(
-						'ID'                => $post_id,
-						'post_title'        => $item->get_title(),
-						'post_content'      => $item->get_content(),
-						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
-						'post_status'       => $item->{'post-status'},
-						'guid'              => $permalink,
-					)
-				);
+				$post_data['ID'] = $post_id;
+				wp_update_post( $post_data );
 			} else {
-				$new_post = true;
-				$post_id = wp_insert_post(
-					array(
-						'post_author'       => $friend_user->ID,
-						'post_type'         => self::FRIEND_POST_CACHE,
-						'post_title'        => $item->get_title(),
-						'post_date_gmt'     => $item->get_gmdate( 'Y-m-d H:i:s' ),
-						'post_content'      => $item->get_content(),
-						'post_status'       => $item->{'post-status'},
-						'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
-						'guid'              => $permalink,
-						'comment_count'     => $item->comment_count,
-					)
-				);
+				$post_data['post_author']   = $friend_user->ID;
+				$post_data['post_type']     = self::FRIEND_POST_CACHE;
+				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
+				$post_data['comment_count'] = $item->comment_count;
+				$post_id = wp_insert_post( $post_data );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
@@ -675,6 +674,7 @@ class Friends {
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 
+			$new_post = ! isset( $post_data['ID'] );
 			$notify_users = apply_filters( 'notify_about_new_friend_post', $new_post && ! $new_friend, $friend_user, $post_id );
 			if ( $notify_users ) {
 				do_action( 'notify_new_friend_post', WP_Post::get_instance( $post_id ) );
@@ -1279,7 +1279,7 @@ class Friends {
 	public function template_override( $template ) {
 		global $wp_query;
 
-		if ( 'friends' === $wp_query->query['pagename'] ) {
+		if ( isset( $wp_query->query['pagename'] ) && 'friends' === $wp_query->query['pagename'] ) {
 			if ( current_user_can( 'edit_posts' ) ) {
 				if ( isset( $_GET['refresh'] ) ) {
 					add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
@@ -1306,7 +1306,6 @@ class Friends {
 				}
 
 				return __DIR__ . '/templates/friends/logged-out.php';
-
 			}
 		}
 		return $template;
@@ -1322,7 +1321,7 @@ class Friends {
 	public function friend_post_edit_link( $link, $post_id ) {
 		global $post;
 
-		if ( self::FRIEND_POST_CACHE === $post->post_type ) {
+		if ( $post && self::FRIEND_POST_CACHE === $post->post_type ) {
 			$link = false;
 		}
 		return $link;

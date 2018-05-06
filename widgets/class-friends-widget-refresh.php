@@ -30,6 +30,8 @@ class Friends_Widget_Refresh extends WP_Widget {
 	 * @param array $instance Widget instance settings.
 	 */
 	public function widget( $args, $instance ) {
+		$instance = wp_parse_args( $instance, $this->defaults() );
+
 		$title = apply_filters( 'widget_title', $instance['title'] );
 		echo $args['before_widget'];
 		if ( ! empty( $title ) ) {
@@ -56,7 +58,20 @@ class Friends_Widget_Refresh extends WP_Widget {
 	}
 
 	/**
-	 * Rgister this widget.
+	 * Return an associative array of default values
+	 *
+	 * These values are used in new widgets.
+	 *
+	 * @return array Array of default values for the Widget's options
+	 */
+	public function defaults() {
+		return array(
+			'title' => '',
+		);
+	}
+
+	/**
+	 * Register this widget.
 	 */
 	public static function register() {
 		register_widget( __CLASS__ );
