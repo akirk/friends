@@ -317,7 +317,7 @@ class Friends {
 		<?php
 		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
 
-			$site_url = $_POST['site_url'];
+			$site_url = trim( $_POST['site_url'] );
 			$protocol = wp_parse_url( $site_url, PHP_URL_SCHEME );
 			if ( ! $protocol ) {
 				$site_url = 'http://' . $site_url;
@@ -570,6 +570,7 @@ class Friends {
 			if ( is_wp_error( $feed ) ) {
 				continue;
 			}
+			$feed = apply_filters( 'friends_feed_content', $feed, $friend_user );
 			$this->process_friend_feed( $friend_user, $feed );
 		}
 	}
@@ -590,12 +591,11 @@ class Friends {
 
 		if ( $existing_posts->have_posts() ) {
 			while ( $existing_posts->have_posts() ) {
-				$existing_posts->the_post();
-				$remote_post_id = get_post_meta( get_the_ID(), 'remote_post_id', true );
-				$remote_post_ids[ $remote_post_id ] = get_the_ID();
-				$remote_post_ids[ get_the_permalink() ] = get_the_ID();
+				$post = $existing_posts->next_post();
+				$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
+				$remote_post_ids[ $remote_post_id ] = $post->ID;
+				$remote_post_ids[ get_permalink( $post ) ] = $post->ID;
 			}
-			wp_reset_postdata();
 		}
 
 		do_action( 'friends_remote_post_ids', $remote_post_ids );
@@ -614,8 +614,11 @@ class Friends {
 		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
 
 		foreach ( $feed->get_items() as $item ) {
+			if ( ! apply_filters( 'friends_use_feed_item', true, $item, $feed, $friend_user ) ) {
+				continue;
+			}
 			$permalink = $item->get_permalink();
-			$content = $item->get_content();
+			$content = wp_kses_post( $item->get_content() );
 
 			// Fallback, when no friends plugin is installed.
 			$item->{'post-id'} = $permalink;
@@ -629,10 +632,14 @@ class Friends {
 			}
 
 			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id' ) as $key ) {
+				if ( ! isset( $item->{$key} ) ) {
+					$item->{$key} = false;
+				}
+
 				foreach ( array( self::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
 					if ( isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
 						$item->{$key} = $item->data['child'][ $xmlns ][ $key ][0]['data'];
-						continue;
+						continue 2;
 					}
 				}
 			}
@@ -1322,7 +1329,7 @@ class Friends {
 		global $post;
 
 		if ( $post && self::FRIEND_POST_CACHE === $post->post_type ) {
-			$link = false;
+			return get_the_guid( $post );
 		}
 		return $link;
 	}
@@ -1340,6 +1347,7 @@ class Friends {
 		if ( self::FRIEND_POST_CACHE === $post->post_type ) {
 			return get_the_guid( $post );
 		}
+		return $post_link;
 	}
 
 	/**
@@ -1349,7 +1357,8 @@ class Friends {
 	 * @return WP_Query The modified main query.
 	 */
 	public function friend_posts_query( $query ) {
-		if ( 'friends' !== get_query_var( 'pagename' ) ) {
+		global $wp_query;
+		if ( $wp_query !== $query || 'friends' !== get_query_var( 'pagename' ) ) {
 			return $query;
 		}
 
@@ -1683,7 +1692,8 @@ class Friends {
 		);
 
 		while ( $friend_posts->have_posts() ) {
-			wp_delete_post( $friend_posts->post->ID, true );
+			$post = $friend_posts->next_post();
+			wp_delete_post( $post->ID, true );
 		}
 	}
 }
