@@ -1,16 +1,19 @@
 <?php get_header(); ?>
 	<h1><a href="<?php site_url( '/friends/' ); ?>">Friends</a></h1>
 	<div class="friends-sidebar">
-		<?php if ( ! dynamic_sidebar( 'Friends Sidebar' ) ) {
+		<?php
+		if ( ! dynamic_sidebar( 'Friends Sidebar' ) ) {
 			the_widget( 'Friends_Widget_Refresh' );
 			the_widget( 'Friends_Widget_Friend_List' );
 			the_widget( 'Friends_Widget_Friend_Request' );
-		} ?>
+		}
+		?>
 	</div>
 	<?php if ( ! is_singular() ) : ?>
 		<?php include __DIR__ . '/editor.php'; ?>
 	<?php endif; ?>
-	<?php while ( have_posts() ) : the_post(); ?>
+	<?php while ( have_posts() ) : ?>
+		<?php the_post(); ?>
 		<?php $token = get_user_option( 'friends_out_token', get_the_author_meta( 'ID' ) ); ?>
 		<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 			<header class="entry-header">

@@ -15,6 +15,9 @@
  * @author Alex Kirk
  */
 class Friends_Widget_Refresh extends WP_Widget {
+	/**
+	 * Constructor
+	 */
 	public function __construct() {
 		parent::__construct(
 			'friends-widget-refresh', __( 'Friend Posts Refresh', 'friends' ), array(
@@ -38,7 +41,7 @@ class Friends_Widget_Refresh extends WP_Widget {
 			echo $args['before_title'] . $title . $args['after_title'];
 		}
 
-		echo '<a href="/friends/?refresh">' . __( 'Refresh', 'friends' ) . '</a>';
+		echo '<a href="/friends/?refresh">' . esc_html__( 'Refresh', 'friends' ) . '</a>';
 
 		echo $args['after_widget'];
 	}

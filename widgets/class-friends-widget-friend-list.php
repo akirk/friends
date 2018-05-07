@@ -45,7 +45,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 
 		?><div class="friend-request-count-message">
 		<?php if ( $friend_requests->get_total() > 0 ) : ?>
-			<a href="<?php echo self_admin_url( 'users.php?role=friend_request' ); ?>">
+			<a href="<?php echo esc_attr( self_admin_url( 'users.php?role=friend_request' ) ); ?>">
 			<?php
 			// translators: %s is the number of friends.
 			echo wp_kses( sprintf( _n( 'You have %s friend request.' , ' You have %s friend requests.', $friend_requests->get_total(), 'friends' ), '<span class="friend-request-count">' . $friend_requests->get_total() . '</span>' ), array( 'span' => array( 'class' => array() ) ) );
@@ -53,12 +53,10 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			</a>
 		<?php endif; ?>
 		</div>
-		<?php
 
+		<span class="friend-count-message">
+		<?php
 		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
-
-		?><span class="friend-count-message">
-		<?php
 		if ( 0 === $friends->get_total() ) {
 			esc_html_e( "You don't have any friends yet.", 'friends' );
 		} else {
@@ -70,11 +68,11 @@ class Friends_Widget_Friend_List extends WP_Widget {
 
 		<ul class="friend-list">
 		<?php foreach ( $friends->get_results() as $friend_user ) : ?>
-			<li><a href="<?php echo esc_url( $friend_user->user_url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a></li>
+			<li><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a></li>
 		<?php endforeach; ?>
 		</ul>
 
-		<a href="<?php echo self_admin_url( 'users.php' ); ?>"><?php _e( 'Manage Friends'); ?></a>
+		<a href="<?php echo esc_attr( self_admin_url( 'users.php' ) ); ?>"><?php esc_html_e( 'Manage Friends', 'friends' ); ?></a>
 		<?php
 		echo $args['after_widget'];
 	}
