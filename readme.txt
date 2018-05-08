@@ -61,6 +61,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.6 =
+- Add friends settings
+
 = 0.5 =
 - Use in/out tokens.
 

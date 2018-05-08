@@ -33,12 +33,13 @@ class Friends_Admin {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'admin_menu',                 array( $this, 'register_admin_menu' ), 10, 3 );
-		add_filter( 'user_row_actions',           array( $this, 'user_row_actions' ), 10, 2 );
-		add_filter( 'handle_bulk_actions-users',  array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
-		add_filter( 'handle_bulk_actions-users',  array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );
-		add_filter( 'bulk_actions-users',         array( $this, 'add_user_bulk_options' ) );
-		add_filter( 'get_edit_user_link',         array( $this, 'admin_edit_user_link' ), 10, 2 );
+		add_action( 'admin_menu',                array( $this, 'register_admin_menu' ), 10, 3 );
+		add_filter( 'user_row_actions',          array( $this, 'user_row_actions' ), 10, 2 );
+		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
+		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );
+		add_filter( 'bulk_actions-users',        array( $this, 'add_user_bulk_options' ) );
+		add_filter( 'get_edit_user_link',        array( $this, 'admin_edit_user_link' ), 10, 2 );
+		add_action( 'admin_bar_menu',            array( $this, 'admin_bar_friends_menu' ), 100 );
 	}
 
 	/**
@@ -59,7 +60,7 @@ class Friends_Admin {
 	 */
 	public function admin_refresh_friend_posts() {
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-		$this->friends->retrieve_friend_posts();
+		$this->friends->feed->retrieve_friend_posts();
 	}
 
 	/**
@@ -90,9 +91,9 @@ class Friends_Admin {
 		} else {
 			$site_url = $feed_url;
 		}
-		$user = $this->create_user( $site_url, 'subscription' );
+		$user = $this->friends->access_control->create_user( $site_url, 'subscription' );
 		if ( ! is_wp_error( $user ) ) {
-			$this->process_friend_feed( $user, $feed );
+			$this->friends->feed->process_friend_feed( $user, $feed );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
 		}
 		return $user;
@@ -110,14 +111,14 @@ class Friends_Admin {
 		}
 
 		$response = wp_safe_remote_get(
-			$site_url . '/wp-json/' . self::REST_NAMESPACE . '/hello', array(
+			$site_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/hello', array(
 				'timeout' => 20,
 				'redirection' => 5,
 			)
 		);
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
+		if ( 200 === wp_remote_retrieve_response_code( $response ) && $json ) {
 			$site_url = rtrim( $json->site_url, '/' );
 			if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) ) {
 				return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
@@ -132,19 +133,19 @@ class Friends_Admin {
 			return $this->subscribe( $site_url );
 		}
 
-		$user = $this->get_user_for_site_url( $site_url );
+		$user = $this->friends->access_control->get_user_for_site_url( $site_url );
 		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend_request' ) ) {
 			$user->set_role( 'friend' );
 			return $user;
 		}
 
-		$user_login = $this->get_user_login_for_site_url( $site_url );
+		$user_login = $this->friends->access_control->get_user_login_for_site_url( $site_url );
 
 		$friend_request_token = sha1( wp_generate_password( 256 ) );
 		update_option( 'friends_request_token_' . sha1( $site_url ), $friend_request_token );
 
 		$response = wp_remote_post(
-			$site_url . '/wp-json/' . self::REST_NAMESPACE . '/friend-request', array(
+			$site_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/friend-request', array(
 				'body' => array(
 					'site_url' => site_url(),
 					'signature' => $friend_request_token,
@@ -167,13 +168,13 @@ class Friends_Admin {
 		}
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		$user = $this->create_user( $site_url, 'pending_friend_request' );
+		$user = $this->friends->access_control->create_user( $site_url, 'pending_friend_request' );
 		if ( ! is_wp_error( $user ) ) {
 			if ( isset( $json->friend_request_pending ) ) {
 				$user->set_role( 'pending_friend_request' );
 				update_option( 'friends_accept_token_' . $json->friend_request_pending, $user->ID );
 			} elseif ( isset( $json->friend ) ) {
-				$this->make_friend( $user, $json->friend );
+				$this->friends->access_control->make_friend( $user, $json->friend );
 			}
 		}
 
@@ -452,5 +453,40 @@ class Friends_Admin {
 		}
 
 		return $actions;
+	}
+
+	/**
+	 * Add a Friends menu to the admin bar
+	 *
+	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
+	 */
+	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'friends',
+				'parent' => 'site-name',
+				'title'  => esc_html__( 'Friends', 'friends' ),
+				'href'   => '/friends/',
+			)
+		);
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'send-friend-request',
+				'parent' => 'friends',
+				'title'  => esc_html__( 'Send Friend Request', 'friends' ),
+				'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
+			)
+		);
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'friends-requests',
+				'parent' => 'friends',
+				'title'  => esc_html__( 'Friends & Requests', 'friends' ),
+				'href'   => self_admin_url( 'users.php' ),
+			)
+		);
 	}
 }
