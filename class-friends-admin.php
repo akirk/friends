@@ -399,12 +399,10 @@ class Friends_Admin {
 			}
 
 			if ( ! $user->has_cap( 'friend_request' ) ) {
-				echo 'y';
 				continue;
 			}
 
 			if ( $user->has_cap( 'friend' ) ) {
-				echo 'x';
 				continue;
 			}
 
