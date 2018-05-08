@@ -85,8 +85,8 @@ class Friends {
 	 * Constructor
 	 */
 	public function __construct() {
-		$this->admin = new Friends_Admin( $this );
 		$this->access_control = new Friends_Access_Control( $this );
+		$this->admin = new Friends_Admin( $this );
 		$this->feed = new Friends_Feed( $this );
 		$this->notifications = new Friends_Notifications( $this );
 		$this->page = new Friends_Page( $this );

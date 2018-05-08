@@ -22,6 +22,7 @@ class Friends_Access_Control {
 	 * @var null
 	 */
 	private $feed_authenticated = null;
+
 	/**
 	 * Contains a reference to the Friends class.
 	 */
@@ -40,11 +41,9 @@ class Friends_Access_Control {
 	 */
 	private function register_hooks() {
 		add_filter( 'determine_current_user', array( $this, 'authenticate' ), 1 );
-		add_action( 'set_user_role',          array( $this, 'update_friend_token' ), 10, 3 );
 		add_action( 'set_user_role',          array( $this, 'update_friend_request_token' ), 10, 3 );
 		add_action( 'delete_user',            array( $this, 'delete_friend_token' ) );
 		add_action( 'init',                   array( $this, 'remote_login' ) );
-		add_action( 'set_user_role',          array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 	}
 
 	/**
@@ -91,6 +90,7 @@ class Friends_Access_Control {
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
 	public function create_user( $site_url, $role, $name = null, $email = null ) {
+
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -253,25 +253,6 @@ class Friends_Access_Control {
 	}
 
 	/**
-	 * Update the friend_token after changing roles
-	 *
-	 * @param  int    $user_id   The user id.
-	 * @param  string $new_role  The new role.
-	 * @param  string $old_roles The old roles.
-	 */
-	public function update_friend_token( $user_id, $new_role, $old_roles ) {
-		if ( 'friend' === $new_role && in_array( $new_role, $old_roles, true ) ) {
-			return;
-		}
-		$current_secret = $this->delete_friend_token( $user_id );
-
-		if ( 'friend' !== $new_role ) {
-			return;
-		}
-		$this->update_in_token( $user_id );
-	}
-
-	/**
 	 * Convert a user to a friend
 	 *
 	 * @param  WP_User $user  The user to become a friend of the blog.
@@ -287,19 +268,5 @@ class Friends_Access_Control {
 		$user->set_role( 'friend' );
 
 		return $user;
-	}
-
-	/**
-	 * Retrieve new friend's posts after changing roles
-	 *
-	 * @param  int    $user_id   The user id.
-	 * @param  string $new_role  The new role.
-	 * @param  string $old_roles The old roles.
-	 */
-	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
-		if ( 'friend' === $new_role ) {
-			update_user_option( $user_id, 'friends_new_friend', true );
-			$this->friends->feed->retrieve_friend_posts( new WP_User( $user_id ) );
-		}
 	}
 }

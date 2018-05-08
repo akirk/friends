@@ -23,6 +23,16 @@ class Friends_REST {
 	private $friends;
 
 	/**
+	 * Contains a reference to the Friends_Access_Control class.
+	 */
+	private $access_control;
+
+	/**
+	 * Contains a reference to the Friends_Feed class.
+	 */
+	private $feed;
+
+	/**
 	 * Constructor
 	 */
 	public function __construct( Friends $friends ) {
@@ -160,13 +170,52 @@ class Friends_REST {
 	}
 
 	/**
+	 * Limits the requests from an ip address
+	 * @param  [type] $name             [description]
+	 * @param  [type] $allowed_requests [description]
+	 * @param  [type] $minutes          [description]
+	 * @return [type]                   [description]
+	 */
+	public function limit_requests_in_minutes( $name, $allowed_requests, $minutes ) {
+		$requests = 0;
+		$now = time();
+
+		for ( $time = $now - $minutes * 60; $time <= $now; $time += 60 ) {
+			$key = $name . date("dHi", $time);
+
+			$requests_in_current_minute = wp_cache_get( $key, 'friends' );
+
+			if ( false === $requests_in_current_minute) {
+				wp_cache_set( $key, 1, 'friends', $minutes * 60 + 1 );
+			} else {
+				wp_cache_incr( $key, 1, 'friends' );
+			}
+		}
+
+		if ( $requests > $allowed_requests ) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
 	 * Receive a friend request via REST
 	 *
 	 * @param  WP_REST_Request $request The incoming request.
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_request( WP_REST_Request $request ) {
-		// TODO: rate limit.
+		if ( ! $this->limit_requests_in_minutes( 'friend-request' . $_SERVER['REMOTE_ADDR'], 5, 5 ) ) {
+			return new WP_Error(
+				'too_many_request',
+				'Too many requests were sent.',
+				array(
+					'status' => 529,
+				)
+			);
+
+		}
+
 		$site_url = trim( $request->get_param( 'site_url' ) );
 		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) || 0 === strcasecmp( site_url(), $site_url ) ) {
 			return new WP_Error(
@@ -195,7 +244,6 @@ class Friends_REST {
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				return new WP_Error( $json->code, $json->message, $json->data );
 			}
-
 			return new WP_Error(
 				'friends_unsupported_site',
 				'An unsupported site was provided.',
@@ -218,10 +266,19 @@ class Friends_REST {
 
 		$user = $this->friends->access_control->get_user_for_site_url( $site_url );
 		if ( $user && ! is_wp_error( $user ) ) {
-			if ( $user->has_cap( 'friend_request' ) && get_user_option( 'friends_request_token', $user->ID ) ) {
+			$request_token = false;
+			if ( $user->has_cap( 'friend_request' ) ) {
+				$request_token = get_user_option( 'friends_request_token', $user->ID );
+			} elseif ( $user->has_cap( 'pending_friend_request' ) ) {
+				$request_token = get_option( 'friends_request_token_' . sha1( $site_url ) );
+				if ( $request_token ) {
+					update_user_option( $user->ID, 'friends_accept_signature', $signature );
+				}
+			}
+			if ( $request_token ) {
 				// Exit early and don't notify.
 				return array(
-					'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
+					'friend_request_pending' => $request_token,
 				);
 			}
 
@@ -231,6 +288,12 @@ class Friends_REST {
 					'friend' => get_user_option( 'friends_in_token', $user->ID ),
 				);
 			}
+		} elseif ( get_option( 'friends_ignore_incoming_friend_requests' ) ) {
+			$token = sha1( wp_generate_password( 256 ) );
+			update_option( 'friends_request_token_' . sha1( $site_url ), $token );
+			return array(
+				'friend_request_pending' => $token,
+			);
 		}
 
 		$user_id = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'email' ) );

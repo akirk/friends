@@ -42,8 +42,8 @@ class Friends_Feed {
 		add_action( 'rss_ns',                     array( $this, 'additional_feed_namespaces' ) );
 		add_action( 'rss2_ns',                    array( $this, 'additional_feed_namespaces' ) );
 
-		// Hooks for Cron.
 		add_action( 'friends_refresh_feeds',      array( $this, 'cron_friends_refresh_feeds' ) );
+		add_action( 'set_user_role',              array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 	}
 
 	/**
@@ -275,5 +275,19 @@ class Friends_Feed {
 		}
 
 		return $query;
+	}
+
+	/**
+	 * Retrieve new friend's posts after changing roles
+	 *
+	 * @param  int    $user_id   The user id.
+	 * @param  string $new_role  The new role.
+	 * @param  string $old_roles The old roles.
+	 */
+	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
+		if ( 'friend' === $new_role && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
+			update_user_option( $user_id, 'friends_new_friend', true );
+			$this->retrieve_friend_posts( new WP_User( $user_id ) );
+		}
 	}
 }

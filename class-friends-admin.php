@@ -102,16 +102,25 @@ class Friends_Admin {
 	/**
 	 * Send a friend request to another WordPress with the Friends plugin
 	 *
-	 * @param  string $site_url The site URL of the friend's WordPress.
+	 * @param  string $friend_url The site URL of the friend's WordPress.
 	 * @return WP_User|WP_error $user The new associated user or an error object.
 	 */
-	public function send_friend_request( $site_url ) {
-		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) ) {
-			return new WP_Error( 'invalid-url', 'An invalid URL was provided.' );
+	public function send_friend_request( $friend_url ) {
+		if ( ! is_string( $friend_url ) || ! wp_http_validate_url( $friend_url ) ) {
+			return new WP_Error( 'invalid-url', __( 'An invalid URL was provided.', 'friends' ) );
+		}
+
+		if ( 0 === strcasecmp( site_url(), $friend_url )  ) {
+			return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
+		}
+
+		$user = $this->friends->access_control->get_user_for_site_url( $friend_url );
+		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend' ) ) {
+			return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
 		}
 
 		$response = wp_safe_remote_get(
-			$site_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/hello', array(
+			$friend_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/hello', array(
 				'timeout' => 20,
 				'redirection' => 5,
 			)
@@ -119,8 +128,8 @@ class Friends_Admin {
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( 200 === wp_remote_retrieve_response_code( $response ) && $json ) {
-			$site_url = rtrim( $json->site_url, '/' );
-			if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) ) {
+			$friend_url = rtrim( $json->site_url, '/' );
+			if ( ! is_string( $friend_url ) || ! wp_http_validate_url( $friend_url ) ) {
 				return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
 			}
 		} else {
@@ -130,22 +139,23 @@ class Friends_Admin {
 				}
 			}
 
-			return $this->subscribe( $site_url );
+			return $this->subscribe( $friend_url );
 		}
 
-		$user = $this->friends->access_control->get_user_for_site_url( $site_url );
+		$user = $this->friends->access_control->get_user_for_site_url( $friend_url );
 		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend_request' ) ) {
+			$this->update_in_token( $user->ID );
 			$user->set_role( 'friend' );
 			return $user;
 		}
 
-		$user_login = $this->friends->access_control->get_user_login_for_site_url( $site_url );
+		$user_login = $this->friends->access_control->get_user_login_for_site_url( $friend_url );
 
 		$friend_request_token = sha1( wp_generate_password( 256 ) );
-		update_option( 'friends_request_token_' . sha1( $site_url ), $friend_request_token );
+		update_option( 'friends_request_token_' . sha1( $friend_url ), $friend_request_token );
 
 		$response = wp_remote_post(
-			$site_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/friend-request', array(
+			$friend_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/friend-request', array(
 				'body' => array(
 					'site_url' => site_url(),
 					'signature' => $friend_request_token,
@@ -159,7 +169,7 @@ class Friends_Admin {
 			$json = json_decode( wp_remote_retrieve_body( $response ) );
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				if ( 'rest_no_route' === $json->code ) {
-					return $this->subscribe( $site_url . '/feed/' );
+					return $this->subscribe( $friend_url . '/feed/' );
 				}
 				return new WP_Error( $json->code, $json->message, $json->data );
 			}
@@ -168,11 +178,15 @@ class Friends_Admin {
 		}
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		$user = $this->friends->access_control->create_user( $site_url, 'pending_friend_request' );
+		$user = $this->friends->access_control->create_user( $friend_url, 'pending_friend_request' );
 		if ( ! is_wp_error( $user ) ) {
 			if ( isset( $json->friend_request_pending ) ) {
-				$user->set_role( 'pending_friend_request' );
 				update_option( 'friends_accept_token_' . $json->friend_request_pending, $user->ID );
+				if ( $user->has_cap( 'pending_friend_request' ) ) {
+					$user->set_role( 'friend' );
+				} else {
+					$user->set_role( 'pending_friend_request' );
+				}
 			} elseif ( isset( $json->friend ) ) {
 				$this->friends->access_control->make_friend( $user, $json->friend );
 			}
@@ -269,18 +283,18 @@ class Friends_Admin {
 			wp_die( __( 'Sorry, you are not allowed to send friend requests.', 'friends' ) );
 		}
 
-		$site_url = '';
+		$friend_url = '';
 		?><h1><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></h1>
 		<?php
 		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
 
-			$site_url = trim( $_POST['site_url'] );
-			$protocol = wp_parse_url( $site_url, PHP_URL_SCHEME );
+			$friend_url = trim( $_POST['friend_url'] );
+			$protocol = wp_parse_url( $friend_url, PHP_URL_SCHEME );
 			if ( ! $protocol ) {
-				$site_url = 'http://' . $site_url;
+				$friend_url = 'http://' . $friend_url;
 			}
 
-			$response = $this->send_friend_request( $site_url );
+			$response = $this->send_friend_request( $friend_url );
 			if ( is_wp_error( $response ) ) {
 				?>
 				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p></div>
@@ -327,7 +341,7 @@ class Friends_Admin {
 			}
 		}
 		if ( ! empty( $_GET['url'] ) ) {
-			$site_url = $_GET['url'];
+			$friend_url = $_GET['url'];
 		}
 		include __DIR__ . '/templates/admin/send-friend-request.php';
 	}
@@ -391,6 +405,12 @@ class Friends_Admin {
 			if ( ! $user->has_cap( 'friend_request' ) ) {
 				continue;
 			}
+
+			if ( $user->has_cap( 'friend' ) ) {
+				continue;
+			}
+
+			$this->update_in_token( $user->ID );
 
 			if ( $user->set_role( 'friend' ) ) {
 				$accepted++;
