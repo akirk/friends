@@ -13,6 +13,7 @@
  */
 
 include __DIR__ . '/class-friends.php';
+include __DIR__ . '/class-friends-admin.php';
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
