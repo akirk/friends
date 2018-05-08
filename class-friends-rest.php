@@ -167,8 +167,8 @@ class Friends_REST {
 	 */
 	public function rest_friend_request( WP_REST_Request $request ) {
 		// TODO: rate limit.
-		$site_url = $request->get_param( 'site_url' );
-		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) || strtolower( site_url() ) === $site_url ) {
+		$site_url = trim( $request->get_param( 'site_url' ) );
+		if ( ! is_string( $site_url ) || ! wp_http_validate_url( $site_url ) || 0 === strcasecmp( site_url(), $site_url ) ) {
 			return new WP_Error(
 				'friends_invalid_site',
 				'An invalid site was provided.',
