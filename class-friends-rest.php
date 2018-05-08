@@ -161,11 +161,12 @@ class Friends_REST {
 		}
 
 		delete_option( 'friends_accept_token_' . $accept_token );
-
 		$this->friends->access_control->make_friend( $friend_user, $out_token );
+		$in_token = $this->friends->access_control->update_in_token( $friend_user->ID );
+
 		do_action( 'notify_accepted_friend_request', $friend_user );
 		return array(
-			'friend' => get_user_option( 'friends_in_token', $friend_user->ID ),
+			'friend' => $in_token,
 		);
 	}
 
@@ -269,7 +270,7 @@ class Friends_REST {
 			$request_token = false;
 			if ( $user->has_cap( 'friend_request' ) ) {
 				$request_token = get_user_option( 'friends_request_token', $user->ID );
-			} elseif ( $user->has_cap( 'pending_friend_request' ) ) {
+			} elseif ( false&&$user->has_cap( 'pending_friend_request' ) ) {
 				$request_token = get_option( 'friends_request_token_' . sha1( $site_url ) );
 				if ( $request_token ) {
 					update_user_option( $user->ID, 'friends_accept_signature', $signature );
@@ -435,6 +436,7 @@ class Friends_REST {
 
 		delete_user_option( $user_id, 'friends_request_token' );
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
+		$u = get_user_by('login', 'friend.local');
 		if ( isset( $json->friend ) ) {
 			$this->friends->access_control->make_friend( $user, $json->friend );
 		} else {

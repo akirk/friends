@@ -182,11 +182,7 @@ class Friends_Admin {
 		if ( ! is_wp_error( $user ) ) {
 			if ( isset( $json->friend_request_pending ) ) {
 				update_option( 'friends_accept_token_' . $json->friend_request_pending, $user->ID );
-				if ( $user->has_cap( 'pending_friend_request' ) ) {
-					$user->set_role( 'friend' );
-				} else {
-					$user->set_role( 'pending_friend_request' );
-				}
+				$user->set_role( 'pending_friend_request' );
 			} elseif ( isset( $json->friend ) ) {
 				$this->friends->access_control->make_friend( $user, $json->friend );
 			}
@@ -403,18 +399,24 @@ class Friends_Admin {
 			}
 
 			if ( ! $user->has_cap( 'friend_request' ) ) {
+				echo 'y';
 				continue;
 			}
 
 			if ( $user->has_cap( 'friend' ) ) {
+				echo 'x';
 				continue;
 			}
 
-			$this->update_in_token( $user->ID );
+			$this->friends->access_control->update_in_token( $user->ID );
+			$user->set_role( 'friend' );
+			$accepted++;
+		}
 
-			if ( $user->set_role( 'friend' ) ) {
-				$accepted++;
-			}
+		if ( ! $sendback ) {
+			return array(
+				'accepted' => $accepted,
+			);
 		}
 
 		$sendback = add_query_arg( 'accepted', $accepted, $sendback );

@@ -125,7 +125,6 @@ class Friends_Access_Control {
 			'user_pass'  => wp_generate_password( 256 ),
 			'role'       => $role,
 		);
-
 		$user_id = wp_insert_user( $userdata );
 
 		update_user_option( $user_id, 'friends_new_friend', true );
@@ -263,7 +262,6 @@ class Friends_Access_Control {
 		if ( ! $user || is_wp_error( $user ) ) {
 			return $user;
 		}
-
 		update_user_option( $user->ID, 'friends_out_token', $out_token );
 		$user->set_role( 'friend' );
 
