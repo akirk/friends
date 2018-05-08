@@ -268,18 +268,19 @@ class Friends_REST {
 		$user = $this->friends->access_control->get_user_for_site_url( $site_url );
 		if ( $user && ! is_wp_error( $user ) ) {
 			$request_token = false;
-			if ( $user->has_cap( 'friend_request' ) ) {
-				$request_token = get_user_option( 'friends_request_token', $user->ID );
-			} elseif ( false&&$user->has_cap( 'pending_friend_request' ) ) {
-				$request_token = get_option( 'friends_request_token_' . sha1( $site_url ) );
-				if ( $request_token ) {
-					update_user_option( $user->ID, 'friends_accept_signature', $signature );
-				}
-			}
-			if ( $request_token ) {
+			if ( $user->has_cap( 'friend_request' ) && get_user_option( 'friends_request_token', $user->ID ) ) {
 				// Exit early and don't notify.
 				return array(
 					'friend_request_pending' => $request_token,
+				);
+			}
+
+			if ( $user->has_cap( 'pending_friend_request' ) && get_option( 'friends_request_token_' . sha1( $site_url ) ) ) {
+				// We already requested friendship, so let's become friends right away.
+				$in_token = $this->friends->access_control->update_in_token( $user->ID );
+				$user->set_role( 'friend' );
+				return array(
+					'friend' => $in_token,
 				);
 			}
 

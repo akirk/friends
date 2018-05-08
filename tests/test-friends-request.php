@@ -214,7 +214,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
-		// Remote approves friend request = sets user to friend.
+		// Remote approves friend request through admin.
 		update_option( 'siteurl', $friend_url );
 		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', [ $my_user_at_friend->ID ] );
 
@@ -230,5 +230,37 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
 
+	public function test_friend_request_with_incoming_requests_disabled() {
+		$my_url = 'http://me.local';
+		$friend_url = 'http://friend.local';
+		update_option( 'friends_ignore_incoming_friend_requests', 1 );
+		update_option( 'siteurl', $my_url );
+		$friends = Friends::get_instance();
 
+		$friend_user = $friends->admin->send_friend_request( $friend_url );
+		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertEquals( $friend_user->user_url, $friend_url );
+		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
+		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
+		$this->assertFalse( $friend_user->has_cap( 'friend' ) );
+
+		// Verify that the user not was created at remote (request is ignored!).
+		$my_user_at_friend = get_user_by( 'login', $friends->access_control->get_user_login_for_site_url( $my_url ) );
+		$this->assertFalse( $my_user_at_friend );
+
+		// Remote also sends a friend request.
+		update_option( 'siteurl', $friend_url );
+		$friends->admin->send_friend_request( $my_url );
+
+		// Refresh the users before querying them again.
+		$friend_user = new WP_User( $friend_user->ID );
+		$this->assertTrue( $friend_user->has_cap( 'friend' ) );
+
+		$my_user_at_friend = get_user_by( 'login', $friends->access_control->get_user_login_for_site_url( $my_url ) );
+		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
+
+		// We could now access the remote feed with this token.
+		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
+		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
+	}
 }
