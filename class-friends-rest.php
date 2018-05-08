@@ -19,21 +19,15 @@ class Friends_REST {
 	const NAMESPACE = 'friends/v1';
 	/**
 	 * Contains a reference to the Friends class.
+	 *
+	 * @var Friends
 	 */
 	private $friends;
 
 	/**
-	 * Contains a reference to the Friends_Access_Control class.
-	 */
-	private $access_control;
-
-	/**
-	 * Contains a reference to the Friends_Feed class.
-	 */
-	private $feed;
-
-	/**
 	 * Constructor
+	 *
+	 * @param Friends $friends A reference to the Friends object.
 	 */
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
@@ -172,21 +166,22 @@ class Friends_REST {
 
 	/**
 	 * Limits the requests from an ip address
-	 * @param  [type] $name             [description]
-	 * @param  [type] $allowed_requests [description]
-	 * @param  [type] $minutes          [description]
-	 * @return [type]                   [description]
+	 *
+	 * @param  string $name             A unique identifier of the page loader.
+	 * @param  int    $allowed_requests The number of allowed requests in time-frame.
+	 * @param  int    $minutes          The time-frame in minutes.
+	 * @return bool Whether the user should be limited or not.
 	 */
 	public function limit_requests_in_minutes( $name, $allowed_requests, $minutes ) {
 		$requests = 0;
 		$now = time();
 
 		for ( $time = $now - $minutes * 60; $time <= $now; $time += 60 ) {
-			$key = $name . date("dHi", $time);
+			$key = $name . date( 'dHi', $time );
 
 			$requests_in_current_minute = wp_cache_get( $key, 'friends' );
 
-			if ( false === $requests_in_current_minute) {
+			if ( false === $requests_in_current_minute ) {
 				wp_cache_set( $key, 1, 'friends', $minutes * 60 + 1 );
 			} else {
 				wp_cache_incr( $key, 1, 'friends' );
@@ -437,7 +432,7 @@ class Friends_REST {
 
 		delete_user_option( $user_id, 'friends_request_token' );
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		$u = get_user_by('login', 'friend.local');
+		$u = get_user_by( 'login', 'friend.local' );
 		if ( isset( $json->friend ) ) {
 			$this->friends->access_control->make_friend( $user, $json->friend );
 		} else {

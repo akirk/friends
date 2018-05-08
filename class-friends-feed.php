@@ -20,11 +20,15 @@ class Friends_Feed {
 
 	/**
 	 * Contains a reference to the Friends class.
+	 *
+	 * @var Friends
 	 */
 	private $friends;
 
 	/**
 	 * Constructor
+	 *
+	 * @param Friends $friends A reference to the Friends object.
 	 */
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
@@ -101,11 +105,13 @@ class Friends_Feed {
 	 */
 	private function get_remote_post_ids( WP_User $friend_user ) {
 		$remote_post_ids = array();
-		$existing_posts = new WP_Query( array(
-			'post_type' => $this->friends::FRIEND_POST_CACHE,
-			'post_status' => array( 'publish', 'private' ),
-			'author' => $friend_user->ID,
-		));
+		$existing_posts = new WP_Query(
+			array(
+				'post_type' => $this->friends::FRIEND_POST_CACHE,
+				'post_status' => array( 'publish', 'private' ),
+				'author' => $friend_user->ID,
+			)
+		);
 
 		if ( $existing_posts->have_posts() ) {
 			while ( $existing_posts->have_posts() ) {

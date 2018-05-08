@@ -19,17 +19,21 @@ class Friends_Access_Control {
 	/**
 	 * States whether this is an authenticated feed call.
 	 *
-	 * @var null
+	 * @var boolean
 	 */
 	private $feed_authenticated = null;
 
 	/**
 	 * Contains a reference to the Friends class.
+	 *
+	 * @var Friends
 	 */
-	private $friends;
+	private $friends = null;
 
 	/**
 	 * Constructor
+	 *
+	 * @param Friends $friends A reference to the Friends object.
 	 */
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
@@ -216,7 +220,6 @@ class Friends_Access_Control {
 		delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
 
 		// No need to delete user options as the user will be deleted.
-
 		return $current_secret;
 	}
 

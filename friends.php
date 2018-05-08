@@ -10,6 +10,12 @@
  * License: GPL2
  * Text Domain: friends
  * Domain Path: /languages/
+ *
+ * @package Friends
+ */
+
+/**
+ * This loads the Friends plugin.
  */
 
 include __DIR__ . '/class-friends-access-control.php';

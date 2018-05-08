@@ -19,6 +19,8 @@ class Friends_Page {
 	const NAMESPACE = 'friends/v1';
 	/**
 	 * Contains a reference to the Friends class.
+	 *
+	 * @var Friends
 	 */
 	private $friends;
 
@@ -31,6 +33,8 @@ class Friends_Page {
 
 	/**
 	 * Constructor
+	 *
+	 * @param Friends $friends A reference to the Friends object.
 	 */
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
@@ -114,6 +118,7 @@ class Friends_Page {
 
 	/**
 	 * Load the template for /friends
+	 *
 	 * @param  string $template The original template intended to load.
 	 * @return string The new template to be loaded.
 	 */
@@ -124,9 +129,11 @@ class Friends_Page {
 			if ( current_user_can( 'edit_posts' ) ) {
 				if ( isset( $_GET['refresh'] ) ) {
 					add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-					add_filter( 'wp_feed_options', function( $feed ) {
-						$feed->enable_cache( false );
-					} );
+					add_filter(
+						'wp_feed_options', function( $feed ) {
+							$feed->enable_cache( false );
+						}
+					);
 					$this->friends->feed->retrieve_friend_posts( null, true );
 				}
 

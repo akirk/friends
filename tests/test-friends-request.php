@@ -9,13 +9,21 @@
  * Sample test case.
  */
 class Friends_RestTest extends WP_UnitTestCase {
+	/**
+	 * The REST server.
+	 *
+	 * @var object
+	 */
 	protected $server;
 
+	/**
+	 * Setup the unit tests.
+	 */
 	public function setUp() {
 		parent::setUp();
-		/** @var WP_REST_Server $wp_rest_server */
 		global $wp_rest_server;
-		$this->server = $wp_rest_server = new \WP_REST_Server;
+		$wp_rest_server = new \WP_REST_Server;
+		$this->server = $wp_rest_server;
 		do_action( 'rest_api_init' );
 
 		add_filter( 'friends_immediately_fetch_feed', '__return_false' );
@@ -31,50 +39,59 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		$debug_options = false;
 		if ( $debug_options ) {
-			add_filter( 'pre_update_option', function( $value, $option, $old_value ) {
-				if ( ! in_array( $option, [ 'rewrite_rules' ] ) ) {
-					echo PHP_EOL, $option, ' => ', $value, PHP_EOL;
-				}
-				return $value;
-			}, 10, 3 );
+			add_filter(
+				'pre_update_option', function( $value, $option, $old_value ) {
+					if ( ! in_array( $option, [ 'rewrite_rules' ] ) ) {
+						echo PHP_EOL, $option, ' => ', $value, PHP_EOL;
+					}
+					return $value;
+				}, 10, 3
+			);
 
-			add_action( 'update_user_metadata', function( $meta_id, $object_id, $meta_key, $meta_value ) {
-				echo PHP_EOL, $meta_key, ' (', $object_id, ') => ';
-				if ( is_numeric( $meta_value ) || is_string( $meta_value ) ) {
-					echo $meta_value, PHP_EOL;
-				} else {
-					var_dump( $meta_value );
-				}
-			}, 10, 4 );
+			add_action(
+				'update_user_metadata', function( $meta_id, $object_id, $meta_key, $meta_value ) {
+					echo PHP_EOL, $meta_key, ' (', $object_id, ') => ';
+					if ( is_numeric( $meta_value ) || is_string( $meta_value ) ) {
+						echo $meta_value, PHP_EOL;
+					} else {
+						var_dump( $meta_value );
+					}
+				}, 10, 4
+			);
 		}
-		add_filter( 'pre_http_request', function( $preempt, $request, $url ) {
-			$p = parse_url( $url );
+		add_filter(
+			'pre_http_request', function( $preempt, $request, $url ) {
+				$p = parse_url( $url );
 
-			$site_url = site_url();
+				$site_url = site_url();
 
-			// Pretend the site_url now is the requested one.
-			update_option( 'siteurl', $p['scheme'] . '://' . $p['host'] );
-			$url = substr( $url, strlen( site_url() . '/wp-json' ) );
-			$r = new WP_REST_Request( $request['method'], $url );
-			if ( ! empty( $request['body'] ) ) {
-				foreach ( $request['body'] as $key => $value ) {
-					$r->set_param( $key, $value );
+				// Pretend the site_url now is the requested one.
+				update_option( 'siteurl', $p['scheme'] . '://' . $p['host'] );
+				$url = substr( $url, strlen( site_url() . '/wp-json' ) );
+				$r = new WP_REST_Request( $request['method'], $url );
+				if ( ! empty( $request['body'] ) ) {
+					foreach ( $request['body'] as $key => $value ) {
+						$r->set_param( $key, $value );
+					}
 				}
-			}
-			$response = $this->server->dispatch( $r );
+				$response = $this->server->dispatch( $r );
 
-			// Restore the old site_url;
-			update_option( 'siteurl', $site_url );
+				// Restore the old site_url.
+				update_option( 'siteurl', $site_url );
 
-			return [
-				'body' => json_encode( $response->data ),
-				'response' => [
-					'code' => $response->status,
-				]
-			];
-		}, 10, 3 );
+				return [
+					'body' => json_encode( $response->data ),
+					'response' => [
+						'code' => $response->status,
+					],
+				];
+			}, 10, 3
+		);
 	}
 
+	/**
+	 * Check that all endpoints are reachable.
+	 */
 	public function test_endpoints() {
 		$the_route = '/' . Friends_REST::NAMESPACE;
 		$routes = $this->server->get_routes();
@@ -83,15 +100,18 @@ class Friends_RestTest extends WP_UnitTestCase {
 				$this->assertTrue( is_array( $route_config ) );
 				foreach ( $route_config as $i => $endpoint ) {
 					$this->assertArrayHasKey( 'callback', $endpoint );
-					$this->assertArrayHasKey( 0, $endpoint[ 'callback' ], get_class( $this ) );
-					$this->assertArrayHasKey( 1, $endpoint[ 'callback' ], get_class( $this ) );
-					$this->assertTrue( is_callable( array( $endpoint[ 'callback' ][0], $endpoint[ 'callback' ][1] ) ) );
+					$this->assertArrayHasKey( 0, $endpoint['callback'], get_class( $this ) );
+					$this->assertArrayHasKey( 1, $endpoint['callback'], get_class( $this ) );
+					$this->assertTrue( is_callable( array( $endpoint['callback'][0], $endpoint['callback'][1] ) ) );
 				}
 			}
 		}
 	}
 
-	public function test_register_route() {
+	/**
+	 * Test the Hello endpoint.
+	 */
+	public function test_hello() {
 		$hello = '/' . Friends_REST::NAMESPACE . '/hello';
 		$routes = $this->server->get_routes();
 		$this->assertArrayHasKey( $hello, $routes );
@@ -101,6 +121,9 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'version', $response->data );
 	}
 
+	/**
+	 * Test a friend request on the REST level.
+	 */
 	public function test_friend_request() {
 		$my_url = 'http://me.local';
 		$friend_url = 'http://friend.local';
@@ -156,6 +179,9 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertFalse( get_option( 'friends_accept_token_' . $friend_request_response->data['friend_request_pending'] ) );
 	}
 
+	/**
+	 * Test a friend request using admin functions and accepting on mobile.
+	 */
 	public function test_friend_request_with_admin_and_accept_on_mobile() {
 		$my_url = 'http://me.local';
 		$friend_url = 'http://friend.local';
@@ -193,6 +219,9 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
 
+	/**
+	 * Test a friend request using the admin.
+	 */
 	public function test_friend_request_with_admin() {
 		$my_url = 'http://me.local';
 		$friend_url = 'http://friend.local';
@@ -230,6 +259,9 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
 
+	/**
+	 * Test a friend request with both sides having incoming requests disabled.
+	 */
 	public function test_friend_request_with_incoming_requests_disabled() {
 		$my_url = 'http://me.local';
 		$friend_url = 'http://friend.local';
@@ -264,12 +296,17 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
 
+	/**
+	 * Test friend requests with just the remote having incoming requests disabled.
+	 */
 	public function test_friend_request_with_remote_incoming_requests_disabled() {
 		$my_url = 'http://me.local';
 		$friend_url = 'http://friend.local';
-		add_filter( 'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
-			return $my_url !== $value;
-		});
+		add_filter(
+			'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
+				return $my_url !== $value;
+			}
+		);
 		update_option( 'siteurl', $my_url );
 		$friends = Friends::get_instance();
 
@@ -300,12 +337,17 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
 
+	/**
+	 * Test a friend request with incoming requests disabled locally.
+	 */
 	public function test_friend_request_with_local_incoming_requests_disabled() {
 		$my_url = 'http://me.local';
 		$friend_url = 'http://friend.local';
-		add_filter( 'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
-			return $my_url === $value;
-		});
+		add_filter(
+			'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
+				return $my_url === $value;
+			}
+		);
 		update_option( 'siteurl', $my_url );
 		$friends = Friends::get_instance();
 
@@ -340,12 +382,17 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
 
+	/**
+	 * Test a friend request with incoming requests disabled locally and accepting with set_role().
+	 */
 	public function test_friend_request_with_local_incoming_requests_disabled_set_role() {
 		$my_url = 'http://me.local';
 		$friend_url = 'http://friend.local';
-		add_filter( 'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
-			return $my_url === $value;
-		});
+		add_filter(
+			'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
+				return $my_url === $value;
+			}
+		);
 		update_option( 'siteurl', $my_url );
 		$friends = Friends::get_instance();
 

@@ -27,7 +27,6 @@ class Friends {
 	/**
 	 * A reference to the Friends_Admin object.
 	 *
-	 *
 	 * @var Friends_Admin
 	 */
 	public $admin;

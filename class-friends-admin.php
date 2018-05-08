@@ -18,11 +18,15 @@
 class Friends_Admin {
 	/**
 	 * Contains a reference to the Friends class.
+	 *
+	 * @var Friends
 	 */
 	private $friends;
 
 	/**
 	 * Constructor
+	 *
+	 * @param Friends $friends A reference to the Friends object.
 	 */
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
@@ -46,7 +50,7 @@ class Friends_Admin {
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
-		add_menu_page( 'Friends', 'Friends', 'manage_options', 'friends-settings', null, 'dashicons-groups', 3.73);
+		add_menu_page( 'Friends', 'Friends', 'manage_options', 'friends-settings', null, 'dashicons-groups', 3.73 );
 		add_submenu_page( 'friends-settings', 'Settings', 'Settings', 'manage_options', 'friends-settings', array( $this, 'render_admin_settings' ) );
 		add_submenu_page( 'friends-settings', 'Send Friend Request', 'Send Friend Request', 'edit_users', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_submenu_page( 'friends-settings', 'Feed', 'Refresh', 'manage_options', 'refresh', array( $this, 'admin_refresh_friend_posts' ) );
@@ -110,7 +114,7 @@ class Friends_Admin {
 			return new WP_Error( 'invalid-url', __( 'An invalid URL was provided.', 'friends' ) );
 		}
 
-		if ( 0 === strcasecmp( site_url(), $friend_url )  ) {
+		if ( 0 === strcasecmp( site_url(), $friend_url ) ) {
 			return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 		}
 
@@ -266,7 +270,8 @@ class Friends_Admin {
 			wp_die( __( 'This is not a user related to this plugin.', 'friends' ) );
 		}
 
-		?><h1><?php echo esc_html( $user->display_name ) ?></h1>
+		?>
+		<h1><?php echo esc_html( $user->display_name ); ?></h1>
 		<?php
 		include __DIR__ . '/templates/admin/edit-friend.php';
 	}
@@ -280,7 +285,8 @@ class Friends_Admin {
 		}
 
 		$friend_url = '';
-		?><h1><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></h1>
+		?>
+		<h1><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></h1>
 		<?php
 		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
 

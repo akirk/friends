@@ -1,4 +1,11 @@
-<form method="post">
+<?php
+/**
+ * This template contains the friend editor.
+ *
+ * @package Friends
+ */
+
+?><form method="post">
 	<?php wp_nonce_field( 'edit-friend' ); ?>
 	<table class="form-table">
 		<tbody>

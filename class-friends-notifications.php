@@ -18,11 +18,15 @@
 class Friends_Notifications {
 	/**
 	 * Contains a reference to the Friends class.
+	 *
+	 * @var Friends
 	 */
 	private $friends;
 
 	/**
 	 * Constructor
+	 *
+	 * @param Friends $friends A reference to the Friends object.
 	 */
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;

@@ -1,4 +1,11 @@
-<form method="post">
+<?php
+/**
+ * This template contains the Friends Settings.
+ *
+ * @package Friends
+ */
+
+?><form method="post">
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
 		<tbody>

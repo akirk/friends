@@ -1,4 +1,11 @@
-<form method="post">
+<?php
+/**
+ * This template contains the Admin Send Friend Request form.
+ *
+ * @package Friends
+ */
+
+?><form method="post">
 	<?php wp_nonce_field( 'send-friend-request' ); ?>
 	<p><?php esc_html_e( "This will send a friend request to the WordPress site you can enter below. If the other site doesn't have friends plugin installed, you'll be subscribed to that site.", 'friends' ); ?></p>
 	<label><?php esc_html_e( 'Site:' ); ?> <input type="text" autofocus name="friend_url" value="<?php echo esc_attr( $friend_url ); ?>" required placeholder="Enter your friend's WordPress URL" size="90" /></label>
