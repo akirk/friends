@@ -6,7 +6,7 @@
  */
 
 /**
- * Sample test case.
+ * Test the REST API.
  */
 class Friends_RestTest extends WP_UnitTestCase {
 	/**

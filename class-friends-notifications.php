@@ -57,12 +57,13 @@ class Friends_Notifications {
 			if ( ! $user->user_email ) {
 				continue;
 			}
+			$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user );
+			$notify_user &= ! get_user_option( 'friends_no_new_post_notification_' . $post->post_author, $user );
 
-			if ( ! apply_filters( 'notify_user_about_friend_post', true, $user, $post ) ) {
+			if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post ) ) {
 				continue;
 			}
 
-			// TODO: Opt out of these e-mails.
 			$author = new WP_User( $post->post_author );
 			// translators: %s is a username.
 			$message = sprintf( __( 'Howdy, %s' ), $user->display_name ) . PHP_EOL . PHP_EOL;
@@ -71,7 +72,7 @@ class Friends_Notifications {
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
 			// translators: %1$s is the blog name, %2$s is a post title.
-			wp_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Post: %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $post->post_title, ENT_QUOTES ) ), $message, $message_headers );
+			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Post: %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $post->post_title, ENT_QUOTES ) ), $message, $message_headers );
 		}
 	}
 
@@ -91,7 +92,8 @@ class Friends_Notifications {
 				continue;
 			}
 
-			if ( ! apply_filters( 'notify_user_about_friend_request', true, $user, $friend_user ) ) {
+			$notify_user = ! get_user_option( 'friends_no_friend_request_notification', $user );
+			if ( ! apply_filters( 'notify_user_about_friend_request', $notify_user, $user, $friend_user ) ) {
 				continue;
 			}
 
@@ -105,7 +107,7 @@ class Friends_Notifications {
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
 			// translators: %1$s is the blog name, %2$s is a username.
-			wp_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Request from %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message, $message_headers );
+			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Request from %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message, $message_headers );
 		}
 
 	}
@@ -140,8 +142,25 @@ class Friends_Notifications {
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
 			// translators: %1$s is the blog name, %2$s is a username.
-			wp_mail( $user->user_email, sprintf( __( '[%1$s] %2$s accepted your Friend Request', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message, $message_headers );
+			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] %2$s accepted your Friend Request', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message, $message_headers );
+		}
+	}
+
+	/**
+	 * Wrapper for wp_mail to be overridden in unit tests
+	 *
+	 * @param string|array $to          Array or comma-separated list of email addresses to send message.
+	 * @param string       $subject     Email subject.
+	 * @param string       $message     Message contents.
+	 * @param string|array $headers     Optional. Additional headers.
+	 * @param string|array $attachments Optional. Files to attach.
+	 * @return bool Whether the email contents were sent successfully.
+	 */
+	public function send_mail( $to, $subject, $message, $headers = '', $attachments = array() )	{
+		if ( ! apply_filters( 'friends_send_mail', true, $to, $subject, $message, $headers ) ) {
+			return;
 		}
 
+		return wp_mail( $to, $subject, $message, $headers, $attachments );
 	}
 }
