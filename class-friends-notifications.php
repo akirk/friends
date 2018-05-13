@@ -156,7 +156,7 @@ class Friends_Notifications {
 	 * @param string|array $attachments Optional. Files to attach.
 	 * @return bool Whether the email contents were sent successfully.
 	 */
-	public function send_mail( $to, $subject, $message, $headers = '', $attachments = array() )	{
+	public function send_mail( $to, $subject, $message, $headers = '', $attachments = array() ) {
 		if ( ! apply_filters( 'friends_send_mail', true, $to, $subject, $message, $headers ) ) {
 			return;
 		}

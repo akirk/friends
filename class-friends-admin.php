@@ -55,7 +55,7 @@ class Friends_Admin {
 		add_submenu_page( 'friends-settings', 'Send Friend Request', 'Send Friend Request', 'edit_users', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
-		add_submenu_page( 'friends-settings', 'Feed', 'Friends &amp; Requests', 'edit_users', 'users.php'  );
+		add_submenu_page( 'friends-settings', 'Feed', 'Friends &amp; Requests', 'edit_users', 'users.php' );
 		add_submenu_page( 'friends-settings', 'Feed', 'Refresh', 'manage_options', 'refresh', array( $this, 'admin_refresh_friend_posts' ) );
 
 		if ( isset( $_GET['page'] ) && 'edit-friend' === $_GET['page'] ) {
@@ -283,10 +283,12 @@ class Friends_Admin {
 
 		$user = wp_get_current_user();
 
-		?><h1><?php esc_html_e( 'Friend Settings', 'friends' ); ?></h1>
+		?>
+		<h1><?php esc_html_e( 'Friend Settings', 'friends' ); ?></h1>
 		<?php
 		if ( isset( $_GET['updated'] ) ) {
-			?><div id="message" class="updated notice is-dismissible"><p>
+			?>
+			<div id="message" class="updated notice is-dismissible"><p>
 				<?php
 				esc_html_e( 'Your settings were updated.', 'friends' );
 				?>
@@ -451,7 +453,7 @@ class Friends_Admin {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
-					// translators: %s is a Site URL.
+						// translators: %s is a Site URL.
 						echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
@@ -460,7 +462,7 @@ class Friends_Admin {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
-					// translators: %s is a Site URL.
+						// translators: %s is a Site URL.
 						echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
@@ -469,7 +471,7 @@ class Friends_Admin {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
-					// translators: %s is a Site URL.
+						// translators: %s is a Site URL.
 						echo wp_kses( sprintf( __( 'No friends plugin installed at %s. We subscribed you to their updates..', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
@@ -478,7 +480,7 @@ class Friends_Admin {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
-					// translators: %s is a username.
+						// translators: %s is a username.
 						echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $response->display_name ) );
 						?>
 					</p></div>
@@ -611,14 +613,16 @@ class Friends_Admin {
 	 */
 	public function add_user_bulk_options( $actions ) {
 		$friends = new WP_User_Query( array( 'role' => 'friend_request' ) );
+		$friends->get_results();
 
-		if ( ! empty( $friends->get_results() ) ) {
+		if ( ! empty( $friends ) ) {
 			$actions['accept_friend_request'] = 'Accept Friend Request';
 		}
 
 		$friends = new WP_User_Query( array( 'role' => 'subscription' ) );
+		$friends->get_results();
 
-		if ( ! empty( $friends->get_results() ) ) {
+		if ( ! empty( $friends ) ) {
 			$actions['friend_request'] = 'Send Friend Request';
 		}
 

@@ -21,7 +21,12 @@
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><?php echo esc_html( sprintf( __( 'Notifications for %s', 'friends' ), $user->display_name ) ); ?></th>
+				<th scope="row">
+				<?php
+				// translators: %s is a username.
+				echo esc_html( sprintf( __( 'Notifications for %s', 'friends' ), $user->display_name ) );
+				?>
+				</th>
 				<td>
 					<fieldset>
 						<label for="friend_request_notification">
