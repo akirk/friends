@@ -132,7 +132,7 @@ class Friends_Admin {
 		}
 
 		$response = wp_safe_remote_get(
-			$friend_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/hello', array(
+			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/hello', array(
 				'timeout' => 20,
 				'redirection' => 5,
 			)
@@ -167,7 +167,7 @@ class Friends_Admin {
 		update_option( 'friends_request_token_' . sha1( $friend_url ), $friend_request_token );
 
 		$response = wp_remote_post(
-			$friend_url . '/wp-json/' . $this->friends->rest::NAMESPACE . '/friend-request', array(
+			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request', array(
 				'body' => array(
 					'site_url' => site_url(),
 					'signature' => $friend_request_token,

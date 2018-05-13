@@ -107,7 +107,7 @@ class Friends_Feed {
 		$remote_post_ids = array();
 		$existing_posts = new WP_Query(
 			array(
-				'post_type' => $this->friends::FRIEND_POST_CACHE,
+				'post_type' => Friends::FRIEND_POST_CACHE,
 				'post_status' => array( 'publish', 'private' ),
 				'author' => $friend_user->ID,
 			)
@@ -189,7 +189,7 @@ class Friends_Feed {
 				wp_update_post( $post_data );
 			} else {
 				$post_data['post_author']   = $friend_user->ID;
-				$post_data['post_type']     = $this->friends::FRIEND_POST_CACHE;
+				$post_data['post_type']     = Friends::FRIEND_POST_CACHE;
 				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
 				$post_data['comment_count'] = $item->comment_count;
 				$post_id = wp_insert_post( $post_data );

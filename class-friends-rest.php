@@ -16,7 +16,7 @@
  * @author Alex Kirk
  */
 class Friends_REST {
-	const NAMESPACE = 'friends/v1';
+	const PREFIX = 'friends/v1';
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -49,25 +49,25 @@ class Friends_REST {
 	 */
 	public function add_rest_routes() {
 		register_rest_route(
-			self::NAMESPACE, 'friend-request', array(
+			self::PREFIX, 'friend-request', array(
 				'methods' => 'POST',
 				'callback' => array( $this, 'rest_friend_request' ),
 			)
 		);
 		register_rest_route(
-			self::NAMESPACE, 'friend-request-accepted', array(
+			self::PREFIX, 'friend-request-accepted', array(
 				'methods' => 'POST',
 				'callback' => array( $this, 'rest_friend_request_accepted' ),
 			)
 		);
 		register_rest_route(
-			self::NAMESPACE, 'hello', array(
+			self::PREFIX, 'hello', array(
 				'methods' => 'GET,POST',
 				'callback' => array( $this, 'rest_hello' ),
 			)
 		);
 		register_rest_route(
-			self::NAMESPACE, 'post-deleted', array(
+			self::PREFIX, 'post-deleted', array(
 				'methods' => 'POST',
 				'callback' => array( $this, 'rest_friend_post_deleted' ),
 			)
@@ -83,7 +83,7 @@ class Friends_REST {
 	public function rest_hello( WP_REST_Request $request ) {
 		if ( 'GET' === $request->get_method() ) {
 			return array(
-				'version' => $this->friends::VERSION,
+				'version' => Friends::VERSION,
 				'site_url' => site_url(),
 			);
 		}
@@ -101,7 +101,7 @@ class Friends_REST {
 		}
 
 		return array(
-			'version' => $this->friends::VERSION,
+			'version' => Friends::VERSION,
 			'response' => sha1( $signature . $request->get_param( 'challenge' ) ),
 		);
 	}
@@ -225,7 +225,7 @@ class Friends_REST {
 
 		$challenge = sha1( wp_generate_password( 256 ) );
 		$response = wp_safe_remote_post(
-			$site_url . '/wp-json/' . self::NAMESPACE . '/hello', array(
+			$site_url . '/wp-json/' . self::PREFIX . '/hello', array(
 				'body' => array(
 					'challenge' => $challenge,
 					'site_url' => site_url(),
@@ -335,7 +335,7 @@ class Friends_REST {
 
 		foreach ( $friends as $friend_user ) {
 			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . self::NAMESPACE . '/post-deleted', array(
+				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/post-deleted', array(
 					'body' => array(
 						'post_id' => $post_id,
 						'friend' => get_user_option( 'friends_out_token', $friend_user->ID ),
@@ -380,7 +380,7 @@ class Friends_REST {
 			);
 		}
 		$post = WP_Post::get_instance( $post_id );
-		if ( $this->friends::FRIEND_POST_CACHE === $post->post_type ) {
+		if ( Friends::FRIEND_POST_CACHE === $post->post_type ) {
 			wp_delete_post( $post_id );
 		}
 
@@ -415,7 +415,7 @@ class Friends_REST {
 		$in_token = $this->friends->access_control->update_in_token( $user->ID );
 
 		$response = wp_safe_remote_post(
-			$user->user_url . '/wp-json/' . self::NAMESPACE . '/friend-request-accepted', array(
+			$user->user_url . '/wp-json/' . self::PREFIX . '/friend-request-accepted', array(
 				'body' => array(
 					'token' => $request_token,
 					'friend' => $in_token,

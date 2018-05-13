@@ -16,7 +16,6 @@
  * @author Alex Kirk
  */
 class Friends_Page {
-	const NAMESPACE = 'friends/v1';
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -169,7 +168,7 @@ class Friends_Page {
 	public function friend_post_edit_link( $link, $post_id ) {
 		global $post;
 
-		if ( $post && $this->friends::FRIEND_POST_CACHE === $post->post_type ) {
+		if ( $post && Friends::FRIEND_POST_CACHE === $post->post_type ) {
 			if ( $this->on_friends_page ) {
 				return false;
 			}
@@ -188,7 +187,7 @@ class Friends_Page {
 	 * @reeturn string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, WP_Post $post, $leavename, $sample ) {
-		if ( $this->friends::FRIEND_POST_CACHE === $post->post_type ) {
+		if ( Friends::FRIEND_POST_CACHE === $post->post_type ) {
 			return get_the_guid( $post );
 		}
 		return $post_link;
@@ -214,7 +213,7 @@ class Friends_Page {
 		$page_id = get_query_var( 'page' );
 
 		$query->set( 'post_status', array( 'publish', 'private' ) );
-		$query->set( 'post_type', array( $this->friends::FRIEND_POST_CACHE, 'post' ) );
+		$query->set( 'post_type', array( Friends::FRIEND_POST_CACHE, 'post' ) );
 		$query->is_page = false;
 		$query->set( 'page', null );
 		$query->set( 'pagename', null );

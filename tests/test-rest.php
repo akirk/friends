@@ -93,7 +93,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 	 * Check that all endpoints are reachable.
 	 */
 	public function test_endpoints() {
-		$the_route = '/' . Friends_REST::NAMESPACE;
+		$the_route = '/' . Friends_REST::PREFIX;
 		$routes = $this->server->get_routes();
 		foreach ( $routes as $route => $route_config ) {
 			if ( 0 === strpos( $the_route, $route ) ) {
@@ -112,7 +112,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 	 * Test the Hello endpoint.
 	 */
 	public function test_hello() {
-		$hello = '/' . Friends_REST::NAMESPACE . '/hello';
+		$hello = '/' . Friends_REST::PREFIX . '/hello';
 		$routes = $this->server->get_routes();
 		$this->assertArrayHasKey( $hello, $routes );
 
@@ -136,7 +136,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Let's send a friend request to $friend_url.
 		update_option( 'siteurl', $friend_url );
-		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::NAMESPACE . '/friend-request' );
+		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/friend-request' );
 		$request->set_param( 'site_url', $my_url );
 		$request->set_param( 'signature', $friend_request_token );
 
@@ -162,7 +162,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Now let's accept the friend request.
 		update_option( 'siteurl', $my_url );
-		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::NAMESPACE . '/friend-request-accepted' );
+		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/friend-request-accepted' );
 		$request_token = $friend_request_response->data['friend_request_pending'];
 		$request->set_param( 'token', $request_token );
 		$request->set_param( 'friend', $my_token_at_friend );
