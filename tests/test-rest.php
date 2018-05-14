@@ -61,7 +61,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		}
 		add_filter(
 			'pre_http_request', function( $preempt, $request, $url ) {
-				$p = parse_url( $url );
+				$p = wp_parse_url( $url );
 
 				$site_url = site_url();
 
@@ -74,13 +74,14 @@ class Friends_RestTest extends WP_UnitTestCase {
 						$r->set_param( $key, $value );
 					}
 				}
-				$response = $this->server->dispatch( $r );
+				global $wp_rest_server;
+				$response = $wp_rest_server->dispatch( $r );
 
 				// Restore the old site_url.
 				update_option( 'siteurl', $site_url );
 
 				return array(
-					'body'     => json_encode( $response->data ),
+					'body'     => wp_json_encode( $response->data ),
 					'response' => array(
 						'code' => $response->status,
 					),
@@ -145,7 +146,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Verify that the user case created at remote.
 		$my_user_at_friend = get_user_by( 'login', $friends->access_control->get_user_login_for_site_url( $my_url ) );
-		$this->assertInstanceOf( WP_User::class, $my_user_at_friend );
+		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
@@ -153,7 +154,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// We're just testing the REST api, so we need to create the user ourselves.
 		$friend_user = $friends->access_control->create_user( $friend_url, 'pending_friend_request' );
-		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
 
 		// And set the appropriate options.
 		update_option( 'friends_accept_token_' . $friend_request_response->data['friend_request_pending'], $friend_user->ID );
@@ -189,7 +190,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -197,7 +198,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Verify that the user was created at remote.
 		$my_user_at_friend = get_user_by( 'login', $friends->access_control->get_user_login_for_site_url( $my_url ) );
-		$this->assertInstanceOf( WP_User::class, $my_user_at_friend );
+		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -229,7 +230,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -237,7 +238,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Verify that the user was created at remote.
 		$my_user_at_friend = get_user_by( 'login', $friends->access_control->get_user_login_for_site_url( $my_url ) );
-		$this->assertInstanceOf( WP_User::class, $my_user_at_friend );
+		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -270,7 +271,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -311,7 +312,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -352,7 +353,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -360,7 +361,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Verify that the user was created at remote.
 		$my_user_at_friend = get_user_by( 'login', $friends->access_control->get_user_login_for_site_url( $my_url ) );
-		$this->assertInstanceOf( WP_User::class, $my_user_at_friend );
+		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -397,7 +398,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( WP_User::class, $friend_user );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -405,7 +406,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Verify that the user was created at remote.
 		$my_user_at_friend = get_user_by( 'login', $friends->access_control->get_user_login_for_site_url( $my_url ) );
-		$this->assertInstanceOf( WP_User::class, $my_user_at_friend );
+		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
