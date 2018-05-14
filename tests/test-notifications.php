@@ -15,11 +15,13 @@ class Friends_NoticiationTest extends WP_UnitTestCase {
 	public function test_notify_new_post() {
 		$that = $this;
 		add_filter(
-			'friends_send_mail', function() use ( $that ) {
-				$that->assertTrue( true );
+			'friends_send_mail', function( $assert ) use ( $that ) {
+				$that->assertTrue( $assert );
 				return false;
 			}
 		);
+
+		apply_filters( 'friends_send_mail', true );
 		// TODO: Implementation.
 	}
 }

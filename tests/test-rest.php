@@ -30,7 +30,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		add_filter(
 			'http_request_host_is_external', function( $in, $host ) {
-				if ( in_array( $host, [ 'me.local', 'friend.local' ] ) ) {
+				if ( in_array( $host, array( 'me.local', 'friend.local' ) ) ) {
 					return true;
 				}
 				return $in;
@@ -41,7 +41,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		if ( $debug_options ) {
 			add_filter(
 				'pre_update_option', function( $value, $option, $old_value ) {
-					if ( ! in_array( $option, [ 'rewrite_rules' ] ) ) {
+					if ( ! in_array( $option, array( 'rewrite_rules' ) ) ) {
 						echo PHP_EOL, $option, ' => ', $value, PHP_EOL;
 					}
 					return $value;
@@ -79,12 +79,12 @@ class Friends_RestTest extends WP_UnitTestCase {
 				// Restore the old site_url.
 				update_option( 'siteurl', $site_url );
 
-				return [
+				return array(
 					'body'     => json_encode( $response->data ),
-					'response' => [
+					'response' => array(
 						'code' => $response->status,
-					],
-				];
+					),
+				);
 			}, 10, 3
 		);
 	}
@@ -245,7 +245,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Remote approves friend request through admin.
 		update_option( 'siteurl', $friend_url );
-		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', [ $my_user_at_friend->ID ] );
+		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', array( $my_user_at_friend->ID ) );
 
 		// Refresh the users before querying them again.
 		$friend_user = new WP_User( $friend_user->ID );
@@ -368,7 +368,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Remote approves friend request through admin.
 		update_option( 'siteurl', $friend_url );
-		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', [ $my_user_at_friend->ID ] );
+		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', array( $my_user_at_friend->ID ) );
 
 		// Refresh the users before querying them again.
 		$friend_user = new WP_User( $friend_user->ID );
