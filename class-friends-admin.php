@@ -37,13 +37,13 @@ class Friends_Admin {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'admin_menu',                array( $this, 'register_admin_menu' ), 10, 3 );
-		add_filter( 'user_row_actions',          array( $this, 'user_row_actions' ), 10, 2 );
+		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
+		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );
-		add_filter( 'bulk_actions-users',        array( $this, 'add_user_bulk_options' ) );
-		add_filter( 'get_edit_user_link',        array( $this, 'admin_edit_user_link' ), 10, 2 );
-		add_action( 'admin_bar_menu',            array( $this, 'admin_bar_friends_menu' ), 100 );
+		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
+		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 100 );
 	}
 
 	/**
@@ -133,7 +133,7 @@ class Friends_Admin {
 
 		$response = wp_safe_remote_get(
 			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/hello', array(
-				'timeout' => 20,
+				'timeout'     => 20,
 				'redirection' => 5,
 			)
 		);
@@ -168,11 +168,11 @@ class Friends_Admin {
 
 		$response = wp_remote_post(
 			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request', array(
-				'body' => array(
-					'site_url' => site_url(),
+				'body'        => array(
+					'site_url'  => site_url(),
 					'signature' => $friend_request_token,
 				),
-				'timeout' => 20,
+				'timeout'     => 20,
 				'redirection' => 5,
 			)
 		);
@@ -331,8 +331,8 @@ class Friends_Admin {
 	 * Process the Friends Edit User page
 	 */
 	public function process_admin_edit_friend() {
-		$friend = $this->check_admin_edit_friend();
-		$arg = 'updated';
+		$friend    = $this->check_admin_edit_friend();
+		$arg       = 'updated';
 		$arg_value = 1;
 
 		if ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( $_GET['accept-friend-request'], 'accept-friend-request-' . $friend->ID ) ) {
@@ -352,10 +352,10 @@ class Friends_Admin {
 						// translators: %s is a Site URL.
 						$arg_value = wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
 					} elseif ( $response->has_cap( 'friend' ) ) {
-						$arg = 'friend';
+						$arg       = 'friend';
 						$arg_value = 1;
 					} elseif ( $response->has_cap( 'subscription' ) ) {
-						$arg = 'subscribed';
+						$arg       = 'subscribed';
 						$arg_value = 1;
 					}
 				}
@@ -437,7 +437,7 @@ class Friends_Admin {
 		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
 
 			$friend_url = trim( $_POST['friend_url'] );
-			$protocol = wp_parse_url( $friend_url, PHP_URL_SCHEME );
+			$protocol   = wp_parse_url( $friend_url, PHP_URL_SCHEME );
 			if ( ! $protocol ) {
 				$friend_url = 'http://' . $friend_url;
 			}
@@ -514,17 +514,17 @@ class Friends_Admin {
 		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '">' . __( 'View' ) . '</a>';
 
 		if ( $user->has_cap( 'friend_request' ) ) {
-			$link = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
+			$link                                  = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
 		}
 
 		if ( $user->has_cap( 'pending_friend_request' ) ) {
-			$link = self_admin_url( wp_nonce_url( 'users.php?action=friend_request&users[]=' . $user->ID ) );
+			$link                           = self_admin_url( wp_nonce_url( 'users.php?action=friend_request&users[]=' . $user->ID ) );
 			$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
 		}
 
 		if ( $user->has_cap( 'subscription' ) ) {
-			$link = self_admin_url( wp_nonce_url( 'users.php?action=friend_request&users[]=' . $user->ID ) );
+			$link                           = self_admin_url( wp_nonce_url( 'users.php?action=friend_request&users[]=' . $user->ID ) );
 			$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Send Friend Request', 'friends' ) . '</a>';
 		}
 

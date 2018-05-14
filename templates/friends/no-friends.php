@@ -16,7 +16,7 @@
 
 	<p>
 	<?php
-	 /* translators: %s is URL. */
+	/* translators: %s is URL. */
 	printf( __( "You don't have any friends yet! You can add friends by <a href=%s>sending friend requests</a>.", 'friends' ), admin_url( 'admin.php?page=send-friend-request' ) );
 	?>
 	</p>

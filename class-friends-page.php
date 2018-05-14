@@ -44,14 +44,14 @@ class Friends_Page {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_filter( 'pre_get_posts',           array( $this, 'friend_posts_query' ), 2 );
-		add_filter( 'post_type_link',          array( $this, 'friend_post_link' ), 10, 4 );
-		add_filter( 'get_edit_post_link',      array( $this, 'friend_post_edit_link' ), 10, 2 );
-		add_filter( 'template_include',        array( $this, 'template_override' ) );
-		add_filter( 'init',                    array( $this, 'register_friends_sidebar' ) );
+		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
+		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 4 );
+		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ), 10, 2 );
+		add_filter( 'template_include', array( $this, 'template_override' ) );
+		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'frontend_publish_post' ) );
-		add_action( 'wp_enqueue_scripts',      array( $this, 'enqueue_scripts' ) );
-		add_filter( 'body_class',              array( $this, 'add_body_class' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 	}
 
 	/**
@@ -60,12 +60,12 @@ class Friends_Page {
 	public function register_friends_sidebar() {
 		register_sidebar(
 			array(
-				'name' => 'Friends Sidebar',
-				'id' => 'friends-sidebar',
+				'name'          => 'Friends Sidebar',
+				'id'            => 'friends-sidebar',
 				'before_widget' => '<div class="friends-widget">',
-				'after_widget' => '</div>',
-				'before_title' => '<h3>',
-				'after_title' => '</h3>',
+				'after_widget'  => '</div>',
+				'before_title'  => '<h3>',
+				'after_title'   => '</h3>',
 			)
 		);
 	}
@@ -99,13 +99,13 @@ class Friends_Page {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
 			$post_id = wp_insert_post(
 				array(
-					'post_type'         => 'post',
-					'post_title'        => $_POST['title'],
-					'post_content'      => $_POST['content'],
-					'post_status'       => $_POST['status'],
+					'post_type'    => 'post',
+					'post_title'   => $_POST['title'],
+					'post_content' => $_POST['content'],
+					'post_status'  => $_POST['status'],
 				)
 			);
-			$result = is_wp_error( $post_id ) ? 'error' : 'success';
+			$result  = is_wp_error( $post_id ) ? 'error' : 'success';
 			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
 				echo $result;
 			} else {

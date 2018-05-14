@@ -38,10 +38,10 @@ class Friends_REST {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'rest_api_init',      array( $this, 'add_rest_routes' ) );
-		add_action( 'wp_trash_post',      array( $this, 'notify_remote_friend_post_deleted' ) );
+		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
+		add_action( 'wp_trash_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
-		add_action( 'set_user_role',      array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
+		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
 	}
 
 	/**
@@ -50,25 +50,25 @@ class Friends_REST {
 	public function add_rest_routes() {
 		register_rest_route(
 			self::PREFIX, 'friend-request', array(
-				'methods' => 'POST',
+				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_friend_request' ),
 			)
 		);
 		register_rest_route(
 			self::PREFIX, 'friend-request-accepted', array(
-				'methods' => 'POST',
+				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_friend_request_accepted' ),
 			)
 		);
 		register_rest_route(
 			self::PREFIX, 'hello', array(
-				'methods' => 'GET,POST',
+				'methods'  => 'GET,POST',
 				'callback' => array( $this, 'rest_hello' ),
 			)
 		);
 		register_rest_route(
 			self::PREFIX, 'post-deleted', array(
-				'methods' => 'POST',
+				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_friend_post_deleted' ),
 			)
 		);
@@ -83,7 +83,7 @@ class Friends_REST {
 	public function rest_hello( WP_REST_Request $request ) {
 		if ( 'GET' === $request->get_method() ) {
 			return array(
-				'version' => Friends::VERSION,
+				'version'  => Friends::VERSION,
 				'site_url' => site_url(),
 			);
 		}
@@ -101,7 +101,7 @@ class Friends_REST {
 		}
 
 		return array(
-			'version' => Friends::VERSION,
+			'version'  => Friends::VERSION,
 			'response' => sha1( $signature . $request->get_param( 'challenge' ) ),
 		);
 	}
@@ -113,11 +113,11 @@ class Friends_REST {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_request_accepted( WP_REST_Request $request ) {
-		$accept_token = $request->get_param( 'token' );
-		$out_token = $request->get_param( 'friend' );
-		$proof = $request->get_param( 'proof' );
+		$accept_token   = $request->get_param( 'token' );
+		$out_token      = $request->get_param( 'friend' );
+		$proof          = $request->get_param( 'proof' );
 		$friend_user_id = get_option( 'friends_accept_token_' . $accept_token );
-		$friend_user = false;
+		$friend_user    = false;
 		if ( $friend_user_id ) {
 			$friend_user = new WP_User( $friend_user_id );
 		}
@@ -174,7 +174,7 @@ class Friends_REST {
 	 */
 	public function limit_requests_in_minutes( $name, $allowed_requests, $minutes ) {
 		$requests = 0;
-		$now = time();
+		$now      = time();
 
 		for ( $time = $now - $minutes * 60; $time <= $now; $time += 60 ) {
 			$key = $name . date( 'dHi', $time );
@@ -224,13 +224,13 @@ class Friends_REST {
 		}
 
 		$challenge = sha1( wp_generate_password( 256 ) );
-		$response = wp_safe_remote_post(
+		$response  = wp_safe_remote_post(
 			$site_url . '/wp-json/' . self::PREFIX . '/hello', array(
-				'body' => array(
+				'body'        => array(
 					'challenge' => $challenge,
-					'site_url' => site_url(),
+					'site_url'  => site_url(),
 				),
-				'timeout' => 5,
+				'timeout'     => 5,
 				'redirection' => 1,
 			)
 		);
@@ -336,11 +336,11 @@ class Friends_REST {
 		foreach ( $friends as $friend_user ) {
 			$response = wp_safe_remote_post(
 				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/post-deleted', array(
-					'body' => array(
+					'body'        => array(
 						'post_id' => $post_id,
-						'friend' => get_user_option( 'friends_out_token', $friend_user->ID ),
+						'friend'  => get_user_option( 'friends_out_token', $friend_user->ID ),
 					),
-					'timeout' => 20,
+					'timeout'     => 20,
 					'redirection' => 5,
 				)
 			);
@@ -354,7 +354,7 @@ class Friends_REST {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_post_deleted( $request ) {
-		$token = $request->get_param( 'friend' );
+		$token   = $request->get_param( 'friend' );
 		$user_id = $this->friends->access_control->verify_token( $token );
 		if ( ! $user_id ) {
 			return new WP_Error(
@@ -365,8 +365,8 @@ class Friends_REST {
 				)
 			);
 		}
-		$friend_user = new WP_User( $user_id );
-		$remote_post_id = $request->get_param( 'post_id' );
+		$friend_user     = new WP_User( $user_id );
+		$remote_post_id  = $request->get_param( 'post_id' );
 		$remote_post_ids = $this->friends->feed->get_remote_post_ids( $friend_user );
 
 		$post_id = false;
@@ -412,16 +412,16 @@ class Friends_REST {
 		$user = new WP_User( $user_id );
 
 		$friend_request_token = get_option( 'friends_request_token_' . sha1( $user->user_url ) );
-		$in_token = $this->friends->access_control->update_in_token( $user->ID );
+		$in_token             = $this->friends->access_control->update_in_token( $user->ID );
 
 		$response = wp_safe_remote_post(
 			$user->user_url . '/wp-json/' . self::PREFIX . '/friend-request-accepted', array(
-				'body' => array(
-					'token' => $request_token,
+				'body'        => array(
+					'token'  => $request_token,
 					'friend' => $in_token,
-					'proof' => sha1( $request_token . $friend_request_token ),
+					'proof'  => sha1( $request_token . $friend_request_token ),
 				),
-				'timeout' => 20,
+				'timeout'     => 20,
 				'redirection' => 5,
 			)
 		);
@@ -432,7 +432,7 @@ class Friends_REST {
 
 		delete_user_option( $user_id, 'friends_request_token' );
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		$u = get_user_by( 'login', 'friend.local' );
+		$u    = get_user_by( 'login', 'friend.local' );
 		if ( isset( $json->friend ) ) {
 			$this->friends->access_control->make_friend( $user, $json->friend );
 		} else {

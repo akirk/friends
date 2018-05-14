@@ -38,16 +38,16 @@ class Friends_Feed {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_filter( 'pre_get_posts',              array( $this, 'private_feed_query' ), 1 );
-		add_filter( 'private_title_format',       array( $this, 'private_title_format' ) );
+		add_filter( 'pre_get_posts', array( $this, 'private_feed_query' ), 1 );
+		add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
 		add_filter( 'pre_option_rss_use_excerpt', array( $this, 'feed_use_excerpt' ), 90 );
-		add_action( 'rss_item',                   array( $this, 'feed_additional_fields' ) );
-		add_action( 'rss2_item',                  array( $this, 'feed_additional_fields' ) );
-		add_action( 'rss_ns',                     array( $this, 'additional_feed_namespaces' ) );
-		add_action( 'rss2_ns',                    array( $this, 'additional_feed_namespaces' ) );
+		add_action( 'rss_item', array( $this, 'feed_additional_fields' ) );
+		add_action( 'rss2_item', array( $this, 'feed_additional_fields' ) );
+		add_action( 'rss_ns', array( $this, 'additional_feed_namespaces' ) );
+		add_action( 'rss2_ns', array( $this, 'additional_feed_namespaces' ) );
 
-		add_action( 'friends_refresh_feeds',      array( $this, 'cron_friends_refresh_feeds' ) );
-		add_action( 'set_user_role',              array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
+		add_action( 'friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
+		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 	}
 
 	/**
@@ -105,19 +105,19 @@ class Friends_Feed {
 	 */
 	private function get_remote_post_ids( WP_User $friend_user ) {
 		$remote_post_ids = array();
-		$existing_posts = new WP_Query(
+		$existing_posts  = new WP_Query(
 			array(
-				'post_type' => Friends::FRIEND_POST_CACHE,
+				'post_type'   => Friends::FRIEND_POST_CACHE,
 				'post_status' => array( 'publish', 'private' ),
-				'author' => $friend_user->ID,
+				'author'      => $friend_user->ID,
 			)
 		);
 
 		if ( $existing_posts->have_posts() ) {
 			while ( $existing_posts->have_posts() ) {
-				$post = $existing_posts->next_post();
-				$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
-				$remote_post_ids[ $remote_post_id ] = $post->ID;
+				$post                                      = $existing_posts->next_post();
+				$remote_post_id                            = get_post_meta( $post->ID, 'remote_post_id', true );
+				$remote_post_ids[ $remote_post_id ]        = $post->ID;
 				$remote_post_ids[ get_permalink( $post ) ] = $post->ID;
 			}
 		}
@@ -142,10 +142,10 @@ class Friends_Feed {
 				continue;
 			}
 			$permalink = $item->get_permalink();
-			$content = wp_kses_post( $item->get_content() );
+			$content   = wp_kses_post( $item->get_content() );
 
 			// Fallback, when no friends plugin is installed.
-			$item->{'post-id'} = $permalink;
+			$item->{'post-id'}     = $permalink;
 			$item->{'post-status'} = 'publish';
 			if ( ! isset( $item->comment_count ) ) {
 				$item->comment_count = 0;
@@ -192,7 +192,7 @@ class Friends_Feed {
 				$post_data['post_type']     = Friends::FRIEND_POST_CACHE;
 				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
 				$post_data['comment_count'] = $item->comment_count;
-				$post_id = wp_insert_post( $post_data );
+				$post_id                    = wp_insert_post( $post_data );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
@@ -205,7 +205,7 @@ class Friends_Feed {
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 
-			$new_post = ! isset( $post_data['ID'] );
+			$new_post     = ! isset( $post_data['ID'] );
 			$notify_users = apply_filters( 'notify_about_new_friend_post', $new_post && ! $new_friend, $friend_user, $post_id );
 			if ( $notify_users ) {
 				do_action( 'notify_new_friend_post', WP_Post::get_instance( $post_id ) );

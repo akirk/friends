@@ -48,7 +48,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			<a href="<?php echo esc_attr( self_admin_url( 'users.php?role=friend_request' ) ); ?>">
 			<?php
 			// translators: %s is the number of friends.
-			echo wp_kses( sprintf( _n( 'You have %s friend request.' , ' You have %s friend requests.', $friend_requests->get_total(), 'friends' ), '<span class="friend-request-count">' . $friend_requests->get_total() . '</span>' ), array( 'span' => array( 'class' => array() ) ) );
+			echo wp_kses( sprintf( _n( 'You have %s friend request.', ' You have %s friend requests.', $friend_requests->get_total(), 'friends' ), '<span class="friend-request-count">' . $friend_requests->get_total() . '</span>' ), array( 'span' => array( 'class' => array() ) ) );
 			?>
 			</a>
 		<?php endif; ?>
@@ -61,7 +61,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			esc_html_e( "You don't have any friends yet.", 'friends' );
 		} else {
 			// translators: %s is the number of friends.
-			echo wp_kses( sprintf( _n( 'You have %s friend:' , ' You have %s friends:', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' ), array( 'span' => array( 'class' => array() ) ) );
+			echo wp_kses( sprintf( _n( 'You have %s friend:', ' You have %s friends:', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' ), array( 'span' => array( 'class' => array() ) ) );
 		}
 		?>
 		</span>

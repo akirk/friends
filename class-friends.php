@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION = '0.6';
+	const VERSION           = '0.6';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 
 	/**
@@ -74,7 +74,7 @@ class Friends {
 	public static function get_instance() {
 		static $instance;
 		if ( ! isset( $instance ) ) {
-			$self = get_called_class();
+			$self     = get_called_class();
 			$instance = new $self();
 		}
 		return $instance;
@@ -85,11 +85,11 @@ class Friends {
 	 */
 	public function __construct() {
 		$this->access_control = new Friends_Access_Control( $this );
-		$this->admin = new Friends_Admin( $this );
-		$this->feed = new Friends_Feed( $this );
-		$this->notifications = new Friends_Notifications( $this );
-		$this->page = new Friends_Page( $this );
-		$this->rest = new Friends_REST( $this );
+		$this->admin          = new Friends_Admin( $this );
+		$this->feed           = new Friends_Feed( $this );
+		$this->notifications  = new Friends_Notifications( $this );
+		$this->page           = new Friends_Page( $this );
+		$this->rest           = new Friends_REST( $this );
 
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
@@ -212,7 +212,7 @@ class Friends {
 
 		$friend_posts = new WP_Query(
 			array(
-				'post_type' => self::FRIEND_POST_CACHE,
+				'post_type'   => self::FRIEND_POST_CACHE,
 				'post_status' => array( 'publish', 'private' ),
 			)
 		);

@@ -37,8 +37,8 @@ class Friends_Notifications {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'notify_new_friend_post',         array( $this, 'notify_new_friend_post' ) );
-		add_action( 'notify_new_friend_request',      array( $this, 'notify_new_friend_request' ) );
+		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ) );
+		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 	}
 
@@ -57,7 +57,7 @@ class Friends_Notifications {
 			if ( ! $user->user_email ) {
 				continue;
 			}
-			$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user );
+			$notify_user  = ! get_user_option( 'friends_no_new_post_notification', $user );
 			$notify_user &= ! get_user_option( 'friends_no_new_post_notification_' . $post->post_author, $user );
 
 			if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post ) ) {
@@ -107,7 +107,7 @@ class Friends_Notifications {
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
 			// translators: %1$s is the blog name, %2$s is a username.
-			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Request from %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message, $message_headers );
+			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Request from %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message, $message_headers );
 		}
 
 	}
@@ -142,7 +142,7 @@ class Friends_Notifications {
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
 			// translators: %1$s is the blog name, %2$s is a username.
-			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] %2$s accepted your Friend Request', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name , ENT_QUOTES ) ), $message, $message_headers );
+			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] %2$s accepted your Friend Request', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message, $message_headers );
 		}
 	}
 

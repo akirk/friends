@@ -45,9 +45,9 @@ class Friends_Access_Control {
 	 */
 	private function register_hooks() {
 		add_filter( 'determine_current_user', array( $this, 'authenticate' ), 1 );
-		add_action( 'set_user_role',          array( $this, 'update_friend_request_token' ), 10, 3 );
-		add_action( 'delete_user',            array( $this, 'delete_friend_token' ) );
-		add_action( 'init',                   array( $this, 'remote_login' ) );
+		add_action( 'set_user_role', array( $this, 'update_friend_request_token' ), 10, 3 );
+		add_action( 'delete_user', array( $this, 'delete_friend_token' ) );
+		add_action( 'init', array( $this, 'remote_login' ) );
 	}
 
 	/**
@@ -129,7 +129,7 @@ class Friends_Access_Control {
 			'user_pass'  => wp_generate_password( 256 ),
 			'role'       => $role,
 		);
-		$user_id = wp_insert_user( $userdata );
+		$user_id  = wp_insert_user( $userdata );
 
 		update_user_option( $user_id, 'friends_new_friend', true );
 
