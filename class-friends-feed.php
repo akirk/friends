@@ -198,8 +198,12 @@ class Friends_Feed {
 				}
 			}
 			$author = $item->get_author();
-			update_post_meta( $post_id, 'author', $author->name );
-			update_post_meta( $post_id, 'gravatar', $item->gravatar );
+			if ( $author ) {
+				update_post_meta( $post_id, 'author', $author->name );
+			}
+			if ( $item->gravatar ) {
+				update_post_meta( $post_id, 'gravatar', $item->gravatar );
+			}
 
 			update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			global $wpdb;

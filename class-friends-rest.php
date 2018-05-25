@@ -432,7 +432,6 @@ class Friends_REST {
 
 		delete_user_option( $user_id, 'friends_request_token' );
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		$u    = get_user_by( 'login', 'friend.local' );
 		if ( isset( $json->friend ) ) {
 			$this->friends->access_control->make_friend( $user, $json->friend );
 		} else {

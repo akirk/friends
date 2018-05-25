@@ -56,7 +56,7 @@ class Friends_Admin {
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
 		add_submenu_page( 'friends-settings', 'Feed', 'Friends &amp; Requests', 'edit_users', 'users.php' );
-		add_submenu_page( 'friends-settings', 'Feed', 'Refresh', 'manage_options', 'refresh', array( $this, 'admin_refresh_friend_posts' ) );
+		add_submenu_page( 'friends-settings', 'Feed', 'Refresh', 'manage_options', 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 
 		if ( isset( $_GET['page'] ) && 'edit-friend' === $_GET['page'] ) {
 			add_submenu_page( 'friends-settings', 'Edit User', 'Edit User', 'edit_users', 'edit-friend', array( $this, 'render_admin_edit_friend' ) );

@@ -21,44 +21,14 @@ class Friends_RestTest extends WP_UnitTestCase {
 	 */
 	public function setUp() {
 		parent::setUp();
+
+		// Manually activate the REST server.
 		global $wp_rest_server;
 		$wp_rest_server = new \WP_REST_Server;
 		$this->server   = $wp_rest_server;
 		do_action( 'rest_api_init' );
 
-		add_filter( 'friends_immediately_fetch_feed', '__return_false' );
-
-		add_filter(
-			'http_request_host_is_external', function( $in, $host ) {
-				if ( in_array( $host, array( 'me.local', 'friend.local' ) ) ) {
-					return true;
-				}
-				return $in;
-			}, 10, 2
-		);
-
-		$debug_options = false;
-		if ( $debug_options ) {
-			add_filter(
-				'pre_update_option', function( $value, $option, $old_value ) {
-					if ( ! in_array( $option, array( 'rewrite_rules' ) ) ) {
-						echo PHP_EOL, $option, ' => ', $value, PHP_EOL;
-					}
-					return $value;
-				}, 10, 3
-			);
-
-			add_action(
-				'update_user_metadata', function( $meta_id, $object_id, $meta_key, $meta_value ) {
-					echo PHP_EOL, $meta_key, ' (', $object_id, ') => ';
-					if ( is_numeric( $meta_value ) || is_string( $meta_value ) ) {
-						echo $meta_value, PHP_EOL;
-					} else {
-						var_dump( $meta_value );
-					}
-				}, 10, 4
-			);
-		}
+		// Emulate HTTP requests to the REST API.
 		add_filter(
 			'pre_http_request', function( $preempt, $request, $url ) {
 				$p = wp_parse_url( $url );
