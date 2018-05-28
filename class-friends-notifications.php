@@ -51,8 +51,6 @@ class Friends_Notifications {
 		$users = new WP_User_Query( array( 'role' => 'administrator' ) );
 		$users = $users->get_results();
 
-		$message_headers = 'Content-Type: text/plain; charset="' . get_option( 'blog_charset' ) . "\"\n";
-
 		foreach ( $users as $user ) {
 			if ( ! $user->user_email ) {
 				continue;
@@ -71,8 +69,8 @@ class Friends_Notifications {
 			$message .= sprintf( __( 'Your friend %1$s has posted something new: %2$s', 'friends' ), $author->display_name, site_url( '/friends/' . $post->ID . '/' ) ) . PHP_EOL . PHP_EOL;
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
-			// translators: %1$s is the blog name, %2$s is a post title.
-			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Post: %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $post->post_title, ENT_QUOTES ) ), $message, $message_headers );
+			// translators: %s is a post title.
+			$this->send_mail( $user->user_email, sprintf( __( 'New Friend Post: %s', 'friends' ), wp_specialchars_decode( $post->post_title, ENT_QUOTES ) ), $message );
 		}
 	}
 
@@ -84,8 +82,6 @@ class Friends_Notifications {
 	public function notify_new_friend_request( WP_User $friend_user ) {
 		$users = new WP_User_Query( array( 'role' => 'administrator' ) );
 		$users = $users->get_results();
-
-		$message_headers = 'Content-Type: text/plain; charset="' . get_option( 'blog_charset' ) . "\"\n";
 
 		foreach ( $users as $user ) {
 			if ( ! $user->user_email ) {
@@ -106,8 +102,8 @@ class Friends_Notifications {
 			$message .= self_admin_url( 'users.php?role=friend_request' ) . PHP_EOL . PHP_EOL;
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
-			// translators: %1$s is the blog name, %2$s is a username.
-			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] New Friend Request from %2$s', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message, $message_headers );
+			// translators: %s is a username.
+			$this->send_mail( $user->user_email, sprintf( __( 'New Friend Request from %s', 'friends' ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message );
 		}
 
 	}
@@ -120,8 +116,6 @@ class Friends_Notifications {
 	public function notify_accepted_friend_request( WP_User $friend_user ) {
 		$users = new WP_User_Query( array( 'role' => 'administrator' ) );
 		$users = $users->get_results();
-
-		$message_headers = 'Content-Type: text/plain; charset="' . get_option( 'blog_charset' ) . "\"\n";
 
 		foreach ( $users as $user ) {
 			if ( ! $user->user_email ) {
@@ -141,8 +135,8 @@ class Friends_Notifications {
 			$message .= site_url( '/friends/' ) . PHP_EOL . PHP_EOL;
 			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
 
-			// translators: %1$s is the blog name, %2$s is a username.
-			$this->send_mail( $user->user_email, sprintf( __( '[%1$s] %2$s accepted your Friend Request', 'friends' ), wp_specialchars_decode( get_site_option( 'blogname' ), ENT_QUOTES ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message, $message_headers );
+			// translators: %s is a username.
+			$this->send_mail( $user->user_email, sprintf( __( '%s accepted your Friend Request', 'friends' ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message );
 		}
 	}
 
@@ -161,6 +155,23 @@ class Friends_Notifications {
 			return;
 		}
 
+		if ( is_multisite() ) {
+			$sitename = get_site_option( 'site_name' );
+		} else {
+			$sitename = get_option( 'blogname' );
+		}
+
+		$subject = sprintf( '[%s] %s', wp_specialchars_decode( $sitename, ENT_QUOTES ), $subject );
+
+		if ( is_multisite() ) {
+			$sitename = get_site_option( 'site_name' );
+			$charset = get_option( 'blog_charset' );
+		} else {
+			$sitename = get_option( 'blogname' );
+			$charset = get_option( 'blog_charset' );
+		}
+
+		$headers = 'Content-Type: text/plain; charset="' . $charset . "\"\n" . $headers;
 		return wp_mail( $to, $subject, $message, $headers, $attachments );
 	}
 }

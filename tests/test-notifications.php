@@ -84,7 +84,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		);
 		add_filter(
 			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
-				$that->assertEquals( $subject, sprintf( '[%s] New Friend Post: %s', WP_TESTS_TITLE, 'First Friend Post' ) );
+				$that->assertEquals( $subject, sprintf( 'New Friend Post: %s', 'First Friend Post' ) );
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
