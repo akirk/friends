@@ -80,6 +80,10 @@ class Friends_Notifications {
 	 * @param  WP_User $friend_user The user requesting friendship.
 	 */
 	public function notify_new_friend_request( WP_User $friend_user ) {
+		if ( ! $friend_user->has_cap( 'friend_request' ) ) {
+			return;
+		}
+
 		$users = new WP_User_Query( array( 'role' => 'administrator' ) );
 		$users = $users->get_results();
 

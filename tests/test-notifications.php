@@ -24,13 +24,6 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	private $friend_id;
 
 	/**
-	 * User ID of a friend at me.local
-	 *
-	 * @var int
-	 */
-	private $me_id;
-
-	/**
 	 * Setup the unit tests.
 	 */
 	public function setUp() {
@@ -45,8 +38,6 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			)
 		);
 
-		// Usually these users would be on two different sites.
-		// For purposes of unit testing we're doing this all on one site.
 		$this->friend_id = $this->factory->user->create(
 			array(
 				'user_login' => 'friend.local',
@@ -54,21 +45,6 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				'role'       => 'friend',
 			)
 		);
-
-		$this->me_id = $this->factory->user->create(
-			array(
-				'user_login' => 'me.local',
-				'role'       => 'friend',
-			)
-		);
-
-		$token = sha1( wp_generate_password( 256 ) );
-		update_user_option( $this->me_id, 'friends_out_token', $token );
-		update_user_option( $this->friend_id, 'friends_in_token', $token );
-
-		$token = sha1( wp_generate_password( 256 ) );
-		update_user_option( $this->friend_id, 'friends_out_token', $token );
-		update_user_option( $this->me_id, 'friends_in_token', $token );
 	}
 
 	/**
@@ -94,7 +70,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		if ( ! class_exists( 'SimplePie', false ) ) {
 			require_once( ABSPATH . WPINC . '/class-simplepie.php' );
 		}
-		update_option( 'siteurl', 'http://friend.local' );
+		update_option( 'siteurl', 'http://me.local' );
 
 		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 
@@ -102,7 +78,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->me_id );
+		$user = new WP_User( $this->friend_id );
 
 		$friends = Friends::get_instance();
 		$friends->feed->process_friend_feed( $user, $feed );
@@ -111,7 +87,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	/**
 	 * Test notifications of a new post.
 	 */
-	public function test_no_notify_new_post() {
+	public function test_no_notify_new_post_single_setting() {
 		$that = $this;
 		add_filter(
 			'notify_user_about_friend_post', function( $do_send ) use ( $that ) {
@@ -123,7 +99,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		if ( ! class_exists( 'SimplePie', false ) ) {
 			require_once( ABSPATH . WPINC . '/class-simplepie.php' );
 		}
-		update_option( 'siteurl', 'http://friend.local' );
+		update_option( 'siteurl', 'http://me.local' );
 
 		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 
@@ -131,12 +107,69 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->me_id );
+		$user = new WP_User( $this->friend_id );
 
 		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
-		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->me_id, true );
+		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
 
 		$friends = Friends::get_instance();
 		$friends->feed->process_friend_feed( $user, $feed );
+	}
+
+	/**
+	 * Test notifications of a new post.
+	 */
+	public function test_no_notify_friend_request() {
+		$that = $this;
+		add_filter(
+			'notify_user_about_friend_request', function( $do_send ) use ( $that ) {
+				$that->assertFalse( $do_send );
+				return $do_send;
+			}, 10
+		);
+
+		update_option( 'siteurl', 'http://me.local' );
+
+		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
+		update_user_option( $test_user->ID, 'friends_no_friend_request_notification', true );
+
+		$me_id = $this->factory->user->create(
+			array(
+				'user_login' => 'me.local',
+				'user_email' => 'me@me.local',
+				'role'       => 'friend_request',
+			)
+		);
+	}
+
+	/**
+	 * Test notifications of a new post.
+	 */
+	public function test_notify_friend_request() {
+		$that = $this;
+		add_filter(
+			'notify_user_about_friend_request', function( $do_send ) use ( $that ) {
+				$that->assertTrue( $do_send );
+				return $do_send;
+			}, 10
+		);
+		add_filter(
+			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
+				$that->assertEquals( $subject, sprintf( 'New Friend Request from %s', 'me.local' ) );
+				$that->assertEquals( $to, WP_TESTS_EMAIL );
+				$that->assertTrue( $do_send );
+				return false;
+			}, 10, 5
+		);
+
+		update_option( 'siteurl', 'http://me.local' );
+
+		$me_id = $this->factory->user->create(
+			array(
+				'user_login' => 'me.local',
+				'user_email' => 'me@me.local',
+				'role'       => 'friend_request',
+			)
+		);
 	}
 }

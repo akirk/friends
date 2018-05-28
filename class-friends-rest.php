@@ -313,7 +313,6 @@ class Friends_REST {
 
 		update_user_option( $user_id, 'friends_accept_signature', $signature );
 
-		do_action( 'notify_new_friend_request', $user );
 		return array(
 			'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
 		);

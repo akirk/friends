@@ -252,6 +252,8 @@ class Friends_Access_Control {
 
 		$token = sha1( wp_generate_password( 256 ) );
 		update_user_option( $user_id, 'friends_request_token', $token );
+
+		do_action( 'notify_new_friend_request', new WP_User( $user_id ) );
 	}
 
 	/**
