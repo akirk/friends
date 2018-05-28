@@ -57,7 +57,7 @@ class Friends_Notifications {
 			if ( ! $user->user_email ) {
 				continue;
 			}
-			$notify_user  = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
+			$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
 			$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_notification_' . $post->post_author, $user->ID );
 
 			if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post ) ) {

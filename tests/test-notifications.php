@@ -11,18 +11,21 @@
 class Friends_NotificationTest extends WP_UnitTestCase {
 	/**
 	 * Current User ID
+	 *
 	 * @var int
 	 */
 	private $user_id;
 
 	/**
 	 * User ID of a friend at friend.local
+	 *
 	 * @var int
 	 */
 	private $friend_id;
 
 	/**
 	 * User ID of a friend at me.local
+	 *
 	 * @var int
 	 */
 	private $me_id;
@@ -33,33 +36,39 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	public function setUp() {
 		parent::setUp();
 
-		$this->factory->post->create( array(
-			'post_type'     => 'post',
-			'post_title'    => 'First Friend Post',
-			'post_date_gmt' => '2018-05-01 10:00:00',
-			'post_status'   => 'private',
-		) );
+		$this->factory->post->create(
+			array(
+				'post_type'     => 'post',
+				'post_title'    => 'First Friend Post',
+				'post_date_gmt' => '2018-05-01 10:00:00',
+				'post_status'   => 'private',
+			)
+		);
 
 		// Usually these users would be on two different sites.
 		// For purposes of unit testing we're doing this all on one site.
-		$this->friend_id = $this->factory->user->create( array(
-			'user_login' => 'friend.local',
-			'user_email' => 'friend@friend.local',
-			'role'       => 'friend',
-		) );
+		$this->friend_id = $this->factory->user->create(
+			array(
+				'user_login' => 'friend.local',
+				'user_email' => 'friend@friend.local',
+				'role'       => 'friend',
+			)
+		);
 
-		$this->me_id = $this->factory->user->create( array(
-		    'user_login' => 'me.local',
-		    'role'       => 'friend',
-		) );
+		$this->me_id = $this->factory->user->create(
+			array(
+				'user_login' => 'me.local',
+				'role'       => 'friend',
+			)
+		);
 
 		$token = sha1( wp_generate_password( 256 ) );
-		update_user_option( $this->me_id,     'friends_out_token', $token );
-		update_user_option( $this->friend_id, 'friends_in_token',  $token );
+		update_user_option( $this->me_id, 'friends_out_token', $token );
+		update_user_option( $this->friend_id, 'friends_in_token', $token );
 
 		$token = sha1( wp_generate_password( 256 ) );
 		update_user_option( $this->friend_id, 'friends_out_token', $token );
-		update_user_option( $this->me_id,     'friends_in_token',  $token );
+		update_user_option( $this->me_id, 'friends_in_token', $token );
 	}
 
 	/**
@@ -124,7 +133,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 
 		$user = new WP_User( $this->me_id );
 
-		$test_user = get_user_by('email', WP_TESTS_EMAIL );
+		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->me_id, true );
 
 		$friends = Friends::get_instance();
