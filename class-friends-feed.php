@@ -46,7 +46,7 @@ class Friends_Feed {
 		add_action( 'rss_ns', array( $this, 'additional_feed_namespaces' ) );
 		add_action( 'rss2_ns', array( $this, 'additional_feed_namespaces' ) );
 
-		add_action( 'friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
+		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
 		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 	}
 
