@@ -165,10 +165,10 @@ class Friends_Notifications {
 
 		if ( is_multisite() ) {
 			$sitename = get_site_option( 'site_name' );
-			$charset = get_option( 'blog_charset' );
+			$charset  = get_option( 'blog_charset' );
 		} else {
 			$sitename = get_option( 'blogname' );
-			$charset = get_option( 'blog_charset' );
+			$charset  = get_option( 'blog_charset' );
 		}
 
 		$headers = 'Content-Type: text/plain; charset="' . $charset . "\"\n" . $headers;
