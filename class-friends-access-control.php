@@ -1,6 +1,6 @@
 <?php
 /**
- * Friends Admin
+ * Friends Access Control
  *
  * This contains the functions for access control.
  *
@@ -56,6 +56,9 @@ class Friends_Access_Control {
 	 * @return bool The authentication status of the feed.
 	 */
 	public function feed_is_authenticated() {
+		if ( is_null( $this->feed_authenticated ) ) {
+			$this->authenticate( 0 );
+		}
 		return $this->feed_authenticated;
 	}
 

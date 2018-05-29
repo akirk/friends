@@ -90,6 +90,7 @@ class Friends {
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->page           = new Friends_Page( $this );
 		$this->rest           = new Friends_REST( $this );
+		$this->third_parties  = new Friends_3rd_Parties( $this );
 
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
