@@ -122,39 +122,38 @@ class Friends_Page {
 	 * @return string The new template to be loaded.
 	 */
 	public function template_override( $template ) {
-		global $wp_query;
-
-		if ( isset( $wp_query->query['pagename'] ) && 'friends' === $wp_query->query['pagename'] ) {
-			if ( current_user_can( 'edit_posts' ) ) {
-				if ( isset( $_GET['refresh'] ) ) {
-					add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-					add_filter(
-						'wp_feed_options', function( $feed ) {
-							$feed->enable_cache( false );
-						}
-					);
-					$this->friends->feed->retrieve_friend_posts( null, true );
-				}
-
-				$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'pending_friend_request' ) ) );
-
-				if ( ! have_posts() ) {
-					return __DIR__ . '/templates/friends/no-posts.php';
-				}
-				return __DIR__ . '/templates/friends/posts.php';
-			}
-
-			if ( $wp_query->is_404 ) {
-				$wp_query->is_404 = false;
-				if ( current_user_can( 'friend' ) ) {
-					$user = wp_get_current_user();
-					wp_safe_redirect( $user->user_url . '/friends/' );
-					exit;
-				}
-
-				return __DIR__ . '/templates/friends/logged-out.php';
-			}
+		if ( ! $this->is_friends_page() ) {
+			return $template;
 		}
+
+		if ( current_user_can( 'edit_posts' ) ) {
+			if ( isset( $_GET['refresh'] ) ) {
+				add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+				add_filter(
+					'wp_feed_options', function( $feed ) {
+						$feed->enable_cache( false );
+					}
+				);
+				$this->friends->feed->retrieve_friend_posts( null, true );
+			}
+
+			if ( ! have_posts() ) {
+				return __DIR__ . '/templates/friends/no-posts.php';
+			}
+			return __DIR__ . '/templates/friends/posts.php';
+		}
+
+		if ( $wp_query->is_404 ) {
+			$wp_query->is_404 = false;
+			if ( current_user_can( 'friend' ) ) {
+				$user = wp_get_current_user();
+				wp_safe_redirect( $user->user_url . '/friends/' );
+				exit;
+			}
+
+			return __DIR__ . '/templates/friends/logged-out.php';
+		}
+
 		return $template;
 	}
 
@@ -194,6 +193,22 @@ class Friends_Page {
 	}
 
 	/**
+	 * Determine whether we are on the /friends/ page or a subpage.
+	 *
+	 * @return boolean Whether we are on a friends page URL.
+	 */
+	protected function is_friends_page() {
+		global $wp_query;
+
+		if ( ! isset( $wp_query ) || ! isset( $wp_query->query['pagename'] ) ) {
+			return false;
+		}
+
+		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
+		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
+	}
+
+	/**
 	 * Modify the main query for the /friends page
 	 *
 	 * @param  WP_Query $query The main query.
@@ -201,7 +216,7 @@ class Friends_Page {
 	 */
 	public function friend_posts_query( $query ) {
 		global $wp_query;
-		if ( $wp_query !== $query || 'friends' !== get_query_var( 'pagename' ) ) {
+		if ( $wp_query !== $query || ! $this->is_friends_page() ) {
 			return $query;
 		}
 
@@ -218,7 +233,12 @@ class Friends_Page {
 		$query->set( 'page', null );
 		$query->set( 'pagename', null );
 
-		if ( $page_id ) {
+		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
+		if ( isset( $pagename_parts[1] ) ) {
+			$query->set( 'author_name', $pagename_parts[1] );
+			$query->is_singular = false;
+			$query->is_author   = true;
+		} elseif ( $page_id ) {
 			$query->set( 'page_id', $page_id );
 			$query->is_singular = true;
 		} else {

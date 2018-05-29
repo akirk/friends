@@ -68,7 +68,8 @@ class Friends_Widget_Friend_List extends WP_Widget {
 
 		<ul class="friend-list">
 		<?php foreach ( $friends->get_results() as $friend_user ) : ?>
-			<li><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a></li>
+			<li><a href="<?php echo esc_url( site_url( '/friends/' . $friend_user->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+				<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>">visit</a></small></li>
 		<?php endforeach; ?>
 		</ul>
 

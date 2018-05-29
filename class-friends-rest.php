@@ -266,7 +266,7 @@ class Friends_REST {
 			if ( $user->has_cap( 'friend_request' ) && get_user_option( 'friends_request_token', $user->ID ) ) {
 				// Exit early and don't notify.
 				return array(
-					'friend_request_pending' => $request_token,
+					'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
 				);
 			}
 

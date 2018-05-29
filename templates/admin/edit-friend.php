@@ -12,7 +12,11 @@
 		<tbody>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'URL', 'friends' ); ?></label></th>
-				<td><a href="<?php echo esc_attr( $friend->user_url ); ?>"><?php echo esc_html( $friend->user_url ); ?></a></td>
+				<td><a href="<?php echo esc_attr( $friend->user_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $friend->user_url ); ?></a></td>
+			</tr>
+			<tr>
+				<th><label for="url"><?php esc_html_e( 'Created', 'friends' ); ?></label></th>
+				<td><?php echo esc_html( $friend->user_registered ); ?></td>
 			</tr>
 			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>

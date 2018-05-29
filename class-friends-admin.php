@@ -154,6 +154,7 @@ class Friends_Admin {
 			return $this->subscribe( $friend_url );
 		}
 
+		// Refetch the user in case the site actually reports a different URL.
 		$user = $this->friends->access_control->get_user_for_site_url( $friend_url );
 		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend_request' ) ) {
 			$this->update_in_token( $user->ID );
@@ -190,6 +191,10 @@ class Friends_Admin {
 		}
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
+		if ( ! $json || ! is_object( $json ) ) {
+			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response.', $response );
+		}
+
 		$user = $this->friends->access_control->create_user( $friend_url, 'pending_friend_request' );
 		if ( ! is_wp_error( $user ) ) {
 			if ( isset( $json->friend_request_pending ) ) {
@@ -448,7 +453,7 @@ class Friends_Admin {
 				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p></div>
 				<?php
 			} elseif ( $response instanceof WP_User ) {
-				$user_link = '<a href="' . esc_url( $response->user_url ) . '">' . esc_html( $response->user_url ) . '</a>';
+				$user_link = '<a href="' . esc_url( $response->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $response->user_url ) . '</a>';
 				if ( $response->has_cap( 'pending_friend_request' ) ) {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
@@ -511,7 +516,7 @@ class Friends_Admin {
 			return $actions;
 		}
 
-		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '">' . __( 'View' ) . '</a>';
+		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . __( 'View' ) . '</a>';
 
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link                                  = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
@@ -643,7 +648,7 @@ class Friends_Admin {
 				'id'     => 'friends',
 				'parent' => 'site-name',
 				'title'  => esc_html__( 'Friends', 'friends' ),
-				'href'   => '/friends/',
+				'href'   => site_url( '/friends/' ),
 			)
 		);
 		$wp_menu->add_menu(
