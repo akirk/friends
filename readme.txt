@@ -1,6 +1,6 @@
 === Friends ===
 Contributors: akirk
-Tags: friends, private-posts, rss, private-blogging
+Tags: friends, friends-plugin, private-posts, rss, private-blogging
 Requires at least: 4.9
 Tested up to: 5.0-alpha
 Requires PHP: 5.2.4

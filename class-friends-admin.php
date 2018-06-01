@@ -439,7 +439,9 @@ class Friends_Admin {
 		?>
 		<h1><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></h1>
 		<?php
-		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
+		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'suggest-friends-plugin' ) ) {
+			// TODO: Suggest.
+		} elseif ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
 
 			$friend_url = trim( $_POST['friend_url'] );
 			$protocol   = wp_parse_url( $friend_url, PHP_URL_SCHEME );
@@ -447,46 +449,47 @@ class Friends_Admin {
 				$friend_url = 'http://' . $friend_url;
 			}
 
-			$response = $this->send_friend_request( $friend_url );
-			if ( is_wp_error( $response ) ) {
+			$friend = $this->send_friend_request( $friend_url );
+			if ( is_wp_error( $friend ) ) {
 				?>
-				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p></div>
+				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend->get_error_message() ); ?></p></div>
 				<?php
-			} elseif ( $response instanceof WP_User ) {
-				$user_link = '<a href="' . esc_url( $response->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $response->user_url ) . '</a>';
-				if ( $response->has_cap( 'pending_friend_request' ) ) {
+			} elseif ( $friend instanceof WP_User ) {
+				$friend_link = '<a href="' . esc_url( $friend->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend->user_url ) . '</a>';
+				if ( $friend->has_cap( 'pending_friend_request' ) ) {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a Site URL.
-						echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
+						echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
-				} elseif ( $response->has_cap( 'friend' ) ) {
+				} elseif ( $friend->has_cap( 'friend' ) ) {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a Site URL.
-						echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
+						echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
-				} elseif ( $response->has_cap( 'subscription' ) ) {
+				} elseif ( $friend->has_cap( 'subscription' ) ) {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a Site URL.
-						echo wp_kses( sprintf( __( 'No friends plugin installed at %s. We subscribed you to their updates..', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
+						echo wp_kses( sprintf( __( 'No friends plugin installed at %s. We subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
+					$this->render_suggest_friends_plugin( $friend );
 				} else {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a username.
-						echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $response->display_name ) );
+						echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $user->display_name ) );
 						?>
 					</p></div>
 					<?php
@@ -497,6 +500,43 @@ class Friends_Admin {
 			$friend_url = $_GET['url'];
 		}
 		include __DIR__ . '/templates/admin/send-friend-request.php';
+	}
+
+	/**
+	 * Renders a form where the user can suggest the friends plugin to a friend.
+	 *
+	 * @param  WP_User $friend The friend to which to suggest the plugin.
+	 */
+	public function render_suggest_friends_plugin( WP_User $friend ) {
+		$domain = parse_url( $friend->user_url, PHP_URL_HOST );
+		$to     = '@' . $domain;
+		// translators: %s is the domain of the friend's WordPress.
+		$subject  = sprintf( __( 'Install the Friends plugin on %s' ), $domain );
+		$message  = __( 'Hi there,' );
+		$message .= PHP_EOL . PHP_EOL;
+		$message .= __( "I'm using the Friends plugin for WordPress to share things with just my friends." );
+		$message .= ' ';
+		$message .= __( "If you'd install it, too, we could connect our WordPresses and become friends." );
+		$message .= ' ';
+		$message .= __( 'Then you could also see the private posts on my blog.' );
+		$message .= ' ';
+		$message .= __( "Let's try! Please install the friends plugin and send me a friend request:" );
+		$message .= PHP_EOL . PHP_EOL;
+		$message .= trailingslashit( $friend->user_url ) . 'wp-admin/plugin-install.php?s=friends-plugin&tab=search&type=tag';
+		$message .= PHP_EOL;
+		$message .= 'https://wordpress.org/plugins/friends/';
+		$message .= PHP_EOL . PHP_EOL;
+		$message .= __( 'Possibly under this link you should then be able to send me a friend request:' );
+		$message .= PHP_EOL . PHP_EOL;
+		$message .= trailingslashit( $friend->user_url ) . 'wp-admin/admin.php?page=send-friend-request&url=' . site_url();
+		$message .= PHP_EOL . PHP_EOL;
+		$message .= __( 'Best,' );
+		$message .= PHP_EOL;
+		$user     = wp_get_current_user();
+		$message .= $user->display_name;
+
+		include __DIR__ . '/templates/admin/suggest-friends-plugin.php';
+
 	}
 
 	/**
