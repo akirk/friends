@@ -411,15 +411,13 @@ class Friends_Admin {
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'You are now friends.', 'friends' ); ?></p></div>
 			<?php
 		} elseif ( isset( $_GET['error'] ) ) {
-						?>
+			?>
 			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
 			<?php
-
 		} elseif ( isset( $_GET['sent-request'] ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Your request was sent.', 'friends' ); ?></p></div>
 			<?php
-
 		} elseif ( isset( $_GET['subscribed'] ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Subscription activated.', 'friends' ); ?></p></div>
