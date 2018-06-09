@@ -62,6 +62,9 @@ class Friends_Admin {
 			add_submenu_page( 'friends-settings', 'Edit User', 'Edit User', 'edit_users', 'edit-friend', array( $this, 'render_admin_edit_friend' ) );
 			add_action( 'load-friends_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
 		}
+		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
+			add_submenu_page( 'friends-settings', 'Suggest Friends Plugin', 'Suggest Friends Plugin', 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
+		}
 	}
 
 	/**
@@ -236,7 +239,6 @@ class Friends_Admin {
 		if ( ! current_user_can( 'edit_users' ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to change the settings.', 'friends' ) );
 		}
-
 	}
 
 	/**
@@ -439,10 +441,7 @@ class Friends_Admin {
 		?>
 		<h1><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></h1>
 		<?php
-		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'suggest-friends-plugin' ) ) {
-			// TODO: Suggest.
-		} elseif ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
-
+		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
 			$friend_url = trim( $_POST['friend_url'] );
 			$protocol   = wp_parse_url( $friend_url, PHP_URL_SCHEME );
 			if ( ! $protocol ) {
@@ -483,7 +482,7 @@ class Friends_Admin {
 						?>
 					</p></div>
 					<?php
-					$this->render_suggest_friends_plugin( $friend );
+					$this->render_suggest_friends_plugin( null, $friend );
 				} else {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
@@ -503,37 +502,88 @@ class Friends_Admin {
 	}
 
 	/**
+	 * Handles the submitted form when suggesting the friends plugin to a friend.
+	 */
+	public function process_suggest_friends_plugin() {
+		if ( empty( $_POST ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'suggest-friends-plugin' ) ) {
+			return;
+		}
+
+		$to = wp_unslash( $_POST['to'] );
+		if ( ! is_email( $to ) ) {
+			return new WP_Error( 'invalid-email', "You didn't specify a valid e-mail address of your friend." );
+		}
+
+		$subject = trim( wp_unslash( $_POST['subject'] ) );
+		if ( ! $subject ) {
+			return new WP_Error( 'empty-subject', 'You specified no subject to send to your friend.' );
+		}
+
+		$message = trim( wp_unslash( $_POST['message'] ) );
+		if ( ! $message ) {
+			return new WP_Error( 'empty-message', 'You specified an empty message to send to your friend.' );
+		}
+
+		return $this->friends->notifications->send_mail( $to, $subject, $message );
+	}
+
+	/**
 	 * Renders a form where the user can suggest the friends plugin to a friend.
 	 *
-	 * @param  WP_User $friend The friend to which to suggest the plugin.
+	 * @param string  $string A string passed by the admin hook.
+	 * @param WP_User $friend The friend to which to suggest the plugin.
 	 */
-	public function render_suggest_friends_plugin( WP_User $friend ) {
-		$domain = parse_url( $friend->user_url, PHP_URL_HOST );
-		$to     = '@' . $domain;
-		// translators: %s is the domain of the friend's WordPress.
-		$subject  = sprintf( __( 'Install the Friends plugin on %s' ), $domain );
-		$message  = __( 'Hi there,' );
-		$message .= PHP_EOL . PHP_EOL;
-		$message .= __( "I'm using the Friends plugin for WordPress to share things with just my friends." );
-		$message .= ' ';
-		$message .= __( "If you'd install it, too, we could connect our WordPresses and become friends." );
-		$message .= ' ';
-		$message .= __( 'Then you could also see the private posts on my blog.' );
-		$message .= ' ';
-		$message .= __( "Let's try! Please install the friends plugin and send me a friend request:" );
-		$message .= PHP_EOL . PHP_EOL;
-		$message .= trailingslashit( $friend->user_url ) . 'wp-admin/plugin-install.php?s=friends-plugin&tab=search&type=tag';
-		$message .= PHP_EOL;
-		$message .= 'https://wordpress.org/plugins/friends/';
-		$message .= PHP_EOL . PHP_EOL;
-		$message .= __( 'Possibly under this link you should then be able to send me a friend request:' );
-		$message .= PHP_EOL . PHP_EOL;
-		$message .= trailingslashit( $friend->user_url ) . 'wp-admin/admin.php?page=send-friend-request&url=' . site_url();
-		$message .= PHP_EOL . PHP_EOL;
-		$message .= __( 'Best,' );
-		$message .= PHP_EOL;
-		$user     = wp_get_current_user();
-		$message .= $user->display_name;
+	public function render_suggest_friends_plugin( $string, WP_User $friend = null ) {
+		?>
+		<h1><?php esc_html_e( 'Recommend the Friends plugin to a friend' ); ?></h1>
+		<?php
+
+		$error = $this->process_suggest_friends_plugin();
+		if ( is_wp_error( $error ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php echo $error->get_error_message(); ?></p></div>
+			<?php
+		} elseif ( $error ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'The message to your friend was sent.', 'friends' ); ?></p></div>
+			<?php
+		}
+
+		if ( ! $friend && isset( $_GET['url'] ) ) {
+			$friend = $this->friends->access_control->get_user_for_site_url( $_GET['url'] );
+		}
+
+		if ( $friend && ! is_wp_error( $friend ) ) {
+			$domain = parse_url( $friend->user_url, PHP_URL_HOST );
+			$to     = '@' . $domain;
+		} else {
+			$domain = '';
+			$to     = '';
+		}
+
+		if ( isset( $_POST['to'] ) ) {
+			$to = wp_unslash( $_POST['to'] );
+		}
+
+		if ( isset( $_POST['subject'] ) ) {
+			$subject = wp_unslash( $_POST['subject'] );
+		} else {
+			// translators: %s is the domain of the friend's WordPress.
+			$subject = sprintf( __( 'Install the Friends plugin on %s' ), $domain );
+		}
+
+		if ( isset( $_POST['message'] ) ) {
+			$message = wp_unslash( $_POST['message'] );
+		} else {
+			ob_start();
+			include apply_filters( 'friends_template_path', 'email/suggest-friends-plugin.text.php' );
+			$message = ob_get_contents();
+			ob_end_clean();
+		}
 
 		include apply_filters( 'friends_template_path', 'admin/suggest-friends-plugin.php' );
 	}
