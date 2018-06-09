@@ -5,7 +5,8 @@
  * @package Friends
  */
 
-?><?php include __DIR__ . '/../header.php'; ?>
+?>
+<?php get_header(); ?>
 	<h1>
 	<?php
 	/* translators: %s is a username. */
@@ -14,4 +15,4 @@
 	</h1>
 
 	<p><?php _e( "Your friends haven't posted anything yet!", 'friends' ); ?></p>
-<?php include __DIR__ . '/../footer.php'; ?>
+<?php get_footer(); ?>

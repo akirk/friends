@@ -212,7 +212,7 @@ class Friends_Feed {
 			$new_post     = ! isset( $post_data['ID'] );
 			$notify_users = apply_filters( 'notify_about_new_friend_post', $new_post && ! $new_friend, $friend_user, $post_id );
 			if ( $notify_users ) {
-				do_action( 'notify_new_friend_post', WP_Post::get_instance( $post_id ) );
+				do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
 			}
 		}
 

@@ -101,6 +101,7 @@ class Friends {
 	 */
 	private function register_hooks() {
 		add_filter( 'init', array( $this, 'register_custom_post_types' ) );
+		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 	}
 
 	/**
@@ -187,6 +188,15 @@ class Friends {
 	public static function deactivate_plugin() {
 		$timestamp = wp_next_scheduled( 'cron_friends_refresh_feeds' );
 		wp_unschedule_event( $timestamp, 'cron_friends_refresh_feeds' );
+	}
+
+	/**
+	 * Add the default path to the template file.
+	 *
+	 * @param string $template_file The relative file path of the template to load.
+	 */
+	public static function friends_template_path( $template_file ) {
+		return __DIR__ . '/templates/' . $template_file;
 	}
 
 	/**

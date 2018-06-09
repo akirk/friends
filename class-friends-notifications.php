@@ -63,14 +63,21 @@ class Friends_Notifications {
 			}
 
 			$author = new WP_User( $post->post_author );
-			// translators: %s is a username.
-			$message = sprintf( __( 'Howdy, %s' ), $user->display_name ) . PHP_EOL . PHP_EOL;
-			// translators: %1$s is a username, %2$s is a URL.
-			$message .= sprintf( __( 'Your friend %1$s has posted something new: %2$s', 'friends' ), $author->display_name, site_url( '/friends/' . $post->ID . '/' ) ) . PHP_EOL . PHP_EOL;
-			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
-
 			// translators: %s is a post title.
-			$this->send_mail( $user->user_email, sprintf( __( 'New Friend Post: %s', 'friends' ), wp_specialchars_decode( $post->post_title, ENT_QUOTES ) ), $message );
+			$email_title = sprintf( __( 'New Friend Post: %s', 'friends' ), $post->post_title );
+
+			$message = array();
+			ob_start();
+			include apply_filters( 'friends_template_path', 'email/new-friend-post.php' );
+			$message['html'] = ob_get_contents();
+			ob_end_clean();
+
+			ob_start();
+			include apply_filters( 'friends_template_path', 'email/new-friend-post.text.php' );
+			$message['text'] = ob_get_contents();
+			ob_end_clean();
+
+			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $message );
 		}
 	}
 
@@ -97,17 +104,21 @@ class Friends_Notifications {
 				continue;
 			}
 
-			// TODO: Opt out of these e-mails.
-			// translators: %s is a username.
-			$message = sprintf( __( 'Howdy, %s' ), $user->display_name ) . PHP_EOL . PHP_EOL;
-			// translators: %s is a username.
-			$message .= sprintf( __( 'You have received a new friend request from %s.', 'friends' ), $friend_user->display_name ) . PHP_EOL . PHP_EOL;
-			$message .= sprintf( __( 'Go to your admin page to review the request and approve or delete it.', 'friends' ), $user->display_name ) . PHP_EOL . PHP_EOL;
-			$message .= self_admin_url( 'users.php?role=friend_request' ) . PHP_EOL . PHP_EOL;
-			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
+			// translators: %s is a user display name.
+			$email_title = sprintf( __( 'New Friend Request from %s', 'friends' ), $friend_user->display_name );
 
-			// translators: %s is a username.
-			$this->send_mail( $user->user_email, sprintf( __( 'New Friend Request from %s', 'friends' ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message );
+			$message = array();
+			ob_start();
+			include apply_filters( 'friends_template_path', 'email/new-friend-request.php' );
+			$message['html'] = ob_get_contents();
+			ob_end_clean();
+
+			ob_start();
+			include apply_filters( 'friends_template_path', 'email/new-friend-request.text.php' );
+			$message['text'] = ob_get_contents();
+			ob_end_clean();
+
+			$this->send_mail( $user->user_email, $email_title, $message );
 		}
 
 	}
@@ -130,17 +141,21 @@ class Friends_Notifications {
 				continue;
 			}
 
-			// TODO: Opt out of these e-mails.
-			// translators: %s is a username.
-			$message = sprintf( __( 'Howdy, %s' ), $user->display_name ) . PHP_EOL . PHP_EOL;
-			// translators: %s is a username.
-			$message .= sprintf( __( '%s has accepted your friend request.', 'friends' ), $friend_user->display_name ) . PHP_EOL . PHP_EOL;
-			$message .= sprintf( __( 'Go to your friends page and look at their posts.', 'friends' ), $user->display_name ) . PHP_EOL . PHP_EOL;
-			$message .= site_url( '/friends/' ) . PHP_EOL . PHP_EOL;
-			$message .= __( 'Best, the Friends plugin', 'friends' ) . PHP_EOL;
+			// translators: %s is a user display name.
+			$email_title = sprintf( __( '%s accepted your Friend Request', 'friends' ), $friend_user->display_name );
 
-			// translators: %s is a username.
-			$this->send_mail( $user->user_email, sprintf( __( '%s accepted your Friend Request', 'friends' ), wp_specialchars_decode( $friend_user->display_name, ENT_QUOTES ) ), $message );
+			$message = array();
+			ob_start();
+			include apply_filters( 'friends_template_path', 'email/accepted-friend-request.php' );
+			$message['html'] = ob_get_contents();
+			ob_end_clean();
+
+			ob_start();
+			include apply_filters( 'friends_template_path', 'email/accepted-friend-request.text.php' );
+			$message['text'] = ob_get_contents();
+			ob_end_clean();
+
+			$this->send_mail( $user->user_email, $email_title, $message );
 		}
 	}
 
@@ -150,12 +165,12 @@ class Friends_Notifications {
 	 * @param string|array $to          Array or comma-separated list of email addresses to send message.
 	 * @param string       $subject     Email subject.
 	 * @param string       $message     Message contents.
-	 * @param string|array $headers     Optional. Additional headers.
-	 * @param string|array $attachments Optional. Files to attach.
+	 * @param array        $headers     Optional. Additional headers.
+	 * @param array        $attachments Optional. Files to attach.
 	 * @return bool Whether the email contents were sent successfully.
 	 */
-	public function send_mail( $to, $subject, $message, $headers = '', $attachments = array() ) {
-		if ( ! apply_filters( 'friends_send_mail', true, $to, $subject, $message, $headers ) ) {
+	public function send_mail( $to, $subject, $message, array $headers = array(), array $attachments = array() ) {
+		if ( ! apply_filters( 'friends_send_mail', true, $to, $subject, $message, $headers, $attachments ) ) {
 			return;
 		}
 
@@ -175,7 +190,37 @@ class Friends_Notifications {
 			$charset  = get_option( 'blog_charset' );
 		}
 
-		$headers = 'Content-Type: text/plain; charset="' . $charset . "\"\n" . $headers;
-		return wp_mail( $to, $subject, $message, $headers, $attachments );
+		$domain = parse_url( get_option( 'siteurl' ), PHP_URL_HOST );
+
+		$alt_function = null;
+		if ( is_array( $message ) ) {
+			if ( isset( $message['html'] ) ) {
+				if ( isset( $message['text'] ) ) {
+					$plain_text = $message['text'];
+				} else {
+					$plain_text = strip_tags( $message['html'] );
+				}
+
+				$headers[]    = 'Content-type: text/html';
+				$alt_function = function( $mailer ) use ( $plain_text ) {
+					$mailer->{'AltBody'} = $plain_text;
+				};
+				add_action(
+					'phpmailer_init', $alt_function
+				);
+
+				$message = $message['html'];
+			} elseif ( isset( $message['text'] ) ) {
+				$message = $message['text'];
+			}
+		}
+		$headers[] = 'From: friends-plugin@' . $domain;
+
+		$mail = wp_mail( $to, $subject, $message, $headers, $attachments );
+		if ( $alt_function ) {
+			remove_action( 'phpmailer_init', $alt_function );
+		}
+
+		return $mail;
 	}
 }

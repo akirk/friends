@@ -138,9 +138,9 @@ class Friends_Page {
 			}
 
 			if ( ! have_posts() ) {
-				return __DIR__ . '/templates/friends/no-posts.php';
+				return apply_filters( 'friends_template_path', 'friends/no-posts.php' );
 			}
-			return __DIR__ . '/templates/friends/posts.php';
+			return apply_filters( 'friends_template_path', 'friends/posts.php' );
 		}
 
 		if ( $wp_query->is_404 ) {
@@ -150,8 +150,7 @@ class Friends_Page {
 				wp_safe_redirect( $user->user_url . '/friends/' );
 				exit;
 			}
-
-			return __DIR__ . '/templates/friends/logged-out.php';
+			return apply_filters( 'friends_template_path', 'friends/logged-out.php' );
 		}
 
 		return $template;

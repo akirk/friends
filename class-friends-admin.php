@@ -300,7 +300,7 @@ class Friends_Admin {
 			</p></div>
 			<?php
 		}
-		include __DIR__ . '/templates/admin/settings.php';
+		include apply_filters( 'friends_template_path', 'admin/settings.php' );
 	}
 
 	/**
@@ -424,7 +424,7 @@ class Friends_Admin {
 			<?php
 		}
 
-		include __DIR__ . '/templates/admin/edit-friend.php';
+		include apply_filters( 'friends_template_path', 'admin/edit-friend.php' );
 	}
 
 	/**
@@ -499,7 +499,7 @@ class Friends_Admin {
 		if ( ! empty( $_GET['url'] ) ) {
 			$friend_url = $_GET['url'];
 		}
-		include __DIR__ . '/templates/admin/send-friend-request.php';
+		include apply_filters( 'friends_template_path', 'admin/send-friend-request.php' );
 	}
 
 	/**
@@ -535,8 +535,7 @@ class Friends_Admin {
 		$user     = wp_get_current_user();
 		$message .= $user->display_name;
 
-		include __DIR__ . '/templates/admin/suggest-friends-plugin.php';
-
+		include apply_filters( 'friends_template_path', 'admin/suggest-friends-plugin.php' );
 	}
 
 	/**
