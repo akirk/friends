@@ -101,9 +101,11 @@ class Friends_Feed {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 		}
 
-		$token = get_user_option( 'friends_out_token', $friend_user->ID );
-		if ( $token ) {
-			$feed_url .= '?friend=' . $token;
+		if ( $private && current_user_can( 'edit_users' ) ) {
+			$token = get_user_option( 'friends_out_token', $friend_user->ID );
+			if ( $token ) {
+				$feed_url .= '?friend=' . $token;
+			}
 		}
 		return apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
 	}

@@ -24,8 +24,13 @@
 				<th scope="row">
 				<?php
 				// translators: %s is a username.
-				echo esc_html( sprintf( __( 'Notifications for you', 'friends' ) . '<br/>(%s)', $user->display_name ) );
+				esc_html_e( 'Notifications for you', 'friends' );
 				?>
+				<br /><em>
+				<?php
+				echo esc_html( $user->display_name );
+				?>
+				</em>
 				</th>
 				<td>
 					<fieldset>
@@ -41,6 +46,15 @@
 					</fieldset>
 				</td>
 			</tr>
+		<tr>
+			<th scope="row"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
+			<td>
+				<?php
+				// translators: %s is a URL.
+				echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed fedader.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-opml' ) ) ), array( 'a' => array( 'href' => array() ) ) );
+				?>
+			</td>
+		</tr>
 		</tbody>
 	</table>
 	<p class="submit">

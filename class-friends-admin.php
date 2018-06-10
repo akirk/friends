@@ -44,6 +44,7 @@ class Friends_Admin {
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 100 );
+		add_action( 'wp_loaded', array( $this, 'download_opml' ), 100 );
 	}
 
 	/**
@@ -64,6 +65,9 @@ class Friends_Admin {
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
 			add_submenu_page( 'friends-settings', 'Suggest Friends Plugin', 'Suggest Friends Plugin', 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
+		}
+		if ( isset( $_GET['page'] ) && 'friends-opml' === $_GET['page'] ) {
+			add_submenu_page( 'friends-settings', 'Download OPML', 'Download OPML', 'manage_options', 'friends-opml', array( $this, 'download_opml' ) );
 		}
 	}
 
@@ -527,6 +531,25 @@ class Friends_Admin {
 		}
 
 		return $this->friends->notifications->send_mail( $to, $subject, $message );
+	}
+
+	/**
+	 * Offers the OPML file for download.
+	 */
+	public function download_opml() {
+		if ( ! isset( $_GET['page'] ) || 'friends-opml' !== $_GET['page'] ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'edit_users' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
+		}
+
+		$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'friend_request', 'subscription' ) ) );
+		$feed    = $this->friends->feed;
+
+		include apply_filters( 'friends_template_path', 'admin/opml.php' );
+		exit;
 	}
 
 	/**
