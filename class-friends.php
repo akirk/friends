@@ -14,8 +14,9 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION           = '0.6';
+	const VERSION           = '0.7';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
+	const PLUGIN_URL        = 'https://wordpress.org/plugins/friends/';
 
 	/**
 	 * Initialize the plugin
@@ -23,13 +24,6 @@ class Friends {
 	public static function init() {
 		static::get_instance();
 	}
-
-	/**
-	 * The URL of the plugin in the WordPress plugin directory.
-	 *
-	 * @var string
-	 */
-	public static $plugin_url = 'https://wordpress.org/plugins/friends/';
 
 	/**
 	 * A reference to the Friends_Admin object.

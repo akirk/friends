@@ -598,12 +598,12 @@ class Friends_Admin {
 		$tweet = '@' . $domain . ' ';
 		// translators: %s is the URL of the blog.
 		$tweet .= sprintf( __( 'Would you like to install the Friends plugin to your WordPress blog %s to stay in touch with me?', 'friends' ), $url );
-		$tweet .= ' ' . Friends::$plugin_url;
+		$tweet .= ' ' . Friends::PLUGIN_URL;
 
 		$tabs = array(
 			'E-Mail'   => admin_url( 'admin.php?page=suggest-friends-plugin&url=' . urlencode( $url ) ),
 			'Twitter'  => 'https://twitter.com/intent/tweet?text=' . urlencode( $tweet ),
-			'Facebook' => 'https://facebook.com/sharer/sharer.php?u=' . urlencode( Friends::$plugin_url ),
+			'Facebook' => 'https://facebook.com/sharer/sharer.php?u=' . urlencode( Friends::PLUGIN_URL ),
 		)
 
 		?>

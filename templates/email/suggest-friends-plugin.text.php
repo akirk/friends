@@ -20,7 +20,7 @@ echo PHP_EOL . PHP_EOL;
 echo trailingslashit( $friend->user_url ) . 'wp-admin/plugin-install.php?s=friends-plugin&tab=search&type=tag';
 echo PHP_EOL;
 
-echo Friends::$plugin_url;
+echo Friends::PLUGIN_URL;
 echo PHP_EOL . PHP_EOL;
 
 echo __( 'Possibly under this link you should then be able to send me a friend request:' );
