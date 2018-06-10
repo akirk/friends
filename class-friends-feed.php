@@ -77,16 +77,7 @@ class Friends_Feed {
 		}
 
 		foreach ( $friends as $friend_user ) {
-			$feed_url = get_user_option( 'friends_feed_url', $friend_user->ID );
-			if ( ! $feed_url ) {
-				$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
-			}
-
-			$token = get_user_option( 'friends_out_token', $friend_user->ID );
-			if ( $token ) {
-				$feed_url .= '?friend=' . $token;
-			}
-			$feed_url = apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
+			$feed_url = $this->get_feed_url( $friend_user );
 
 			$feed = fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
@@ -95,6 +86,26 @@ class Friends_Feed {
 			$feed = apply_filters( 'friends_feed_content', $feed, $friend_user );
 			$this->process_friend_feed( $friend_user, $feed );
 		}
+	}
+
+	/**
+	 * Get the (private) feed URL for a friend.
+	 *
+	 * @param  WP_User $friend_user The friend user.
+	 * @param  boolean $private     Whether to generate a private feed URL (if possible).
+	 * @return string               The feed URL.
+	 */
+	public function get_feed_url( WP_User $friend_user, $private = true ) {
+		get_user_option( 'friends_feed_url', $friend_user->ID );
+		if ( ! $feed_url ) {
+			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
+		}
+
+		$token = get_user_option( 'friends_out_token', $friend_user->ID );
+		if ( $token ) {
+			$feed_url .= '?friend=' . $token;
+		}
+		return apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
 	}
 
 	/**

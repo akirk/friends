@@ -25,6 +25,13 @@ class Friends {
 	}
 
 	/**
+	 * The URL of the plugin in the WordPress plugin directory.
+	 *
+	 * @var string
+	 */
+	public static $plugin_url = 'https://wordpress.org/plugins/friends/';
+
+	/**
 	 * A reference to the Friends_Admin object.
 	 *
 	 * @var Friends_Admin

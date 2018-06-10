@@ -24,7 +24,7 @@
 				<th scope="row">
 				<?php
 				// translators: %s is a username.
-				echo esc_html( sprintf( __( 'Notifications for %s', 'friends' ), $user->display_name ) );
+				echo esc_html( sprintf( __( 'Notifications for you', 'friends' ) . '<br/>(%s)', $user->display_name ) );
 				?>
 				</th>
 				<td>

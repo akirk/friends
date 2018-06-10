@@ -550,9 +550,18 @@ class Friends_Admin {
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'The message to your friend was sent.', 'friends' ); ?></p></div>
 			<?php
 		}
+		if ( ! isset( $_GET['tab'] ) ) {
+			$_GET['tab'] = 'e-mail';
+		}
 
 		if ( ! $friend && isset( $_GET['url'] ) ) {
 			$friend = $this->friends->access_control->get_user_for_site_url( $_GET['url'] );
+			$url    = $_GET['url'];
+			if ( 'http' !== substr( $url, 0, 4 ) ) {
+				$url = 'http://' . $url;
+			}
+		} else {
+			$url = $friend->user_url;
 		}
 
 		if ( $friend && ! is_wp_error( $friend ) ) {
@@ -562,6 +571,32 @@ class Friends_Admin {
 			$domain = '';
 			$to     = '';
 		}
+
+		$tweet = '@' . $domain . ' ';
+		// translators: %s is the URL of the blog.
+		$tweet .= sprintf( __( 'Would you like to install the Friends plugin to your WordPress blog %s to stay in touch with me?', 'friends' ), $url );
+		$tweet .= ' ' . Friends::$plugin_url;
+
+		$tabs = array(
+			'E-Mail'   => admin_url( 'admin.php?page=suggest-friends-plugin&url=' . urlencode( $url ) ),
+			'Twitter'  => 'https://twitter.com/intent/tweet?text=' . urlencode( $tweet ),
+			'Facebook' => 'https://facebook.com/sharer/sharer.php?u=' . urlencode( Friends::$plugin_url ),
+		)
+
+		?>
+		<h2 class="nav-tab-wrapper" style="margin-bottom: 2em">
+			<?php
+			foreach ( $tabs as $tab_title => $tab_url ) {
+				printf(
+					'<a href="%s" class="nav-tab %s">%s</a>',
+					esc_url( $tab_url ),
+					esc_attr( 'E-Mail' === $tab_title ? 'nav-tab-active' : '' ),
+					esc_html( $tab_title )
+				);
+			}
+			?>
+		</h2>
+		<?php
 
 		if ( isset( $_POST['to'] ) ) {
 			$to = wp_unslash( $_POST['to'] );
