@@ -49,3 +49,17 @@
 #friend-request {
   margin-bottom: 2em;
 }
+
+div.friend-reactions {
+
+}
+
+div.friend-reactions button {
+  border: 1px solid #bbb;
+  background-color: #eee;
+  cursor: pointer;
+}
+
+div.friend-reactions button.pressed {
+  background-color: #999;
+}

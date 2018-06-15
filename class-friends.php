@@ -90,6 +90,7 @@ class Friends {
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->page           = new Friends_Page( $this );
+		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
 		$this->third_parties  = new Friends_3rd_Parties( $this );
 
