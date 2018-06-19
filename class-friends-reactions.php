@@ -75,13 +75,13 @@ class Friends_Reactions {
 	 * @return string        The post content with buttons or nothing if echoed.
 	 */
 	public function post_reactions( $text = '', $echo = false ) {
-			$t         = new WP_Term_Query(
-				array(
-					'object_ids' => get_the_ID(),
-				)
-			);
-			$reactions = array();
-		foreach ( $t->get_terms() as $term ) {
+		$reactions  = array();
+		$term_query = new WP_Term_Query(
+			array(
+				'object_ids' => get_the_ID(),
+			)
+		);
+		foreach ( $term_query->get_terms() as $term ) {
 			if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
 				continue;
 			}
@@ -92,18 +92,17 @@ class Friends_Reactions {
 			$reactions[ $term->slug ][ $user_id ] = 1;
 		}
 
-			ob_start();
-			include apply_filters( 'friends_template_path', 'friends/reactions.php' );
-			$reactions_text = ob_get_contents();
-			ob_end_clean();
+		ob_start();
+		include apply_filters( 'friends_template_path', 'friends/reactions.php' );
+		$reactions_text = ob_get_contents();
+		ob_end_clean();
 
-			// wp_set_object_terms( get_the_ID(),'smile', 'friend-reaction-' . get_current_user_id(), true );
-			$text .= $reactions_text;
+		$text .= $reactions_text;
 
 		if ( ! $echo ) {
 			return $text;
 		}
 
-			echo $text;
+		echo $text;
 	}
 }
