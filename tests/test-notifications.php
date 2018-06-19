@@ -45,6 +45,8 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				'role'       => 'friend',
 			)
 		);
+
+		remove_filter( 'friends_send_mail', '__return_false' );
 	}
 
 	/**
@@ -117,7 +119,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test notifications of a new post.
+	 * Test notifications of a friend request.
 	 */
 	public function test_no_notify_friend_request() {
 		$that = $this;
@@ -143,7 +145,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test notifications of a new post.
+	 * Test notifications of a friend request.
 	 */
 	public function test_notify_friend_request() {
 		$that = $this;
@@ -171,5 +173,37 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				'role'       => 'friend_request',
 			)
 		);
+	}
+
+	/**
+	 * Test notifications of an accepted friend request.
+	 */
+	public function test_notify_accepted_friend_request() {
+		$that = $this;
+		add_filter(
+			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
+				$that->assertEquals( $subject, sprintf( '%s accepted your Friend Request', 'me.local' ) );
+				$that->assertEquals( $to, WP_TESTS_EMAIL );
+				$that->assertTrue( $do_send );
+				return false;
+			}, 10, 5
+		);
+
+		update_option( 'siteurl', 'http://me.local' );
+
+		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
+		update_user_option( $test_user->ID, 'friends_no_friend_request_notification', true );
+
+		$me_id = $this->factory->user->create(
+			array(
+				'user_login' => 'me.local',
+				'user_email' => 'me@me.local',
+				'role'       => 'friend_request',
+			)
+		);
+
+		$me = new WP_User( $me_id );
+		$me->set_role( 'friend' );
+		do_action( 'notify_accepted_friend_request', $me );
 	}
 }

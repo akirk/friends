@@ -43,6 +43,9 @@ add_filter(
 // Disable the feed fetching after a friendship was established.
 add_filter( 'friends_immediately_fetch_feed', '__return_false' );
 
+// Disable sending e-mails.
+add_filter( 'friends_send_mail', '__return_false' );
+
 // Output setting of options during debugging.
 if ( defined( 'TESTS_VERBOSE' ) && TESTS_VERBOSE ) {
 	add_filter(
