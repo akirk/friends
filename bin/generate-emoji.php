@@ -17,7 +17,7 @@ foreach ( json_decode( $rankings ) as $emoji ) {
 
 foreach ( json_decode( $emojis ) as $emoji ) {
 	foreach ( $emoji->short_names as $short_name ) {
-		if ( in_array( $short_name, array( '+1', '-1', true ) ) ) {
+		if ( in_array( $short_name, array( '+1', '-1' ), true ) ) {
 			continue;
 		}
 		$html = '&#x' . str_replace( '-', ';&#x', $emoji->unified ) . ';';
