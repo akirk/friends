@@ -180,3 +180,17 @@ body.friends-page {
 .friends-page article footer.entry-meta button.pressed {
 	color: #f0821e;
 }
+
+#friends-reaction-picker {
+	display: none;
+	position: absolute;
+	border: 2px solid grey;
+	border-radius: .25em;
+	background-color: #fff;
+	padding: 1em;
+}
+
+#friends-reaction-picker button {
+	background-color: #fff;
+	border: 0;
+}

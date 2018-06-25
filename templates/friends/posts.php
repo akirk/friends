@@ -73,7 +73,7 @@
 			</div>
 
 			<footer class="entry-meta">
-				<button href="<?php comments_link(); ?>" target="_blank" rel="noopener noreferrer" class="auth-link" data-token="<?php echo esc_attr( $token ); ?>">
+				<button href="<?php comments_link(); ?>" target="_blank" rel="noopener noreferrer" class="comments auth-link" data-token="<?php echo esc_attr( $token ); ?>">
 					<span class="dashicons dashicons-admin-comments"></span>
 					<?php comments_number( '' ); ?>
 				</button>

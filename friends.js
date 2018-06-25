@@ -1,22 +1,29 @@
-jQuery( document ).on( 'click', 'a.auth-link', function() {
+jQuery( document ).on( 'click', 'a.auth-link, button.comments', function() {
 	var $this = jQuery( this ), href = $this.attr( 'href' );
-	if ( href.indexOf( 'friend_auth=' ) >= 0 ) return;
-	var hash = href.indexOf( '#' );
-	if ( hash >= 0 ) {
-		hash = href.substr( hash );
-		href = href.substr( 0, href.length - hash.length );
-	} else {
-		hash = '';
+
+	if ( href && href.indexOf( 'friend_auth=' ) >= 0 ) {
+		var hash = href.indexOf( '#' );
+		if ( hash >= 0 ) {
+			hash = href.substr( hash );
+			href = href.substr( 0, href.length - hash.length );
+		} else {
+			hash = '';
+		}
+
+		if ( href.indexOf( '?' ) >= 0 ) {
+			href += '&';
+		} else {
+			href += '?';
+		}
+		href += 'friend_auth=' + $this.data( 'token' ) + hash;
+
+		$this.attr( 'href', href );
 	}
 
-	if ( href.indexOf( '?' ) >= 0 ) {
-		href += '&';
-	} else {
-		href += '?';
+	if ( $this.is( 'button' ) ) {
+		location.href = href;
+		return false;
 	}
-	href += 'friend_auth=' + $this.data( 'token' ) + hash;
-
-	$this.attr( 'href', href );
 } );
 
 jQuery( function( $ ) {
@@ -29,4 +36,37 @@ jQuery( function( $ ) {
 			this.value = 'http://' + this.value;
 		}
 	} );
+
+	jQuery( document ).on( 'click', 'button.new-reaction', function() {
+		var p = $(this).position();
+		$( '#friends-reaction-picker' ).data( 'id' , $( this ).data( 'id' ) ). css({
+			left: p.left + 'px',
+			top: p.top + 'px'
+		}).show();
+	} );
+
+	jQuery( document ).on( 'click', 'button.reaction', function() {
+		jQuery.post( ajaxurl, {
+			action: 'friends_toggle_react',
+			post_id: $( this ).data( 'id' ),
+			reaction: $( this ).data( 'emoji' )
+		}, function(response) {
+			location.reload();
+		});
+		return false;
+	} );
+
+	jQuery( '#friends-reaction-picker' ).on( 'click', 'button', function() {
+		jQuery.post( ajaxurl, {
+			action: 'friends_toggle_react',
+			post_id: $( '#friends-reaction-picker' ).data( 'id' ),
+			reaction: $( this ).data( 'emoji' )
+		}, function(response) {
+			location.reload();
+		});
+		return false;
+	} );
+
+
+
 } );

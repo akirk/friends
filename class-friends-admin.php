@@ -43,7 +43,7 @@ class Friends_Admin {
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
-		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 100 );
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'wp_loaded', array( $this, 'download_opml' ), 100 );
 	}
 
@@ -126,7 +126,7 @@ class Friends_Admin {
 	 */
 	public function send_friend_request( $friend_url ) {
 		if ( ! is_string( $friend_url ) || ! wp_http_validate_url( $friend_url ) ) {
-			return new WP_Error( 'invalid-url', __( 'An invalid URL was provided.', 'friends' ) );
+			return new WP_Error( 'invalid-url', __( 'You entererd an invalid URL.', 'friends' ) );
 		}
 
 		if ( 0 === strcasecmp( site_url(), $friend_url ) ) {
@@ -788,11 +788,11 @@ class Friends_Admin {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return;
 		}
-		$wp_menu->add_menu(
+		$wp_menu->add_node(
 			array(
 				'id'     => 'friends',
-				'parent' => 'site-name',
-				'title'  => esc_html__( 'Friends', 'friends' ),
+				'parent' => '',
+				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html__( 'Friends', 'friends' ),
 				'href'   => site_url( '/friends/' ),
 			)
 		);

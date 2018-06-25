@@ -38,6 +38,8 @@ class Friends_Reactions {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
+		add_action( 'wp_ajax_friends_toggle_react', array( $this, 'toggle_react' ) );
+
 	}
 
 	/**
@@ -46,17 +48,9 @@ class Friends_Reactions {
 	public function register_taxonomies() {
 		$args = array(
 			'labels'            => array(
-				'name'              => _x( 'Reactions', 'taxonomy general name' ),
-				'singular_name'     => _x( 'Reaction', 'taxonomy singular name' ),
-				'search_items'      => __( 'Search Reactions' ),
-				'all_items'         => __( 'All Reactions' ),
-				'parent_item'       => __( 'Parent Reaction' ),
-				'parent_item_colon' => __( 'Parent Reaction:' ),
-				'edit_item'         => __( 'Edit Reaction' ),
-				'update_item'       => __( 'Update Reaction' ),
-				'add_new_item'      => __( 'Add New Reaction' ),
-				'new_item_name'     => __( 'New Reaction Name' ),
-				'menu_name'         => __( 'Reaction' ),
+				'name'          => _x( 'Reactions', 'taxonomy general name' ),
+				'singular_name' => _x( 'Reaction', 'taxonomy singular name' ),
+				'menu_name'     => __( 'Reaction' ),
 			),
 			'hierarchical'      => false,
 			'show_ui'           => true,
@@ -103,5 +97,31 @@ class Friends_Reactions {
 		}
 
 		echo $text;
+	}
+
+	/**
+	 * Store a reaction.
+	 */
+	public function toggle_react() {
+		if ( ! current_user_can( 'edit_posts' ) && current_user_can( 'friend' ) ) {
+			return new WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
+		}
+
+		if ( is_numeric( $_POST['post_id'] ) && is_string( $_POST['reaction'] ) ) {
+			// TODO: Whitelist Emojis.
+			$term = false;
+			foreach ( wp_get_object_terms( $_POST['post_id'], 'friend-reaction-' . get_current_user_id() ) as $t ) {
+				if ( $t->slug === $_POST['reaction'] ) {
+					$term = $t;
+					break;
+				}
+			}
+			if ( ! $term ) {
+				wp_set_object_terms( $_POST['post_id'], $_POST['reaction'], 'friend-reaction-' . get_current_user_id(), true );
+			} else {
+				wp_remove_object_terms( $_POST['post_id'], $term->term_id, 'friend-reaction-' . get_current_user_id() );
+			}
+			return true;
+		}
 	}
 }

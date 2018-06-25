@@ -14,11 +14,14 @@
 			$classes[] = 'pressed';
 		}
 		?>
-		<button class="<?php echo implode( ' ', $classes ); ?>">
+		<button class="reaction <?php echo implode( ' ', $classes ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" data-emoji="<?php echo esc_attr( $slug ); ?>">
 			<?php
 			switch ( $slug ) {
 				case 'smile':
 					echo '&#x1F604;';
+					break;
+				case 'sob':
+					echo '&#x1F62D;';
 					break;
 			}
 			?>
@@ -27,7 +30,7 @@
 		<?php
 	}
 	?>
-	<button class="new-reaction">
+	<button class="new-reaction" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
 		<span class="dashicons dashicons-plus"></span>
 	</button>
 </div>
