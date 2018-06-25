@@ -60,12 +60,22 @@ class Friends_Page {
 	public function register_friends_sidebar() {
 		register_sidebar(
 			array(
+				'name'          => 'Friends Topbar',
+				'id'            => 'friends-topbar',
+				'before_widget' => '<div class="friends-main-widget">',
+				'after_widget'  => '</div>',
+				'before_title'  => '<h1>',
+				'after_title'   => '</h1>',
+			)
+		);
+		register_sidebar(
+			array(
 				'name'          => 'Friends Sidebar',
 				'id'            => 'friends-sidebar',
 				'before_widget' => '<div class="friends-widget">',
 				'after_widget'  => '</div>',
-				'before_title'  => '<h3>',
-				'after_title'   => '</h3>',
+				'before_title'  => '<h5>',
+				'after_title'   => '</h5>',
 			)
 		);
 	}
@@ -74,8 +84,8 @@ class Friends_Page {
 	 * Reference our script for the /friends page
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_script( 'friends-js', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
-		wp_enqueue_style( 'friends-css', plugin_dir_url( __FILE__ ) . 'friends.css' );
+		wp_enqueue_script( 'friends', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
+		wp_enqueue_style( 'friends', plugin_dir_url( __FILE__ ) . 'friends.css' );
 	}
 
 	/**

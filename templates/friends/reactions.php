@@ -7,8 +7,8 @@
 
 ?>
 <div class="friend-reactions">
-	<?php foreach ( $reactions as $slug => $users ) : ?>
-		<?php
+	<?php
+	foreach ( $reactions as $slug => $users ) {
 		$classes = array();
 		if ( isset( $users[ get_current_user_id() ] ) ) {
 			$classes[] = 'pressed';
@@ -24,5 +24,10 @@
 			?>
 			<?php echo count( $users ); ?>
 		</button>
-	<?php endforeach; ?>
+		<?php
+	}
+	?>
+	<button class="new-reaction">
+		<span class="dashicons dashicons-plus"></span>
+	</button>
 </div>

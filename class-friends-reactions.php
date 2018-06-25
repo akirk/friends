@@ -38,7 +38,6 @@ class Friends_Reactions {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
-		add_action( 'the_content', array( $this, 'post_reactions' ), 20 );
 	}
 
 	/**

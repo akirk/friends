@@ -39,7 +39,8 @@ add_action( 'widgets_init', array( 'Friends_Widget_Refresh', 'register' ) );
 include __DIR__ . '/widgets/class-friends-widget-friend-list.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Friend_List', 'register' ) );
 
-
 include __DIR__ . '/widgets/class-friends-widget-friend-request.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Friend_Request', 'register' ) );
 
+include __DIR__ . '/widgets/class-friends-widget-new-private-post.php';
+add_action( 'widgets_init', array( 'Friends_Widget_New_Private_Post', 'register' ) );
