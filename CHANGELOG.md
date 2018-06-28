@@ -1,3 +1,20 @@
+0.8
+===
+- Reactions
+
+0.7
+===
+- Download OPML
+- Suggest Friends plugin via different media
+
+0.6
+===
+- Add friends settings
+
+0.5
+===
+- Use in/out tokens.
+
 0.4
 ===
 - Send notifications for friend request, accepted request and new posts.

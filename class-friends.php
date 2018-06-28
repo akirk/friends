@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION           = '0.7';
+	const VERSION           = '0.8';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const PLUGIN_URL        = 'https://wordpress.org/plugins/friends/';
 
