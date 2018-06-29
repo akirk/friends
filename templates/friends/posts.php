@@ -20,7 +20,7 @@
 						'after_title'   => '</h1>',
 					)
 				);
-			?>
+				?>
 			</div>
 		<?php endif; ?>
 	</div>
