@@ -39,13 +39,14 @@ jQuery( function( $ ) {
 
 	jQuery( document ).on( 'click', 'button.new-reaction', function() {
 		var p = $(this).position();
-		$( '#friends-reaction-picker' ).data( 'id' , $( this ).data( 'id' ) ). css({
+		$( '#friends-reaction-picker' ).data( 'id' , $( this ).data( 'id' ) ).css({
 			left: p.left + 'px',
 			top: p.top + 'px'
 		}).show();
+		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'button.reaction', function() {
+	jQuery( document ).on( 'click', 'button.reaction:not(.new-reaction)', function() {
 		jQuery.post( ajaxurl, {
 			action: 'friends_toggle_react',
 			post_id: $( this ).data( 'id' ),

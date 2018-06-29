@@ -34,7 +34,7 @@ body.friends-page {
 	max-width: 95%;
 }
 
-.friends-page button {
+.friends-page form button {
 	background-color: #222;
 	border: 0;
 	border-radius: .25em;
@@ -61,7 +61,7 @@ body.friends-page {
 	margin: 0;
 }
 
-.friends-post-inline selectm, .friends-sidebar select {
+.friends-post-inline select, .friends-sidebar select {
 	border: 1px solid #bbb;
 	border-radius: 3px;
 	height: 3em;
@@ -163,6 +163,7 @@ body.friends-page {
 }
 
 .friends-page article footer.entry-meta button {
+	font-size: 14px;
 	border: 0;
 	background-color: #fff;
 	cursor: pointer;
@@ -171,14 +172,18 @@ body.friends-page {
 	font-weight: normal;
 }
 
-.friends-page article footer.entry-meta div.friend-reactions {
-	margin-bottom: 1px;
-}
-.friends-page article footer.entry-meta div.friend-reactions button {
+.friends-page article footer.entry-meta button.reaction span {
 	font-size: 18px;
+	line-height: 20px;
+	vertical-align: top;
 }
-.friends-page article footer.entry-meta button.pressed {
+.friends-page article footer.entry-meta button.reaction.pressed {
 	color: #f0821e;
+}
+
+button.new-reaction span {
+	font-family: dashicons;
+	vertical-align: middle;
 }
 
 #friends-reaction-picker {
@@ -191,6 +196,7 @@ body.friends-page {
 }
 
 #friends-reaction-picker button {
+	font-size: 18px;
 	background-color: #fff;
 	border: 0;
 }

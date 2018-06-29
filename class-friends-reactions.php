@@ -39,7 +39,15 @@ class Friends_Reactions {
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
 		add_action( 'wp_ajax_friends_toggle_react', array( $this, 'toggle_react' ) );
+		add_action( 'the_content', array( $this, 'post_reactions' ), 20 );
+		add_action( 'wp_footer', array( $this, 'reactions_picker' ), 20 );
+	}
 
+	/**
+	 * Register the hooks that attach reactions to content
+	 */
+	public function unregister_content_hooks() {
+		remove_action( 'the_content', array( $this, 'post_reactions' ), 20 );
 	}
 
 	/**
@@ -68,29 +76,31 @@ class Friends_Reactions {
 	 * @return string        The post content with buttons or nothing if echoed.
 	 */
 	public function post_reactions( $text = '', $echo = false ) {
-		$reactions  = array();
-		$term_query = new WP_Term_Query(
-			array(
-				'object_ids' => get_the_ID(),
-			)
-		);
-		foreach ( $term_query->get_terms() as $term ) {
-			if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
-				continue;
+		if ( is_user_logged_in() ) {
+			$reactions  = array();
+			$term_query = new WP_Term_Query(
+				array(
+					'object_ids' => get_the_ID(),
+				)
+			);
+			foreach ( $term_query->get_terms() as $term ) {
+				if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
+					continue;
+				}
+				$user_id = substr( $term->taxonomy, 16 );
+				if ( ! isset( $reactions[ $term->slug ] ) ) {
+					$reactions[ $term->slug ] = array();
+				}
+				$reactions[ $term->slug ][ $user_id ] = 1;
 			}
-			$user_id = substr( $term->taxonomy, 16 );
-			if ( ! isset( $reactions[ $term->slug ] ) ) {
-				$reactions[ $term->slug ] = array();
-			}
-			$reactions[ $term->slug ][ $user_id ] = 1;
+
+			ob_start();
+			include apply_filters( 'friends_template_path', 'friends/reactions.php' );
+			$reactions_text = ob_get_contents();
+			ob_end_clean();
+
+			$text .= $reactions_text;
 		}
-
-		ob_start();
-		include apply_filters( 'friends_template_path', 'friends/reactions.php' );
-		$reactions_text = ob_get_contents();
-		ob_end_clean();
-
-		$text .= $reactions_text;
 
 		if ( ! $echo ) {
 			return $text;
@@ -100,10 +110,19 @@ class Friends_Reactions {
 	}
 
 	/**
+	 * Output the reactions picker.
+	 */
+	public function reactions_picker() {
+		if ( is_user_logged_in() ) {
+			include apply_filters( 'friends_template_path', 'friends/reactions-picker.php' );
+		}
+	}
+
+	/**
 	 * Store a reaction.
 	 */
 	public function toggle_react() {
-		if ( ! current_user_can( 'edit_posts' ) && current_user_can( 'friend' ) ) {
+		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
 		}
 

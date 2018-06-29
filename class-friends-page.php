@@ -84,8 +84,10 @@ class Friends_Page {
 	 * Reference our script for the /friends page
 	 */
 	public function enqueue_scripts() {
-		wp_enqueue_script( 'friends', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
-		wp_enqueue_style( 'friends', plugin_dir_url( __FILE__ ) . 'friends.css' );
+		if ( is_user_logged_in() ) {
+			wp_enqueue_script( 'friends', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
+			wp_enqueue_style( 'friends', plugin_dir_url( __FILE__ ) . 'friends.css' );
+		}
 	}
 
 	/**
@@ -233,6 +235,7 @@ class Friends_Page {
 			return $query;
 		}
 		$this->on_friends_page = true;
+		$this->friends->reactions->unregister_content_hooks();
 
 		$page_id = get_query_var( 'page' );
 

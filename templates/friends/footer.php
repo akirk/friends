@@ -18,7 +18,7 @@
 						'after_title'   => '</h4>',
 					)
 				);
-			?>
+				?>
 			</div>
 			<div class="friends-widget">
 				<?php
@@ -30,7 +30,7 @@
 						'after_title'   => '</h4>',
 					)
 				);
-			?>
+				?>
 			</div>
 			<div class="friends-widget">
 				<?php
@@ -42,14 +42,10 @@
 						'after_title'   => '</h4>',
 					)
 				);
-			?>
+				?>
 			</div>
 		<?php endif; ?>
 	</nav>
-</div>
-<div id="friends-reaction-picker">
-	<button data-emoji="smile">&#x1F604;</button>
-	<button data-emoji="sob">&#x1F62D;</button>
 </div>
 <?php wp_footer(); ?>
 </body>
