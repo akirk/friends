@@ -85,10 +85,12 @@ class Friends_Page {
 	 */
 	public function enqueue_scripts() {
 		if ( is_user_logged_in() ) {
-			wp_enqueue_script( 'friends', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
-			wp_enqueue_style( 'friends', plugin_dir_url( __FILE__ ) . 'friends.css' );
+			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), 'jquery' );
+			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ) );
 			$variables = array(
-				'emojis_json' => plugin_dir_url( __FILE__ ) . 'emojis.json',
+				'emojis_json' => plugins_url( 'emojis.json', __FILE__ ),
+				'ajax_url'    => admin_url( 'admin-ajax.php' ),
+				'spinner_url' => admin_url( 'images/wpspin_light.gif' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
 

@@ -162,32 +162,34 @@ body.friends-page {
 	justify-content: flex-end;
 }
 
-.friends-page article footer.entry-meta button {
+button.friends-reaction, .friends-page article footer.entry-meta button {
 	font-size: 14px;
 	border: 0;
 	background-color: #fff;
 	cursor: pointer;
 	color: #87a6bc;
 	padding: 2px;
+	margin: .2em;
 	font-weight: normal;
 	border: 1px dotted transparent;
 	border-radius: 4px;
-}
-.friends-page article footer.entry-meta button:hover {
-	border-color: #cccccc;
+	line-height: 20px;
 }
 
-.friends-page article footer.entry-meta button:focus {
+button.friends-reaction:hover, .friends-page article footer.entry-meta button:hover {
+	border-color: #cccccc;
+	background-color: #fff;
+}
+
+button.friends-reaction:focus, .friends-page article footer.entry-meta button:focus {
 	outline: none;
 }
 
-.friends-page article footer.entry-meta button.reaction span {
+button.friends-reaction span {
 	font-size: 18px;
 	vertical-align: top;
-	height: 20px;
-	display: inline-block;
 }
-.friends-page article footer.entry-meta button.reaction.pressed {
+button.friends-reaction.pressed {
 	color: #f0821e;
 }
 
@@ -204,20 +206,29 @@ button.new-reaction span {
 	border-radius: .25em;
 	background-color: #fff;
 	padding: 1em;
+	max-width: 50%;
+	max-height: 20%;
+	overflow: auto;
 }
 
 #friends-reaction-picker button {
+	padding: .2em;
+	margin: 0;
 	font-size: 18px;
 	background-color: #fff;
 	border: 0;
 	cursor: pointer;
+	z-index: 999999;
+}
+
+#friends-reaction-picker button:focus {
+	outline: none;
+
 }
 
 #friends-reaction-picker .spinner {
-	background: url('/wp-admin/images/wpspin_light.gif') no-repeat;
 	background-size: 16px 16px;
 	opacity: .7;
 	width: 16px;
 	height: 16px;
 }
-

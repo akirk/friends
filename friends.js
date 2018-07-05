@@ -38,41 +38,60 @@ jQuery( function( $ ) {
 	} );
 
 	jQuery( document ).on( 'click', 'button.new-reaction', function() {
-		var p = $(this).position();
-		$( '#friends-reaction-picker' ).data( 'id' , $( this ).data( 'id' ) ).css({
+		var p = $(this).offset();
+		var spinner = $( '#friends-reaction-picker .spinner' );
+		var picker = $( '#friends-reaction-picker' );
+
+		picker.data( 'id' , $( this ).data( 'id' ) ).css( {
 			left: p.left + 'px',
 			top: p.top + 'px'
-		}).show();
+		} );
 
-		jQuery.getJSON( friends.emojis_json, function( json ) {
-			var html = [];
-			$.each( json, function( key, val ) {
-			    html.push( '<button data-emoji="' + key + '">' + val + '</button>' );
-			  });
-			$( '#friends-reaction-picker' ).html( html.join( '' ) );
-		})
+		if ( spinner.length ) {
+			spinner.css( 'background', 'url( ' + friends.spinner_url + ') no-repeat' );
+			picker.show();
+
+			jQuery.getJSON( friends.emojis_json, function( json ) {
+				var html = [];
+				$.each( json, function( key, val ) {
+				    html.push( '<button data-emoji="' + key + '">' + val + '</button>' );
+				  });
+				picker.html( html.join( '' ) ).css( {
+					left: Math.max( 0, p.left - picker.width() / 2 ) + 'px',
+				} );
+			} );
+		} else {
+			picker.css( {
+				left: Math.max( 0, p.left - picker.width() / 2 ) + 'px',
+			} ).show();
+		}
+
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'button.reaction:not(.new-reaction)', function() {
-		jQuery.post( ajaxurl, {
+	jQuery( document ).on( 'click', 'button.friends-reaction:not(.new-reaction)', function() {
+		jQuery.post( friends.ajax_url, {
 			action: 'friends_toggle_react',
 			post_id: $( this ).data( 'id' ),
 			reaction: $( this ).data( 'emoji' )
 		}, function(response) {
 			location.reload();
-		});
+		} );
 		return false;
 	} );
 
+	jQuery( document ).on( 'click', function() {
+		$( '#friends-reaction-picker' ).hide();
+	} );
+
 	jQuery( '#friends-reaction-picker' ).on( 'click', 'button', function() {
-		jQuery.post( ajaxurl, {
+		jQuery.post( friends.ajax_url, {
 			action: 'friends_toggle_react',
 			post_id: $( '#friends-reaction-picker' ).data( 'id' ),
 			reaction: $( this ).data( 'emoji' )
 		}, function(response) {
 			location.reload();
-		});
+		} );
 		return false;
 	} );
 

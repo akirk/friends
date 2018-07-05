@@ -90,15 +90,21 @@ class Friends_Reactions {
 					'object_ids' => get_the_ID(),
 				)
 			);
+			$usernames  = array();
+
 			foreach ( $term_query->get_terms() as $term ) {
 				if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
 					continue;
 				}
 				$user_id = substr( $term->taxonomy, 16 );
+				if ( ! isset( $usernames[ $user_id ] ) ) {
+					$user                  = new WP_User( $user_id );
+					$usernames[ $user_id ] = $user->user_login;
+				}
 				if ( ! isset( $reactions[ $term->slug ] ) ) {
 					$reactions[ $term->slug ] = array();
 				}
-				$reactions[ $term->slug ][ $user_id ] = 1;
+				$reactions[ $term->slug ][ $user_id ] = $usernames[ $user_id ];
 			}
 
 			ob_start();
