@@ -189,7 +189,7 @@ button.friends-reaction span {
 	font-size: 18px;
 	vertical-align: top;
 }
-button.friends-reaction.pressed {
+button.friends-reaction.pressed, .friends-page article footer.entry-meta button.pressed {
 	color: #f0821e;
 }
 

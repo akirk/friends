@@ -5,8 +5,8 @@
  * @package Friends
  */
 
-?>
-<?php include __DIR__ . '/header.php'; ?>
+$friends = Friends::get_instance();
+include __DIR__ . '/header.php'; ?>
 <section class="posts">
 	<div class="friends-topbar">
 		<?php if ( ! dynamic_sidebar( 'Friends Topbar' ) ) : ?>
@@ -77,7 +77,7 @@
 					<span class="dashicons dashicons-admin-comments"></span>
 					<?php comments_number( '', 1, '%' ); ?>
 				</button>
-				<?php echo Friends_Reactions::post_reactions(); ?>
+				<?php echo $friends->reactions->post_reactions(); ?>
 			</footer>
 		</article>
 	<?php endwhile; ?>

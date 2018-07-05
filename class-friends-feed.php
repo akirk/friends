@@ -167,17 +167,22 @@ class Friends_Feed {
 			if ( ! $content || ! $permalink ) {
 				continue;
 			}
-
-			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id' ) as $key ) {
+			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id', 'reaction' ) as $key ) {
 				if ( ! isset( $item->{$key} ) ) {
 					$item->{$key} = false;
 				}
-
 				foreach ( array( self::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
-					if ( isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
-						$item->{$key} = $item->data['child'][ $xmlns ][ $key ][0]['data'];
-						continue 2;
+					if ( ! isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
+						continue;
 					}
+
+					if ( 'reaction' === $key ) {
+						$item->reactions = $item->data['child'][ $xmlns ][ $key ];
+						break;
+					}
+
+					$item->{$key} = $item->data['child'][ $xmlns ][ $key ][0]['data'];
+					break;
 				}
 			}
 
@@ -216,6 +221,9 @@ class Friends_Feed {
 			}
 			if ( $item->gravatar ) {
 				update_post_meta( $post_id, 'gravatar', $item->gravatar );
+			}
+			if ( $item->reactions ) {
+				$this->friends->reactions->update_remote_reactions( $post_id, $item->reactions );
 			}
 
 			update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
@@ -279,6 +287,11 @@ class Friends_Feed {
 			echo '<friends:gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</friends:gravatar>';
 			echo '<friends:post-status>' . esc_html( $post->post_status ) . '</friends:post-status>';
 			echo '<friends:post-id>' . esc_html( $post->ID ) . '</friends:post-id>';
+			$reactions = $this->friends->reactions->get_reactions( $post->ID );
+			foreach ( $reactions as $slug => $users ) {
+				$count = $this->friends->reactions->get_count( $users );
+				echo '<friends:reaction friends:slug="' . esc_attr( $slug ) . '" friends:count="' . esc_attr( $count ) . '">' . esc_html( implode( ', ', $users ) ) . '</friends:reaction>';
+			}
 		}
 	}
 

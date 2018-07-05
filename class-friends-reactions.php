@@ -76,6 +76,83 @@ class Friends_Reactions {
 	}
 
 	/**
+	 * Gets the usernames of reactions (including remote reactions).
+	 *
+	 * @param  array $reaction_users The users returned from get_reactions.
+	 * @return string The usernames of the reactions.
+	 */
+	public static function get_count( array $reaction_users ) {
+		$count = count( $reaction_users );
+		if ( isset( $reaction_users['remote'] ) ) {
+			$count += $reaction_users['remote']->count - 1;
+		}
+
+		return $count;
+	}
+
+	/**
+	 * Determine the count of reactions (including remote reactions).
+	 *
+	 * @param  array $reaction_users The users returned from get_reactions.
+	 * @return int The number of reactions.
+	 */
+	public static function get_usernames( array $reaction_users ) {
+		$count = count( $reaction_users );
+		if ( isset( $reaction_users['remote'] ) ) {
+			$reaction_users['remote'] = $reaction_users['remote']->usernames;
+		}
+
+		return implode( ', ', $reaction_users );
+
+	}
+
+	/**
+	 * Get the reactions for a post.
+	 *
+	 * @param  int $post_id The post ID.
+	 * @return array The users' reactions.
+	 */
+	public function get_reactions( $post_id ) {
+		$reactions        = array();
+		$term_query       = new WP_Term_Query(
+			array(
+				'object_ids' => $post_id,
+			)
+		);
+		$remote_reactions = maybe_unserialize( get_post_meta( $post_id, 'remote_reactions', true ) );
+		if ( is_array( $remote_reactions ) ) {
+			foreach ( $remote_reactions as $slug => $reaction ) {
+				if ( ! isset( $reactions[ $slug ] ) ) {
+					$reactions[ $slug ] = array();
+				}
+				$reactions[ $slug ]['remote'] = $reaction;
+			}
+		}
+
+		foreach ( $term_query->get_terms() as $term ) {
+			if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
+				continue;
+			}
+			if ( ! isset( $reactions[ $term->slug ] ) ) {
+				$reactions[ $term->slug ] = array();
+			}
+
+			$user_id = substr( $term->taxonomy, 16 );
+			$user    = new WP_User( $user_id );
+			if ( ! $user || is_wp_error( $user ) ) {
+				continue;
+			}
+
+			if ( ! isset( $reactions[ $term->slug ] ) ) {
+				$reactions[ $term->slug ] = array();
+			}
+			$reactions[ $term->slug ][ $user_id ] = $user->display_name;
+		}
+
+		return $reactions;
+	}
+
+	/**
 	 * Display Post reactions under a post.
 	 *
 	 * @param  string  $text The post content.
@@ -84,28 +161,7 @@ class Friends_Reactions {
 	 */
 	public function post_reactions( $text = '', $echo = false ) {
 		if ( is_user_logged_in() ) {
-			$reactions  = array();
-			$term_query = new WP_Term_Query(
-				array(
-					'object_ids' => get_the_ID(),
-				)
-			);
-			$usernames  = array();
-
-			foreach ( $term_query->get_terms() as $term ) {
-				if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
-					continue;
-				}
-				$user_id = substr( $term->taxonomy, 16 );
-				if ( ! isset( $usernames[ $user_id ] ) ) {
-					$user                  = new WP_User( $user_id );
-					$usernames[ $user_id ] = $user->user_login;
-				}
-				if ( ! isset( $reactions[ $term->slug ] ) ) {
-					$reactions[ $term->slug ] = array();
-				}
-				$reactions[ $term->slug ][ $user_id ] = $usernames[ $user_id ];
-			}
+			$reactions = $this->get_reactions( get_the_ID() );
 
 			ob_start();
 			include apply_filters( 'friends_template_path', 'friends/reactions.php' );
@@ -184,4 +240,33 @@ class Friends_Reactions {
 
 		return $emojis[ $slug ];
 	}
+
+	/**
+	 * Store remote reactions in post_meta.
+	 *
+	 * @param  int   $post_id   The post id.
+	 * @param  array $feed_data The feed data as delivered by SimplePie.
+	 * @return array The parsed reactions.
+	 */
+	public function update_remote_reactions( $post_id, array $feed_data ) {
+		$reactions = array();
+
+		foreach ( $feed_data as $feed_reaction ) {
+			$attribs = $feed_reaction['attribs'][ Friends_Feed::XMLNS ];
+			$slug    = $attribs['slug'];
+			if ( ! preg_match( '/^[a-z0-9_-]+$/', $slug ) ) {
+				continue;
+			}
+
+			$reactions[ $slug ] = (object) array(
+				'slug'      => $slug,
+				'count'     => $attribs['count'],
+				'usernames' => $feed_reaction['data'],
+			);
+		}
+
+		update_post_meta( $post_id, 'remote_reactions', $reactions );
+		return $reactions;
+	}
+
 }
