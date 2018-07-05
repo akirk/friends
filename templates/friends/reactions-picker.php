@@ -6,7 +6,4 @@
  */
 
 ?>
-<div id="friends-reaction-picker">
-	<button data-emoji="smile">&#x1F604;</button>
-	<button data-emoji="sob">&#x1F62D;</button>
-</div>
+<div id="friends-reaction-picker"><div class="spinner"></div></div>

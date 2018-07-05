@@ -87,6 +87,11 @@ class Friends_Page {
 		if ( is_user_logged_in() ) {
 			wp_enqueue_script( 'friends', plugin_dir_url( __FILE__ ) . 'friends.js', 'jquery' );
 			wp_enqueue_style( 'friends', plugin_dir_url( __FILE__ ) . 'friends.css' );
+			$variables = array(
+				'emojis_json' => plugin_dir_url( __FILE__ ) . 'emojis.json',
+			);
+			wp_localize_script( 'friends', 'friends', $variables );
+
 		}
 	}
 

@@ -11,14 +11,7 @@ foreach ( $reactions as $slug => $users ) {
 		$classes[] = 'pressed';
 	}
 	echo '<button class="reaction ' . implode( ' ', $classes ) . '" data-id="' . esc_attr( get_the_ID() ) . '" data-emoji="' . esc_attr( $slug ) . '"><span>';
-	switch ( $slug ) {
-		case 'smile':
-			echo '&#x1F604;';
-			break;
-		case 'sob':
-			echo '&#x1F62D;';
-			break;
-	}
+	echo Friends_Reactions::get_emoji_html( $slug );
 	echo '</span> ' . count( $users );
 	echo '</button>';
 }

@@ -47,4 +47,4 @@ uasort(
 );
 $popular = array_slice( $popular, 0, 100 );
 
-file_put_contents( __DIR__ . '/../emoji.json', json_encode( $popular, JSON_PRETTY_PRINT ) );
+file_put_contents( __DIR__ . '/../emojis.json', json_encode( $popular, JSON_PRETTY_PRINT ) );

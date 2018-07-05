@@ -170,12 +170,22 @@ body.friends-page {
 	color: #87a6bc;
 	padding: 2px;
 	font-weight: normal;
+	border: 1px dotted transparent;
+	border-radius: 4px;
+}
+.friends-page article footer.entry-meta button:hover {
+	border-color: #cccccc;
+}
+
+.friends-page article footer.entry-meta button:focus {
+	outline: none;
 }
 
 .friends-page article footer.entry-meta button.reaction span {
 	font-size: 18px;
-	line-height: 20px;
 	vertical-align: top;
+	height: 20px;
+	display: inline-block;
 }
 .friends-page article footer.entry-meta button.reaction.pressed {
 	color: #f0821e;
@@ -189,7 +199,8 @@ button.new-reaction span {
 #friends-reaction-picker {
 	display: none;
 	position: absolute;
-	border: 2px solid grey;
+	border: 1px solid #999999;
+	box-shadow: 2px 2px 5px #cccccc;
 	border-radius: .25em;
 	background-color: #fff;
 	padding: 1em;
@@ -199,4 +210,14 @@ button.new-reaction span {
 	font-size: 18px;
 	background-color: #fff;
 	border: 0;
+	cursor: pointer;
 }
+
+#friends-reaction-picker .spinner {
+	background: url('/wp-admin/images/wpspin_light.gif') no-repeat;
+	background-size: 16px 16px;
+	opacity: .7;
+	width: 16px;
+	height: 16px;
+}
+

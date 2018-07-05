@@ -24,6 +24,13 @@ class Friends_Reactions {
 	private $friends;
 
 	/**
+	 * Holds the supported Emojis array.
+	 *
+	 * @var array
+	 */
+	private static $emojis;
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -142,5 +149,33 @@ class Friends_Reactions {
 			}
 			return true;
 		}
+	}
+
+	/**
+	 * Fetches the Emojis from the JSON file.
+	 *
+	 * @return array The emojis.
+	 */
+	private static function get_emojis() {
+		if ( ! self::$emojis ) {
+			self::$emojis = json_decode( file_get_contents( __DIR__ . '/emojis.json' ), true );
+		}
+		return self::$emojis;
+	}
+
+	/**
+	 * Get the HTML code for an emoji
+	 *
+	 * @param  string $slug The emoji shortname to look up.
+	 * @return string|false The emoji HTML or false if it doesn't exist.
+	 */
+	public static function get_emoji_html( $slug ) {
+		$emojis = self::get_emojis();
+
+		if ( ! isset( $emojis[ $slug ] ) ) {
+			return;
+		}
+
+		return $emojis[ $slug ];
 	}
 }

@@ -43,6 +43,14 @@ jQuery( function( $ ) {
 			left: p.left + 'px',
 			top: p.top + 'px'
 		}).show();
+
+		jQuery.getJSON( friends.emojis_json, function( json ) {
+			var html = [];
+			$.each( json, function( key, val ) {
+			    html.push( '<button data-emoji="' + key + '">' + val + '</button>' );
+			  });
+			$( '#friends-reaction-picker' ).html( html.join( '' ) );
+		})
 		return false;
 	} );
 
