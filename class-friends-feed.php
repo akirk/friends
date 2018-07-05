@@ -177,7 +177,7 @@ class Friends_Feed {
 					}
 
 					if ( 'reaction' === $key ) {
-						$item->reactions = $item->data['child'][ $xmlns ][ $key ];
+						$item->reaction = $item->data['child'][ $xmlns ][ $key ];
 						break;
 					}
 
@@ -222,8 +222,8 @@ class Friends_Feed {
 			if ( $item->gravatar ) {
 				update_post_meta( $post_id, 'gravatar', $item->gravatar );
 			}
-			if ( $item->reactions ) {
-				$this->friends->reactions->update_remote_reactions( $post_id, $item->reactions );
+			if ( $item->reaction ) {
+				$this->friends->reactions->update_remote_reactions( $post_id, $item->reaction );
 			}
 
 			update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
