@@ -29,6 +29,7 @@ tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
 // Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
+Friends::activate_plugin();
 
 // Make sure to be able to query these hosts.
 add_filter(

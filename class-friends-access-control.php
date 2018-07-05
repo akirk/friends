@@ -84,14 +84,24 @@ class Friends_Access_Control {
 	 */
 	public function get_user_for_site_url( $site_url ) {
 		$user_login = $this->get_user_login_for_site_url( $site_url );
-		return get_user_by( 'login', $user_login );
+		$user       = get_user_by( 'login', $user_login );
+		if ( $user && ! $user->data->user_url ) {
+			wp_update_user(
+				array(
+					'ID'       => $user->ID,
+					'user_url' => $site_url,
+				)
+			);
+			$user = get_user_by( 'login', $user_login );
+		}
+		return $user;
 	}
 
 	/**
 	 * Create a WP_User with a specific Friends-related role
 	 *
 	 * @param  string $site_url The site URL for which to create the user.
-	 * @param  string $role     The role: subscription, pending_friend_request, friend_request, or friend.
+	 * @param  string $role     The role: subscription, pending_friend_request, or friend_request.
 	 * @param  string $name     The user's nickname.
 	 * @param  string $email    The user e-mail address.
 	 * @return WP_User|WP_Error The created user or an error.
@@ -247,6 +257,8 @@ class Friends_Access_Control {
 	 * @param  int    $user_id   The user id.
 	 * @param  string $new_role  The new role.
 	 * @param  string $old_roles The old roles.
+	 *
+	 * @return string The new token.
 	 */
 	public function update_friend_request_token( $user_id, $new_role, $old_roles ) {
 		if ( 'friend_request' !== $new_role || in_array( $new_role, $old_roles, true ) ) {
@@ -257,6 +269,7 @@ class Friends_Access_Control {
 		update_user_option( $user_id, 'friends_request_token', $token );
 
 		do_action( 'notify_new_friend_request', new WP_User( $user_id ) );
+		return $token;
 	}
 
 	/**
@@ -274,5 +287,31 @@ class Friends_Access_Control {
 		$user->set_role( 'friend' );
 
 		return $user;
+	}
+
+	/**
+	 * Check whether a user is a valid friend
+	 *
+	 * @param  WP_User $user The potential friend user.
+	 * @return boolean       Whether the user has valid friend data.
+	 */
+	public function is_valid_friend( WP_User $user ) {
+		if ( ! $user->has_cap( 'friend' ) ) {
+			return false;
+		}
+
+		if ( ! $user->data->user_url ) {
+			return false;
+		}
+
+		if ( ! get_user_option( 'friends_in_token', $user->ID ) ) {
+			return false;
+		}
+
+		if ( ! get_user_option( 'friends_out_token', $user->ID ) ) {
+			return false;
+		}
+
+		return true;
 	}
 }

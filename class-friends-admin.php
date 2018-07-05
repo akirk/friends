@@ -134,7 +134,7 @@ class Friends_Admin {
 		}
 
 		$user = $this->friends->access_control->get_user_for_site_url( $friend_url );
-		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend' ) ) {
+		if ( $user && ! is_wp_error( $user ) && $this->friends->access_control->is_valid_friend( $user ) ) {
 			return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
 		}
 

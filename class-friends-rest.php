@@ -279,7 +279,7 @@ class Friends_REST {
 				);
 			}
 
-			if ( $user->has_cap( 'friend' ) ) {
+			if ( $user->has_cap( 'friend' ) && get_user_option( 'friends_in_token', $user->ID ) ) {
 				// Already a friend, was it deleted?
 				return array(
 					'friend' => get_user_option( 'friends_in_token', $user->ID ),
@@ -293,8 +293,8 @@ class Friends_REST {
 			);
 		}
 
-		$user_id = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'email' ) );
-		if ( is_wp_error( $user_id ) ) {
+		$user = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'email' ) );
+		if ( is_wp_error( $user ) ) {
 			return new WP_Error(
 				'friends_friend_request_failed',
 				'Could not respond to the friend request.',
@@ -304,15 +304,12 @@ class Friends_REST {
 			);
 		}
 
-		$user = new WP_User( $user_id );
-
-		if ( $user->has_cap( 'pending_friend_request' ) ) {
+		if ( ! $user->has_cap( 'friend_request' ) ) {
 			// Friend request was deleted on the other side and then re-initated.
 			$user->set_role( 'friend_request' );
 		}
 
-		update_user_option( $user_id, 'friends_accept_signature', $signature );
-
+		update_user_option( $user->ID, 'friends_accept_signature', $signature );
 		return array(
 			'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
 		);
