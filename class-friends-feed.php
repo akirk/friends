@@ -116,7 +116,7 @@ class Friends_Feed {
 	 * @param  WP_User $friend_user The friend user.
 	 * @return array A mapping of the remote post ids.
 	 */
-	private function get_remote_post_ids( WP_User $friend_user ) {
+	public function get_remote_post_ids( WP_User $friend_user ) {
 		$remote_post_ids = array();
 		$existing_posts  = new WP_Query(
 			array(
@@ -223,7 +223,7 @@ class Friends_Feed {
 				update_post_meta( $post_id, 'gravatar', $item->gravatar );
 			}
 			if ( $item->reaction ) {
-				$this->friends->reactions->update_remote_reactions( $post_id, $item->reaction );
+				$this->friends->reactions->update_remote_feed_reactions( $post_id, $item->reaction );
 			}
 
 			update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
@@ -282,16 +282,25 @@ class Friends_Feed {
 	 * Additional fields for the friends feed.
 	 */
 	public function feed_additional_fields() {
-		if ( $this->friends->access_control->feed_is_authenticated() ) {
-			global $post;
-			echo '<friends:gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</friends:gravatar>';
-			echo '<friends:post-status>' . esc_html( $post->post_status ) . '</friends:post-status>';
-			echo '<friends:post-id>' . esc_html( $post->ID ) . '</friends:post-id>';
-			$reactions = $this->friends->reactions->get_reactions( $post->ID );
-			foreach ( $reactions as $slug => $users ) {
-				$count = $this->friends->reactions->get_count( $users );
-				echo '<friends:reaction friends:slug="' . esc_attr( $slug ) . '" friends:count="' . esc_attr( $count ) . '">' . esc_html( implode( ', ', $users ) ) . '</friends:reaction>';
+		$authenticated_user_id = $this->friends->access_control->feed_is_authenticated();
+		if ( ! $authenticated_user_id ) {
+			return;
+		}
+
+		global $post;
+		echo '<friends:gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</friends:gravatar>' . PHP_EOL;
+		echo '<friends:post-status>' . esc_html( $post->post_status ) . '</friends:post-status>' . PHP_EOL;
+		echo '<friends:post-id>' . esc_html( $post->ID ) . '</friends:post-id>' . PHP_EOL;
+
+		$reactions = $this->friends->reactions->get_reactions( $post->ID, $authenticated_user_id );
+		foreach ( $reactions as $slug => $reaction ) {
+			echo '<friends:reaction';
+			echo ' friends:slug="' . esc_attr( $slug ) . '"';
+			echo ' friends:count="' . esc_attr( $reaction->count ) . '"';
+			if ( $reaction->user_reacted ) {
+				echo ' friends:you-reacted="1"';
 			}
+			echo '>' . esc_html( $reaction->usernames ) . '</friends:reaction>' . PHP_EOL;
 		}
 	}
 

@@ -41,6 +41,7 @@ class Friends_REST {
 		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
 		add_action( 'wp_trash_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
+		add_action( 'friends_user_post_reaction', array( $this, 'notify_remote_friend_post_reaction' ) );
 		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
 	}
 
@@ -70,6 +71,12 @@ class Friends_REST {
 			self::PREFIX, 'post-deleted', array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_friend_post_deleted' ),
+			)
+		);
+		register_rest_route(
+			self::PREFIX, 'update-post-reactions', array(
+				'methods'  => 'POST',
+				'callback' => array( $this, 'rest_update_friend_post_reactions' ),
 			)
 		);
 	}
@@ -365,17 +372,14 @@ class Friends_REST {
 		$remote_post_id  = $request->get_param( 'post_id' );
 		$remote_post_ids = $this->friends->feed->get_remote_post_ids( $friend_user );
 
-		$post_id = false;
-		if ( isset( $remote_post_ids[ $remote_post_id ] ) ) {
-			$post_id = $remote_post_ids[ $remote_post_id ];
-		}
-
-		if ( ! $post_id ) {
+		if ( ! isset( $remote_post_ids[ $remote_post_id ] ) ) {
 			return array(
 				'deleted' => false,
 			);
 		}
-		$post = WP_Post::get_instance( $post_id );
+
+		$post_id = $remote_post_ids[ $remote_post_id ];
+		$post    = WP_Post::get_instance( $post_id );
 		if ( Friends::FRIEND_POST_CACHE === $post->post_type ) {
 			wp_delete_post( $post_id );
 		}
@@ -383,6 +387,78 @@ class Friends_REST {
 		return array(
 			'deleted' => true,
 		);
+	}
+
+
+	/**
+	 * Notify friends of a friend reaction
+	 *
+	 * @param  int $post_id The post id of the post that is deleted.
+	 */
+	public function notify_remote_friend_post_reaction( $post_id ) {
+		$post = WP_Post::get_instance( $post_id );
+		if ( 'post' !== $post->post_type ) {
+			return;
+		}
+
+		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+		$friends = $friends->get_results();
+
+		foreach ( $friends as $friend_user ) {
+			$reactions = $this->friends->reactions->get_reactions( $post->ID, $friend_user->ID );
+
+			$response = wp_safe_remote_post(
+				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/update-post-reactions', array(
+					'body'        => array(
+						'post_id'   => $post_id,
+						'reactions' => $reactions,
+						'friend'    => get_user_option( 'friends_out_token', $friend_user->ID ),
+					),
+					'timeout'     => 20,
+					'redirection' => 5,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Update the remote friend reactions for this post.
+	 *
+	 * @param  WP_REST_Request $request The incoming request.
+	 * @return array The array to be returned via the REST API.
+	 */
+	public function rest_update_friend_post_reactions( $request ) {
+		$token   = $request->get_param( 'friend' );
+		$user_id = $this->friends->access_control->verify_token( $token );
+		if ( ! $user_id ) {
+			return new WP_Error(
+				'friends_friend_request_failed',
+				'Could not respond to the friend request.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+		$friend_user     = new WP_User( $user_id );
+		$remote_post_id  = $request->get_param( 'post_id' );
+		$remote_post_ids = $this->friends->feed->get_remote_post_ids( $friend_user );
+
+		if ( ! isset( $remote_post_ids[ $remote_post_id ] ) ) {
+			return array(
+				'updated' => false,
+			);
+		}
+
+		$post_id = $remote_post_ids[ $remote_post_id ];
+		$post    = WP_Post::get_instance( $post_id );
+		if ( Friends::FRIEND_POST_CACHE === $post->post_type ) {
+			$this->friends->reactions->update_remote_reactions( $post_id, $request->get_param( 'reactions' ) );
+		}
+
+		return array(
+			'updated' => true,
+		);
+
 	}
 
 	/**

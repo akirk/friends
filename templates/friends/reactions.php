@@ -5,18 +5,14 @@
  * @package Friends
  */
 
-foreach ( $reactions as $slug => $users ) {
-	if ( empty( $users ) ) {
-		continue;
-	}
-
+foreach ( $reactions as $slug => $reaction ) {
 	$classes = array();
-	if ( isset( $users[ get_current_user_id() ] ) ) {
+	if ( $reaction->user_reacted ) {
 		$classes[] = 'pressed';
 	}
-	echo '<button class="friends-reaction ' . implode( ' ', $classes ) . '" data-id="' . esc_attr( get_the_ID() ) . '" data-emoji="' . esc_attr( $slug ) . '" title="' . esc_attr( Friends_Reactions::get_usernames( $users ) ) . '"><span>';
-	echo Friends_Reactions::get_emoji_html( $slug );
-	echo '</span> ' . Friends_Reactions::get_count( $users );
+	echo '<button class="friends-reaction ' . implode( ' ', $classes ) . '" data-id="' . esc_attr( get_the_ID() ) . '" data-emoji="' . esc_attr( $slug ) . '" title="' . esc_attr( $reaction->usernames ) . '"><span>';
+	echo $reaction->html_entity;
+	echo '</span> ' . $reaction->count;
 	echo '</button>';
 }
 ?>

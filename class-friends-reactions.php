@@ -28,7 +28,7 @@ class Friends_Reactions {
 	 *
 	 * @var array
 	 */
-	private static $emojis;
+	private $emojis;
 
 	/**
 	 * Constructor
@@ -73,60 +73,28 @@ class Friends_Reactions {
 			'query_var'         => true,
 		);
 		register_taxonomy( 'friend-reaction-' . get_current_user_id(), array( 'post', Friends::FRIEND_POST_CACHE ), $args );
-	}
-
-	/**
-	 * Gets the usernames of reactions (including remote reactions).
-	 *
-	 * @param  array $reaction_users The users returned from get_reactions.
-	 * @return string The usernames of the reactions.
-	 */
-	public static function get_count( array $reaction_users ) {
-		$count = count( $reaction_users );
-		if ( isset( $reaction_users['remote'] ) ) {
-			$count += $reaction_users['remote']->count - 1;
+		if ( get_current_user_id() !== $this->friends->get_main_friend_user_id() ) {
+			register_taxonomy( 'friend-reaction-' . $this->friends->get_main_friend_user_id(), array( 'post', Friends::FRIEND_POST_CACHE ), $args );
 		}
-
-		return $count;
-	}
-
-	/**
-	 * Determine the count of reactions (including remote reactions).
-	 *
-	 * @param  array $reaction_users The users returned from get_reactions.
-	 * @return int The number of reactions.
-	 */
-	public static function get_usernames( array $reaction_users ) {
-		$count = count( $reaction_users );
-		if ( isset( $reaction_users['remote'] ) ) {
-			$reaction_users['remote'] = $reaction_users['remote']->usernames;
-		}
-
-		return implode( ', ', $reaction_users );
-
 	}
 
 	/**
 	 * Get the reactions for a post.
 	 *
-	 * @param  int $post_id The post ID.
+	 * @param  int       $post_id The post ID.
+	 * @param  int|false $exclude_user_id Whether to exclude a certain user_id.
 	 * @return array The users' reactions.
 	 */
-	public function get_reactions( $post_id ) {
-		$reactions        = array();
-		$term_query       = new WP_Term_Query(
+	public function get_reactions( $post_id, $exclude_user_id = false ) {
+		$reactions      = array();
+		$term_query     = new WP_Term_Query(
 			array(
 				'object_ids' => $post_id,
 			)
 		);
-		$remote_reactions = maybe_unserialize( get_post_meta( $post_id, 'remote_reactions', true ) );
-		if ( is_array( $remote_reactions ) ) {
-			foreach ( $remote_reactions as $slug => $reaction ) {
-				if ( ! isset( $reactions[ $slug ] ) ) {
-					$reactions[ $slug ] = array();
-				}
-				$reactions[ $slug ]['remote'] = $reaction;
-			}
+		$user_reactions = array();
+		if ( false !== $exclude_user_id ) {
+			$excluded_user = new WP_User( $excluded_user_id );
 		}
 
 		foreach ( $term_query->get_terms() as $term ) {
@@ -137,8 +105,13 @@ class Friends_Reactions {
 				$reactions[ $term->slug ] = array();
 			}
 
-			$user_id = substr( $term->taxonomy, 16 );
-			$user    = new WP_User( $user_id );
+			$user_id = intval( substr( $term->taxonomy, 16 ) );
+			if ( $exclude_user_id === $user_id || ( false === $exclude_user_id && get_current_user_id() === $user_id ) ) {
+				$user_reactions[ $term->slug ] = true;
+				continue;
+			}
+
+			$user = new WP_User( $user_id );
 			if ( ! $user || is_wp_error( $user ) ) {
 				continue;
 			}
@@ -147,6 +120,42 @@ class Friends_Reactions {
 				$reactions[ $term->slug ] = array();
 			}
 			$reactions[ $term->slug ][ $user_id ] = $user->display_name;
+		}
+
+		$remote_reactions = maybe_unserialize( get_post_meta( $post_id, 'remote_reactions', true ) );
+		foreach ( $reactions as $slug => $reacting_usernames ) {
+			$user_reacted = isset( $user_reactions[ $slug ] );
+
+			$count = count( $reacting_usernames );
+			if ( false === $exclude_user_id && $user_reacted ) {
+				$count += 1;
+			}
+
+			$usernames = array_values( $reacting_usernames );
+			if ( false === $exclude_user_id && $user_reacted ) {
+				$usernames[] = $excluded_user->display_name;
+			}
+
+			if ( is_array( $remote_reactions ) && isset( $remote_reactions[ $slug ] ) ) {
+				$count      += $remote_reactions[ $slug ]->count;
+				$usernames[] = $remote_reactions[ $slug ]->usernames;
+				unset( $remote_reactions[ $slug ] );
+			}
+
+			$reactions[ $slug ] = (object) array(
+				'count'        => intval( $count ),
+				'html_entity'  => $this->get_emoji_html( $slug ),
+				'usernames'    => implode( ', ', $usernames ),
+				'user_reacted' => isset( $user_reactions[ $slug ] ),
+			);
+		}
+
+		if ( is_array( $remote_reactions ) ) {
+			foreach ( $remote_reactions as $slug => $reaction ) {
+				$reaction->user_reacted = false;
+				$reaction->html_entity  = $this->get_emoji_html( $slug );
+				$reactions[ $slug ]     = $reaction;
+			}
 		}
 
 		return $reactions;
@@ -196,19 +205,27 @@ class Friends_Reactions {
 		}
 
 		if ( is_numeric( $_POST['post_id'] ) && is_string( $_POST['reaction'] ) ) {
-			// TODO: Whitelist Emojis.
+			$post_id = intval( $_POST['post_id'] );
+
+			if ( ! $this->get_emoji_html( $_POST['reaction'] ) ) {
+				// This emoji is not defined in emoji.json.
+				return new WP_Error( 'invalid-emoji', 'This emoji is unknown.' );
+			}
+
 			$term = false;
-			foreach ( wp_get_object_terms( $_POST['post_id'], 'friend-reaction-' . get_current_user_id() ) as $t ) {
+			foreach ( wp_get_object_terms( $post_id, 'friend-reaction-' . get_current_user_id() ) as $t ) {
 				if ( $t->slug === $_POST['reaction'] ) {
 					$term = $t;
 					break;
 				}
 			}
 			if ( ! $term ) {
-				wp_set_object_terms( $_POST['post_id'], $_POST['reaction'], 'friend-reaction-' . get_current_user_id(), true );
+				wp_set_object_terms( $post_id, $_POST['reaction'], 'friend-reaction-' . get_current_user_id(), true );
 			} else {
-				wp_remove_object_terms( $_POST['post_id'], $term->term_id, 'friend-reaction-' . get_current_user_id() );
+				wp_remove_object_terms( $post_id, $term->term_id, 'friend-reaction-' . get_current_user_id() );
 			}
+
+			do_action( 'friends_user_post_reaction', $post_id );
 			return true;
 		}
 	}
@@ -218,11 +235,11 @@ class Friends_Reactions {
 	 *
 	 * @return array The emojis.
 	 */
-	private static function get_emojis() {
-		if ( ! self::$emojis ) {
-			self::$emojis = json_decode( file_get_contents( __DIR__ . '/emojis.json' ), true );
+	private function get_emojis() {
+		if ( ! $this->emojis ) {
+			$this->emojis = json_decode( file_get_contents( __DIR__ . '/emojis.json' ), true );
 		}
-		return self::$emojis;
+		return $this->emojis;
 	}
 
 	/**
@@ -231,8 +248,8 @@ class Friends_Reactions {
 	 * @param  string $slug The emoji shortname to look up.
 	 * @return string|false The emoji HTML or false if it doesn't exist.
 	 */
-	public static function get_emoji_html( $slug ) {
-		$emojis = self::get_emojis();
+	public function get_emoji_html( $slug ) {
+		$emojis = $this->get_emojis();
 
 		if ( ! isset( $emojis[ $slug ] ) ) {
 			return;
@@ -248,7 +265,7 @@ class Friends_Reactions {
 	 * @param  array $feed_data The feed data as delivered by SimplePie.
 	 * @return array The parsed reactions.
 	 */
-	public function update_remote_reactions( $post_id, array $feed_data ) {
+	public function update_remote_feed_reactions( $post_id, array $feed_data ) {
 		$reactions = array();
 
 		foreach ( $feed_data as $feed_reaction ) {
@@ -259,10 +276,72 @@ class Friends_Reactions {
 			}
 
 			$reactions[ $slug ] = (object) array(
-				'slug'      => $slug,
-				'count'     => $attribs['count'],
-				'usernames' => $feed_reaction['data'],
+				'count'        => $attribs['count'],
+				'usernames'    => $feed_reaction['data'],
+				'user_reacted' => isset( $attribs['you-reacted'] ) && $attribs['you-reacted'],
 			);
+		}
+
+		return $this->update_remote_reactions( $post_id, $reactions );
+	}
+
+	/**
+	 * Store remote reactions in post_meta and update the main user taxonomy.
+	 *
+	 * @param  int   $post_id   The post id.
+	 * @param  array $reactions The reactions data to be updated.
+	 * @return array The parsed reactions.
+	 */
+	public function update_remote_reactions( $post_id, array $reactions ) {
+		$main_user_id        = $this->friends->get_main_friend_user_id();
+		$main_user_reactions = wp_get_object_terms( $post_id, 'friend-reaction-' . $main_user_id );
+		if ( is_wp_error( $main_user_reactions ) ) {
+			$main_user_reactions = array();
+		}
+
+		foreach ( $reactions as $slug => $reaction ) {
+			if ( is_array( $reaction ) ) {
+				$reaction = (object) $reaction;
+			}
+
+			if (
+				! preg_match( '/^[a-z0-9_-]+$/', $slug )
+				|| ! isset( $reaction->count )
+				|| $reaction->count < 0
+				|| ! isset( $reaction->usernames )
+			) {
+				unset( $reactions[ $slug ] );
+				continue;
+			}
+
+			$term = false;
+			foreach ( $main_user_reactions as $k => $t ) {
+				if ( $t->slug === $slug ) {
+					$term = $t;
+					unset( $main_user_reactions[ $k ] );
+					break;
+				}
+			}
+
+			if ( $reaction->user_reacted && ! $term ) {
+				// Someone reacted on the remote site which hasn't been recorded here yet.
+				wp_set_object_terms( $post_id, $slug, 'friend-reaction-' . $main_user_id, true );
+			} elseif ( ! $reaction->user_reacted && $term ) {
+				// Someone removed our reaction on the remote site so we need to delete it here.
+				wp_remove_object_terms( $post_id, $term->term_id, 'friend-reaction-' . $main_user_id );
+			}
+
+			unset( $reaction->user_reacted );
+			$reactions[ $slug ] = $reaction;
+
+			if ( ! $reaction->count ) {
+				unset( $reactions[ $slug ] );
+			}
+		}
+
+		// Remove all remaining reactions as they have not been reported by remote.
+		foreach ( $main_user_reactions as $term ) {
+			wp_remove_object_terms( $post_id, $term->term_id, 'friend-reaction-' . $main_user_id );
 		}
 
 		update_post_meta( $post_id, 'remote_reactions', $reactions );

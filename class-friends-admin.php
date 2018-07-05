@@ -272,6 +272,11 @@ class Friends_Admin {
 		} else {
 			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
 		}
+
+		if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
+			user_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
+		}
+
 		if ( isset( $_POST['new_post_notification'] ) && $_POST['new_post_notification'] ) {
 			delete_user_option( get_current_user_id(), 'friends_no_new_post_notification' );
 		} else {
@@ -306,6 +311,10 @@ class Friends_Admin {
 			</p></div>
 			<?php
 		}
+
+		$potential_main_users = new WP_User_Query( array( 'role' => 'administrator' ) );
+		$main_user_id         = $this->friends->get_main_friend_user_id();
+
 		include apply_filters( 'friends_template_path', 'admin/settings.php' );
 	}
 
