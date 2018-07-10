@@ -1,6 +1,8 @@
 0.8
 ===
 - Reactions
+- Shortcodes
+- Customizable Profile page
 
 0.7
 ===

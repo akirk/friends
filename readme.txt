@@ -63,6 +63,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 == Changelog ==
 = 0.8 =
 - Reactions
+- Shortcodes
+- Customizable Profile page
 
 = 0.7 =
 - Download OPML
