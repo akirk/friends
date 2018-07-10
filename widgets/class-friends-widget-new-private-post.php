@@ -1,27 +1,27 @@
 <?php
 /**
- * Friend Request Widget
+ * Friend New Private Post Widget
  *
- * A widget that allows you to send a friend request.
+ * A widget that allows you to create a new private post.
  *
  * @package Friends
- * @since 0.3
+ * @since 0.8
  */
 
 /**
- * This is the class for the Friend Request Widget.
+ * This is the class for the Friend New Private Post Widget.
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Widget_Friend_Request extends WP_Widget {
+class Friends_Widget_New_Private_Post extends WP_Widget {
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
 		parent::__construct(
-			'friends-widget-friend-request', __( 'Friend request', 'friends' ), array(
-				'description' => __( 'Send a friend request.', 'friends' ),
+			'friends-widget-new-private-post', __( 'New Private Post', 'friends' ), array(
+				'description' => __( 'Allows the creation of a new private post from within the page.', 'friends' ),
 			)
 		);
 	}
@@ -42,10 +42,13 @@ class Friends_Widget_Friend_Request extends WP_Widget {
 		}
 
 		?>
-		<form action="<?php echo esc_url( self_admin_url( 'admin.php?page=send-friend-request' ) ); ?>" method="post">
-		<?php wp_nonce_field( 'send-friend-request' ); ?>
-		<input type="text" name="friend_url" size="15" placeholder="<?php echo esc_attr_e( "Friend's URL", 'friends' ); ?>"/>
-		<button><?php echo esc_attr_e( 'Send Request', 'friends' ); ?></button>
+		<form method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="friends-post-inline">
+			<?php wp_nonce_field( 'friends_publish' ); ?>
+			<input type="hidden" name="action" value="friends_publish" />
+			<input type="text" name="title" value="" placeholder="<?php echo esc_attr( __( 'Title' ) ); ?>" /><br />
+			<textarea name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( 'What are you up to, %s?', 'friends' ), wp_get_current_user()->display_name ) ); ?>"></textarea><br />
+			<button>Post to your friends</button>
+			<input type="hidden" name="status" value="private" /></span>
 		</form>
 		<?php
 		echo $args['after_widget'];

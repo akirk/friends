@@ -155,7 +155,7 @@ class Friends_Access_Control {
 	 * @param  string $token The token to verify.
 	 * @return int|bool The user id or false.
 	 */
-	protected function verify_token( $token ) {
+	public function verify_token( $token ) {
 		$user_id = get_option( 'friends_in_token_' . $token );
 		if ( ! $user_id ) {
 			return false;

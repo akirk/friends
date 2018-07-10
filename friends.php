@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 0.7
+ * Version: 0.8
  *
  * Description: Connect WordPresses and communicate privately with your friends.
  *
@@ -23,6 +23,7 @@ include __DIR__ . '/class-friends-admin.php';
 include __DIR__ . '/class-friends-feed.php';
 include __DIR__ . '/class-friends-notifications.php';
 include __DIR__ . '/class-friends-page.php';
+include __DIR__ . '/class-friends-reactions.php';
 include __DIR__ . '/class-friends-rest.php';
 include __DIR__ . '/class-friends-3rd-parties.php';
 include __DIR__ . '/class-friends.php';
@@ -38,7 +39,8 @@ add_action( 'widgets_init', array( 'Friends_Widget_Refresh', 'register' ) );
 include __DIR__ . '/widgets/class-friends-widget-friend-list.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Friend_List', 'register' ) );
 
-
 include __DIR__ . '/widgets/class-friends-widget-friend-request.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Friend_Request', 'register' ) );
 
+include __DIR__ . '/widgets/class-friends-widget-new-private-post.php';
+add_action( 'widgets_init', array( 'Friends_Widget_New_Private_Post', 'register' ) );

@@ -10,6 +10,18 @@
 	<table class="form-table">
 		<tbody>
 			<tr>
+				<th scope="row"><?php esc_html_e( 'Main Friend User', 'friends' ); ?></th>
+				<td>
+					<select name="main_user_id">
+						<?php foreach ( $potential_main_users->get_results() as $potential_main_user ) : ?>
+							<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $main_user_id, $user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
+
+						<?php endforeach; ?>
+					</select>
+					<p class="description"><?php esc_html_e( 'When remotely reacting to a post, it will be attributed to this user.', 'friends' ); ?></p>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row"><?php esc_html_e( 'Friend Requests', 'friends' ); ?></th>
 				<td>
 					<fieldset>
@@ -46,15 +58,15 @@
 					</fieldset>
 				</td>
 			</tr>
-		<tr>
-			<th scope="row"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
-			<td>
-				<?php
-				// translators: %s is a URL.
-				echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed fedader.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-opml' ) ) ), array( 'a' => array( 'href' => array() ) ) );
-				?>
-			</td>
-		</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
+				<td>
+					<?php
+					// translators: %s is a URL.
+					echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed fedader.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-opml' ) ) ), array( 'a' => array( 'href' => array() ) ) );
+					?>
+				</td>
+			</tr>
 		</tbody>
 	</table>
 	<p class="submit">

@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION           = '0.7';
+	const VERSION           = '0.8';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const PLUGIN_URL        = 'https://wordpress.org/plugins/friends/';
 
@@ -90,6 +90,7 @@ class Friends {
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->page           = new Friends_Page( $this );
+		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
 		$this->third_parties  = new Friends_3rd_Parties( $this );
 
@@ -178,6 +179,10 @@ class Friends {
 	public static function activate_plugin() {
 		self::setup_roles();
 
+		if ( false === get_option( 'friends_main_user_id' ) ) {
+			update_option( 'friends_main_user_id', get_current_user_id() );
+		}
+
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
 			wp_schedule_event( time(), 'hourly', 'cron_friends_refresh_feeds' );
 		}
@@ -201,6 +206,30 @@ class Friends {
 	}
 
 	/**
+	 * Get the main friend user id.
+	 *
+	 * @return int The user_id.
+	 */
+	public static function get_main_friend_user_id() {
+		$main_user_id = get_option( 'friends_main_user_id' );
+
+		if ( false === $main_user_id ) {
+			// Backfill the main user id.
+			if ( get_current_user_id() ) {
+				$main_user_id = get_current_user_id();
+			} else {
+				$users = new WP_User_Query( array( 'role' => 'administrator' ) );
+				foreach ( $users->get_results() as $user ) {
+					$main_user_id = $user->ID;
+					break;
+				}
+			}
+			update_option( 'friends_main_user_id', $main_user_id );
+		}
+		return $main_user_id;
+	}
+
+	/**
 	 * Delete all the data the plugin has stored in WordPress
 	 */
 	public static function uninstall_plugin() {
@@ -217,6 +246,7 @@ class Friends {
 			delete_user_option( $user->ID, 'friends_request_token' );
 		}
 
+		delete_option( 'friends_main_user_id' );
 		remove_role( 'friend' );
 		remove_role( 'friend_request' );
 		remove_role( 'pending_friend_request' );

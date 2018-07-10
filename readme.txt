@@ -61,6 +61,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.8 =
+- Reactions
+
 = 0.7 =
 - Download OPML
 - Suggest Friends plugin via different media
