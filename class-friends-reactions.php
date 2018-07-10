@@ -61,6 +61,15 @@ class Friends_Reactions {
 	 * Register the taxonomies necessary
 	 */
 	public function register_taxonomies() {
+		$this->register_user_taxonomy( get_current_user_id() );
+	}
+
+	/**
+	 * Register the taxonomy for a certain user
+	 *
+	 * @param  int $user_id The user id.
+	 */
+	public function register_user_taxonomy( $user_id ) {
 		$args = array(
 			'labels'            => array(
 				'name'          => _x( 'Reactions', 'taxonomy general name' ),
@@ -72,10 +81,26 @@ class Friends_Reactions {
 			'show_admin_column' => true,
 			'query_var'         => true,
 		);
-		register_taxonomy( 'friend-reaction-' . get_current_user_id(), array( 'post', Friends::FRIEND_POST_CACHE ), $args );
-		if ( get_current_user_id() !== $this->friends->get_main_friend_user_id() ) {
-			register_taxonomy( 'friend-reaction-' . $this->friends->get_main_friend_user_id(), array( 'post', Friends::FRIEND_POST_CACHE ), $args );
+		register_taxonomy( 'friend-reaction-' . $user_id, array( 'post', Friends::FRIEND_POST_CACHE ), $args );
+	}
+
+	/**
+	 * Get my reactions for a post.
+	 *
+	 * @param  int $post_id The post ID.
+	 * @return array The users' reactions.
+	 */
+	public function get_my_reactions( $post_id ) {
+		$my_reactions = wp_get_object_terms( $post_id, 'friend-reaction-' . get_current_user_id() );
+		if ( is_wp_error( $my_reactions ) ) {
+			return array();
 		}
+		$reactions = array();
+		foreach ( $my_reactions as $term ) {
+			$reactions[] = $term->slug;
+		}
+
+		return $reactions;
 	}
 
 	/**
@@ -86,15 +111,17 @@ class Friends_Reactions {
 	 * @return array The users' reactions.
 	 */
 	public function get_reactions( $post_id, $exclude_user_id = false ) {
-		$reactions      = array();
-		$term_query     = new WP_Term_Query(
+		$reactions  = array();
+		$term_query = new WP_Term_Query(
 			array(
 				'object_ids' => $post_id,
 			)
 		);
-		$user_reactions = array();
+
 		if ( false !== $exclude_user_id ) {
 			$excluded_user = new WP_User( $excluded_user_id );
+		} else {
+			$excluded_user = wp_get_current_user();
 		}
 
 		foreach ( $term_query->get_terms() as $term ) {
@@ -157,6 +184,8 @@ class Friends_Reactions {
 				$reactions[ $slug ]     = $reaction;
 			}
 		}
+
+		ksort( $reactions );
 
 		return $reactions;
 	}
@@ -293,7 +322,8 @@ class Friends_Reactions {
 	 * @return array The parsed reactions.
 	 */
 	public function update_remote_reactions( $post_id, array $reactions ) {
-		$main_user_id        = $this->friends->get_main_friend_user_id();
+		$main_user_id = $this->friends->get_main_friend_user_id();
+		$this->register_user_taxonomy( $main_user_id );
 		$main_user_reactions = wp_get_object_terms( $post_id, 'friend-reaction-' . $main_user_id );
 		if ( is_wp_error( $main_user_reactions ) ) {
 			$main_user_reactions = array();
@@ -345,6 +375,48 @@ class Friends_Reactions {
 		}
 
 		update_post_meta( $post_id, 'remote_reactions', $reactions );
+		return $reactions;
+	}
+
+	/**
+	 * Store reactions of a friend.
+	 *
+	 * @param  int   $post_id   The post id.
+	 * @param  int   $friend_user_id The friend who reacted.
+	 * @param  array $reactions The reactions data to be updated.
+	 * @return array The parsed reactions.
+	 */
+	public function update_friend_reactions( $post_id, $friend_user_id, array $reactions ) {
+		$this->register_user_taxonomy( $friend_user_id );
+		$friend_user_reactions = wp_get_object_terms( $post_id, 'friend-reaction-' . $friend_user_id );
+
+		if ( is_wp_error( $friend_user_reactions ) ) {
+			return false;
+		}
+		foreach ( $reactions as $slug ) {
+			if ( ! preg_match( '/^[a-z0-9_-]+$/', $slug ) ) {
+				continue;
+			}
+
+			$term = false;
+			foreach ( $friend_user_reactions as $k => $t ) {
+				if ( $t->slug === $slug ) {
+					$term = $t;
+					unset( $friend_user_reactions[ $k ] );
+					break;
+				}
+			}
+
+			if ( ! $term ) {
+				wp_set_object_terms( $post_id, $slug, 'friend-reaction-' . $friend_user_id, true );
+			}
+		}
+
+		// Remove all remaining reactions as they have not been reported by remote.
+		foreach ( $friend_user_reactions as $term ) {
+			wp_remove_object_terms( $post_id, $term->term_id, 'friend-reaction-' . $friend_user_id );
+		}
+
 		return $reactions;
 	}
 

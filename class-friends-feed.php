@@ -226,7 +226,10 @@ class Friends_Feed {
 				$this->friends->reactions->update_remote_feed_reactions( $post_id, $item->reaction );
 			}
 
-			update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
+			if ( is_numeric( $item->{'post-id'} ) ) {
+				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
+			}
+
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 
