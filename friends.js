@@ -1,7 +1,7 @@
 jQuery( document ).on( 'click', 'a.auth-link, button.comments', function() {
 	var $this = jQuery( this ), href = $this.attr( 'href' );
 
-	if ( href && href.indexOf( 'friend_auth=' ) >= 0 ) {
+	if ( href && href.indexOf( 'friend_auth=' ) < 0 ) {
 		var hash = href.indexOf( '#' );
 		if ( hash >= 0 ) {
 			hash = href.substr( hash );

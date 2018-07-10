@@ -8,33 +8,33 @@ body.friends-page {
 	color: #333;
 }
 
-.friends-page div.container {
+body.friends-page div.container {
 	display: flex;
 	flex-flow: row wrap;
 }
 
 @media only screen and (max-width: 600px) {
-	.friends-page div.container {
+	body.friends-page div.container {
 		flex-flow: column wrap;
 	}
 }
 
-.friends-page section.posts {
+body.friends-page section.posts {
 	padding: 2em;
 	flex: 7;
 }
 
-.friends-page nav.friends-sidebar {
+body.friends-page nav.friends-sidebar {
 	padding: 2em;
 	flex: 1;
 }
 
-.friends-page img, .friends-page video, .friends-page textarea, .friends-page input {
+body.friends-page img, body.friends-page video, body.friends-page textarea, body.friends-page input {
 	height: auto;
 	max-width: 95%;
 }
 
-.friends-page form button {
+body.friends-page form button {
 	background-color: #222;
 	border: 0;
 	border-radius: .25em;
@@ -68,101 +68,103 @@ body.friends-page {
 	max-width: 100%;
 }
 
-.friends-post-inline input:focus, .friends-post-inline  textarea:focus {
+.friends-post-inline input:focus, .friends-post-inline textarea:focus {
 	color: #222;
 	border-color: #333;
 }
 
-.friends-page pre {
+body.friends-page pre {
 	max-width: 100%;
 	overflow: auto;
 }
 
 
-.friends-page input, .friends-page textarea, .friends-post-inline button {
+body.friends-page form input, body.friends-page form input:focus, body.friends-page form textarea:focus, body.friends-page form textarea, .friends-post-inline form button {
+	color: #222;
 	border: 1px solid grey;
 }
 
-.friends-page div.friends-topbar {
+body.friends-page div.friends-topbar {
 	padding-bottom: 2em;
 }
 
-.friends-page img.avatar {
+body.friends-page img.avatar {
 	border-radius: 100%;
 }
 
-.friends-page div.friends-widget {
+body.friends-page div.friends-widget {
 	margin-bottom: 2em;
 }
 
-.friends-page a, .friends-page a:link, .friends-page a:active {
+body.friends-page a, body.friends-page a:link, body.friends-page a:active {
 	color: #33bbe3;
 }
 
-.friends-page a:hover {
+body.friends-page a:hover {
 	color: #78dcfa;
 }
 
-.friends-page a:visited {
+body.friends-page a:visited {
 	color: #00aadc;
 }
 
-.friends-page article {
+body.friends-page section.posts article.hentry {
 	border-bottom: 1px solid #87a6bc;
 	padding-bottom: 1em;
 	margin-bottom: 1em;
 }
 
-.friends-page article div.entry-content, .friends-page article h4.entry-title {
+body.friends-page section.posts article.hentry div.entry-content, body.friends-page section.posts article.hentry h4.entry-title {
 	font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
 }
 
-.friends-page article header.entry-header {
+body.friends-page section.posts article.hentry header.entry-header {
 	display: flex;
 	font-size: 88%;
 	line-height: 1.4;
 }
 
-.friends-page article header.entry-header div.avatar {
+body.friends-page section.posts article.hentry header.entry-header div.avatar {
 	margin-right: .5em;
 }
 
-.friends-page article h4.entry-title {
+body.friends-page section.posts article.hentry h4.entry-title {
 	font-size: 130%;
 	line-height: 1.4;
 	margin: .5em 0;
 }
 
-.friends-page article header.entry-header a {
+body.friends-page section.posts article.hentry header.entry-header a {
 	text-decoration: none;
 }
 
-.friends-page article h4.entry-title a {
+body.friends-page section.posts article.hentry h4.entry-title a {
 	text-decoration: none;
 	color: #333;
 }
 
-.friends-page article div.entry-content {
+body.friends-page section.posts article.hentry div.entry-content {
+	float: none;
 	line-height: 1.5;
 	font-size: 110%;
 	word-break: break-word;
 }
 
-.friends-page article div.entry-content p {
+body.friends-page section.posts article.hentry div.entry-content p {
 	margin: 0;
 	margin-bottom: .5em;
 }
 
-.friends-page article footer.entry-meta {
+body.friends-page section.posts article.hentry footer.entry-meta {
 	font-size: 1.5em;
 }
 
-.friends-page article footer.entry-meta {
+body.friends-page section.posts article.hentry footer.entry-meta {
 	display: flex;
 	justify-content: flex-end;
 }
 
-button.friends-reaction, .friends-page article footer.entry-meta button {
+button.friends-reaction, body.friends-page section.posts article.hentry footer.entry-meta button {
 	font-size: 14px;
 	border: 0;
 	background-color: #fff;
@@ -176,12 +178,12 @@ button.friends-reaction, .friends-page article footer.entry-meta button {
 	line-height: 20px;
 }
 
-button.friends-reaction:hover, .friends-page article footer.entry-meta button:hover {
+button.friends-reaction:hover, body.friends-page section.posts article.hentry footer.entry-meta button:hover {
 	border-color: #cccccc;
 	background-color: #fff;
 }
 
-button.friends-reaction:focus, .friends-page article footer.entry-meta button:focus {
+button.friends-reaction:focus, body.friends-page section.posts article.hentry footer.entry-meta button:focus {
 	outline: none;
 }
 
@@ -189,7 +191,7 @@ button.friends-reaction span {
 	font-size: 18px;
 	vertical-align: top;
 }
-button.friends-reaction.pressed, .friends-page article footer.entry-meta button.pressed {
+button.friends-reaction.pressed, body.friends-page section.posts article.hentry footer.entry-meta button.pressed {
 	color: #f0821e;
 }
 
