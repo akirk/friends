@@ -794,32 +794,58 @@ class Friends_Admin {
 	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
 	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			return;
+		$friends_url = site_url( '/friends/' );
+
+		if ( current_user_can( 'friend' ) ) {
+			$user        = wp_get_current_user();
+			$friends_url = $user->user_url . '/friends/';
 		}
+
 		$wp_menu->add_node(
 			array(
 				'id'     => 'friends',
 				'parent' => '',
 				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html__( 'Friends', 'friends' ),
-				'href'   => site_url( '/friends/' ),
+				'href'   => $friends_url,
 			)
 		);
-		$wp_menu->add_menu(
-			array(
-				'id'     => 'send-friend-request',
-				'parent' => 'friends',
-				'title'  => esc_html__( 'Send Friend Request', 'friends' ),
-				'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
-			)
-		);
-		$wp_menu->add_menu(
-			array(
-				'id'     => 'friends-requests',
-				'parent' => 'friends',
-				'title'  => esc_html__( 'Friends & Requests', 'friends' ),
-				'href'   => self_admin_url( 'users.php' ),
-			)
-		);
+
+		if ( current_user_can( 'edit_posts' ) ) {
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'your-profile',
+					'parent' => 'friends',
+					'title'  => esc_html__( 'Your Profile', 'friends' ),
+					'href'   => site_url( '/friends/?public' ),
+				)
+			);
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'send-friend-request',
+					'parent' => 'friends',
+					'title'  => esc_html__( 'Send Friend Request', 'friends' ),
+					'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
+				)
+			);
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'friends-requests',
+					'parent' => 'friends',
+					'title'  => esc_html__( 'Friends & Requests', 'friends' ),
+					'href'   => self_admin_url( 'users.php' ),
+				)
+			);
+		}
+
+		if ( current_user_can( 'friend' ) ) {
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'send-friend-request',
+					'parent' => 'friends',
+					'title'  => esc_html__( 'Profile', 'friends' ),
+					'href'   => site_url( '/friends/' ),
+				)
+			);
+		}
 	}
 }

@@ -234,3 +234,13 @@ button.new-reaction span {
 	width: 16px;
 	height: 16px;
 }
+
+.only-friends {
+	border-left: 2px solid #9f9;
+	padding-left: .5em;
+}
+
+.not-friends {
+	border-left: 2px solid #f99;
+	padding-left: .5em;
+}

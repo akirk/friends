@@ -92,7 +92,9 @@ class Friends {
 		$this->page           = new Friends_Page( $this );
 		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
-		$this->third_parties  = new Friends_3rd_Parties( $this );
+
+		new Friends_3rd_Parties( $this );
+		new Friends_Shortcodes( $this );
 
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
@@ -176,8 +178,44 @@ class Friends {
 	/**
 	 * Actions to take upon plugin activation.
 	 */
+	public static function create_friends_page() {
+		$query = new WP_Query( array( 'name' => 'friends' ) );
+		if ( $query->have_posts() ) {
+			return;
+		}
+
+		$content  = '[only-friends]';
+		$content .= __( 'Hi Friend!', 'friends' );
+		$content .= PHP_EOL;
+		$content .= __( 'Do you know any of my friends? Maybe you want to become friends with them as well?', 'friends' );
+		$content .= PHP_EOL;
+		$content .= '[friends-list include-links=true]';
+		$content .= '[/only-friends]';
+
+		$content .= '[not-friends]';
+		$content .= sprintf( __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' ), 'https://wordpress.org/', 'https://wordpress.org/plugins/friends/' );
+		$content .= PHP_EOL;
+		// translators: %1$s and %2$s are URLs.
+		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, follow me and get your own <a href="%1$s">WordPress</a> now and install the <a href="%2$s">Friends plugin</a>!', 'friends' ), 'https://wordpress.org/', 'https://wordpress.org/plugins/friends/' );
+		$content .= PHP_EOL;
+		$content .= '[/not-friends]';
+
+		$post_data = array(
+			'post_title'   => __( 'Welcome to the Friends Plugin', 'friends' ),
+			'post_content' => $content,
+			'post_type'    => 'page',
+			'post_name'    => 'friends',
+			'post_status'  => 'publish',
+		);
+		$post_id   = wp_insert_post( $post_data );
+	}
+
+	/**
+	 * Actions to take upon plugin activation.
+	 */
 	public static function activate_plugin() {
 		self::setup_roles();
+		self::create_friends_page();
 
 		if ( false === get_option( 'friends_main_user_id' ) ) {
 			update_option( 'friends_main_user_id', get_current_user_id() );

@@ -26,6 +26,7 @@ include __DIR__ . '/class-friends-page.php';
 include __DIR__ . '/class-friends-reactions.php';
 include __DIR__ . '/class-friends-rest.php';
 include __DIR__ . '/class-friends-3rd-parties.php';
+include __DIR__ . '/class-friends-shortcodes.php';
 include __DIR__ . '/class-friends.php';
 
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
