@@ -193,15 +193,15 @@ class Friends {
 		$content .= '[/only-friends]';
 
 		$content .= '[not-friends]';
-		$content .= sprintf( __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' ), 'https://wordpress.org/', 'https://wordpress.org/plugins/friends/' );
+		$content .= __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' );
 		$content .= PHP_EOL;
 		// translators: %1$s and %2$s are URLs.
-		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, follow me and get your own <a href="%1$s">WordPress</a> now and install the <a href="%2$s">Friends plugin</a>!', 'friends' ), 'https://wordpress.org/', 'https://wordpress.org/plugins/friends/' );
+		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, follow me and get your own <a href="%1$s">WordPress</a> now and install the <a href="%2$s">Friends plugin</a>!', 'friends' ), 'https://wordpress.org/', self::PLUGIN_URL );
 		$content .= PHP_EOL;
 		$content .= '[/not-friends]';
 
 		$post_data = array(
-			'post_title'   => __( 'Welcome to the Friends Plugin', 'friends' ),
+			'post_title'   => __( 'Welcome my Friends Page', 'friends' ),
 			'post_content' => $content,
 			'post_type'    => 'page',
 			'post_name'    => 'friends',
