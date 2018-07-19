@@ -17,6 +17,7 @@ class Friends {
 	const VERSION           = '0.8';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const PLUGIN_URL        = 'https://wordpress.org/plugins/friends/';
+	const REQUIRED_ROLE     = 'administrator';
 
 	/**
 	 * Initialize the plugin

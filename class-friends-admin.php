@@ -53,14 +53,14 @@ class Friends_Admin {
 	public function register_admin_menu() {
 		add_menu_page( 'Friends', 'Friends', 'manage_options', 'friends-settings', null, 'dashicons-groups', 3.73 );
 		add_submenu_page( 'friends-settings', 'Settings', 'Settings', 'manage_options', 'friends-settings', array( $this, 'render_admin_settings' ) );
-		add_submenu_page( 'friends-settings', 'Send Friend Request', 'Send Friend Request', 'edit_users', 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
+		add_submenu_page( 'friends-settings', 'Send Friend Request', 'Send Friend Request', Friends::REQUIRED_ROLE, 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
-		add_submenu_page( 'friends-settings', 'Feed', 'Friends &amp; Requests', 'edit_users', 'users.php' );
+		add_submenu_page( 'friends-settings', 'Feed', 'Friends &amp; Requests', Friends::REQUIRED_ROLE, 'users.php' );
 		add_submenu_page( 'friends-settings', 'Feed', 'Refresh', 'manage_options', 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 
 		if ( isset( $_GET['page'] ) && 'edit-friend' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', 'Edit User', 'Edit User', 'edit_users', 'edit-friend', array( $this, 'render_admin_edit_friend' ) );
+			add_submenu_page( 'friends-settings', 'Edit User', 'Edit User', Friends::REQUIRED_ROLE, 'edit-friend', array( $this, 'render_admin_edit_friend' ) );
 			add_action( 'load-friends_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
@@ -240,7 +240,7 @@ class Friends_Admin {
 	 * Check access for the Friends Admin settings page
 	 */
 	public function check_admin_settings() {
-		if ( ! current_user_can( 'edit_users' ) ) {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to change the settings.', 'friends' ) );
 		}
 	}
@@ -312,7 +312,7 @@ class Friends_Admin {
 			<?php
 		}
 
-		$potential_main_users = new WP_User_Query( array( 'role' => 'administrator' ) );
+		$potential_main_users = new WP_User_Query( array( 'role' => Friends::REQUIRED_ROLE ) );
 		$main_user_id         = $this->friends->get_main_friend_user_id();
 
 		include apply_filters( 'friends_template_path', 'admin/settings.php' );
@@ -322,7 +322,7 @@ class Friends_Admin {
 	 * Process access for the Friends Edit User page
 	 */
 	private function check_admin_edit_friend() {
-		if ( ! current_user_can( 'edit_users' ) ) {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to edit this user.' ) );
 		}
 
@@ -444,7 +444,7 @@ class Friends_Admin {
 	 * Render the admin form for sending a friend request.
 	 */
 	public function render_admin_send_friend_request() {
-		if ( ! current_user_can( 'edit_users' ) ) {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to send friend requests.', 'friends' ) );
 		}
 
@@ -550,7 +550,7 @@ class Friends_Admin {
 			return;
 		}
 
-		if ( ! current_user_can( 'edit_users' ) ) {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
 		}
 
@@ -810,7 +810,7 @@ class Friends_Admin {
 			)
 		);
 
-		if ( current_user_can( 'edit_posts' ) ) {
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'your-profile',

@@ -55,7 +55,7 @@ class Friends_Shortcodes {
 			return do_shortcode( $content );
 		}
 
-		if ( current_user_can( 'edit_users' ) ) {
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			return '<div class="only-friends">' . do_shortcode( $content ) . '</div>';
 		}
 
@@ -74,7 +74,7 @@ class Friends_Shortcodes {
 			return '';
 		}
 
-		if ( current_user_can( 'edit_users' ) ) {
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			return '<div class="not-friends">' . do_shortcode( $content ) . '</div>';
 		}
 
