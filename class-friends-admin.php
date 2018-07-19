@@ -794,23 +794,45 @@ class Friends_Admin {
 	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
 	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
-		$friends_url = site_url( '/friends/' );
+		$friends_url   = site_url( '/friends/' );
+		$friends_title = __( 'Friends', 'friends' );
+		$open_requests = 0;
 
 		if ( current_user_can( 'friend' ) ) {
 			$user        = wp_get_current_user();
 			$friends_url = $user->user_url . '/friends/';
 		}
 
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			$friend_requests = new WP_User_Query( array( 'role' => 'friend_request' ) );
+			$open_requests   = $friend_requests->get_total();
+			if ( $open_requests > 0 ) {
+				// translators: %s is the number of open friend requests.
+				$friends_title = sprintf( __( 'Friends (%s)', 'friends' ), $open_requests );
+			}
+		}
+
 		$wp_menu->add_node(
 			array(
 				'id'     => 'friends',
 				'parent' => '',
-				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html__( 'Friends', 'friends' ),
+				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( $friends_title ),
 				'href'   => $friends_url,
 			)
 		);
 
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			if ( $open_requests > 0 ) {
+				$wp_menu->add_menu(
+					array(
+						'id'     => 'open-friend-requests',
+						'parent' => 'friends',
+						// translators: %s is the number of open friend requests.
+						'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $open_requests, 'friends' ), $open_requests ) ),
+						'href'   => self_admin_url( 'users.php?role=friend_request' ),
+					)
+				);
+			}
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'your-profile',
