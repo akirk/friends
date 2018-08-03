@@ -675,6 +675,8 @@ class Friends_Admin {
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link                                  = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
+			$actions['friend_request_date']        = '<div class="nonessential">Requested on ' . date( 'Y-m-d H:i:s' ) . '</div>';
+
 		}
 
 		if ( $user->has_cap( 'pending_friend_request' ) ) {
