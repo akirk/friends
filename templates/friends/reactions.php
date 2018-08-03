@@ -17,5 +17,5 @@ foreach ( $reactions as $slug => $reaction ) {
 }
 ?>
 <button class="friends-reaction new-reaction" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
-	<span>&#xf132;</span>
+	<span>&#xf132;</span> <?php _e( 'Respond' ); ?>
 </button>

@@ -37,44 +37,55 @@ class Friends_Widget_Friend_List extends WP_Widget {
 
 		$title = apply_filters( 'widget_title', $instance['title'] );
 		echo $args['before_widget'];
-		if ( ! empty( $title ) ) {
-			echo $args['before_title'] . $title . $args['after_title'];
-		}
+		echo $args['before_title'];
 
+		$friends         = new WP_User_Query( array( 'role' => 'friend' ) );
 		$friend_requests = new WP_User_Query( array( 'role' => 'friend_request' ) );
 
-		?><div class="friend-request-count-message">
-		<?php if ( $friend_requests->get_total() > 0 ) : ?>
-			<a href="<?php echo esc_attr( self_admin_url( 'users.php?role=friend_request' ) ); ?>">
-			<?php
-			// translators: %s is the number of friends.
-			echo wp_kses( sprintf( _n( 'You have %s friend request.', ' You have %s friend requests.', $friend_requests->get_total(), 'friends' ), '<span class="friend-request-count">' . $friend_requests->get_total() . '</span>' ), array( 'span' => array( 'class' => array() ) ) );
-			?>
-			</a>
-		<?php endif; ?>
-		</div>
+		// translators: %s is the number of your friends.
+		$friends_title = sprintf( _n( '%s Friend', '%s Friends', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' );
 
-		<span class="friend-count-message">
+		?><a href="<?php echo esc_attr( self_admin_url( 'users.php' ) ); ?>">
 		<?php
-		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
-		if ( 0 === $friends->get_total() ) {
-			esc_html_e( "You don't have any friends yet.", 'friends' );
+		if ( $friend_requests->get_total() > 0 ) {
+			echo wp_kses(
+				// translators: %1$s is the string "%s Friend", %2$s is a URL, %3$s is the number of open friend requests.
+				sprintf( _n( '%1$s <a href=%2$s>(%3$s request)</a>', '%1$s <a href=%2$s>(%3$s requests)</a>', $friend_requests->get_total(), 'friends' ), $friends_title, '"' . esc_attr( self_admin_url( 'users.php?role=friend_request' ) ) . '" class="open-requests"', '<span class="friend-count">' . $friend_requests->get_total() . '</span>' ), array(
+					'span' => array( 'class' => array() ),
+					'a'    => array(
+						'class' => array(),
+						'href'  => array(),
+					),
+				)
+			);
 		} else {
-			// translators: %s is the number of friends.
-			echo wp_kses( sprintf( _n( 'You have %s friend:', ' You have %s friends:', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' ), array( 'span' => array( 'class' => array() ) ) );
+			echo wp_kses( $friends_title, array( 'span' => array( 'class' => array() ) ) );
+
 		}
 		?>
-		</span>
-
-		<ul class="friend-list">
-		<?php foreach ( $friends->get_results() as $friend_user ) : ?>
-			<li><a href="<?php echo esc_url( site_url( '/friends/' . $friend_user->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-				<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>">visit</a></small></li>
-		<?php endforeach; ?>
-		</ul>
-
-		<a href="<?php echo esc_attr( self_admin_url( 'users.php' ) ); ?>"><?php esc_html_e( 'Manage Friends', 'friends' ); ?></a>
+		</a>
 		<?php
+		echo $args['after_title'];
+
+		if ( 0 === $friends->get_total() ) {
+			?>
+			<span class="friend-count-message">
+			<?php
+				esc_html_e( "You don't have any friends yet.", 'friends' );
+			?>
+			</span>
+			<?php
+		} else {
+			?>
+			<ul class="friend-list">
+			<?php foreach ( $friends->get_results() as $friend_user ) : ?>
+				<li><a href="<?php echo esc_url( site_url( '/friends/' . $friend_user->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+					<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>">visit</a></small></li>
+			<?php endforeach; ?>
+			</ul>
+			<?php
+		}
+
 		echo $args['after_widget'];
 	}
 

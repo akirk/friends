@@ -9,7 +9,25 @@ $friends = Friends::get_instance();
 include __DIR__ . '/header.php'; ?>
 <section class="posts">
 	<div class="friends-topbar">
-		<?php if ( ! dynamic_sidebar( 'Friends Topbar' ) ) : ?>
+		<?php if ( $friends->page->author ) : ?>
+			<h1>
+			<?php echo esc_html( $friends->page->author->display_name ); ?>
+			</h1>
+			<p>
+			<?php
+			echo wp_kses(
+				// translators: %1$s is a URL, %2$s is a site name, %3$s is a URL.
+				sprintf( __( 'Visit <a href=%1$s>%2$s</a>. Back to <a href=%3$s>your friends page</a>.', 'friends' ), '"' . esc_url( $friends->page->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->page->author->ID ) ) . '"', esc_html( $friends->page->author->user_login ), '"' . esc_attr( site_url( '/friends/' ) ) . '"' ), array(
+					'a' => array(
+						'href'       => array(),
+						'class'      => array(),
+						'data-token' => array(),
+					),
+				)
+			);
+			?>
+			</p>
+		<?php elseif ( ! dynamic_sidebar( 'Friends Topbar' ) ) : ?>
 			<div class="friends-main-widget">
 				<?php
 				the_widget(

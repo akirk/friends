@@ -31,6 +31,13 @@ class Friends_Page {
 	private $on_friends_page = false;
 
 	/**
+	 * Whether an author is being displayed
+	 *
+	 * @var string|false
+	 */
+	public $author = false;
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -248,6 +255,7 @@ class Friends_Page {
 
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
+			$this->author = get_user_by( 'login', $pagename_parts[1] );
 			$query->set( 'author_name', $pagename_parts[1] );
 			$query->is_singular = false;
 			$query->is_author   = true;

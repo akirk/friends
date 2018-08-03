@@ -78,7 +78,6 @@ body.friends-page pre {
 	overflow: auto;
 }
 
-
 body.friends-page form input, body.friends-page form input:focus, body.friends-page form textarea:focus, body.friends-page form textarea, .friends-post-inline form button {
 	color: #222;
 	border: 1px solid grey;
@@ -94,6 +93,27 @@ body.friends-page img.avatar {
 
 body.friends-page div.friends-widget {
 	margin-bottom: 2em;
+}
+
+body.friends-page div.friends-widget h4 a {
+	color: #222;
+	text-decoration: none;
+}
+
+body.friends-page div.friends-widget a.open-requests {
+	font-size: 90%;
+	font-weight: normal;
+}
+
+body.friends-page div.friends-widget ul {
+	margin: .5em 0;
+	padding: 0;
+}
+
+body.friends-page div.friends-widget ul li {
+	list-style: none;
+	margin: 0 0 .5em 0;
+	padding: 0;
 }
 
 body.friends-page a, body.friends-page a:link, body.friends-page a:active {
@@ -170,12 +190,14 @@ button.friends-reaction, body.friends-page section.posts article.hentry footer.e
 	background-color: #fff;
 	cursor: pointer;
 	color: #87a6bc;
-	padding: 2px;
-	margin: .2em;
+	padding: 4px;
+	margin: 3px;
 	font-weight: normal;
-	border: 1px dotted transparent;
+	border: 1px solid #cccccc;
 	border-radius: 4px;
 	line-height: 20px;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+	height: 30px;
 }
 
 button.friends-reaction:hover, body.friends-page section.posts article.hentry footer.entry-meta button:hover {
@@ -236,11 +258,19 @@ button.new-reaction span {
 }
 
 .only-friends {
-	border-left: 2px solid #9f9;
+	background-color: #efe;
 	padding-left: .5em;
 }
 
 .not-friends {
-	border-left: 2px solid #f99;
+	background-color: #fee;
 	padding-left: .5em;
+}
+
+.only-friends .watermark, .not-friends .watermark {
+	float: right;
+	padding-top: .5em;
+	padding-right: .5em;
+	font-size: 80%;
+	color: #ccc;
 }

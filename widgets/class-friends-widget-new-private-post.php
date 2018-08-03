@@ -77,7 +77,7 @@ class Friends_Widget_New_Private_Post extends WP_Widget {
 	 */
 	public function defaults() {
 		return array(
-			'title' => '',
+			'title' => __( 'Friends', 'friends' ),
 		);
 	}
 

@@ -56,14 +56,14 @@ class Friends_Shortcodes {
 		}
 
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			return '<div class="only-friends">' . do_shortcode( $content ) . '</div>';
+			return '<div class="only-friends"><span class="watermark">' . __( 'Only friends', 'friends' ) . '</span>' . do_shortcode( $content ) . '</div>';
 		}
 
 		return '';
 	}
 
 	/**
-	 * Display the content of this shortcode just to friends.
+	 * Display the content of this shortcode to everyone except friends.
 	 *
 	 * @param  array  $atts    Attributes provided by the user.
 	 * @param  string $content Enclosed content provided by the user.
@@ -75,7 +75,7 @@ class Friends_Shortcodes {
 		}
 
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			return '<div class="not-friends">' . do_shortcode( $content ) . '</div>';
+			return '<div class="not-friends"><span class="watermark">' . __( 'Not friends', 'friends' ) . '</span>' . do_shortcode( $content ) . '</div>';
 		}
 
 		return do_shortcode( $content );
