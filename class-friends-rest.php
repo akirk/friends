@@ -43,6 +43,7 @@ class Friends_REST {
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'friends_user_post_reaction', array( $this, 'notify_remote_friend_post_reaction' ), 10, 2 );
 		add_action( 'friends_user_post_reaction', array( $this, 'notify_friend_of_my_reaction' ) );
+		add_action( 'friends_user_post_reaction', array( $this, 'notify_other_friends_of_my_reaction' ) );
 		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
 	}
 
@@ -84,6 +85,12 @@ class Friends_REST {
 			self::PREFIX, 'my-reactions', array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_update_reactions_on_my_post' ),
+			)
+		);
+		register_rest_route(
+			self::PREFIX, 'recommendation', array(
+				'methods'  => 'POST',
+				'callback' => array( $this, 'rest_receive_recommendation' ),
 			)
 		);
 	}
@@ -368,8 +375,8 @@ class Friends_REST {
 		$user_id = $this->friends->access_control->verify_token( $token );
 		if ( ! $user_id ) {
 			return new WP_Error(
-				'friends_friend_request_failed',
-				'Could not respond to the friend request.',
+				'friends_request_failed',
+				'Could not respond to the request.',
 				array(
 					'status' => 403,
 				)
@@ -442,8 +449,8 @@ class Friends_REST {
 		$user_id = $this->friends->access_control->verify_token( $token );
 		if ( ! $user_id ) {
 			return new WP_Error(
-				'friends_friend_request_failed',
-				'Could not respond to the friend request.',
+				'friends_request_failed',
+				'Could not respond to the request.',
 				array(
 					'status' => 403,
 				)
@@ -497,6 +504,53 @@ class Friends_REST {
 		);
 	}
 
+	/**
+	 * Notify the friend of our reaction on their post
+	 *
+	 * @param  int $post_id The post id of the post that was reacted to.
+	 * @param  int $exclude_friend_user_id Don't notify this user_id.
+	 */
+	public function notify_other_friends_of_my_reaction( $post_id, $exclude_friend_user_id = null ) {
+		$post = WP_Post::get_instance( $post_id );
+		if ( Friends::FRIEND_POST_CACHE !== $post->post_type ) {
+			return;
+		}
+		$friend_user = new WP_User( $post->post_author );
+		if ( $friend_user->has_cap( 'subscription' ) ) {
+			// The link is public so let's include title and content.
+			$recommendation = array(
+				'link'        => get_permalink( $post ),
+				'title'       => get_the_title( $post ),
+				'description' => $post->post_content,
+			);
+		} else {
+			$recommendation = array(
+				'sha1_link' => sha1( get_permalink( $post ) ),
+			);
+		}
+
+		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+		foreach ( $friends->get_results() as $friend_user ) {
+			if ( $exclude_friend_user_id === $friend_user->ID ) {
+				continue;
+			}
+
+			$reactions = $this->friends->reactions->get_my_reactions( $post->ID );
+
+			$response = wp_safe_remote_post(
+				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/recommendation', array(
+					'body'        => array_merge(
+						$recommendation, array(
+							'reactions' => $reactions,
+							'friend'    => get_user_option( 'friends_out_token', $friend_user->ID ),
+						)
+					),
+					'timeout'     => 20,
+					'redirection' => 5,
+				)
+			);
+		}
+	}
 
 	/**
 	 * Update the reactions of a friend on my post.
@@ -509,8 +563,8 @@ class Friends_REST {
 		$user_id = $this->friends->access_control->verify_token( $token );
 		if ( ! $user_id ) {
 			return new WP_Error(
-				'friends_friend_request_failed',
-				'Could not respond to the friend request.',
+				'friends_request_failed',
+				'Could not respond to the request.',
 				array(
 					'status' => 403,
 				)
@@ -534,6 +588,37 @@ class Friends_REST {
 			'updated' => true,
 		);
 	}
+
+	/**
+	 * Receive a recommendation for a post
+	 *
+	 * @param  WP_REST_Request $request The incoming request.
+	 * @return array The array to be returned via the REST API.
+	 */
+	public function rest_receive_recommendation( $request ) {
+		$token   = $request->get_param( 'friend' );
+		$user_id = $this->friends->access_control->verify_token( $token );
+		if ( ! $user_id ) {
+			return new WP_Error(
+				'friends_request_failed',
+				'Could not respond to the request.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+		$friend_user = new WP_User( $user_id );
+		$link        = $request->get_param( 'link' );
+		if ( $link ) {
+			// TODO: insert this into the friend feed.
+		}
+
+		$hashed_link = $request->get_param( 'link' );
+		if ( $hashed_link ) {
+			// TODO: check if we also have this friend post and highlight it.
+		}
+	}
+
 	/**
 	 * Notify the friend's site via REST about the accepted friend request.
 	 *
