@@ -177,7 +177,7 @@ class Friends {
 	}
 
 	/**
-	 * Actions to take upon plugin activation.
+	 * Creates a page /friends/ to enable customization via shortcodes.
 	 */
 	public static function create_friends_page() {
 		$query = new WP_Query( array( 'name' => 'friends' ) );
