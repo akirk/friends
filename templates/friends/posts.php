@@ -27,19 +27,8 @@ include __DIR__ . '/header.php'; ?>
 			);
 			?>
 			</p>
-		<?php elseif ( ! dynamic_sidebar( 'Friends Topbar' ) ) : ?>
-			<div class="friends-main-widget">
-				<?php
-				the_widget(
-					'Friends_Widget_New_Private_Post', 'title=Friends', array(
-						'before_widget' => '<div class="friends-widget">',
-						'after_widget'  => '</div>',
-						'before_title'  => '<h1>',
-						'after_title'   => '</h1>',
-					)
-				);
-				?>
-			</div>
+		<?php else : ?>
+			<?php dynamic_sidebar( 'friends-topbar' ); ?>
 		<?php endif; ?>
 	</div>
 	<?php while ( have_posts() ) : ?>

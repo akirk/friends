@@ -225,6 +225,44 @@ class Friends {
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
 			wp_schedule_event( time(), 'hourly', 'cron_friends_refresh_feeds' );
 		}
+
+		self::add_default_sidebars_widgets();
+	}
+
+	/**
+	 * Add default widgets to the sidebars.
+	 */
+	public static function add_default_sidebars_widgets() {
+		$sidebars_widgets = get_option( 'sidebars_widgets' );
+
+		$id = count( $sidebars_widgets );
+
+		foreach ( array(
+			'friends-topbar'  => array(
+				'friends-widget-new-private-post' => array(
+					'title' => 'Friends',
+				),
+			),
+			'friends-sidebar' => array(
+				'friends-widget-refresh'        => array(),
+				'friends-widget-friend-list'    => array(
+					'title' => 'Friends',
+				),
+				'friends-widget-friend-request' => array(),
+			),
+		) as $sidebar_id => $default_widgets ) {
+			if ( ! empty( $sidebars_widgets[ $sidebar_id ] ) ) {
+				continue;
+			}
+			$sidebars_widgets[ $sidebar_id ] = array();
+			foreach ( $default_widgets as $widget_id => $options ) {
+				$id                               += 1;
+				$sidebars_widgets[ $sidebar_id ][] = $widget_id . '-' . $id;
+				update_option( 'widget_' . $widget_id, array( $id => $options ) );
+			}
+		}
+
+		update_option( 'sidebars_widgets', $sidebars_widgets );
 	}
 
 	/**
