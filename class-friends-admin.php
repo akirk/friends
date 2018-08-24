@@ -161,7 +161,7 @@ class Friends_Admin {
 			return $this->subscribe( $friend_url );
 		}
 
-		// Refetch the user in case the site actually reports a different URL.
+		// Sending a friend request to someone who has requested friendship is like accepting the friend request.
 		$friend_user = $this->friends->access_control->get_user_for_site_url( $friend_url );
 		if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->has_cap( 'friend_request' ) ) {
 			$this->update_in_token( $friend_user->ID );
@@ -188,8 +188,8 @@ class Friends_Admin {
 			)
 		);
 
+		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			$json = json_decode( wp_remote_retrieve_body( $response ) );
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				if ( 'rest_no_route' === $json->code ) {
 					return $this->subscribe( $friend_url . '/feed/' );
@@ -200,7 +200,6 @@ class Friends_Admin {
 			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response.', $response );
 		}
 
-		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( ! $json || ! is_object( $json ) ) {
 			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response.', $response );
 		}
@@ -226,6 +225,23 @@ class Friends_Admin {
 							'display_name' => $json->name,
 						)
 					);
+				}
+
+				$response = wp_safe_remote_post(
+					$user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request-accepted', array(
+						'body'        => array(
+							'token'  => $json->token,
+							'friend' => $this->friends->access_control->update_in_token( $user->ID ),
+							'proof'  => sha1( $json->token . $friend_request_token ),
+						),
+						'timeout'     => 20,
+						'redirection' => 5,
+					)
+				);
+
+				$json = json_decode( wp_remote_retrieve_body( $response ) );
+				if ( $json->friend ) {
+					update_user_option( $user->ID, 'friends_out_token', $json->friend );
 				}
 			}
 		}
@@ -514,6 +530,7 @@ class Friends_Admin {
 					</p></div>
 					<?php
 					$this->render_suggest_friends_plugin( null, $friend );
+					return;
 				} else {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
@@ -603,7 +620,7 @@ class Friends_Admin {
 	 */
 	public function render_suggest_friends_plugin( $string, WP_User $friend = null ) {
 		?>
-		<h1><?php esc_html_e( 'Recommend the Friends plugin to a friend' ); ?></h1>
+		<h1><?php esc_html_e( 'Recommend the Friends plugin to your friend' ); ?></h1>
 		<?php
 
 		$error = $this->process_suggest_friends_plugin();

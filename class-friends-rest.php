@@ -319,12 +319,17 @@ class Friends_REST {
 						)
 					);
 				}
+				$token = sha1( wp_generate_password( 256 ) );
+				update_user_option( $user->ID, 'friends_request_token', $token );
+				update_user_option( $user->ID, 'friends_accept_signature', $signature );
+				update_option( 'friends_accept_token_' . $token, $user->ID );
 
 				$main_user = new WP_User( get_option( 'friends_main_user_id' ) );
 				return array(
 					'name'       => $main_user->display_name,
 					'avatar_url' => get_avatar_url( $main_user->ID ),
 					'friend'     => $in_token,
+					'token'      => $token,
 				);
 			}
 

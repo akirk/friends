@@ -131,6 +131,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		update_option( 'friends_accept_token_' . $friend_request_response->data['friend_request_pending'], $friend_user->ID );
 		update_user_option( $friend_user->ID, 'friends_accept_signature', $friend_request_token );
 		$my_token_at_friend = $friends->access_control->update_in_token( $friend_user->ID );
+		update_user_option( $my_user_at_friend->ID, 'friends_in_token', $my_token_at_friend );
 
 		// Now let's accept the friend request.
 		update_option( 'siteurl', $my_url );
@@ -142,10 +143,17 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		$friend_accept_response = $this->server->dispatch( $request );
 		$this->assertArrayHasKey( 'friend', $friend_accept_response->data );
+		delete_user_option( $my_user_at_friend->ID, 'friends_request_token' );
 
-		// We could now access the remote feed with this token.
+		$friends->access_control->make_friend( $my_user_at_friend, $friend_accept_response->data['friend'] );
+
+		// Check the token.
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), $friend_accept_response->data['friend'] );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), $my_token_at_friend );
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $my_user_at_friend->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $my_user_at_friend->ID ) ) );
+		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
+		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 
 		// Check cleanup.
 		$this->assertFalse( get_option( 'friends_accept_token_' . $friend_request_response->data['friend_request_pending'] ) );
@@ -188,6 +196,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
@@ -229,6 +239,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
@@ -268,8 +280,10 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
-		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
+		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 	}
 
 	/**
@@ -311,6 +325,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
@@ -357,6 +373,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
@@ -403,6 +421,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
@@ -452,6 +472,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
