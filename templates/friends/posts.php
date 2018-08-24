@@ -82,10 +82,10 @@ include __DIR__ . '/header.php'; ?>
 				<?php if ( Friends::FRIEND_POST_CACHE === get_post_type() ) : ?>
 					<?php if ( $recommendation ) : ?>
 						<a href="<?php the_permalink(); ?>" target="_blank" rel="noopener noreferrer" class="auth-link" data-token="<?php echo esc_attr( $token ); ?>">
-														<?php
-														// translators: %s is a post title.
-														echo esc_html( sprintf( __( 'Recommendation: %s', 'friends' ), get_the_title() ) );
-						?>
+							<?php
+							// translators: %s is a post title.
+							echo esc_html( sprintf( __( 'Recommendation: %s', 'friends' ), get_the_title() ) );
+							?>
 						</a>
 					<?php else : ?>
 						<a href="<?php the_permalink(); ?>" target="_blank" rel="noopener noreferrer" class="auth-link" data-token="<?php echo esc_attr( $token ); ?>"><?php the_title(); ?></a>
