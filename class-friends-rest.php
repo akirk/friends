@@ -175,6 +175,7 @@ class Friends_REST {
 			);
 		}
 
+		delete_user_option( $friend_user->ID, 'friends_accept_signature' );
 		delete_option( 'friends_accept_token_' . $accept_token );
 		$this->friends->access_control->make_friend( $friend_user, $out_token );
 		$in_token = $this->friends->access_control->update_in_token( $friend_user->ID );
@@ -320,7 +321,6 @@ class Friends_REST {
 					);
 				}
 				$token = sha1( wp_generate_password( 256 ) );
-				update_user_option( $user->ID, 'friends_request_token', $token );
 				update_user_option( $user->ID, 'friends_accept_signature', $signature );
 				update_option( 'friends_accept_token_' . $token, $user->ID );
 

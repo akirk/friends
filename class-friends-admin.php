@@ -238,6 +238,7 @@ class Friends_Admin {
 						'redirection' => 5,
 					)
 				);
+				delete_user_option( $user->ID, 'friends_request_token' );
 
 				$json = json_decode( wp_remote_retrieve_body( $response ) );
 				if ( $json->friend ) {
