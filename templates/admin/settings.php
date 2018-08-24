@@ -61,6 +61,11 @@
 							<input name="autosend_recommendations" type="checkbox" id="autosend_recommendations" value="1" <?php checked( '1', ! get_user_option( 'friends_no_autosend_recommendations' ) ); ?>>
 							<?php esc_html_e( 'Automatically recommend posts to friends when you reacted to them', 'friends' ); ?>
 						</label>
+						<br />
+						<label for="ignore_recommendations">
+							<input name="ignore_recommendations" type="checkbox" id="ignore_recommendations" value="1" <?php checked( '1', get_user_option( 'friends_ignore_recommendations' ) ); ?>>
+							<?php esc_html_e( 'Ignore post recommendations from friends', 'friends' ); ?>
+						</label>
 					</fieldset>
 				</td>
 			</tr>

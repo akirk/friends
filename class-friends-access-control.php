@@ -103,10 +103,10 @@ class Friends_Access_Control {
 	 * @param  string $site_url   The site URL for which to create the user.
 	 * @param  string $role       The role: subscription, pending_friend_request, or friend_request.
 	 * @param  string $display_name       The user's display name.
-	 * @param  string $avatar_url The avater URL.
+	 * @param  string $gravatar The gravatar URL.
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
-	public function create_user( $site_url, $role, $display_name = null, $avatar_url = null ) {
+	public function create_user( $site_url, $role, $display_name = null, $gravatar = null ) {
 
 		$role_rank = array_flip(
 			array(
@@ -146,7 +146,7 @@ class Friends_Access_Control {
 		$user_id  = wp_insert_user( $userdata );
 
 		update_user_option( $user_id, 'friends_new_friend', true );
-		$this->update_avatar_url( $user_id, $avatar_url );
+		$this->update_gravatar( $user_id, $gravatar );
 
 		return new WP_User( $user_id );
 	}
@@ -155,20 +155,20 @@ class Friends_Access_Control {
 	 * Update a friend's avatar URL
 	 *
 	 * @param  int    $user_id    The user id.
-	 * @param  string $avatar_url The avatar URL.
+	 * @param  string $gravatar The avatar URL.
 	 * @return string|false The URL that was set or false.
 	 */
-	public function update_avatar_url( $user_id, $avatar_url ) {
-		if ( $avatar_url && wp_http_validate_url( $avatar_url ) ) {
+	public function update_gravatar( $user_id, $gravatar ) {
+		if ( $gravatar && wp_http_validate_url( $gravatar ) ) {
 			$user = new WP_User( $user_id );
 			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
 
-				$avatar_host = parse_url( $avatar_url, PHP_URL_HOST );
+				$avatar_host = parse_url( $gravatar, PHP_URL_HOST );
 				if ( preg_match( '#\bgravatar.com$#i', $avatar_host ) ) {
 					// We'll only allow gravatar URLs for now.
-					update_user_option( $user_id, 'friends_avatar_url', $avatar_url );
+					update_user_option( $user_id, 'friends_gravatar', $gravatar );
 
-					return $avatar_url;
+					return $gravatar;
 				}
 			}
 		}

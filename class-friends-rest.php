@@ -180,7 +180,7 @@ class Friends_REST {
 		$this->friends->access_control->make_friend( $friend_user, $out_token );
 		$in_token = $this->friends->access_control->update_in_token( $friend_user->ID );
 
-		$this->friends->access_control->update_avatar_url( $friend_user->ID, $request->get_param( 'avatar_url' ) );
+		$this->friends->access_control->update_gravatar( $friend_user->ID, $request->get_param( 'gravatar' ) );
 		if ( $request->get_param( 'name' ) ) {
 			wp_update_user(
 				array(
@@ -309,7 +309,7 @@ class Friends_REST {
 				$in_token = $this->friends->access_control->update_in_token( $user->ID );
 				$user->set_role( 'friend' );
 
-				$this->friends->access_control->update_avatar_url( $user->ID, $request->get_param( 'avatar_url' ) );
+				$this->friends->access_control->update_gravatar( $user->ID, $request->get_param( 'gravatar' ) );
 				if ( $request->get_param( 'name' ) ) {
 					wp_update_user(
 						array(
@@ -326,10 +326,10 @@ class Friends_REST {
 
 				$main_user = new WP_User( get_option( 'friends_main_user_id' ) );
 				return array(
-					'name'       => $main_user->display_name,
-					'avatar_url' => get_avatar_url( $main_user->ID ),
-					'friend'     => $in_token,
-					'token'      => $token,
+					'name'     => $main_user->display_name,
+					'gravatar' => get_avatar_url( $main_user->ID ),
+					'friend'   => $in_token,
+					'token'    => $token,
 				);
 			}
 
@@ -347,7 +347,7 @@ class Friends_REST {
 			);
 		}
 
-		$user = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'avatar_url' ) );
+		$user = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'gravatar' ) );
 		if ( is_wp_error( $user ) ) {
 			return new WP_Error(
 				'friends_friend_request_failed',
@@ -551,7 +551,7 @@ class Friends_REST {
 		}
 
 		$notify_friends = ! get_user_option( 'friends_no_autosend_recommendations', $user->ID );
-		if ( ! apply_filters( 'notify_friends_of_my_reaction', $notify_user, $user, $friend_user ) ) {
+		if ( ! apply_filters( 'notify_friends_of_my_reaction', $notify_friends, $user, $friend_user ) ) {
 			return;
 		}
 
@@ -565,6 +565,7 @@ class Friends_REST {
 				'link'        => get_permalink( $post ),
 				'title'       => get_the_title( $post ),
 				'author'      => get_the_author_meta( 'display_name', $post->post_author ),
+				'gravatar'    => get_avatar_url( $friend_user->ID ),
 				'description' => $post->post_content,
 			);
 		} else {
@@ -659,6 +660,11 @@ class Friends_REST {
 			);
 		}
 
+		$standard_response = array(
+			'thank' => 'you',
+		);
+		$standard_response = false;
+
 		$friend_user = new WP_User( $user_id );
 
 		$permalink = $request->get_param( 'link' );
@@ -666,29 +672,55 @@ class Friends_REST {
 
 		$is_public_recommendation = boolval( $permalink );
 
-		if ( apply_filters( 'friends_accept_recommendation', true, $is_public_recommendation ? $permalink : $sha1_link, $friend_user ) ) {
-
-			if ( $permalink ) {
-				$friend_name = '<a href="' . esc_url( $friend_user->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ) . '">' . esc_html( $friend_user->display_name ) . '</a>';
-
-				// translators: %s is the friend's name.
-				$content  = sprintf( __( 'This post was recommended by %s.', 'friends' ), $friend_name );
-				$content .= PHP_EOL . PHP_EOL . $request->get_param( 'description' );
-
-				// translators: %s is a post title.
-				$title     = sprintf( __( 'Recommendation: %s', 'friends' ), $request->get_param( 'title' ) );
-				$post_data = array(
-					'post_title'   => $title,
-					'post_content' => $content,
-					'guid'         => $permalink,
-					'post_type'    => Friends::FRIEND_POST_CACHE,
-					'tags_input'   => array( 'recommendation' ),
-				);
-
-				$post_id = wp_insert_post( $post_data );
-			} else {
-				// TODO: check if we also have this friend post and highlight it.
+		if ( ! apply_filters( 'friends_accept_recommendation', true, $is_public_recommendation ? $permalink : $sha1_link, $friend_user ) ) {
+			if ( $standard_response ) {
+				return $standard_response;
 			}
+
+			return array(
+				'no' => 'thanks',
+			);
+		}
+
+		if ( ! $permalink ) {
+			// TODO: check if we also have this friend post and highlight it.
+			if ( $standard_response ) {
+				return $standard_response;
+			}
+
+			return array(
+				'ignored' => 'for now',
+			);
+		}
+
+		$post_id = $this->friends->feed->url_to_postid( $permalink );
+		if ( $post_id ) {
+			if ( $standard_response ) {
+				return $standard_response;
+			}
+
+			return array(
+				'already' => 'knew',
+			);
+		}
+
+		$post_data = array(
+			'post_title'   => $request->get_param( 'title' ),
+			'post_content' => $request->get_param( 'description' ),
+			'post_status'  => 'publish',
+			'post_author'  => $friend_user->ID,
+			'guid'         => $permalink,
+			'post_type'    => Friends::FRIEND_POST_CACHE,
+			'tags_input'   => array( 'recommendation' ),
+		);
+
+		$post_id = wp_insert_post( $post_data );
+		update_post_meta( $post_id, 'author', $request->get_param( 'author' ) );
+		update_post_meta( $post_id, 'recommendation', true );
+		update_post_meta( $post_id, 'gravatar', $request->get_param( 'gravatar' ) );
+
+		if ( $standard_response ) {
+			return $standard_response;
 		}
 
 		return array(
@@ -725,11 +757,11 @@ class Friends_REST {
 		$response     = wp_safe_remote_post(
 			$user->user_url . '/wp-json/' . self::PREFIX . '/friend-request-accepted', array(
 				'body'        => array(
-					'token'      => $request_token,
-					'friend'     => $in_token,
-					'proof'      => sha1( $request_token . $friend_request_token ),
-					'name'       => $current_user->display_name,
-					'avatar_url' => get_avatar_url( $current_user->ID ),
+					'token'    => $request_token,
+					'friend'   => $in_token,
+					'proof'    => sha1( $request_token . $friend_request_token ),
+					'name'     => $current_user->display_name,
+					'gravatar' => get_avatar_url( $current_user->ID ),
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -745,8 +777,8 @@ class Friends_REST {
 		if ( isset( $json->friend ) ) {
 			$this->friends->access_control->make_friend( $user, $json->friend );
 
-			if ( isset( $json->avatar_url ) ) {
-				$this->friends->access_control->update_avatar_url( $user->ID, $json->avatar_url );
+			if ( isset( $json->gravatar ) ) {
+				$this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
 			}
 
 			if ( isset( $json->name ) ) {

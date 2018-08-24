@@ -178,10 +178,10 @@ class Friends_Admin {
 		$response     = wp_remote_post(
 			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request', array(
 				'body'        => array(
-					'site_url'   => site_url(),
-					'name'       => $current_user->display_name,
-					'avatar_url' => get_avatar_url( $current_user->ID ),
-					'signature'  => $friend_request_token,
+					'site_url'  => site_url(),
+					'name'      => $current_user->display_name,
+					'gravatar'  => get_avatar_url( $current_user->ID ),
+					'signature' => $friend_request_token,
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -212,8 +212,8 @@ class Friends_Admin {
 			} elseif ( isset( $json->friend ) ) {
 				$this->friends->access_control->make_friend( $user, $json->friend );
 
-				if ( isset( $json->avatar_url ) ) {
-					$this->friends->access_control->update_avatar_url( $user->ID, $json->avatar_url );
+				if ( isset( $json->gravatar ) ) {
+					$this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
 				}
 
 				if ( isset( $json->name ) ) {
@@ -294,7 +294,7 @@ class Friends_Admin {
 			return;
 		}
 
-		foreach ( array( 'ignore_incoming_friend_requests' ) as $checkbox ) {
+		foreach ( array( 'ignore_incoming_friend_requests', 'ignore_recommendations' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {

@@ -195,6 +195,11 @@ class Friends_Feed {
 			if ( is_null( $post_id ) && isset( $remote_post_ids[ $permalink ] ) ) {
 				$post_id = $remote_post_ids[ $permalink ];
 			}
+
+			if ( is_null( $post_id ) ) {
+				$post_id = $this->url_to_postid( $permalink );
+			}
+
 			$post_data = array(
 				'post_title'        => $item->get_title(),
 				'post_content'      => $item->get_content(),
@@ -202,6 +207,7 @@ class Friends_Feed {
 				'post_status'       => $item->{'post-status'},
 				'guid'              => $permalink,
 			);
+
 			if ( ! is_null( $post_id ) ) {
 				$post_data['ID'] = $post_id;
 				wp_update_post( $post_data );
@@ -337,5 +343,18 @@ class Friends_Feed {
 			update_user_option( $user_id, 'friends_new_friend', true );
 			$this->retrieve_friend_posts( new WP_User( $user_id ) );
 		}
+	}
+
+	/**
+	 * More generic version of the native url_to_postid()
+	 *
+	 * @param string $url Permalink to check.
+	 * @return int Post ID, or 0 on failure.
+	 */
+	function url_to_postid( $url ) {
+		global $wpdb;
+
+		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid = %s LIMIT 1', $url ) );
+		return $post_id;
 	}
 }

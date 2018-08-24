@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION           = '0.8';
+	const VERSION           = '0.9';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const PLUGIN_URL        = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE     = 'administrator';
@@ -326,7 +326,7 @@ class Friends {
 		}
 
 		if ( is_numeric( $id_or_email ) ) {
-			$url = get_user_option( 'friends_avatar_url', $id_or_email );
+			$url = get_user_option( 'friends_gravatar', $id_or_email );
 			if ( $url ) {
 				$args['url']          = $url;
 				$args['found_avatar'] = true;

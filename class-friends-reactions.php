@@ -328,6 +328,7 @@ class Friends_Reactions {
 		if ( is_wp_error( $main_user_reactions ) ) {
 			$main_user_reactions = array();
 		}
+		$changed = false;
 
 		foreach ( $reactions as $slug => $reaction ) {
 			if ( is_array( $reaction ) ) {
@@ -356,9 +357,11 @@ class Friends_Reactions {
 			if ( $reaction->user_reacted && ! $term ) {
 				// Someone reacted on the remote site which hasn't been recorded here yet.
 				wp_set_object_terms( $post_id, $slug, 'friend-reaction-' . $main_user_id, true );
+				$changed = true;
 			} elseif ( ! $reaction->user_reacted && $term ) {
 				// Someone removed our reaction on the remote site so we need to delete it here.
 				wp_remove_object_terms( $post_id, $term->term_id, 'friend-reaction-' . $main_user_id );
+				$changed = true;
 			}
 
 			unset( $reaction->user_reacted );
