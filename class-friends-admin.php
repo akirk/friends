@@ -267,14 +267,16 @@ class Friends_Admin {
 			}
 		}
 
-		if ( isset( $_POST['friend_request_notification'] ) && $_POST['friend_request_notification'] ) {
-			delete_user_option( get_current_user_id(), 'friends_no_friend_request_notification' );
-		} else {
-			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
+		foreach ( array( 'friend_request_notification', 'autosend_recommendations' ) as $negative_user_checkbox ) {
+			if ( isset( $_POST[ $negative_user_checkbox ] ) && $_POST[ $negative_user_checkbox ] ) {
+				delete_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox );
+			} else {
+				update_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox, 1 );
+			}
 		}
 
 		if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
-			user_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
+			update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
 		}
 
 		if ( isset( $_POST['new_post_notification'] ) && $_POST['new_post_notification'] ) {
@@ -506,9 +508,23 @@ class Friends_Admin {
 				}
 			}
 		}
+
 		if ( ! empty( $_GET['url'] ) ) {
 			$friend_url = $_GET['url'];
 		}
+
+		$friend_requests = new WP_User_Query(
+			array(
+				'role__in' => array( 'friend', 'pending_friend_request', 'friend_request', 'subscription' ),
+				'orderby'  => 'registered',
+				'order'    => 'DESC',
+			)
+		);
+		$friend_requests = $friend_requests->get_results();
+
+		$wp_roles = wp_roles();
+		$roles    = $wp_roles->get_names();
+
 		include apply_filters( 'friends_template_path', 'admin/send-friend-request.php' );
 	}
 
