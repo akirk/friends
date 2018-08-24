@@ -107,6 +107,7 @@ class Friends {
 	private function register_hooks() {
 		add_filter( 'init', array( $this, 'register_custom_post_types' ) );
 		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
+		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 	}
 
 	/**
@@ -304,6 +305,34 @@ class Friends {
 			update_option( 'friends_main_user_id', $main_user_id );
 		}
 		return $main_user_id;
+	}
+
+	/**
+	 * Override Avatar URL for friends
+	 *
+	 * @param  array $args         The avatar details array.
+	 * @param  mixed $id_or_email  Identifies what to retrieve the avatar for.
+	 * @return array              The avatar (potentially modified) details array.
+	 */
+	public function get_avatar_data( $args, $id_or_email ) {
+		if ( is_object( $id_or_email ) ) {
+			if ( $id_or_email instanceof WP_User ) {
+				$id_or_email = $id_or_email->ID;
+			} elseif ( $id_or_email instanceof WP_Post ) {
+				$id_or_email = $id_or_email->post_author;
+			} elseif ( $id_or_email instanceof WP_Comment ) {
+				$id_or_email = $id_or_email->user_id;
+			}
+		}
+
+		if ( is_numeric( $id_or_email ) ) {
+			$url = get_user_option( 'friends_avatar_url', $id_or_email );
+			if ( $url ) {
+				$args['url']          = $url;
+				$args['found_avatar'] = true;
+			}
+		}
+		return $args;
 	}
 
 	/**

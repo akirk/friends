@@ -100,13 +100,13 @@ class Friends_Access_Control {
 	/**
 	 * Create a WP_User with a specific Friends-related role
 	 *
-	 * @param  string $site_url The site URL for which to create the user.
-	 * @param  string $role     The role: subscription, pending_friend_request, or friend_request.
-	 * @param  string $name     The user's nickname.
-	 * @param  string $email    The user e-mail address.
+	 * @param  string $site_url   The site URL for which to create the user.
+	 * @param  string $role       The role: subscription, pending_friend_request, or friend_request.
+	 * @param  string $display_name       The user's display name.
+	 * @param  string $avatar_url The avater URL.
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
-	public function create_user( $site_url, $role, $name = null, $email = null ) {
+	public function create_user( $site_url, $role, $display_name = null, $avatar_url = null ) {
 
 		$role_rank = array_flip(
 			array(
@@ -135,18 +135,45 @@ class Friends_Access_Control {
 		}
 
 		$userdata = array(
-			'user_login' => $this->get_user_login_for_site_url( $site_url ),
-			'nickname'   => $name,
-			'user_email' => $email,
-			'user_url'   => $site_url,
-			'user_pass'  => wp_generate_password( 256 ),
-			'role'       => $role,
+			'user_login'   => $this->get_user_login_for_site_url( $site_url ),
+			'display_name' => $display_name,
+			'first_name'   => $display_name,
+			'nickname'     => $display_name,
+			'user_url'     => $site_url,
+			'user_pass'    => wp_generate_password( 256 ),
+			'role'         => $role,
 		);
 		$user_id  = wp_insert_user( $userdata );
 
 		update_user_option( $user_id, 'friends_new_friend', true );
+		$this->update_avatar_url( $user_id, $avatar_url );
 
 		return new WP_User( $user_id );
+	}
+
+	/**
+	 * Update a friend's avatar URL
+	 *
+	 * @param  int    $user_id    The user id.
+	 * @param  string $avatar_url The avatar URL.
+	 * @return string|false The URL that was set or false.
+	 */
+	public function update_avatar_url( $user_id, $avatar_url ) {
+		if ( $avatar_url && wp_http_validate_url( $avatar_url ) ) {
+			$user = new WP_User( $user_id );
+			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
+
+				$avatar_host = parse_url( $avatar_url, PHP_URL_HOST );
+				if ( preg_match( '#\bgravatar.com$#i', $avatar_host ) ) {
+					// We'll only allow gravatar URLs for now.
+					update_user_option( $user_id, 'friends_avatar_url', $avatar_url );
+
+					return $avatar_url;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**

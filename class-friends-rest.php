@@ -179,6 +179,18 @@ class Friends_REST {
 		$this->friends->access_control->make_friend( $friend_user, $out_token );
 		$in_token = $this->friends->access_control->update_in_token( $friend_user->ID );
 
+		$this->friends->access_control->update_avatar_url( $friend_user->ID, $request->get_param( 'avatar_url' ) );
+		if ( $request->get_param( 'name' ) ) {
+			wp_update_user(
+				array(
+					'ID'           => $friend_user->ID,
+					'nickname'     => $request->get_param( 'name' ),
+					'first_name'   => $request->get_param( 'name' ),
+					'display_name' => $request->get_param( 'name' ),
+				)
+			);
+		}
+
 		do_action( 'notify_accepted_friend_request', $friend_user );
 		return array(
 			'friend' => $in_token,
@@ -295,8 +307,24 @@ class Friends_REST {
 				// We already requested friendship, so let's become friends right away.
 				$in_token = $this->friends->access_control->update_in_token( $user->ID );
 				$user->set_role( 'friend' );
+
+				$this->friends->access_control->update_avatar_url( $user->ID, $request->get_param( 'avatar_url' ) );
+				if ( $request->get_param( 'name' ) ) {
+					wp_update_user(
+						array(
+							'ID'           => $user->ID,
+							'nickname'     => $request->get_param( 'name' ),
+							'first_name'   => $request->get_param( 'name' ),
+							'display_name' => $request->get_param( 'name' ),
+						)
+					);
+				}
+
+				$main_user = new WP_User( get_option( 'friends_main_user_id' ) );
 				return array(
-					'friend' => $in_token,
+					'name'       => $main_user->display_name,
+					'avatar_url' => get_avatar_url( $main_user->ID ),
+					'friend'     => $in_token,
 				);
 			}
 
@@ -314,7 +342,7 @@ class Friends_REST {
 			);
 		}
 
-		$user = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'email' ) );
+		$user = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'avatar_url' ) );
 		if ( is_wp_error( $user ) ) {
 			return new WP_Error(
 				'friends_friend_request_failed',
@@ -688,12 +716,15 @@ class Friends_REST {
 		$friend_request_token = get_option( 'friends_request_token_' . sha1( $user->user_url ) );
 		$in_token             = $this->friends->access_control->update_in_token( $user->ID );
 
-		$response = wp_safe_remote_post(
+		$current_user = wp_get_current_user();
+		$response     = wp_safe_remote_post(
 			$user->user_url . '/wp-json/' . self::PREFIX . '/friend-request-accepted', array(
 				'body'        => array(
-					'token'  => $request_token,
-					'friend' => $in_token,
-					'proof'  => sha1( $request_token . $friend_request_token ),
+					'token'      => $request_token,
+					'friend'     => $in_token,
+					'proof'      => sha1( $request_token . $friend_request_token ),
+					'name'       => $current_user->display_name,
+					'avatar_url' => get_avatar_url( $current_user->ID ),
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -704,10 +735,25 @@ class Friends_REST {
 			return;
 		}
 
-		delete_user_option( $user_id, 'friends_request_token' );
+		delete_user_option( $user->ID, 'friends_request_token' );
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( isset( $json->friend ) ) {
 			$this->friends->access_control->make_friend( $user, $json->friend );
+
+			if ( isset( $json->avatar_url ) ) {
+				$this->friends->access_control->update_avatar_url( $user->ID, $json->avatar_url );
+			}
+
+			if ( isset( $json->name ) ) {
+				wp_update_user(
+					array(
+						'ID'           => $user->ID,
+						'nickname'     => $json->name,
+						'first_name'   => $json->name,
+						'display_name' => $json->name,
+					)
+				);
+			}
 		} else {
 			$user->set_role( 'pending_friend_request' );
 			if ( isset( $json->friend_request_pending ) ) {

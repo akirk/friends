@@ -14,7 +14,7 @@
 				<td>
 					<select name="main_user_id">
 						<?php foreach ( $potential_main_users->get_results() as $potential_main_user ) : ?>
-							<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $main_user_id, $user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
+							<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $main_user_id, $current_user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
 
 						<?php endforeach; ?>
 					</select>
@@ -35,14 +35,8 @@
 			<tr>
 				<th scope="row">
 				<?php
-				// translators: %s is a username.
-				esc_html_e( 'Notifications for you', 'friends' );
+				esc_html_e( 'E-Mail Notifications', 'friends' );
 				?>
-				<br /><em>
-				<?php
-				echo esc_html( $user->display_name );
-				?>
-				</em>
 				</th>
 				<td>
 					<fieldset>
@@ -56,6 +50,7 @@
 							<?php esc_html_e( 'New Posts', 'friends' ); ?>
 						</label>
 					</fieldset>
+				<p class="description"><?php esc_html_e( 'You can also change these settings on a friend by friend basis.', 'friends' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -64,7 +59,7 @@
 					<fieldset>
 						<label for="autosend_recommendations">
 							<input name="autosend_recommendations" type="checkbox" id="autosend_recommendations" value="1" <?php checked( '1', ! get_user_option( 'friends_no_autosend_recommendations' ) ); ?>>
-							<?php esc_html_e( 'Auto-recommend posts to friends that you have react to.', 'friends' ); ?>
+							<?php esc_html_e( 'Automatically recommend posts to friends when you reacted to them', 'friends' ); ?>
 						</label>
 					</fieldset>
 				</td>

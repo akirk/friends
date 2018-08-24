@@ -162,11 +162,11 @@ class Friends_Admin {
 		}
 
 		// Refetch the user in case the site actually reports a different URL.
-		$user = $this->friends->access_control->get_user_for_site_url( $friend_url );
-		if ( $user && ! is_wp_error( $user ) && $user->has_cap( 'friend_request' ) ) {
-			$this->update_in_token( $user->ID );
-			$user->set_role( 'friend' );
-			return $user;
+		$friend_user = $this->friends->access_control->get_user_for_site_url( $friend_url );
+		if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->has_cap( 'friend_request' ) ) {
+			$this->update_in_token( $friend_user->ID );
+			$friend_user->set_role( 'friend' );
+			return $friend_user;
 		}
 
 		$user_login = $this->friends->access_control->get_user_login_for_site_url( $friend_url );
@@ -174,11 +174,14 @@ class Friends_Admin {
 		$friend_request_token = sha1( wp_generate_password( 256 ) );
 		update_option( 'friends_request_token_' . sha1( $friend_url ), $friend_request_token );
 
-		$response = wp_remote_post(
+		$current_user = wp_get_current_user();
+		$response     = wp_remote_post(
 			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request', array(
 				'body'        => array(
-					'site_url'  => site_url(),
-					'signature' => $friend_request_token,
+					'site_url'   => site_url(),
+					'name'       => $current_user->display_name,
+					'avatar_url' => get_avatar_url( $current_user->ID ),
+					'signature'  => $friend_request_token,
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -209,6 +212,21 @@ class Friends_Admin {
 				$user->set_role( 'pending_friend_request' );
 			} elseif ( isset( $json->friend ) ) {
 				$this->friends->access_control->make_friend( $user, $json->friend );
+
+				if ( isset( $json->avatar_url ) ) {
+					$this->friends->access_control->update_avatar_url( $user->ID, $json->avatar_url );
+				}
+
+				if ( isset( $json->name ) ) {
+					wp_update_user(
+						array(
+							'ID'           => $user->ID,
+							'nickname'     => $json->name,
+							'first_name'   => $json->name,
+							'display_name' => $json->name,
+						)
+					);
+				}
 			}
 		}
 
@@ -299,7 +317,7 @@ class Friends_Admin {
 	public function render_admin_settings() {
 		$this->check_admin_settings();
 
-		$user = wp_get_current_user();
+		$current_user = wp_get_current_user();
 
 		?>
 		<h1><?php esc_html_e( 'Friend Settings', 'friends' ); ?></h1>
@@ -817,8 +835,8 @@ class Friends_Admin {
 		$open_requests = 0;
 
 		if ( current_user_can( 'friend' ) ) {
-			$user        = wp_get_current_user();
-			$friends_url = $user->user_url . '/friends/';
+			$current_user = wp_get_current_user();
+			$friends_url  = $current_user->user_url . '/friends/';
 		}
 
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
