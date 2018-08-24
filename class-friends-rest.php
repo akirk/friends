@@ -43,7 +43,7 @@ class Friends_REST {
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'friends_user_post_reaction', array( $this, 'notify_remote_friend_post_reaction' ), 10, 2 );
 		add_action( 'friends_user_post_reaction', array( $this, 'notify_friend_of_my_reaction' ) );
-		add_action( 'friends_user_post_reaction', array( $this, 'notify_other_friends_of_my_reaction' ) );
+		add_action( 'friends_user_post_reaction', array( $this, 'recommend_post_to_friends' ) );
 		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
 	}
 
@@ -416,12 +416,13 @@ class Friends_REST {
 			return;
 		}
 
-		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
-
+		$friends = new WP_User_Query(
+			array(
+				'role'    => 'friend',
+				'exclude' => array( $exclude_friend_user_id ),
+			)
+		);
 		foreach ( $friends->get_results() as $friend_user ) {
-			if ( $exclude_friend_user_id === $friend_user->ID ) {
-				continue;
-			}
 			$reactions = $this->friends->reactions->get_reactions( $post->ID, $friend_user->ID );
 
 			$response = wp_safe_remote_post(
@@ -505,36 +506,53 @@ class Friends_REST {
 	}
 
 	/**
-	 * Notify the friend of our reaction on their post
+	 * Recommend a post to your friends.
 	 *
 	 * @param  int $post_id The post id of the post that was reacted to.
 	 * @param  int $exclude_friend_user_id Don't notify this user_id.
 	 */
-	public function notify_other_friends_of_my_reaction( $post_id, $exclude_friend_user_id = null ) {
+	public function recommend_post_to_friends( $post_id, $exclude_friend_user_id = null ) {
 		$post = WP_Post::get_instance( $post_id );
 		if ( Friends::FRIEND_POST_CACHE !== $post->post_type ) {
 			return;
 		}
+
+		$notify_friends = ! get_user_option( 'friends_no_autosend_recommendations', $user->ID );
+		if ( ! apply_filters( 'notify_friends_of_my_reaction', $notify_user, $user, $friend_user ) ) {
+			return;
+		}
+
 		$friend_user = new WP_User( $post->post_author );
-		if ( $friend_user->has_cap( 'subscription' ) ) {
+		if (
+			$friend_user->has_cap( 'subscription' )
+			|| 'publish' === $post->post_status
+		) {
 			// The link is public so let's include title and content.
 			$recommendation = array(
 				'link'        => get_permalink( $post ),
 				'title'       => get_the_title( $post ),
+				'author'      => get_the_author_meta( 'display_name', $post->post_author ),
 				'description' => $post->post_content,
 			);
 		} else {
 			$recommendation = array(
 				'sha1_link' => sha1( get_permalink( $post ) ),
 			);
+
+			// TODO: maybe anonymously recommend this (potentially private post) to friends,
+			// so that they can make use of the recommendation _if_ they also have that
+			// friend's (private) post cached on their side.
+			return;
 		}
 
-		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
-		foreach ( $friends->get_results() as $friend_user ) {
-			if ( $exclude_friend_user_id === $friend_user->ID ) {
-				continue;
-			}
+		$friends = new WP_User_Query(
+			array(
+				'role'    => 'friend',
+				'exclude' => array( $exclude_friend_user_id, $post->post_author ),
+			)
+		);
 
+		foreach ( $friends->get_results() as $friend_user ) {
 			$reactions = $this->friends->reactions->get_my_reactions( $post->ID );
 
 			$response = wp_safe_remote_post(
@@ -607,16 +625,42 @@ class Friends_REST {
 				)
 			);
 		}
+
 		$friend_user = new WP_User( $user_id );
-		$link        = $request->get_param( 'link' );
-		if ( $link ) {
-			// TODO: insert this into the friend feed.
+
+		$permalink = $request->get_param( 'link' );
+		$sha1_link = $request->get_param( 'sha1_link' );
+
+		$is_public_recommendation = boolval( $permalink );
+
+		if ( apply_filters( 'friends_accept_recommendation', true, $is_public_recommendation ? $permalink : $sha1_link, $friend_user ) ) {
+
+			if ( $permalink ) {
+				$friend_name = '<a href="' . esc_url( $friend_user->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ) . '">' . esc_html( $friend_user->display_name ) . '</a>';
+
+				// translators: %s is the friend's name.
+				$content  = sprintf( __( 'This post was recommended by %s.', 'friends' ), $friend_name );
+				$content .= PHP_EOL . PHP_EOL . $request->get_param( 'description' );
+
+				// translators: %s is a post title.
+				$title     = sprintf( __( 'Recommendation: %s', 'friends' ), $request->get_param( 'title' ) );
+				$post_data = array(
+					'post_title'   => $title,
+					'post_content' => $content,
+					'guid'         => $permalink,
+					'post_type'    => Friends::FRIEND_POST_CACHE,
+					'tags_input'   => array( 'recommendation' ),
+				);
+
+				$post_id = wp_insert_post( $post_data );
+			} else {
+				// TODO: check if we also have this friend post and highlight it.
+			}
 		}
 
-		$hashed_link = $request->get_param( 'link' );
-		if ( $hashed_link ) {
-			// TODO: check if we also have this friend post and highlight it.
-		}
+		return array(
+			'thank' => 'you',
+		);
 	}
 
 	/**

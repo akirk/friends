@@ -59,11 +59,22 @@
 				</td>
 			</tr>
 			<tr>
+				<th scope="row"><?php esc_html_e( 'Recommendations', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="autosend_recommendations">
+							<input name="autosend_recommendations" type="checkbox" id="autosend_recommendations" value="1" <?php checked( '1', ! get_user_option( 'friends_no_autosend_recommendations' ) ); ?>>
+							<?php esc_html_e( 'Auto-recommend posts to friends that you have react to.', 'friends' ); ?>
+						</label>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
 				<td>
 					<?php
 					// translators: %s is a URL.
-					echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed fedader.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-opml' ) ) ), array( 'a' => array( 'href' => array() ) ) );
+					echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed reader.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-opml' ) ) ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 				</td>
 			</tr>
