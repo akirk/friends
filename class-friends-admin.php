@@ -92,28 +92,28 @@ class Friends_Admin {
 		if ( ! is_string( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
 			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
 		}
+		$site_url = $feed_url;
 
-		$feed = fetch_feed( $feed_url );
+		$feed = $this->friends->feed->fetch_feed( $feed_url );
+		if ( $feed->all_discovered_feeds ) {
+			$feed_url = $feed->all_discovered_feeds[0]->url;
+			$feed     = $this->friends->feed->fetch_feed( $feed_url );
+		}
+
 		if ( is_wp_error( $feed ) ) {
-			if ( '/feed/' === substr( $feed_url, -6 ) ) {
-				// Retry with the entered URL, maybe an RSS feed was entered.
-				$feed_url = substr( $feed_url, 0, -6 );
-			}
-			$feed = fetch_feed( $feed_url );
-			if ( is_wp_error( $feed ) ) {
-				return $feed;
-			}
+			return $feed;
 		}
 
 		if ( '/feed/' === substr( $feed_url, -6 ) ) {
 			$site_url = substr( $feed_url, 0, -6 );
-		} else {
-			$site_url = $feed_url;
 		}
+
 		$user = $this->friends->access_control->create_user( $site_url, 'subscription' );
 		if ( ! is_wp_error( $user ) ) {
 			$this->friends->feed->process_friend_feed( $user, $feed );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
+			var_dump( $feed_url );
+			exit;
 		}
 		return $user;
 	}
@@ -192,7 +192,7 @@ class Friends_Admin {
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				if ( 'rest_no_route' === $json->code ) {
-					return $this->subscribe( $friend_url . '/feed/' );
+					return $this->subscribe( $friend_url );
 				}
 				return new WP_Error( $json->code, $json->message, $json->data );
 			}

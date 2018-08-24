@@ -79,7 +79,7 @@ class Friends_Feed {
 		foreach ( $friends as $friend_user ) {
 			$feed_url = $this->get_feed_url( $friend_user );
 
-			$feed = fetch_feed( $feed_url );
+			$feed = $this->fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
 				continue;
 			}
@@ -313,6 +313,35 @@ class Friends_Feed {
 		}
 	}
 
+	/**
+	 * SimplePie autoloader
+	 *
+	 * @param  string $class The SimplePie class name.
+	 */
+	public function wp_simplepie_autoload( $class ) {
+		if ( 0 !== strpos( $class, 'SimplePie_' ) ) {
+			return;
+		}
+
+		$file = __DIR__ . '/lib/' . str_replace( '_', '/', $class ) . '.php';
+		include( $file );
+	}
+
+	/**
+	 * Wrapper around fetch_feed that uses the bundled version
+	 *
+	 * @param  string $url The feed URL.
+	 * @return object The parsed feed.
+	 */
+	public function fetch_feed( $url ) {
+		if ( ! class_exists( 'SimplePie', false ) ) {
+			spl_autoload_register( array( $this, 'wp_simplepie_autoload' ) );
+
+			require_once( __DIR__ . '/lib/SimplePie.php' );
+		}
+
+		return fetch_feed( $feed );
+	}
 	/**
 	 * Modify the main query for the friends feed
 	 *
