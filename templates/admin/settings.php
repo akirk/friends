@@ -63,7 +63,7 @@
 						</label>
 						<br />
 						<label for="ignore_recommendations">
-							<input name="ignore_recommendations" type="checkbox" id="ignore_recommendations" value="1" <?php checked( '1', get_user_option( 'friends_ignore_recommendations' ) ); ?>>
+							<input name="ignore_recommendations" type="checkbox" id="ignore_recommendations" value="1" <?php checked( '1', get_option( 'friends_ignore_recommendations' ) ); ?>>
 							<?php esc_html_e( 'Ignore post recommendations from friends', 'friends' ); ?>
 						</label>
 					</fieldset>
