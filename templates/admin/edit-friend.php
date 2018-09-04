@@ -11,8 +11,12 @@
 	<table class="form-table">
 		<tbody>
 			<tr>
-				<th><label for="url"><?php esc_html_e( 'URL', 'friends' ); ?></label></th>
+				<th><label for="url"><?php esc_html_e( 'URL' ); ?></label></th>
 				<td><a href="<?php echo esc_attr( $friend->user_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $friend->user_url ); ?></a></td>
+			</tr>
+			<tr>
+				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>
+				<td><a href="<?php echo esc_url( site_url( '/friends/' . $friend->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_posts->found_posts ); ?></a> <a href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ); ?>"><?php echo esc_html_e( 'Refresh', 'friends' ); ?></a></td>
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Created', 'friends' ); ?></label></th>

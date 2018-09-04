@@ -81,10 +81,12 @@ class Friends_Feed {
 
 			$feed = $this->fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
+				do_action( 'friends_retrieve_friends_error', $feed, $friend_user );
 				continue;
 			}
-			$feed = apply_filters( 'friends_feed_content', $feed, $friend_user );
-			$this->process_friend_feed( $friend_user, $feed );
+			$feed      = apply_filters( 'friends_feed_content', $feed, $friend_user );
+			$new_posts = $this->process_friend_feed( $friend_user, $feed );
+			do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
 		}
 	}
 
@@ -149,6 +151,7 @@ class Friends_Feed {
 		$new_friend = get_user_option( 'friends_new_friend', $friend_user->ID );
 
 		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
+		$new_posts       = array();
 
 		foreach ( $feed->get_items() as $item ) {
 			if ( ! apply_filters( 'friends_use_feed_item', true, $item, $feed, $friend_user ) ) {
@@ -167,6 +170,7 @@ class Friends_Feed {
 			if ( ! $content || ! $permalink ) {
 				continue;
 			}
+
 			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id', 'reaction' ) as $key ) {
 				if ( ! isset( $item->{$key} ) ) {
 					$item->{$key} = false;
@@ -217,6 +221,7 @@ class Friends_Feed {
 				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
 				$post_data['comment_count'] = $item->comment_count;
 				$post_id                    = wp_insert_post( $post_data );
+				$new_posts[]                = $id;
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
@@ -249,6 +254,8 @@ class Friends_Feed {
 		if ( $new_friend ) {
 			delete_user_option( $friend_user->ID, 'friends_new_friend' );
 		}
+
+		return $new_posts;
 	}
 
 	/**
@@ -337,10 +344,10 @@ class Friends_Feed {
 		if ( ! class_exists( 'SimplePie', false ) ) {
 			spl_autoload_register( array( $this, 'wp_simplepie_autoload' ) );
 
-			require_once( __DIR__ . '/lib/SimplePie.php' );
+			require_once __DIR__ . '/lib/SimplePie.php';
 		}
 
-		return fetch_feed( $feed );
+		return fetch_feed( $url );
 	}
 	/**
 	 * Modify the main query for the friends feed

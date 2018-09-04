@@ -75,11 +75,43 @@ class Friends_Admin {
 	 * Admin menu to refresh the friend posts.
 	 */
 	public function admin_refresh_friend_posts() {
+		$friend = null;
+		if ( isset( $_GET['user'] ) ) {
+			$friend = new WP_User( intval( $_GET['user'] ) );
+			if ( ! $friend || is_wp_error( $friend ) ) {
+				wp_die( esc_html__( 'Invalid user ID.' ) );
+			}
+		}
+
 		?>
 		<h1><?php esc_html_e( "Refreshing Your Friends' Posts", 'friends' ); ?></h1>
 		<?php
+
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-		$this->friends->feed->retrieve_friend_posts();
+
+		add_filter(
+			'friends_friend_feed_url', function( $feed_url, $friend_user ) {
+				// translators: %s is the name of the friend.
+				printf( __( 'Refreshing %s', 'friends' ) . '<br/>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $friend_user->user_login ) . '</a>' );
+				return $feed_url;
+			}, 10, 2
+		);
+
+		add_action(
+			'friends_retrieved_new_posts', function( $new_posts, $friend_user ) {
+				// translators: %s is the number of new posts found.
+				printf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) );
+			}, 10, 2
+		);
+
+		add_action(
+			'friends_retrieve_friends_error', function( $error, $friend_user ) {
+				esc_html_e( 'An error occurred while retrieving the posts.', 'friends' );
+				print_r( $error );
+			}, 10, 2
+		);
+
+		$this->friends->feed->retrieve_friend_posts( $friend );
 	}
 
 	/**
@@ -99,7 +131,6 @@ class Friends_Admin {
 			$feed_url = $feed->all_discovered_feeds[0]->url;
 			$feed     = $this->friends->feed->fetch_feed( $feed_url );
 		}
-
 		if ( is_wp_error( $feed ) ) {
 			return $feed;
 		}
@@ -112,8 +143,6 @@ class Friends_Admin {
 		if ( ! is_wp_error( $user ) ) {
 			$this->friends->feed->process_friend_feed( $user, $feed );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
-			var_dump( $feed_url );
-			exit;
 		}
 		return $user;
 	}
@@ -446,7 +475,14 @@ class Friends_Admin {
 	 * Render the Friends Edit User page
 	 */
 	public function render_admin_edit_friend() {
-		$friend = $this->check_admin_edit_friend();
+		$friend       = $this->check_admin_edit_friend();
+		$friend_posts = new WP_Query(
+			array(
+				'post_type'   => Friends::FRIEND_POST_CACHE,
+				'post_status' => array( 'publish', 'private' ),
+				'author'      => $friend->ID,
+			)
+		);
 
 		?>
 		<h1><?php echo esc_html( $friend->display_name ); ?></h1>
@@ -621,7 +657,7 @@ class Friends_Admin {
 	 */
 	public function render_suggest_friends_plugin( $string, WP_User $friend = null ) {
 		?>
-		<h1><?php esc_html_e( 'Recommend the Friends plugin to your friend' ); ?></h1>
+		<p><?php esc_html_e( "Maybe you'll want to suggest your friend to install the friends plugin?", 'friends' ); ?> <?php esc_html_e( 'We have prepared some tools for you to give them instructions on how to do so.' ); ?></p>
 		<?php
 
 		$error = $this->process_suggest_friends_plugin();
