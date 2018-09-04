@@ -68,9 +68,12 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				return false;
 			}, 10, 5
 		);
+		$friends = Friends::get_instance();
 
 		if ( ! class_exists( 'SimplePie', false ) ) {
-			require_once( ABSPATH . WPINC . '/class-simplepie.php' );
+			spl_autoload_register( array( $friends->feed, 'wp_simplepie_autoload' ) );
+
+			require_once __DIR__ . '/../lib/SimplePie.php';
 		}
 		update_option( 'siteurl', 'http://me.local' );
 
@@ -82,7 +85,6 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 
 		$user = new WP_User( $this->friend_id );
 
-		$friends = Friends::get_instance();
 		$friends->feed->process_friend_feed( $user, $feed );
 	}
 

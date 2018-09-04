@@ -135,7 +135,10 @@ class Friends_Feed {
 				if ( $remote_post_id ) {
 					$remote_post_ids[ $remote_post_id ] = $post->ID;
 				}
-				$remote_post_ids[ get_permalink( $post ) ] = $post->ID;
+				$permalink                     = get_permalink( $post );
+				$remote_post_ids[ $permalink ] = $post->ID;
+				$permalink                     = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( $permalink ) );
+				$remote_post_ids[ $permalink ] = $post->ID;
 			}
 		}
 
@@ -159,7 +162,7 @@ class Friends_Feed {
 			if ( ! apply_filters( 'friends_use_feed_item', true, $item, $feed, $friend_user ) ) {
 				continue;
 			}
-			$permalink = str_replace( '&#38;', '&', ent2ncr( wp_kses_normalize_entities( $item->get_permalink() ) ) );
+			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->get_permalink() ) ) );
 			$title     = trim( $item->get_title() );
 			$content   = wp_kses_post( trim( $item->get_content() ) );
 
@@ -227,8 +230,10 @@ class Friends_Feed {
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
-				$new_posts[] = $post_id;
+				$new_posts[]                   = $post_id;
+				$remote_post_ids[ $permalink ] = $post_id;
 			}
+
 			$author = $item->get_author();
 			if ( $author ) {
 				update_post_meta( $post_id, 'author', $author->name );
@@ -395,7 +400,7 @@ class Friends_Feed {
 	function url_to_postid( $url, $author_id ) {
 		global $wpdb;
 
-		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid = %s AND post_author = %d LIMIT 1', esc_attr( $url ), $author_id ) );
+		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) AND post_author = %d LIMIT 1', $url, esc_attr( $url ), $author_id ) );
 		return $post_id;
 	}
 }
