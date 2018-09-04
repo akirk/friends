@@ -44,8 +44,8 @@
 
 <p>
 	<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $author->ID ) ); ?>">
-						<?php
-						esc_html_e( "Unsubscribe from this friend's posts", 'friends' );
+	<?php
+		esc_html_e( "Unsubscribe from this friend's posts", 'friends' );
 	?>
 	</a>
 </p>
