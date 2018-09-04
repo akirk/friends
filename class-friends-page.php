@@ -93,7 +93,7 @@ class Friends_Page {
 	 */
 	public function enqueue_scripts() {
 		if ( is_user_logged_in() ) {
-			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), 'jquery' );
+			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), array( 'jquery' ) );
 			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ) );
 			$variables = array(
 				'emojis_json' => plugins_url( 'emojis.json', __FILE__ ),
