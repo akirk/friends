@@ -91,6 +91,7 @@ class Friends {
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->page           = new Friends_Page( $this );
+		$this->recommendation = new Friends_Recommendation( $this );
 		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
 
@@ -175,6 +176,39 @@ class Friends {
 		}
 		$subscription->add_cap( 'subscription' );
 		$subscription->add_cap( 'level_0' );
+	}
+
+	/**
+	 * Gets all friends.
+	 */
+	public static function all_friends() {
+		static $all_friends;
+		if ( ! isset( $all_friends ) ) {
+			$all_friends = new WP_User_Query( array( 'role' => 'friend' ) );
+		}
+		return $all_friends;
+	}
+
+	/**
+	 * Gets all friend requests.
+	 */
+	public static function all_friend_requests() {
+		static $all_friend_requests;
+		if ( ! isset( $all_friend_requests ) ) {
+			$all_friend_requests = new WP_User_Query( array( 'role' => 'friend_request' ) );
+		}
+		return $all_friend_requests;
+	}
+
+	/**
+	 * Gets all admin users.
+	 */
+	public static function all_admin_users() {
+		static $all_admin_users;
+		if ( ! isset( $all_admin_users ) ) {
+			$all_admin_users = new WP_User_Query( array( 'role' => self::REQUIRED_ROLE ) );
+		}
+		return $all_admin_users;
 	}
 
 	/**
@@ -296,7 +330,7 @@ class Friends {
 			if ( get_current_user_id() ) {
 				$main_user_id = get_current_user_id();
 			} else {
-				$users = new WP_User_Query( array( 'role' => 'administrator' ) );
+				$users = self::all_admin_users();
 				foreach ( $users->get_results() as $user ) {
 					$main_user_id = $user->ID;
 					break;

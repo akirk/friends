@@ -380,7 +380,7 @@ class Friends_REST {
 			return;
 		}
 
-		$friends = new WP_User_Query( array( 'role' => 'friend' ) );
+		$friends = Friends::all_friends();
 		$friends = $friends->get_results();
 
 		foreach ( $friends as $friend_user ) {
@@ -539,72 +539,6 @@ class Friends_REST {
 	}
 
 	/**
-	 * Recommend a post to your friends.
-	 *
-	 * @param  int $post_id The post id of the post that was reacted to.
-	 * @param  int $exclude_friend_user_id Don't notify this user_id.
-	 */
-	public function recommend_post_to_friends( $post_id, $exclude_friend_user_id = null ) {
-		$post = WP_Post::get_instance( $post_id );
-		if ( Friends::FRIEND_POST_CACHE !== $post->post_type ) {
-			return;
-		}
-
-		$notify_friends = ! get_user_option( 'friends_no_autosend_recommendations', $user->ID );
-		if ( ! apply_filters( 'notify_friends_of_my_reaction', $notify_friends, $user, $friend_user ) ) {
-			return;
-		}
-
-		$friend_user = new WP_User( $post->post_author );
-		if (
-			$friend_user->has_cap( 'subscription' )
-			|| 'publish' === $post->post_status
-		) {
-			// The link is public so let's include title and content.
-			$recommendation = array(
-				'link'        => get_permalink( $post ),
-				'title'       => get_the_title( $post ),
-				'author'      => get_the_author_meta( 'display_name', $post->post_author ),
-				'gravatar'    => get_avatar_url( $friend_user->ID ),
-				'description' => $post->post_content,
-			);
-		} else {
-			$recommendation = array(
-				'sha1_link' => sha1( get_permalink( $post ) ),
-			);
-
-			// TODO: maybe anonymously recommend this (potentially private post) to friends,
-			// so that they can make use of the recommendation _if_ they also have that
-			// friend's (private) post cached on their side.
-			return;
-		}
-
-		$friends = new WP_User_Query(
-			array(
-				'role'    => 'friend',
-				'exclude' => array( $exclude_friend_user_id, $post->post_author ),
-			)
-		);
-
-		foreach ( $friends->get_results() as $friend_user ) {
-			$reactions = $this->friends->reactions->get_my_reactions( $post->ID );
-
-			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/recommendation', array(
-					'body'        => array_merge(
-						$recommendation, array(
-							'reactions' => $reactions,
-							'friend'    => get_user_option( 'friends_out_token', $friend_user->ID ),
-						)
-					),
-					'timeout'     => 20,
-					'redirection' => 5,
-				)
-			);
-		}
-	}
-
-	/**
 	 * Update the reactions of a friend on my post.
 	 *
 	 * @param  WP_REST_Request $request The incoming request.
@@ -716,8 +650,13 @@ class Friends_REST {
 
 		$post_id = wp_insert_post( $post_data );
 		update_post_meta( $post_id, 'author', $request->get_param( 'author' ) );
-		update_post_meta( $post_id, 'recommendation', true );
 		update_post_meta( $post_id, 'gravatar', $request->get_param( 'gravatar' ) );
+
+		$message = $request->get_param( 'message' );
+		if ( ! $message ) {
+			$message = true;
+		}
+		update_post_meta( $post_id, 'recommendation', $message );
 
 		if ( $standard_response ) {
 			return $standard_response;

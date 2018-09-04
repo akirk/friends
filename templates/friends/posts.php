@@ -100,11 +100,11 @@ include __DIR__ . '/header.php'; ?>
 				if ( Friends::FRIEND_POST_CACHE === get_post_type() && $recommendation ) {
 					$friend_name = '<a href="' . esc_url( get_the_author_meta( 'url' ) ) . '" class="auth-link" data-token="' . esc_attr( $token ) . '">' . esc_html( get_the_author() ) . '</a>';
 					?>
-					<p>
+					<p class="friend-recommendation">
 					<?php
 					echo wp_kses(
 						// translators: %s is the friend's name.
-						sprintf( __( 'Your friend %s reacted on this.', 'friends' ), $friend_name ), array(
+						sprintf( __( 'Your friend %1$s recommended this with the message: %2$s', 'friends' ), $friend_name, '<span>' . esc_html( $recommendation ) . '</span>' ), array(
 							'a' => array(
 								'class'      => array(),
 								'data-token' => array(),
@@ -126,6 +126,9 @@ include __DIR__ . '/header.php'; ?>
 					<?php comments_number( '', 1, '%' ); ?>
 				</button>
 				<?php echo $friends->reactions->post_reactions(); ?>
+				<?php if ( Friends::FRIEND_POST_CACHE === get_post_type() ) : ?>
+					<?php echo $friends->recommendation->post_recommendation(); ?>
+				<?php endif; ?>
 			</footer>
 		</article>
 	<?php endwhile; ?>

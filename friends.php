@@ -24,6 +24,7 @@ include __DIR__ . '/class-friends-feed.php';
 include __DIR__ . '/class-friends-notifications.php';
 include __DIR__ . '/class-friends-page.php';
 include __DIR__ . '/class-friends-reactions.php';
+include __DIR__ . '/class-friends-recommendation.php';
 include __DIR__ . '/class-friends-rest.php';
 include __DIR__ . '/class-friends-3rd-parties.php';
 include __DIR__ . '/class-friends-shortcodes.php';

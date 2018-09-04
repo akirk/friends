@@ -36,7 +36,10 @@ jQuery( function( $ ) {
 			this.value = 'http://' + this.value;
 		}
 	} );
+} );
 
+/* Reactions */
+jQuery( function( $ ) {
 	jQuery( document ).on( 'click', 'button.new-reaction', function() {
 		var p = $(this).offset();
 		var spinner = $( '#friends-reaction-picker .spinner' );
@@ -69,32 +72,69 @@ jQuery( function( $ ) {
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'button.friends-reaction:not(.new-reaction)', function() {
+	jQuery( document ).on( 'click', 'button.friends-reaction', function() {
 		jQuery.post( friends.ajax_url, {
+			_ajax_nonce: $( this ).data( 'nonce' ),
 			action: 'friends_toggle_react',
 			post_id: $( this ).data( 'id' ),
 			reaction: $( this ).data( 'emoji' )
-		}, function(response) {
+		}, function( response ) {
 			location.reload();
 		} );
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', function() {
-		$( '#friends-reaction-picker' ).hide();
+	jQuery( document ).on( 'click', function( e ) {
+		if ( 0 === $( e.target ).closest( '#friends-reaction-picker' ).length ) {
+			$( '#friends-reaction-picker' ).hide();
+		}
 	} );
 
 	jQuery( '#friends-reaction-picker' ).on( 'click', 'button', function() {
 		jQuery.post( friends.ajax_url, {
+			_ajax_nonce: $( '#friends-reaction-picker' ).data( 'nonce' ),
 			action: 'friends_toggle_react',
 			post_id: $( '#friends-reaction-picker' ).data( 'id' ),
 			reaction: $( this ).data( 'emoji' )
-		}, function(response) {
+		}, function( response ) {
 			location.reload();
 		} );
 		return false;
 	} );
-
-
-
 } );
+
+/* Recommendation */
+jQuery( function( $ ) {
+	jQuery( document ).on( 'click', 'button.friends-recommendation', function() {
+		var p = $(this).offset();
+		var form = $( '#friends-recommendation-form' );
+
+		form.find( 'div.message' ).hide();
+		form.find( 'form' ).show();
+		form.find( 'input[name=post_id]' ) .val( $( this ).data( 'id' ) );
+
+		form.css( {
+			left: p.left + 'px',
+			top: p.top + 'px'
+		} ).show();
+
+		return false;
+	} );
+
+	jQuery( document ).on( 'submit', '#friends-recommendation-form form', function() {
+		var form = $( '#friends-recommendation-form' );
+
+		jQuery.post( friends.ajax_url, form.find( 'form' ).serialize(), function( response ) {
+			form.find( 'div.message' ).text( response.data.result ).show();
+			form.find( 'form' ).hide();
+		} );
+
+		return false;
+	} );
+
+	jQuery( document ).on( 'click', function( e ) {
+		if ( 0 === $( e.target ).closest( '#friends-recommendation-form' ).length ) {
+			$( '#friends-recommendation-form' ).hide();
+		}
+	} );
+});

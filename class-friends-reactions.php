@@ -51,7 +51,7 @@ class Friends_Reactions {
 	}
 
 	/**
-	 * Register the hooks that attach reactions to content
+	 * Unregister the hooks that attach reactions to content
 	 */
 	public function unregister_content_hooks() {
 		remove_action( 'the_content', array( $this, 'post_reactions' ), 20 );
@@ -202,7 +202,7 @@ class Friends_Reactions {
 			$reactions = $this->get_reactions( get_the_ID() );
 
 			ob_start();
-			include apply_filters( 'friends_template_path', 'friends/reactions.php' );
+			include apply_filters( 'friends_template_path', 'friends/post-reactions.php' );
 			$reactions_text = ob_get_contents();
 			ob_end_clean();
 
@@ -229,11 +229,13 @@ class Friends_Reactions {
 	 * Store a reaction.
 	 */
 	public function toggle_react() {
+		check_ajax_referer( 'friends-reaction' );
+
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
 		}
 
-		if ( is_numeric( $_POST['post_id'] ) && is_string( $_POST['reaction'] ) ) {
+		if ( is_numeric( $_POST['post_id'] ) & $_POST['post_id'] > 0 && is_string( $_POST['reaction'] ) && ! empty( trim( $_POST['reaction'] ) ) ) {
 			$post_id = intval( $_POST['post_id'] );
 
 			if ( ! $this->get_emoji_html( $_POST['reaction'] ) ) {
@@ -248,6 +250,7 @@ class Friends_Reactions {
 					break;
 				}
 			}
+
 			if ( ! $term ) {
 				wp_set_object_terms( $post_id, $_POST['reaction'], 'friend-reaction-' . get_current_user_id(), true );
 			} else {
@@ -255,7 +258,14 @@ class Friends_Reactions {
 			}
 
 			do_action( 'friends_user_post_reaction', $post_id );
-			return true;
+
+			wp_send_json_success( array(
+				'result' => true,
+			) );
+		} else {
+			wp_send_json_error( array(
+				'result' => false,
+			) );
 		}
 	}
 
@@ -422,5 +432,4 @@ class Friends_Reactions {
 
 		return $reactions;
 	}
-
 }

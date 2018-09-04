@@ -331,7 +331,7 @@ class Friends_Admin {
 			}
 		}
 
-		foreach ( array( 'friend_request_notification', 'autosend_recommendations' ) as $negative_user_checkbox ) {
+		foreach ( array( 'friend_request_notification' ) as $negative_user_checkbox ) {
 			if ( isset( $_POST[ $negative_user_checkbox ] ) && $_POST[ $negative_user_checkbox ] ) {
 				delete_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox );
 			} else {
@@ -378,7 +378,7 @@ class Friends_Admin {
 			<?php
 		}
 
-		$potential_main_users = new WP_User_Query( array( 'role' => Friends::REQUIRED_ROLE ) );
+		$potential_main_users = Friends::all_admin_users();
 		$main_user_id         = $this->friends->get_main_friend_user_id();
 
 		include apply_filters( 'friends_template_path', 'admin/settings.php' );
@@ -861,7 +861,7 @@ class Friends_Admin {
 	 * @return array The extended bulk options.
 	 */
 	public function add_user_bulk_options( $actions ) {
-		$friends = new WP_User_Query( array( 'role' => 'friend_request' ) );
+		$friends = Friends::all_friend_requests();
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
@@ -894,7 +894,7 @@ class Friends_Admin {
 		}
 
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			$friend_requests = new WP_User_Query( array( 'role' => 'friend_request' ) );
+			$friend_requests = Friends::all_friend_requests();
 			$open_requests   = $friend_requests->get_total();
 			if ( $open_requests > 0 ) {
 				// translators: %s is the number of open friend requests.

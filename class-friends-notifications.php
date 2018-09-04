@@ -48,7 +48,7 @@ class Friends_Notifications {
 	 * @param  WP_Post $post The new post by a friend.
 	 */
 	public function notify_new_friend_post( WP_Post $post ) {
-		$users = new WP_User_Query( array( 'role' => Friends::REQUIRED_ROLE ) );
+		$users = Friends::admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -91,7 +91,7 @@ class Friends_Notifications {
 			return;
 		}
 
-		$users = new WP_User_Query( array( 'role' => Friends::REQUIRED_ROLE ) );
+		$users = Friends::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -129,7 +129,7 @@ class Friends_Notifications {
 	 * @param  WP_User $friend_user The user who accepted friendship.
 	 */
 	public function notify_accepted_friend_request( WP_User $friend_user ) {
-		$users = new WP_User_Query( array( 'role' => Friends::REQUIRED_ROLE ) );
+		$users = Friends::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {

@@ -184,7 +184,7 @@ body.friends-page section.posts article.hentry footer.entry-meta {
 	justify-content: flex-end;
 }
 
-button.friends-reaction, body.friends-page section.posts article.hentry footer.entry-meta button {
+button.friends-action, body.friends-page section.posts article.hentry footer.entry-meta button {
 	font-size: 14px;
 	border: 0;
 	background-color: #fff;
@@ -200,20 +200,20 @@ button.friends-reaction, body.friends-page section.posts article.hentry footer.e
 	height: 30px;
 }
 
-button.friends-reaction:hover, body.friends-page section.posts article.hentry footer.entry-meta button:hover {
+button.friends-action:hover, body.friends-page section.posts article.hentry footer.entry-meta button:hover {
 	border-color: #cccccc;
 	background-color: #fff;
 }
 
-button.friends-reaction:focus, body.friends-page section.posts article.hentry footer.entry-meta button:focus {
+button.friends-action:focus, body.friends-page section.posts article.hentry footer.entry-meta button:focus {
 	outline: none;
 }
 
-button.friends-reaction span {
+button.friends-action span {
 	font-size: 18px;
 	vertical-align: top;
 }
-button.friends-reaction.pressed, body.friends-page section.posts article.hentry footer.entry-meta button.pressed {
+button.friends-action.pressed, body.friends-page section.posts article.hentry footer.entry-meta button.pressed {
 	color: #f0821e;
 }
 
@@ -255,6 +255,25 @@ button.new-reaction span {
 	opacity: .7;
 	width: 16px;
 	height: 16px;
+}
+
+#friends-recommendation-form {
+	display: none;
+	position: absolute;
+	border: 1px solid #999999;
+	box-shadow: 2px 2px 5px #cccccc;
+	border-radius: .25em;
+	background-color: #fff;
+	padding: 1em;
+	width: 20em;
+}
+
+#friends-recommendation-form fieldset {
+	margin-bottom: 1em;
+}
+
+p.friend-recommendation {
+	font-style: italic;
 }
 
 .only-friends {

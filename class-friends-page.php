@@ -244,6 +244,7 @@ class Friends_Page {
 		}
 		$this->on_friends_page = true;
 		$this->friends->reactions->unregister_content_hooks();
+		$this->friends->recommendation->unregister_content_hooks();
 
 		$page_id = get_query_var( 'page' );
 

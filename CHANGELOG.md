@@ -1,6 +1,7 @@
 0.9
 ===
 - Post recommendations
+- Includes the most recent version of SimplePie
 
 0.8
 ===
