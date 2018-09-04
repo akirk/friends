@@ -199,6 +199,16 @@ class Friends {
 		}
 		return $all_friend_requests;
 	}
+	/**
+	 * Gets all subscriptions.
+	 */
+	public static function all_subscriptions() {
+		static $all_subscriptions;
+		if ( ! isset( $all_subscriptions ) ) {
+			$all_subscriptions = new WP_User_Query( array( 'role' => 'subscription' ) );
+		}
+		return $all_subscriptions;
+	}
 
 	/**
 	 * Gets all admin users.

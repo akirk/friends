@@ -106,8 +106,17 @@ body.friends-page div.friends-widget a.open-requests {
 }
 
 body.friends-page div.friends-widget ul {
-	margin: .5em 0;
+	margin: .5em 0 1em 0;
 	padding: 0;
+}
+
+body.friends-page div.friends-widget h5 {
+	margin-bottom: .5em;
+}
+
+body.friends-page div.friends-widget h5 a {
+	color: #222;
+	text-decoration: none;
 }
 
 body.friends-page div.friends-widget ul li {
@@ -158,6 +167,15 @@ body.friends-page section.posts article.hentry header.entry-header a {
 	text-decoration: none;
 }
 
+body.friends-page button.friends-trash-post, body.friends-page button.friends-untrash-post {
+	float: right;
+	border: 0;
+	background: transparent;
+	color: #333;
+	cursor: pointer;
+	font-size: 90%;
+}
+
 body.friends-page section.posts article.hentry h4.entry-title a {
 	text-decoration: none;
 	color: #333;
@@ -177,9 +195,6 @@ body.friends-page section.posts article.hentry div.entry-content p {
 
 body.friends-page section.posts article.hentry footer.entry-meta {
 	font-size: 1.5em;
-}
-
-body.friends-page section.posts article.hentry footer.entry-meta {
 	display: flex;
 	justify-content: flex-end;
 }

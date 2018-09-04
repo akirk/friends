@@ -169,6 +169,12 @@ class Friends_Reactions {
 				unset( $remote_reactions[ $slug ] );
 			}
 
+			$usernames = array_filter( $usernames );
+			if ( empty( $usernames ) ) {
+				unset( $reactions[ $slug ] );
+				continue;
+			}
+
 			$reactions[ $slug ] = (object) array(
 				'count'        => intval( $count ),
 				'html_entity'  => $this->get_emoji_html( $slug ),
@@ -235,38 +241,50 @@ class Friends_Reactions {
 			return new WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
 		}
 
-		if ( is_numeric( $_POST['post_id'] ) & $_POST['post_id'] > 0 && is_string( $_POST['reaction'] ) && ! empty( trim( $_POST['reaction'] ) ) ) {
-			$post_id = intval( $_POST['post_id'] );
-
-			if ( ! $this->get_emoji_html( $_POST['reaction'] ) ) {
-				// This emoji is not defined in emoji.json.
-				return new WP_Error( 'invalid-emoji', 'This emoji is unknown.' );
-			}
-
-			$term = false;
-			foreach ( wp_get_object_terms( $post_id, 'friend-reaction-' . get_current_user_id() ) as $t ) {
-				if ( $t->slug === $_POST['reaction'] ) {
-					$term = $t;
-					break;
-				}
-			}
-
-			if ( ! $term ) {
-				wp_set_object_terms( $post_id, $_POST['reaction'], 'friend-reaction-' . get_current_user_id(), true );
-			} else {
-				wp_remove_object_terms( $post_id, $term->term_id, 'friend-reaction-' . get_current_user_id() );
-			}
-
-			do_action( 'friends_user_post_reaction', $post_id );
-
-			wp_send_json_success( array(
-				'result' => true,
-			) );
-		} else {
-			wp_send_json_error( array(
-				'result' => false,
-			) );
+		if ( ! isset( $_POST['post_id'] ) || ! isset( $_POST['reaction'] ) ) {
+			wp_send_json_error(
+				array(
+					'result' => false,
+				)
+			);
 		}
+
+		if ( ! is_numeric( $_POST['post_id'] ) || $_POST['post_id'] <= 0 ) {
+			wp_send_json_error(
+				array(
+					'result' => false,
+				)
+			);
+		}
+
+		$post_id = intval( $_POST['post_id'] );
+
+		if ( ! $this->get_emoji_html( $_POST['reaction'] ) ) {
+			// This emoji is not defined in emoji.json.
+			return new WP_Error( 'invalid-emoji', 'This emoji is unknown.' );
+		}
+
+		$term = false;
+		foreach ( wp_get_object_terms( $post_id, 'friend-reaction-' . get_current_user_id() ) as $t ) {
+			if ( $t->slug === $_POST['reaction'] ) {
+				$term = $t;
+				break;
+			}
+		}
+
+		if ( ! $term ) {
+			wp_set_object_terms( $post_id, $_POST['reaction'], 'friend-reaction-' . get_current_user_id(), true );
+		} else {
+			wp_remove_object_terms( $post_id, $term->term_id, 'friend-reaction-' . get_current_user_id() );
+		}
+
+		do_action( 'friends_user_post_reaction', $post_id );
+
+		wp_send_json_success(
+			array(
+				'result' => true,
+			)
+		);
 	}
 
 	/**

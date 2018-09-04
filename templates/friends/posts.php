@@ -31,6 +31,10 @@ include __DIR__ . '/header.php'; ?>
 			<?php dynamic_sidebar( 'friends-topbar' ); ?>
 		<?php endif; ?>
 	</div>
+	<?php if ( ! have_posts() ) : ?>
+		<?php esc_html_e( 'No posts found.', 'friends' ); ?>
+	<?php endif; ?>
+
 	<?php while ( have_posts() ) : ?>
 		<?php
 		the_post();
@@ -76,6 +80,11 @@ include __DIR__ . '/header.php'; ?>
 					<span class="post-date"><?php /* translators: %s is a time span */ printf( _x( '%s ago', '%s = human-readable time difference', 'friends' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
 					<?php edit_post_link(); ?>
 				</div>
+				<?php if ( Friends::FRIEND_POST_CACHE === get_post_type() ) : ?>
+					<button class="friends-trash-post" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
+						&#x1F5D1;
+					</button>
+				<?php endif; ?>
 			</header>
 
 			<h4 class="entry-title">

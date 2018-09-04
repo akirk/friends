@@ -925,6 +925,14 @@ class Friends_Admin {
 			}
 			$wp_menu->add_menu(
 				array(
+					'id'     => 'your-feed',
+					'parent' => 'friends',
+					'title'  => esc_html__( 'Feed', 'friends' ),
+					'href'   => site_url( '/friends/' ),
+				)
+			);
+			$wp_menu->add_menu(
+				array(
 					'id'     => 'your-profile',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Your Profile', 'friends' ),

@@ -57,6 +57,7 @@ class Friends_Page {
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'frontend_publish_post' ) );
+		add_action( 'wp_ajax_trash_friends_post', array( $this, 'trash_friends_post' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 	}
@@ -98,6 +99,7 @@ class Friends_Page {
 				'emojis_json' => plugins_url( 'emojis.json', __FILE__ ),
 				'ajax_url'    => admin_url( 'admin-ajax.php' ),
 				'spinner_url' => admin_url( 'images/wpspin_light.gif' ),
+				'text_undo'   => __( 'Undo' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
 
@@ -163,7 +165,7 @@ class Friends_Page {
 				$this->friends->feed->retrieve_friend_posts( null, true );
 			}
 
-			if ( ! have_posts() ) {
+			if ( ! have_posts() && ! get_query_var( 'author_name' ) ) {
 				return apply_filters( 'friends_template_path', 'friends/no-posts.php' );
 			}
 			return apply_filters( 'friends_template_path', 'friends/posts.php' );

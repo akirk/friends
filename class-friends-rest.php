@@ -43,7 +43,6 @@ class Friends_REST {
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'friends_user_post_reaction', array( $this, 'notify_remote_friend_post_reaction' ), 10, 2 );
 		add_action( 'friends_user_post_reaction', array( $this, 'notify_friend_of_my_reaction' ) );
-		add_action( 'friends_user_post_reaction', array( $this, 'recommend_post_to_friends' ) );
 		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
 	}
 
@@ -565,8 +564,11 @@ class Friends_REST {
 				'updated' => false,
 			);
 		}
-
-		$this->friends->reactions->update_friend_reactions( $post_id, $friend_user->ID, $request->get_param( 'reactions' ) );
+		$reactions = $request->get_param( 'reactions' );
+		if ( ! $reactions ) {
+			$reactions = array();
+		}
+		$this->friends->reactions->update_friend_reactions( $post_id, $friend_user->ID, $reactions );
 
 		do_action( 'friends_user_post_reaction', $post_id, $friend_user->ID );
 

@@ -201,7 +201,7 @@ class Friends_Feed {
 			}
 
 			if ( is_null( $post_id ) ) {
-				$post_id = $this->url_to_postid( $permalink );
+				$post_id = $this->url_to_postid( $permalink, $friend_user->ID );
 			}
 
 			$post_data = array(
@@ -384,13 +384,14 @@ class Friends_Feed {
 	/**
 	 * More generic version of the native url_to_postid()
 	 *
-	 * @param string $url Permalink to check.
+	 * @param string $url       Permalink to check.
+	 * @param int    $author_id The id of the author.
 	 * @return int Post ID, or 0 on failure.
 	 */
-	function url_to_postid( $url ) {
+	function url_to_postid( $url, $author_id ) {
 		global $wpdb;
 
-		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid = %s LIMIT 1', $url ) );
+		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid = %s AND post_author = %d LIMIT 1', $url, $author_id ) );
 		return $post_id;
 	}
 }

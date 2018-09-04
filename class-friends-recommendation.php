@@ -94,66 +94,92 @@ class Friends_Recommendation {
 			return new WP_Error( 'unauthorized', 'You are not authorized to send a recommendation.' );
 		}
 
-		if ( is_numeric( $_POST['post_id'] ) && $_POST['post_id'] > 0 && is_string( $_POST['message'] ) && is_array( $_POST['friends'] ) && count( $_POST['friends'] ) > 0 ) {
-			$post_id = intval( $_POST['post_id'] );
-			$post    = WP_Post::get_instance( $post_id );
-			if ( Friends::FRIEND_POST_CACHE !== $post->post_type ) {
-				return;
-			}
+		if ( ! isset( $_POST['post_id'] ) || empty( $_POST['friends'] ) ) {
+			wp_send_json_error(
+				array(
+					'result' => __( 'There was a problem sending your recommendation.', 'friends' ),
+				)
+			);
+		}
 
-			$friend_user = new WP_User( $post->post_author );
-			if (
-				$friend_user->has_cap( 'subscription' )
-				|| 'publish' === $post->post_status
-			) {
-				// The link is public so let's include title and content.
-				$recommendation = array(
-					'link'        => get_permalink( $post ),
-					'title'       => get_the_title( $post ),
-					'author'      => get_the_author_meta( 'display_name', $post->post_author ),
-					'gravatar'    => get_avatar_url( $friend_user->ID ),
-					'description' => $post->post_content,
-					'message'     => $_POST['message'],
-				);
-			} else {
-				$recommendation = array(
-					'sha1_link' => sha1( get_permalink( $post ) ),
-					'message'   => $_POST['message'],
-				);
+		if ( ! isset( $_POST['message'] ) ) {
+			$_POST['message'] = '';
+		}
 
-				// TODO: maybe anonymously recommend this (potentially private post) to friends,
-				// so that they can make use of the recommendation _if_ they also have that
-				// friend's (private) post cached on their side.
-				return;
-			}
+		if ( ! is_array( $_POST['friends'] ) || count( $_POST['friends'] ) <= 0 ) {
+			wp_send_json_error(
+				array(
+					'result' => __( 'There was a problem sending your recommendation.', 'friends' ),
+				)
+			);
+		}
 
-			$recommendation['reactions'] = $reactions;
+		if ( ! is_numeric( $_POST['post_id'] ) || $_POST['post_id'] <= 0 ) {
+			wp_send_json_error(
+				array(
+					'result' => __( 'There was a problem sending your recommendation.', 'friends' ),
+				)
+			);
+		}
 
-			$friends = new WP_User_Query( array(
+		$post_id = intval( $_POST['post_id'] );
+		$post    = WP_Post::get_instance( $post_id );
+		if ( Friends::FRIEND_POST_CACHE !== $post->post_type ) {
+			return;
+		}
+
+		$friend_user = new WP_User( $post->post_author );
+		if (
+			$friend_user->has_cap( 'subscription' )
+			|| 'publish' === $post->post_status
+		) {
+			// The link is public so let's include title and content.
+			$recommendation = array(
+				'link'        => get_permalink( $post ),
+				'title'       => get_the_title( $post ),
+				'author'      => get_the_author_meta( 'display_name', $post->post_author ),
+				'gravatar'    => get_avatar_url( $friend_user->ID ),
+				'description' => $post->post_content,
+				'message'     => $_POST['message'],
+			);
+		} else {
+			$recommendation = array(
+				'sha1_link' => sha1( get_permalink( $post ) ),
+				'message'   => $_POST['message'],
+			);
+
+			// TODO: maybe anonymously recommend this (potentially private post) to friends,
+			// so that they can make use of the recommendation _if_ they also have that
+			// friend's (private) post cached on their side.
+			return;
+		}
+
+		$recommendation['reactions'] = $reactions;
+
+		$friends = new WP_User_Query(
+			array(
 				'role'    => 'friend',
 				'include' => array_map( 'intval', $_POST['friends'] ),
-			) );
+			)
+		);
 
-			foreach ( $friends->get_results() as $friend_user ) {
-				$response = wp_safe_remote_post(
-					$friend_user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/recommendation', array(
-						'body'        => array_merge(
-							$recommendation, array(
-								'friend' => get_user_option( 'friends_out_token', $friend_user->ID ),
-							)
-						),
-						'timeout'     => 2,
-						'redirection' => 5,
-					)
-				);
-			}
-			wp_send_json_success( array(
-				'result' => __( 'Your recommendation was sent.', 'friends' ),
-			) );
-		} else {
-			wp_send_json_error( array(
-				'result' => __( 'There was a problem sending your recommendation.', 'friends' ),
-			) );
+		foreach ( $friends->get_results() as $friend_user ) {
+			$response = wp_safe_remote_post(
+				$friend_user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/recommendation', array(
+					'body'        => array_merge(
+						$recommendation, array(
+							'friend' => get_user_option( 'friends_out_token', $friend_user->ID ),
+						)
+					),
+					'timeout'     => 2,
+					'redirection' => 5,
+				)
+			);
 		}
+		wp_send_json_success(
+			array(
+				'result' => __( 'Your recommendation was sent.', 'friends' ),
+			)
+		);
 	}
 }
