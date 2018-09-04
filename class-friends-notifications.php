@@ -48,7 +48,7 @@ class Friends_Notifications {
 	 * @param  WP_Post $post The new post by a friend.
 	 */
 	public function notify_new_friend_post( WP_Post $post ) {
-		$users = Friends::admin_users();
+		$users = Friends::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {

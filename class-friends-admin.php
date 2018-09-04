@@ -52,8 +52,8 @@ class Friends_Admin {
 	 */
 	public function register_admin_menu() {
 		add_menu_page( 'Friends', 'Friends', 'manage_options', 'friends-settings', null, 'dashicons-groups', 3.73 );
-		add_submenu_page( 'friends-settings', 'Settings', 'Settings', 'manage_options', 'friends-settings', array( $this, 'render_admin_settings' ) );
-		add_submenu_page( 'friends-settings', 'Send Friend Request', 'Send Friend Request', Friends::REQUIRED_ROLE, 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
+		add_submenu_page( 'friends-settings', __( 'Settings' ), __( 'Settings' ), 'manage_options', 'friends-settings', array( $this, 'render_admin_settings' ) );
+		add_submenu_page( 'friends-settings', __( 'Send Friend Request', 'friends' ), __( 'Send Friend Request', 'friends' ), Friends::REQUIRED_ROLE, 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
 		add_submenu_page( 'friends-settings', 'Feed', 'Friends &amp; Requests', Friends::REQUIRED_ROLE, 'users.php' );
@@ -952,6 +952,14 @@ class Friends_Admin {
 					'id'     => 'friends-requests',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Friends & Requests', 'friends' ),
+					'href'   => self_admin_url( 'users.php' ),
+				)
+			);
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'friends-settings',
+					'parent' => 'friends',
+					'title'  => esc_html__( 'Settings' ),
 					'href'   => self_admin_url( 'users.php' ),
 				)
 			);

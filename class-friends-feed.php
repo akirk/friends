@@ -221,7 +221,7 @@ class Friends_Feed {
 				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
 				$post_data['comment_count'] = $item->comment_count;
 				$post_id                    = wp_insert_post( $post_data );
-				$new_posts[]                = $id;
+				$new_posts[]                = $post_id;
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
