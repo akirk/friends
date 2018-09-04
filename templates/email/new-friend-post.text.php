@@ -32,4 +32,9 @@ echo PHP_EOL, PHP_EOL;
 echo $quoted_text;
 
 echo PHP_EOL, PHP_EOL;
+
+_e( "Unsubscribe from this friend's posts", 'friends' );
+echo ' ', self_admin_url( 'admin.php?page=edit-friend&user=' . $author->ID );
+
+echo PHP_EOL, PHP_EOL;
 _e( 'Best, the Friends plugin', 'friends' );

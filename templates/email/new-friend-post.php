@@ -41,4 +41,12 @@
 		esc_html_e( 'Best, the Friends plugin', 'friends' );
 	?>
 </p>
+
+<p>
+	<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $author->ID ) ); ?>">
+						<?php
+						esc_html_e( "Unsubscribe from this friend's posts", 'friends' );
+	?>
+	</a>
+</p>
 <?php include __DIR__ . '/footer.php'; ?>

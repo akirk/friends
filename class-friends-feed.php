@@ -158,7 +158,8 @@ class Friends_Feed {
 				continue;
 			}
 			$permalink = $item->get_permalink();
-			$content   = wp_kses_post( $item->get_content() );
+			$title     = trim( $item->get_title() );
+			$content   = wp_kses_post( trim( $item->get_content() ) );
 
 			// Fallback, when no friends plugin is installed.
 			$item->{'post-id'}     = $permalink;
@@ -167,7 +168,7 @@ class Friends_Feed {
 				$item->comment_count = 0;
 			}
 
-			if ( ! $content || ! $permalink ) {
+			if ( ( ! $content && ! $title ) || ! $permalink ) {
 				continue;
 			}
 
@@ -205,8 +206,8 @@ class Friends_Feed {
 			}
 
 			$post_data = array(
-				'post_title'        => $item->get_title(),
-				'post_content'      => $item->get_content(),
+				'post_title'        => $title,
+				'post_content'      => $content,
 				'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
 				'post_status'       => $item->{'post-status'},
 				'guid'              => $permalink,
@@ -220,11 +221,11 @@ class Friends_Feed {
 				$post_data['post_type']     = Friends::FRIEND_POST_CACHE;
 				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
 				$post_data['comment_count'] = $item->comment_count;
-				$post_id                    = wp_insert_post( $post_data );
-				$new_posts[]                = $post_id;
+				$post_id                    = wp_insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
+				$new_posts[] = $post_id;
 			}
 			$author = $item->get_author();
 			if ( $author ) {
@@ -243,16 +244,17 @@ class Friends_Feed {
 
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
-
-			$new_post     = ! isset( $post_data['ID'] );
-			$notify_users = apply_filters( 'notify_about_new_friend_post', $new_post && ! $new_friend, $friend_user, $post_id );
-			if ( $notify_users ) {
-				do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
-			}
 		}
 
 		if ( $new_friend ) {
 			delete_user_option( $friend_user->ID, 'friends_new_friend' );
+		} else {
+			foreach ( $new_posts as $post_id ) {
+				$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
+				if ( $notify_users ) {
+					do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
+				}
+			}
 		}
 
 		return $new_posts;

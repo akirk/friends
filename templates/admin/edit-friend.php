@@ -47,7 +47,7 @@
 			</tr>
 			<tr>
 				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
-				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( get_user_option( 'friends_display_name_' . $friend->ID, $user ) ?: $friend->display_name ); ?>" class="regular-text" /> <span class="description"><?php esc_html_e( 'Careful, your friend can see this.', 'friends' ); ?></span></td>
+				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( get_user_option( 'friends_display_name_' . $friend->ID, $user ) ?: $friend->display_name ); ?>" class="regular-text" /> <span class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></span></td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>

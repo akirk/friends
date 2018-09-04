@@ -960,7 +960,7 @@ class Friends_Admin {
 					'id'     => 'friends-settings',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Settings' ),
-					'href'   => self_admin_url( 'users.php' ),
+					'href'   => self_admin_url( 'admin.php?page=friends-settings' ),
 				)
 			);
 		}

@@ -50,7 +50,7 @@
 							<?php esc_html_e( 'New Posts', 'friends' ); ?>
 						</label>
 					</fieldset>
-				<p class="description"><?php esc_html_e( 'You can also change these settings on a friend by friend basis.', 'friends' ); ?></p>
+				<p class="description"><?php esc_html_e( 'You can also change this setting for each friend separately.', 'friends' ); ?></p>
 				</td>
 			</tr>
 			<tr>
