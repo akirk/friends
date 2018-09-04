@@ -98,7 +98,7 @@ class Friends_Feed {
 	 * @return string               The feed URL.
 	 */
 	public function get_feed_url( WP_User $friend_user, $private = true ) {
-		get_user_option( 'friends_feed_url', $friend_user->ID );
+		$feed_url = get_user_option( 'friends_feed_url', $friend_user->ID );
 		if ( ! $feed_url ) {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 		}
@@ -130,9 +130,11 @@ class Friends_Feed {
 
 		if ( $existing_posts->have_posts() ) {
 			while ( $existing_posts->have_posts() ) {
-				$post                                      = $existing_posts->next_post();
-				$remote_post_id                            = get_post_meta( $post->ID, 'remote_post_id', true );
-				$remote_post_ids[ $remote_post_id ]        = $post->ID;
+				$post           = $existing_posts->next_post();
+				$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
+				if ( $remote_post_id ) {
+					$remote_post_ids[ $remote_post_id ] = $post->ID;
+				}
 				$remote_post_ids[ get_permalink( $post ) ] = $post->ID;
 			}
 		}
@@ -157,7 +159,7 @@ class Friends_Feed {
 			if ( ! apply_filters( 'friends_use_feed_item', true, $item, $feed, $friend_user ) ) {
 				continue;
 			}
-			$permalink = $item->get_permalink();
+			$permalink = str_replace( '&#38;', '&', ent2ncr( wp_kses_normalize_entities( $item->get_permalink() ) ) );
 			$title     = trim( $item->get_title() );
 			$content   = wp_kses_post( trim( $item->get_content() ) );
 
@@ -393,7 +395,7 @@ class Friends_Feed {
 	function url_to_postid( $url, $author_id ) {
 		global $wpdb;
 
-		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid = %s AND post_author = %d LIMIT 1', $url, $author_id ) );
+		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid = %s AND post_author = %d LIMIT 1', esc_attr( $url ), $author_id ) );
 		return $post_id;
 	}
 }
