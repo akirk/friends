@@ -163,7 +163,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s sent a Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
-				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), WP_TESTS_TITLE, $partial_subject ) );
+				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), defined( 'MULTISITE' ) && MULTISITE ? WP_TESTS_TITLE . ' Network' : WP_TESTS_TITLE, $partial_subject ) );
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
@@ -191,7 +191,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s accepted your Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
-				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), WP_TESTS_TITLE, $partial_subject ) );
+				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), defined( 'MULTISITE' ) && MULTISITE ? WP_TESTS_TITLE . ' Network' : WP_TESTS_TITLE, $partial_subject ) );
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
