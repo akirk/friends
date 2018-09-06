@@ -125,6 +125,7 @@ class Friends_Feed {
 				'post_type'   => Friends::FRIEND_POST_CACHE,
 				'post_status' => array( 'publish', 'private' ),
 				'author'      => $friend_user->ID,
+				'nopaging'    => true,
 			)
 		);
 

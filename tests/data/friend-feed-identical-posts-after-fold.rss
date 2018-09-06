@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+	<channel>
+		<title>example.org</title>
+		<link>http://example.org</link>
+		<description>My friend's site</description>
+		<item>
+			<title>Post 1</title>
+			<link>http://example.org/post1</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 2</title>
+			<link>http://example.org/post2</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 3</title>
+			<link>http://example.org/post3</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 4</title>
+			<link>http://example.org/post4</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 5</title>
+			<link>http://example.org/post5</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 6</title>
+			<link>http://example.org/post6</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 7</title>
+			<link>http://example.org/post7</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 8</title>
+			<link>http://example.org/post8</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 9</title>
+			<link>http://example.org/post9</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Post 10</title>
+			<link>http://example.org/post10</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Ampersand post</title>
+			<link>http://example.org/test?url=with&amp;parameters=that&amp;contain=ampersands</link>
+			<description>This is a normal post.</description>
+		</item>
+		<item>
+			<title>Ampersand post</title>
+			<link>http://example.org/test?url=with&amp;parameters=that&amp;contain=ampersands</link>
+			<description>This is a normal post.</description>
+		</item>
+	</channel>
+</rss>
