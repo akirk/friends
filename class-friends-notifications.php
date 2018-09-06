@@ -62,9 +62,8 @@ class Friends_Notifications {
 				continue;
 			}
 
-			$author = new WP_User( $post->post_author );
-			// translators: %s is a post title.
-			$email_title = sprintf( __( 'New Friend Post: %s', 'friends' ), $post->post_title );
+			$author      = new WP_User( $post->post_author );
+			$email_title = $post->post_title;
 
 			$message = array();
 			ob_start();
@@ -77,7 +76,7 @@ class Friends_Notifications {
 			$message['text'] = ob_get_contents();
 			ob_end_clean();
 
-			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $message );
+			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $message, array(), array(), $author->user_login );
 		}
 	}
 
@@ -105,7 +104,7 @@ class Friends_Notifications {
 			}
 
 			// translators: %s is a user display name.
-			$email_title = sprintf( __( 'New Friend Request from %s', 'friends' ), $friend_user->display_name );
+			$email_title = sprintf( __( '%s sent a Friend Request', 'friends' ), $friend_user->display_name );
 
 			$message = array();
 			ob_start();
@@ -162,32 +161,33 @@ class Friends_Notifications {
 	/**
 	 * Wrapper for wp_mail to be overridden in unit tests
 	 *
-	 * @param string|array $to          Array or comma-separated list of email addresses to send message.
-	 * @param string       $subject     Email subject.
-	 * @param string       $message     Message contents.
-	 * @param array        $headers     Optional. Additional headers.
-	 * @param array        $attachments Optional. Files to attach.
+	 * @param string|array $to                Array or comma-separated list of email addresses to send message.
+	 * @param string       $subject           Email subject.
+	 * @param string       $message           Message contents.
+	 * @param array        $headers           Optional. Additional headers.
+	 * @param array        $attachments       Optional. Files to attach.
+	 * @param string       $override_sitename Optional. Override the sitename.
 	 * @return bool Whether the email contents were sent successfully.
 	 */
-	public function send_mail( $to, $subject, $message, array $headers = array(), array $attachments = array() ) {
+	public function send_mail( $to, $subject, $message, array $headers = array(), array $attachments = array(), $override_sitename = false ) {
+		if ( is_multisite() ) {
+			$sitename = get_site_option( 'site_name' );
+			$charset  = get_site_option( 'blog_charset' );
+		} else {
+			$sitename = get_option( 'blogname' );
+			$charset  = get_option( 'blog_charset' );
+		}
+
+		if ( $override_sitename ) {
+			$sitename = $override_sitename;
+		}
+
+		// translators: %1$s is the site name, %2$s is the subject.
+		$subject = sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), wp_specialchars_decode( $sitename, ENT_QUOTES ), $subject );
+		$subject = apply_filters( 'friends_send_mail_subject', $subject );
+
 		if ( ! apply_filters( 'friends_send_mail', true, $to, $subject, $message, $headers, $attachments ) ) {
 			return;
-		}
-
-		if ( is_multisite() ) {
-			$sitename = get_site_option( 'site_name' );
-		} else {
-			$sitename = get_option( 'blogname' );
-		}
-
-		$subject = sprintf( '[%s] %s', wp_specialchars_decode( $sitename, ENT_QUOTES ), $subject );
-
-		if ( is_multisite() ) {
-			$sitename = get_site_option( 'site_name' );
-			$charset  = get_option( 'blog_charset' );
-		} else {
-			$sitename = get_option( 'blogname' );
-			$charset  = get_option( 'blog_charset' );
 		}
 
 		$domain = parse_url( get_option( 'siteurl' ), PHP_URL_HOST );

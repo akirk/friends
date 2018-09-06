@@ -62,7 +62,8 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		);
 		add_filter(
 			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
-				$that->assertEquals( $subject, sprintf( 'New Friend Post: %s', 'First Friend Post' ) );
+				// translators: %1$s is the site name, %2$s is the subject.
+				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), 'friend.local', 'First Friend Post' ) );
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
@@ -159,7 +160,10 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		);
 		add_filter(
 			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
-				$that->assertEquals( $subject, sprintf( 'New Friend Request from %s', 'me.local' ) );
+				// translators: %s is a user display name.
+				$partial_subject = sprintf( __( '%s sent a Friend Request', 'friends' ), 'me.local' );
+				// translators: %1$s is the site name, %2$s is the subject.
+				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), WP_TESTS_TITLE, $partial_subject ) );
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
@@ -184,7 +188,10 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		$that = $this;
 		add_filter(
 			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
-				$that->assertEquals( $subject, sprintf( '%s accepted your Friend Request', 'me.local' ) );
+				// translators: %s is a user display name.
+				$partial_subject = sprintf( __( '%s accepted your Friend Request', 'friends' ), 'me.local' );
+				// translators: %1$s is the site name, %2$s is the subject.
+				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), WP_TESTS_TITLE, $partial_subject ) );
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
