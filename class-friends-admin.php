@@ -56,18 +56,18 @@ class Friends_Admin {
 		add_submenu_page( 'friends-settings', __( 'Send Friend Request', 'friends' ), __( 'Send Friend Request', 'friends' ), Friends::REQUIRED_ROLE, 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
-		add_submenu_page( 'friends-settings', 'Feed', 'Friends &amp; Requests', Friends::REQUIRED_ROLE, 'users.php' );
-		add_submenu_page( 'friends-settings', 'Feed', 'Refresh', 'manage_options', 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
+		add_submenu_page( 'friends-settings', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, 'users.php' );
+		add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), 'manage_options', 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 
 		if ( isset( $_GET['page'] ) && 'edit-friend' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', 'Edit User', 'Edit User', Friends::REQUIRED_ROLE, 'edit-friend', array( $this, 'render_admin_edit_friend' ) );
+			add_submenu_page( 'friends-settings', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend', array( $this, 'render_admin_edit_friend' ) );
 			add_action( 'load-friends_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', 'Suggest Friends Plugin', 'Suggest Friends Plugin', 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
+			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
 		}
 		if ( isset( $_GET['page'] ) && 'friends-opml' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', 'Download OPML', 'Download OPML', 'manage_options', 'friends-opml', array( $this, 'download_opml' ) );
+			add_submenu_page( 'friends-settings', __( 'Download OPML', 'friends' ), __( 'Download OPML', 'friends' ), 'manage_options', 'friends-opml', array( $this, 'download_opml' ) );
 		}
 	}
 
