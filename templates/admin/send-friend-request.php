@@ -34,8 +34,8 @@
 		<thead>
 			<tr>
 				<th style="width: 20em" class="column-primary column-site"><?php _e( 'Site', 'friends' ); ?></th>
-				<th style="width: 10em" class="column-date"><?php _e( 'Date', 'friends' ); ?></th>
-				<th class="column-stats"><?php _e( 'Status', 'friends' ); ?></th>
+				<th style="width: 10em" class="column-date"><?php _e( 'Date' ); ?></th>
+				<th class="column-stats"><?php _e( 'Status' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>

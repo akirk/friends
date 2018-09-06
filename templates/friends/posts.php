@@ -32,7 +32,7 @@ include __DIR__ . '/header.php'; ?>
 		<?php endif; ?>
 	</div>
 	<?php if ( ! have_posts() ) : ?>
-		<?php esc_html_e( 'No posts found.', 'friends' ); ?>
+		<?php esc_html_e( 'No posts found.' ); ?>
 	<?php endif; ?>
 
 	<?php while ( have_posts() ) : ?>
@@ -77,7 +77,7 @@ include __DIR__ . '/header.php'; ?>
 							</a>
 						<?php endif; ?>
 					</div>
-					<span class="post-date"><?php /* translators: %s is a time span */ printf( _x( '%s ago', '%s = human-readable time difference', 'friends' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
+					<span class="post-date"><?php /* translators: %s is a time span */ printf( _x( '%s ago', '%s = human-readable time difference' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
 					<?php edit_post_link(); ?>
 				</div>
 				<?php if ( Friends::FRIEND_POST_CACHE === get_post_type() ) : ?>

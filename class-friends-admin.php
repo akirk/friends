@@ -935,7 +935,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'your-profile',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Your Profile', 'friends' ),
+					'title'  => esc_html__( 'Your Profile' ),
 					'href'   => site_url( '/friends/?public' ),
 				)
 			);
@@ -970,7 +970,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'send-friend-request',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Profile', 'friends' ),
+					'title'  => esc_html__( 'Profile' ),
 					'href'   => site_url( '/friends/' ),
 				)
 			);
