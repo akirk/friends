@@ -149,7 +149,8 @@ class Friends {
 	private static function setup_roles() {
 		$friend = get_role( 'friend' );
 		if ( ! $friend ) {
-			$friend = add_role( 'friend', __( 'Friend', 'friends' ) );
+			_x( 'Friend', 'User role', 'friends' );
+			$friend = add_role( 'friend', 'Friend' );
 		}
 		$friend->add_cap( 'read_private_posts' );
 		$friend->add_cap( 'read' );
@@ -158,21 +159,24 @@ class Friends {
 
 		$friend_request = get_role( 'friend_request' );
 		if ( ! $friend_request ) {
-			$friend_request = add_role( 'friend_request', __( 'Friend Request', 'friends' ) );
+			_x( 'Friend Request', 'User role', 'friends' );
+			$friend_request = add_role( 'friend_request', 'Friend Request' );
 		}
 		$friend_request->add_cap( 'friend_request' );
 		$friend_request->add_cap( 'level_0' );
 
 		$pending_friend_request = get_role( 'pending_friend_request' );
 		if ( ! $pending_friend_request ) {
-			$pending_friend_request = add_role( 'pending_friend_request', __( 'Pending Friend Request', 'friends' ) );
+			_x( 'Pending Friend Request', 'User role', 'friends' );
+			$pending_friend_request = add_role( 'pending_friend_request', 'Pending Friend Request' );
 		}
 		$pending_friend_request->add_cap( 'pending_friend_request' );
 		$pending_friend_request->add_cap( 'level_0' );
 
 		$subscription = get_role( 'subscription' );
 		if ( ! $subscription ) {
-			$subscription = add_role( 'subscription', __( 'Subscription', 'friends' ) );
+			_x( 'Subscription', 'User role', 'friends' );
+			$subscription = add_role( 'subscription', 'Subscription' );
 		}
 		$subscription->add_cap( 'subscription' );
 		$subscription->add_cap( 'level_0' );

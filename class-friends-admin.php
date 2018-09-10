@@ -44,6 +44,7 @@ class Friends_Admin {
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
+		add_action( 'gettext_with_context', array( $this, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_loaded', array( $this, 'download_opml' ), 100 );
 	}
 
@@ -631,6 +632,37 @@ class Friends_Admin {
 	}
 
 	/**
+	 * Enable translated user roles.
+	 * props https://wordpress.stackexchange.com/a/141705/74893
+	 *
+	 * @param string $translations    The potentially translated text.
+	 * @param string $text    Text to translate.
+	 * @param string $context Context information for the translators.
+	 * @param string $domain  Unique identifier for retrieving translated strings.
+	 * @return string Translated text on success, original text on failure.
+	 */
+	public function translate_user_role( $translations, $text, $context, $domain ) {
+
+		$roles = array(
+			'Friend',
+			'Friend Request',
+			'Pending Friend Request',
+			'Subscription',
+		);
+
+		if (
+			'User role' === $context
+			&& in_array( $text, $roles, true )
+			&& 'friends' !== $domain
+		) {
+			// @codingStandardsIgnoreLine
+			return translate_with_gettext_context( $text, $context, 'friends' );
+		}
+
+		return $translations;
+	}
+
+	/**
 	 * Offers the OPML file for download.
 	 */
 	public function download_opml() {
@@ -927,7 +959,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'your-feed',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Feed', 'friends' ),
+					'title'  => esc_html__( 'Latest Posts', 'friends' ),
 					'href'   => site_url( '/friends/' ),
 				)
 			);
@@ -943,7 +975,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'send-friend-request',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Send Friend Request', 'friends' ),
+					'title'  => esc_html__( 'Add a Friend', 'friends' ),
 					'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
 				)
 			);
