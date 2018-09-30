@@ -51,43 +51,57 @@ class Friends_REST {
 	 */
 	public function add_rest_routes() {
 		register_rest_route(
-			self::PREFIX, 'friend-request', array(
+			self::PREFIX,
+			'friend-request',
+			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_friend_request' ),
 			)
 		);
 		register_rest_route(
-			self::PREFIX, 'friend-request-accepted', array(
+			self::PREFIX,
+			'friend-request-accepted',
+			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_friend_request_accepted' ),
 			)
 		);
 		register_rest_route(
-			self::PREFIX, 'hello', array(
+			self::PREFIX,
+			'hello',
+			array(
 				'methods'  => 'GET,POST',
 				'callback' => array( $this, 'rest_hello' ),
 			)
 		);
 		register_rest_route(
-			self::PREFIX, 'post-deleted', array(
+			self::PREFIX,
+			'post-deleted',
+			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_friend_post_deleted' ),
 			)
 		);
 		register_rest_route(
-			self::PREFIX, 'update-post-reactions', array(
+			self::PREFIX,
+			'update-post-reactions',
+			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_update_friend_post_reactions' ),
 			)
 		);
 		register_rest_route(
-			self::PREFIX, 'my-reactions', array(
+			self::PREFIX,
+			'my-reactions',
+			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_update_reactions_on_my_post' ),
 			)
 		);
 		register_rest_route(
-			self::PREFIX, 'recommendation', array(
+			self::PREFIX,
+			'recommendation',
+			array(
 				'methods'  => 'POST',
 				'callback' => array( $this, 'rest_receive_recommendation' ),
 			)
@@ -258,7 +272,8 @@ class Friends_REST {
 
 		$challenge = sha1( wp_generate_password( 256 ) );
 		$response  = wp_safe_remote_post(
-			$site_url . '/wp-json/' . self::PREFIX . '/hello', array(
+			$site_url . '/wp-json/' . self::PREFIX . '/hello',
+			array(
 				'body'        => array(
 					'challenge' => $challenge,
 					'site_url'  => site_url(),
@@ -384,7 +399,8 @@ class Friends_REST {
 
 		foreach ( $friends as $friend_user ) {
 			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/post-deleted', array(
+				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/post-deleted',
+				array(
 					'body'        => array(
 						'post_id' => $post_id,
 						'friend'  => get_user_option( 'friends_out_token', $friend_user->ID ),
@@ -458,7 +474,8 @@ class Friends_REST {
 			$reactions = $this->friends->reactions->get_reactions( $post->ID, $friend_user->ID );
 
 			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/update-post-reactions', array(
+				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/update-post-reactions',
+				array(
 					'body'        => array(
 						'post_id'   => $post_id,
 						'reactions' => $reactions,
@@ -525,7 +542,8 @@ class Friends_REST {
 		$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
 
 		$response = wp_safe_remote_post(
-			$friend_user->user_url . '/wp-json/' . self::PREFIX . '/my-reactions', array(
+			$friend_user->user_url . '/wp-json/' . self::PREFIX . '/my-reactions',
+			array(
 				'body'        => array(
 					'post_id'   => $remote_post_id,
 					'reactions' => $reactions,
@@ -696,7 +714,8 @@ class Friends_REST {
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
-			$user->user_url . '/wp-json/' . self::PREFIX . '/friend-request-accepted', array(
+			$user->user_url . '/wp-json/' . self::PREFIX . '/friend-request-accepted',
+			array(
 				'body'        => array(
 					'token'    => $request_token,
 					'friend'   => $in_token,

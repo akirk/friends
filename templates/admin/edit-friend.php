@@ -22,7 +22,7 @@
 			<?php endif; ?>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>
-				<td><a href="<?php echo esc_url( site_url( '/friends/' . $friend->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_posts->found_posts ); ?></a> <a href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ); ?>"><?php echo esc_html_e( 'Refresh', 'friends' ); ?></a></td>
+				<td><a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend->user_login ) . '/' ) ); ?>"><?php echo esc_html( $friend_posts->found_posts ); ?></a> <a href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ); ?>"><?php echo esc_html_e( 'Refresh', 'friends' ); ?></a></td>
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Created', 'friends' ); ?></label></th>
@@ -47,7 +47,7 @@
 			</tr>
 			<tr>
 				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
-				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( get_user_option( 'friends_display_name_' . $friend->ID, $user ) ?: $friend->display_name ); ?>" class="regular-text" /> <span class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></span></td>
+				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( get_user_option( 'friends_display_name_' . $friend->ID, $user ) ?: $friend->display_name ); ?>" class="regular-text" /> <p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>

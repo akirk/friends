@@ -55,19 +55,24 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	public function test_notify_new_post() {
 		$that = $this;
 		add_filter(
-			'notify_user_about_friend_post', function( $do_send ) use ( $that ) {
+			'notify_user_about_friend_post',
+			function( $do_send ) use ( $that ) {
 				$that->assertTrue( $do_send );
 				return $do_send;
-			}, 10
+			},
+			10
 		);
 		add_filter(
-			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
+			'friends_send_mail',
+			function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
 				// translators: %1$s is the site name, %2$s is the subject.
 				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), 'friend.local', 'First Friend Post' ) );
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
-			}, 10, 5
+			},
+			10,
+			5
 		);
 		$friends = Friends::get_instance();
 
@@ -95,10 +100,12 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	public function test_no_notify_new_post_single_setting() {
 		$that = $this;
 		add_filter(
-			'notify_user_about_friend_post', function( $do_send ) use ( $that ) {
+			'notify_user_about_friend_post',
+			function( $do_send ) use ( $that ) {
 				$that->assertFalse( $do_send );
 				return $do_send;
-			}, 10
+			},
+			10
 		);
 
 		if ( ! class_exists( 'SimplePie', false ) ) {
@@ -127,10 +134,12 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	public function test_no_notify_friend_request() {
 		$that = $this;
 		add_filter(
-			'notify_user_about_friend_request', function( $do_send ) use ( $that ) {
+			'notify_user_about_friend_request',
+			function( $do_send ) use ( $that ) {
 				$that->assertFalse( $do_send );
 				return $do_send;
-			}, 10
+			},
+			10
 		);
 
 		update_option( 'siteurl', 'http://me.local' );
@@ -153,13 +162,16 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	public function test_notify_friend_request() {
 		$that = $this;
 		add_filter(
-			'notify_user_about_friend_request', function( $do_send ) use ( $that ) {
+			'notify_user_about_friend_request',
+			function( $do_send ) use ( $that ) {
 				$that->assertTrue( $do_send );
 				return $do_send;
-			}, 10
+			},
+			10
 		);
 		add_filter(
-			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
+			'friends_send_mail',
+			function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s sent a Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
@@ -167,7 +179,9 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
-			}, 10, 5
+			},
+			10,
+			5
 		);
 
 		update_option( 'siteurl', 'http://me.local' );
@@ -187,7 +201,8 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 	public function test_notify_accepted_friend_request() {
 		$that = $this;
 		add_filter(
-			'friends_send_mail', function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
+			'friends_send_mail',
+			function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s accepted your Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
@@ -195,7 +210,9 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				$that->assertEquals( $to, WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
-			}, 10, 5
+			},
+			10,
+			5
 		);
 
 		update_option( 'siteurl', 'http://me.local' );

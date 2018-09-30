@@ -20,7 +20,9 @@ class Friends_Widget_New_Private_Post extends WP_Widget {
 	 */
 	public function __construct() {
 		parent::__construct(
-			'friends-widget-new-private-post', __( 'New Private Post', 'friends' ), array(
+			'friends-widget-new-private-post',
+			__( 'New Private Post', 'friends' ),
+			array(
 				'description' => __( 'Allows the creation of a new private post from within the page.', 'friends' ),
 			)
 		);

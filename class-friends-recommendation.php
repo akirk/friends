@@ -165,9 +165,11 @@ class Friends_Recommendation {
 
 		foreach ( $friends->get_results() as $friend_user ) {
 			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/recommendation', array(
+				$friend_user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/recommendation',
+				array(
 					'body'        => array_merge(
-						$recommendation, array(
+						$recommendation,
+						array(
 							'friend' => get_user_option( 'friends_out_token', $friend_user->ID ),
 						)
 					),

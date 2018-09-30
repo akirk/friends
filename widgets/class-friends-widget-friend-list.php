@@ -20,7 +20,9 @@ class Friends_Widget_Friend_List extends WP_Widget {
 	 */
 	public function __construct() {
 		parent::__construct(
-			'friends-widget-friend-list', __( 'Friend List', 'friends' ), array(
+			'friends-widget-friend-list',
+			__( 'Friend List', 'friends' ),
+			array(
 				'description' => __( 'Shows a list of your friends.', 'friends' ),
 			)
 		);
@@ -51,7 +53,8 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		if ( $friend_requests->get_total() > 0 ) {
 			echo wp_kses(
 				// translators: %1$s is the string "%s Friend", %2$s is a URL, %3$s is the number of open friend requests.
-				sprintf( _n( '%1$s <a href=%2$s>(%3$s request)</a>', '%1$s <a href=%2$s>(%3$s requests)</a>', $friend_requests->get_total(), 'friends' ), $friends_title, '"' . esc_attr( self_admin_url( 'users.php?role=friend_request' ) ) . '" class="open-requests"', '<span class="friend-count">' . $friend_requests->get_total() . '</span>' ), array(
+				sprintf( _n( '%1$s <a href=%2$s>(%3$s request)</a>', '%1$s <a href=%2$s>(%3$s requests)</a>', $friend_requests->get_total(), 'friends' ), $friends_title, '"' . esc_attr( self_admin_url( 'users.php?role=friend_request' ) ) . '" class="open-requests"', '<span class="friend-count">' . $friend_requests->get_total() . '</span>' ),
+				array(
 					'span' => array( 'class' => array() ),
 					'a'    => array(
 						'class' => array(),
@@ -80,7 +83,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			?>
 			<ul class="friend-list">
 			<?php foreach ( $friends->get_results() as $friend_user ) : ?>
-				<li><a href="<?php echo esc_url( site_url( '/friends/' . $friend_user->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+				<li><a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
 					<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>">visit</a></small></li>
 			<?php endforeach; ?>
 			</ul>
@@ -100,7 +103,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			<h5>Subscriptions</h5>
 			<ul class="subscription-list">
 			<?php foreach ( $subscriptions->get_results() as $friend_user ) : ?>
-				<li><a href="<?php echo esc_url( site_url( '/friends/' . $friend_user->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+				<li><a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
 					<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>">visit</a></small></li>
 			<?php endforeach; ?>
 			</ul>

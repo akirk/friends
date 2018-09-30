@@ -17,7 +17,8 @@ include __DIR__ . '/header.php'; ?>
 			<?php
 			echo wp_kses(
 				// translators: %1$s is a site name, %2$s is a URL.
-				sprintf( __( 'Visit %1$s. Back to <a href=%2$s>your friends page</a>.', 'friends' ), '<a href="' . esc_url( $friends->page->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->page->author->ID ) ) . '">' . esc_html( $friends->page->author->display_name ) . '</a>', '"' . esc_attr( site_url( '/friends/' ) ) . '"' ), array(
+				sprintf( __( 'Visit %1$s. Back to <a href=%2$s>your friends page</a>.', 'friends' ), '<a href="' . esc_url( $friends->page->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->page->author->ID ) ) . '">' . esc_html( $friends->page->author->display_name ) . '</a>', '"' . esc_attr( site_url( '/friends/' ) ) . '"' ),
+				array(
 					'a' => array(
 						'href'       => array(),
 						'class'      => array(),
@@ -77,7 +78,7 @@ include __DIR__ . '/header.php'; ?>
 							</a>
 						<?php endif; ?>
 					</div>
-					<span class="post-date"><?php /* translators: %s is a time span */ printf( _x( '%s ago', '%s = human-readable time difference' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
+					<span class="post-date"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
 					<?php edit_post_link(); ?>
 				</div>
 				<?php if ( Friends::FRIEND_POST_CACHE === get_post_type() ) : ?>
@@ -113,7 +114,8 @@ include __DIR__ . '/header.php'; ?>
 					<?php
 					echo wp_kses(
 						// translators: %s is the friend's name.
-						sprintf( __( 'Your friend %1$s recommended this with the message: %2$s', 'friends' ), $friend_name, '<span>' . esc_html( $recommendation ) . '</span>' ), array(
+						sprintf( __( 'Your friend %1$s recommended this with the message: %2$s', 'friends' ), $friend_name, '<span>' . esc_html( $recommendation ) . '</span>' ),
+						array(
 							'a' => array(
 								'class'      => array(),
 								'data-token' => array(),

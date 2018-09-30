@@ -1,3 +1,57 @@
+/* =Reset default browser CSS. Based on work by Eric Meyer.
+-------------------------------------------------------------- */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td {
+	border: 0;
+	font-family: inherit;
+	font-size: 100%;
+	font-style: inherit;
+	font-weight: inherit;
+	margin: 0;
+	outline: 0;
+	padding: 0;
+	vertical-align: baseline;
+}
+:focus {/* remember to define focus styles! */
+	outline: 0;
+}
+body {
+	background: #fff;
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+table {/* tables still need 'cellspacing="0"' in the markup */
+	border-collapse: separate;
+	border-spacing: 0;
+}
+caption, th, td {
+	font-weight: normal;
+	text-align: left;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: "";
+}
+blockquote, q {
+	quotes: "" "";
+}
+a img {
+	border: 0;
+}
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+
 body.friends-page {
 	font-family: sans-serif;
 	line-height: 1.15;
@@ -6,6 +60,7 @@ body.friends-page {
 	margin: 0;
 	background-color: #fff;
 	color: #333;
+	padding: 0 2em;
 }
 
 body.friends-page div.container {
@@ -137,14 +192,19 @@ body.friends-page a:visited {
 	color: #00aadc;
 }
 
-body.friends-page section.posts article.hentry {
-	border-bottom: 1px solid #87a6bc;
-	padding-bottom: 1em;
-	margin-bottom: 1em;
+body.friends-page section.posts article.hentry:before {
+	display: none;
 }
 
-body.friends-page section.posts article.hentry div.entry-content, body.friends-page section.posts article.hentry h4.entry-title {
+body.friends-page section.posts article.hentry {
+	border-bottom: 1px solid #87a6bc;
+	padding: 0 0 1em 0;
+	margin: 0 0 1em 0;
+}
+
+body.friends-page section.posts article.hentry div.entry-content, body.friends-page section.posts article.hentry header.entry-header, body.friends-page section.posts article.hentry h4.entry-title {
 	font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
+	margin: 0 0 1em 0;
 }
 
 body.friends-page section.posts article.hentry header.entry-header {
@@ -160,7 +220,12 @@ body.friends-page section.posts article.hentry header.entry-header div.avatar {
 body.friends-page section.posts article.hentry h4.entry-title {
 	font-size: 130%;
 	line-height: 1.4;
-	margin: .5em 0;
+	margin: 0 0 1em 0;
+	text-align: left;
+}
+
+body.friends-page section.posts article.hentry header.entry-header:after {
+	display: none;
 }
 
 body.friends-page section.posts article.hentry header.entry-header a {

@@ -20,7 +20,9 @@ class Friends_Widget_Refresh extends WP_Widget {
 	 */
 	public function __construct() {
 		parent::__construct(
-			'friends-widget-refresh', __( 'Friend Posts Refresh', 'friends' ), array(
+			'friends-widget-refresh',
+			__( 'Friend Posts Refresh', 'friends' ),
+			array(
 				'description' => __( "Shows a refresh link to refetch your friends' posts.", 'friends' ),
 			)
 		);

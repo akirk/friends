@@ -158,7 +158,8 @@ class Friends_Page {
 			if ( isset( $_GET['refresh'] ) ) {
 				add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 				add_filter(
-					'wp_feed_options', function( $feed ) {
+					'wp_feed_options',
+					function( $feed ) {
 						$feed->enable_cache( false );
 					}
 				);

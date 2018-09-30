@@ -20,7 +20,9 @@ class Friends_Widget_Friend_Request extends WP_Widget {
 	 */
 	public function __construct() {
 		parent::__construct(
-			'friends-widget-friend-request', __( 'Friend request', 'friends' ), array(
+			'friends-widget-friend-request',
+			__( 'Friend request', 'friends' ),
+			array(
 				'description' => __( 'Send a friend request.', 'friends' ),
 			)
 		);

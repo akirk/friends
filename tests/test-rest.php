@@ -30,7 +30,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Emulate HTTP requests to the REST API.
 		add_filter(
-			'pre_http_request', function( $preempt, $request, $url ) {
+			'pre_http_request',
+			function( $preempt, $request, $url ) {
 				$p = wp_parse_url( $url );
 
 				$site_url = site_url();
@@ -56,7 +57,9 @@ class Friends_RestTest extends WP_UnitTestCase {
 						'code' => $response->status,
 					),
 				);
-			}, 10, 3
+			},
+			10,
+			3
 		);
 	}
 
@@ -293,7 +296,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 		add_filter(
-			'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
+			'pre_option_friends_ignore_incoming_friend_requests',
+			function( $value ) use ( $my_url ) {
 				return $my_url !== $value;
 			}
 		);
@@ -338,7 +342,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 		add_filter(
-			'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
+			'pre_option_friends_ignore_incoming_friend_requests',
+			function( $value ) use ( $my_url ) {
 				return $my_url === $value;
 			}
 		);
@@ -386,7 +391,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 		add_filter(
-			'pre_option_friends_ignore_incoming_friend_requests', function( $value ) use ( $my_url ) {
+			'pre_option_friends_ignore_incoming_friend_requests',
+			function( $value ) use ( $my_url ) {
 				return $my_url === $value;
 			}
 		);

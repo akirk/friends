@@ -91,7 +91,8 @@ class Friends_Shortcodes {
 		$a = shortcode_atts(
 			array(
 				'include-links' => false,
-			), $atts
+			),
+			$atts
 		);
 
 		$friends = Friends::all_friends();

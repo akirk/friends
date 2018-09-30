@@ -50,6 +50,7 @@ class Friends_Feed {
 		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_opml' ), 100 );
+		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 10, 2 );
 	}
 
 	/**
@@ -353,6 +354,16 @@ class Friends_Feed {
 
 		include apply_filters( 'friends_template_path', 'admin/opml.php' );
 		exit;
+	}
+
+	/**
+	 * Configure feed downloading options
+	 *
+	 * @param  SimplePie $feed The SimplePie object.
+	 * @param  string    $url  The URL to fetch.
+	 */
+	public function wp_feed_options( $feed, $url ) {
+		$feed->useragent .= ' Friends/' . Friends::VERSION;
 	}
 
 	/**

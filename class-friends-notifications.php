@@ -206,7 +206,8 @@ class Friends_Notifications {
 					$mailer->{'AltBody'} = $plain_text;
 				};
 				add_action(
-					'phpmailer_init', $alt_function
+					'phpmailer_init',
+					$alt_function
 				);
 
 				$message = $message['html'];

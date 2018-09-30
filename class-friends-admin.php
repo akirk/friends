@@ -87,25 +87,34 @@ class Friends_Admin {
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 
 		add_filter(
-			'friends_friend_feed_url', function( $feed_url, $friend_user ) {
+			'friends_friend_feed_url',
+			function( $feed_url, $friend_user ) {
 				// translators: %s is the name of the friend.
 				printf( __( 'Refreshing %s', 'friends' ) . '<br/>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $friend_user->user_login ) . '</a>' );
 				return $feed_url;
-			}, 10, 2
+			},
+			10,
+			2
 		);
 
 		add_action(
-			'friends_retrieved_new_posts', function( $new_posts, $friend_user ) {
+			'friends_retrieved_new_posts',
+			function( $new_posts, $friend_user ) {
 				// translators: %s is the number of new posts found.
 				printf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) );
-			}, 10, 2
+			},
+			10,
+			2
 		);
 
 		add_action(
-			'friends_retrieve_friends_error', function( $error, $friend_user ) {
+			'friends_retrieve_friends_error',
+			function( $error, $friend_user ) {
 				esc_html_e( 'An error occurred while retrieving the posts.', 'friends' );
 				print_r( $error );
-			}, 10, 2
+			},
+			10,
+			2
 		);
 
 		$this->friends->feed->retrieve_friend_posts( $friend );
@@ -165,7 +174,8 @@ class Friends_Admin {
 		}
 
 		$response = wp_safe_remote_get(
-			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/hello', array(
+			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/hello',
+			array(
 				'timeout'     => 20,
 				'redirection' => 5,
 			)
@@ -202,7 +212,8 @@ class Friends_Admin {
 
 		$current_user = wp_get_current_user();
 		$response     = wp_remote_post(
-			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request', array(
+			$friend_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request',
+			array(
 				'body'        => array(
 					'site_url'  => site_url(),
 					'name'      => $current_user->display_name,
@@ -254,7 +265,8 @@ class Friends_Admin {
 				}
 
 				$response = wp_safe_remote_post(
-					$user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request-accepted', array(
+					$user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/friend-request-accepted',
+					array(
 						'body'        => array(
 							'token'  => $json->token,
 							'friend' => $this->friends->access_control->update_in_token( $user->ID ),
@@ -529,41 +541,49 @@ class Friends_Admin {
 				$friend_url = 'http://' . $friend_url;
 			}
 
-			$friend = $this->send_friend_request( $friend_url );
-			if ( is_wp_error( $friend ) ) {
+			$friend_user = $this->send_friend_request( $friend_url );
+			if ( is_wp_error( $friend_user ) ) {
 				?>
 				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend->get_error_message() ); ?></p></div>
 				<?php
-			} elseif ( $friend instanceof WP_User ) {
+			} elseif ( $friend_user instanceof WP_User ) {
 				$friend_link = '<a href="' . esc_url( $friend->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend->user_url ) . '</a>';
-				if ( $friend->has_cap( 'pending_friend_request' ) ) {
+				if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a Site URL.
 						echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+						// translators: %s is a Site URL.
+						echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+						// translators: %s is the friends page URL.
+						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
-				} elseif ( $friend->has_cap( 'friend' ) ) {
+				} elseif ( $friend_user->has_cap( 'friend' ) ) {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a Site URL.
 						echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+						// translators: %s is the friends page URL.
+						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
-				} elseif ( $friend->has_cap( 'subscription' ) ) {
+				} elseif ( $friend_user->has_cap( 'subscription' ) ) {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a Site URL.
 						echo wp_kses( sprintf( __( 'No friends plugin installed at %s. We subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+						// translators: %s is the friends page URL.
+						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
-					$this->render_suggest_friends_plugin( null, $friend );
+					$this->render_suggest_friends_plugin( null, $friend_user );
 					return;
 				} else {
 					?>
@@ -767,7 +787,7 @@ class Friends_Admin {
 			return $actions;
 		}
 
-		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . __( 'View' ) . '</a>';
+		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
 
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link                                  = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );

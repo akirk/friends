@@ -28,7 +28,8 @@ foreach ( json_decode( $emojis ) as $emoji ) {
 }
 
 uasort(
-	$popular, function ( $a, $b ) use ( $rankings_map ) {
+	$popular,
+	function ( $a, $b ) use ( $rankings_map ) {
 		if ( isset( $rankings_map[ $a ] ) ) {
 			$a = $rankings_map[ $a ];
 		} else {
