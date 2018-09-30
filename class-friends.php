@@ -132,13 +132,19 @@ class Friends {
 		);
 
 		$args = array(
-			'labels'        => $labels,
-			'description'   => "A cached friend's post",
-			'public'        => apply_filters( 'friends_show_cached_posts', false ),
-			'menu_position' => 5,
-			'menu_icon'     => 'dashicons-groups',
-			'supports'      => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
-			'has_archive'   => true,
+			'labels'              => $labels,
+			'description'         => "A cached friend's post",
+			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated(),
+			'show_ui'             => apply_filters( 'friends_show_cached_posts', false ),
+			'show_in_menu'        => false,
+			'show_in_nav_menus'   => false,
+			'show_in_admin_bar'   => false,
+			'exclude_from_search' => apply_filters( 'friends_show_cached_posts', false ),
+			'public'              => false,
+			'menu_position'       => 5,
+			'menu_icon'           => 'dashicons-groups',
+			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
+			'has_archive'         => true,
 		);
 		register_post_type( self::FRIEND_POST_CACHE, $args );
 	}
@@ -269,6 +275,10 @@ class Friends {
 
 		if ( false === get_option( 'friends_main_user_id' ) ) {
 			update_option( 'friends_main_user_id', get_current_user_id() );
+		}
+
+		if ( false === get_option( 'friends_private_rss_key' ) ) {
+			update_option( 'friends_private_rss_key', sha1( wp_generate_password( 256 ) ) );
 		}
 
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {

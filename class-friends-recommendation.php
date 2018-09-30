@@ -58,7 +58,7 @@ class Friends_Recommendation {
 	 * @return string        The post content with buttons or nothing if echoed.
 	 */
 	public function post_recommendation( $text = '', $echo = false ) {
-		if ( is_user_logged_in() ) {
+		if ( Friends::FRIEND_POST_CACHE === get_post_type() && is_user_logged_in() ) {
 			ob_start();
 			include apply_filters( 'friends_template_path', 'friends/post-recommendation.php' );
 			$recommendation_text = ob_get_contents();

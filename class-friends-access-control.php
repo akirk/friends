@@ -59,7 +59,20 @@ class Friends_Access_Control {
 		if ( is_null( $this->feed_authenticated ) ) {
 			$this->authenticate( 0 );
 		}
-		return $this->feed_authenticated;
+		return (bool) $this->feed_authenticated;
+	}
+
+	/**
+	 * Whether the private RSS feed is authenticated
+	 *
+	 * @return bool The authentication status of the feed.
+	 */
+	public function private_rss_is_authenticated() {
+		if ( isset( $_GET['auth'] ) && get_option( 'friends_private_rss_key' ) === $_GET['auth'] ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
@@ -224,22 +237,18 @@ class Friends_Access_Control {
 	 * @return int The new authenticated user.
 	 */
 	public function authenticate( $incoming_user_id ) {
-		if ( ! isset( $_GET['friend'] ) ) {
-			return $incoming_user_id;
+		if ( isset( $_GET['friend'] ) ) {
+			$user_id = $this->verify_token( $_GET['friend'] );
+			if ( $user_id ) {
+				$user = new WP_User( $user_id );
+				if ( $user->has_cap( 'friend' ) ) {
+					$this->feed_authenticated = $user_id;
+					return $this->feed_authenticated;
+				}
+			}
 		}
 
-		$user_id = $this->verify_token( $_GET['friend'] );
-		if ( ! $user_id ) {
-			return $incoming_user_id;
-		}
-
-		$user = new WP_User( $user_id );
-		if ( ! $user->has_cap( 'friend' ) ) {
-			return $incoming_user_id;
-		}
-
-		$this->feed_authenticated = $user_id;
-		return $user_id;
+		return $incoming_user_id;
 	}
 
 	/**

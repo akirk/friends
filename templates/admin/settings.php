@@ -65,11 +65,24 @@
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
+				<th scope="row" rowspan="2"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
 				<td>
 					<?php
 					// translators: %s is a URL.
-					echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed reader.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-opml' ) ) ), array( 'a' => array( 'href' => array() ) ) );
+					echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed reader.', 'friends' ), esc_url( home_url( '?friends=opml&auth=' . get_option( 'friends_private_rss_key' ) ) ) ), array( 'a' => array( 'href' => array() ) ) );
+					?>
+					<p class="description">
+					<?php
+					echo __( 'If your feed reader supports it, you can also subscribe to this URL as the OPML file gets updated as you add or remove friends.', 'friends' );
+					?>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<?php
+					// translators: %s is a URL.
+					echo wp_kses( sprintf( __( 'You can also subscribe to a <a href=%s>complied RSS of friend posts</a>.', 'friends' ), esc_url( get_post_type_archive_feed_link( Friends::FRIEND_POST_CACHE ) . '?auth=' . get_option( 'friends_private_rss_key' ) ) ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 				</td>
 			</tr>

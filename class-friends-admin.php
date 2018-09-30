@@ -45,7 +45,6 @@ class Friends_Admin {
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'gettext_with_context', array( $this, 'translate_user_role' ), 10, 4 );
-		add_action( 'wp_loaded', array( $this, 'download_opml' ), 100 );
 	}
 
 	/**
@@ -66,9 +65,6 @@ class Friends_Admin {
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
 			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
-		}
-		if ( isset( $_GET['page'] ) && 'friends-opml' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', __( 'Download OPML', 'friends' ), __( 'Download OPML', 'friends' ), 'manage_options', 'friends-opml', array( $this, 'download_opml' ) );
 		}
 	}
 
@@ -663,25 +659,6 @@ class Friends_Admin {
 	}
 
 	/**
-	 * Offers the OPML file for download.
-	 */
-	public function download_opml() {
-		if ( ! isset( $_GET['page'] ) || 'friends-opml' !== $_GET['page'] ) {
-			return;
-		}
-
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
-		}
-
-		$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'friend_request', 'subscription' ) ) );
-		$feed    = $this->friends->feed;
-
-		include apply_filters( 'friends_template_path', 'admin/opml.php' );
-		exit;
-	}
-
-	/**
 	 * Renders a form where the user can suggest the friends plugin to a friend.
 	 *
 	 * @param string  $string A string passed by the admin hook.
@@ -983,7 +960,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'friends-requests',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Friends & Requests', 'friends' ),
+					'title'  => esc_html__( 'Your Friends & Requests', 'friends' ),
 					'href'   => self_admin_url( 'users.php' ),
 				)
 			);

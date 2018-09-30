@@ -15,7 +15,10 @@ foreach ( $reactions as $slug => $reaction ) {
 	echo '</span> ' . $reaction->count;
 	echo '</button>';
 }
-?>
-<button class="friends-action new-reaction" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
-	<span>&#xf132;</span> <?php esc_html_e( 'Respond', 'friends' ); ?>
-</button>
+if ( Friends::FRIEND_POST_CACHE === get_post_type() || count( $reactions ) ) :
+	?>
+	<button class="friends-action new-reaction" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
+		<span>&#xf132;</span> <?php esc_html_e( 'Respond', 'friends' ); ?>
+	</button>
+<?php
+endif;
