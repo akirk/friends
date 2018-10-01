@@ -544,7 +544,7 @@ class Friends_Admin {
 			$friend_user = $this->send_friend_request( $friend_url );
 			if ( is_wp_error( $friend_user ) ) {
 				?>
-				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend->get_error_message() ); ?></p></div>
+				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend_user->get_error_message() ); ?></p></div>
 				<?php
 			} elseif ( $friend_user instanceof WP_User ) {
 				$friend_link = '<a href="' . esc_url( $friend->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend->user_url ) . '</a>';
