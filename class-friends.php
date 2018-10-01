@@ -117,24 +117,24 @@ class Friends {
 	 */
 	public function register_custom_post_types() {
 		$labels = array(
-			'name'               => 'Friend Post Cache',
-			'singular_name'      => 'Friend Post Cache Item',
-			'add_new'            => 'Add New',
-			'add_new_item'       => 'Add New Friend Post',
-			'edit_item'          => 'Edit Friend Post',
-			'new_item'           => 'New Friend Post',
-			'all_items'          => 'All Friend Posts',
-			'view_item'          => 'View Friend Posts Item',
-			'search_items'       => 'Search Friend Posts',
-			'not_found'          => 'No Friend Posts Items found',
-			'not_found_in_trash' => 'No Friend Posts Items found in the Trash',
+			'name'               => _x( 'Friend Posts', 'taxonomy plural name', 'friends' ),
+			'singular_name'      => _x( 'Friend Post', 'taxonomy singular name', 'friends' ),
+			'add_new'            => _x( 'Add New', 'post' ),
+			'add_new_item'       => __( 'Add New Friend Post', 'friends' ),
+			'edit_item'          => __( 'Edit Friend Post', 'friends' ),
+			'new_item'           => __( 'New Friend Post', 'friends' ),
+			'all_items'          => __( 'All Friend Posts', 'friends' ),
+			'view_item'          => __( 'View Friend Post', 'friends' ),
+			'search_items'       => __( 'Search Friend Posts', 'friends' ),
+			'not_found'          => __( 'No Friend Posts found', 'friends' ),
+			'not_found_in_trash' => __( 'No Friend Posts found in the Trash', 'friends' ),
 			'parent_item_colon'  => '',
-			'menu_name'          => 'Friend Post Cache',
+			'menu_name'          => __( 'Cached Friend Posts' ),
 		);
 
 		$args = array(
 			'labels'              => $labels,
-			'description'         => "A cached friend's post",
+			'description'         => __( "A cached friend's post", 'friends' ),
 			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated(),
 			'show_ui'             => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_menu'        => false,
