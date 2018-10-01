@@ -97,6 +97,7 @@ class Friends {
 
 		new Friends_3rd_Parties( $this );
 		new Friends_Shortcodes( $this );
+		new Friends_Gutenberg( $this );
 
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
