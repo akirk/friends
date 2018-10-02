@@ -459,6 +459,9 @@ class Friends_Admin {
 			if ( trim( $_POST['friends_display_name'] ) ) {
 				$friend->display_name = trim( $_POST['friends_display_name'] );
 			}
+			if ( trim( $_POST['user_url'] ) && filter_var( $_POST['user_url'], FILTER_VALIDATE_URL ) ) {
+				$friend->user_url = $_POST['user_url'];
+			}
 			wp_update_user( $friend );
 
 			if ( ! get_user_option( 'friends_no_new_post_notification' ) ) {
@@ -467,6 +470,12 @@ class Friends_Admin {
 				} else {
 					update_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID, 1 );
 				}
+			}
+
+			if ( isset( $_POST['friends_feed_url'] ) && filter_var( $_POST['friends_feed_url'], FILTER_VALIDATE_URL ) ) {
+				update_user_option( $friend->ID, 'friends_feed_url', $_POST['friends_feed_url'] );
+			} else {
+				delete_user_option( $friend->ID, 'friends_feed_url' );
 			}
 		} else {
 			return;

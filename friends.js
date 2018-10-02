@@ -1,5 +1,8 @@
 jQuery( document ).on( 'click', 'a.auth-link, button.comments', function() {
 	var $this = jQuery( this ), href = $this.attr( 'href' );
+	if ( ! $this.data( 'token' ) ) {
+		return true;
+	}
 
 	if ( href && href.indexOf( 'friend_auth=' ) < 0 ) {
 		var hash = href.indexOf( '#' );

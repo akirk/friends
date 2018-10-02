@@ -12,14 +12,12 @@
 		<tbody>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'URL' ); ?></label></th>
-				<td><a href="<?php echo esc_url( $friend->user_url ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $friend->user_url ); ?></a></td>
+				<td><input type="text" name="user_url" value="<?php echo esc_attr( $friend->user_url ); ?>" class="regular-text" /></td>
 			</tr>
-			<?php if ( get_user_option( 'friends_feed_url', $friend->ID ) ) : ?>
-				<tr>
-					<th><label for="url"><?php esc_html_e( 'Feed URL', 'friends' ); ?></label></th>
-					<td><a href="<?php echo esc_url( get_user_option( 'friends_feed_url', $friend->ID ) ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( get_user_option( 'friends_feed_url', $friend->ID ) ); ?></a></td>
-				</tr>
-			<?php endif; ?>
+			<tr>
+				<th><label for="url"><?php esc_html_e( 'Feed URL', 'friends' ); ?></label></th>
+				<td><input type="text" name="friends_feed_url" value="<?php echo esc_attr( get_user_option( 'friends_feed_url', $friend->ID ) ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Will discover the feed from the URL above', 'friends' ); ?>" /></td>
+			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>
 				<td><a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend->user_login ) . '/' ) ); ?>"><?php echo esc_html( $friend_posts->found_posts ); ?></a> <a href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ); ?>"><?php echo esc_html_e( 'Refresh', 'friends' ); ?></a></td>
