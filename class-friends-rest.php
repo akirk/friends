@@ -39,6 +39,7 @@ class Friends_REST {
 	 */
 	private function register_hooks() {
 		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
+		add_filter( 'rest_request_before_callbacks', array( $this, 'rest_request_before_callbacks' ), 100, 3 );
 		add_action( 'wp_trash_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'friends_user_post_reaction', array( $this, 'notify_remote_friend_post_reaction' ), 10, 2 );
@@ -106,6 +107,38 @@ class Friends_REST {
 				'callback' => array( $this, 'rest_receive_recommendation' ),
 			)
 		);
+	}
+
+	/**
+	 * Limit the REST API.
+	 *
+	 * @param WP_HTTP_Response|WP_Error $response Result to send to the client.
+	 * @param array                     $handler  Route handler used for the request.
+	 * @param WP_REST_Request           $request  Request used to generate the response.
+	 * @return WP_HTTP_Response|WP_Error Result to send to the client.
+	 */
+	public function rest_request_before_callbacks( $response, $handler, $request ) {
+		// Nota bene: when directly accessing an endpoint in a browser, a user will be
+		// appear authenticated if a nonce is present, see rest_cookie_check_errors().
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			return $result;
+		}
+
+		$route = $request->get_route();
+
+		// Don't allow spying on the users list since it gives away the user's subscriptions,
+		// friend requests and friends.
+		if ( 0 === stripos( $route, '/wp/v2/users' ) ) {
+			return new WP_Error(
+				'rest_forbidden',
+				'Sorry, you are not allowed to do that.',
+				array( 'status' => 401 )
+			);
+		}
+
+		// The wp/v2/posts and wp/v2/pages endpoints are safe since it respects the post status.
+		// The friend_post_cache CPT is also fine since its public attribute is set to false.
+		return $endpoints;
 	}
 
 	/**
