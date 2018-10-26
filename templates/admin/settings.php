@@ -82,7 +82,7 @@
 				<td>
 					<?php
 					// translators: %s is a URL.
-					echo wp_kses( sprintf( __( 'You can also subscribe to a <a href=%s>complied RSS feed of friend posts</a>.', 'friends' ), esc_url( get_post_type_archive_feed_link( Friends::FRIEND_POST_CACHE ) . '?auth=' . get_option( 'friends_private_rss_key' ) ) ), array( 'a' => array( 'href' => array() ) ) );
+					echo wp_kses( sprintf( __( 'You can also subscribe to a <a href=%s>compiled RSS feed of friend posts</a>.', 'friends' ), esc_url( get_post_type_archive_feed_link( Friends::FRIEND_POST_CACHE ) . '?auth=' . get_option( 'friends_private_rss_key' ) ) ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 					<p class="description">
 					<?php
