@@ -63,6 +63,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 = 0.10 =
 - Disable listing users via REST
 - Allow just subscribing to a site
+- Add Gutenberg blocks
 
 = 0.9 =
 - Post recommendations
