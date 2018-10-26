@@ -61,6 +61,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.10 =
+- Disable listing users via REST
+- Allow just subscribing to a site
+- Rule processing of friend posts
+
 = 0.9 =
 - Post recommendations
 - Includes the most recent version of SimplePie
