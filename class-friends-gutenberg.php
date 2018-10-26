@@ -43,7 +43,7 @@ class Friends_Gutenberg {
 	 * Register the Gutenberg blocks
 	 */
 	private function register_gutenberg_blocks() {
-		add_action( 'init', array( $this, 'language_data' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ), 100 );
 		add_action( 'init', array( $this, 'register_only_friends' ) );
 		add_action( 'init', array( $this, 'register_not_friends' ) );
 	}
@@ -140,6 +140,9 @@ class Friends_Gutenberg {
 	 * Load up the language data for the Gutenberg blocks
 	 */
 	public function language_data() {
+		if ( ! function_exists( 'gutenberg_get_jed_locale_data' ) ) {
+			return;
+		}
 		wp_add_inline_script(
 			'friends-block-not-friends',
 			sprintf(
