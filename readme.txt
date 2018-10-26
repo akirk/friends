@@ -27,8 +27,7 @@ Things start to get more interesting if you bring private posts to the game.
 
 When you post something with the post status sent to "Private," while not visible to the random (logged-out) visitor of your site, it is shared with your friends.
 
-
-This is the long description.  No limit, and you can use Markdown (as well as 
+The logo was created by Ramon Dodd, @ramonopoly.
 
 == Installation ==
  
