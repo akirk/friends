@@ -1,5 +1,8 @@
-0.9
-===
+= 0.10 =
+- Disable listing users via REST
+- Allow just subscribing to a site
+
+= 0.9 =
 - Post recommendations
 - Includes the most recent version of SimplePie
 
