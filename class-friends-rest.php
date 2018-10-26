@@ -120,8 +120,8 @@ class Friends_REST {
 	public function rest_request_before_callbacks( $response, $handler, $request ) {
 		// Nota bene: when directly accessing an endpoint in a browser, a user will be
 		// appear authenticated if a nonce is present, see rest_cookie_check_errors().
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			return $result;
+		if ( is_wp_error( $response ) || current_user_can( Friends::REQUIRED_ROLE ) ) {
+			return $response;
 		}
 
 		$route = $request->get_route();
@@ -136,9 +136,9 @@ class Friends_REST {
 			);
 		}
 
-		// The wp/v2/posts and wp/v2/pages endpoints are safe since it respects the post status.
+		// The wp/v2/posts and wp/v2/pages endpoints are safe since they respect the post status.
 		// The friend_post_cache CPT is also fine since its public attribute is set to false.
-		return $endpoints;
+		return $response;
 	}
 
 	/**
