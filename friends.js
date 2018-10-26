@@ -39,6 +39,9 @@ jQuery( function( $ ) {
 			this.value = 'http://' + this.value;
 		}
 	} );
+	$( '#only_subscribe' ).on( 'change', function() {
+		$( this ).closest( 'form' ).find( '#submit' ).text( this.checked ? '1' : '2' );
+	} );
 } );
 
 /* Reactions */

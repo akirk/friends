@@ -110,6 +110,7 @@ class Friends {
 		add_filter( 'init', array( $this, 'register_custom_post_types' ) );
 		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
+		add_filter( 'wp_head', array( $this, 'html_link_tag_friends' ) );
 	}
 
 	/**
@@ -394,6 +395,12 @@ class Friends {
 		return $args;
 	}
 
+	/**
+	 * Surface the friends URL as a link in the HTML head.
+	 */
+	public function html_link_tag_friends() {
+		echo '<link rel="friends-base-url" href="', esc_attr( home_url() ), '" />';
+	}
 	/**
 	 * Delete all the data the plugin has stored in WordPress
 	 */

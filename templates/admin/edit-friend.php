@@ -67,4 +67,10 @@
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
 	</p>
+	<p class="description" id="friend_url-description">
+		<?php
+		// translators: %s is the user URL.
+		echo wp_kses( sprintf( __( 'To unfriend this user, just <a href=%s>delete them on the users page</a>.', 'friends' ), '"' . self_admin_url( 'users.php' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+		?>
+	</p>
 </form>

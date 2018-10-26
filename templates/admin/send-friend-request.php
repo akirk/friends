@@ -26,7 +26,9 @@
 		</tbody>
 	</table>
 
-	<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php echo esc_attr_x( 'Send Friend Request', 'button', 'friends' ); ?>" />
+	<input type="submit" name="request-friendship" class="button button-primary" value="<?php echo esc_attr_x( 'Send Friend Request', 'button', 'friends' ); ?>" />
+
+	<input type="submit" name="just-subscribe" class="button" value="<?php echo esc_attr_x( 'Just subscribe', 'button', 'friends' ); ?>" />
 </form>
 
 <?php if ( ! empty( $friend_requests ) ) : ?>

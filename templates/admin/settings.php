@@ -14,7 +14,7 @@
 				<td>
 					<select name="main_user_id">
 						<?php foreach ( $potential_main_users->get_results() as $potential_main_user ) : ?>
-							<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $main_user_id, $current_user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
+							<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $main_user_id, $potential_main_user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
 
 						<?php endforeach; ?>
 					</select>
