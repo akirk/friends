@@ -1,5 +1,9 @@
 # Friends for WordPress
 
+## Decentralized Social Networking with WordPress
+
+Connect WordPresses and communicate privately with your friends. You can send friend requests to your friends' blogs and see their posts aggregated.
+
 **Connect WordPresses and communicate privately with your friends**
 
 On your WordPress site you can post anything you wish to share with the world. But blogging only becomes really interesting if you interact with other people.

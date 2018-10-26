@@ -6,12 +6,19 @@ Tested up to: 5.0-alpha
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
- 
-Connect WordPresses and communicate privately with your friends. You can send friend requests to your friends' blogs and see their posts aggregated.
- 
+
+Decentralized Social Networking with WordPress. Connect WordPresses through friendship requests and read each other’s (private) posts in a feed reader.
+
 == Description ==
  
-On your WordPress site you can post anything you wish to share with the world. But blogging only becomes really interesting if you interact with other people.
+= Decentralized Social Networking with WordPress =
+
+- Connect WordPresses through friendship requests
+- Read each other’s (private) posts in a feed reader UI
+- Subscribe to any RSS feed
+- Compatible with the WordPress mobile apps
+
+On your WordPress site you can post anything you wish to share with the world. Sometimes the open nature of WordPress might be a little too open. What if you only want to share some posts with friends but not the whole world?
 
 With the Friends plugin, you can establish a connection with your friends' WordPress sites by making and accepting friend requests.
 
@@ -27,7 +34,7 @@ Things start to get more interesting if you bring private posts to the game.
 
 When you post something with the post status sent to "Private," while not visible to the random (logged-out) visitor of your site, it is shared with your friends.
 
-The logo was created by Ramon Dodd, @ramonopoly.
+The logo was created by Ramon Dodd, @ramonopoly. Thank you!
 
 == Installation ==
  
@@ -98,7 +105,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Subscribe to WordPresses without Friends plugin.
 
 = 0.1 =
-All basic functionality:
+- All basic functionality:
 - Request and accept friendships
 - Subscribe to private feed
 - /friends/ page 
