@@ -47,7 +47,7 @@
 					<a href="<?php echo esc_url( apply_filters( 'get_edit_user_link', $friend_user->user_url, $friend_user->ID ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
 					<button type="button" class="toggle-row"><span class="screen-reader-text"><?php _e( 'Show more details' ); ?></span></button>
 				</td>
-				<td class="date column-date" data-colname="<?php esc_attr_e( 'Date', 'friends' ); ?>"><?php echo esc_html( $friend_user->user_registered ); ?></td>
+				<td class="date column-date" data-colname="<?php esc_attr_e( 'Date', 'friends' ); ?>"><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $friend_user->user_registered ) ); ?></td>
 				<td class="stats column-stats" data-colname="<?php esc_attr_e( 'Status', 'friends' ); ?>"><?php echo esc_html( $roles[ $friend_user->roles[0] ] ); ?></td>
 			</tr>
 			<?php endforeach; ?>

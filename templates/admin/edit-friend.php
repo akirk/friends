@@ -20,11 +20,25 @@
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>
-				<td><a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend->user_login ) . '/' ) ); ?>"><?php echo esc_html( $friend_posts->found_posts ); ?></a> <a href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ); ?>"><?php echo esc_html_e( 'Refresh', 'friends' ); ?></a></td>
+				<td>
+
+					<a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend->user_login ) . '/' ) ); ?>">
+										<?php
+										// translators: %d is the number of posts.
+										printf( _n( 'View %d post', 'View %d posts', $friend_posts->found_posts, 'friends' ), $friend_posts->found_posts );
+										?>
+					</a>
+					<p class="description">
+					<?php
+					// translators: %s is a URL.
+					printf( __( '<a href=%s>Refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ) );
+					?>
+					</p>
+					</td>
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Created', 'friends' ); ?></label></th>
-				<td><?php echo esc_html( $friend->user_registered ); ?></td>
+				<td><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $friend->user_registered ) ); ?></td>
 			</tr>
 			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
