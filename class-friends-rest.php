@@ -354,7 +354,7 @@ class Friends_REST {
 			if ( $user->has_cap( 'pending_friend_request' ) && get_option( 'friends_request_token_' . sha1( $site_url ) ) ) {
 				// We already requested friendship, so let's become friends right away.
 				$in_token = $this->friends->access_control->update_in_token( $user->ID );
-				$user->set_role( 'friend' );
+				$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 
 				$this->friends->access_control->update_gravatar( $user->ID, $request->get_param( 'gravatar' ) );
 				if ( $request->get_param( 'name' ) ) {
@@ -730,7 +730,7 @@ class Friends_REST {
 	 * @param  string $old_roles The old roles.
 	 */
 	public function notify_remote_friend_request_accepted( $user_id, $new_role, $old_roles ) {
-		if ( 'friend' !== $new_role ) {
+		if ( 'friend' !== $new_role && 'restricted_friend' !== $new_role ) {
 			return;
 		}
 

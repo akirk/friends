@@ -63,6 +63,18 @@ class Friends_Access_Control {
 	}
 
 	/**
+	 * Get authenticated feed user
+	 *
+	 * @return WP_User|null The authentication status of the feed.
+	 */
+	public function get_authenticated_feed_user() {
+		if ( is_null( $this->feed_authenticated ) ) {
+			return null;
+		}
+		return new WP_User( $this->feed_authenticated );
+	}
+
+	/**
 	 * Whether the private RSS feed is authenticated
 	 *
 	 * @return bool The authentication status of the feed.
@@ -320,7 +332,7 @@ class Friends_Access_Control {
 			return $user;
 		}
 		update_user_option( $user->ID, 'friends_out_token', $out_token );
-		$user->set_role( 'friend' );
+		$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 
 		return $user;
 	}

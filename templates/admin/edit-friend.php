@@ -31,15 +31,37 @@
 				<td>
 					<?php if ( $friend->has_cap( 'friend_request' ) ) : ?>
 						<?php esc_html_e( 'Friend Request', 'friends' ); ?>
-						<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'accept-friend-request-' . $friend->ID, 'accept-friend-request' ) ); ?>"><?php esc_html_e( 'Accept Friend Request', 'friends' ); ?></a>
+						<p class="description">
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'accept-friend-request-' . $friend->ID, 'accept-friend-request' ) ); ?>"><?php esc_html_e( 'Accept Friend Request', 'friends' ); ?></a>
+						</p>
 					<?php elseif ( $friend->has_cap( 'pending_friend_request' ) ) : ?>
 						<?php esc_html_e( 'Pending Friend Request', 'friends' ); ?>
-						<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'send-friend-request-' . $friend->ID, 'send-friend-request' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
+						<p class="description">
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'send-friend-request-' . $friend->ID, 'send-friend-request' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
+						</p>
 					<?php elseif ( $friend->has_cap( 'subscription' ) ) : ?>
 						<?php esc_html_e( 'Subscription', 'friends' ); ?>
-						<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'send-friend-request-' . $friend->ID, 'send-friend-request' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
+						<p class="description">
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'send-friend-request-' . $friend->ID, 'send-friend-request' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
+						</p>
+					<?php elseif ( $friend->has_cap( 'restricted_friend' ) ) : ?>
+						<?php esc_html_e( 'Restricted Friend', 'friends' ); ?>
+						<p class="description">
+							<?php
+							// translators: %s is a friend role.
+							echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'change-to-friend-' . $friend->ID, 'change-to-friend' ) ) . '">' . __( 'Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+							?>
+							<?php esc_html_e( 'A Restricted Friend has friend status but cannot read private posts.', 'friends' ); ?>
+						</p>
 					<?php elseif ( $friend->has_cap( 'friend' ) ) : ?>
 						<?php esc_html_e( 'Friend', 'friends' ); ?>
+						<p class="description">
+						<?php
+							// translators: %s is a friend role.
+						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'change-to-restricted-friend-' . $friend->ID, 'change-to-restricted-friend' ) ) . '">' . __( 'Restricted Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+						?>
+							<?php esc_html_e( 'A Restricted Friend has friend status but cannot read private posts.', 'friends' ); ?>
+						</p>
 					<?php endif; ?>
 				</td>
 			</tr>

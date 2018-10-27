@@ -54,6 +54,28 @@
 				</td>
 			</tr>
 			<tr>
+				<th scope="row"><?php esc_html_e( 'Default Role', 'friends' ); ?></th>
+				<td>
+					<select name="default_role">
+						<?php
+						foreach ( array(
+							'friend'            => _x( 'Friend', 'User role', 'friends' ),
+							'restricted_friend' => _x( 'Restricted Friend', 'User role', 'friends' ),
+						) as $role => $title ) :
+							?>
+							<option value="<?php echo esc_attr( $role ); ?>" <?php selected( $default_role, $role ); ?>><?php echo esc_html( $title ); ?></option>
+
+						<?php endforeach; ?>
+					</select>
+					<p class="description">
+					<?php esc_html_e( 'When accepting a friend request, first assign this role.', 'friends' ); ?>
+					<?php
+					esc_html_e( 'A Restricted Friend has friend status but cannot read private posts.', 'friends' );
+					?>
+					</p>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row"><?php esc_html_e( 'Recommendations', 'friends' ); ?></th>
 				<td>
 					<fieldset>

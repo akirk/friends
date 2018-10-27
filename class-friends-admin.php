@@ -211,7 +211,7 @@ class Friends_Admin {
 		$friend_user = $this->friends->access_control->get_user_for_site_url( $friend_url );
 		if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->has_cap( 'friend_request' ) ) {
 			$this->update_in_token( $friend_user->ID );
-			$friend_user->set_role( 'friend' );
+			$friend_user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 			return $friend_user;
 		}
 
@@ -362,6 +362,10 @@ class Friends_Admin {
 			update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
 		}
 
+		if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'restricted_friend' ), true ) ) {
+			update_option( 'friends_default_friend_role', $_POST['default_role'] );
+		}
+
 		if ( isset( $_POST['new_post_notification'] ) && $_POST['new_post_notification'] ) {
 			delete_user_option( get_current_user_id(), 'friends_no_new_post_notification' );
 		} else {
@@ -399,6 +403,7 @@ class Friends_Admin {
 
 		$potential_main_users = Friends::all_admin_users();
 		$main_user_id         = $this->friends->get_main_friend_user_id();
+		$default_role         = get_option( 'friends_default_friend_role', 'friend' );
 
 		include apply_filters( 'friends_template_path', 'admin/settings.php' );
 	}
@@ -443,7 +448,7 @@ class Friends_Admin {
 		if ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( $_GET['accept-friend-request'], 'accept-friend-request-' . $friend->ID ) ) {
 			if ( $friend->has_cap( 'friend_request' ) ) {
 				$this->friends->access_control->update_in_token( $friend->ID );
-				$friend->set_role( 'friend' );
+				$friend->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 				$arg = 'friend';
 			}
 		} elseif ( isset( $_GET['send-friend-request'] ) && wp_verify_nonce( $_GET['send-friend-request'], 'send-friend-request-' . $friend->ID ) ) {
@@ -464,6 +469,14 @@ class Friends_Admin {
 						$arg_value = 1;
 					}
 				}
+			}
+		} elseif ( isset( $_GET['change-to-restricted-friend'] ) && wp_verify_nonce( $_GET['change-to-restricted-friend'], 'change-to-restricted-friend-' . $friend->ID ) ) {
+			if ( $friend->has_cap( 'friend' ) ) {
+				$friend->set_role( 'restricted_friend' );
+			}
+		} elseif ( isset( $_GET['change-to-friend'] ) && wp_verify_nonce( $_GET['change-to-friend'], 'change-to-friend-' . $friend->ID ) ) {
+			if ( $friend->has_cap( 'restricted_friend' ) ) {
+				$friend->set_role( 'friend' );
 			}
 		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-' . $friend->ID ) ) {
 			if ( trim( $_POST['friends_display_name'] ) ) {
@@ -632,7 +645,7 @@ class Friends_Admin {
 
 		$friend_requests = new WP_User_Query(
 			array(
-				'role__in' => array( 'friend', 'pending_friend_request', 'friend_request', 'subscription' ),
+				'role__in' => array( 'friend', 'restricted_friend', 'pending_friend_request', 'friend_request', 'subscription' ),
 				'orderby'  => 'registered',
 				'order'    => 'DESC',
 			)
@@ -865,7 +878,7 @@ class Friends_Admin {
 			}
 
 			$this->friends->access_control->update_in_token( $user->ID );
-			$user->set_role( 'friend' );
+			$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 			$accepted++;
 		}
 
