@@ -950,12 +950,14 @@ class Friends_Admin {
 			$friends_url  = $current_user->user_url . '/friends/';
 		}
 
+		$friends_main_url = $friends_url;
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$friend_requests = Friends::all_friend_requests();
 			$open_requests   = $friend_requests->get_total();
 			if ( $open_requests > 0 ) {
 				// translators: %s is the number of open friend requests.
-				$friends_title = sprintf( __( 'Friends (%s)', 'friends' ), $open_requests );
+				$friends_title    = sprintf( __( 'Friends (%s)', 'friends' ), $open_requests );
+				$friends_main_url = self_admin_url( 'users.php?role=friend_request' );
 			}
 		}
 
@@ -964,7 +966,7 @@ class Friends_Admin {
 				'id'     => 'friends',
 				'parent' => '',
 				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( $friends_title ),
-				'href'   => $friends_url,
+				'href'   => $friends_main_url,
 			)
 		);
 

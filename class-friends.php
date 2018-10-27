@@ -138,7 +138,7 @@ class Friends {
 			'description'         => __( "A cached friend's post", 'friends' ),
 			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated(),
 			'show_ui'             => apply_filters( 'friends_show_cached_posts', false ),
-			'show_in_menu'        => false,
+			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_nav_menus'   => false,
 			'show_in_admin_bar'   => false,
 			'exclude_from_search' => apply_filters( 'friends_show_cached_posts', false ),
