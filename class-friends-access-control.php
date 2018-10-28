@@ -56,10 +56,7 @@ class Friends_Access_Control {
 	 * @return bool The authentication status of the feed.
 	 */
 	public function feed_is_authenticated() {
-		if ( is_null( $this->feed_authenticated ) ) {
-			$this->authenticate( 0 );
-		}
-		return (bool) $this->feed_authenticated;
+		return (bool) $this->get_authenticated_feed_user();
 	}
 
 	/**
@@ -69,8 +66,13 @@ class Friends_Access_Control {
 	 */
 	public function get_authenticated_feed_user() {
 		if ( is_null( $this->feed_authenticated ) ) {
+			$this->authenticate( 0 );
+		}
+
+		if ( is_null( $this->feed_authenticated ) ) {
 			return null;
 		}
+
 		return new WP_User( $this->feed_authenticated );
 	}
 
