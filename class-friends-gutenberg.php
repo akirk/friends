@@ -43,7 +43,7 @@ class Friends_Gutenberg {
 	 * Register the Gutenberg blocks
 	 */
 	private function register_gutenberg_blocks() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ), 100 );
+		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
 		add_action( 'init', array( $this, 'register_only_friends' ) );
 		add_action( 'init', array( $this, 'register_not_friends' ) );
 	}
@@ -140,16 +140,19 @@ class Friends_Gutenberg {
 	 * Load up the language data for the Gutenberg blocks
 	 */
 	public function language_data() {
-		if ( ! function_exists( 'gutenberg_get_jed_locale_data' ) ) {
-			return;
+		$locale_data = false;
+		if ( function_exists( 'wp_get_jed_locale_data' ) ) {
+			$locale_data = wp_get_jed_locale_data( 'friends' );
+		} elseif ( function_exists( 'gutenberg_get_jed_locale_data' ) ) {
+			$locale_data = gutenberg_get_jed_locale_data( 'friends' );
 		}
-		wp_add_inline_script(
-			'friends-block-not-friends',
-			sprintf(
-				'var friendsData = { localeData: %s };',
-				json_encode( gutenberg_get_jed_locale_data( 'friends' ) )
-			),
-			'before'
-		);
+
+		if ( $locale_data ) {
+			wp_add_inline_script(
+				'friends-block-not-friends',
+				'wp.i18n.setLocaleData( ' . wp_json_encode( $locale_data ) . ', "friends" );',
+				'before'
+			);
+		}
 	}
 }

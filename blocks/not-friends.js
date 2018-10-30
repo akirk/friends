@@ -1,8 +1,6 @@
-const { __, setLocaleData } = wp.i18n;
+const { __ } = wp.i18n;
 const { registerBlockType } = wp.blocks;
 const { RichText } = wp.editor;
-
-// setLocaleData( window.friendsData.localeData, 'friends' );
 
 registerBlockType( 'friends/not-friends', {
 	title: __( 'Only visible to non-friends', 'friends' ),
