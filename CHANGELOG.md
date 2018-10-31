@@ -1,13 +1,20 @@
-= 0.11 =
+0.12
+===
+- Bugfix: don't notify about posts that are trashed via rules
+
+0.11
+===
 - Add Restricted Friend functionality
 - Add feed rules
 
-= 0.10 =
+0.10
+===
 - Disable listing users via REST
 - Allow just subscribing to a site
 - Add Gutenberg blocks
 
-= 0.9 =
+0.9
+===
 - Post recommendations
 - Includes the most recent version of SimplePie
 

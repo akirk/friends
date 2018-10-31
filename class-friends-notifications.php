@@ -48,6 +48,10 @@ class Friends_Notifications {
 	 * @param  WP_Post $post The new post by a friend.
 	 */
 	public function notify_new_friend_post( WP_Post $post ) {
+		if ( 'trash' === $post->post_status ) {
+			return;
+		}
+
 		$users = Friends::all_admin_users();
 		$users = $users->get_results();
 

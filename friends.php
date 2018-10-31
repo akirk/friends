@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 0.11
+ * Version: 0.12
  *
  * Description: Decentralized Social Networking with WordPress. Connect WordPresses through friendship requests and read each other’s (private) posts in a feed reader.
  *

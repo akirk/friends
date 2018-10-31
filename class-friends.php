@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION           = '0.11';
+	const VERSION           = '0.12';
 	const FRIEND_POST_CACHE = 'friend_post_cache';
 	const PLUGIN_URL        = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE     = 'administrator';
@@ -442,7 +442,7 @@ class Friends {
 		$friend_posts = new WP_Query(
 			array(
 				'post_type'   => self::FRIEND_POST_CACHE,
-				'post_status' => array( 'publish', 'private' ),
+				'post_status' => array( 'publish', 'private', 'trash' ),
 			)
 		);
 

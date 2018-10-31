@@ -142,7 +142,7 @@ class Friends_Feed {
 		$existing_posts  = new WP_Query(
 			array(
 				'post_type'   => Friends::FRIEND_POST_CACHE,
-				'post_status' => array( 'publish', 'private' ),
+				'post_status' => array( 'publish', 'private', 'trash' ),
 				'author'      => $friend_user->ID,
 				'nopaging'    => true,
 			)
