@@ -8,7 +8,7 @@
 ?><form method="post" id="edit-rules">
 	<?php wp_nonce_field( 'edit-friend-rules-' . $friend->ID ); ?>
 	<input type="hidden" name="friend" value="<?php echo esc_attr( $friend->ID ); ?>" />
-	<p class="description"><?php esc_html_e( "By specifying rules for this feed, you can automatically accept or trash individual feed items, thus filter this friend's post according to your interest.", 'friends' ); ?></p>
+	<p class="description"><?php esc_html_e( 'By specifying rules, you can automatically accept, trash, or transform individual feed items, thus filter incoming posts according to your interest.', 'friends' ); ?></p>
 	<p class="description"><?php esc_html_e( 'Save changes to add another rule, leave the rule text empty to delete the rule.', 'friends' ); ?></p>
 	<table>
 		<tbody>
