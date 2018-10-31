@@ -1,4 +1,4 @@
-= 0.10 =
+= 0.11 =
 - Add Restricted Friend functionality
 - Add feed rules
 
