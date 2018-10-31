@@ -46,6 +46,7 @@ class Friends_Admin {
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this, 'translate_user_role' ), 10, 4 );
+		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'render_preview_friend_rules' ) );
 	}
 
 	/**
@@ -60,9 +61,11 @@ class Friends_Admin {
 		add_submenu_page( 'friends-settings', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, 'users.php' );
 		add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), 'manage_options', 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 
-		if ( isset( $_GET['page'] ) && 'edit-friend' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend', array( $this, 'render_admin_edit_friend' ) );
+		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
+			add_submenu_page( 'friends-settings', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
+			add_submenu_page( 'friends-settings', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
 			add_action( 'load-friends_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
+			add_action( 'load-friends_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
 			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
@@ -74,7 +77,9 @@ class Friends_Admin {
 	 */
 	public function admin_enqueue_scripts() {
 		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', __FILE__ ), array( 'jquery' ) );
-		$variables = array();
+		$variables = array(
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
+		);
 		wp_localize_script( 'friends-admin', 'friends', $variables );
 	}
 
@@ -409,6 +414,129 @@ class Friends_Admin {
 	}
 
 	/**
+	 * Process access for the Friends Edit Rules page
+	 */
+	private function check_admin_edit_friend_rules() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to edit the rules.' ) );
+		}
+
+		if ( ! isset( $_GET['user'] ) ) {
+			wp_die( esc_html__( 'Invalid user ID.' ) );
+		}
+
+		$friend = new WP_User( intval( $_GET['user'] ) );
+		if ( ! $friend || is_wp_error( $friend ) ) {
+			wp_die( esc_html__( 'Invalid user ID.' ) );
+		}
+
+		if (
+			! $friend->has_cap( 'friend_request' ) &&
+			! $friend->has_cap( 'pending_friend_request' ) &&
+			! $friend->has_cap( 'friend' ) &&
+			! $friend->has_cap( 'subscription' )
+		) {
+			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
+		}
+
+		return $friend;
+	}
+
+	/**
+	 * Process the Friends Edit Rules page
+	 */
+	public function process_admin_edit_friend_rules() {
+		$friend    = $this->check_admin_edit_friend_rules();
+		$arg       = 'updated';
+		$arg_value = 1;
+		if ( isset( $_POST['friend-rules-raw'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'friend-rules-raw-' . $friend->ID ) ) {
+			$rules = $this->friends->feed->validate_feed_rules( json_decode( stripslashes( $_POST['rules'] ), true ) );
+			if ( false === $rules ) {
+				$arg = 'error';
+			} else {
+				update_option( 'friends_feed_rules_' . $friend->ID, $rules );
+			}
+		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-rules-' . $friend->ID ) ) {
+			update_option( 'friends_feed_catch_all_' . $friend->ID, $this->friends->feed->validate_feed_catch_all( $_POST['catch_all'] ) );
+			update_option( 'friends_feed_rules_' . $friend->ID, $this->friends->feed->validate_feed_rules( $_POST['rules'] ) );
+		} else {
+			return;
+		}
+
+		if ( isset( $_GET['wp_http_referer'] ) ) {
+			wp_safe_redirect( $_GET['wp_http_referer'] );
+		} else {
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( 'wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+		}
+		exit;
+	}
+
+	/**
+	 * Render the Friends Edit Rules page
+	 */
+	public function render_admin_edit_friend_rules() {
+		$friend    = $this->check_admin_edit_friend_rules();
+		$catch_all = $this->friends->feed->get_feed_catch_all( $friend );
+		$rules     = $this->friends->feed->get_feed_rules( $friend );
+
+		?>
+		<h1>
+		<?php
+		// translators: %s is the name of a friend.
+		printf( __( 'Rules for %s', 'friends' ), esc_html( $friend->display_name ) );
+		?>
+		</h1>
+		<?php
+
+		if ( isset( $_GET['updated'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Rules were updated.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['error'] ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
+			<?php
+		}
+
+		$rules   = array_values( $rules );
+		$rules[] = array(
+			'field' => 'title',
+			'regex' => '',
+		);
+		include apply_filters( 'friends_template_path', 'admin/edit-rules.php' );
+
+		include apply_filters( 'friends_template_path', 'admin/rules-examples.php' );
+		echo '<div id="preview-rules">';
+		$_POST['catch_all'] = $catch_all;
+		$_POST['rules']     = $rules;
+		$this->render_preview_friend_rules();
+		echo '</div>';
+
+		array_pop( $rules );
+		include apply_filters( 'friends_template_path', 'admin/edit-raw-rules.php' );
+	}
+
+	/**
+	 * Render the Friends Edit User page
+	 */
+	public function render_preview_friend_rules() {
+		$friend       = $this->check_admin_edit_friend_rules();
+		$friend_posts = new WP_Query(
+			array(
+				'post_type'   => Friends::FRIEND_POST_CACHE,
+				'post_status' => array( 'publish', 'private', 'trash' ),
+				'author'      => $friend->ID,
+			)
+		);
+
+		$feed                                = $this->friends->feed;
+		$feed->feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $_POST['rules'] );
+		$feed->feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $_POST['catch_all'] );
+
+		include apply_filters( 'friends_template_path', 'admin/preview-rules.php' );
+	}
+
+	/**
 	 * Process access for the Friends Edit User page
 	 */
 	private function check_admin_edit_friend() {
@@ -524,6 +652,7 @@ class Friends_Admin {
 				'author'      => $friend->ID,
 			)
 		);
+		$rules        = $this->friends->feed->get_feed_rules( $friend );
 
 		?>
 		<h1><?php echo esc_html( $friend->display_name ); ?></h1>

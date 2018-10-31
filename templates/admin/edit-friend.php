@@ -7,7 +7,6 @@
 
 ?><form method="post">
 	<?php wp_nonce_field( 'edit-friend-' . $friend->ID ); ?>
-	<input type="hidden" name="friend" value="<?php echo esc_attr( $friend->ID ); ?>" />
 	<table class="form-table">
 		<tbody>
 			<tr>
@@ -23,10 +22,10 @@
 				<td>
 
 					<a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend->user_login ) . '/' ) ); ?>">
-										<?php
-										// translators: %d is the number of posts.
-										printf( _n( 'View %d post', 'View %d posts', $friend_posts->found_posts, 'friends' ), $friend_posts->found_posts );
-										?>
+						<?php
+						// translators: %d is the number of posts.
+						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $friend_posts->found_posts, 'friends' ), $friend_posts->found_posts ) );
+						?>
 					</a>
 					<p class="description">
 					<?php
@@ -87,7 +86,7 @@
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>
 				<td>
 					<?php if ( get_user_option( 'friends_no_new_post_notification' ) ) : ?>
-						<span class="description"><?php esc_html_e( 'You have disabled new post notifications for yourself.' ); ?> <a href="<?php echo esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change setting', 'friends' ); ?></a></span>
+						<span class="description"><?php esc_html_e( 'You have disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change setting', 'friends' ); ?></a></span>
 					<?php else : ?>
 					<fieldset>
 						<label for="friends_new_post_notification">
@@ -96,6 +95,15 @@
 						</label>
 					</fieldset>
 					<?php endif; ?>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Rules', 'friends' ); ?></th>
+				<td><a href="<?php echo self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $friend->ID ); ?>">
+										<?php
+										// translators: %d is the number of rules.
+										echo esc_html( sprintf( _n( '%d rule', '%d rules', count( $rules ), 'friends' ), count( $rules ) ) );
+										?>
 				</td>
 			</tr>
 		</tbody>

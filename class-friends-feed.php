@@ -26,6 +26,20 @@ class Friends_Feed {
 	private $friends;
 
 	/**
+	 * Caches the feed rules.
+	 *
+	 * @var array
+	 */
+	public $feed_rules = array();
+
+	/**
+	 * Caches the feed catch all action.
+	 *
+	 * @var array
+	 */
+	public $feed_catch_all = array();
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -41,6 +55,8 @@ class Friends_Feed {
 		add_filter( 'pre_get_posts', array( $this, 'private_feed_query' ), 1 );
 		add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
 		add_filter( 'pre_option_rss_use_excerpt', array( $this, 'feed_use_excerpt' ), 90 );
+		add_filter( 'friends_modify_feed_item', array( $this, 'apply_feed_rules' ), 10, 3 );
+
 		add_action( 'rss_item', array( $this, 'feed_additional_fields' ) );
 		add_action( 'rss2_item', array( $this, 'feed_additional_fields' ) );
 		add_action( 'rss_ns', array( $this, 'additional_feed_namespaces' ) );
@@ -151,6 +167,176 @@ class Friends_Feed {
 	}
 
 	/**
+	 * Apply the feed rules
+	 *
+	 * @param  object  $item         The feed item.
+	 * @param  object  $feed         The feed object.
+	 * @param  WP_User $friend_user The friend user.
+	 * @return object The modified feed item.
+	 */
+	public function apply_feed_rules( $item, $feed, WP_User $friend_user ) {
+		$rules  = $this->get_feed_rules( $friend_user );
+		$action = $this->get_feed_catch_all( $friend_user );
+
+		foreach ( $rules as $rule ) {
+			$field = $this->get_feed_rule_field( $rule['field'], $item );
+
+			if ( 'author' === $field && ! isset( $item->author ) ) {
+				if ( $item instanceof WP_Post ) {
+					$item->author = get_post_meta( get_the_ID( $post ), 'author', true );
+				} else {
+					$item->author = $item->get_author()->name;
+				}
+			}
+
+			if ( preg_match( '/' . $rule['regex'] . '/iu', $item->$field ) ) {
+				if ( 'replace' === $rule['action'] ) {
+					$item->$field = preg_replace( '/' . $rule['regex'] . '/iu', $rule['replace'], $item->$field );
+					continue;
+				}
+				$action = $rule['action'];
+				break;
+			}
+		}
+
+		switch ( $action ) {
+			case 'delete':
+				return false;
+
+			case 'trash':
+				$item->feed_rule_transform = array(
+					'post_status' => 'trash',
+				);
+				return $item;
+
+			case 'accept':
+				return $item;
+		}
+
+		return $item;
+	}
+
+	/**
+	 * Get the field name for the feed item.
+	 *
+	 * @param  string $field The field name.
+	 * @param  object $item  The feed item.
+	 * @return string        The adapted field name.
+	 */
+	private function get_feed_rule_field( $field, $item ) {
+		if ( $item instanceof WP_Post ) {
+			switch ( $field ) {
+				case 'title':
+					return 'post_title';
+				case 'permalink':
+					return 'guid';
+				case 'content':
+					return 'post_content';
+			}
+		}
+		return $field;
+	}
+
+	/**
+	 * Retrieve the rules for this feed.
+	 *
+	 * @param  WP_User $friend_user The friend user.
+	 * @return array The rules set by the user for this feed.
+	 */
+	public function get_feed_rules( WP_User $friend_user ) {
+		if ( ! isset( $this->feed_rules[ $friend_user->ID ] ) ) {
+			$this->feed_rules[ $friend_user->ID ] = $this->validate_feed_rules( get_option( 'friends_feed_rules_' . $friend_user->ID ) );
+		}
+		return $this->feed_rules[ $friend_user->ID ];
+	}
+
+	/**
+	 * Validate feed item rules
+	 *
+	 * @param  array $rules The rules to validate.
+	 * @return array        The valid rules.
+	 */
+	public function validate_feed_rules( $rules ) {
+		if ( ! is_array( $rules ) ) {
+			return array();
+		}
+
+		if ( isset( $rules['field'] ) && is_array( $rules['field'] ) ) {
+			// Transform POST values.
+			$transformed_rules = array();
+			foreach ( $rules['field'] as $key => $field ) {
+				$rule = array();
+				foreach ( $rules as $part => $keys ) {
+					if ( isset( $keys[ $key ] ) ) {
+						$rule[ $part ] = $keys[ $key ];
+					}
+				}
+				$transformed_rules[] = $rule;
+			}
+			$rules = $transformed_rules;
+		}
+
+		foreach ( $rules as $k => $rule ) {
+			if ( ! isset( $rule['field'] ) || ! in_array( $rule['field'], array( 'title', 'content', 'permalink', 'author' ), true ) ) {
+				unset( $rules[ $k ] );
+				continue;
+			}
+
+			if ( ! isset( $rule['regex'] ) || ! is_string( $rule['regex'] ) || '' === trim( $rule['regex'] ) ) {
+				unset( $rules[ $k ] );
+				continue;
+			}
+
+			$rules[ $k ]['regex'] = substr( $rule['regex'], 0, 10240 );
+
+			if ( ! isset( $rule['action'] ) || ! in_array( $rule['action'], array( 'accept', 'trash', 'delete', 'replace' ), true ) ) {
+				unset( $rules[ $k ] );
+				continue;
+			}
+
+			if ( 'replace' === $rule['action'] ) {
+				if ( ! isset( $rule['replace'] ) || ! is_string( $rule['replace'] ) ) {
+					unset( $rules[ $k ] );
+					continue;
+				}
+
+				$rules[ $k ]['replace'] = substr( $rule['replace'], 0, 10240 );
+			} else {
+				unset( $rules[ $k ]['replace'] );
+			}
+		}
+
+		return $rules;
+	}
+
+	/**
+	 * Retrieve the catch_all value for this feed.
+	 *
+	 * @param  WP_User $friend_user The friend user.
+	 * @return array The rules set by the user for this feed.
+	 */
+	public function get_feed_catch_all( WP_User $friend_user ) {
+		if ( ! isset( $this->feed_catch_all[ $friend_user->ID ] ) ) {
+			$this->feed_catch_all[ $friend_user->ID ] = $this->validate_feed_catch_all( get_option( 'friends_feed_catch_all_' . $friend_user->ID ) );
+		}
+		return $this->feed_catch_all[ $friend_user->ID ];
+	}
+
+	/**
+	 * Validate feed catch_all
+	 *
+	 * @param  array $catch_all The catch_all value to.
+	 * @return array            A valid catch_all
+	 */
+	public function validate_feed_catch_all( $catch_all ) {
+		if ( ! in_array( $catch_all, array( 'accept', 'trash', 'delete' ), true ) ) {
+			return 'accept';
+		}
+
+		return $catch_all;
+	}
+
+	/**
 	 * Process the feed of a friend user.
 	 *
 	 * @param  WP_User   $friend_user The friend user.
@@ -160,10 +346,12 @@ class Friends_Feed {
 		$new_friend = get_user_option( 'friends_new_friend', $friend_user->ID );
 
 		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
+		$rules           = $this->get_feed_rules( $friend_user );
 		$new_posts       = array();
 
 		foreach ( $feed->get_items() as $item ) {
-			if ( ! apply_filters( 'friends_use_feed_item', true, $item, $feed, $friend_user ) ) {
+			$item = apply_filters( 'friends_modify_feed_item', $item, $feed, $friend_user );
+			if ( ! $item ) {
 				continue;
 			}
 			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->get_permalink() ) ) );
@@ -221,6 +409,11 @@ class Friends_Feed {
 				'post_status'       => $item->{'post-status'},
 				'guid'              => $permalink,
 			);
+
+			// Modified via feed rules.
+			if ( isset( $item->feed_rule_transform ) ) {
+				$post_data = array_merge( $post_data, $item->feed_rule_transform );
+			}
 
 			if ( ! is_null( $post_id ) ) {
 				$post_data['ID'] = $post_id;

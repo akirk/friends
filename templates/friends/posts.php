@@ -48,7 +48,7 @@ include __DIR__ . '/header.php'; ?>
 				<div class="avatar">
 					<?php if ( Friends::FRIEND_POST_CACHE === get_post_type() ) : ?>
 						<?php if ( $recommendation ) : ?>
-							<a href="<?php the_permalink(); ?>">
+							<a href="<?php the_permalink(); ?>" rel="noopener noreferrer">
 								<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
 							</a>
 						<?php else : ?>
@@ -66,7 +66,7 @@ include __DIR__ . '/header.php'; ?>
 					<div class="author">
 						<?php if ( Friends::FRIEND_POST_CACHE === get_post_type() ) : ?>
 							<?php if ( $recommendation ) : ?>
-								<a href="<?php the_permalink(); ?>"><strong><?php echo esc_html( get_post_meta( get_the_ID(), 'author', true ) ); ?></strong></a>
+								<a href="<?php the_permalink(); ?>" rel="noopener noreferrer" ><strong><?php echo esc_html( get_post_meta( get_the_ID(), 'author', true ) ); ?></strong></a>
 							<?php else : ?>
 								<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" target="_blank" rel="noopener noreferrer" class="auth-link" data-token="<?php echo esc_attr( $token ); ?>">
 									<strong><?php the_author(); ?></strong>
@@ -123,6 +123,8 @@ include __DIR__ . '/header.php'; ?>
 							),
 						)
 					);
+
+					echo ' ', esc_html__( 'Be aware that this post might have been altered by your friend. Please verify with the original when in doubt.', 'friends' );
 					?>
 					</p>
 					<?php

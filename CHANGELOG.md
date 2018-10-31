@@ -1,5 +1,6 @@
 = 0.10 =
 - Add Restricted Friend functionality
+- Add feed rules
 
 = 0.10 =
 - Disable listing users via REST

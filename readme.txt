@@ -69,6 +69,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 == Changelog ==
 = 0.11 =
 - Add Restricted Friend functionality
+- Add feed rules
 
 = 0.10 =
 - Disable listing users via REST

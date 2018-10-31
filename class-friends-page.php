@@ -102,7 +102,6 @@ class Friends_Page {
 				'text_undo'   => __( 'Undo' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
-
 		}
 	}
 
