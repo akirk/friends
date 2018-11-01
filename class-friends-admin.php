@@ -856,7 +856,7 @@ class Friends_Admin {
 	 */
 	public function render_suggest_friends_plugin( $string, WP_User $friend = null ) {
 		?>
-		<p><?php esc_html_e( "Maybe you'll want to suggest your friend to install the friends plugin?", 'friends' ); ?> <?php esc_html_e( 'We have prepared some tools for you to give them instructions on how to do so.' ); ?></p>
+		<p><?php esc_html_e( "Maybe you'll want to suggest your friend to install the friends plugin?", 'friends' ); ?> <?php esc_html_e( 'We have prepared some tools for you to give them instructions on how to do so.', 'friends' ); ?></p>
 		<?php
 
 		$error = $this->process_suggest_friends_plugin();
