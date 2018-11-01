@@ -99,7 +99,7 @@ class Friends_Access_Control {
 		$host = wp_parse_url( $site_url, PHP_URL_HOST );
 		$path = wp_parse_url( $site_url, PHP_URL_PATH );
 
-		$user_login = trim( preg_replace( '#[^a-z0-9.-]+#', ' ', strtolower( $host . ' ' . $path ) ) );
+		$user_login = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#', ' ', strtolower( $host . ' ' . $path ) ) ) );
 		return $user_login;
 	}
 
