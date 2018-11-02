@@ -782,7 +782,10 @@ class Friends_Admin {
 		$friend_requests = $friend_requests->get_results();
 
 		$wp_roles = wp_roles();
-		$roles    = $wp_roles->get_names();
+		$roles    = array();
+		foreach ( $wp_roles->get_names() as $role => $name ) {
+			$roles[ $role ] = $this->translate_user_role( '', $name, 'User role', 'default' );
+		}
 
 		include apply_filters( 'friends_template_path', 'admin/send-friend-request.php' );
 	}
@@ -828,7 +831,6 @@ class Friends_Admin {
 	 * @return string Translated text on success, original text on failure.
 	 */
 	public function translate_user_role( $translations, $text, $context, $domain ) {
-
 		$roles = array(
 			'Friend',
 			'Restricted Friend',
