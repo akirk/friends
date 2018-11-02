@@ -1,3 +1,8 @@
+0.13
+===
+- No longer use hardcoded WP REST API URLs
+- Add bookmarklets
+
 0.12
 ===
 - Bugfix: don't notify about posts that are trashed via rules

@@ -7,7 +7,7 @@ Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Decentralized Social Networking with WordPress. Connect WordPresses through friendship requests and read each other’s (private) posts in a feed reader.
+Decentralized Social Networking with WordPress. Connect WordPresses through friend requests and read each other’s (private) posts in a feed reader.
 
 == Description ==
  
@@ -67,6 +67,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.13 =
+- No longer use hardcoded WP REST API URLs
+- Add bookmarklets
+
 = 0.12 =
 - Bugfix: don't notify about posts that are trashed via rules
 
