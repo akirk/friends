@@ -164,8 +164,10 @@ class Friends_Recommendation {
 		);
 
 		foreach ( $friends->get_results() as $friend_user ) {
+			$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
+
 			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . Friends_REST::PREFIX . '/recommendation',
+				$friend_rest_url . '/recommendation',
 				array(
 					'body'        => array_merge(
 						$recommendation,

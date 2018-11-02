@@ -363,4 +363,19 @@ class Friends_Access_Control {
 
 		return true;
 	}
+
+	/**
+	 * Get the REST URL for the friend
+	 *
+	 * @param  WP_User $user A friend user.
+	 * @return string        The REST URL.
+	 */
+	public function get_rest_url( WP_User $user ) {
+		$friend_rest_url = get_user_option( 'friends_rest_url', $user->ID );
+		if ( ! $friend_rest_url ) {
+			$friend_rest_url = $user->user_url . '/wp-json/';
+			update_user_option( $user->ID, 'friends_rest_url', $friend_rest_url );
+		}
+		return $friend_rest_url;
+	}
 }

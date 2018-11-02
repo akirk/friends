@@ -152,6 +152,7 @@ class Friends_REST {
 			return array(
 				'version'  => Friends::VERSION,
 				'site_url' => site_url(),
+				'rest_url' => get_rest_url() . Friends_REST::PREFIX,
 			);
 		}
 
@@ -303,13 +304,25 @@ class Friends_REST {
 			);
 		}
 
+		$rest_url = trim( $request->get_param( 'rest_url' ) );
+		if ( ! is_string( $rest_url ) || ! wp_http_validate_url( $rest_url ) || 0 === strcasecmp( rest_url(), $rest_url ) ) {
+			return new WP_Error(
+				'friends_invalid_rest_url',
+				'An invalid Rest URL was provided.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
 		$challenge = sha1( wp_generate_password( 256 ) );
 		$response  = wp_safe_remote_post(
-			$site_url . '/wp-json/' . self::PREFIX . '/hello',
+			$rest_url . '/hello',
 			array(
 				'body'        => array(
 					'challenge' => $challenge,
 					'site_url'  => site_url(),
+					'rest_url'  => get_rest_url() . Friends_REST::PREFIX,
 				),
 				'timeout'     => 5,
 				'redirection' => 1,
@@ -404,6 +417,7 @@ class Friends_REST {
 				)
 			);
 		}
+		update_user_option( $user->ID, 'friends_rest_url', $rest_url );
 
 		if ( ! $user->has_cap( 'friend_request' ) ) {
 			// Friend request was deleted on the other side and then re-initated.
@@ -431,8 +445,10 @@ class Friends_REST {
 		$friends = $friends->get_results();
 
 		foreach ( $friends as $friend_user ) {
+			$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
+
 			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/post-deleted',
+				$friend_rest_url . '/post-deleted',
 				array(
 					'body'        => array(
 						'post_id' => $post_id,
@@ -504,10 +520,11 @@ class Friends_REST {
 			)
 		);
 		foreach ( $friends->get_results() as $friend_user ) {
-			$reactions = $this->friends->reactions->get_reactions( $post->ID, $friend_user->ID );
+			$reactions       = $this->friends->reactions->get_reactions( $post->ID, $friend_user->ID );
+			$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
 
 			$response = wp_safe_remote_post(
-				$friend_user->user_url . '/wp-json/' . self::PREFIX . '/update-post-reactions',
+				$friend_rest_url . '/update-post-reactions',
 				array(
 					'body'        => array(
 						'post_id'   => $post_id,
@@ -574,8 +591,10 @@ class Friends_REST {
 		$reactions      = $this->friends->reactions->get_my_reactions( $post->ID );
 		$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
 
+		$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
+
 		$response = wp_safe_remote_post(
-			$friend_user->user_url . '/wp-json/' . self::PREFIX . '/my-reactions',
+			$friend_rest_url . '/my-reactions',
 			array(
 				'body'        => array(
 					'post_id'   => $remote_post_id,
@@ -740,14 +759,16 @@ class Friends_REST {
 			return;
 		}
 
-		$user = new WP_User( $user_id );
+		$friend_user = new WP_User( $user_id );
 
-		$friend_request_token = get_option( 'friends_request_token_' . sha1( $user->user_url ) );
-		$in_token             = $this->friends->access_control->update_in_token( $user->ID );
+		$friend_request_token = get_option( 'friends_request_token_' . sha1( $friend_user->user_url ) );
+		$in_token             = $this->friends->access_control->update_in_token( $friend_user->ID );
+
+		$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
-			$user->user_url . '/wp-json/' . self::PREFIX . '/friend-request-accepted',
+			$friend_rest_url . '/friend-request-accepted',
 			array(
 				'body'        => array(
 					'token'    => $request_token,
@@ -765,19 +786,19 @@ class Friends_REST {
 			return;
 		}
 
-		delete_user_option( $user->ID, 'friends_request_token' );
+		delete_user_option( $friend_user->ID, 'friends_request_token' );
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( isset( $json->friend ) ) {
-			$this->friends->access_control->make_friend( $user, $json->friend );
+			$this->friends->access_control->make_friend( $friend_user, $json->friend );
 
 			if ( isset( $json->gravatar ) ) {
-				$this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
+				$this->friends->access_control->update_gravatar( $friend_user->ID, $json->gravatar );
 			}
 
 			if ( isset( $json->name ) ) {
 				wp_update_user(
 					array(
-						'ID'           => $user->ID,
+						'ID'           => $friend_user->ID,
 						'nickname'     => $json->name,
 						'first_name'   => $json->name,
 						'display_name' => $json->name,
@@ -785,7 +806,7 @@ class Friends_REST {
 				);
 			}
 		} else {
-			$user->set_role( 'pending_friend_request' );
+			$friend_user->set_role( 'pending_friend_request' );
 			if ( isset( $json->friend_request_pending ) ) {
 				update_option( 'friends_accept_token_' . $json->friend_request_pending, $user_id );
 			}

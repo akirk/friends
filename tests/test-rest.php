@@ -28,6 +28,13 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->server   = $wp_rest_server;
 		do_action( 'rest_api_init' );
 
+		add_filter(
+			'rest_url',
+			function() {
+				return get_option( 'siteurl' ) . '/wp-json/';
+			}
+		);
+
 		// Emulate HTTP requests to the REST API.
 		add_filter(
 			'pre_http_request',
@@ -38,7 +45,21 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 				// Pretend the site_url now is the requested one.
 				update_option( 'siteurl', $p['scheme'] . '://' . $p['host'] );
-				$url = substr( $url, strlen( site_url() . '/wp-json' ) );
+				$rest_prefix = site_url() . '/wp-json';
+				if ( false === strpos( $url, $rest_prefix ) ) {
+					$html = Friends::get_html_link_rel_friends_base_url();
+
+					// Restore the old site_url.
+					update_option( 'siteurl', $site_url );
+					return array(
+						'body'     => $html,
+						'response' => array(
+							'code' => 200,
+						),
+					);
+				}
+
+				$url = substr( $url, strlen( $rest_prefix ) );
 				$r   = new WP_REST_Request( $request['method'], $url );
 				if ( ! empty( $request['body'] ) ) {
 					foreach ( $request['body'] as $key => $value ) {
@@ -112,6 +133,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		update_option( 'siteurl', $friend_url );
 		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/friend-request' );
 		$request->set_param( 'site_url', $my_url );
+		$request->set_param( 'rest_url', $my_url . '/wp-json/' . Friends_REST::PREFIX );
 		$request->set_param( 'signature', $friend_request_token );
 
 		$friend_request_response = $this->server->dispatch( $request );

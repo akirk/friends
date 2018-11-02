@@ -110,7 +110,7 @@ class Friends {
 		add_filter( 'init', array( $this, 'register_custom_post_types' ) );
 		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
-		add_filter( 'wp_head', array( $this, 'html_link_tag_friends' ) );
+		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
 	}
 
 	/**
@@ -410,10 +410,17 @@ class Friends {
 	}
 
 	/**
-	 * Surface the friends URL as a link in the HTML head.
+	 * Output the friends base URL as a link in the HTML head.
 	 */
-	public function html_link_tag_friends() {
-		echo '<link rel="friends-base-url" href="', esc_attr( home_url() ), '" />';
+	public static function html_link_rel_friends_base_url() {
+		echo self::get_html_link_rel_friends_base_url();
+	}
+
+	/**
+	 * Generate a link tag with the friends base URL
+	 */
+	public static function get_html_link_rel_friends_base_url() {
+		return '<link rel="friends-base-url" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" />';
 	}
 	/**
 	 * Delete all the data the plugin has stored in WordPress
