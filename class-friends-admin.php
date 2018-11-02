@@ -831,6 +831,7 @@ class Friends_Admin {
 
 		$roles = array(
 			'Friend',
+			'Restricted Friend',
 			'Friend Request',
 			'Pending Friend Request',
 			'Subscription',
