@@ -58,6 +58,6 @@
 <p>
 	<?php esc_html_e( "You can also drag one of these bookmarklet to your bookmarks bar and click it when you're on a site that you want to subscribe or become friends with:", 'friends' ); ?>
 	<br />
-	<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.hostname))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none"><?php echo esc_html_e( 'Add as friend', 'friends' ); ?></a>
-	<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.hostname))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none"><?php echo esc_html_e( 'Subscribe', 'friends' ); ?></a>
+	<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none"><?php echo esc_html_e( 'Add as friend', 'friends' ); ?></a>
+	<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none"><?php echo esc_html_e( 'Subscribe', 'friends' ); ?></a>
 </p>
