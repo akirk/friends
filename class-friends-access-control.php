@@ -134,7 +134,6 @@ class Friends_Access_Control {
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
 	public function create_user( $site_url, $role, $display_name = null, $gravatar = null ) {
-
 		$role_rank = array_flip(
 			array(
 				'subscription',
