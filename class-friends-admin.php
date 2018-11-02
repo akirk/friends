@@ -1146,18 +1146,16 @@ class Friends_Admin {
 				$friends_title    = sprintf( __( 'Friends (%s)', 'friends' ), $open_requests );
 				$friends_main_url = self_admin_url( 'users.php?role=friend_request' );
 			}
-		}
 
-		$wp_menu->add_node(
-			array(
-				'id'     => 'friends',
-				'parent' => '',
-				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( $friends_title ),
-				'href'   => $friends_main_url,
-			)
-		);
+			$wp_menu->add_node(
+				array(
+					'id'     => 'friends',
+					'parent' => '',
+					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( $friends_title ),
+					'href'   => $friends_main_url,
+				)
+			);
 
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			if ( $open_requests > 0 ) {
 				$wp_menu->add_menu(
 					array(
@@ -1209,9 +1207,16 @@ class Friends_Admin {
 					'href'   => self_admin_url( 'admin.php?page=friends-settings' ),
 				)
 			);
-		}
+		} elseif ( current_user_can( 'friend' ) ) {
+			$wp_menu->add_node(
+				array(
+					'id'     => 'friends',
+					'parent' => '',
+					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( $friends_title ),
+					'href'   => $friends_main_url,
+				)
+			);
 
-		if ( current_user_can( 'friend' ) ) {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'send-friend-request',

@@ -111,6 +111,7 @@ class Friends {
 		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
+		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
 	}
 
 	/**
