@@ -9,7 +9,6 @@
 	<?php wp_nonce_field( 'send-friend-request' ); ?>
 	<p>
 		<?php esc_html_e( "This will set up a connection between your site and your friend's site.", 'friends' ); ?>
-
 	</p>
 
 	<table class="form-table">
@@ -55,3 +54,10 @@
 	</table>
 	</div>
 <?php endif; ?>
+
+<p>
+	<?php esc_html_e( "You can also drag this bookmarklet to your bookmarks bar and just click it when you're on their site:", 'friends' ); ?>
+	<br />
+	<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.hostname))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none"><?php echo esc_html_e( 'Add as friend', 'friends' ); ?></a>
+	<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.hostname))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none"><?php echo esc_html_e( 'Subscribe', 'friends' ); ?></a>
+</p>
