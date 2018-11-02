@@ -86,7 +86,7 @@
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>
 				<td>
 					<?php if ( get_user_option( 'friends_no_new_post_notification' ) ) : ?>
-						<span class="description"><?php esc_html_e( 'You have disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change setting', 'friends' ); ?></a></span>
+						<span class="description"><?php esc_html_e( 'You have generally disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change setting', 'friends' ); ?></a></span>
 					<?php else : ?>
 					<fieldset>
 						<label for="friends_new_post_notification">
@@ -100,10 +100,10 @@
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Rules', 'friends' ); ?></th>
 				<td><a href="<?php echo self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $friend->ID ); ?>">
-										<?php
-										// translators: %d is the number of rules.
-										echo esc_html( sprintf( _n( '%d rule', '%d rules', count( $rules ), 'friends' ), count( $rules ) ) );
-										?>
+					<?php
+					// translators: %d is the number of rules.
+					echo esc_html( sprintf( _n( '%d rule', '%d rules', count( $rules ), 'friends' ), count( $rules ) ) );
+					?>
 				</td>
 			</tr>
 		</tbody>

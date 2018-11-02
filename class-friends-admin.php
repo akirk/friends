@@ -53,7 +53,7 @@ class Friends_Admin {
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
-		add_menu_page( 'Friends', 'Friends', 'manage_options', 'friends-settings', null, 'dashicons-groups', 3.73 );
+		add_menu_page( 'friends', __( 'Friends', 'friends' ), 'manage_options', 'friends-settings', null, 'dashicons-groups', 3.73 );
 		add_submenu_page( 'friends-settings', __( 'Settings' ), __( 'Settings' ), 'manage_options', 'friends-settings', array( $this, 'render_admin_settings' ) );
 		add_submenu_page( 'friends-settings', __( 'Send Friend Request', 'friends' ), __( 'Send Friend Request', 'friends' ), Friends::REQUIRED_ROLE, 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
@@ -394,7 +394,7 @@ class Friends_Admin {
 		$current_user = wp_get_current_user();
 
 		?>
-		<h1><?php esc_html_e( 'Friend Settings', 'friends' ); ?></h1>
+		<h1><?php esc_html_e( 'Friends Settings', 'friends' ); ?></h1>
 		<?php
 		if ( isset( $_GET['updated'] ) ) {
 			?>
@@ -963,7 +963,8 @@ class Friends_Admin {
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link                                  = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
-			$actions['friend_request_date']        = '<div class="nonessential">Requested on ' . date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) . '</div>';
+			// translators: %s is a date.
+			$actions['friend_request_date'] = '<div class="nonessential">' . esc_html( sprintf( __( 'Requested on %s', 'friends' ), date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) ) ) . '</div>';
 
 		}
 

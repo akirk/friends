@@ -34,8 +34,8 @@
 	<table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-right: 1em">
 		<thead>
 			<tr>
-				<th style="width: 20em" class="column-primary column-site"><?php _e( 'Site', 'friends' ); ?></th>
-				<th style="width: 10em" class="column-date"><?php _e( 'Date' ); ?></th>
+				<th style="width: 18em" class="column-primary column-site"><?php _e( 'Site', 'friends' ); ?></th>
+				<th style="width: 15em" class="column-date"><?php _e( 'Date' ); ?></th>
 				<th class="column-status"><?php _e( 'Status', 'friends' ); ?></th>
 			</tr>
 		</thead>
