@@ -242,10 +242,13 @@ class Friends_Admin {
 			return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
 		}
 
-		// $friend_rest_url = rtrim( $json->rest_url, '/' );
-		// if ( ! is_string( $friend_rest_url ) || ! wp_http_validate_url( $friend_rest_url ) ) {
-		// return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
-		// }
+		if ( isset( $json->rest_url ) ) {
+			$friend_rest_url = rtrim( $json->rest_url, '/' );
+			if ( ! is_string( $friend_rest_url ) || ! wp_http_validate_url( $friend_rest_url ) ) {
+				return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
+			}
+		}
+
 		$friend_user = $this->friends->access_control->get_user_for_site_url( $friend_url );
 		if ( $friend_user && ! is_wp_error( $friend_user ) && $this->friends->access_control->is_valid_friend( $friend_user ) ) {
 			return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
@@ -258,7 +261,7 @@ class Friends_Admin {
 		$user_login = $this->friends->access_control->get_user_login_for_site_url( $friend_url );
 
 		$friend_request_token = sha1( wp_generate_password( 256 ) );
-		update_option( 'friends_request_token_' . sha1( $friend_url ), $friend_request_token );
+		update_option( 'friends_request_token_' . sha1( $friend_rest_url ), $friend_request_token );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_remote_post(

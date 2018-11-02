@@ -156,7 +156,7 @@ class Friends_REST {
 			);
 		}
 
-		$signature = get_option( 'friends_request_token_' . sha1( $request->get_param( 'site_url' ) ) );
+		$signature = get_option( 'friends_request_token_' . sha1( $request->get_param( 'rest_url' ) ) );
 
 		if ( ! $signature ) {
 			return new WP_Error(
@@ -364,7 +364,7 @@ class Friends_REST {
 				);
 			}
 
-			if ( $user->has_cap( 'pending_friend_request' ) && get_option( 'friends_request_token_' . sha1( $site_url ) ) ) {
+			if ( $user->has_cap( 'pending_friend_request' ) && get_option( 'friends_request_token_' . sha1( $rest_url ) ) ) {
 				// We already requested friendship, so let's become friends right away.
 				$in_token = $this->friends->access_control->update_in_token( $user->ID );
 				$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
@@ -401,7 +401,7 @@ class Friends_REST {
 			}
 		} elseif ( get_option( 'friends_ignore_incoming_friend_requests' ) ) {
 			$token = sha1( wp_generate_password( 256 ) );
-			update_option( 'friends_request_token_' . sha1( $site_url ), $token );
+			update_option( 'friends_request_token_' . sha1( $rest_url ), $token );
 			return array(
 				'friend_request_pending' => $token,
 			);
@@ -761,10 +761,9 @@ class Friends_REST {
 
 		$friend_user = new WP_User( $user_id );
 
-		$friend_request_token = get_option( 'friends_request_token_' . sha1( $friend_user->user_url ) );
+		$friend_rest_url      = $this->friends->access_control->get_rest_url( $friend_user );
+		$friend_request_token = get_option( 'friends_request_token_' . sha1( $friend_rest_url ) );
 		$in_token             = $this->friends->access_control->update_in_token( $friend_user->ID );
-
-		$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(

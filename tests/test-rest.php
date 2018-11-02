@@ -127,7 +127,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Prepare a signature that $my_url generates before sending the friend request.
 		$friend_request_token = sha1( wp_generate_password( 256 ) );
-		update_option( 'friends_request_token_' . sha1( $friend_url ), $friend_request_token );
+		update_option( 'friends_request_token_' . sha1( $friend_url . '/wp-json/' . Friends_REST::PREFIX ), $friend_request_token );
 
 		// Let's send a friend request to $friend_url.
 		update_option( 'siteurl', $friend_url );
