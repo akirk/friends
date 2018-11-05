@@ -45,5 +45,5 @@ printf(
 );
 echo PHP_EOL, PHP_EOL;
 
-echo PHP_EOL, PHP_EOL;
-_e( 'This notification was brought to you by the Friends plugin.', 'friends' );
+// translators: %s is a site name.
+printf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), is_multisite() ? get_site_option( 'site_name' ) : get_option( 'blogname' ) );

@@ -20,4 +20,6 @@ echo PHP_EOL . PHP_EOL;
 echo self_admin_url( 'users.php?role=friend_request' );
 
 echo PHP_EOL . PHP_EOL;
-_e( 'Best, the Friends plugin', 'friends' );
+
+// translators: %s is a site name.
+printf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), is_multisite() ? get_site_option( 'site_name' ) : get_option( 'blogname' ) );

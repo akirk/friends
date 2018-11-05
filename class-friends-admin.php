@@ -1109,14 +1109,14 @@ class Friends_Admin {
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
-			$actions['accept_friend_request'] = 'Accept Friend Request';
+			$actions['accept_friend_request'] = __( 'Accept Friend Request', 'friends' );
 		}
 
 		$friends = new WP_User_Query( array( 'role' => 'subscription' ) );
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
-			$actions['friend_request'] = 'Send Friend Request';
+			$actions['friend_request'] = __( 'Send Friend Request', 'friends' );
 		}
 
 		return $actions;
