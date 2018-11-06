@@ -491,7 +491,7 @@ class Friends_REST {
 
 		$post_id = $remote_post_ids[ $remote_post_id ];
 		$post    = WP_Post::get_instance( $post_id );
-		if ( Friends::FRIEND_POST_CACHE === $post->post_type ) {
+		if ( Friends::CPT === $post->post_type ) {
 			wp_delete_post( $post_id );
 		}
 
@@ -582,7 +582,7 @@ class Friends_REST {
 	 */
 	public function notify_friend_of_my_reaction( $post_id ) {
 		$post = WP_Post::get_instance( $post_id );
-		if ( Friends::FRIEND_POST_CACHE !== $post->post_type ) {
+		if ( Friends::CPT !== $post->post_type ) {
 			return;
 		}
 
@@ -716,7 +716,7 @@ class Friends_REST {
 			'post_status'  => 'publish',
 			'post_author'  => $friend_user->ID,
 			'guid'         => $permalink,
-			'post_type'    => Friends::FRIEND_POST_CACHE,
+			'post_type'    => Friends::CPT,
 			'tags_input'   => array( 'recommendation' ),
 		);
 

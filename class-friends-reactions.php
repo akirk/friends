@@ -81,7 +81,7 @@ class Friends_Reactions {
 			'show_admin_column' => true,
 			'query_var'         => true,
 		);
-		register_taxonomy( 'friend-reaction-' . $user_id, array( 'post', Friends::FRIEND_POST_CACHE ), $args );
+		register_taxonomy( 'friend-reaction-' . $user_id, array( 'post', Friends::CPT ), $args );
 	}
 
 	/**

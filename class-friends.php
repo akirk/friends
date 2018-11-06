@@ -14,10 +14,10 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION           = '0.13';
-	const FRIEND_POST_CACHE = 'friend_post_cache';
-	const PLUGIN_URL        = 'https://wordpress.org/plugins/friends/';
-	const REQUIRED_ROLE     = 'administrator';
+	const VERSION       = '0.13';
+	const CPT           = 'friend_post_cache';
+	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
+	const REQUIRED_ROLE = 'administrator';
 
 	/**
 	 * Initialize the plugin
@@ -39,6 +39,13 @@ class Friends {
 	 * @var Friends_Access_Control
 	 */
 	public $access_control;
+
+	/**
+	 * A reference to the Friends_Bookmarks object.
+	 *
+	 * @var Friends_Bookmarks
+	 */
+	public $bookmarks;
 
 	/**
 	 * A reference to the Friends_Feed object.
@@ -88,6 +95,7 @@ class Friends {
 	public function __construct() {
 		$this->access_control = new Friends_Access_Control( $this );
 		$this->admin          = new Friends_Admin( $this );
+		$this->bookmarks      = new Friends_Bookmarks( $this );
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->page           = new Friends_Page( $this );
@@ -107,7 +115,7 @@ class Friends {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_filter( 'init', array( $this, 'register_custom_post_types' ) );
+		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
 		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
@@ -115,9 +123,9 @@ class Friends {
 	}
 
 	/**
-	 * Registers the custom post types
+	 * Registers the custom post type
 	 */
-	public function register_custom_post_types() {
+	public function register_custom_post_type() {
 		$labels = array(
 			'name'               => _x( 'Friend Posts', 'taxonomy plural name', 'friends' ),
 			'singular_name'      => _x( 'Friend Post', 'taxonomy singular name', 'friends' ),
@@ -149,7 +157,7 @@ class Friends {
 			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
 			'has_archive'         => true,
 		);
-		register_post_type( self::FRIEND_POST_CACHE, $args );
+		register_post_type( self::CPT, $args );
 	}
 
 	/**
@@ -449,7 +457,7 @@ class Friends {
 
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => self::FRIEND_POST_CACHE,
+				'post_type'   => self::CPT,
 				'post_status' => array( 'publish', 'private', 'trash' ),
 			)
 		);

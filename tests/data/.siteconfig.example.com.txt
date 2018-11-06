@@ -1,0 +1,22 @@
+title: //h1[@class="header"]
+
+author: //p[contains(@class, 'our-author')]/a
+#author: //p[text() = 'By ']/a/text()
+
+date: //p[contains(@class, 'date')]
+
+body: //div[@class="article"]
+strip_id_or_class: remove-me
+strip_id_or_class: remove
+#strip_id_or_class: dont-strip
+
+http_header(Cookie): send=cookie; another=one
+http_header(user-agent): PHP/5.3
+http_header(referer): https://t.co/fromtwitter
+
+find_string: <noscript>
+replace_string: <div>
+find_string: </noscript>
+replace_string: </div>
+
+test_url: http://www.siteconfig.example.com/testpath

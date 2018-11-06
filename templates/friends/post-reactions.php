@@ -16,7 +16,7 @@ foreach ( $reactions as $slug => $reaction ) {
 	echo '</button>';
 }
 
-if ( Friends::FRIEND_POST_CACHE === get_post_type() || count( $reactions ) || get_the_author_meta( 'ID' ) !== get_current_user_id() ) :
+if ( Friends::CPT === get_post_type() || count( $reactions ) || get_the_author_meta( 'ID' ) !== get_current_user_id() ) :
 	?>
 	<button class="friends-action new-reaction" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
 		<span>&#xf132;</span> <?php esc_html_e( 'Respond', 'friends' ); ?>
