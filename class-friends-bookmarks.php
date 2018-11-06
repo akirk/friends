@@ -66,7 +66,7 @@ class Friends_Bookmarks {
 
 		$args = array(
 			'labels'              => $labels,
-			'description'         => __( "A cached friend's post", 'friends' ),
+			'description'         => __( 'Your bookmark', 'friends' ),
 			'publicly_queryable'  => false,
 			'show_ui'             => true,
 			'show_in_menu'        => true,
