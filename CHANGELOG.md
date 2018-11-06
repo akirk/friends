@@ -1,3 +1,7 @@
+0.14
+===
+- Add bookmarks that can be used to recommend articles to friends
+
 0.13
 ===
 - No longer use hardcoded WP REST API URLs
