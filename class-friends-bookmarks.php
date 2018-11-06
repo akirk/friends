@@ -40,6 +40,7 @@ class Friends_Bookmarks {
 	 */
 	private function register_hooks() {
 		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'post_row_actions', array( $this, 'post_row_actions' ), 10, 2 );
 		add_action( 'wp_ajax_friends_save_bookmark', array( $this, 'save_bookmark' ) );
 	}
 
@@ -402,5 +403,21 @@ class Friends_Bookmarks {
 		$html = preg_replace( '#\n\s*\n\s*#', PHP_EOL . PHP_EOL, trim( $html ) );
 
 		return $html;
+	}
+
+	/**
+	 * Add actions to the post rows
+	 *
+	 * @param  array   $actions The existing actions.
+	 * @param  WP_Post $post    The post in question.
+	 * @return array The extended actions.
+	 */
+	public function post_row_actions( array $actions, WP_Post $post ) {
+		if ( self::CPT !== $post->post_type ) {
+			return;
+		}
+		$actions['visit'] = '<a href="' . esc_url( $post->guid ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
+
+		return $actions;
 	}
 }
