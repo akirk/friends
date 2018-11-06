@@ -203,7 +203,7 @@ class Friends_Page {
 	 * @reeturn string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, WP_Post $post, $leavename, $sample ) {
-		if ( Friends::CPT === $post->post_type ) {
+		if ( Friends::CPT === $post->post_type || Friends_Bookmarks::CPT === $post->post_type ) {
 			return get_the_guid( $post );
 		}
 		return $post_link;
