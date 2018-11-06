@@ -414,7 +414,7 @@ class Friends_Bookmarks {
 	 */
 	public function post_row_actions( array $actions, WP_Post $post ) {
 		if ( self::CPT !== $post->post_type ) {
-			return;
+			return $actions;
 		}
 		$actions['visit'] = '<a href="' . esc_url( $post->guid ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
 
