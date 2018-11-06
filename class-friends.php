@@ -150,6 +150,7 @@ class Friends {
 			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_nav_menus'   => false,
 			'show_in_admin_bar'   => false,
+			'show_in_rest'        => false,
 			'exclude_from_search' => apply_filters( 'friends_show_cached_posts', false ),
 			'public'              => false,
 			'menu_position'       => 5,

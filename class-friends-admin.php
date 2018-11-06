@@ -37,7 +37,7 @@ class Friends_Admin {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
+		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );

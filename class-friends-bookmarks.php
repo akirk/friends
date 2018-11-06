@@ -40,8 +40,16 @@ class Friends_Bookmarks {
 	 */
 	private function register_hooks() {
 		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
 		add_action( 'post_row_actions', array( $this, 'post_row_actions' ), 10, 2 );
-		add_action( 'wp_ajax_friends_save_bookmark', array( $this, 'save_bookmark' ) );
+		add_action( 'wp_ajax_friends_save_bookmark', array( $this, 'ajax_save_bookmark' ) );
+	}
+
+	/**
+	 * Registers the admin menus
+	 */
+	public function register_admin_menu() {
+		add_submenu_page( 'edit.php?post_type=' . self::CPT, __( 'Save Bookmark', 'friends' ), __( 'Save Bookmark', 'friends' ), 'manage_options', 'friends-save-bookmark', array( $this, 'render_save_bookmark' ) );
 	}
 
 	/**
@@ -72,6 +80,7 @@ class Friends_Bookmarks {
 			'show_in_menu'        => true,
 			'show_in_nav_menus'   => false,
 			'show_in_admin_bar'   => false,
+			'show_in_rest'        => false,
 			'exclude_from_search' => false,
 			'public'              => false,
 			'menu_position'       => 6,
@@ -83,41 +92,85 @@ class Friends_Bookmarks {
 	}
 
 	/**
+	 * Save the bookmark via the bookmarklet
+	 */
+	function ajax_save_bookmark() {
+		$error = $this->save_bookmark();
+		wp_safe_redirect( add_query_arg( 'error', $error->get_error_code(), self_admin_url( 'admin.php?page=friends-save-bookmark&url=' . esc_url( $_GET['url'] ) ) ) );
+	}
+
+	/**
+	 * Save the bookmark
+	 */
+	function render_save_bookmark() {
+		?>
+		<h1><?php esc_html_e( 'Save Bookmark', 'friends' ); ?></h1>
+		<?php
+		if ( isset( $_GET['error'] ) ) {
+			switch ( $_GET['error'] ) {
+				case 'invalid-url':
+					$error = __( 'You entererd an invalid URL.', 'friends' );
+					break;
+				case 'invalid-content':
+					$error = __( 'No content was extracted.', 'friends' );
+					break;
+				case 'could-not-download':
+					$error = __( 'Could not download the URL.', 'friends' );
+					break;
+				default:
+					$error = $_GET['error'];
+			}
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $error ); ?></p></div>
+			<?php
+		}
+		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'save-bookmark' ) ) {
+			$error = $this->download( $_POST['url'] );
+			if ( is_wp_error( $error ) ) {
+				?>
+				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $error->get_error_message() ); ?></p></div>
+				<?php
+			}
+		}
+
+		if ( ! empty( $_GET['url'] ) ) {
+			$url = $_GET['url'];
+		}
+
+		include apply_filters( 'friends_template_path', 'admin/save-bookmark.php' );
+	}
+
+	/**
 	 * Save the bookmark
 	 */
 	function save_bookmark() {
 		if ( empty( $_GET['url'] ) || ! is_string( $_GET['url'] ) || ! wp_http_validate_url( $_GET['url'] ) ) {
 			return new WP_Error( 'invalid-url', __( 'You entererd an invalid URL.', 'friends' ) );
 		}
-		$item = $this->download( $_GET['url'] );
-		if ( ! $item || is_wp_error( $item ) ) {
-			return $item;
-		}
 
-		if ( ! $item->content && ! $item->title ) {
-			return new WP_Error( 'invalid-content', 'No Content' );
-		}
-
-		$title   = strip_tags( trim( $item->title ) );
-		$content = wp_kses_post( trim( $item->content ) );
-		$post_id = null;
+		$post_id = $this->friends->feed->url_to_postid( $_GET['url'], get_current_user_id() );
 		if ( is_null( $post_id ) ) {
-			$post_id = $this->friends->feed->url_to_postid( $item->url, get_current_user_id() );
-		}
+			$item = $this->download( $_GET['url'] );
+			if ( is_wp_error( $item ) ) {
+				return $item;
+			}
 
-		$post_data = array(
-			'post_title'    => $title,
-			'post_content'  => $content,
-			'post_date_gmt' => date( 'Y-m-d H:i:s' ),
-			'post_status'   => 'publish',
-			'guid'          => $item->url,
-			'post_type'     => self::CPT,
-		);
+			if ( ! $item->content && ! $item->title ) {
+				return new WP_Error( 'invalid-content', __( 'No content was extracted.', 'friends' ) );
+			}
 
-		if ( ! is_null( $post_id ) ) {
-			$post_data['ID'] = $post_id;
-			wp_update_post( $post_data );
-		} else {
+			$title   = strip_tags( trim( $item->title ) );
+			$content = wp_kses_post( trim( $item->content ) );
+
+			$post_data = array(
+				'post_title'    => $title,
+				'post_content'  => $content,
+				'post_date_gmt' => date( 'Y-m-d H:i:s' ),
+				'post_status'   => 'publish',
+				'guid'          => $item->url,
+				'post_type'     => self::CPT,
+			);
+
 			$post_id = wp_insert_post( $post_data, true );
 		}
 
@@ -269,7 +322,7 @@ class Friends_Bookmarks {
 
 		$response = wp_safe_remote_get( $url, $args );
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return false;
+			return new WP_Error( 'could-not-download', __( 'Could not download the URL.', 'friends' ) );
 		}
 
 		$item      = $this->extract_content( wp_remote_retrieve_body( $response ), $site_config );
