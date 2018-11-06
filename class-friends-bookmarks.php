@@ -97,7 +97,11 @@ class Friends_Bookmarks {
 	 * Save the bookmark via the bookmarklet
 	 */
 	function ajax_save_bookmark() {
-		$error = $this->save_bookmark();
+		if ( empty( $_GET['url'] ) ) {
+			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
+		}
+
+		$error = $this->save_bookmark( $_GET['url'] );
 		wp_safe_redirect( add_query_arg( 'error', $error->get_error_code(), self_admin_url( 'admin.php?page=friends-save-bookmark&url=' . esc_url( $_GET['url'] ) ) ) );
 	}
 
@@ -114,7 +118,7 @@ class Friends_Bookmarks {
 		if ( isset( $_GET['error'] ) ) {
 			switch ( $_GET['error'] ) {
 				case 'invalid-url':
-					return new WP_Error( $_GET['error'], __( 'You entererd an invalid URL.', 'friends' ) );
+					return new WP_Error( $_GET['error'], __( 'You entered an invalid URL.', 'friends' ) );
 				case 'invalid-content':
 					return new WP_Error( $_GET['error'], __( 'No content was extracted.', 'friends' ) );
 				case 'could-not-download':
@@ -130,7 +134,7 @@ class Friends_Bookmarks {
 	 * Save the bookmark through the UI
 	 */
 	function render_save_bookmark() {
-		// $error = $this->process_admin_save_bookmark();
+		$error = $this->process_admin_save_bookmark();
 		?>
 		<h1><?php esc_html_e( 'Save Bookmark', 'friends' ); ?></h1>
 		<?php
@@ -148,16 +152,19 @@ class Friends_Bookmarks {
 	}
 
 	/**
-	 * Save the bookmark
+	 * Download and save the bookmark as a CPT
+	 *
+	 * @param  string $url The URL to save.
+	 * @return WP_Error    Potentially an error message
 	 */
-	function save_bookmark() {
-		if ( empty( $_GET['url'] ) || ! is_string( $_GET['url'] ) || ! wp_http_validate_url( $_GET['url'] ) ) {
-			return new WP_Error( 'invalid-url', __( 'You entererd an invalid URL.', 'friends' ) );
+	function save_bookmark( $url ) {
+		if ( ! is_string( $url ) || ! wp_http_validate_url( $url ) ) {
+			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 		}
 
-		$post_id = $this->friends->feed->url_to_postid( $_GET['url'], get_current_user_id() );
+		$post_id = $this->friends->feed->url_to_postid( $url, get_current_user_id() );
 		if ( is_null( $post_id ) ) {
-			$item = $this->download( $_GET['url'] );
+			$item = $this->download( $url );
 			if ( is_wp_error( $item ) ) {
 				return $item;
 			}
@@ -320,11 +327,14 @@ class Friends_Bookmarks {
 		$args = array(
 			'timeout'     => 20,
 			'redirection' => 5,
+			'headers'     => array(
+				'user-agent' => 'Friends Plugin',
+			),
 		);
 
 		$site_config = $this->get_site_config( $url );
 		if ( isset( $site_config['http_header'] ) ) {
-			$args['headers'] = $site_config['http_header'];
+			$args['headers'] = array_merge( $args['headers'], $site_config['http_header'] );
 		}
 
 		$response = wp_safe_remote_get( $url, $args );
