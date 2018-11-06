@@ -41,6 +41,7 @@ class Friends_Bookmarks {
 	private function register_hooks() {
 		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
+		add_action( 'edit_form_before_permalink', array( $this, 'edit_form_before_permalink' ), 10, 3 );
 		add_action( 'post_row_actions', array( $this, 'post_row_actions' ), 10, 2 );
 		add_action( 'wp_ajax_friends_save_bookmark', array( $this, 'ajax_save_bookmark' ) );
 	}
@@ -50,6 +51,7 @@ class Friends_Bookmarks {
 	 */
 	public function register_admin_menu() {
 		add_submenu_page( 'edit.php?post_type=' . self::CPT, __( 'Save Bookmark', 'friends' ), __( 'Save Bookmark', 'friends' ), 'manage_options', 'friends-save-bookmark', array( $this, 'render_save_bookmark' ) );
+		add_action( 'load-friends_bookmark_page_friends-save-bookmark', array( $this, 'process_admin_save_bookmark' ) );
 	}
 
 	/**
@@ -102,35 +104,40 @@ class Friends_Bookmarks {
 	/**
 	 * Save the bookmark
 	 */
-	function render_save_bookmark() {
-		?>
-		<h1><?php esc_html_e( 'Save Bookmark', 'friends' ); ?></h1>
-		<?php
+	function process_admin_save_bookmark() {
+		$error = false;
+
+		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'save-bookmark' ) ) {
+			return $this->save_bookmark( $_POST['url'] );
+		}
+
 		if ( isset( $_GET['error'] ) ) {
 			switch ( $_GET['error'] ) {
 				case 'invalid-url':
-					$error = __( 'You entererd an invalid URL.', 'friends' );
-					break;
+					return new WP_Error( $_GET['error'], __( 'You entererd an invalid URL.', 'friends' ) );
 				case 'invalid-content':
-					$error = __( 'No content was extracted.', 'friends' );
-					break;
+					return new WP_Error( $_GET['error'], __( 'No content was extracted.', 'friends' ) );
 				case 'could-not-download':
-					$error = __( 'Could not download the URL.', 'friends' );
-					break;
+					return new WP_Error( $_GET['error'], __( 'Could not download the URL.', 'friends' ) );
 				default:
-					$error = $_GET['error'];
+					return new WP_Error( $_GET['error'], $_GET['error'] );
 			}
-			?>
-			<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $error ); ?></p></div>
-			<?php
 		}
-		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'save-bookmark' ) ) {
-			$error = $this->download( $_POST['url'] );
-			if ( is_wp_error( $error ) ) {
-				?>
-				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $error->get_error_message() ); ?></p></div>
-				<?php
-			}
+		return false;
+	}
+
+	/**
+	 * Save the bookmark through the UI
+	 */
+	function render_save_bookmark() {
+		// $error = $this->process_admin_save_bookmark();
+		?>
+		<h1><?php esc_html_e( 'Save Bookmark', 'friends' ); ?></h1>
+		<?php
+		if ( is_wp_error( $error ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $error->get_error_message() ); ?></p></div>
+			<?php
 		}
 
 		if ( ! empty( $_GET['url'] ) ) {
@@ -270,12 +277,12 @@ class Friends_Bookmarks {
 				continue;
 			}
 
-			if ( 'strip_id_or_class' === $key ) {
-				if ( ! isset( $site_config['strip_id_or_class'] ) ) {
-					$site_config['strip_id_or_class'] = array();
+			if ( in_array( $key, array( 'strip', 'strip_id_or_class' ) ) ) {
+				if ( ! isset( $site_config[ $key ] ) ) {
+					$site_config[ $key ] = array();
 				}
 
-				$site_config['strip_id_or_class'][] = $value;
+				$site_config[ $key ][] = $value;
 				continue;
 			}
 		}
@@ -376,16 +383,24 @@ class Friends_Bookmarks {
 			}
 		}
 
+		if ( isset( $site_config['strip'] ) ) {
+			foreach ( $site_config['strip'] as $xp ) {
+				$this->remove_node( $xpath->query( $xp ) );
+			}
+		}
+
 		$item->title = $xpath->query( $site_config['title'] );
 		if ( $item->title ) {
 			$item->title = $this->get_inner_html( $item->title );
-		} else {
+		}
+		if ( ! $item->title ) {
 			$item->title = $this->get_inner_html( $xpath->query( '//title' ) );
 		}
 		$item->content = $xpath->query( $site_config['body'] );
 		if ( $item->content ) {
 			$item->content = $this->get_inner_html( $item->content );
-		} else {
+		}
+		if ( ! $item->content ) {
 			$item->content = $this->get_inner_html( $xpath->query( '//body' ) );
 		}
 
@@ -472,5 +487,20 @@ class Friends_Bookmarks {
 		$actions['visit'] = '<a href="' . esc_url( $post->guid ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
 
 		return $actions;
+	}
+
+	/**
+	 * Show the URL on the bookmarks custom post type
+	 *
+	 * @param  WP_Post $post The post to be shown.
+	 */
+	public function edit_form_before_permalink( WP_Post $post ) {
+		if ( self::CPT !== $post->post_type ) {
+			return;
+		}
+
+		?>
+		<p><label><?php _e( 'URL' ); ?> <input type="text" name="guid" value="<?php echo esc_url( $post->guid ); ?>" class="regular-text"/></label> (Saving URL changes doesn't work yet)</p>
+		<?php
 	}
 }
