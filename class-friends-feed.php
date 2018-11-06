@@ -630,10 +630,13 @@ class Friends_Feed {
 	 * @param int    $author_id The id of the author.
 	 * @return int Post ID, or 0 on failure.
 	 */
-	function url_to_postid( $url, $author_id ) {
+	function url_to_postid( $url, $author_id = false ) {
 		global $wpdb;
-
-		$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) AND post_author = %d LIMIT 1', $url, esc_attr( $url ), $author_id ) );
+		if ( $author_id ) {
+			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) AND post_author = %d LIMIT 1', $url, esc_attr( $url ), $author_id ) );
+		} else {
+			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) LIMIT 1', $url, esc_attr( $url ) ) );
+		}
 		return $post_id;
 	}
 }
