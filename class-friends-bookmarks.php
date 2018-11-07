@@ -494,7 +494,7 @@ class Friends_Bookmarks {
 		if ( self::CPT !== $post->post_type ) {
 			return $actions;
 		}
-		$actions['visit'] = '<a href="' . esc_url( $post->guid ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
+		$actions['visit'] = '<a href="' . esc_url( $post->guid ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $post->guid ) . '</a>';
 
 		return $actions;
 	}
