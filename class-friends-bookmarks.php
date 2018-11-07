@@ -510,7 +510,11 @@ class Friends_Bookmarks {
 		}
 
 		?>
-		<p><label><?php _e( 'URL' ); ?> <input type="text" name="guid" value="<?php echo esc_url( $post->guid ); ?>" class="regular-text"/></label> (Saving URL changes doesn't work yet)</p>
+		<p>
+			<label><?php _e( 'URL' ); ?> <input type="text" name="guid" value="<?php echo esc_url( $post->guid ); ?>" class="regular-text"/></label>
+			(Saving URL changes doesn't work yet)
+			<a href="<?php echo esc_url( site_url( '/friends/' . $post->ID . '/' ) ); ?>">View on frontend</a>
+		</p>
 		<?php
 	}
 }
