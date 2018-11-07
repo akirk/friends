@@ -87,7 +87,7 @@ class Friends_Bookmarks {
 			'public'              => false,
 			'menu_position'       => 6,
 			'menu_icon'           => 'dashicons-media-document',
-			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
+			'supports'            => array( 'title', 'editor', 'author' ),
 			'has_archive'         => true,
 		);
 		register_post_type( self::CPT, $args );
@@ -180,7 +180,7 @@ class Friends_Bookmarks {
 				'post_title'    => $title,
 				'post_content'  => $content,
 				'post_date_gmt' => date( 'Y-m-d H:i:s' ),
-				'post_status'   => 'publish',
+				'post_status'   => 'private',
 				'guid'          => $item->url,
 				'post_type'     => self::CPT,
 			);

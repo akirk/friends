@@ -47,6 +47,7 @@ class Friends_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'render_preview_friend_rules' ) );
+		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 	}
 
@@ -1230,6 +1231,38 @@ class Friends_Admin {
 	}
 
 	/**
+	 * Fires at the end of the delete users form prior to the confirm button.
+	 *
+	 * @param WP_User $current_user WP_User object for the current user.
+	 * @param array   $userids      Array of IDs for users being deleted.
+	 */
+	public function delete_user_form( $current_user, $userids ) {
+		$only_friends_affiliated = true;
+		foreach ( $userids as $user_id ) {
+			$user = new WP_User( $user_id );
+			if (
+				! $user->has_cap( 'friend_request' ) &&
+				! $user->has_cap( 'pending_friend_request' ) &&
+				! $user->has_cap( 'friend' ) &&
+				! $user->has_cap( 'subscription' )
+			) {
+				$only_friends_affiliated = false;
+				break;
+			}
+		}
+
+		if ( $only_friends_affiliated ) {
+			?>
+			<script type="text/javascript">
+				jQuery( function() {
+					jQuery( '#delete_option1' ).closest( 'li' ).hide();
+				} );
+			</script>
+			<?php
+		}
+	}
+
+	/**
 	 * Display the Bookmarklets at the Tools section of wp-admin
 	 */
 	public function toolbox_bookmarklets() {
@@ -1239,9 +1272,9 @@ class Friends_Admin {
 
 			<p><?php _e( "Drag one of these bookmarklets to your bookmarks bar and click it when you're on a site around the web for the appropriate action.", 'friends' ); ?></p>
 			<p>
-				<a onclick="alert( '<?php echo esc_attr( __( 'Please drag this to your bookmarks bar.', 'friends' ) ); ?>' );return false" href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Add as friend', 'friends' ); ?></a>
+				<a onclick="alert( '<?php echo esc_attr( __( 'Please drag this to your bookmarks bar.', 'friends' ) ); ?>' );return false" href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Add friend', 'friends' ); ?></a>
 				<a onclick="alert( '<?php echo esc_attr( __( 'Please drag this to your bookmarks bar.', 'friends' ) ); ?>' );return false" href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=send-friend-request&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Subscribe', 'friends' ); ?></a>
-				<a onclick="alert( '<?php echo esc_attr( __( 'Please drag this to your bookmarks bar.', 'friends' ) ); ?>' );return false" href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin-ajax.php?action=friends_save_bookmark&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Save', 'friends' ); ?></a>
+				<a onclick="alert( '<?php echo esc_attr( __( 'Please drag this to your bookmarks bar.', 'friends' ) ); ?>' );return false" href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin-ajax.php?action=friends_save_bookmark&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Bookmark', 'friends' ); ?></a>
 			</p>
 			</div>
 		</div>

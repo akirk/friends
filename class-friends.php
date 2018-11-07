@@ -153,6 +153,7 @@ class Friends {
 			'show_in_rest'        => false,
 			'exclude_from_search' => apply_filters( 'friends_show_cached_posts', false ),
 			'public'              => false,
+			'delete_with_user'    => true,
 			'menu_position'       => 5,
 			'menu_icon'           => 'dashicons-groups',
 			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
