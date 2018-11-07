@@ -651,6 +651,7 @@ class Friends_Admin {
 			}
 		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-' . $friend->ID ) ) {
 			if ( trim( $_POST['friends_display_name'] ) ) {
+				$friend->first_name   = trim( $_POST['friends_display_name'] );
 				$friend->display_name = trim( $_POST['friends_display_name'] );
 			}
 			if ( trim( $_POST['user_url'] ) && filter_var( $_POST['user_url'], FILTER_VALIDATE_URL ) ) {
