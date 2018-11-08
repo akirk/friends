@@ -1,0 +1,18 @@
+
+.only-friends {
+	background-color: #efe;
+	padding-left: .5em;
+}
+
+.not-friends {
+	background-color: #fee;
+	padding-left: .5em;
+}
+
+.only-friends .watermark, .not-friends .watermark {
+	float: right;
+	padding-top: .5em;
+	padding-right: .5em;
+	font-size: 80%;
+	color: #ccc;
+}
