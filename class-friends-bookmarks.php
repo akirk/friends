@@ -88,6 +88,7 @@ class Friends_Bookmarks {
 			'menu_position'       => 6,
 			'menu_icon'           => 'dashicons-media-document',
 			'supports'            => array( 'title', 'editor', 'author' ),
+			'taxonomies'          => array( 'post_tag' ),
 			'has_archive'         => true,
 		);
 		register_post_type( self::CPT, $args );
