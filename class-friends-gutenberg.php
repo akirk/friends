@@ -59,15 +59,15 @@ class Friends_Gutenberg {
 		);
 
 		wp_register_style(
-			'friends',
-			plugins_url( 'friends.css', __FILE__ )
+			'friends-gutenberg',
+			plugins_url( 'friends-gutenberg.css', __FILE__ )
 		);
 
 		register_block_type(
 			'friends/only-friends',
 			array(
-				'script'          => 'friends-block-only-friends',
-				'style'           => 'friends',
+				'editor_script'   => 'friends-block-only-friends',
+				'style'           => 'friends-gutenberg',
 				'render_callback' => array( $this, 'render_only_friends' ),
 			)
 		);
@@ -103,15 +103,15 @@ class Friends_Gutenberg {
 		);
 
 		wp_register_style(
-			'friends',
-			plugins_url( 'friends.css', __FILE__ )
+			'friends-gutenberg',
+			plugins_url( 'friends-gutenberg.css', __FILE__ )
 		);
 
 		register_block_type(
 			'friends/not-friends',
 			array(
-				'script'          => 'friends-block-not-friends',
-				'style'           => 'friends',
+				'editor_script'   => 'friends-block-not-friends',
+				'style'           => 'friends-gutenberg',
 				'render_callback' => array( $this, 'render_not_friends' ),
 			)
 		);
@@ -140,19 +140,17 @@ class Friends_Gutenberg {
 	 * Load up the language data for the Gutenberg blocks
 	 */
 	public function language_data() {
-		$locale_data = false;
+		$locale_data = array();
 		if ( function_exists( 'wp_get_jed_locale_data' ) ) {
 			$locale_data = wp_get_jed_locale_data( 'friends' );
 		} elseif ( function_exists( 'gutenberg_get_jed_locale_data' ) ) {
 			$locale_data = gutenberg_get_jed_locale_data( 'friends' );
 		}
 
-		if ( $locale_data ) {
-			wp_add_inline_script(
-				'friends-block-not-friends',
-				'wp.i18n.setLocaleData( ' . wp_json_encode( $locale_data ) . ', "friends" );',
-				'before'
-			);
-		}
+		wp_add_inline_script(
+			'friends-block-not-friends',
+			'wp.i18n.setLocaleData( ' . wp_json_encode( $locale_data ) . ', "friends" );',
+			'before'
+		);
 	}
 }
