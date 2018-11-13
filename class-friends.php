@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION       = '0.14.2';
+	const VERSION       = '0.14.3';
 	const CPT           = 'friend_post_cache';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'administrator';
@@ -39,13 +39,6 @@ class Friends {
 	 * @var Friends_Access_Control
 	 */
 	public $access_control;
-
-	/**
-	 * A reference to the Friends_Bookmarks object.
-	 *
-	 * @var Friends_Bookmarks
-	 */
-	public $bookmarks;
 
 	/**
 	 * A reference to the Friends_Feed object.
@@ -76,6 +69,13 @@ class Friends {
 	public $rest;
 
 	/**
+	 * A reference to the Friends_Saved_Articles object.
+	 *
+	 * @var Friends_Saved_Articles
+	 */
+	public $saved_articles;
+
+	/**
 	 * Get the class singleton
 	 *
 	 * @return Friends A class instance.
@@ -95,13 +95,13 @@ class Friends {
 	public function __construct() {
 		$this->access_control = new Friends_Access_Control( $this );
 		$this->admin          = new Friends_Admin( $this );
-		$this->bookmarks      = new Friends_Bookmarks( $this );
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->page           = new Friends_Page( $this );
 		$this->recommendation = new Friends_Recommendation( $this );
 		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
+		$this->saved          = new Friends_Saved( $this );
 
 		new Friends_3rd_Parties( $this );
 		new Friends_Shortcodes( $this );
@@ -160,6 +160,7 @@ class Friends {
 			'taxonomies'          => array( 'post_tag' ),
 			'has_archive'         => true,
 		);
+
 		register_post_type( self::CPT, $args );
 	}
 

@@ -203,7 +203,7 @@ class Friends_Page {
 	 * @reeturn string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, WP_Post $post, $leavename, $sample ) {
-		if ( Friends::CPT === $post->post_type || Friends_Bookmarks::CPT === $post->post_type ) {
+		if ( Friends::CPT === $post->post_type || Friends_Saved::CPT === $post->post_type ) {
 			return get_the_guid( $post );
 		}
 		return $post_link;
@@ -251,7 +251,7 @@ class Friends_Page {
 		$page_id = get_query_var( 'page' );
 
 		$query->set( 'post_status', array( 'publish', 'private' ) );
-		$query->set( 'post_type', array( Friends::CPT, Friends_Bookmarks::CPT, 'post' ) );
+		$query->set( 'post_type', array( Friends::CPT, Friends_Saved::CPT, 'post' ) );
 		$query->is_page = false;
 		$query->set( 'page', null );
 		$query->set( 'pagename', null );

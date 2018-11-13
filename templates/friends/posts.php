@@ -56,7 +56,7 @@ include __DIR__ . '/header.php'; ?>
 								<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
 							</a>
 						<?php endif; ?>
-					<?php elseif ( Friends_Bookmarks::CPT === get_post_type() ) : ?>
+					<?php elseif ( Friends_Saved::CPT === get_post_type() ) : ?>
 					<?php else : ?>
 						<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
 							<img src="<?php echo esc_url( $avatar ? $avatar : get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
@@ -73,7 +73,7 @@ include __DIR__ . '/header.php'; ?>
 									<strong><?php the_author(); ?></strong>
 								</a>
 							<?php endif; ?>
-						<?php elseif ( Friends_Bookmarks::CPT === get_post_type() ) : ?>
+						<?php elseif ( Friends_Saved::CPT === get_post_type() ) : ?>
 							<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">
 								<?php
 								// translators: %s is an author name.
@@ -89,7 +89,7 @@ include __DIR__ . '/header.php'; ?>
 					<span class="post-date"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
 					<?php edit_post_link(); ?>
 				</div>
-				<?php if ( Friends::CPT === get_post_type() || Friends_Bookmarks::CPT === get_post_type() ) : ?>
+				<?php if ( Friends::CPT === get_post_type() || Friends_Saved::CPT === get_post_type() ) : ?>
 					<button class="friends-trash-post" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
 						&#x1F5D1;
 					</button>
@@ -161,7 +161,7 @@ include __DIR__ . '/header.php'; ?>
 					<?php comments_number( '', 1, '%' ); ?>
 				</button>
 				<?php echo $friends->reactions->post_reactions(); ?>
-				<?php if ( Friends::CPT === get_post_type() || Friends_Bookmarks::CPT === get_post_type() ) : ?>
+				<?php if ( Friends::CPT === get_post_type() || Friends_Saved::CPT === get_post_type() ) : ?>
 					<?php echo $friends->recommendation->post_recommendation(); ?>
 				<?php endif; ?>
 			</footer>

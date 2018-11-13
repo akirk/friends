@@ -2,21 +2,21 @@
 /**
  * Friends Admin
  *
- * This contains the functions for the admin section.
+ * This contains the functions for saving articles.
  *
  * @package Friends
  */
 
 /**
- * This is the class for storing bookmarks with the Friends Plugin.
+ * This is the class for saving articles with the Friends Plugin.
  *
  * @since 0.6
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Bookmarks {
-	const CPT = 'friends_bookmark';
+class Friends_Saved {
+	const CPT = 'friends_saved';
 
 	/**
 	 * Contains a reference to the Friends class.
@@ -43,15 +43,15 @@ class Friends_Bookmarks {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ), 10, 3 );
 		add_action( 'edit_form_before_permalink', array( $this, 'edit_form_before_permalink' ), 10, 3 );
 		add_action( 'post_row_actions', array( $this, 'post_row_actions' ), 10, 2 );
-		add_action( 'wp_ajax_friends_save_bookmark', array( $this, 'ajax_save_bookmark' ) );
+		add_action( 'wp_ajax_friends_save_article', array( $this, 'ajax_save_article' ) );
 	}
 
 	/**
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
-		add_submenu_page( 'edit.php?post_type=' . self::CPT, __( 'Save Bookmark', 'friends' ), __( 'Save Bookmark', 'friends' ), 'manage_options', 'friends-save-bookmark', array( $this, 'render_save_bookmark' ) );
-		add_action( 'load-friends_bookmark_page_friends-save-bookmark', array( $this, 'process_admin_save_bookmark' ) );
+		add_submenu_page( 'edit.php?post_type=' . self::CPT, __( 'Save saved_article', 'friends' ), __( 'Save saved_article', 'friends' ), 'manage_options', 'friends-save-saved_article', array( $this, 'render_save_article' ) );
+		add_action( 'load-friends_saved_article_page_friends-save-saved_article', array( $this, 'process_admin_save_article' ) );
 	}
 
 	/**
@@ -59,24 +59,24 @@ class Friends_Bookmarks {
 	 */
 	public function register_custom_post_type() {
 		$labels = array(
-			'name'               => _x( 'Bookmarks', 'taxonomy plural name', 'friends' ),
-			'singular_name'      => _x( 'Bookmark', 'taxonomy singular name', 'friends' ),
-			'add_new'            => _x( 'Add New', 'bookmark' ),
-			'add_new_item'       => __( 'Add New Bookmark', 'friends' ),
-			'edit_item'          => __( 'Edit Bookmark', 'friends' ),
-			'new_item'           => __( 'New Bookmark', 'friends' ),
-			'all_items'          => __( 'All Bookmarks', 'friends' ),
-			'view_item'          => __( 'View Bookmark', 'friends' ),
-			'search_items'       => __( 'Search Bookmarks', 'friends' ),
-			'not_found'          => __( 'No Bookmarks found', 'friends' ),
-			'not_found_in_trash' => __( 'No Bookmarks found in the Trash', 'friends' ),
+			'name'               => _x( 'Saved Articles', 'taxonomy plural name', 'friends' ),
+			'singular_name'      => _x( 'Saved Article', 'taxonomy singular name', 'friends' ),
+			'add_new'            => _x( 'Add New', 'saved article', 'friends' ),
+			'add_new_item'       => __( 'Add New Saved Article', 'friends' ),
+			'edit_item'          => __( 'Edit Saved Article', 'friends' ),
+			'new_item'           => __( 'New Saved Article', 'friends' ),
+			'all_items'          => __( 'All Saved Articles', 'friends' ),
+			'view_item'          => __( 'View Saved Article', 'friends' ),
+			'search_items'       => __( 'Search Saved Articles', 'friends' ),
+			'not_found'          => __( 'No Saved Articles found', 'friends' ),
+			'not_found_in_trash' => __( 'No Saved Articles found in the Trash', 'friends' ),
 			'parent_item_colon'  => '',
-			'menu_name'          => __( 'Bookmarks' ),
+			'menu_name'          => _x( 'Saved Articles', 'taxonomy plural name', 'friends' ),
 		);
 
 		$args = array(
 			'labels'              => $labels,
-			'description'         => __( 'Your bookmark', 'friends' ),
+			'description'         => _x( 'Saved Article', 'taxonomy singular name', 'friends' ),
 			'publicly_queryable'  => false,
 			'show_ui'             => true,
 			'show_in_menu'        => true,
@@ -91,29 +91,30 @@ class Friends_Bookmarks {
 			'taxonomies'          => array( 'post_tag' ),
 			'has_archive'         => true,
 		);
+
 		register_post_type( self::CPT, $args );
 	}
 
 	/**
-	 * Save the bookmark via the bookmarklet
+	 * Save the saved_article via the saved_articlelet
 	 */
-	function ajax_save_bookmark() {
+	function ajax_save_article() {
 		if ( empty( $_GET['url'] ) ) {
 			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 		}
 
-		$error = $this->save_bookmark( $_GET['url'] );
-		wp_safe_redirect( add_query_arg( 'error', $error->get_error_code(), self_admin_url( 'admin.php?page=friends-save-bookmark&url=' . esc_url( $_GET['url'] ) ) ) );
+		$error = $this->save_article( $_GET['url'] );
+		wp_safe_redirect( add_query_arg( 'error', $error->get_error_code(), self_admin_url( 'admin.php?page=friends-save-saved_article&url=' . esc_url( $_GET['url'] ) ) ) );
 	}
 
 	/**
-	 * Save the bookmark
+	 * Save the saved_article
 	 */
-	function process_admin_save_bookmark() {
+	function process_admin_save_article() {
 		$error = false;
 
-		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'save-bookmark' ) ) {
-			return $this->save_bookmark( $_POST['url'] );
+		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'save-saved_article' ) ) {
+			return $this->save_article( $_POST['url'] );
 		}
 
 		if ( isset( $_GET['error'] ) ) {
@@ -132,12 +133,12 @@ class Friends_Bookmarks {
 	}
 
 	/**
-	 * Save the bookmark through the UI
+	 * Save the saved_article through the UI
 	 */
-	function render_save_bookmark() {
-		$error = $this->process_admin_save_bookmark();
+	function render_save_article() {
+		$error = $this->process_admin_save_article();
 		?>
-		<h1><?php esc_html_e( 'Save Bookmark', 'friends' ); ?></h1>
+		<h1><?php esc_html_e( 'Save saved_article', 'friends' ); ?></h1>
 		<?php
 		if ( is_wp_error( $error ) ) {
 			?>
@@ -149,16 +150,16 @@ class Friends_Bookmarks {
 			$url = $_GET['url'];
 		}
 
-		include apply_filters( 'friends_template_path', 'admin/save-bookmark.php' );
+		include apply_filters( 'friends_template_path', 'admin/save-saved_article.php' );
 	}
 
 	/**
-	 * Download and save the bookmark as a CPT
+	 * Download and save the saved_article as a CPT
 	 *
 	 * @param  string $url The URL to save.
 	 * @return WP_Error    Potentially an error message
 	 */
-	function save_bookmark( $url ) {
+	function save_article( $url ) {
 		if ( ! is_string( $url ) || ! wp_http_validate_url( $url ) ) {
 			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 		}
@@ -256,7 +257,7 @@ class Friends_Bookmarks {
 				continue;
 			}
 
-			if ( in_array( $key, array( 'title', 'date', 'body' ) ) ) {
+			if ( in_array( $key, array( 'title', 'date', 'body', 'author' ) ) ) {
 				$site_config[ $key ] = $value;
 				continue;
 			}
@@ -361,31 +362,25 @@ class Friends_Bookmarks {
 			$site_config = array();
 		}
 
-		$articles    = array( 'article', 'blog', 'body', 'content', 'entry', 'hentry', 'main', 'page', 'post', 'text', 'story' );
-		$dates       = array( 'date' );
-		$site_config = array_merge(
-			array(
-				'title' => '//h1',
-				'body'  => '//*[contains(@class, "' . implode( '")]|//*[contains(@class, "', $articles ) . '")]|*[contains(@id, "' . implode( '")]|//*[contains(@id, "', $articles ) . '")]',
-				'date'  => '//*[contains(@class, "' . implode( '")]|//*[contains(@class, "', $dates ) . '")]|*[contains(@id, "' . implode( '")]|//*[contains(@id, "', $dates ) . '")]',
-			),
-			$site_config
-		);
-
 		if ( isset( $site_config['replace'] ) ) {
 			foreach ( $site_config['replace'] as $search => $replace ) {
 				$html = str_replace( $search, $replace, $html );
 			}
 		}
 
-		$item = (object) array();
-		$dom  = new DOMDocument();
+		$item = (object) array(
+			'title'   => false,
+			'content' => false,
+		);
+
+		if ( ! class_exists( 'Readability', false ) ) {
+			require_once __DIR__ . '/lib/PressForward-Readability/Readability.php';
+		}
 
 		set_error_handler( '__return_null' );
-		$dom->loadHTML( '<?xml encoding="utf-8" ?>' . $html );
+		$readability = new Readability( '<?xml encoding="utf-8" ?>' . $html );
 		restore_error_handler();
-
-		$xpath = new DOMXpath( $dom );
+		$xpath = new DOMXpath( $readability->dom );
 
 		if ( isset( $site_config['strip_id_or_class'] ) ) {
 			foreach ( $site_config['strip_id_or_class'] as $id_or_class ) {
@@ -400,30 +395,28 @@ class Friends_Bookmarks {
 			}
 		}
 
-		$item->title = $xpath->query( $site_config['title'] );
-		if ( $item->title ) {
-			$item->title = $this->get_inner_html( $item->title );
-		}
-		if ( ! $item->title ) {
-			$item->title = $this->get_inner_html( $xpath->query( '//title' ) );
-		}
-		$item->content = $xpath->query( $site_config['body'] );
-		if ( $item->content ) {
-			$item->content = $this->get_inner_html( $item->content );
-		}
-		if ( ! $item->content ) {
-			$item->content = $this->get_inner_html( $xpath->query( '//body' ) );
-		}
-
-		$item->date = $xpath->query( $site_config['date'] );
-		if ( $item->date ) {
-			$item->date = $this->get_inner_html( $item->date );
-			if ( $item->date ) {
-				$item->date = strtotime( $item->date );
+		if ( isset( $site_config['title'] ) ) {
+			$item->title = $xpath->query( $site_config['title'] );
+			if ( $item->title ) {
+				$item->title = $this->get_inner_html( $item->title );
 			}
 		}
-		if ( ! $item->date ) {
-			$item->date = time();
+
+		if ( isset( $site_config['body'] ) ) {
+			$item->content = $xpath->query( $site_config['body'] );
+			if ( $item->content ) {
+				$item->content = $this->get_inner_html( $item->content );
+			}
+		}
+
+		if ( ! $item->title || ! $item->content ) {
+			$result = $readability->init();
+			if ( ! $item->title ) {
+				$item->title = $readability->getTitle()->textContent;
+			}
+			if ( ! $item->content ) {
+				$item->content = $readability->getContent()->innerHTML;
+			}
 		}
 
 		return $item;
@@ -501,7 +494,7 @@ class Friends_Bookmarks {
 	}
 
 	/**
-	 * Show the URL on the bookmarks custom post type
+	 * Show the URL on the saved_articles custom post type
 	 *
 	 * @param  WP_Post $post The post to be shown.
 	 */
