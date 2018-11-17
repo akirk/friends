@@ -602,7 +602,6 @@ class Friends_Feed {
 
 		$friend_user = $this->friends->access_control->get_authenticated_feed_user();
 		if ( ! $query->is_admin && $query->is_feed && $friend_user->has_cap( 'friend' ) && ! $friend_user->has_cap( 'restricted_friend' ) ) {
-			echo 'private';
 			$query->set( 'post_status', array( 'publish', 'private' ) );
 		}
 
