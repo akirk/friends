@@ -77,7 +77,7 @@ class Friends_Access_Control {
 	}
 
 	/**
-	 * Whether the private RSS feed is authenticated
+	 * Whether the private RSS feed is authenticated. This is the feed for the admins of the site that will contain the friends posts.
 	 *
 	 * @return bool The authentication status of the feed.
 	 */
