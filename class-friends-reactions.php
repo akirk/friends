@@ -119,7 +119,7 @@ class Friends_Reactions {
 		);
 
 		if ( false !== $exclude_user_id ) {
-			$excluded_user = new WP_User( $excluded_user_id );
+			$excluded_user = new WP_User( $exclude_user_id );
 		} else {
 			$excluded_user = wp_get_current_user();
 		}
