@@ -64,7 +64,7 @@ class Friends_Saved_ArticleTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 		$item    = $friends->saved->extract_content( file_get_contents( __DIR__ . '/data/basic-page.html' ) );
 
-		$this->assertContains( 'HTML Title', $item->title );
+		$this->assertContains( 'First Title', $item->title );
 		$this->assertContains( 'This is the article.', $item->content );
 		$this->assertEquals( 1, substr_count( $item->content, 'This is the article.' ) );
 		$this->assertContains( 'This should be removed with a site config.', $item->content );

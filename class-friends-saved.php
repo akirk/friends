@@ -410,12 +410,41 @@ class Friends_Saved {
 		}
 
 		if ( ! $item->title || ! $item->content ) {
-			$result = $readability->init();
-			if ( ! $item->title ) {
-				$item->title = $readability->getTitle()->textContent;
-			}
-			if ( ! $item->content ) {
-				$item->content = $readability->getContent()->innerHTML;
+			$copied_dom = clone $readability->dom;
+			$result     = $readability->init();
+			if ( $result ) {
+				if ( ! $item->title ) {
+					$item->title = $readability->getTitle()->textContent;
+				}
+				if ( ! $item->content ) {
+					$item->content = $readability->getContent()->innerHTML;
+				}
+			} else {
+				$xpath = new DOMXpath( $copied_dom );
+
+				if ( ! $item->title ) {
+					$item->title = $xpath->query( '(//h1)[1]' );
+					if ( $item->title ) {
+						$item->title = $this->get_inner_html( $item->title );
+					} else {
+						$item->title = $xpath->query( '//title' );
+						if ( $item->title ) {
+							$item->title = $this->get_inner_html( $item->title );
+						}
+					}
+				}
+				if ( ! $item->content ) {
+					$articles      = array( 'article', 'blog', 'body', 'content', 'entry', 'hentry', 'main', 'page', 'post', 'text', 'story' );
+					$item->content = $xpath->query( '(//*[contains(@class, "' . implode( '")]|//*[contains(@class, "', $articles ) . '")]|*[contains(@id, "' . implode( '")]|//*[contains(@id, "', $articles ) . '")])[1]' );
+					if ( $item->content ) {
+						$item->content = $this->get_inner_html( $item->content );
+					} else {
+						$item->title = $xpath->query( '//body' );
+						if ( $item->title ) {
+							$item->title = $this->get_inner_html( $item->title );
+						}
+					}
+				}
 			}
 		}
 
@@ -439,8 +468,7 @@ class Friends_Saved {
 		}
 
 		foreach ( $nodelist as $child ) {
-			$outer_html = $child->ownerDocument->saveXML( $child ); // @codingStandardsIgnoreLine
-			$html      .= preg_replace( "#^<(\\w*)(?:\\s*\\w+=(?:\"[^\"]*\"|\'[^\']*\'))*\\s*>(.*)</\\1>$#s", '\2', $outer_html ) . PHP_EOL;
+			$html .= $child->innerHTML; // @codingStandardsIgnoreLine
 		}
 
 		return $this->clean_html( $html );

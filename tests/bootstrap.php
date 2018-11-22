@@ -27,10 +27,13 @@ function _manually_load_plugin() {
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
+// We need to prevent output since we'll want to test some headers later.
 ob_start();
+
 // Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
 Friends::activate_plugin();
+ob_end_clean();
 
 // Make sure to be able to query these hosts.
 add_filter(

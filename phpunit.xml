@@ -3,6 +3,7 @@
 	bootstrap="tests/bootstrap.php"
 	backupGlobals="false"
 	colors="true"
+	stderr="true"
 	convertErrorsToExceptions="true"
 	convertNoticesToExceptions="true"
 	convertWarningsToExceptions="true"
