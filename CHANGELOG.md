@@ -1,6 +1,7 @@
 0.14
 ===
-- Add bookmarks that can be used to recommend articles to friends
+- Add Saved Articles that can be used to recommend articles to friends
+- Extract article contents using Readability
 
 0.13
 ===

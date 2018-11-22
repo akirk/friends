@@ -68,7 +68,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
  
 == Changelog ==
 = 0.14 =
-- Add bookmarks that can be used to recommend articles to friends
+- Add Saved Articles that can be used to recommend articles to friends
+- Extract article contents using Readability
 
 = 0.13 =
 - No longer use hardcoded WP REST API URLs

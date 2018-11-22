@@ -10,7 +10,7 @@
 /**
  * This is the class for saving articles with the Friends Plugin.
  *
- * @since 0.6
+ * @since 0.14
  *
  * @package Friends
  * @author Alex Kirk
