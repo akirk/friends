@@ -50,8 +50,8 @@ class Friends_Saved {
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
-		add_submenu_page( 'edit.php?post_type=' . self::CPT, __( 'Save saved_article', 'friends' ), __( 'Save saved_article', 'friends' ), 'manage_options', 'friends-save-saved_article', array( $this, 'render_save_article' ) );
-		add_action( 'load-friends_saved_article_page_friends-save-saved_article', array( $this, 'process_admin_save_article' ) );
+		add_submenu_page( 'edit.php?post_type=' . self::CPT, __( 'Save Article', 'friends' ), __( 'Save Article', 'friends' ), 'manage_options', 'friends-save-article', array( $this, 'render_save_article' ) );
+		add_action( 'load-friends_saved_page_friends-save-article', array( $this, 'process_admin_save_article' ) );
 	}
 
 	/**
@@ -104,7 +104,7 @@ class Friends_Saved {
 		}
 
 		$error = $this->save_article( $_GET['url'] );
-		wp_safe_redirect( add_query_arg( 'error', $error->get_error_code(), self_admin_url( 'admin.php?page=friends-save-saved_article&url=' . esc_url( $_GET['url'] ) ) ) );
+		wp_safe_redirect( add_query_arg( 'error', $error->get_error_code(), self_admin_url( 'admin.php?page=friends-save-article&url=' . esc_url( $_GET['url'] ) ) ) );
 	}
 
 	/**
@@ -113,7 +113,7 @@ class Friends_Saved {
 	function process_admin_save_article() {
 		$error = false;
 
-		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'save-saved_article' ) ) {
+		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'save-article' ) ) {
 			return $this->save_article( $_POST['url'] );
 		}
 
@@ -150,7 +150,7 @@ class Friends_Saved {
 			$url = $_GET['url'];
 		}
 
-		include apply_filters( 'friends_template_path', 'admin/save-saved_article.php' );
+		include apply_filters( 'friends_template_path', 'admin/save-article.php' );
 	}
 
 	/**
@@ -189,8 +189,8 @@ class Friends_Saved {
 
 			$post_id = wp_insert_post( $post_data, true );
 		}
-
-		wp_safe_redirect( str_replace( '&amp;', '&', get_edit_post_link( $post_id ) ) );
+		wp_untrash_post( $post_id );
+		wp_safe_redirect( self_admin_url( 'post.php?post=' . $post_id . '&action=edit' ) );
 		exit;
 	}
 

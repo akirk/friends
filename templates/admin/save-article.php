@@ -6,7 +6,7 @@
  */
 
 ?><div class="wrap"><form method="post">
-	<?php wp_nonce_field( 'save-bookmark' ); ?>
+	<?php wp_nonce_field( 'save-article' ); ?>
 
 	<table class="form-table">
 		<tbody>
