@@ -138,7 +138,7 @@ class Friends_Saved {
 	function render_save_article() {
 		$error = $this->process_admin_save_article();
 		?>
-		<h1><?php esc_html_e( 'Save saved_article', 'friends' ); ?></h1>
+		<h1><?php esc_html_e( 'Save Article', 'friends' ); ?></h1>
 		<?php
 		if ( is_wp_error( $error ) ) {
 			?>
