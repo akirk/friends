@@ -30,110 +30,60 @@ class Friends_Gutenberg {
 	 */
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
-
-		if ( ! function_exists( 'register_block_type' ) ) {
-			// Gutenberg is not active.
-			return;
-		}
-
-		$this->register_gutenberg_blocks();
+		$this->register_hooks();
 	}
 
 	/**
-	 * Register the Gutenberg blocks
+	 * Register the WordPress hooks
 	 */
-	private function register_gutenberg_blocks() {
+	private function register_hooks() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
-		add_action( 'init', array( $this, 'register_only_friends' ) );
-		add_action( 'init', array( $this, 'register_not_friends' ) );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
+		add_action( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
 	}
 
 	/**
-	 * Register the "Only visible for friends" Gutenberg block
+	 * Register the Gutenberg Block Visibility
 	 */
-	public function register_only_friends() {
-		wp_register_script(
-			'friends-block-only-friends',
-			plugins_url( 'blocks/only-friends.build.js', __FILE__ ),
+	public function register_friends_block_visibility() {
+		wp_enqueue_script(
+			'friends-block-visibility',
+			plugins_url( 'blocks/block-visibility.build.js', __FILE__ ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
 		);
 
-		wp_register_style(
+		wp_enqueue_style(
 			'friends-gutenberg',
 			plugins_url( 'friends-gutenberg.css', __FILE__ )
-		);
-
-		register_block_type(
-			'friends/only-friends',
-			array(
-				'editor_script'   => 'friends-block-only-friends',
-				'style'           => 'friends-gutenberg',
-				'render_callback' => array( $this, 'render_only_friends' ),
-			)
 		);
 	}
 
 	/**
 	 * Render the "Only visible for friends" Gutenberg block
 	 *
-	 * @param  object $attributes Attributes for the block.
 	 * @param  object $content    The content provided by the user.
+	 * @param  object $block      Attributes for the block.
 	 * @return string             The rendered content.
 	 */
-	public function render_only_friends( $attributes, $content ) {
-		if ( current_user_can( 'friend' ) ) {
-			return do_shortcode( $content );
+	public function render_friends_block_visibility( $content, $block ) {
+		$visibility = ( empty( $block['attrs'] ) || empty( $block['attrs']['friends_visibility'] ) ) ? 'default' : $block['attrs']['friends_visibility'];
+
+		switch ( $visibility ) {
+			case 'only-friends':
+				if ( current_user_can( 'friend' ) || current_user_can( 'administrator' ) ) {
+					return $content;
+				}
+				return '';
+
+			case 'not-friends':
+				if ( current_user_can( 'friend' ) && ! current_user_can( 'administrator' ) ) {
+					return '';
+				}
+				return $content;
+
 		}
 
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			return '<div class="only-friends"><span class="watermark">' . __( 'Only friends', 'friends' ) . '</span>' . do_shortcode( $content ) . '</div>';
-		}
-
-		return '';
-	}
-
-	/**
-	 * Register the "Only visible for non-friends" Gutenberg block
-	 */
-	public function register_not_friends() {
-		wp_register_script(
-			'friends-block-not-friends',
-			plugins_url( 'blocks/not-friends.build.js', __FILE__ ),
-			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
-		);
-
-		wp_register_style(
-			'friends-gutenberg',
-			plugins_url( 'friends-gutenberg.css', __FILE__ )
-		);
-
-		register_block_type(
-			'friends/not-friends',
-			array(
-				'editor_script'   => 'friends-block-not-friends',
-				'style'           => 'friends-gutenberg',
-				'render_callback' => array( $this, 'render_not_friends' ),
-			)
-		);
-	}
-
-	/**
-	 * Render the "Only visible for non-friends" Gutenberg block
-	 *
-	 * @param  object $attributes Attributes for the block.
-	 * @param  object $content    The content provided by the user.
-	 * @return string             The rendered content.
-	 */
-	public function render_not_friends( $attributes, $content ) {
-		if ( current_user_can( 'friend' ) ) {
-			return '';
-		}
-
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			return '<div class="not-friends"><span class="watermark">' . __( 'Not friends', 'friends' ) . '</span>' . do_shortcode( $content ) . '</div>';
-		}
-
-		return do_shortcode( $content );
+		return $content;
 	}
 
 	/**
@@ -147,10 +97,12 @@ class Friends_Gutenberg {
 			$locale_data = gutenberg_get_jed_locale_data( 'friends' );
 		}
 
-		wp_add_inline_script(
-			'friends-block-not-friends',
-			'wp.i18n.setLocaleData( ' . wp_json_encode( $locale_data ) . ', "friends" );',
-			'before'
-		);
+		if ( ! empty( $locale_data ) ) {
+			wp_add_inline_script(
+				'friends-block-not-friends',
+				'wp.i18n.setLocaleData( ' . wp_json_encode( $locale_data ) . ', "friends" );',
+				'before'
+			);
+		}
 	}
 }

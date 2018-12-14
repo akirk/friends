@@ -2,8 +2,7 @@ let webpack = require( 'webpack' ),
 	NODE_ENV = process.env.NODE_ENV || 'development',
 	webpackConfig = {
 		entry: {
-			'only-friends': './only-friends.js',
-			'not-friends': './not-friends.js',
+			'block-visibility': './block-visibility.js',
 		},
 		output: {
 			path: __dirname,
