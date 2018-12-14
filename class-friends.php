@@ -104,7 +104,6 @@ class Friends {
 		$this->saved          = new Friends_Saved( $this );
 
 		new Friends_3rd_Parties( $this );
-		new Friends_Shortcodes( $this );
 		new Friends_Gutenberg( $this );
 
 		$this->register_hooks();
@@ -257,7 +256,7 @@ class Friends {
 	}
 
 	/**
-	 * Creates a page /friends/ to enable customization via shortcodes.
+	 * Creates a page /friends/ to enable customization via.
 	 */
 	public static function create_friends_page() {
 		$query = new WP_Query( array( 'name' => 'friends' ) );
@@ -265,6 +264,7 @@ class Friends {
 			return;
 		}
 
+		// TODO convert to Gutenberg.
 		$content  = '[only-friends]';
 		$content .= __( 'Hi Friend!', 'friends' );
 		$content .= PHP_EOL;
