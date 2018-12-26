@@ -39,7 +39,7 @@ class Friends_Gutenberg {
 	private function register_hooks() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
-		add_action( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
+		add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
 	}
 
 	/**
