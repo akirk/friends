@@ -126,15 +126,35 @@ class Friends_Access_Control {
 	}
 
 	/**
-	 * Create a WP_User with a specific Friends-related role
+	 * Create a WP_User with for a challenge
 	 *
-	 * @param  string $site_url   The site URL for which to create the user.
-	 * @param  string $role       The role: subscription, pending_friend_request, or friend_request.
-	 * @param  string $display_name       The user's display name.
-	 * @param  string $gravatar The gravatar URL.
+	 * @param  string $challenge The challenge that we gave the requestor.
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
-	public function create_user( $site_url, $role, $display_name = null, $gravatar = null ) {
+	public function create_user_for_challenge( $challenge ) {
+		$data = get_option( 'friends_request_challenge_' . $challenge );
+		if ( ! $data ) {
+			return new WP_Error( 'friends_invalid_challenge', 'Invalid challenge for creation specified' );
+		}
+
+		$friend_user = $this->create_user( $data['site_url'], 'friend_request', $data['name'], $data['icon_url'], $data['message'] );
+		update_user_option( $friend_user->ID, 'friends_out_token', $data['key'] );
+
+		return $friend_user;
+	}
+
+
+	/**
+	 * Create a WP_User with a specific Friends-related role
+	 *
+	 * @param  string $site_url     The site URL for which to create the user.
+	 * @param  string $role         The role: subscription, pending_friend_request, or friend_request.
+	 * @param  string $display_name The user's display name.
+	 * @param  string $icon_url     The user_icon_url URL.
+	 * @param  string $message      A message passed by the requestor.
+	 * @return WP_User|WP_Error The created user or an error.
+	 */
+	public function create_user( $site_url, $role, $display_name = null, $icon_url = null, $message = null ) {
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -146,22 +166,22 @@ class Friends_Access_Control {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$user = $this->get_user_for_site_url( $site_url );
-		if ( $user && ! is_wp_error( $user ) ) {
+		$friend_user = $this->get_user_for_site_url( $site_url );
+		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 			foreach ( $role_rank as $_role => $rank ) {
 				if ( $rank > $role_rank[ $role ] ) {
 					break;
 				}
-				if ( $user->has_cap( $_role ) ) {
+				if ( $friend_user->has_cap( $_role ) ) {
 					// Upgrade user role.
-					$user->set_role( $role );
+					$friend_user->set_role( $role );
 					break;
 				}
 			}
-			return $user;
+			return $friend_user;
 		}
 
-		$userdata = array(
+		$userdata       = array(
 			'user_login'   => $this->get_user_login_for_site_url( $site_url ),
 			'display_name' => $display_name,
 			'first_name'   => $display_name,
@@ -170,32 +190,33 @@ class Friends_Access_Control {
 			'user_pass'    => wp_generate_password( 256 ),
 			'role'         => $role,
 		);
-		$user_id  = wp_insert_user( $userdata );
+		$friend_user_id = wp_insert_user( $userdata );
 
-		update_user_option( $user_id, 'friends_new_friend', true );
-		$this->update_gravatar( $user_id, $gravatar );
+		update_user_option( $friend_id, 'friends_new_friend', true );
+		$this->update_user_icon_url( $friend_id, $icon_url );
+		update_user_option( $friend_id, 'friends_request_message', $message );
 
-		return new WP_User( $user_id );
+		return new WP_User( $friend_id );
 	}
 
 	/**
 	 * Update a friend's avatar URL
 	 *
 	 * @param  int    $user_id    The user id.
-	 * @param  string $gravatar The avatar URL.
+	 * @param  string $user_icon_url  The user icon URL.
 	 * @return string|false The URL that was set or false.
 	 */
-	public function update_gravatar( $user_id, $gravatar ) {
-		if ( $gravatar && wp_http_validate_url( $gravatar ) ) {
+	public function update_user_icon_url( $user_id, $user_icon_url ) {
+		if ( $user_icon_url && wp_http_validate_url( $user_icon_url ) ) {
 			$user = new WP_User( $user_id );
 			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) ) {
 
-				$avatar_host = wp_parse_url( $gravatar, PHP_URL_HOST );
-				if ( preg_match( '#\bgravatar.com$#i', $avatar_host ) ) {
-					// We'll only allow gravatar URLs for now.
-					update_user_option( $user_id, 'friends_gravatar', $gravatar );
+				$icon_host = parse_url( $user_icon_url, PHP_URL_HOST );
+				if ( preg_match( '#\buser_icon_url.com$#i', $icon_host ) ) {
+					// We'll only allow user_icon_url URLs for now.
+					update_user_option( $user_id, 'friends_user_icon_url', $user_icon_url );
 
-					return $gravatar;
+					return $user_icon_url;
 				}
 			} elseif ( $user->has_cap( 'subscription' ) ) {
 				update_user_option( $user_id, 'friends_gravatar', $gravatar );

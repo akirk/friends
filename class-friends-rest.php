@@ -61,10 +61,10 @@ class Friends_REST {
 		);
 		register_rest_route(
 			self::PREFIX,
-			'friend-request-accepted',
+			'accept-friend-request',
 			array(
 				'methods'  => 'POST',
-				'callback' => array( $this, 'rest_friend_request_accepted' ),
+				'callback' => array( $this, 'rest_accept_friend_request' ),
 			)
 		);
 		register_rest_route(
@@ -179,7 +179,7 @@ class Friends_REST {
 	 * @param  WP_REST_Request $request The incoming request.
 	 * @return array The array to be returned via the REST API.
 	 */
-	public function rest_friend_request_accepted( WP_REST_Request $request ) {
+	public function rest_accept_friend_request( WP_REST_Request $request ) {
 		$accept_token   = $request->get_param( 'token' );
 		$out_token      = $request->get_param( 'friend' );
 		$proof          = $request->get_param( 'proof' );
@@ -226,7 +226,7 @@ class Friends_REST {
 		$this->friends->access_control->make_friend( $friend_user, $out_token );
 		$in_token = $this->friends->access_control->update_in_token( $friend_user->ID );
 
-		$this->friends->access_control->update_gravatar( $friend_user->ID, $request->get_param( 'gravatar' ) );
+		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ) );
 		if ( $request->get_param( 'name' ) ) {
 			wp_update_user(
 				array(
@@ -281,6 +281,17 @@ class Friends_REST {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_request( WP_REST_Request $request ) {
+		$pre_shared_secret = $request->get_param( 'pre_shared_secret' );
+		if ( get_option( 'friends_pre_shared_secret', 'friends' ) !== $pre_shared_secret ) {
+			return new WP_Error(
+				'friends_invalid_pre_shared_secret',
+				'An invalid pre shared secret was provided.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
 		if ( ! $this->limit_requests_in_minutes( 'friend-request' . $_SERVER['REMOTE_ADDR'], 5, 5 ) ) {
 			return new WP_Error(
 				'too_many_request',
@@ -303,130 +314,26 @@ class Friends_REST {
 			);
 		}
 
-		$rest_url = trim( $request->get_param( 'rest_url' ) );
-		if ( ! is_string( $rest_url ) || ! wp_http_validate_url( $rest_url ) || 0 === strcasecmp( rest_url(), $rest_url ) ) {
-			return new WP_Error(
-				'friends_invalid_rest_url',
-				'An invalid Rest URL was provided.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
+		$key     = $request->get_param( 'key' );
+		$message = $request->get_param( 'message' );
 
 		$challenge = sha1( wp_generate_password( 256 ) );
-		$response  = wp_safe_remote_post(
-			$rest_url . '/hello',
+		update_option(
+			'friends_request_challenge_' . $challenge,
 			array(
-				'body'        => array(
-					'challenge' => $challenge,
-					'site_url'  => site_url(),
-					'rest_url'  => get_rest_url() . Friends_REST::PREFIX,
-				),
-				'timeout'     => 5,
-				'redirection' => 1,
+				'key'      => $key,
+				'icon_url' => $icon_url,
+				'url'      => $site_url,
+				'message'  => $message,
 			)
 		);
 
-		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		if ( ! $json || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
-				return new WP_Error( $json->code, $json->message, $json->data );
-			}
-			return new WP_Error(
-				'friends_unsupported_site',
-				'An unsupported site was provided.',
-				array(
-					'status' => 403,
-					'error'  => serialize( $response ),
-				)
-			);
+		if ( ! get_option( 'friends_ignore_incoming_friend_requests' ) ) {
+			$friend_user = $this->friends->access_control->create_user_for_challenge( $challenge );
 		}
 
-		$signature = $request->get_param( 'signature' );
-		if ( sha1( $signature . $challenge ) !== $json->response ) {
-			return new WP_Error(
-				'friends_invalid_response',
-				'An invalid response was provided.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		$user = $this->friends->access_control->get_user_for_site_url( $site_url );
-		if ( $user && ! is_wp_error( $user ) ) {
-			$request_token = false;
-			if ( $user->has_cap( 'friend_request' ) && get_user_option( 'friends_request_token', $user->ID ) ) {
-				// Exit early and don't notify.
-				return array(
-					'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
-				);
-			}
-
-			if ( $user->has_cap( 'pending_friend_request' ) && get_option( 'friends_request_token_' . sha1( $rest_url ) ) ) {
-				// We already requested friendship, so let's become friends right away.
-				$in_token = $this->friends->access_control->update_in_token( $user->ID );
-				$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
-
-				$this->friends->access_control->update_gravatar( $user->ID, $request->get_param( 'gravatar' ) );
-				if ( $request->get_param( 'name' ) ) {
-					wp_update_user(
-						array(
-							'ID'           => $user->ID,
-							'nickname'     => $request->get_param( 'name' ),
-							'first_name'   => $request->get_param( 'name' ),
-							'display_name' => $request->get_param( 'name' ),
-						)
-					);
-				}
-				$token = sha1( wp_generate_password( 256 ) );
-				update_user_option( $user->ID, 'friends_accept_signature', $signature );
-				update_option( 'friends_accept_token_' . $token, $user->ID );
-
-				$main_user = new WP_User( get_option( 'friends_main_user_id' ) );
-				return array(
-					'name'     => $main_user->display_name,
-					'gravatar' => get_avatar_url( $main_user->ID ),
-					'friend'   => $in_token,
-					'token'    => $token,
-				);
-			}
-
-			if ( $user->has_cap( 'friend' ) && get_user_option( 'friends_in_token', $user->ID ) ) {
-				// Already a friend, was it deleted?
-				return array(
-					'friend' => get_user_option( 'friends_in_token', $user->ID ),
-				);
-			}
-		} elseif ( get_option( 'friends_ignore_incoming_friend_requests' ) ) {
-			$token = sha1( wp_generate_password( 256 ) );
-			update_option( 'friends_request_token_' . sha1( $rest_url ), $token );
-			return array(
-				'friend_request_pending' => $token,
-			);
-		}
-
-		$user = $this->friends->access_control->create_user( $site_url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'gravatar' ) );
-		if ( is_wp_error( $user ) ) {
-			return new WP_Error(
-				'friends_friend_request_failed',
-				'Could not respond to the friend request.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
-		update_user_option( $user->ID, 'friends_rest_url', $rest_url );
-
-		if ( ! $user->has_cap( 'friend_request' ) ) {
-			// Friend request was deleted on the other side and then re-initated.
-			$user->set_role( 'friend_request' );
-		}
-
-		update_user_option( $user->ID, 'friends_accept_signature', $signature );
 		return array(
-			'friend_request_pending' => get_user_option( 'friends_request_token', $user->ID ),
+			'challenge' => $challenge,
 		);
 	}
 
@@ -722,7 +629,7 @@ class Friends_REST {
 
 		$post_id = wp_insert_post( $post_data );
 		update_post_meta( $post_id, 'author', $request->get_param( 'author' ) );
-		update_post_meta( $post_id, 'gravatar', $request->get_param( 'gravatar' ) );
+		update_post_meta( $post_id, 'icon_url', $request->get_param( 'icon_url' ) );
 
 		$message = $request->get_param( 'message' );
 		if ( ! $message ) {
@@ -774,7 +681,7 @@ class Friends_REST {
 					'friend'   => $in_token,
 					'proof'    => sha1( $request_token . $friend_request_token ),
 					'name'     => $current_user->display_name,
-					'gravatar' => get_avatar_url( $current_user->ID ),
+					'icon_url' => get_avatar_url( $current_user->ID ),
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -790,8 +697,8 @@ class Friends_REST {
 		if ( isset( $json->friend ) ) {
 			$this->friends->access_control->make_friend( $friend_user, $json->friend );
 
-			if ( isset( $json->gravatar ) ) {
-				$this->friends->access_control->update_gravatar( $friend_user->ID, $json->gravatar );
+			if ( isset( $json->user_icon_url ) ) {
+				$this->friends->access_control->update_user_icon_url( $friend_user->ID, $json->user_icon_url );
 			}
 
 			if ( isset( $json->name ) ) {
