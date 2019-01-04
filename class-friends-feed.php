@@ -181,11 +181,17 @@ class Friends_Feed {
 		foreach ( $rules as $rule ) {
 			$field = $this->get_feed_rule_field( $rule['field'], $item );
 
-			if ( 'author' === $field && ! isset( $item->author ) ) {
+			if ( 'title' === $rule['field'] && ! isset( $item->$field ) ) {
+				if ( ! ( $item instanceof WP_Post ) ) {
+					$item->$field = $item->get_title();
+				}
+			}
+
+			if ( 'author' === $rule['field'] && ! isset( $item->$field ) ) {
 				if ( $item instanceof WP_Post ) {
-					$item->author = get_post_meta( get_the_ID( $post ), 'author', true );
+					$item->$field = get_post_meta( get_the_ID( $post ), 'author', true );
 				} else {
-					$item->author = $item->get_author()->name;
+					$item->$field = $item->get_author()->name;
 				}
 			}
 
