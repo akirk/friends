@@ -29,7 +29,6 @@ include __DIR__ . '/class-friends-reactions.php';
 include __DIR__ . '/class-friends-recommendation.php';
 include __DIR__ . '/class-friends-rest.php';
 include __DIR__ . '/class-friends-3rd-parties.php';
-include __DIR__ . '/class-friends-saved.php';
 include __DIR__ . '/class-friends-gutenberg.php';
 include __DIR__ . '/class-friends.php';
 

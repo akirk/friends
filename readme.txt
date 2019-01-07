@@ -67,6 +67,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.15 =
+- Removed Saved Articles, this will go into the Thinkery plugin
+
 = 0.14 =
 - Add Saved Articles that can be used to recommend articles to friends
 - Extract article contents using Readability

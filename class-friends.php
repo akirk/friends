@@ -69,13 +69,6 @@ class Friends {
 	public $rest;
 
 	/**
-	 * A reference to the Friends_Saved_Articles object.
-	 *
-	 * @var Friends_Saved_Articles
-	 */
-	public $saved_articles;
-
-	/**
 	 * Get the class singleton
 	 *
 	 * @return Friends A class instance.
@@ -101,7 +94,6 @@ class Friends {
 		$this->recommendation = new Friends_Recommendation( $this );
 		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
-		$this->saved          = new Friends_Saved( $this );
 
 		new Friends_3rd_Parties( $this );
 		new Friends_Gutenberg( $this );
