@@ -3,6 +3,8 @@ let webpack = require( 'webpack' ),
 	webpackConfig = {
 		entry: {
 			'block-visibility': './block-visibility.js',
+			'friends-list': './friends-list.js',
+			'friend-posts': './friend-posts.js',
 		},
 		output: {
 			path: __dirname,

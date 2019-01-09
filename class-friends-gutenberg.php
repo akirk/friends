@@ -37,9 +37,191 @@ class Friends_Gutenberg {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
-		add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
-		add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
+		if ( function_exists( 'register_block_type' ) ) {
+			add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
+			add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
+			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
+			add_action( 'block_attributes', array( $this, 'block_attributes' ) );
+
+			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_list' ) );
+			register_block_type(
+				'friends/friends-list',
+				array(
+					'render_callback' => array( $this, 'render_block_friends_list' ),
+					'attributes'      => array(
+						'user_types' => array(
+							'type' => 'string',
+						),
+					),
+				)
+			);
+
+			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friend_posts' ) );
+			register_block_type(
+				'friends/friend-posts',
+				array(
+					'render_callback' => array( $this, 'render_block_friend_posts' ),
+					'attributes'      => array(
+						'show_author' => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'show_date'   => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+					),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Register the Friends List block
+	 */
+	public function register_friends_list() {
+		if ( ! function_exists( 'register_block_type' ) ) {
+			// Gutenberg is not active.
+			return;
+		}
+
+		wp_enqueue_script(
+			'friends-friends-list',
+			plugins_url( 'blocks/friends-list.build.js', __FILE__ ),
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
+		);
+
+	}
+
+	/**
+	 * Render the Friends List block
+	 *
+	 * @param  array  $attributes Attributes set by Gutenberg.
+	 * @param  string $content    The JS block content.
+	 * @return string The new block content.
+	 */
+	public function render_block_friends_list( $attributes, $content ) {
+		switch ( $attributes['user_types'] ) {
+			case 'friend_requests':
+				$friends  = Friends::all_friend_requests();
+				$no_users = __( "You currently don't have any friend requests.", 'friends' );
+				break;
+
+			case 'friends_subscriptions':
+				$friends  = Friends::all_friends_subscriptions();
+				$no_users = __( "You don't have any friends or subscriptions yet.", 'friends' );
+				break;
+
+			case 'subscriptions':
+				$friends  = Friends::all_subscriptions();
+				$no_users = __( "You don't have any subscriptions yet.", 'friends' );
+				break;
+
+			case 'friends':
+			default:
+				$friends  = Friends::all_friends();
+				$no_users = __( "You don't have any friends yet.", 'friends' );
+		}
+
+		if ( $friends->get_total() === 0 ) {
+			return $no_users;
+		}
+
+		$out = '<ul>';
+		foreach ( $friends->get_results() as $friend_user ) {
+			$out .= sprintf(
+				'<li><a class="wp-block-friends-friends-list" href="%1$s">%2$s</a></li>',
+				esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) ),
+				esc_html( $friend_user->display_name )
+			);
+		}
+		$out .= '</ul>';
+
+		return $out;
+	}
+
+	/**
+	 * Register the Friend Posts block
+	 */
+	public function register_friend_posts() {
+		if ( ! function_exists( 'register_block_type' ) ) {
+			// Gutenberg is not active.
+			return;
+		}
+
+		wp_enqueue_script(
+			'friends-friend-posts',
+			plugins_url( 'blocks/friend-posts.build.js', __FILE__ ),
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
+		);
+	}
+
+	/**
+	 * Render the Friend Posts block
+	 *
+	 * @param  array  $attributes Attributes set by Gutenberg.
+	 * @param  string $content    The JS block content.
+	 * @return string The new block content.
+	 */
+	public function render_block_friend_posts( $attributes, $content ) {
+		$recent_posts = wp_get_recent_posts(
+			array(
+				'numberposts' => 10,
+				'post_type'   => Friends::CPT,
+			)
+		);
+
+		if ( count( $recent_posts ) === 0 ) {
+			return 'No posts';
+		}
+
+		$date_formats = array(
+			'Y w'   => 'D j, H:i',
+			'Y m d' => 'H:i',
+			'Y'     => 'M j',
+			''      => 'M j, Y',
+		);
+
+		$out         = '<ul>';
+		$last_author = false;
+		foreach ( $recent_posts as $post ) {
+			$out .= '<li>';
+			if ( $attributes['show_author'] ) {
+				$new_author = get_the_author_meta( 'display_name', $post['post_author'] );
+				if ( $last_author !== $new_author ) {
+					if ( $last_author ) {
+						$out .= '</li></ul>';
+					}
+					$out        .= '<img src="' . esc_url( get_avatar_url( $post['post_author'] ) ) . '" width="20" height="20" class="avatar" />';
+					$out        .= esc_html( $new_author );
+					$out        .= '<ul><li>';
+					$last_author = $new_author;
+				}
+			}
+
+			$out .= sprintf(
+				'<a class="wp-block-friends-friend-posts" href="%1$s">%2$s</a> ',
+				esc_url( get_permalink( $post['ID'] ) ),
+				esc_html( get_the_title( $post['ID'] ) )
+			);
+
+			if ( $attributes['show_date'] ) {
+				$post_date = strtotime( $post['post_date'] );
+				foreach ( $date_formats as $compare => $date_format ) {
+					if ( date( $compare ) === date( $compare, $post_date ) ) {
+						break;
+					}
+				}
+				$out .= ' <span class="date">' . date( $date_format, $post_date ) . '</span>';
+			}
+			$out .= '</li>';
+		}
+		if ( $attributes['show_author'] ) {
+			$out .= '</ul></li>';
+		}
+		$out .= '</ul>';
+
+		return $out;
 	}
 
 	/**
@@ -55,6 +237,23 @@ class Friends_Gutenberg {
 		wp_enqueue_style(
 			'friends-gutenberg',
 			plugins_url( 'friends-gutenberg.css', __FILE__ )
+		);
+	}
+
+	/**
+	 * Add the friends_visibility attribute globally.
+	 *
+	 * @param  object $attributes Attributes for the block.
+	 * @return object             Attributes for the block.
+	 */
+	public function block_attributes( $attributes ) {
+		return array_merge(
+			$attributes,
+			array(
+				'friends_visibility' => array(
+					'type' => 'string',
+				),
+			)
 		);
 	}
 

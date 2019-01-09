@@ -11,30 +11,26 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 			friends_visibility,
 		}, setAttributes } = props;
 
-		const onChangeVisibility = ( friends_visibility ) => {
-			setAttributes( { friends_visibility } );
-		}
-
 		return (
 			<Fragment>
 				<BlockEdit { ...props } />
 				<InspectorControls>
-					<PanelBody className="friends-block-visibility" title={ __( 'Friends' ) }>
+					<PanelBody className="friends-block-visibility" title={ __( 'Friends', 'friends' ) }>
 					<SelectControl
-							label={ __( 'Block visibility' ) }
-							onChange={ onChangeVisibility }
+							label={ __( 'Block visibility', 'friends' ) }
+							onChange={ friends_visibility => setAttributes( { friends_visibility } ) }
 							value={ friends_visibility }
 							options={ [
 								{
-									label: 'For everyone',
+									label: __( 'For everyone', 'friends' ),
 									value: 'default',
 								},
 								{
-									label: 'Only friends',
+									label: __( 'Only friends', 'friends' ),
 									value: 'only-friends',
 								},
 								{
-									label: 'Everyone except friends',
+									label: __( 'Everyone except friends', 'friends' ),
 									value: 'not-friends',
 								},
 							] }
@@ -44,19 +40,6 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 			</Fragment>
 		);
 	};
-}, "friendsBlockVisibility" );
+}, 'friendsBlockVisibility' );
 
-addFilter( 'blocks.registerBlockType', 'llms/visibility-attributes', ( settings, name ) => {
-
-	if ( ! settings.attributes ) {
-		settings.attributes = {};
-	}
-
-	settings.attributes.friends_visibility = {
-		default: 'all',
-		type: 'string',
-	};
-
-	return settings;
-} );
 addFilter( 'editor.BlockEdit', 'friends/block-visibility', friendsBlockVisibility );

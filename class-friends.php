@@ -224,6 +224,17 @@ class Friends {
 	}
 
 	/**
+	 * Gets all friends.
+	 */
+	public static function all_friends_subscriptions() {
+		static $all_friends;
+		if ( ! isset( $all_friends ) ) {
+			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'restricted_friend', 'subscription' ) ) );
+		}
+		return $all_friends;
+	}
+
+	/**
 	 * Gets all friend requests.
 	 */
 	public static function all_friend_requests() {
