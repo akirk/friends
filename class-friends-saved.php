@@ -306,7 +306,7 @@ class Friends_Saved {
 	 * @return array An array of potential filenames.
 	 */
 	public function get_site_config_filenames( $url ) {
-		$host = parse_url( $url, PHP_URL_HOST );
+		$host = wp_parse_url( $url, PHP_URL_HOST );
 		if ( 'www.' === substr( $host, 0, 4 ) ) {
 			$host = substr( $host, 4 );
 		}

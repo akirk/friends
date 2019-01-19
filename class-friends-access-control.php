@@ -187,15 +187,18 @@ class Friends_Access_Control {
 	public function update_gravatar( $user_id, $gravatar ) {
 		if ( $gravatar && wp_http_validate_url( $gravatar ) ) {
 			$user = new WP_User( $user_id );
-			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
+			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) ) {
 
-				$avatar_host = parse_url( $gravatar, PHP_URL_HOST );
+				$avatar_host = wp_parse_url( $gravatar, PHP_URL_HOST );
 				if ( preg_match( '#\bgravatar.com$#i', $avatar_host ) ) {
 					// We'll only allow gravatar URLs for now.
 					update_user_option( $user_id, 'friends_gravatar', $gravatar );
 
 					return $gravatar;
 				}
+			} elseif ( $user->has_cap( 'subscription' ) ) {
+				update_user_option( $user_id, 'friends_gravatar', $gravatar );
+				return $gravatar;
 			}
 		}
 

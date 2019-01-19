@@ -171,7 +171,38 @@ class Friends_Admin {
 			return new WP_Error( 'already-friend', __( 'You are already subscribed to this site.', 'friends' ) );
 		}
 
-		$user = $this->friends->access_control->create_user( $site_url, 'subscription' );
+		$favicon  = null;
+		$response = wp_safe_remote_get(
+			$site_url,
+			array(
+				'timeout'     => 20,
+				'redirection' => 5,
+			)
+		);
+		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
+			$dom = new DOMDocument();
+
+			set_error_handler( '__return_null' );
+			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
+			restore_error_handler();
+
+			$xpath = new DOMXpath( $dom );
+			foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
+				if ( in_array( $link->getAttribute( 'rel' ), array( 'shortcut icon', 'icon' ) ) ) {
+					$favicon = $link->getAttribute( 'href' );
+
+					$domain = wp_parse_url( $favicon, PHP_URL_HOST );
+
+					if ( ! $domain ) {
+						$parsed_site_url = wp_parse_url( $site_url );
+						$favicon         = $parsed_site_url['scheme'] . '://' . $parsed_site_url['host'] . '/' . ltrim( $favicon, '/' );
+					}
+					break;
+				}
+			}
+		}
+
+		$user = $this->friends->access_control->create_user( $site_url, 'subscription', null, $favicon );
 		if ( ! is_wp_error( $user ) ) {
 			$this->friends->feed->process_friend_feed( $user, $feed );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
@@ -933,7 +964,7 @@ class Friends_Admin {
 		}
 
 		if ( $friend && ! is_wp_error( $friend ) ) {
-			$domain = parse_url( $friend->user_url, PHP_URL_HOST );
+			$domain = wp_parse_url( $friend->user_url, PHP_URL_HOST );
 			$to     = '@' . $domain;
 		} else {
 			$domain = '';
