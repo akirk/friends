@@ -1,11 +1,12 @@
 === Friends ===
 Contributors: akirk
-Tags: friends, friends-plugin, private-posts, rss, private-blogging, decentralized, social-network, oyd, own-your-data
+Tags: friends, rss, decentralized, social-network, oyd, own-your-data
 Requires at least: 5.0
 Tested up to: 5.0
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Stable tag: trunk
 
 Decentralized Social Networking with WordPress. Connect WordPresses through friend requests and read each other’s (private) posts in a feed reader.
 

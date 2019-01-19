@@ -851,8 +851,6 @@ class Friends_Admin {
 						?>
 					</p></div>
 					<?php
-					$this->render_suggest_friends_plugin( null, $friend_user );
-					return;
 				} else {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
@@ -956,25 +954,18 @@ class Friends_Admin {
 	 * @param WP_User $friend The friend to which to suggest the plugin.
 	 */
 	public function render_suggest_friends_plugin( $string, WP_User $friend = null ) {
-		?>
-		<p><?php esc_html_e( "Maybe you'll want to suggest your friend to install the friends plugin?", 'friends' ); ?> <?php esc_html_e( 'We have prepared some tools for you to give them instructions on how to do so.', 'friends' ); ?></p>
-		<?php
-
-		$error = $this->process_suggest_friends_plugin();
-		if ( is_wp_error( $error ) ) {
-			?>
-			<div id="message" class="updated error is-dismissible"><p><?php echo $error->get_error_message(); ?></p></div>
-			<?php
-		} elseif ( $error ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'The message to your friend was sent.', 'friends' ); ?></p></div>
-			<?php
-		}
 		if ( ! isset( $_GET['tab'] ) ) {
 			$_GET['tab'] = 'e-mail';
 		}
 
-		if ( ! $friend && isset( $_GET['url'] ) ) {
+		if ( ! $friend && isset( $_GET['user'] ) ) {
+			$friend = new WP_User( intval( $_GET['user'] ) );
+			if ( $friend->has_cap( 'subscription' ) ) {
+				$url = $friend->user_url;
+			} else {
+				$friend = null;
+			}
+		} elseif ( ! $friend && isset( $_GET['url'] ) ) {
 			$friend = $this->friends->access_control->get_user_for_site_url( $_GET['url'] );
 			$url    = $_GET['url'];
 			if ( 'http' !== substr( $url, 0, 4 ) ) {
@@ -990,6 +981,22 @@ class Friends_Admin {
 		} else {
 			$domain = '';
 			$to     = '';
+		}
+
+		?>
+		<h1><?php echo esc_html( $friend->display_name ); ?></h1>
+		<p><?php esc_html_e( "Maybe you'll want to suggest your friend to install the friends plugin?", 'friends' ); ?> <?php esc_html_e( 'We have prepared some tools for you to give them instructions on how to do so.', 'friends' ); ?></p>
+		<?php
+
+		$error = $this->process_suggest_friends_plugin();
+		if ( is_wp_error( $error ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php echo $error->get_error_message(); ?></p></div>
+			<?php
+		} elseif ( $error ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'The message to your friend was sent.', 'friends' ); ?></p></div>
+			<?php
 		}
 
 		$tweet = '@' . $domain . ' ';

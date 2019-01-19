@@ -63,6 +63,8 @@
 						<?php echo esc_html( _x( 'Subscription', 'User role', 'friends' ) ); ?>
 						<p class="description">
 							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'send-friend-request-' . $friend->ID, 'send-friend-request' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
+							<?php _e( 'or' ); ?>
+							<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=suggest-friends-plugin&user=' . $friend->ID ) ); ?>"><?php esc_html_e( 'Suggest Friends Plugin', 'friends' ); ?></a>
 						</p>
 					<?php elseif ( $friend->has_cap( 'restricted_friend' ) ) : ?>
 						<?php echo esc_html( _x( 'Restricted Friend', 'User role', 'friends' ) ); ?>
