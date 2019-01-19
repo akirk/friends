@@ -9,15 +9,15 @@ $friends = Friends::get_instance();
 include __DIR__ . '/header.php'; ?>
 <section class="posts">
 	<div class="friends-topbar">
-		<?php if ( $friends->page->author ) : ?>
+		<?php if ( $friends->frontend->author ) : ?>
 			<h1>
-			<?php echo esc_html( $friends->page->author->display_name ); ?>
+			<?php echo esc_html( $friends->frontend->author->display_name ); ?>
 			</h1>
 			<p>
 			<?php
 			echo wp_kses(
 				// translators: %1$s is a site name, %2$s is a URL.
-				sprintf( __( 'Visit %1$s. Back to <a href=%2$s>your friends page</a>.', 'friends' ), '<a href="' . esc_url( $friends->page->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->page->author->ID ) ) . '">' . esc_html( $friends->page->author->display_name ) . '</a>', '"' . esc_attr( site_url( '/friends/' ) ) . '"' ),
+				sprintf( __( 'Visit %1$s. Back to <a href=%2$s>your friends page</a>.', 'friends' ), '<a href="' . esc_url( $friends->frontend->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->frontend->author->ID ) ) . '">' . esc_html( $friends->frontend->author->display_name ) . '</a>', '"' . esc_attr( site_url( '/friends/' ) ) . '"' ),
 				array(
 					'a' => array(
 						'href'       => array(),

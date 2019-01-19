@@ -55,11 +55,11 @@ class Friends {
 	public $notifications;
 
 	/**
-	 * A reference to the Friends_Page object.
+	 * A reference to the Friends_Frontend object.
 	 *
-	 * @var Friends_Page
+	 * @var Friends_Frontend
 	 */
-	public $page;
+	public $frontend;
 
 	/**
 	 * A reference to the Friends_REST object.
@@ -90,7 +90,7 @@ class Friends {
 		$this->admin          = new Friends_Admin( $this );
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
-		$this->page           = new Friends_Page( $this );
+		$this->frontend       = new Friends_Frontend( $this );
 		$this->recommendation = new Friends_Recommendation( $this );
 		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );

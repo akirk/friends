@@ -15,7 +15,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Page {
+class Friends_Frontend {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -149,7 +149,7 @@ class Friends_Page {
 	 * @return string The new template to be loaded.
 	 */
 	public function template_override( $template ) {
-		if ( ! $this->is_friends_page() ) {
+		if ( ! $this->is_friends_frontend() ) {
 			return $template;
 		}
 
@@ -214,7 +214,7 @@ class Friends_Page {
 	 *
 	 * @return boolean Whether we are on a friends page URL.
 	 */
-	protected function is_friends_page() {
+	protected function is_friends_frontend() {
 		global $wp_query;
 
 		if ( ! isset( $wp_query ) || ! isset( $wp_query->query['pagename'] ) ) {
@@ -237,7 +237,7 @@ class Friends_Page {
 	 */
 	public function friend_posts_query( $query ) {
 		global $wp_query;
-		if ( $wp_query !== $query || ! $this->is_friends_page() ) {
+		if ( $wp_query !== $query || ! $this->is_friends_frontend() ) {
 			return $query;
 		}
 
