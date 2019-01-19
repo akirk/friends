@@ -16,3 +16,8 @@
 	font-size: 80%;
 	color: #ccc;
 }
+
+ul.friend-posts img.avatar {
+	vertical-align: middle;
+	margin-right: .3em;
+}

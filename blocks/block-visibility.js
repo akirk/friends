@@ -15,7 +15,7 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 			<Fragment>
 				<BlockEdit { ...props } />
 				<InspectorControls>
-					<PanelBody className="friends-block-visibility" title={ __( 'Friends', 'friends' ) }>
+					<PanelBody className="friends-block-visibility" title={ __( 'Friends Visibility', 'friends' ) }>
 					<SelectControl
 							label={ __( 'Block visibility', 'friends' ) }
 							onChange={ friends_visibility => setAttributes( { friends_visibility } ) }

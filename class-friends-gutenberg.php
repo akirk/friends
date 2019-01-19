@@ -62,13 +62,31 @@ class Friends_Gutenberg {
 				array(
 					'render_callback' => array( $this, 'render_block_friend_posts' ),
 					'attributes'      => array(
-						'show_author' => array(
+						'author_inline' => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+						'author_name'   => array(
 							'type'    => 'boolean',
 							'default' => true,
 						),
-						'show_date'   => array(
+						'author_avatar' => array(
 							'type'    => 'boolean',
 							'default' => true,
+						),
+						'show_date'     => array(
+							'type'    => 'boolean',
+							'default' => true,
+						),
+						'count'         => array(
+							'type'    => 'number',
+							'default' => 5,
+						),
+						'exclude_users' => array(
+							'type' => 'string',
+						),
+						'only_users'    => array(
+							'type' => 'string',
 						),
 					),
 				)
@@ -164,17 +182,6 @@ class Friends_Gutenberg {
 	 * @return string The new block content.
 	 */
 	public function render_block_friend_posts( $attributes, $content ) {
-		$recent_posts = wp_get_recent_posts(
-			array(
-				'numberposts' => 10,
-				'post_type'   => Friends::CPT,
-			)
-		);
-
-		if ( count( $recent_posts ) === 0 ) {
-			return 'No posts';
-		}
-
 		$date_formats = array(
 			'Y w'   => 'D j, H:i',
 			'Y m d' => 'H:i',
@@ -182,41 +189,91 @@ class Friends_Gutenberg {
 			''      => 'M j, Y',
 		);
 
-		$out         = '<ul>';
 		$last_author = false;
-		foreach ( $recent_posts as $post ) {
-			$out .= '<li>';
-			if ( $attributes['show_author'] ) {
-				$new_author = get_the_author_meta( 'display_name', $post['post_author'] );
-				if ( $last_author !== $new_author ) {
-					if ( $last_author ) {
-						$out .= '</li></ul>';
-					}
-					$out        .= '<img src="' . esc_url( get_avatar_url( $post['post_author'] ) ) . '" width="20" height="20" class="avatar" />';
-					$out        .= esc_html( $new_author );
-					$out        .= '<ul><li>';
-					$last_author = $new_author;
-				}
-			}
 
-			$out .= sprintf(
-				'<a class="wp-block-friends-friend-posts" href="%1$s">%2$s</a> ',
-				esc_url( get_permalink( $post['ID'] ) ),
-				esc_html( get_the_title( $post['ID'] ) )
+		$only_users    = array_flip( array_filter( preg_split( '/[, ]+/', $attributes['only_users'] ) ) );
+		$exclude_users = array_flip( array_filter( preg_split( '/[, ]+/', $attributes['exclude_users'] ) ) );
+
+		$count     = max( 1, min( 100, $attributes['count'] ) );
+		$remaining = $count;
+		$offset    = 0;
+		$out       = '<ul class="friend-posts">';
+		while ( $remaining > 0 ) {
+			$recent_posts = wp_get_recent_posts(
+				array(
+					'numberposts' => $count,
+					'offset'      => $offset,
+					'post_type'   => Friends::CPT,
+				)
 			);
-
-			if ( $attributes['show_date'] ) {
-				$post_date = strtotime( $post['post_date'] );
-				foreach ( $date_formats as $compare => $date_format ) {
-					if ( date( $compare ) === date( $compare, $post_date ) ) {
-						break;
-					}
-				}
-				$out .= ' <span class="date">' . date( $date_format, $post_date ) . '</span>';
+			if ( count( $recent_posts ) === 0 ) {
+				break;
 			}
-			$out .= '</li>';
+			$offset += $count;
+
+			foreach ( $recent_posts as $post ) {
+				$author = get_the_author_meta( 'display_name', $post['post_author'] );
+
+				if ( ! empty( $only_users ) && ! isset( $only_users[ $author ] ) ) {
+					continue;
+				}
+
+				if ( ! empty( $exclude_users ) && isset( $exclude_users[ $author ] ) ) {
+					continue;
+				}
+
+				if ( $remaining <= 0 ) {
+					break 2;
+				}
+				$remaining -= 1;
+
+				if ( $attributes['author_name'] || $attributes['author_avatar'] || $attributes['author_inline'] ) {
+					if ( $attributes['author_inline'] || $last_author !== $author ) {
+						if ( $last_author && ! $attributes['author_inline'] ) {
+							$out .= '</li></ul></li>';
+						}
+						$last_author = $author;
+
+						$out .= '<li>';
+						if ( $attributes['author_avatar'] ) {
+							$out .= '<img src="' . esc_url( get_avatar_url( $post['post_author'] ) ) . '" width="20" height="20" class="avatar" />';
+						}
+						if ( $attributes['author_name'] ) {
+							$out .= esc_html( $author );
+						}
+
+						if ( $attributes['author_inline'] ) {
+							$out .= ' ';
+						} else {
+							$out .= '<ul><li>';
+						}
+					} else {
+						$out .= '<li>';
+					}
+				} else {
+					$out .= '<li>';
+				}
+
+				$out .= sprintf(
+					'<a class="wp-block-friends-friend-posts" href="%1$s">%2$s</a>',
+					esc_url( get_permalink( $post['ID'] ) ),
+					esc_html( get_the_title( $post['ID'] ) )
+				);
+
+				if ( $attributes['show_date'] ) {
+					$post_date = strtotime( $post['post_date'] );
+					foreach ( $date_formats as $compare => $date_format ) {
+						if ( date( $compare ) === date( $compare, $post_date ) ) {
+							break;
+						}
+					}
+					$out .= ' <span class="date">' . date( $date_format, $post_date ) . '</span>';
+				}
+				$out .= '</li>';
+			}
 		}
-		if ( $attributes['show_author'] ) {
+
+		if ( $last_author && ( $attributes['author_name'] || $attributes['author_avatar'] ) && ! $attributes['author_inline'] ) {
 			$out .= '</ul></li>';
 		}
 		$out .= '</ul>';
