@@ -69,6 +69,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 == Changelog ==
 = 0.15 =
 - Removed Saved Articles, this will go into the Thinkery plugin
+- Subscriptions will use the site's favicon as user avatar
+- Removed short codes and replaced them with Gutenberg blocks "Friend Posts" and "Friends List" Gutenberg, added a "Friends Visibility" global Gutenberg option
 
 = 0.14 =
 - Add Saved Articles that can be used to recommend articles to friends
