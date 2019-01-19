@@ -266,6 +266,11 @@ class Friends_Frontend {
 			$query->set( 'page_id', $page_id );
 			$query->is_singular = true;
 		} else {
+			// This is the main friends page.
+			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
+			if ( $hide_from_friends_page ) {
+				$query->set( 'author__not_in', $hide_from_friends_page );
+			}
 			$query->is_singular = false;
 		}
 

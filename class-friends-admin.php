@@ -692,6 +692,22 @@ class Friends_Admin {
 			}
 			wp_update_user( $friend );
 
+			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
+			if ( ! $hide_from_friends_page ) {
+				$hide_from_friends_page = array();
+			}
+			if ( isset( $_POST['hide_from_friends_page'] ) && $_POST['hide_from_friends_page'] ) {
+				if ( ! in_array( $friend->ID, $hide_from_friends_page ) ) {
+					$hide_from_friends_page[] = $friend->ID;
+					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
+				}
+			} else {
+				if ( in_array( $friend->ID, $hide_from_friends_page ) ) {
+					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->ID ) ) );
+					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
+				}
+			}
+
 			if ( ! get_user_option( 'friends_no_new_post_notification' ) ) {
 				if ( isset( $_POST['friends_new_post_notification'] ) && $_POST['friends_new_post_notification'] ) {
 					delete_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID );
@@ -721,7 +737,7 @@ class Friends_Admin {
 	 * Render the Friends Edit User page
 	 */
 	public function render_admin_edit_friend() {
-		$friend       = $this->check_admin_edit_friend();
+		$friend = $this->check_admin_edit_friend();
 		$friend_posts = new WP_Query(
 			array(
 				'post_type'   => Friends::CPT,
@@ -729,7 +745,12 @@ class Friends_Admin {
 				'author'      => $friend->ID,
 			)
 		);
-		$rules        = $this->friends->feed->get_feed_rules( $friend );
+
+		$rules = $this->friends->feed->get_feed_rules( $friend );
+		$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
+		if ( ! $hide_from_friends_page ) {
+			$hide_from_friends_page = array();
+		}
 
 		?>
 		<h1><?php echo esc_html( $friend->display_name ); ?></h1>

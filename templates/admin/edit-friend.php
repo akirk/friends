@@ -20,20 +20,27 @@
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>
 				<td>
-
+					<fieldset>
+						<label for="hide_from_friends_page">
+							<input name="hide_from_friends_page" type="checkbox" id="hide_from_friends_page" value="1" <?php checked( '1', in_array( $friend->ID, $hide_from_friends_page ) ); ?>>
+							<?php esc_html_e( "Don't show posts on your friends page", 'friends' ); ?>
+						</label>
+					</fieldset>
+					<fieldset>
 					<a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend->user_login ) . '/' ) ); ?>">
 						<?php
 						// translators: %d is the number of posts.
 						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $friend_posts->found_posts, 'friends' ), $friend_posts->found_posts ) );
 						?>
 					</a>
+					</fieldset>
 					<p class="description">
 					<?php
 					// translators: %s is a URL.
 					printf( __( '<a href=%s>Refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ) );
 					?>
 					</p>
-					</td>
+				</td>
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Created', 'friends' ); ?></label></th>
