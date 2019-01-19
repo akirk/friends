@@ -49,7 +49,11 @@ class Friends_Blocks {
 				array(
 					'render_callback' => array( $this, 'render_block_friends_list' ),
 					'attributes'      => array(
-						'user_types' => array(
+						'users_inline' => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
+						'user_types'   => array(
 							'type' => 'string',
 						),
 					),
@@ -142,18 +146,37 @@ class Friends_Blocks {
 		}
 
 		if ( $friends->get_total() === 0 ) {
-			return $no_users;
+			return '<span class="wp-block-friends-friends-list no-users">' . $no_users . '</span>';
 		}
 
-		$out = '<ul>';
+		if ( $attributes['users_inline'] ) {
+			$out   = '';
+			$first = true;
+		} else {
+			$out = '<ul>';
+		}
 		foreach ( $friends->get_results() as $friend_user ) {
+			$count += 1;
+			if ( $attributes['users_inline'] ) {
+				if ( ! $first ) {
+					$out .= ', ';
+				}
+				$first = false;
+			} else {
+				$out .= '<li>';
+			}
 			$out .= sprintf(
-				'<li><a class="wp-block-friends-friends-list" href="%1$s">%2$s</a></li>',
+				'<a class="wp-block-friends-friends-list wp-user" href="%1$s">%2$s</a></li>',
 				esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) ),
 				esc_html( $friend_user->display_name )
 			);
+			if ( ! $attributes['users_inline'] ) {
+				$out .= '</li>';
+			}
 		}
-		$out .= '</ul>';
+		if ( ! $attributes['users_inline'] ) {
+			$out .= '</ul>';
+		}
 
 		return $out;
 	}
