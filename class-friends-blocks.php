@@ -1,21 +1,21 @@
 <?php
 /**
- * Friends Gutenberg
+ * Friends Blocks
  *
- * This contains the functions for gutenberg.
+ * This contains the functions for blocks.
  *
  * @package Friends
  */
 
 /**
- * This is the class for the Friends Plugin gutenberg.
+ * This is the class for the Friends Plugin blocks.
  *
  * @since 0.8
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Gutenberg {
+class Friends_Blocks {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -99,7 +99,7 @@ class Friends_Gutenberg {
 	 */
 	public function register_friends_list() {
 		if ( ! function_exists( 'register_block_type' ) ) {
-			// Gutenberg is not active.
+			// Blocks is not active.
 			return;
 		}
 
@@ -114,7 +114,7 @@ class Friends_Gutenberg {
 	/**
 	 * Render the Friends List block
 	 *
-	 * @param  array  $attributes Attributes set by Gutenberg.
+	 * @param  array  $attributes Attributes set by Blocks.
 	 * @param  string $content    The JS block content.
 	 * @return string The new block content.
 	 */
@@ -163,7 +163,7 @@ class Friends_Gutenberg {
 	 */
 	public function register_friend_posts() {
 		if ( ! function_exists( 'register_block_type' ) ) {
-			// Gutenberg is not active.
+			// Blocks is not active.
 			return;
 		}
 
@@ -177,7 +177,7 @@ class Friends_Gutenberg {
 	/**
 	 * Render the Friend Posts block
 	 *
-	 * @param  array  $attributes Attributes set by Gutenberg.
+	 * @param  array  $attributes Attributes set by Blocks.
 	 * @param  string $content    The JS block content.
 	 * @return string The new block content.
 	 */
@@ -282,7 +282,7 @@ class Friends_Gutenberg {
 	}
 
 	/**
-	 * Register the Gutenberg Block Visibility
+	 * Register the Blocks Block Visibility
 	 */
 	public function register_friends_block_visibility() {
 		wp_enqueue_script(
@@ -292,8 +292,8 @@ class Friends_Gutenberg {
 		);
 
 		wp_enqueue_style(
-			'friends-gutenberg',
-			plugins_url( 'friends-gutenberg.css', __FILE__ )
+			'friends-blocks',
+			plugins_url( 'friends-blocks.css', __FILE__ )
 		);
 	}
 
@@ -315,7 +315,7 @@ class Friends_Gutenberg {
 	}
 
 	/**
-	 * Render the "Only visible for friends" Gutenberg block
+	 * Render the "Only visible for friends" Blocks block
 	 *
 	 * @param  object $content    The content provided by the user.
 	 * @param  object $block      Attributes for the block.
@@ -343,14 +343,14 @@ class Friends_Gutenberg {
 	}
 
 	/**
-	 * Load up the language data for the Gutenberg blocks
+	 * Load up the language data for the Blocks blocks
 	 */
 	public function language_data() {
 		$locale_data = array();
 		if ( function_exists( 'wp_get_jed_locale_data' ) ) {
 			$locale_data = wp_get_jed_locale_data( 'friends' );
-		} elseif ( function_exists( 'gutenberg_get_jed_locale_data' ) ) {
-			$locale_data = gutenberg_get_jed_locale_data( 'friends' );
+		} elseif ( function_exists( 'blocks_get_jed_locale_data' ) ) {
+			$locale_data = blocks_get_jed_locale_data( 'friends' );
 		}
 
 		if ( ! empty( $locale_data ) ) {

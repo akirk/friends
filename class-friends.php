@@ -96,7 +96,7 @@ class Friends {
 		$this->rest           = new Friends_REST( $this );
 
 		new Friends_3rd_Parties( $this );
-		new Friends_Gutenberg( $this );
+		new Friends_Blocks( $this );
 
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
@@ -267,7 +267,7 @@ class Friends {
 			return;
 		}
 
-		// TODO convert to Gutenberg.
+		// TODO convert to Blocks.
 		$content  = '[only-friends]';
 		$content .= __( 'Hi Friend!', 'friends' );
 		$content .= PHP_EOL;
