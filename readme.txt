@@ -1,7 +1,7 @@
 === Friends ===
 Contributors: akirk
-Tags: friends, friends-plugin, private-posts, rss, private-blogging
-Requires at least: 4.9
+Tags: friends, friends-plugin, private-posts, rss, private-blogging, decentralized, social-network, oyd, own-your-data
+Requires at least: 5.0
 Tested up to: 5.0
 Requires PHP: 5.2.4
 License: GPLv2 or later
