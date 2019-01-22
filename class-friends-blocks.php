@@ -92,6 +92,10 @@ class Friends_Blocks {
 						'only_users'    => array(
 							'type' => 'string',
 						),
+						'internal_link' => array(
+							'type'    => 'boolean',
+							'default' => false,
+						),
 					),
 				)
 			);
@@ -279,7 +283,7 @@ class Friends_Blocks {
 
 				$out .= sprintf(
 					'<a class="wp-block-friends-friend-posts" href="%1$s">%2$s</a>',
-					esc_url( get_permalink( $post['ID'] ) ),
+					esc_url( $attributes['internal_link'] ? ( '/friends/' . $post['ID'] . '/' ) : get_permalink( $post['ID'] ) ),
 					esc_html( get_the_title( $post['ID'] ) )
 				);
 

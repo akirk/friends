@@ -35,6 +35,10 @@ registerBlockType( 'friends/friend-posts', {
 		only_users: {
 			type: 'string',
 		},
+		internal_link: {
+			type: 'boolean',
+			default: false,
+		},
 	},
 
 	edit: function( { attributes, setAttributes } ) {
@@ -80,6 +84,11 @@ registerBlockType( 'friends/friend-posts', {
 							placeholder={ __( 'space and/or comma separated', 'friends' ) }
 							value={ attributes.only_users }
 							onChange={ only_users => setAttributes( { only_users } ) }
+							/>
+						<CheckboxControl
+							label={ __( 'Link to local page', 'friends' ) }
+							checked={ attributes.internal_link }
+							onChange={ internal_link => setAttributes( { internal_link } ) }
 							/>
 					</PanelBody>
 				</InspectorControls>
