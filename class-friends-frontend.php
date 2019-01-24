@@ -101,9 +101,7 @@ class Friends_Frontend {
 				'text_undo'   => __( 'Undo' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
-			if ( $this->is_friends_frontend() ) {
-				wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ) );
-			}
+			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ) );
 		}
 	}
 

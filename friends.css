@@ -1,14 +1,14 @@
 /* =Reset default browser CSS. Based on work by Eric Meyer.
 -------------------------------------------------------------- */
 
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, font, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td {
+body.friendspage, body.friendspage div, body.friendspage span, body.friendspage applet, body.friendspage object, body.friendspage iframe,
+h1, body.friendspage h2, body.friendspage h3, body.friendspage h4, body.friendspage h5, body.friendspage h6, body.friendspage p, body.friendspage blockquote, body.friendspage pre,
+a, body.friendspage abbr, body.friendspage acronym, body.friendspage address, body.friendspage big, body.friendspage cite, body.friendspage code,
+del, body.friendspage dfn, body.friendspage em, body.friendspage font, body.friendspage ins, body.friendspage kbd, body.friendspage q, body.friendspage s, body.friendspage samp,
+small, body.friendspage strike, body.friendspage strong, body.friendspage sub, body.friendspage sup, body.friendspage tt, body.friendspage var,
+dl, body.friendspage dt, body.friendspage dd, body.friendspage ol, body.friendspage ul, body.friendspage li,
+fieldset, body.friendspage form, body.friendspage label, body.friendspage legend,
+table, body.friendspage caption, body.friendspage tbody, body.friendspage tfoot, body.friendspage thead, body.friendspage tr, body.friendspage th, body.friendspage td {
 	border: 0;
 	font-family: inherit;
 	font-size: 100%;
@@ -19,36 +19,36 @@ table, caption, tbody, tfoot, thead, tr, th, td {
 	padding: 0;
 	vertical-align: baseline;
 }
-:focus {/* remember to define focus styles! */
+body.friendspage :focus {/* remember to define focus styles! */
 	outline: 0;
 }
-body {
+body.friendspage {
 	background: #fff;
 	line-height: 1;
 }
-ol, ul {
+body.friendspage ol, body.friendspage ul {
 	list-style: none;
 }
-table {/* tables still need 'cellspacing="0"' in the markup */
+body.friendspage table {/* tables still need 'cellspacing="0"' in the markup */
 	border-collapse: separate;
 	border-spacing: 0;
 }
-caption, th, td {
+body.friendspage caption, body.friendspage th, body.friendspage td {
 	font-weight: normal;
 	text-align: left;
 }
-blockquote:before, blockquote:after,
-q:before, q:after {
+body.friendspage blockquote:before, body.friendspage blockquote:after,
+q:before, body.friendspage q:after {
 	content: "";
 }
-blockquote, q {
+body.friendspage blockquote, body.friendspage q {
 	quotes: "" "";
 }
-a img {
+body.friendspage a img {
 	border: 0;
 }
-article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section {
+body.friendspage article, body.friendspage aside, body.friendspage details, body.friendspage figcaption, body.friendspage figure,
+footer, body.friendspage header, body.friendspage hgroup, body.friendspage menu, body.friendspage nav, body.friendspage section {
 	display: block;
 }
 
