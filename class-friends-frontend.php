@@ -94,7 +94,6 @@ class Friends_Frontend {
 	public function enqueue_scripts() {
 		if ( is_user_logged_in() ) {
 			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), array( 'jquery' ) );
-			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ) );
 			$variables = array(
 				'emojis_json' => plugins_url( 'emojis.json', __FILE__ ),
 				'ajax_url'    => admin_url( 'admin-ajax.php' ),
@@ -102,6 +101,9 @@ class Friends_Frontend {
 				'text_undo'   => __( 'Undo' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
+			if ( $this->is_friends_frontend() ) {
+				wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ) );
+			}
 		}
 	}
 
