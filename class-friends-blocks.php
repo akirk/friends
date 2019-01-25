@@ -210,10 +210,11 @@ class Friends_Blocks {
 	 */
 	public function render_block_friend_posts( $attributes, $content ) {
 		$date_formats = array(
-			'Y w'   => 'D j, H:i',
-			'Y m d' => 'H:i',
-			'Y'     => 'M j',
-			''      => 'M j, Y',
+			'Y m d H' => 'human',
+			'Y m d'   => 'H:i',
+			'Y w'     => 'D j, H:i',
+			'Y'       => 'M j',
+			''        => 'M j, Y',
 		);
 
 		$last_author = false;
@@ -288,13 +289,20 @@ class Friends_Blocks {
 				);
 
 				if ( $attributes['show_date'] ) {
-					$post_date = strtotime( $post['post_date'] );
+					$post_date = strtotime( $post['post_date_gmt'] );
 					foreach ( $date_formats as $compare => $date_format ) {
 						if ( date( $compare ) === date( $compare, $post_date ) ) {
 							break;
 						}
 					}
-					$out .= ' <span class="date">' . date( $date_format, $post_date ) . '</span>';
+					$out .= ' <span class="date" data-date="' . esc_attr( $post['post_date'] ) . '">';
+					if ( 'human' === $date_format ) {
+						/* translators: %s is a time span */
+						$out .= sprintf( __( '%s ago' ), human_time_diff( $post_date ) );
+					} else {
+						$out .= date_i18n( $date_format, strtotime( $post['post_date'] ) );
+					}
+					$out .= '</span>';
 				}
 				$out .= '</li>';
 			}
