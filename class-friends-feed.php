@@ -66,7 +66,7 @@ class Friends_Feed {
 		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_opml' ), 100 );
-		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 10, 2 );
+		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90, 2 );
 	}
 
 	/**
@@ -100,9 +100,10 @@ class Friends_Feed {
 
 			$feed = $this->fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
-				do_action( 'friends_retrieve_friends_error', $feed, $friend_user );
+				do_action( 'friends_retrieve_friends_error', $feed_url, $feed, $friend_user );
 				continue;
 			}
+
 			$feed      = apply_filters( 'friends_feed_content', $feed, $friend_user );
 			$new_posts = $this->process_friend_feed( $friend_user, $feed );
 			do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
@@ -370,7 +371,6 @@ class Friends_Feed {
 			if ( ! isset( $item->comment_count ) ) {
 				$item->comment_count = 0;
 			}
-
 			if ( ( ! $content && ! $title ) || ! $permalink ) {
 				continue;
 			}
@@ -563,6 +563,7 @@ class Friends_Feed {
 	 */
 	public function wp_feed_options( $feed, $url ) {
 		$feed->useragent .= ' Friends/' . Friends::VERSION;
+		$feed->set_cache_duration( 3590 );
 	}
 
 	/**
