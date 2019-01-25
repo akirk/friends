@@ -44,6 +44,7 @@ class Friends_Admin {
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
+		add_action( 'admin_bar_menu', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'render_preview_friend_rules' ) );
@@ -73,6 +74,46 @@ class Friends_Admin {
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
 			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
+		}
+	}
+
+	/**
+	 * Add our help information
+	 */
+	public function register_help() {
+		global $friends_debug;
+		$screen = get_current_screen();
+		switch ( $screen->id ) {
+			case 'toplevel_page_friends-settings':
+				$screen->add_help_tab(
+					array(
+						'id'      => 'overview',
+						'title'   => __( 'Overview' ),
+						'content' => '<p>' . __( 'Welcome to the Friends Settings! You can configure the Friends plugin here to your liking.', 'friends' ) . '</p>' .
+							// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
+							'<p>' . sprintf( __( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ), '"' . esc_attr( self_admin_url( 'users.php' ) ) . '"', __( 'Friends &amp; Requests', 'friends' ) ) . '</p>',
+					)
+				);
+				break;
+			case 'users':
+				$screen->add_help_tab(
+					array(
+						'id'      => 'friends',
+						'title'   => __( 'Friends', 'friends' ),
+						'content' => '<p>' . __( 'Here you can find your friends and subscriptions.', 'friends' ) . '</p><p>' . __( 'If you no longer want to be friends with someone or stop a subscription, you can simply delete that user.', 'friends' ) . '</p>',
+					)
+				);
+				break;
+			default:
+				if ( strpos( $screen->id, 'friends' ) && $friends_debug ) {
+					$screen->add_help_tab(
+						array(
+							'id'      => 'friends_' . $screen->id,
+							'title'   => $screen->id,
+							'content' => '<p>' . $screen->id . '</p>',
+						)
+					);
+				}
 		}
 	}
 
