@@ -82,7 +82,9 @@ class Friends_Admin {
 	public function admin_enqueue_scripts() {
 		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', __FILE__ ), array( 'jquery' ) );
 		$variables = array(
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'ajax_url'        => admin_url( 'admin-ajax.php' ),
+			'add_friend_url'  => self_admin_url( 'admin.php?page=send-friend-request' ),
+			'add_friend_text' => __( 'Add a Friend', 'friends' ),
 		);
 		wp_localize_script( 'friends-admin', 'friends', $variables );
 	}
@@ -202,7 +204,7 @@ class Friends_Admin {
 			}
 		}
 
-		$user = $this->friends->access_control->create_user( $site_url, 'subscription', null, $favicon );
+		$user = $this->friends->access_control->create_user( $site_url, 'subscription', $feed->get_title(), $favicon );
 		if ( ! is_wp_error( $user ) ) {
 			$this->friends->feed->process_friend_feed( $user, $feed );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
