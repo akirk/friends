@@ -645,6 +645,7 @@ class Friends_Admin {
 				'post_type'   => Friends::CPT,
 				'post_status' => array( 'publish', 'private', 'trash' ),
 				'author'      => $friend->ID,
+				'post_count'  => 50,
 			)
 		);
 

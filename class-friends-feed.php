@@ -208,7 +208,8 @@ class Friends_Feed {
 
 		switch ( $action ) {
 			case 'delete':
-				return false;
+				$item->feed_rule_delete = true;
+				return $item;
 
 			case 'trash':
 				$item->feed_rule_transform = array(
@@ -358,7 +359,7 @@ class Friends_Feed {
 
 		foreach ( $feed->get_items() as $item ) {
 			$item = apply_filters( 'friends_modify_feed_item', $item, $feed, $friend_user );
-			if ( ! $item ) {
+			if ( ! $item || ( isset( $item->feed_rule_delete ) && $item->feed_rule_delete ) ) {
 				continue;
 			}
 			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->get_permalink() ) ) );

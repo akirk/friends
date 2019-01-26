@@ -37,6 +37,9 @@
 					echo 'display: none';}
 				?>
 				" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_attr( $rule['replace'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
+				<?php if ( empty( $rule['regex'] ) ) : ?>
+					<td><span class="description">(<?php _e( 'Unsubmitted rule', 'friends' ); ?>)</span></td>
+				<?php endif; ?>
 			</tr>
 		<?php endforeach; ?>
 		<tr>
