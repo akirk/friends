@@ -564,7 +564,11 @@ class Friends_Feed {
 	 */
 	public function wp_feed_options( $feed, $url ) {
 		$feed->useragent .= ' Friends/' . Friends::VERSION;
-		$feed->set_cache_duration( 3590 );
+		if ( isset( $_GET['page'] ) && 'page=friends-refresh' === $_GET['page'] ) {
+			$feed->enable_cache( false );
+		} else {
+			$feed->set_cache_duration( 3590 );
+		}
 	}
 
 	/**

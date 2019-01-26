@@ -151,8 +151,8 @@ class Friends_Admin {
 		add_filter(
 			'friends_friend_feed_url',
 			function( $feed_url, $friend_user ) {
-				// translators: %s is the name of the friend.
-				printf( __( 'Refreshing %s', 'friends' ) . '<br/>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $friend_user->user_login ) . '</a>' );
+				// translators: %1s is the name of the friend, %2$s is the feed URL.
+				printf( __( 'Refreshing %1$s at %2$s', 'friends' ) . '<br/>', '<b>' . esc_html( $friend_user->user_login ) . '</b>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $feed_url ) . '</a>' );
 				return $feed_url;
 			},
 			10,
@@ -164,6 +164,18 @@ class Friends_Admin {
 			function( $new_posts, $friend_user ) {
 				// translators: %s is the number of new posts found.
 				printf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) );
+			},
+			10,
+			2
+		);
+
+		add_filter(
+			'friends_feed_content',
+			function( $feed, $friend_user ) {
+				$count = count( $feed->get_items() );
+				// translators: %s is the number of posts found.
+				printf( _n( 'Found %d item in the feed.', 'Found %d items in the feed.', $count, 'friends' ) . ' ', $count );
+				return $feed;
 			},
 			10,
 			2
@@ -749,7 +761,7 @@ class Friends_Admin {
 			if ( ! $hide_from_friends_page ) {
 				$hide_from_friends_page = array();
 			}
-			if ( isset( $_POST['hide_from_friends_page'] ) && $_POST['hide_from_friends_page'] ) {
+			if ( ! isset( $_POST['show_on_friends_page'] ) || ! $_POST['show_on_friends_page'] ) {
 				if ( ! in_array( $friend->ID, $hide_from_friends_page ) ) {
 					$hide_from_friends_page[] = $friend->ID;
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
