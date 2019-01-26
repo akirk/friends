@@ -626,9 +626,7 @@ class Friends_Admin {
 
 		include apply_filters( 'friends_template_path', 'admin/rules-examples.php' );
 		echo '<div id="preview-rules">';
-		$_POST['catch_all'] = $catch_all;
-		$_POST['rules']     = $rules;
-		$this->render_preview_friend_rules();
+		$this->render_preview_friend_rules( $rules, $catch_all );
 		echo '</div>';
 
 		array_pop( $rules );
@@ -636,22 +634,33 @@ class Friends_Admin {
 	}
 
 	/**
-	 * Render the Friends Edit User page
+	 * Respond to the Ajax request to the Friend rules preview
 	 */
-	public function render_preview_friend_rules() {
+	public function ajax_preview_friend_rules() {
+		$this->render_preview_friend_rules( $_POST['rules'], $_POST['catch_all'] );
+		exit;
+	}
+
+	/**
+	 * Render the Friend rules preview
+	 *
+	 * @param  array  $rules     The rules to apply.
+	 * @param  string $catch_all The catch all behavior.
+	 */
+	public function render_preview_friend_rules( $rules, $catch_all ) {
 		$friend       = $this->check_admin_edit_friend_rules();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => Friends::CPT,
-				'post_status' => array( 'publish', 'private', 'trash' ),
-				'author'      => $friend->ID,
-				'post_count'  => 50,
+				'post_type'      => Friends::CPT,
+				'post_status'    => array( 'publish', 'private', 'trash' ),
+				'author'         => $friend->ID,
+				'posts_per_page' => 25,
 			)
 		);
 
 		$feed                                = $this->friends->feed;
-		$feed->feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $_POST['rules'] );
-		$feed->feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $_POST['catch_all'] );
+		$feed->feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );
+		$feed->feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $catch_all );
 
 		include apply_filters( 'friends_template_path', 'admin/preview-rules.php' );
 	}
