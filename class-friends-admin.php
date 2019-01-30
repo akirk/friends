@@ -207,6 +207,10 @@ class Friends_Admin {
 		$site_url = $feed_url;
 
 		$feed = $this->friends->feed->fetch_feed( $feed_url );
+		if ( is_wp_error( $feed ) ) {
+			return $feed;
+		}
+
 		if ( $feed->all_discovered_feeds ) {
 			$feed_url = $feed->all_discovered_feeds[0]->url;
 			$feed     = $this->friends->feed->fetch_feed( $feed_url );
@@ -314,11 +318,16 @@ class Friends_Admin {
 			)
 		);
 
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			$json = json_decode( wp_remote_retrieve_body( $response ) );
 
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				if ( 'rest_no_route' !== $json->code ) {
+					// translators: %s is the message from the other server.
 					return new WP_Error( $json->code, $json->message, $json->data );
 				}
 			}
@@ -375,7 +384,8 @@ class Friends_Admin {
 				if ( 'rest_no_route' === $json->code ) {
 					return $this->subscribe( $friend_url );
 				}
-				return new WP_Error( $json->code, $json->message, $json->data );
+				// translators: %s is the message from the other server.
+				return new WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), $json->message ), $json->data );
 			}
 
 			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response.', $response );
@@ -873,7 +883,23 @@ class Friends_Admin {
 
 			if ( is_wp_error( $friend_user ) ) {
 				?>
-				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend_user->get_error_message() ); ?></p></div>
+				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend_user->get_error_message() ); ?></p>
+				<?php
+				$error_data = $friend_user->get_error_message();
+				if ( isset( $error_data->error ) ) {
+					$error = unserialize( $error_data->error );
+					if ( is_wp_error( $error ) ) {
+						?>
+						<pre>
+						<?php
+						print_r( $error );
+						?>
+						</pre>
+						<?php
+					}
+				}
+				?>
+				</div>
 				<?php
 			} elseif ( $friend_user instanceof WP_User ) {
 				$friend_link = '<a href="' . esc_url( $friend_user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->user_url ) . '</a>';

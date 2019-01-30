@@ -155,7 +155,6 @@ class Friends_REST {
 				'rest_url' => get_rest_url() . Friends_REST::PREFIX,
 			);
 		}
-
 		$signature = get_option( 'friends_request_token_' . sha1( $request->get_param( 'rest_url' ) ) );
 
 		if ( ! $signature ) {
@@ -339,6 +338,7 @@ class Friends_REST {
 				'An unsupported site was provided.',
 				array(
 					'status' => 403,
+					'error'  => serialize( $response ),
 				)
 			);
 		}

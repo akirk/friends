@@ -51,11 +51,17 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 					// Restore the old site_url.
 					update_option( 'siteurl', $site_url );
-					return array(
-						'body'     => $html,
-						'response' => array(
-							'code' => 200,
+					return apply_filters(
+						'fake_http_response',
+						array(
+							'body'     => $html,
+							'response' => array(
+								'code' => 200,
+							),
 						),
+						$p['scheme'] . '://' . $p['host'],
+						$url,
+						$request
 					);
 				}
 
@@ -72,11 +78,17 @@ class Friends_RestTest extends WP_UnitTestCase {
 				// Restore the old site_url.
 				update_option( 'siteurl', $site_url );
 
-				return array(
-					'body'     => wp_json_encode( $response->data ),
-					'response' => array(
-						'code' => $response->status,
+				return apply_filters(
+					'fake_http_response',
+					array(
+						'body'     => wp_json_encode( $response->data ),
+						'response' => array(
+							'code' => $response->status,
+						),
 					),
+					$p['scheme'] . '://' . $p['host'],
+					$url,
+					$request
 				);
 			},
 			10,
@@ -504,5 +516,132 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
+	}
+
+	/**
+	 * The friend doesn't have the plugin installed, so we should subscribe.
+	 */
+	public function test_friend_request_with_no_plugin_on_other_side() {
+		$my_url     = 'http://me.local';
+		$friend_url = 'http://friend.local';
+
+		add_filter(
+			'fake_http_response',
+			function( $response, $site_url, $url, $request ) use ( $my_url, $friend_url ) {
+				if ( $site_url === $my_url ) {
+					return $response;
+				}
+				if ( rtrim( $url, '/' ) === $friend_url ) {
+					return array(
+						'headers'  => array(
+							'content-type' => 'text/html',
+						),
+						'body'     => '<html><link rel="alternate" type="application/rss+xml" title="akirk.blog &raquo; Feed" href="' . $friend_url . '/feed/" />',
+						'response' => array(
+							'code' => 200,
+						),
+					);
+				}
+				if ( $friend_url . '/feed/' === $url ) {
+					return array(
+						'headers'  => array(
+							'content-type' => 'application/rss+xml',
+						),
+						'body'     => file_get_contents( __DIR__ . '/data/friend-feed-1-private-post.rss' ),
+						'response' => array(
+							'code' => 200,
+						),
+					);
+				}
+				return new WP_Error(
+					'rest_no_route',
+					'No route was found matching the URL and request method',
+					array(
+						'status' => 404,
+					)
+				);
+			},
+			10,
+			4
+		);
+
+		update_option( 'siteurl', $my_url );
+		$friends = Friends::get_instance();
+
+		$friend_user = $friends->admin->send_friend_request( $friend_url );
+		$this->assertInstanceOf( 'WP_User', $friend_user );
+		$this->assertEquals( rtrim( $friend_user->user_url, '/' ), $friend_url );
+		$this->assertTrue( $friend_user->has_cap( 'subscription' ) );
+
+		// Verify that the user was not created at remote.
+		$my_user_at_friend = $friends->access_control->get_user_for_site_url( $my_url );
+		$this->assertFalse( $my_user_at_friend );
+
+		// No tokens were generated.
+		$this->assertFalse( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
+		$this->assertFalse( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
+	}
+
+	/**
+	 * We can't connect to the friend (for example because of incompatibel SSL configurations).
+	 */
+	public function test_friend_request_unable_to_connect() {
+		$my_url     = 'http://me.local';
+		$friend_url = 'http://friend.local';
+
+		add_filter(
+			'fake_http_response',
+			function( $response, $site_url, $url, $request ) use ( $my_url, $friend_url ) {
+				if ( $site_url === $my_url ) {
+					return $response;
+				}
+				return new WP_Error(
+					'http_request_failed',
+					'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure'
+				);
+			},
+			10,
+			4
+		);
+
+		update_option( 'siteurl', $my_url );
+		$friends = Friends::get_instance();
+
+		$friend_user = $friends->admin->send_friend_request( $friend_url );
+		$this->assertInstanceOf( 'WP_Error', $friend_user );
+		$this->assertEquals( 'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $friend_user->get_error_message() );
+	}
+
+	/**
+	 * The friend can't connect to us (for example because of incompatibel SSL configurations).
+	 */
+	public function test_friend_request_with_other_side_unable_to_connect() {
+		$my_url     = 'http://me.local';
+		$friend_url = 'http://friend.local';
+
+		add_filter(
+			'fake_http_response',
+			function( $response, $site_url, $url, $request ) use ( $my_url, $friend_url ) {
+				if ( $site_url === $friend_url ) {
+					return $response;
+				}
+				return new WP_Error(
+					'http_request_failed',
+					'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure'
+				);
+			},
+			10,
+			4
+		);
+
+		update_option( 'siteurl', $my_url );
+		$friends = Friends::get_instance();
+
+		$friend_user = $friends->admin->send_friend_request( $friend_url );
+		$this->assertInstanceOf( 'WP_Error', $friend_user );
+		$this->assertEquals( 'The other side responded: An unsupported site was provided.', $friend_user->get_error_message() );
+		$error = unserialize( $friend_user->get_error_data()->error );
+		$this->assertInstanceOf( 'WP_Error', $error );
+		$this->assertEquals( 'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $error->get_error_message() );
 	}
 }
