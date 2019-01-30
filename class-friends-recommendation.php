@@ -124,7 +124,7 @@ class Friends_Recommendation {
 
 		$post_id = intval( $_POST['post_id'] );
 		$post    = WP_Post::get_instance( $post_id );
-		if ( Friends::CPT !== $post->post_type && Friends_Saved::CPT !== $post->post_type ) {
+		if ( Friends::CPT !== $post->post_type ) {
 			return;
 		}
 
