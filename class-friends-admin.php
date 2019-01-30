@@ -260,8 +260,8 @@ class Friends_Admin {
 				}
 			}
 		}
-
-		$user = $this->friends->access_control->create_user( $site_url, 'subscription', $feed->get_title(), $favicon );
+		$feed_title = trim( str_replace( '&raquo; Feed', '', $feed->get_title() ) );
+		$user = $this->friends->access_control->create_user( $site_url, 'subscription', $feed_title, $favicon );
 		if ( ! is_wp_error( $user ) ) {
 			$this->friends->feed->process_friend_feed( $user, $feed );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
@@ -317,10 +317,6 @@ class Friends_Admin {
 				'redirection' => 5,
 			)
 		);
-
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
 
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			$json = json_decode( wp_remote_retrieve_body( $response ) );
