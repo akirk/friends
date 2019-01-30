@@ -609,7 +609,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
 		$this->assertInstanceOf( 'WP_Error', $friend_user );
-		$this->assertEquals( 'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $friend_user->get_error_message() );
+		$this->assertEquals( 'WP HTTP Error: cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $friend_user->get_error_message() );
 	}
 
 	/**
