@@ -68,6 +68,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.16 =
+- Bugfixes: Friend Request error handling, feed rules for author
+- Add some help texts
+- Bring back shortcodes
+
 = 0.15 =
 - Removed Saved Articles, this will go into the Thinkery plugin
 - Subscriptions will use the site's favicon as user avatar

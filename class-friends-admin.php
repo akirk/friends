@@ -121,7 +121,7 @@ class Friends_Admin {
 	 * Reference our script for the /friends page
 	 */
 	public function admin_enqueue_scripts() {
-		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', __FILE__ ), array( 'jquery' ) );
+		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', __FILE__ ), array( 'jquery' ), Friends::VERSION );
 		$variables = array(
 			'ajax_url'        => admin_url( 'admin-ajax.php' ),
 			'add_friend_url'  => self_admin_url( 'admin.php?page=send-friend-request' ),

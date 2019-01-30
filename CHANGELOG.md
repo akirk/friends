@@ -1,3 +1,9 @@
+0.16
+====
+- Bugfixes: Friend Request error handling, feed rules for author
+- Add some help texts
+- Bring back shortcodes
+
 0.15
 ====
 - Removed Saved Articles, this will go into the Thinkery plugin
