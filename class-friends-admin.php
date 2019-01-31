@@ -38,6 +38,7 @@ class Friends_Admin {
 	 */
 	private function register_hooks() {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
+		add_action( 'admin_head-users.php', array( $this, 'keep_friends_open_on_users_screen' ) );
 		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );
@@ -95,6 +96,22 @@ class Friends_Admin {
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
 			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), Friends::REQUIRED_ROLE, 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
+		}
+	}
+
+	/**
+	 * Use JavaScript to keep the Friends menu open when responding to a Friend Request.
+	 */
+	public function keep_friends_open_on_users_screen() {
+		if ( 'friend_request' == $_GET['role'] ) {
+			?>
+			<script type="text/javascript">
+				jQuery(document).ready( function($)
+				{
+					$("#toplevel_page_friends-settings, #toplevel_page_friends-settings > a").addClass('wp-has-current-submenu');
+				});
+			</script>
+			<?php
 		}
 	}
 
@@ -1432,6 +1449,14 @@ class Friends_Admin {
 					'id'     => 'new-friend-request',
 					'parent' => 'new-content',
 					'title'  => esc_html__( 'Friend', 'friends' ),
+					'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
+				)
+			);
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'new-subscription',
+					'parent' => 'new-content',
+					'title'  => esc_html__( 'Subscription', 'friends' ),
 					'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
 				)
 			);
