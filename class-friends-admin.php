@@ -72,9 +72,10 @@ class Friends_Admin {
 		}
 
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
+		$page_type = sanitize_title( $menu_title );
 		add_menu_page( 'friends', $menu_title, Friends::REQUIRED_ROLE, 'friends-settings', null, 'dashicons-groups', 3.73 );
 		add_submenu_page( 'friends-settings', __( 'Settings' ), __( 'Settings' ), Friends::REQUIRED_ROLE, 'friends-settings', array( $this, 'render_admin_settings' ) );
-		add_action( 'load-friends_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
+		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
 		add_submenu_page( 'friends-settings', __( 'Latest Posts', 'friends' ), __( 'Latest Posts', 'friends' ), Friends::REQUIRED_ROLE, 'friends-page', array( $this, 'redirect_to_friends_page' ) );
 		add_submenu_page( 'friends-settings', __( 'Send Friend Request', 'friends' ), __( 'Send Friend Request', 'friends' ), Friends::REQUIRED_ROLE, 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
@@ -87,7 +88,6 @@ class Friends_Admin {
 
 		add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), Friends::REQUIRED_ROLE, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 
-		$page_type = sanitize_title( $menu_title );
 		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
 			add_submenu_page( 'friends-settings', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
 			add_submenu_page( 'friends-settings', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
