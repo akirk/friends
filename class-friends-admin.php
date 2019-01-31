@@ -44,7 +44,8 @@ class Friends_Admin {
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
-		add_action( 'admin_bar_menu', array( $this, 'register_help' ) );
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_new_content' ), 71 );
+		add_action( 'current_screen', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'render_preview_friend_rules' ) );
@@ -56,16 +57,36 @@ class Friends_Admin {
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
-		$menu_title = __( 'Friends', 'friends' );
-		add_menu_page( 'friends', $menu_title, 'manage_options', 'friends-settings', null, 'dashicons-groups', 3.73 );
-		$page_type = sanitize_title( $menu_title );
-		add_submenu_page( 'friends-settings', __( 'Settings' ), __( 'Settings' ), 'manage_options', 'friends-settings', array( $this, 'render_admin_settings' ) );
+		$friend_requests = Friends::all_friend_requests();
+		$friend_request_count = $friend_requests->get_total();
+		$unread_badge = '';
+		if ( $friend_request_count > 0 ) {
+			$unread_badge = ' <div class="wp-core-ui wp-ui-notification friends-open-requests" style="display: inline; font-size: 90%; padding: .1em .5em .1em .4em; border-radius: 50%; color: #fff;"><span aria-hidden="true">' . $friend_request_count . '</span><span class="screen-reader-text">';
+			// translators: %s is the number of friend requests pending.
+			$unread_badge .= sprintf( _n( '%s friend request', '%s friend requests', $friend_request_count, 'friends' ), $friend_request_count );
+			$unread_badge .= '</span></div>';
+			if ( get_user_option( 'friends_unobtrusive_badge' ) ) {
+				$unread_badge = ' (' . $friend_request_count . ')';
+			}
+		}
+
+		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
+		add_menu_page( 'friends', $menu_title, Friends::REQUIRED_ROLE, 'friends-settings', null, 'dashicons-groups', 3.73 );
+		add_submenu_page( 'friends-settings', __( 'Settings' ), __( 'Settings' ), Friends::REQUIRED_ROLE, 'friends-settings', array( $this, 'render_admin_settings' ) );
+		add_action( 'load-friends_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
+		add_submenu_page( 'friends-settings', __( 'Latest Posts', 'friends' ), __( 'Latest Posts', 'friends' ), Friends::REQUIRED_ROLE, 'friends-page', array( $this, 'redirect_to_friends_page' ) );
 		add_submenu_page( 'friends-settings', __( 'Send Friend Request', 'friends' ), __( 'Send Friend Request', 'friends' ), Friends::REQUIRED_ROLE, 'send-friend-request', array( $this, 'render_admin_send_friend_request' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
-		add_submenu_page( 'friends-settings', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, 'users.php' );
-		add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), 'manage_options', 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
+		if ( $friend_request_count > 0 ) {
+			add_submenu_page( 'friends-settings', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, Friends::REQUIRED_ROLE, 'users.php?role=friend_request' );
+		}
 
+		add_submenu_page( 'friends-settings', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, 'users.php' );
+
+		add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), Friends::REQUIRED_ROLE, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
+
+		$page_type = sanitize_title( $menu_title );
 		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
 			add_submenu_page( 'friends-settings', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
 			add_submenu_page( 'friends-settings', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
@@ -73,16 +94,21 @@ class Friends_Admin {
 			add_action( 'load-' . $page_type . '_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
 		}
 		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), 'manage_options', 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
+			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), Friends::REQUIRED_ROLE, 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
 		}
 	}
 
 	/**
 	 * Add our help information
+	 *
+	 * @param  WP_Screen $screen The current wp-admin screen.
 	 */
-	public function register_help() {
+	public function register_help( $screen ) {
+		if ( ! ( $screen instanceof WP_Screen ) ) {
+			return;
+		}
 		global $friends_debug;
-		$screen = get_current_screen();
+
 		switch ( $screen->id ) {
 			case 'toplevel_page_friends-settings':
 				$screen->add_help_tab(
@@ -105,7 +131,7 @@ class Friends_Admin {
 				);
 				break;
 			default:
-				if ( strpos( $screen->id, 'friends' ) && $friends_debug ) {
+				if ( strpos( $screen->id, 'friends' ) && isset( $friends_debug ) && $friends_debug ) {
 					$screen->add_help_tab(
 						array(
 							'id'      => 'friends_' . $screen->id,
@@ -346,7 +372,8 @@ class Friends_Admin {
 
 		$friend_user = $this->friends->access_control->get_user_for_site_url( $friend_url );
 		if ( $friend_user && ! is_wp_error( $friend_user ) && $this->friends->access_control->is_valid_friend( $friend_user ) ) {
-			return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
+			// translators: %s is a username.
+			return new WP_Error( 'already-friend', sprintf( __( 'You are already friends with %s', 'friends' ), $friend_user->user_login ) );
 		} elseif ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->has_cap( 'friend_request' ) ) {
 			$this->update_in_token( $friend_user->ID );
 			$friend_user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
@@ -459,6 +486,14 @@ class Friends_Admin {
 		}
 
 		return self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID );
+	}
+
+	/**
+	 * Redirect to the Friends page
+	 */
+	public function redirect_to_friends_page() {
+		wp_safe_redirect( site_url( '/friends/' ) );
+		exit;
 	}
 
 	/**
@@ -1214,6 +1249,7 @@ class Friends_Admin {
 		}
 
 		$sendback = add_query_arg( 'accepted', $accepted, $sendback );
+		$sendback = remove_query_arg( 'role', $sendback );
 		wp_safe_redirect( $sendback );
 	}
 
@@ -1279,9 +1315,7 @@ class Friends_Admin {
 	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
 	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
-		$friends_url   = site_url( '/friends/' );
-		$friends_title = __( 'Friends', 'friends' );
-		$open_requests = 0;
+		$friends_url = site_url( '/friends/' );
 
 		if ( current_user_can( 'friend' ) ) {
 			$current_user = wp_get_current_user();
@@ -1291,29 +1325,35 @@ class Friends_Admin {
 		$friends_main_url = $friends_url;
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$friend_requests = Friends::all_friend_requests();
-			$open_requests   = $friend_requests->get_total();
-			if ( $open_requests > 0 ) {
-				// translators: %s is the number of open friend requests.
-				$friends_title    = sprintf( __( 'Friends (%s)', 'friends' ), $open_requests );
+			$friend_request_count = $friend_requests->get_total();
+			$unread_badge = '';
+			if ( $friend_request_count > 0 ) {
 				$friends_main_url = self_admin_url( 'users.php?role=friend_request' );
+				$unread_badge  = ' <div class="wp-core-ui wp-ui-notification friends-open-requests" style="display: inline; font-size: 90%; padding: .1em .5em .1em .4em; border-radius: 50%; color: #fff;"><span aria-hidden="true">' . $friend_request_count . '</span><span class="screen-reader-text">';
+				// translators: %s is the number of friend requests pending.
+				$unread_badge .= sprintf( _n( '%s friend request', '%s friend requests', $friend_request_count, 'friends' ), $friend_request_count );
+				$unread_badge .= '</span></div>';
+				if ( get_user_option( 'friends_unobtrusive_badge' ) ) {
+					$unread_badge = ' (' . $friend_request_count . ')';
+				}
 			}
 
 			$wp_menu->add_node(
 				array(
 					'id'     => 'friends',
 					'parent' => '',
-					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( $friends_title ),
+					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( __( 'Friends', 'friends' ) ) . $unread_badge,
 					'href'   => $friends_main_url,
 				)
 			);
 
-			if ( $open_requests > 0 ) {
+			if ( $friend_request_count > 0 ) {
 				$wp_menu->add_menu(
 					array(
 						'id'     => 'open-friend-requests',
 						'parent' => 'friends',
 						// translators: %s is the number of open friend requests.
-						'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $open_requests, 'friends' ), $open_requests ) ),
+						'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $friend_request_count, 'friends' ), $friend_request_count ) ),
 						'href'   => self_admin_url( 'users.php?role=friend_request' ),
 					)
 				);
@@ -1358,22 +1398,41 @@ class Friends_Admin {
 					'href'   => self_admin_url( 'admin.php?page=friends-settings' ),
 				)
 			);
+
 		} elseif ( current_user_can( 'friend' ) ) {
 			$wp_menu->add_node(
 				array(
 					'id'     => 'friends',
 					'parent' => '',
-					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( $friends_title ),
+					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( __( 'Friends', 'friends' ) ),
 					'href'   => $friends_main_url,
 				)
 			);
 
 			$wp_menu->add_menu(
 				array(
-					'id'     => 'send-friend-request',
+					'id'     => 'profile',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Profile' ),
 					'href'   => site_url( '/friends/' ),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Add a Friends menu to the New Content admin section
+	 *
+	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
+	 */
+	public function admin_bar_friends_new_content( WP_Admin_Bar $wp_menu ) {
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'new-friend-request',
+					'parent' => 'new-content',
+					'title'  => esc_html__( 'Friend', 'friends' ),
+					'href'   => self_admin_url( 'admin.php?page=send-friend-request' ),
 				)
 			);
 		}
