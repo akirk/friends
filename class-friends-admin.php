@@ -60,16 +60,7 @@ class Friends_Admin {
 	public function register_admin_menu() {
 		$friend_requests = Friends::all_friend_requests();
 		$friend_request_count = $friend_requests->get_total();
-		$unread_badge = '';
-		if ( $friend_request_count > 0 ) {
-			$unread_badge = ' <div class="wp-core-ui wp-ui-notification friends-open-requests" style="display: inline; font-size: 90%; padding: .1em .5em .1em .4em; border-radius: 50%; color: #fff;"><span aria-hidden="true">' . $friend_request_count . '</span><span class="screen-reader-text">';
-			// translators: %s is the number of friend requests pending.
-			$unread_badge .= sprintf( _n( '%s friend request', '%s friend requests', $friend_request_count, 'friends' ), $friend_request_count );
-			$unread_badge .= '</span></div>';
-			if ( get_user_option( 'friends_unobtrusive_badge' ) ) {
-				$unread_badge = ' (' . $friend_request_count . ')';
-			}
-		}
+		$unread_badge = $this->get_unread_badge( $friend_request_count );
 
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
 		$page_type = sanitize_title( $menu_title );
@@ -1335,6 +1326,28 @@ class Friends_Admin {
 	}
 
 	/**
+	 * Get the unread badge HTML
+	 *
+	 * @param  int $friend_request_count The numbger of friend requests.
+	 * @return string The unread badge HTML.
+	 */
+	private function get_unread_badge( $friend_request_count ) {
+		if ( 0 === $friend_request_count > 0 ) {
+			return '';
+		}
+
+		if ( get_user_option( 'friends_unobtrusive_badge' ) ) {
+			return ' (' . $friend_request_count . ')';
+		}
+
+		$unread_badge = ' <div class="wp-core-ui wp-ui-notification friends-open-requests" style="display: inline; font-size: 90%; padding: .1em .5em .1em .4em; border-radius: 50%;background-color: #d54e21; color: #fff;"><span aria-hidden="true">' . $friend_request_count . '</span><span class="screen-reader-text">';
+		// translators: %s is the number of friend requests pending.
+		$unread_badge .= sprintf( _n( '%s friend request', '%s friend requests', $friend_request_count, 'friends' ), $friend_request_count );
+		$unread_badge .= '</span></div>';
+		return $unread_badge;
+	}
+
+	/**
 	 * Add a Friends menu to the admin bar
 	 *
 	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
@@ -1350,24 +1363,15 @@ class Friends_Admin {
 		$friends_main_url = $friends_url;
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$friend_requests = Friends::all_friend_requests();
-			$friend_request_count = $friend_requests->get_total();
-			$unread_badge = '';
 			if ( $friend_request_count > 0 ) {
 				$friends_main_url = self_admin_url( 'users.php?role=friend_request' );
-				$unread_badge  = ' <div class="wp-core-ui wp-ui-notification friends-open-requests" style="display: inline; font-size: 90%; padding: .1em .5em .1em .4em; border-radius: 50%; color: #fff;"><span aria-hidden="true">' . $friend_request_count . '</span><span class="screen-reader-text">';
-				// translators: %s is the number of friend requests pending.
-				$unread_badge .= sprintf( _n( '%s friend request', '%s friend requests', $friend_request_count, 'friends' ), $friend_request_count );
-				$unread_badge .= '</span></div>';
-				if ( get_user_option( 'friends_unobtrusive_badge' ) ) {
-					$unread_badge = ' (' . $friend_request_count . ')';
-				}
 			}
 
 			$wp_menu->add_node(
 				array(
 					'id'     => 'friends',
 					'parent' => '',
-					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( __( 'Friends', 'friends' ) ) . $unread_badge,
+					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( __( 'Friends', 'friends' ) ) . $this->get_unread_badge( $friend_requests->get_total() ),
 					'href'   => $friends_main_url,
 				)
 			);
