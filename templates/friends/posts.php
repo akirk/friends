@@ -52,7 +52,7 @@ include __DIR__ . '/header.php'; ?>
 								<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
 							</a>
 						<?php else : ?>
-							<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" target="_blank" rel="noopener noreferrer" class="author-avatar auth-link" data-token="<?php echo esc_attr( $token ); ?>">
+							<a href="<?php echo esc_attr( site_url( '/friends/' . get_the_author_meta( 'login' ) . '/' ) ); ?>"class="author-avatar">
 								<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
 							</a>
 						<?php endif; ?>
@@ -68,7 +68,7 @@ include __DIR__ . '/header.php'; ?>
 							<?php if ( $recommendation ) : ?>
 								<a href="<?php the_permalink(); ?>" rel="noopener noreferrer" ><strong><?php echo esc_html( get_post_meta( get_the_ID(), 'author', true ) ); ?></strong></a>
 							<?php else : ?>
-								<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" target="_blank" rel="noopener noreferrer" class="auth-link" data-token="<?php echo esc_attr( $token ); ?>">
+								<a href="<?php echo esc_attr( site_url( '/friends/' . get_the_author_meta( 'login' ) . '/' ) ); ?>">
 									<strong><?php the_author(); ?></strong>
 								</a>
 							<?php endif; ?>
