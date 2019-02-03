@@ -1,4 +1,4 @@
-jQuery( document ).on( 'click', 'a.auth-link, button.comments', function() {
+jQuery( document ).on( 'click', 'a.auth-link, button.comments.auth-link', function() {
 	var $this = jQuery( this ), href = $this.attr( 'href' );
 	if ( ! $this.data( 'token' ) ) {
 		return true;

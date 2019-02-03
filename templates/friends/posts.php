@@ -148,10 +148,17 @@ include __DIR__ . '/header.php'; ?>
 			</div>
 
 			<footer class="entry-meta">
+				<?php if ( Friends::CPT === get_post_type() ) : ?>
 				<button href="<?php comments_link(); ?>" target="_blank" rel="noopener noreferrer" class="comments auth-link" data-token="<?php echo esc_attr( $token ); ?>">
 					<span class="dashicons dashicons-admin-comments"></span>
 					<?php comments_number( '', 1, '%' ); ?>
 				</button>
+				<?php else : ?>
+				<button href="<?php comments_link(); ?>" class="comments">
+					<span class="dashicons dashicons-admin-comments"></span>
+					<?php comments_number( '', 1, '%' ); ?>
+				</button>
+				<?php endif; ?>
 				<?php echo $friends->reactions->post_reactions(); ?>
 				<?php if ( Friends::CPT === get_post_type() ) : ?>
 					<?php echo $friends->recommendation->post_recommendation(); ?>
