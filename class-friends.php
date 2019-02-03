@@ -16,6 +16,7 @@
 class Friends {
 	const VERSION       = '0.20.1';
 	const CPT           = 'friend_post_cache';
+	const CPT_PREFIX    = 'friends_cache';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'administrator';
 
@@ -69,6 +70,13 @@ class Friends {
 	public $rest;
 
 	/**
+	 * Post types registered by other plugins.
+	 *
+	 * @var array
+	 */
+	private $registered_post_types = array();
+
+	/**
 	 * Get the class singleton
 	 *
 	 * @return Friends A class instance.
@@ -115,28 +123,77 @@ class Friends {
 	}
 
 	/**
+	 * Get all the post types that cache posts for friends.
+	 *
+	 * @return array The array of cache post types.
+	 */
+	public function get_all_cached_post_types() {
+		return array_values( $this->registered_post_types );
+	}
+
+	/**
+	 * Get all the cached and original post types.
+	 *
+	 * @return array The array of post types.
+	 */
+	public function get_all_post_types() {
+		return array_merge( array_keys( $this->registered_post_types ), array_values( $this->registered_post_types ) );
+	}
+
+	/**
+	 * Check whether a post type is a cached post type.
+	 *
+	 * @param  string $cached_post_type The post type to check.
+	 * @return boolean                  Whether the post type is a cached post type.
+	 */
+	public function is_cached_post_type( $cached_post_type ) {
+		return in_array( $cached_post_type, $this->registered_post_types, true );
+	}
+
+	/**
+	 * Check whether a post type has been registered with the Friends plugin.
+	 * Register this through Friends_API::register_post_type( $post_type );
+	 *
+	 * @param  string $post_type The post type to check.
+	 * @return boolean           Whether the post type has been registered.
+	 */
+	public function is_known_post_type( $post_type ) {
+		return isset( $this->registered_post_types[ $post_type ] );
+	}
+
+	/**
+	 * Get the corresponding cached post type for the given post type.
+	 *
+	 * @param  string $post_type The post type to check.
+	 * @return string            The post type to be used for caching.
+	 */
+	public function get_cache_post_type( $post_type ) {
+		return $this->registered_post_types[ $post_type ];
+	}
+
+	/**
 	 * Registers the custom post type
 	 */
 	public function register_custom_post_type() {
 		$labels = array(
-			'name'               => _x( 'Friend Posts', 'taxonomy plural name', 'friends' ),
-			'singular_name'      => _x( 'Friend Post', 'taxonomy singular name', 'friends' ),
-			'add_new'            => _x( 'Add New', 'post' ),
-			'add_new_item'       => __( 'Add New Friend Post', 'friends' ),
-			'edit_item'          => __( 'Edit Friend Post', 'friends' ),
-			'new_item'           => __( 'New Friend Post', 'friends' ),
-			'all_items'          => __( 'All Friend Posts', 'friends' ),
-			'view_item'          => __( 'View Friend Post', 'friends' ),
-			'search_items'       => __( 'Search Friend Posts', 'friends' ),
-			'not_found'          => __( 'No Friend Posts found', 'friends' ),
-			'not_found_in_trash' => __( 'No Friend Posts found in the Trash', 'friends' ),
+			'name'               => 'Friend Posts',
+			'singular_name'      => 'Friend Post',
+			'add_new'            => 'Add New',
+			'add_new_item'       => 'Add New Friend Post',
+			'edit_item'          => 'Edit Friend Post',
+			'new_item'           => 'New Friend Post',
+			'all_items'          => 'All Friend Posts',
+			'view_item'          => 'View Friend Post',
+			'search_items'       => 'Search Friend Posts',
+			'not_found'          => 'No Friend Posts found',
+			'not_found_in_trash' => 'No Friend Posts found in the Trash',
 			'parent_item_colon'  => '',
-			'menu_name'          => __( 'Cached Friend Posts' ),
+			'menu_name'          => 'Cached Friend Posts',
 		);
 
 		$args = array(
 			'labels'              => $labels,
-			'description'         => __( "A cached friend's post", 'friends' ),
+			'description'         => "A cached friend's post",
 			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated(),
 			'show_ui'             => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
@@ -154,6 +211,8 @@ class Friends {
 		);
 
 		register_post_type( self::CPT, $args );
+		$this->registered_post_types['post'] = self::CPT;
+		do_action( 'friends_register_post_type' );
 	}
 
 	/**
@@ -506,7 +565,7 @@ class Friends {
 
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => self::CPT,
+				'post_type'   => $this->get_all_cached_post_types(),
 				'post_status' => array( 'publish', 'private', 'trash' ),
 			)
 		);

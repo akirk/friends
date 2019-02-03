@@ -184,7 +184,7 @@ class Friends_Frontend {
 	public function friend_post_edit_link( $link, $post_id ) {
 		global $post;
 
-		if ( $post && Friends::CPT === $post->post_type ) {
+		if ( $post && $this->friends->is_cached_post_type( $post->post_type ) ) {
 			if ( $this->on_friends_page ) {
 				return false;
 			}
@@ -203,7 +203,7 @@ class Friends_Frontend {
 	 * @reeturn string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, WP_Post $post, $leavename, $sample ) {
-		if ( Friends::CPT === $post->post_type ) {
+		if ( $post && $this->friends->is_cached_post_type( $post->post_type ) ) {
 			return get_the_guid( $post );
 		}
 		return $post_link;
@@ -250,10 +250,17 @@ class Friends_Frontend {
 
 		$page_id = get_query_var( 'page' );
 
+		// Potentially limit post types to be displayed on the friends page.
+		$post_types = get_user_option( 'friends_page_post_types' );
+		if ( false === $post_types ) {
+			$post_types = $this->friends->get_all_post_types();
+		} else {
+			$post_types = explode( ',', $post_types );
+		}
+		$query->set( 'post_type', $post_types );
+
 		$query->set( 'post_status', array( 'publish', 'private' ) );
-		$query->set( 'post_type', array( Friends::CPT, 'post' ) );
 		$query->is_page = false;
-		$query->set( 'page', null );
 		$query->set( 'pagename', null );
 
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );

@@ -352,7 +352,7 @@ class Friends_REST {
 
 		$post_id = $remote_post_ids[ $remote_post_id ];
 		$post    = WP_Post::get_instance( $post_id );
-		if ( Friends::CPT === $post->post_type ) {
+		if ( $this->friends->is_cached_post_type( $post->post_type ) ) {
 			wp_delete_post( $post_id );
 		}
 
@@ -443,7 +443,7 @@ class Friends_REST {
 	 */
 	public function notify_friend_of_my_reaction( $post_id ) {
 		$post = WP_Post::get_instance( $post_id );
-		if ( Friends::CPT !== $post->post_type ) {
+		if ( ! $this->friends->is_cached_post_type( $post->post_type ) ) {
 			return;
 		}
 
@@ -530,7 +530,6 @@ class Friends_REST {
 		$standard_response = array(
 			'thank' => 'you',
 		);
-		$standard_response = false;
 
 		$friend_user = new WP_User( $user_id );
 
@@ -571,13 +570,25 @@ class Friends_REST {
 			);
 		}
 
+		$post_type = $this->friends->is_known_post_type( $request->get_param( 'post_type' ) );
+		if ( ! $post_type ) {
+			if ( $standard_response ) {
+				return $standard_response;
+			}
+
+			return array(
+				'post_type' => 'unknown',
+			);
+
+		}
+
 		$post_data = array(
 			'post_title'   => $request->get_param( 'title' ),
 			'post_content' => $request->get_param( 'description' ),
 			'post_status'  => 'publish',
 			'post_author'  => $friend_user->ID,
 			'guid'         => $permalink,
-			'post_type'    => Friends::CPT,
+			'post_type'    => $this->friends->get_cache_post_type( $request->get_param( 'post_type' ) ),
 			'tags_input'   => array( 'recommendation' ),
 		);
 

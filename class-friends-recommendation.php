@@ -58,7 +58,7 @@ class Friends_Recommendation {
 	 * @return string        The post content with buttons or nothing if echoed.
 	 */
 	public function post_recommendation( $text = '', $echo = false ) {
-		if ( ( Friends::CPT === get_post_type() ) && is_user_logged_in() ) {
+		if ( $this->friends->is_cached_post_type( get_post_type() ) && is_user_logged_in() ) {
 			ob_start();
 			include apply_filters( 'friends_template_path', 'friends/post-recommendation.php' );
 			$recommendation_text = ob_get_contents();
@@ -124,7 +124,7 @@ class Friends_Recommendation {
 
 		$post_id = intval( $_POST['post_id'] );
 		$post    = WP_Post::get_instance( $post_id );
-		if ( Friends::CPT !== $post->post_type ) {
+		if ( ! $this->friends->is_cached_post_type( $post->post_type ) ) {
 			return;
 		}
 
@@ -140,6 +140,7 @@ class Friends_Recommendation {
 				'author'      => get_the_author_meta( 'display_name', $post->post_author ),
 				'gravatar'    => get_avatar_url( $friend_user->ID ),
 				'description' => $post->post_content,
+				'post_type'   => $post->post_type,
 				'message'     => $_POST['message'],
 			);
 		} else {

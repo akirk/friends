@@ -96,17 +96,24 @@ class Friends_Feed {
 		}
 
 		foreach ( $friends as $friend_user ) {
-			$feed_url = $this->get_feed_url( $friend_user );
-
-			$feed = $this->fetch_feed( $feed_url );
-			if ( is_wp_error( $feed ) ) {
-				do_action( 'friends_retrieve_friends_error', $feed_url, $feed, $friend_user );
-				continue;
+			$post_types = get_user_option( 'friends_post_types', $friend_user->ID );
+			if ( false === $post_types ) {
+				$post_types = 'post';
 			}
+			foreach ( explode( ',', $post_types ) as $post_type ) {
+				$feed_url = $this->get_feed_url( $friend_user, $post_type );
 
-			$feed      = apply_filters( 'friends_feed_content', $feed, $friend_user );
-			$new_posts = $this->process_friend_feed( $friend_user, $feed );
-			do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
+				$feed = $this->fetch_feed( $feed_url );
+				if ( is_wp_error( $feed ) ) {
+					do_action( 'friends_retrieve_friends_error', $feed_url, $feed, $friend_user );
+					continue;
+				}
+				$cache_post_type = $this->friends->get_cache_post_type( $post_type );
+
+				$feed      = apply_filters( 'friends_feed_content', $feed, $friend_user, $cache_post_type );
+				$new_posts = $this->process_friend_feed( $friend_user, $feed );
+				do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
+			}
 		}
 	}
 
@@ -114,10 +121,10 @@ class Friends_Feed {
 	 * Get the (private) feed URL for a friend.
 	 *
 	 * @param  WP_User $friend_user The friend user.
-	 * @param  boolean $private     Whether to generate a private feed URL (if possible).
+	 * @param  string  $post_type   The post type for which to get the feed.
 	 * @return string               The feed URL.
 	 */
-	public function get_feed_url( WP_User $friend_user, $private = true ) {
+	public function get_feed_url( WP_User $friend_user, $post_type = 'post' ) {
 		$feed_url = get_user_option( 'friends_feed_url', $friend_user->ID );
 		if ( ! $feed_url ) {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
@@ -125,8 +132,14 @@ class Friends_Feed {
 
 		if ( $private && ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) ) {
 			$token = get_user_option( 'friends_out_token', $friend_user->ID );
+			$sep = '?';
 			if ( $token ) {
-				$feed_url .= '?friend=' . $token;
+				$feed_url .= $sep . 'friend=' . $token;
+				$sep = '&';
+			}
+			if ( 'post' !== $post_type ) {
+				$feed_url .= $sep . 'post_type=' . $post_type;
+				$sep = '&';
 			}
 		}
 		return apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
@@ -142,7 +155,7 @@ class Friends_Feed {
 		$remote_post_ids = array();
 		$existing_posts  = new WP_Query(
 			array(
-				'post_type'   => Friends::CPT,
+				'post_type'   => $this->friends->get_all_cached_post_types(),
 				'post_status' => array( 'publish', 'private', 'trash' ),
 				'author'      => $friend_user->ID,
 				'nopaging'    => true,
@@ -349,8 +362,9 @@ class Friends_Feed {
 	 *
 	 * @param  WP_User   $friend_user The friend user.
 	 * @param  SimplePie $feed        The RSS feed object of the friend user.
+	 * @param  string    $cache_post_type The post type to be used for caching the feed items.
 	 */
-	public function process_friend_feed( WP_User $friend_user, SimplePie $feed ) {
+	public function process_friend_feed( WP_User $friend_user, SimplePie $feed, $cache_post_type ) {
 		$new_friend = get_user_option( 'friends_new_friend', $friend_user->ID );
 
 		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
@@ -427,7 +441,7 @@ class Friends_Feed {
 				wp_update_post( $post_data );
 			} else {
 				$post_data['post_author']   = $friend_user->ID;
-				$post_data['post_type']     = Friends::CPT;
+				$post_data['post_type']     = $cache_post_type;
 				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
 				$post_data['comment_count'] = $item->comment_count;
 				$post_id                    = wp_insert_post( $post_data, true );
