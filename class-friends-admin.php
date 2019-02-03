@@ -1332,7 +1332,7 @@ class Friends_Admin {
 	 * @return string The unread badge HTML.
 	 */
 	private function get_unread_badge( $friend_request_count ) {
-		if ( 0 === $friend_request_count > 0 ) {
+		if ( 0 === $friend_request_count ) {
 			return '';
 		}
 

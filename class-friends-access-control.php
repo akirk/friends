@@ -253,6 +253,10 @@ class Friends_Access_Control {
 	 * @return int The new authenticated user.
 	 */
 	public function authenticate( $incoming_user_id ) {
+		if ( false === $incoming_user_id ) {
+			return false;
+		}
+
 		if ( isset( $_GET['friend'] ) ) {
 			$user_id = $this->verify_token( $_GET['friend'] );
 			if ( $user_id ) {
