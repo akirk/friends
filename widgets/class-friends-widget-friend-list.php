@@ -64,20 +64,25 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			);
 		} else {
 			echo wp_kses( $friends_title, array( 'span' => array( 'class' => array() ) ) );
-
 		}
 		?>
 		</a>
 		<?php
 		echo $args['after_title'];
 
-		if ( 0 === $friends->get_total() ) {
+		if ( 0 === $friends->get_total() + $subscriptions->get_total() ) {
 			?>
 			<span class="friend-count-message">
 			<?php
-				esc_html_e( "You don't have any friends yet.", 'friends' );
+				esc_html_e( "You don't have any friends or subscriptions yet.", 'friends' );
 			?>
 			</span>
+
+			<a href="<?php echo esc_attr( self_admin_url( 'admin.php?page=send_friend_request' ) ); ?>">
+			<?php
+				esc_html_e( 'Send a request', 'friends' );
+			?>
+			</a>
 			<?php
 		} else {
 			?>
@@ -90,15 +95,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			<?php
 		}
 
-		if ( 0 === $friends->get_total() ) {
-			?>
-			<span class="friend-count-message">
-			<?php
-				esc_html_e( "You don't have any friends yet.", 'friends' );
-			?>
-			</span>
-			<?php
-		} else {
+		if ( 0 !== $subscriptions->get_total() ) {
 			?>
 			<h5><?php _e( 'Subscriptions', 'friends' ); ?></h5>
 			<ul class="subscription-list">

@@ -933,7 +933,7 @@ class Friends_Admin {
 				?>
 				<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend_user->get_error_message() ); ?></p>
 				<?php
-				$error_data = $friend_user->get_error_message();
+				$error_data = $friend_user->get_error_data();
 				if ( isset( $error_data->error ) ) {
 					$error = unserialize( $error_data->error );
 					if ( is_wp_error( $error ) ) {
@@ -943,6 +943,14 @@ class Friends_Admin {
 						print_r( $error );
 						?>
 						</pre>
+						<?php
+					} elseif ( is_array( $error ) && isset( $error['body'] ) ) {
+						?>
+						<textarea>
+						<?php
+						echo esc_html( $error['body'] );
+						?>
+						</textarea>
 						<?php
 					}
 				}

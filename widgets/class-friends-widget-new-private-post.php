@@ -50,6 +50,12 @@ class Friends_Widget_New_Private_Post extends WP_Widget {
 			<input type="text" name="title" value="" placeholder="<?php echo esc_attr( __( 'Title' ) ); ?>" /><br />
 			<textarea name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( 'What do you want to post just to your friends, %s?', 'friends' ), wp_get_current_user()->display_name ) ); ?>"></textarea><br />
 			<button><?php _e( 'Post to your friends', 'friends' ); ?></button>
+			<small class="description">
+			<?php
+			// translators: %1$s is the menu label "Visibility", %2$s is the menu label "Private".
+			echo wp_kses( sprintf( __( '(You can also use the <a href=%1$s>WordPress editor</a> and set %2$s to %3$s.)', 'friends' ), '"' . self_admin_url( 'post-new.php' ) . '"', __( 'Visibility' ), __( 'Private' ) ), array( 'a' => array( 'href' => array() ) ) );
+			?>
+			</small>
 			<input type="hidden" name="status" value="private" /></span>
 		</form>
 		<?php

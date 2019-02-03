@@ -236,6 +236,7 @@ class Friends {
 		}
 		return $all_friend_requests;
 	}
+
 	/**
 	 * Gets all subscriptions.
 	 */
