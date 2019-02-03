@@ -1363,6 +1363,7 @@ class Friends_Admin {
 		$friends_main_url = $friends_url;
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$friend_requests = Friends::all_friend_requests();
+			$friend_request_count = $friend_requests->get_total();
 			if ( $friend_request_count > 0 ) {
 				$friends_main_url = self_admin_url( 'users.php?role=friend_request' );
 			}
