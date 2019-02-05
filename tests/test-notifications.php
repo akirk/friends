@@ -91,7 +91,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 
 		$user = new WP_User( $this->friend_id );
 
-		$friends->feed->process_friend_feed( $user, $feed );
+		$friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 	}
 
 	/**
@@ -125,7 +125,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
 
 		$friends = Friends::get_instance();
-		$friends->feed->process_friend_feed( $user, $feed );
+		$friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 	}
 
 	/**

@@ -368,7 +368,7 @@ class Friends_Admin {
 		$feed_title = trim( str_replace( '&raquo; Feed', '', $feed->get_title() ) );
 		$user = $this->friends->access_control->create_user( $url, 'subscription', $feed_title, $favicon );
 		if ( ! is_wp_error( $user ) ) {
-			$this->friends->feed->process_friend_feed( $user, $feed );
+			$this->friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
 		}
 

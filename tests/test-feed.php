@@ -110,10 +110,10 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$user = new WP_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 1, $new_items );
 
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 0, $new_items );
 	}
 
@@ -130,10 +130,10 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$user = new WP_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 1, $new_items );
 
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 0, $new_items );
 	}
 
@@ -150,10 +150,10 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$user = new WP_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 1, $new_items );
 
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 0, $new_items );
 	}
 
@@ -170,10 +170,10 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$user = new WP_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 11, $new_items );
 
-		$new_items = $friends->feed->process_friend_feed( $user, $feed );
+		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
 		$this->assertCount( 0, $new_items );
 	}
 
