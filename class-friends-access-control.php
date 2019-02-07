@@ -45,6 +45,7 @@ class Friends_Access_Control {
 	 */
 	private function register_hooks() {
 		add_filter( 'determine_current_user', array( $this, 'authenticate' ), 1 );
+		add_filter( 'option_comment_whitelist', array( $this, 'option_comment_whitelist' ) );
 		add_action( 'set_user_role', array( $this, 'update_friend_request_token' ), 10, 3 );
 		add_action( 'delete_user', array( $this, 'delete_friend_token' ) );
 		add_action( 'init', array( $this, 'remote_login' ) );
@@ -384,5 +385,19 @@ class Friends_Access_Control {
 			update_user_option( $user->ID, 'friends_rest_url', $friend_rest_url );
 		}
 		return $friend_rest_url;
+	}
+
+	/**
+	 * Prevent a friend's first comment ending up in moderation.
+	 *
+	 * @param  string $value The value retrieved from the Database.
+	 * @return string The filtered value.
+	 */
+	public function option_comment_whitelist( $value ) {
+		// Don't moderate the first comment by a friend.
+		if ( current_user_can( 'friend' ) || current_user_can( 'restricted_friend' ) ) {
+			return '0';
+		}
+		return $value;
 	}
 }
