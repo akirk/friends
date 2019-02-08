@@ -52,6 +52,72 @@ class Friends_Admin {
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'render_preview_friend_rules' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
+		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
+
+		if ( ! get_option( 'permalink_structure' ) ) {
+			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
+		}
+		add_action( 'admin_notices', array( $this, 'admin_notice_no_friends' ) );
+	}
+
+	/**
+	 * Display an admin notice.
+	 *
+	 * @param string $short_notice The message to display on the first line of the notice beside "Friends".
+	 * @param string $long_notice The message to display below the "Friends" line.
+	 * @param string $type The type of the message (error, warning, or success).
+	 */
+	private function show_admin_notice( $short_notice, $long_notice, $type = 'error' ) {
+
+		?>
+		<div class="friends-notice notice notice-<?php echo $type; ?>">
+			<p style="max-width:800px;"><?php echo $short_notice; // WPCS: xss ok. ?></p>
+			<p style="max-width:800px;"><?php echo $long_notice; // WPCS: xss ok. ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Display admin notice about an unsupported permalink structure
+	 */
+	public function admin_notice_unsupported_permalink_structure() {
+		$screen = get_current_screen();
+
+		if ( 'plugins' !== $screen->id ) {
+			return;
+		}
+		$short_notice = '<b>' . __( 'Friends', 'friends' ) . '</b> ';
+		$short_notice .= __( '&#151; You are running an unsupported permalink structure.', 'friends' );
+		// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
+		$long_notice = __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' );
+		$long_notice = sprintf( $long_notice, admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) );
+
+		$this->show_admin_notice( $short_notice, $long_notice );
+	}
+
+	/**
+	 * Display admin notice when user doesn't have friends or subscriptions
+	 */
+	public function admin_notice_no_friends() {
+		$screen = get_current_screen();
+
+		if ( 'dashboard' !== $screen->id ) {
+			return;
+		}
+
+		$friends_subscriptions = Friends::all_friends_subscriptions();
+		if ( $friends_subscriptions->get_total() ) {
+			return;
+		}
+
+		$short_notice = '<b class="headline">' . __( 'Connect with friends or subscribe to websites!', 'friends' ) . '</b>';
+		$long_notice = __( 'The Friends plugin is all about connecting with friends and news.', 'friends' );
+		// translators: 1: URL to send-friend-request, 2: the name of the Send Friend Request page.
+		$long_notice .= ' ' . sprintf( __( "To get started, go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website you'd like to subscribe.", 'friends' ), '"' . admin_url( 'admin.php?page=send-friend-request' ) . '"', __( 'Send Friend Request', 'friends' ) );
+		// translators: %s is the URL of the user's friends page.
+		$long_notice .= '<br/>' . sprintf( __( "All of your friends' (and subscriptions') posts will then be displayed on your <a href=%s>Friends page</a>.", 'friends' ), site_url( '/friends/' ) );
+
+		$this->show_admin_notice( $short_notice, $long_notice, '' );
 	}
 
 	/**
@@ -162,6 +228,8 @@ class Friends_Admin {
 			'add_friend_text' => __( 'Add a Friend', 'friends' ),
 		);
 		wp_localize_script( 'friends-admin', 'friends', $variables );
+		wp_enqueue_style( 'friends-admin', plugins_url( 'friends-admin.css', __FILE__ ), array(), Friends::VERSION );
+
 	}
 
 	/**
@@ -1524,5 +1592,37 @@ class Friends_Admin {
 			</div>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Add more "at a glance" items
+
+	 * @param  array $items Items inserted by another plugin.
+	 * @return array        Items + our items.
+	 */
+	public function dashboard_glance_items( $items ) {
+		$users = count_users();
+		$friend_count = $users['avail_roles']['friend'] + $users['avail_roles']['restricted_friend'];
+		$friend_request_count = $users['avail_roles']['friend_request'];
+		$subscription_count = $users['avail_roles']['subscription'];
+		$friend_post_count = wp_count_posts( Friends::CPT );
+		$friend_post_count = $friend_post_count->publish + $friend_post_count->private;
+
+		// translators: %s is the number of friends.
+		$items[] = '<a class="friends" href="' . self_admin_url( 'users.php?role=friend' ) . '">' . sprintf( _n( '%s Friend', '%s Friends', $friend_count, 'friends' ), $friend_count ) . '</a>';
+		if ( $friend_request_count ) {
+			// translators: %s is the number of friend requests.
+			$items[] = '<a class="friend-requests" href="' . self_admin_url( 'users.php?role=friend_request' ) . '">' . sprintf( _n( '%s Friend Request', '%s Friend Requests', $friend_request_count, 'friends' ), $friend_request_count ) . '</a>';
+		}
+		if ( $subscription_count ) {
+			// translators: %s is the number of subscriptions.
+			$items[] = '<a class="subscriptions" href="' . self_admin_url( 'users.php?role=subscription' ) . '">' . sprintf( _n( '%s Subscription', '%s Subscriptions', $subscription_count, 'friends' ), $subscription_count ) . '</a>';
+		}
+
+		if ( $friend_post_count ) {
+			// translators: %s is the number of friend posts.
+			$items[] = '<a class="friend-posts" href="' . site_url( '/friends/' ) . '">' . sprintf( _n( '%s Post by Friends', '%s Posts by Friends', $friend_post_count, 'friends' ), $friend_post_count ) . '</a>';
+		}
+		return $items;
 	}
 }

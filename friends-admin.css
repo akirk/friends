@@ -1,0 +1,36 @@
+.friends-notice b.headline {
+	font-size: 110%;
+}
+.friends-notice b.headline:before {
+	content: "\f307";
+	color: #82878c;
+    font: normal 20px/1 dashicons;
+    speak: none;
+    display: inline-block;
+    padding: 0 10px 0 0;
+    position: relative;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-decoration: none!important;
+    vertical-align: top;
+}
+
+#dashboard_right_now li a.friends:before {
+	content: "\f307";
+	padding: 0 5px 0 0;
+}
+
+#dashboard_right_now li a.friend-requests:before {
+	content: "\f336";
+	padding: 0 5px 0 0;
+}
+
+#dashboard_right_now li a.subscriptions:before {
+	content: "\f123";
+	padding: 0 5px 0 0;
+}
+
+#dashboard_right_now li a.friend-posts:before {
+	content: "\f159";
+	padding: 0 5px 0 0;
+}
