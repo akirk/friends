@@ -540,6 +540,10 @@ class Friends_Admin {
 			}
 		}
 
+		if ( ! is_wp_error( $user ) ) {
+			$this->friends->feed->retrieve_friend_posts( $user );
+		}
+
 		return $user;
 	}
 
