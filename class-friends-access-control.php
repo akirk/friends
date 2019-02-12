@@ -93,12 +93,12 @@ class Friends_Access_Control {
 	/**
 	 * Convert a site URL to a username
 	 *
-	 * @param  string $site_url The site URL in question.
+	 * @param  string $url The site URL in question.
 	 * @return string The corresponding username.
 	 */
-	public function get_user_login_for_site_url( $site_url ) {
-		$host = wp_parse_url( $site_url, PHP_URL_HOST );
-		$path = wp_parse_url( $site_url, PHP_URL_PATH );
+	public function get_user_login_for_url( $url ) {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		$path = wp_parse_url( $url, PHP_URL_PATH );
 
 		$user_login = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#', ' ', strtolower( $host . ' ' . $path ) ) ) );
 		return $user_login;
@@ -107,17 +107,17 @@ class Friends_Access_Control {
 	/**
 	 * Checks whether a user already exists for a site URL.
 	 *
-	 * @param  string $site_url The site URL for which to create the user.
+	 * @param  string $url The site URL for which to create the user.
 	 * @return WP_User|false Whether the user already exists
 	 */
-	public function get_user_for_site_url( $site_url ) {
-		$user_login = $this->get_user_login_for_site_url( $site_url );
+	public function get_user_for_url( $url ) {
+		$user_login = $this->get_user_login_for_url( $url );
 		$user       = get_user_by( 'login', $user_login );
 		if ( $user && ! $user->data->user_url ) {
 			wp_update_user(
 				array(
 					'ID'       => $user->ID,
-					'user_url' => $site_url,
+					'user_url' => $url,
 				)
 			);
 			$user = get_user_by( 'login', $user_login );
@@ -126,19 +126,19 @@ class Friends_Access_Control {
 	}
 
 	/**
-	 * Create a WP_User with for a challenge
+	 * Create a WP_User with for a request_id
 	 *
-	 * @param  string $challenge The challenge that we gave the requestor.
+	 * @param  string $request_id The request_id that we gave the requestor.
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
-	public function create_user_for_challenge( $challenge ) {
-		$data = get_option( 'friends_request_challenge_' . $challenge );
+	public function create_user_for_request_id( $request_id ) {
+		$data = get_option( 'friends_request_' . $request_id );
 		if ( ! $data ) {
-			return new WP_Error( 'friends_invalid_challenge', 'Invalid challenge for creation specified' );
+			return new WP_Error( 'friends_invalid_request_id', 'Invalid request_id for creation specified' );
 		}
 
-		$friend_user = $this->create_user( $data['site_url'], 'friend_request', $data['name'], $data['icon_url'], $data['message'] );
-		update_user_option( $friend_user->ID, 'friends_out_token', $data['key'] );
+		$friend_user = $this->create_user( $data['url'], 'friend_request', $data['name'], $data['icon_url'], $data['message'] );
+		update_user_option( $friend_user->ID, 'friends_request_id', $request_id );
 
 		return $friend_user;
 	}
@@ -147,14 +147,14 @@ class Friends_Access_Control {
 	/**
 	 * Create a WP_User with a specific Friends-related role
 	 *
-	 * @param  string $site_url     The site URL for which to create the user.
+	 * @param  string $url     The site URL for which to create the user.
 	 * @param  string $role         The role: subscription, pending_friend_request, or friend_request.
 	 * @param  string $display_name The user's display name.
 	 * @param  string $icon_url     The user_icon_url URL.
 	 * @param  string $message      A message passed by the requestor.
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
-	public function create_user( $site_url, $role, $display_name = null, $icon_url = null, $message = null ) {
+	public function create_user( $url, $role, $display_name = null, $icon_url = null, $message = null ) {
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -166,7 +166,7 @@ class Friends_Access_Control {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$friend_user = $this->get_user_for_site_url( $site_url );
+		$friend_user = $this->get_user_for_url( $url );
 		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 			foreach ( $role_rank as $_role => $rank ) {
 				if ( $rank > $role_rank[ $role ] ) {
@@ -181,19 +181,18 @@ class Friends_Access_Control {
 			return $friend_user;
 		}
 
-		$userdata       = array(
-			'user_login'   => $this->get_user_login_for_site_url( $site_url ),
+		$userdata  = array(
+			'user_login'   => $this->get_user_login_for_url( $url ),
 			'display_name' => $display_name,
 			'first_name'   => $display_name,
 			'nickname'     => $display_name,
-			'user_url'     => $site_url,
+			'user_url'     => $url,
 			'user_pass'    => wp_generate_password( 256 ),
 			'role'         => $role,
 		);
-		$friend_user_id = wp_insert_user( $userdata );
-
+		$friend_id = wp_insert_user( $userdata );
 		update_user_option( $friend_id, 'friends_new_friend', true );
-		$this->update_user_icon_url( $friend_id, $icon_url );
+		$this->update_user_icon_url( $friend_id, $icon_url, $url );
 		update_user_option( $friend_id, 'friends_request_message', $message );
 
 		return new WP_User( $friend_id );
@@ -209,13 +208,16 @@ class Friends_Access_Control {
 	public function update_user_icon_url( $user_id, $user_icon_url ) {
 		if ( $user_icon_url && wp_http_validate_url( $user_icon_url ) ) {
 			$user = new WP_User( $user_id );
-			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) ) {
-
-				$icon_host = parse_url( $user_icon_url, PHP_URL_HOST );
-				if ( preg_match( '#\buser_icon_url.com$#i', $icon_host ) ) {
-					// We'll only allow user_icon_url URLs for now.
+			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
+				$icon_host_parts = array_reverse( explode( '.', parse_url( strtolower( $user_icon_url ), PHP_URL_HOST ) ) );
+				if ( 'gravatar.com' === $icon_host_parts[1] . '.' . $icon_host_parts[0] ) {
 					update_user_option( $user_id, 'friends_user_icon_url', $user_icon_url );
+					return $user_icon_url;
+				}
 
+				$user_host_parts = array_reverse( explode( '.', parse_url( strtolower( $user->user_url ), PHP_URL_HOST ) ) );
+				if ( $user_host_parts[1] . '.' . $user_host_parts[0] === $icon_host_parts[1] . '.' . $icon_host_parts[0] ) {
+					update_user_option( $user_id, 'friends_user_icon_url', $user_icon_url );
 					return $user_icon_url;
 				}
 			} elseif ( $user->has_cap( 'subscription' ) ) {
@@ -354,14 +356,16 @@ class Friends_Access_Control {
 	 * Convert a user to a friend
 	 *
 	 * @param  WP_User $user  The user to become a friend of the blog.
-	 * @param  string  $out_token The token to talk to the remote.
+	 * @param  string  $out_token The token to authenticate against the remote.
+	 * @param  string  $in_token The token the remote needs to use to authenticate to us.
 	 * @return WP_User|WP_Error The user or an error.
 	 */
-	public function make_friend( WP_User $user, $out_token ) {
+	public function make_friend( WP_User $user, $out_token, $in_token ) {
 		if ( ! $user || is_wp_error( $user ) ) {
 			return $user;
 		}
 		update_user_option( $user->ID, 'friends_out_token', $out_token );
+		update_user_option( $user->ID, 'friends_in_token', $in_token );
 		$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 
 		return $user;
@@ -400,12 +404,14 @@ class Friends_Access_Control {
 	 * @return string        The REST URL.
 	 */
 	public function get_rest_url( WP_User $user ) {
-		$friend_rest_url = get_user_option( 'friends_rest_url', $user->ID );
-		if ( ! $friend_rest_url || false === strpos( $friend_rest_url, Friends_REST::PREFIX ) ) {
-			$friend_rest_url = $user->user_url . '/wp-json/' . Friends_REST::PREFIX;
-			update_user_option( $user->ID, 'friends_rest_url', $friend_rest_url );
+		$rest_url = get_user_option( 'friends_rest_url', $user->ID );
+		if ( ! $rest_url || false === strpos( $rest_url, Friends_REST::PREFIX ) ) {
+			$rest_url = $this->friends->rest->discover_rest_url( $user->user_url );
+			if ( $rest_url ) {
+				update_user_option( $user->ID, 'friends_rest_url', $rest_url );
+			}
 		}
-		return $friend_rest_url;
+		return $rest_url;
 	}
 
 	/**

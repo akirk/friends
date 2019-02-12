@@ -310,7 +310,7 @@ class Friends_Admin {
 		if ( ! is_string( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
 			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
 		}
-		$site_url = $feed_url;
+		$url = $feed_url;
 
 		$feed = $this->friends->feed->fetch_feed( $feed_url );
 		if ( is_wp_error( $feed ) ) {
@@ -326,12 +326,12 @@ class Friends_Admin {
 		}
 
 		if ( $feed->get_permalink() ) {
-			$site_url = $feed->get_permalink();
+			$url = $feed->get_permalink();
 		} elseif ( '/feed/' === substr( $feed_url, -6 ) ) {
-			$site_url = substr( $feed_url, 0, -6 );
+			$url = substr( $feed_url, 0, -6 );
 		}
 
-		$user = $this->friends->access_control->get_user_for_site_url( $site_url );
+		$user = $this->friends->access_control->get_user_for_url( $url );
 		if ( $user && ! is_wp_error( $user ) && $this->friends->access_control->is_valid_friend( $user ) ) {
 			return new WP_Error( 'already-friend', __( 'You are already subscribed to this site.', 'friends' ) );
 		}
@@ -391,90 +391,38 @@ class Friends_Admin {
 			return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 		}
 
-		$response        = wp_safe_remote_get(
-			$friend_url,
-			array(
-				'timeout'     => 20,
-				'redirection' => 5,
-			)
-		);
-		$friend_rest_url = $friend_url . '/wp-json/' . Friends_REST::PREFIX;
-
-		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-			$dom = new DOMDocument();
-
-			set_error_handler( '__return_null' );
-			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
-			restore_error_handler();
-
-			$xpath = new DOMXpath( $dom );
-			foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
-				if ( 'friends-base-url' === $link->getAttribute( 'rel' ) ) {
-					$friend_rest_url = $link->getAttribute( 'href' );
-					break;
-				}
-			}
+		$friend_user = $this->friends->access_control->get_user_for_url( $friend_url );
+		if ( $friend_user && ! is_wp_error( $friend_user ) && $this->friends->access_control->is_valid_friend( $friend_user ) ) {
+			return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
 		}
 
-		$response = wp_safe_remote_get(
-			$friend_rest_url . '/hello',
-			array(
-				'timeout'     => 20,
-				'redirection' => 5,
-			)
-		);
-
-		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			$json = json_decode( wp_remote_retrieve_body( $response ) );
-
-			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
-				if ( 'rest_no_route' !== $json->code ) {
-					// translators: %s is the message from the other server.
-					return new WP_Error( $json->code, $json->message, $json->data );
-				}
-			}
-
+		$rest_url = $this->friends->rest->discover_rest_url( $friend_url );
+		if ( ! $rest_url ) {
 			return $this->subscribe( $friend_url );
 		}
 
-		$json       = json_decode( wp_remote_retrieve_body( $response ) );
-		$friend_url = rtrim( $json->site_url, '/' );
-		if ( ! is_string( $friend_url ) || ! wp_http_validate_url( $friend_url ) ) {
-			return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
-		}
-
-		if ( isset( $json->rest_url ) ) {
-			$friend_rest_url = rtrim( $json->rest_url, '/' );
-			if ( ! is_string( $friend_rest_url ) || ! wp_http_validate_url( $friend_rest_url ) ) {
-				return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
-			}
-		}
-
-		$friend_user = $this->friends->access_control->get_user_for_site_url( $friend_url );
-		if ( $friend_user && ! is_wp_error( $friend_user ) && $this->friends->access_control->is_valid_friend( $friend_user ) ) {
-			// translators: %s is a username.
-			return new WP_Error( 'already-friend', sprintf( __( 'You are already friends with %s', 'friends' ), $friend_user->user_login ) );
-		} elseif ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->has_cap( 'friend_request' ) ) {
-			$this->update_in_token( $friend_user->ID );
-			$friend_user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
-			return $friend_user;
-		}
-
-		$user_login = $this->friends->access_control->get_user_login_for_site_url( $friend_url );
-
-		$friend_request_token = sha1( wp_generate_password( 256 ) );
-		update_option( 'friends_request_token_' . sha1( $friend_rest_url ), $friend_request_token );
+		/*
+		// if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->has_cap( 'friend_request' ) ) {
+		// $this->update_in_token( $friend_user->ID );
+		// $friend_user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
+		// return $friend_user;
+		// }
+		//
+		*/
+		$user_login       = $this->friends->access_control->get_user_login_for_url( $friend_url );
+		$future_out_token = sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_remote_post(
-			$friend_rest_url . '/friend-request',
+			$rest_url . '/friend-request',
 			array(
 				'body'        => array(
-					'site_url'  => site_url(),
-					'rest_url'  => get_rest_url() . Friends_REST::PREFIX,
-					'name'      => $current_user->display_name,
-					'gravatar'  => get_avatar_url( $current_user->ID ),
-					'signature' => $friend_request_token,
+					'pre_shared_secret' => 'friends',
+					'name'              => $current_user->display_name,
+					'url'               => site_url(),
+					'icon_url'          => get_avatar_url( $current_user->ID ),
+					'message'           => 'optional-message',
+					'key'               => $future_out_token,
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -490,57 +438,52 @@ class Friends_Admin {
 				// translators: %s is the message from the other server.
 				return new WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), $json->message ), $json->data );
 			}
-
-			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response.', $response );
 		}
 
 		if ( ! $json || ! is_object( $json ) ) {
-			return new WP_Error( 'unexpected-rest-response', 'Unexpected server response.', $response );
+			return new WP_Error( 'unexpected-rest-response', 'Unexpected remote response.', $response );
 		}
 
-		$user = $this->friends->access_control->create_user( $friend_url, 'pending_friend_request' );
-		if ( ! is_wp_error( $user ) ) {
-			update_user_option( $user->ID, 'friends_rest_url', $friend_rest_url );
+		$friend_user = $this->friends->access_control->create_user( $friend_url, 'pending_friend_request' );
+		if ( ! is_wp_error( $friend_user ) ) {
+			update_user_option( $friend_user->ID, 'friends_rest_url', $rest_url );
 
-			if ( isset( $json->friend_request_pending ) ) {
-				update_option( 'friends_accept_token_' . $json->friend_request_pending, $user->ID );
-				$user->set_role( 'pending_friend_request' );
-			} elseif ( isset( $json->friend ) ) {
-				$this->friends->access_control->make_friend( $user, $json->friend );
-
-				if ( isset( $json->gravatar ) ) {
-					$this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
-				}
-
-				if ( isset( $json->name ) ) {
-					wp_update_user(
-						array(
-							'ID'           => $user->ID,
-							'nickname'     => $json->name,
-							'first_name'   => $json->name,
-							'display_name' => $json->name,
-						)
-					);
-				}
-
-				$response = wp_safe_remote_post(
-					$friend_rest_url . '/friend-request-accepted',
-					array(
-						'body'        => array(
-							'token'  => $json->token,
-							'friend' => $this->friends->access_control->update_in_token( $user->ID ),
-							'proof'  => sha1( $json->token . $friend_request_token ),
-						),
-						'timeout'     => 20,
-						'redirection' => 5,
-					)
-				);
-				delete_user_option( $user->ID, 'friends_request_token' );
-
-				$json = json_decode( wp_remote_retrieve_body( $response ) );
-				if ( $json->friend ) {
-					update_user_option( $user->ID, 'friends_out_token', $json->friend );
-				}
+			if ( isset( $json->request ) ) {
+				update_option( 'friends_request_' . sha1( $json->request ), $friend_user->ID );
+				update_user_option( $friend_user->ID, 'friends_future_out_token_' . sha1( $json->request ), $future_out_token );
+				$friend_user->set_role( 'pending_friend_request' );
+				// } elseif ( isset( $json->friend ) ) {
+				// $this->friends->access_control->make_friend( $user, $json->friend );
+				// if ( isset( $json->gravatar ) ) {
+				// $this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
+				// }
+				// if ( isset( $json->name ) ) {
+				// wp_update_user(
+				// array(
+				// 'ID'           => $user->ID,
+				// 'nickname'     => $json->name,
+				// 'first_name'   => $json->name,
+				// 'display_name' => $json->name,
+				// )
+				// );
+				// }
+				// $response = wp_safe_remote_post(
+				// $friend_rest_url . '/friend-request-accepted',
+				// array(
+				// 'body'        => array(
+				// 'token'  => $json->token,
+				// 'friend' => $this->friends->access_control->update_in_token( $user->ID ),
+				// 'proof'  => sha1( $json->token . $friend_request_token ),
+				// ),
+				// 'timeout'     => 20,
+				// 'redirection' => 5,
+				// )
+				// );
+				// delete_user_option( $user->ID, 'friends_request_token' );
+				// $json = json_decode( wp_remote_retrieve_body( $response ) );
+				// if ( $json->friend ) {
+				// update_user_option( $user->ID, 'friends_out_token', $json->friend );
+				// }
 			}
 		}
 
@@ -1172,15 +1115,8 @@ class Friends_Admin {
 			$_GET['tab'] = 'e-mail';
 		}
 
-		if ( ! $friend && isset( $_GET['user'] ) ) {
-			$friend = new WP_User( intval( $_GET['user'] ) );
-			if ( $friend->has_cap( 'subscription' ) ) {
-				$url = $friend->user_url;
-			} else {
-				$friend = null;
-			}
-		} elseif ( ! $friend && isset( $_GET['url'] ) ) {
-			$friend = $this->friends->access_control->get_user_for_site_url( $_GET['url'] );
+		if ( ! $friend && isset( $_GET['url'] ) ) {
+			$friend = $this->friends->access_control->get_user_for_url( $_GET['url'] );
 			$url    = $_GET['url'];
 			if ( 'http' !== substr( $url, 0, 4 ) ) {
 				$url = 'http://' . $url;
