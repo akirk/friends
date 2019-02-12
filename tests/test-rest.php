@@ -46,7 +46,25 @@ class Friends_RestTest extends WP_UnitTestCase {
 				// Pretend the site_url now is the requested one.
 				update_option( 'siteurl', $p['scheme'] . '://' . $p['host'] );
 				$rest_prefix = site_url() . '/wp-json';
-				if ( false === strpos( $url, $rest_prefix ) ) {
+				if ( substr( $url, -6 ) === '/feed/' ) {
+					// Restore the old site_url.
+					update_option( 'siteurl', $site_url );
+					return apply_filters(
+						'fake_http_response',
+						array(
+							'headers'  => array(
+								'content-type' => 'application/rss+xml',
+							),
+							'body'     => file_get_contents( __DIR__ . '/data/friend-feed-1-public-post.rss' ),
+							'response' => array(
+								'code' => 200,
+							),
+						),
+						$p['scheme'] . '://' . $p['host'],
+						$url,
+						$request
+					);
+				} elseif ( false === strpos( $url, $rest_prefix ) ) {
 					$html = Friends::get_html_link_rel_friends_base_url();
 
 					// Restore the old site_url.
@@ -54,6 +72,9 @@ class Friends_RestTest extends WP_UnitTestCase {
 					return apply_filters(
 						'fake_http_response',
 						array(
+							'headers'  => array(
+								'content-type' => 'text/html',
+							),
 							'body'     => $html,
 							'response' => array(
 								'code' => 200,
@@ -81,6 +102,9 @@ class Friends_RestTest extends WP_UnitTestCase {
 				return apply_filters(
 					'fake_http_response',
 					array(
+						'headers'  => array(
+							'content-type' => 'text/json',
+						),
 						'body'     => wp_json_encode( $response->data ),
 						'response' => array(
 							'code' => $response->status,
