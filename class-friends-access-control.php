@@ -323,6 +323,7 @@ class Friends_Access_Control {
 	 * @return string The new friend_in_token.
 	 */
 	public function update_in_token( $user_id ) {
+		return false;
 		$in_token = sha1( wp_generate_password( 256 ) );
 		if ( update_user_option( $user_id, 'friends_in_token', $in_token ) ) {
 			update_option( 'friends_in_token_' . $in_token, $user_id );
@@ -365,7 +366,9 @@ class Friends_Access_Control {
 			return $user;
 		}
 		update_user_option( $user->ID, 'friends_out_token', $out_token );
-		update_user_option( $user->ID, 'friends_in_token', $in_token );
+		if ( update_user_option( $user->ID, 'friends_in_token', $in_token ) ) {
+			update_option( 'friends_in_token_' . $in_token, $user->ID );
+		}
 		$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 
 		return $user;
