@@ -110,12 +110,16 @@ class Friends_Admin {
 			return;
 		}
 
-		$short_notice = '<b class="headline">' . __( 'Connect with friends or subscribe to websites!', 'friends' ) . '</b>';
-		$long_notice = __( 'The Friends plugin is all about connecting with friends and news.', 'friends' );
+		$short_notice = '<b class="headline">' . __( 'Welcome to the Friends Plugin!', 'friends' ) . '</b>';
+		$long_notice = '<p>' . __( "You're seeing this message because you haven't connected with friends or made any subscriptions yet. Here is how to get started:", 'friends' ) . '</p>';
+		$long_notice .= '<p>' . __( 'The Friends plugin is all about connecting with friends and news.', 'friends' );
 		// translators: 1: URL to send-friend-request, 2: the name of the Send Friend Request page.
-		$long_notice .= ' ' . sprintf( __( "To get started, go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website you'd like to subscribe.", 'friends' ), '"' . admin_url( 'admin.php?page=send-friend-request' ) . '"', __( 'Send Friend Request', 'friends' ) );
+		$long_notice .= ' ' . sprintf( __( "First, you'll want to go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website or blog you'd like to subscribe to.", 'friends' ), '"' . admin_url( 'admin.php?page=send-friend-request' ) . '"', __( 'Send Friend Request', 'friends' ) );
 		// translators: %s is the URL of the user's friends page.
-		$long_notice .= '<br/>' . sprintf( __( "All of your friends' (and subscriptions') posts will then be displayed on your <a href=%s>Friends page</a>.", 'friends' ), site_url( '/friends/' ) );
+		$long_notice .= ' ' . sprintf( __( "As soon as you have done this, you'll be able see all the compiled posts of your friends (and subscriptions) on your <a href=%s>Friends page</a>.", 'friends' ), site_url( '/friends/' ) ) . '</p>';
+
+		$long_notice .= '<p>' . __( 'Furthermore, your friends will be able to see your private posts. This means you can submit posts on your own blog that only they will be able to see and vica versa.', 'friends' ) . ' ';
+		$long_notice .= __( 'This allows building your own decentralized social network, no third party involved.', 'friends' ) . '</p>';
 
 		$this->show_admin_notice( $short_notice, $long_notice, '' );
 	}
