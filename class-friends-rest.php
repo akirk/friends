@@ -246,36 +246,6 @@ class Friends_REST {
 	}
 
 	/**
-	 * Limits the requests from an ip address
-	 *
-	 * @param  string $name             A unique identifier of the page loader.
-	 * @param  int    $allowed_requests The number of allowed requests in time-frame.
-	 * @param  int    $minutes          The time-frame in minutes.
-	 * @return bool Whether the user should be limited or not.
-	 */
-	public function limit_requests_in_minutes( $name, $allowed_requests, $minutes ) {
-		$requests = 0;
-		$now      = time();
-
-		for ( $time = $now - $minutes * 60; $time <= $now; $time += 60 ) {
-			$key = $name . date( 'dHi', $time );
-
-			$requests_in_current_minute = wp_cache_get( $key, 'friends' );
-
-			if ( false === $requests_in_current_minute ) {
-				wp_cache_set( $key, 1, 'friends', $minutes * 60 + 1 );
-			} else {
-				wp_cache_incr( $key, 1, 'friends' );
-			}
-		}
-
-		if ( $requests > $allowed_requests ) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
 	 * Receive a friend request via REST
 	 *
 	 * @param  WP_REST_Request $request The incoming request.
@@ -293,17 +263,6 @@ class Friends_REST {
 			);
 		}
 
-		if ( ! $this->limit_requests_in_minutes( 'friend-request' . $_SERVER['REMOTE_ADDR'], 5, 5 ) ) {
-			return new WP_Error(
-				'too_many_request',
-				'Too many requests were sent.',
-				array(
-					'status' => 529,
-				)
-			);
-
-		}
-
 		$url = trim( $request->get_param( 'url' ) );
 		if ( ! is_string( $url ) || ! wp_http_validate_url( $url ) || 0 === strcasecmp( site_url(), $url ) ) {
 			return new WP_Error(
@@ -315,21 +274,14 @@ class Friends_REST {
 			);
 		}
 
-		$request_id = sha1( wp_generate_password( 256 ) );
-		update_option(
-			'friends_request_' . $request_id,
-			array(
-				'key'      => $request->get_param( 'key' ),
-				'name'     => $request->get_param( 'name' ),
-				'icon_url' => $request->get_param( 'icon_url' ),
-				'url'      => $request->get_param( 'url' ),
-				'message'  => $request->get_param( 'message' ),
-			)
-		);
+		$friend_user = $this->friends->access_control->create_user( $url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
+		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ), $url );
 
-		if ( ! get_option( 'friends_ignore_incoming_friend_requests' ) ) {
-			$friend_user = $this->friends->access_control->create_user_for_request_id( $request_id );
-		}
+		update_user_option( $friend_user->ID, 'friends_future_in_key', $request->get_param( 'key' ) );
+		update_user_option( $friend_user->ID, 'friends_request_message', $request->get_param( 'message' ) );
+
+		$request_id = sha1( wp_generate_password( 256 ) );
+		update_user_option( $friend_user->ID, 'friends_request_id', $request_id );
 
 		return array(
 			'request' => $request_id,
@@ -712,8 +664,7 @@ class Friends_REST {
 
 		$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
 		$request_id      = get_user_option( 'friends_request_id', $friend_user->ID );
-		$request_data    = get_option( 'friends_request_' . $request_id );
-		$future_in_token = $request_data['key'];
+		$future_in_token = get_user_option( 'friends_future_in_key', $friend_user->ID );
 
 		$proof     = sha1( wp_generate_password( 256 ) );
 		$challenge = sha1( wp_generate_password( 256 ) );
@@ -748,7 +699,7 @@ class Friends_REST {
 
 		$this->friends->access_control->make_friend( $friend_user, $json->key, $future_in_token );
 		delete_user_option( $friend_user->ID, 'friends_request_id' );
-		delete_option( 'friends_request_' . $request_id );
+		delete_user_option( $friend_user->ID, 'friends_future_in_key' );
 
 		/*
 		TODO

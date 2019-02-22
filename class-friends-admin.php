@@ -41,7 +41,6 @@ class Friends_Admin {
 		add_action( 'admin_head-users.php', array( $this, 'keep_friends_open_on_users_screen' ) );
 		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
-		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_send_friend_request' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
@@ -419,7 +418,7 @@ class Friends_Admin {
 		$future_out_token = sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
-		$response     = wp_remote_post(
+		$response     = wp_safe_remote_post(
 			$rest_url . '/friend-request',
 			array(
 				'body'        => array(
@@ -493,11 +492,11 @@ class Friends_Admin {
 			}
 		}
 
-		if ( ! is_wp_error( $user ) ) {
-			$this->friends->feed->retrieve_friend_posts( $user );
+		if ( ! is_wp_error( $friend_user ) ) {
+			$this->friends->feed->retrieve_friend_posts( $friend_user );
 		}
 
-		return $user;
+		return $friend_user;
 	}
 
 	/**
@@ -1253,19 +1252,13 @@ class Friends_Admin {
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link                                  = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
+			$message = get_user_option( 'friends_request_message', $user->ID );
 			// translators: %s is a date.
-			$actions['friend_request_date'] = '<div class="nonessential">' . esc_html( sprintf( __( 'Requested on %s', 'friends' ), date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) ) ) . '</div>';
-
-		}
-
-		if ( $user->has_cap( 'pending_friend_request' ) ) {
-			$link                           = self_admin_url( wp_nonce_url( 'users.php?action=friend_request&users[]=' . $user->ID ) );
-			$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
-		}
-
-		if ( $user->has_cap( 'subscription' ) ) {
-			$link                           = self_admin_url( wp_nonce_url( 'users.php?action=friend_request&users[]=' . $user->ID ) );
-			$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Send Friend Request', 'friends' ) . '</a>';
+			$actions['friend_request_date'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Requested on %s', 'friends' ), date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) ) ) . '</span>';
+			if ( $message ) {
+				// translators: %s is a message text.
+				$actions['friend_request_message'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Message: %s', 'friends' ), $message ) ) . '</span>';
+			}
 		}
 
 		return $actions;
@@ -1311,38 +1304,6 @@ class Friends_Admin {
 
 		$sendback = add_query_arg( 'accepted', $accepted, $sendback );
 		$sendback = remove_query_arg( 'role', $sendback );
-		wp_safe_redirect( $sendback );
-	}
-
-	/**
-	 * Handle bulk sending of friend requests on the user page
-	 *
-	 * @param  string $sendback The URL to send the user back to.
-	 * @param  string $action The requested action.
-	 * @param  array  $users The selected users.
-	 */
-	public function handle_bulk_send_friend_request( $sendback, $action, $users ) {
-		if ( 'friend_request' !== $action ) {
-			return $sendback;
-		}
-
-		$sent = 0;
-		foreach ( $users as $user_id ) {
-			$user = new WP_User( $user_id );
-			if ( ! $user || is_wp_error( $user ) ) {
-				continue;
-			}
-
-			if ( ! $user->has_cap( 'subscription' ) && $user->has_cap( 'friend_request' ) ) {
-				continue;
-			}
-
-			if ( ! is_wp_error( $this->send_friend_request( $user->user_url ) ) ) {
-				$sent++;
-			}
-		}
-
-		$sendback = add_query_arg( 'sent', $sent, $sendback );
 		wp_safe_redirect( $sendback );
 	}
 

@@ -9,9 +9,9 @@ jQuery( function( $ ) {
 		}
 	} );
 
-	jQuery( document ).on( 'click', 'button#send-friends-advanced', function() {
+	jQuery( document ).on( 'click', 'a#send-friends-advanced', function() {
 		jQuery( 'tr.hidden' ).removeClass( 'hidden' );
-		jQuery( this ).hide();
+		jQuery( this ).remove();
 		return false;
 	} );
 

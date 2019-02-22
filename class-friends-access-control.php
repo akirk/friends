@@ -126,35 +126,15 @@ class Friends_Access_Control {
 	}
 
 	/**
-	 * Create a WP_User with for a request_id
-	 *
-	 * @param  string $request_id The request_id that we gave the requestor.
-	 * @return WP_User|WP_Error The created user or an error.
-	 */
-	public function create_user_for_request_id( $request_id ) {
-		$data = get_option( 'friends_request_' . $request_id );
-		if ( ! $data ) {
-			return new WP_Error( 'friends_invalid_request_id', 'Invalid request_id for creation specified' );
-		}
-
-		$friend_user = $this->create_user( $data['url'], 'friend_request', $data['name'], $data['icon_url'], $data['message'] );
-		update_user_option( $friend_user->ID, 'friends_request_id', $request_id );
-
-		return $friend_user;
-	}
-
-
-	/**
 	 * Create a WP_User with a specific Friends-related role
 	 *
 	 * @param  string $url     The site URL for which to create the user.
 	 * @param  string $role         The role: subscription, pending_friend_request, or friend_request.
 	 * @param  string $display_name The user's display name.
 	 * @param  string $icon_url     The user_icon_url URL.
-	 * @param  string $message      A message passed by the requestor.
 	 * @return WP_User|WP_Error The created user or an error.
 	 */
-	public function create_user( $url, $role, $display_name = null, $icon_url = null, $message = null ) {
+	public function create_user( $url, $role, $display_name = null, $icon_url = null ) {
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -193,7 +173,6 @@ class Friends_Access_Control {
 		$friend_id = wp_insert_user( $userdata );
 		update_user_option( $friend_id, 'friends_new_friend', true );
 		$this->update_user_icon_url( $friend_id, $icon_url, $url );
-		update_user_option( $friend_id, 'friends_request_message', $message );
 
 		return new WP_User( $friend_id );
 	}
