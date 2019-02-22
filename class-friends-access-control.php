@@ -46,7 +46,7 @@ class Friends_Access_Control {
 	private function register_hooks() {
 		add_filter( 'determine_current_user', array( $this, 'authenticate' ), 1 );
 		add_filter( 'option_comment_whitelist', array( $this, 'option_comment_whitelist' ) );
-		add_action( 'set_user_role', array( $this, 'update_friend_request_token' ), 10, 3 );
+		add_action( 'set_user_role', array( $this, 'notify_new_friend_request' ), 10, 3 );
 		add_action( 'delete_user', array( $this, 'delete_friend_token' ) );
 		add_action( 'init', array( $this, 'remote_login' ) );
 	}
@@ -285,30 +285,12 @@ class Friends_Access_Control {
 
 		if ( $current_secret ) {
 			delete_option( 'friends_in_token_' . $current_secret );
-			delete_option( 'friends_accept_token_' . $current_secret );
 		}
 
 		$user = new WP_User( $user_id );
-		delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
 
 		// No need to delete user options as the user will be deleted.
 		return $current_secret;
-	}
-
-	/**
-	 * Update the friend_in_token
-	 *
-	 * @param  int $user_id The user_id to give an friend_in_token.
-	 * @return string The new friend_in_token.
-	 */
-	public function update_in_token( $user_id ) {
-		return false;
-		$in_token = sha1( wp_generate_password( 256 ) );
-		if ( update_user_option( $user_id, 'friends_in_token', $in_token ) ) {
-			update_option( 'friends_in_token_' . $in_token, $user_id );
-		}
-
-		return $in_token;
 	}
 
 	/**
@@ -320,13 +302,10 @@ class Friends_Access_Control {
 	 *
 	 * @return string The new token.
 	 */
-	public function update_friend_request_token( $user_id, $new_role, $old_roles ) {
+	public function notify_new_friend_request( $user_id, $new_role, $old_roles ) {
 		if ( 'friend_request' !== $new_role || in_array( $new_role, $old_roles, true ) ) {
 			return;
 		}
-
-		$token = sha1( wp_generate_password( 256 ) );
-		update_user_option( $user_id, 'friends_request_token', $token );
 
 		do_action( 'notify_new_friend_request', new WP_User( $user_id ) );
 		return $token;

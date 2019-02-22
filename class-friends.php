@@ -447,13 +447,9 @@ class Friends {
 		foreach ( $affected_users as $user ) {
 			$in_token = get_user_option( 'friends_in_token', $user->ID );
 			delete_option( 'friends_in_token_' . $in_token );
-			delete_option( 'friends_accept_token_' . $in_token );
-			delete_option( 'friends_request_token_' . sha1( $user->user_url ) );
 			delete_user_option( $user->ID, 'friends_out_token' );
 			delete_user_option( $user->ID, 'friends_in_token' );
 			delete_user_option( $user->ID, 'friends_new_friend' );
-			delete_user_option( $user->ID, 'friends_accept_signature' );
-			delete_user_option( $user->ID, 'friends_request_token' );
 		}
 
 		delete_option( 'friends_main_user_id' );

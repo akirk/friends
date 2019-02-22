@@ -142,38 +142,6 @@ class Friends_REST {
 	}
 
 	/**
-	 * Acknowledge via REST that the friends plugin had called.
-	 *
-	 * @param  WP_REST_Request $request The incoming request.
-	 * @return array The array to be returned via the REST API.
-	 */
-	public function rest_hello( WP_REST_Request $request ) {
-		if ( 'GET' === $request->get_method() ) {
-			return array(
-				'version'  => Friends::VERSION,
-				'url'      => site_url(),
-				'rest_url' => get_rest_url() . Friends_REST::PREFIX,
-			);
-		}
-		$signature = get_option( 'friends_request_token_' . sha1( $request->get_param( 'rest_url' ) ) );
-
-		if ( ! $signature ) {
-			return new WP_Error(
-				'friends_unknown_request',
-				'The other party is unknown.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		return array(
-			'version'  => Friends::VERSION,
-			'response' => sha1( $signature . $request->get_param( 'challenge' ) ),
-		);
-	}
-
-	/**
 	 * Receive a notification via REST that a friend request was accepted
 	 *
 	 * @param  WP_REST_Request $request The incoming request.
@@ -197,10 +165,10 @@ class Friends_REST {
 			);
 		}
 
-		$future_out_token = get_user_option( 'friends_future_out_token_' . sha1( $request_id ), $friend_user_id );
+		$future_in_token = get_user_option( 'friends_future_in_token_' . sha1( $request_id ), $friend_user_id );
 		$proof            = $request->get_param( 'proof' );
 		$signature        = $request->get_param( 'signature' );
-		if ( ! $proof || ! $signature || sha1( $future_out_token . $proof ) !== $signature ) {
+		if ( ! $proof || ! $signature || sha1( $future_in_token . $proof ) !== $signature ) {
 			return new WP_Error(
 				'friends_invalid_signature',
 				'An invalid signature was provided.',
@@ -221,8 +189,17 @@ class Friends_REST {
 			);
 		}
 
-		$in_token = $this->friends->access_control->update_in_token( $friend_user->ID );
-		$this->friends->access_control->make_friend( $friend_user, $future_out_token, $in_token );
+		$future_out_token = $request->get_param( 'key' );
+		if ( ! is_string( $future_out_token ) || empty( $future_out_token ) ) {
+			return new WP_Error(
+				'friends_invalid_key',
+				'The key must be a non-empty string.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+		$this->friends->access_control->make_friend( $friend_user, $future_out_token, $future_in_token );
 
 		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ) );
 		if ( $request->get_param( 'name' ) ) {
@@ -236,12 +213,11 @@ class Friends_REST {
 			);
 		}
 
-		delete_user_option( $friend_user_id, 'friends_future_out_token_' . sha1( $request_id ) );
+		delete_user_option( $friend_user_id, 'friends_future_in_token_' . sha1( $request_id ) );
 
 		do_action( 'notify_accepted_friend_request', $friend_user );
 		return array(
-			'signature' => sha1( $future_out_token . $request->get_param( 'challenge' ) ),
-			'key'       => $in_token,
+			'signature' => sha1( $future_out_token . $future_in_token ),
 		);
 	}
 
@@ -274,10 +250,21 @@ class Friends_REST {
 			);
 		}
 
-		$friend_user = $this->friends->access_control->create_user( $url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
-		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ), $url );
+		$future_out_token = $request->get_param( 'key' );
+		if ( ! is_string( $future_out_token ) || empty( $future_out_token ) ) {
+			return new WP_Error(
+				'friends_invalid_key',
+				'The key must be a non-empty string.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
 
-		update_user_option( $friend_user->ID, 'friends_future_in_key', $request->get_param( 'key' ) );
+		$friend_user = $this->friends->access_control->create_user( $url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
+		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ) );
+
+		update_user_option( $friend_user->ID, 'friends_future_out_token', $request->get_param( 'key' ) );
 		update_user_option( $friend_user->ID, 'friends_request_message', $request->get_param( 'message' ) );
 
 		$request_id = sha1( wp_generate_password( 256 ) );
@@ -654,7 +641,7 @@ class Friends_REST {
 			return;
 		}
 
-		$request_token = get_user_option( 'friends_request_token', $user_id );
+		$request_token = get_user_option( 'friends_request_id', $user_id );
 		if ( ! $request_token ) {
 			// We were accepted, so no need to notify the other.
 			return;
@@ -662,12 +649,12 @@ class Friends_REST {
 
 		$friend_user = new WP_User( $user_id );
 
-		$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
-		$request_id      = get_user_option( 'friends_request_id', $friend_user->ID );
-		$future_in_token = get_user_option( 'friends_future_in_key', $friend_user->ID );
+		$friend_rest_url  = $this->friends->access_control->get_rest_url( $friend_user );
+		$request_id       = get_user_option( 'friends_request_id', $friend_user->ID );
+		$future_out_token = get_user_option( 'friends_future_out_token', $friend_user->ID );
 
-		$proof     = sha1( wp_generate_password( 256 ) );
-		$challenge = sha1( wp_generate_password( 256 ) );
+		$proof           = sha1( wp_generate_password( 256 ) );
+		$future_in_token = site_url() . sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
@@ -676,8 +663,8 @@ class Friends_REST {
 				'body'        => array(
 					'request'   => $request_id,
 					'proof'     => $proof,
-					'signature' => sha1( $future_in_token . $proof ),
-					'challenge' => $challenge,
+					'signature' => sha1( $future_out_token . $proof ),
+					'key'       => $future_in_token,
 					'name'      => $current_user->display_name,
 					'icon_url'  => get_avatar_url( $current_user->ID ),
 				),
@@ -692,14 +679,15 @@ class Friends_REST {
 		}
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		if ( ! isset( $json->signature ) || sha1( $future_in_token . $challenge ) !== $json->signature ) {
+		if ( ! isset( $json->signature ) || sha1( $future_in_token . $future_out_token ) !== $json->signature ) {
+			$friend_user->set_role( 'friend_request' );
 			// TODO find a way to message the user.
 			return;
 		}
 
-		$this->friends->access_control->make_friend( $friend_user, $json->key, $future_in_token );
+		$this->friends->access_control->make_friend( $friend_user, $future_out_token, $future_in_token );
 		delete_user_option( $friend_user->ID, 'friends_request_id' );
-		delete_user_option( $friend_user->ID, 'friends_future_in_key' );
+		delete_user_option( $friend_user->ID, 'friends_future_out_token' );
 
 		/*
 		TODO
@@ -709,7 +697,6 @@ class Friends_REST {
 		When their friend request is no longer valid
 		$friend_user->set_role( 'pending_friend_request' );
 		if ( isset( $json->friend_request_pending ) ) {
-		update_option( 'friends_accept_token_' . $json->friend_request_pending, $user_id );
 		}
 		}
 		*/

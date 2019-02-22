@@ -414,8 +414,8 @@ class Friends_Admin {
 		// }
 		//
 		*/
-		$user_login       = $this->friends->access_control->get_user_login_for_url( $friend_url );
-		$future_out_token = sha1( wp_generate_password( 256 ) );
+		$user_login      = $this->friends->access_control->get_user_login_for_url( $friend_url );
+		$future_in_token = site_url() . sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
@@ -427,7 +427,7 @@ class Friends_Admin {
 					'url'      => site_url(),
 					'icon_url' => get_avatar_url( $current_user->ID ),
 					'message'  => $message,
-					'key'      => $future_out_token,
+					'key'      => $future_in_token,
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -455,7 +455,7 @@ class Friends_Admin {
 
 			if ( isset( $json->request ) ) {
 				update_option( 'friends_request_' . sha1( $json->request ), $friend_user->ID );
-				update_user_option( $friend_user->ID, 'friends_future_out_token_' . sha1( $json->request ), $future_out_token );
+				update_user_option( $friend_user->ID, 'friends_future_in_token_' . sha1( $json->request ), $future_in_token );
 				$friend_user->set_role( 'pending_friend_request' );
 				// } elseif ( isset( $json->friend ) ) {
 				// $this->friends->access_control->make_friend( $user, $json->friend );
@@ -807,7 +807,6 @@ class Friends_Admin {
 
 		if ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( $_GET['accept-friend-request'], 'accept-friend-request-' . $friend->ID ) ) {
 			if ( $friend->has_cap( 'friend_request' ) ) {
-				$this->friends->access_control->update_in_token( $friend->ID );
 				$friend->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 				$arg = 'friend';
 			}
@@ -1291,7 +1290,6 @@ class Friends_Admin {
 				continue;
 			}
 
-			$this->friends->access_control->update_in_token( $user->ID );
 			$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 			$accepted++;
 		}
