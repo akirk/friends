@@ -1,5 +1,20 @@
 jQuery( function( $ ) {
 
+	jQuery( document ).on( 'click', 'input#require_codeword', function() {
+		if ( this.checked ) {
+			jQuery( '#codeword_options' ).removeClass( 'hidden' );
+			jQuery( '#codeword' ).focus();
+		} else {
+			jQuery( '#codeword_options' ).addClass( 'hidden' );
+		}
+	} );
+
+	jQuery( document ).on( 'click', 'button#send-friends-advanced', function() {
+		jQuery( 'tr.hidden' ).removeClass( 'hidden' );
+		jQuery( this ).hide();
+		return false;
+	} );
+
 	jQuery( document ).on( 'click', 'a#toggle-raw-rules-data', function() {
 		jQuery( '#raw-rules-data' ).toggle();
 		return false;

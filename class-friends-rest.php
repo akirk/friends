@@ -282,11 +282,11 @@ class Friends_REST {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_request( WP_REST_Request $request ) {
-		$pre_shared_secret = $request->get_param( 'pre_shared_secret' );
-		if ( get_option( 'friends_pre_shared_secret', 'friends' ) !== $pre_shared_secret ) {
+		$codeword = $request->get_param( 'codeword' );
+		if ( get_option( 'friends_require_codeword' ) && get_option( 'friends_codeword', 'friends' ) !== $codeword ) {
 			return new WP_Error(
-				'friends_invalid_pre_shared_secret',
-				'An invalid pre shared secret was provided.',
+				'friends_invalid_codeword',
+				get_option( 'friends_wrong_codeword_message', 'An invalid codeword was provided.' ),
 				array(
 					'status' => 403,
 				)
@@ -664,9 +664,12 @@ class Friends_REST {
 			)
 		);
 
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
 			$dom = new DOMDocument();
-
 			set_error_handler( '__return_null' );
 			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
 			restore_error_handler();

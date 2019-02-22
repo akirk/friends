@@ -5,6 +5,11 @@
  * @package Friends
  */
 
+$codeword_class = '';
+if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 'friends_require_codeword' ) ) {
+	$codeword_class = 'hidden';
+}
+
 ?><form method="post">
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
@@ -25,11 +30,26 @@
 				<th scope="row"><?php esc_html_e( 'Friend Requests', 'friends' ); ?></th>
 				<td>
 					<fieldset>
-						<label for="ignore_incoming_friend_requests">
-							<input name="ignore_incoming_friend_requests" type="checkbox" id="ignore_incoming_friend_requests" value="1" <?php checked( '1', get_option( 'friends_ignore_incoming_friend_requests' ) ); ?>>
-							<?php esc_html_e( 'Ignore incoming friend requests', 'friends' ); ?>
+						<label for="require_codeword">
+							<input name="require_codeword" type="checkbox" id="require_codeword" value="1" <?php checked( '', $codeword_class ); ?>>
+							<?php esc_html_e( 'Require a code word to send you friend request', 'friends' ); ?>
 						</label>
 					</fieldset>
+					<div id="codeword_options" class="<?php echo $codeword_class; ?>">
+						<fieldset>
+							<label for="codeword">
+								<?php _e( 'This code word must be provided to send you a friend request:', 'friends' ); ?> <input name="codeword" type="text" id="codeword" placeholder="friends" value="<?php echo esc_attr( get_option( 'friends_codeword', '' ) ); ?>" />
+							</label>
+						</fieldset>
+						<fieldset>
+							<label for="wrong_codeword_message">
+								<p><?php _e( 'Error message for a wrong code word:', 'friends' ); ?></p>
+							</label>
+							<p>
+								<textarea name="wrong_codeword_message" id="wrong_codeword_message" class="regular-text" rows="3" cols="80" placeholder="<?php echo esc_attr( __( 'Return this message to the friend requestor if a wrong code word was provided.' ) ); ?>"><?php echo esc_html( get_option( 'friends_wrong_codeword_message' ) ); ?></textarea>
+							</p>
+						</fieldset>
+					</div>
 				</td>
 			</tr>
 			<tr>

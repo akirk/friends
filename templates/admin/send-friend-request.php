@@ -24,6 +24,25 @@
 					<p class="description" id="friend_url-description">
 						<?php esc_html_e( "If the site is not compatible with the Friends plugin, you'll subscribe the site's RSS feed.", 'friends' ); ?>
 					</p>
+					<p><button class="button-link" id="send-friends-advanced"><?php _e( 'Advanced »', 'friends' ); ?></button>
+				</td>
+			</tr>
+			<tr class="hidden">
+				<th scope="row"><label for="message"><?php esc_html_e( 'Message (Optional)', 'friends' ); ?></label></th>
+				<td>
+					<input type="text" autofocus id="message" name="message" value="<?php echo esc_attr( $message ); ?>" placeholder="<?php _e( 'Optionally enter a message for your future friend', 'friends' ); ?>" class="large-text" />
+					<p class="description" id="message-description">
+						<?php esc_html_e( 'Only change this if your friend asked you to provide this.', 'friends' ); ?>
+					</p>
+				</td>
+			</tr>
+			<tr class="hidden">
+				<th scope="row"><label for="codeword"><?php esc_html_e( 'Code word (Optional)', 'friends' ); ?></label></th>
+				<td>
+					<input type="text" autofocus id="codeword" name="codeword" value="<?php echo esc_attr( $codeword ); ?>" placeholder="friends" class="regular-text" />
+					<p class="description" id="codeword-description">
+						<?php esc_html_e( 'Only change this if your friend asked you to provide this.', 'friends' ); ?>
+					</p>
 				</td>
 			</tr>
 		</tbody>

@@ -380,9 +380,11 @@ class Friends_Admin {
 	 * Send a friend request to another WordPress with the Friends plugin
 	 *
 	 * @param  string $friend_url The site URL of the friend's WordPress.
+	 * @param  string $codeword   A codeword to send along.
+	 * @param  string $message    A message to send along.
 	 * @return WP_User|WP_error $user The new associated user or an error object.
 	 */
-	public function send_friend_request( $friend_url ) {
+	public function send_friend_request( $friend_url, $codeword = 'friends', $message = '' ) {
 		if ( ! is_string( $friend_url ) || ! wp_http_validate_url( $friend_url ) ) {
 			return new WP_Error( 'invalid-url', __( 'You entererd an invalid URL.', 'friends' ) );
 		}
@@ -397,6 +399,10 @@ class Friends_Admin {
 		}
 
 		$rest_url = $this->friends->rest->discover_rest_url( $friend_url );
+		if ( is_wp_error( $rest_url ) ) {
+			return $rest_url;
+		}
+
 		if ( ! $rest_url ) {
 			return $this->subscribe( $friend_url );
 		}
@@ -417,12 +423,12 @@ class Friends_Admin {
 			$rest_url . '/friend-request',
 			array(
 				'body'        => array(
-					'pre_shared_secret' => 'friends',
-					'name'              => $current_user->display_name,
-					'url'               => site_url(),
-					'icon_url'          => get_avatar_url( $current_user->ID ),
-					'message'           => 'optional-message',
-					'key'               => $future_out_token,
+					'codeword' => $codeword,
+					'name'     => $current_user->display_name,
+					'url'      => site_url(),
+					'icon_url' => get_avatar_url( $current_user->ID ),
+					'message'  => $message,
+					'key'      => $future_out_token,
 				),
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -564,6 +570,24 @@ class Friends_Admin {
 
 		if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
 			update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
+		}
+
+		if ( isset( $_POST['require_codeword'] ) && $_POST['require_codeword'] ) {
+			update_option( 'friends_require_codeword', true );
+		} else {
+			delete_option( 'friends_require_codeword' );
+		}
+
+		if ( isset( $_POST['codeword'] ) && $_POST['codeword'] ) {
+			update_option( 'friends_codeword', $_POST['codeword'] );
+		} else {
+			delete_option( 'friends_codeword' );
+		}
+
+		if ( isset( $_POST['wrong_codeword_message'] ) && $_POST['wrong_codeword_message'] ) {
+			update_option( 'friends_wrong_codeword_message', $_POST['wrong_codeword_message'] );
+		} else {
+			delete_option( 'friends_wrong_codeword_message' );
 		}
 
 		if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'restricted_friend' ), true ) ) {
@@ -928,6 +952,8 @@ class Friends_Admin {
 		<?php
 		if ( ! empty( $_POST ) && wp_verify_nonce( $_POST['_wpnonce'], 'send-friend-request' ) ) {
 			$friend_url = trim( $_POST['friend_url'] );
+			$codeword = trim( $_POST['codeword'] );
+			$message = trim( $_POST['message'] );
 			$protocol   = wp_parse_url( $friend_url, PHP_URL_SCHEME );
 			if ( ! $protocol ) {
 				$friend_url = 'http://' . $friend_url;
@@ -936,7 +962,7 @@ class Friends_Admin {
 			if ( isset( $_POST['just-subscribe'] ) ) {
 				$friend_user = $this->subscribe( $friend_url );
 			} else {
-				$friend_user = $this->send_friend_request( $friend_url );
+				$friend_user = $this->send_friend_request( $friend_url, $codeword, $message );
 			}
 
 			if ( is_wp_error( $friend_user ) ) {
