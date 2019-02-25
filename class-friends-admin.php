@@ -337,7 +337,7 @@ class Friends_Admin {
 
 		$favicon  = null;
 		$response = wp_safe_remote_get(
-			$site_url,
+			$url,
 			array(
 				'timeout'     => 20,
 				'redirection' => 5,
@@ -358,15 +358,15 @@ class Friends_Admin {
 					$domain = wp_parse_url( $favicon, PHP_URL_HOST );
 
 					if ( ! $domain ) {
-						$parsed_site_url = wp_parse_url( $site_url );
-						$favicon         = $parsed_site_url['scheme'] . '://' . $parsed_site_url['host'] . '/' . ltrim( $favicon, '/' );
+						$parsed_url = wp_parse_url( $url );
+						$favicon         = $parsed_url['scheme'] . '://' . $parsed_url['host'] . '/' . ltrim( $favicon, '/' );
 					}
 					break;
 				}
 			}
 		}
 		$feed_title = trim( str_replace( '&raquo; Feed', '', $feed->get_title() ) );
-		$user = $this->friends->access_control->create_user( $site_url, 'subscription', $feed_title, $favicon );
+		$user = $this->friends->access_control->create_user( $url, 'subscription', $feed_title, $favicon );
 		if ( ! is_wp_error( $user ) ) {
 			$this->friends->feed->process_friend_feed( $user, $feed );
 			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
@@ -1037,7 +1037,7 @@ class Friends_Admin {
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
 						// translators: %s is a username.
-						echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $user->display_name ) );
+						echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $friend_user->display_name ) );
 						?>
 					</p></div>
 					<?php
