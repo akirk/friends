@@ -14,18 +14,24 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
 		<tbody>
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Main Friend User', 'friends' ); ?></th>
-				<td>
-					<select name="main_user_id">
-						<?php foreach ( $potential_main_users->get_results() as $potential_main_user ) : ?>
-							<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $main_user_id, $potential_main_user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
+			<?php
+			if ( $potential_main_users->get_total() > 1 ) :
+				?>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Main Friend User', 'friends' ); ?></th>
+					<td>
+						<select name="main_user_id">
+							<?php foreach ( $potential_main_users->get_results() as $potential_main_user ) : ?>
+								<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $main_user_id, $potential_main_user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
 
-						<?php endforeach; ?>
-					</select>
-					<p class="description"><?php esc_html_e( 'When remotely reacting to a post, it will be attributed to this user.', 'friends' ); ?></p>
-				</td>
-			</tr>
+							<?php endforeach; ?>
+						</select>
+						<p class="description"><?php esc_html_e( 'When remotely reacting to a post, it will be attributed to this user.', 'friends' ); ?></p>
+					</td>
+				</tr>
+				<?php
+			endif;
+			?>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Friend Requests', 'friends' ); ?></th>
 				<td>
