@@ -147,6 +147,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friend_url = 'http://friend.local';
 		update_option( 'siteurl', $my_url );
 		$friends = Friends::get_instance();
+		$future_in_token = 'future_in_token';
+		$future_out_token = 'future_out_token';
 
 		// Prepare a signature that $my_url generates before sending the friend request.
 		$friend_request_token = sha1( wp_generate_password( 256 ) );
@@ -156,8 +158,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		update_option( 'siteurl', $friend_url );
 		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/friend-request' );
 		$request->set_param( 'url', $my_url );
-		$future_in_key = future_in_key;
-		$request->set_param( 'key', $friend_request_token );
+		$request->set_param( 'key', $future_in_token );
 
 		$friend_request_response = $this->server->dispatch( $request );
 		$this->assertArrayHasKey( 'request', $friend_request_response->data );
@@ -174,23 +175,27 @@ class Friends_RestTest extends WP_UnitTestCase {
 		// We're just testing the REST api, so we need to create the user ourselves.
 		$friend_user = $friends->access_control->create_user( $friend_url, 'pending_friend_request' );
 		$this->assertInstanceOf( 'WP_User', $friend_user );
+		$friend_user = $friends->access_control->create_user( $friend_url, 'pending_friend_request' );
+
+		update_option( 'friends_request_' . sha1( $friend_request_response->data['request'] ), $friend_user->ID );
+		update_user_option( $friend_user->ID, 'friends_future_in_token_' . sha1( $friend_request_response->data['request'] ), $future_in_token );
 
 		// Now let's accept the friend request.
 		update_option( 'siteurl', $my_url );
 		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/accept-friend-request' );
 		$request->set_param( 'request', $friend_request_response->data['request'] );
-		$request->set_param( 'friend', $my_token_at_friend );
-		$request->set_param( 'proof', sha1( $request_token . $friend_request_token ) );
+		$request->set_param( 'key', $future_out_token );
+		$request->set_param( 'proof', sha1( $future_in_token . $friend_request_response->data['request'] ) );
 
 		$friend_accept_response = $this->server->dispatch( $request );
-		$this->assertArrayHasKey( 'friend', $friend_accept_response->data );
+		$this->assertArrayHasKey( 'signature', $friend_accept_response->data );
 		delete_user_option( $my_user_at_friend->ID, 'friends_request_token' );
 
-		$friends->access_control->make_friend( $my_user_at_friend, $friend_accept_response->data['friend'] );
+		$friends->access_control->make_friend( $my_user_at_friend, $future_in_token, $future_out_token );
 
 		// Check the token.
-		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), $friend_accept_response->data['friend'] );
-		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), $my_token_at_friend );
+		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), $future_in_token );
+		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), $future_out_token );
 		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $my_user_at_friend->ID ) ) );
 		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $my_user_at_friend->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
@@ -390,7 +395,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertTrue( $friend_user->has_cap( 'subscription' ) );
 
 		// Verify that the user was not created at remote.
-		$my_user_at_friend = $friends->access_control->get_user_for_site_url( $my_url );
+		$my_user_at_friend = $friends->access_control->get_user_for_url( $my_url );
 		$this->assertFalse( $my_user_at_friend );
 
 		// No tokens were generated.
@@ -425,39 +430,6 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
 		$this->assertInstanceOf( 'WP_Error', $friend_user );
-		$this->assertEquals( 'WP HTTP Error: cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $friend_user->get_error_message() );
-	}
-
-	/**
-	 * The friend can't connect to us (for example because of incompatibel SSL configurations).
-	 */
-	public function test_friend_request_with_other_side_unable_to_connect() {
-		$my_url     = 'http://me.local';
-		$friend_url = 'http://friend.local';
-
-		add_filter(
-			'fake_http_response',
-			function( $response, $site_url, $url, $request ) use ( $my_url, $friend_url ) {
-				if ( $site_url === $friend_url ) {
-					return $response;
-				}
-				return new WP_Error(
-					'http_request_failed',
-					'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure'
-				);
-			},
-			10,
-			4
-		);
-
-		update_option( 'siteurl', $my_url );
-		$friends = Friends::get_instance();
-
-		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( 'WP_Error', $friend_user );
-		$this->assertEquals( 'The other side responded: An unsupported site was provided.', $friend_user->get_error_message() );
-		$error = unserialize( $friend_user->get_error_data()->error );
-		$this->assertInstanceOf( 'WP_Error', $error );
-		$this->assertEquals( 'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $error->get_error_message() );
+		$this->assertEquals( 'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $friend_user->get_error_message() );
 	}
 }

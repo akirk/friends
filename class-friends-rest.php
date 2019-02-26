@@ -167,11 +167,10 @@ class Friends_REST {
 
 		$future_in_token = get_user_option( 'friends_future_in_token_' . sha1( $request_id ), $friend_user_id );
 		$proof            = $request->get_param( 'proof' );
-		$signature        = $request->get_param( 'signature' );
-		if ( ! $proof || ! $signature || sha1( $future_in_token . $proof ) !== $signature ) {
+		if ( ! $proof || sha1( $future_in_token . $request_id ) !== $proof ) {
 			return new WP_Error(
-				'friends_invalid_signature',
-				'An invalid signature was provided.',
+				'friends_invalid_proof',
+				'An invalid proof was provided.',
 				array(
 					'status' => 403,
 				)
@@ -262,6 +261,12 @@ class Friends_REST {
 		}
 
 		$friend_user = $this->friends->access_control->create_user( $url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
+		if ( $friend_user->has_cap( 'friend' ) ) {
+			if ( get_user_option( 'friends_out_token', $friend_user->ID ) && ! get_user_option( 'friends_out_token', $friend_user->ID ) ) {
+				// TODO: trigger an accept friend request right away?
+			}
+			$friend_user->set_role( 'friend_request' );
+		}
 		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ) );
 
 		update_user_option( $friend_user->ID, 'friends_future_out_token', $request->get_param( 'key' ) );
@@ -592,7 +597,7 @@ class Friends_REST {
 	 */
 	public function discover_rest_url( $url ) {
 		if ( ! is_string( $url ) || ! wp_http_validate_url( $url ) ) {
-			return new WP_Error( 'invalid-url-returned', 'An invalid URL was returned.' );
+			return new WP_Error( 'invalid-url-given', 'An invalid URL was given.' );
 		}
 
 		$response = wp_safe_remote_get(
@@ -624,7 +629,7 @@ class Friends_REST {
 			}
 		}
 
-		return new WP_Error( 'no-rest-url', 'REST URL could not be determined.' );
+		return false;
 	}
 
 	/**
@@ -652,21 +657,18 @@ class Friends_REST {
 		$friend_rest_url  = $this->friends->access_control->get_rest_url( $friend_user );
 		$request_id       = get_user_option( 'friends_request_id', $friend_user->ID );
 		$future_out_token = get_user_option( 'friends_future_out_token', $friend_user->ID );
-
-		$proof           = sha1( wp_generate_password( 256 ) );
-		$future_in_token = site_url() . sha1( wp_generate_password( 256 ) );
+		$future_in_token  = site_url() . sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
 			$friend_rest_url . '/accept-friend-request',
 			array(
 				'body'        => array(
-					'request'   => $request_id,
-					'proof'     => $proof,
-					'signature' => sha1( $future_out_token . $proof ),
-					'key'       => $future_in_token,
-					'name'      => $current_user->display_name,
-					'icon_url'  => get_avatar_url( $current_user->ID ),
+					'request'  => $request_id,
+					'proof'    => sha1( $future_out_token . $request_id ),
+					'key'      => $future_in_token,
+					'name'     => $current_user->display_name,
+					'icon_url' => get_avatar_url( $current_user->ID ),
 				),
 				'timeout'     => 20,
 				'redirection' => 5,

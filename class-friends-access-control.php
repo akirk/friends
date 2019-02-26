@@ -308,7 +308,6 @@ class Friends_Access_Control {
 		}
 
 		do_action( 'notify_new_friend_request', new WP_User( $user_id ) );
-		return $token;
 	}
 
 	/**
