@@ -81,7 +81,7 @@ include __DIR__ . '/header.php'; ?>
 					<span class="post-date" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
 					<?php edit_post_link(); ?>
 				</div>
-				<?php if ( Friends::CPT === get_post_type() ) : ?>
+				<?php if ( false && Friends::CPT === get_post_type() ) : ?>
 					<button class="friends-trash-post" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
 						&#x1F5D1;
 					</button>
@@ -97,8 +97,10 @@ include __DIR__ . '/header.php'; ?>
 							echo esc_html( sprintf( __( 'Recommendation: %s', 'friends' ), get_the_title() ) );
 							?>
 						</a>
-					<?php else : ?>
+					<?php elseif ( $token ) : ?>
 						<a href="<?php the_permalink(); ?>" target="_blank" rel="noopener noreferrer" class="auth-link" data-token="<?php echo esc_attr( $token ); ?>"><?php the_title(); ?></a>
+					<?php else : ?>
+						<a href="<?php the_permalink(); ?>" target="_blank" rel="noopener noreferrer"><?php the_title(); ?></a>
 					<?php endif; ?>
 				<?php else : ?>
 					<a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
@@ -148,16 +150,21 @@ include __DIR__ . '/header.php'; ?>
 			</div>
 
 			<footer class="entry-meta">
-				<?php if ( Friends::CPT === get_post_type() ) : ?>
+				<?php if ( Friends::CPT === get_post_type() && $token ) : ?>
 				<button href="<?php comments_link(); ?>" target="_blank" rel="noopener noreferrer" class="comments auth-link" data-token="<?php echo esc_attr( $token ); ?>">
 					<span class="dashicons dashicons-admin-comments"></span>
 					<?php comments_number( '', 1, '%' ); ?>
 				</button>
-				<?php else : ?>
-				<button href="<?php comments_link(); ?>" class="comments">
+				<?php elseif ( Friends::CPT === get_post_type() ) : ?>
+				<a href="<?php comments_link(); ?>" target="_blank" rel="noopener noreferrer" class="comments button">
 					<span class="dashicons dashicons-admin-comments"></span>
 					<?php comments_number( '', 1, '%' ); ?>
-				</button>
+				</a>
+				<?php else : ?>
+				<a href="<?php comments_link(); ?>" class="comments button">
+					<span class="dashicons dashicons-admin-comments"></span>
+					<?php comments_number( '', 1, '%' ); ?>
+				</a>
 				<?php endif; ?>
 				<?php echo $friends->reactions->post_reactions(); ?>
 				<?php if ( Friends::CPT === get_post_type() ) : ?>

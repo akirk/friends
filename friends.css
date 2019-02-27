@@ -205,6 +205,7 @@ body.friends-page section.posts article.hentry {
 body.friends-page section.posts article.hentry div.entry-content, body.friends-page section.posts article.hentry header.entry-header, body.friends-page section.posts article.hentry h4.entry-title {
 	font-family: "Noto Serif", Georgia, "Times New Roman", Times, serif;
 	margin: 0 0 1em 0;
+	text-align: left;
 }
 
 body.friends-page section.posts article.hentry header.entry-header {
@@ -264,7 +265,8 @@ body.friends-page section.posts article.hentry footer.entry-meta {
 	justify-content: flex-end;
 }
 
-button.friends-action, body.friends-page section.posts article.hentry footer.entry-meta button {
+button.friends-action, body.friends-page section.posts article.hentry footer.entry-meta button,
+a.button.friends-action, body.friends-page section.posts article.hentry footer.entry-meta a.button {
 	font-size: 14px;
 	border: 0;
 	background-color: #fff;
@@ -280,24 +282,29 @@ button.friends-action, body.friends-page section.posts article.hentry footer.ent
 	height: 30px;
 }
 
-button.friends-action:hover, body.friends-page section.posts article.hentry footer.entry-meta button:hover {
+button.friends-action:hover, body.friends-page section.posts article.hentry footer.entry-meta button:hover,
+a.button.friends-action:hover, body.friends-page section.posts article.hentry footer.entry-meta button:hover {
 	border-color: #cccccc;
 	background-color: #fff;
 }
 
-button.friends-action:focus, body.friends-page section.posts article.hentry footer.entry-meta button:focus {
+button.friends-action:focus, body.friends-page section.posts article.hentry footer.entry-meta button:focus,
+a.button.friends-action:focus, body.friends-page section.posts article.hentry footer.entry-meta a.button:focus {
 	outline: none;
 }
 
-button.friends-action span {
+button.friends-action span,
+a.button.friends-action span {
 	font-size: 18px;
 	vertical-align: top;
 }
-button.friends-action.pressed, body.friends-page section.posts article.hentry footer.entry-meta button.pressed {
+button.friends-action.pressed, body.friends-page section.posts article.hentry footer.entry-meta button.pressed,
+a.button.friends-action.pressed, body.friends-page section.posts article.hentry footer.entry-meta a.button.pressed {
 	color: #f0821e;
 }
 
-button.new-reaction span {
+button.new-reaction span,
+a.button.new-reaction span {
 	font-family: dashicons;
 	vertical-align: middle;
 }
