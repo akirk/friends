@@ -1271,12 +1271,19 @@ class Friends_Admin {
 	 */
 	public function user_row_actions( array $actions, WP_User $user ) {
 		if (
-			! $user->has_cap( 'friend_request' ) &&
-			! $user->has_cap( 'pending_friend_request' ) &&
-			! $user->has_cap( 'friend' ) &&
-			! $user->has_cap( 'subscription' )
+			! current_user_can( Friends::REQUIRED_ROLE ) ||
+			(
+				! $user->has_cap( 'friend_request' ) &&
+				! $user->has_cap( 'pending_friend_request' ) &&
+				! $user->has_cap( 'friend' ) &&
+				! $user->has_cap( 'subscription' )
+			)
 		) {
 			return $actions;
+		}
+
+		if ( is_multisite() ) {
+			$actions = array_merge( array( 'edit' => '<a href="' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ) . '">' . __( 'Edit' ) . '</a>' ), $actions );
 		}
 
 		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
