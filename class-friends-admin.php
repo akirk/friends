@@ -1249,7 +1249,8 @@ class Friends_Admin {
 		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
 
 		if ( $user->has_cap( 'friend_request' ) ) {
-			$link                                  = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
+			$link = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
+
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
 			$message = get_user_option( 'friends_request_message', $user->ID );
 			// translators: %s is a date.
@@ -1257,6 +1258,15 @@ class Friends_Admin {
 			if ( $message ) {
 				// translators: %s is a message text.
 				$actions['friend_request_message'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Message: %s', 'friends' ), $message ) ) . '</span>';
+			}
+		}
+
+		if ( $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'subscription' ) ) {
+			$link = self_admin_url( wp_nonce_url( 'admin.php?page=send-friend-request&url=' . $user->user_url ) );
+			if ( $user->has_cap( 'pending_friend_request' ) ) {
+				$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
+			} elseif ( $user->has_cap( 'subscription' ) ) {
+				$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Send Friend Request', 'friends' ) . '</a>';
 			}
 		}
 
