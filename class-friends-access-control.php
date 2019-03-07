@@ -148,6 +148,13 @@ class Friends_Access_Control {
 
 		$friend_user = $this->get_user_for_url( $url );
 		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
+			if ( is_multisite() ) {
+				$current_site = get_current_site();
+				if ( ! is_user_member_of_blog( $friend_user->ID, $current_site->ID ) ) {
+					add_user_to_blog( $current_site->ID, $friend_user->ID, $role );
+				}
+			}
+
 			foreach ( $role_rank as $_role => $rank ) {
 				if ( $rank > $role_rank[ $role ] ) {
 					break;
