@@ -169,9 +169,16 @@ class Friends_Blocks {
 			} else {
 				$out .= '<li>';
 			}
+
+			if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+				$url = site_url( '/friends/' . $friend_user->user_login . '/' );
+			} else {
+				$url = $friend_user->user_url;
+			}
+
 			$out .= sprintf(
 				'<a class="wp-block-friends-friends-list wp-user" href="%1$s">%2$s</a></li>',
-				esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) ),
+				esc_url( $url ),
 				esc_html( $friend_user->display_name )
 			);
 			if ( ! $attributes['users_inline'] ) {

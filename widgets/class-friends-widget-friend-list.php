@@ -87,8 +87,15 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		} else {
 			?>
 			<ul class="friend-list">
-			<?php foreach ( $friends->get_results() as $friend_user ) : ?>
-				<li><a href="<?php echo esc_url( site_url( '/friends/' . $friend_user->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+			<?php
+			foreach ( $friends->get_results() as $friend_user ) :
+				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+					$url = site_url( '/friends/' . $friend_user->user_login . '/' );
+				} else {
+					$url = $friend_user->user_url;
+				}
+				?>
+				<li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
 					<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( get_user_option( 'friends_out_token', $friend_user->ID ) ); ?>"><?php _e( 'visit', 'friends' ); ?></a></small></li>
 			<?php endforeach; ?>
 			</ul>
