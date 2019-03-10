@@ -1254,10 +1254,10 @@ class Friends_Admin {
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
 			$message = get_user_option( 'friends_request_message', $user->ID );
 			// translators: %s is a date.
-			$actions['friend_request_date'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Requested on %s', 'friends' ), date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) ) ) . '</span>';
+			$actions['friends friends_request_date'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Requested on %s', 'friends' ), date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) ) ) . '</span>';
 			if ( $message ) {
 				// translators: %s is a message text.
-				$actions['friend_request_message'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Message: %s', 'friends' ), $message ) ) . '</span>';
+				$actions['friends friend_request_message'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Message: %s', 'friends' ), $message ) ) . '</span>';
 			}
 		}
 

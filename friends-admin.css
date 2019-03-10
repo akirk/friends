@@ -34,3 +34,11 @@
 	content: "\f105";
 	padding: 0 5px 0 0;
 }
+
+tr .row-actions span.friends {
+	display: none;
+}
+
+tr:hover .row-actions span.friends {
+	display: inline;
+}

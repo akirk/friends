@@ -270,7 +270,7 @@ class Friends_REST {
 		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ) );
 
 		update_user_option( $friend_user->ID, 'friends_future_out_token', $request->get_param( 'key' ) );
-		update_user_option( $friend_user->ID, 'friends_request_message', $request->get_param( 'message' ) );
+		update_user_option( $friend_user->ID, 'friends_request_message', mb_substr( $request->get_param( 'message' ), 0, 2000 ) );
 
 		$request_id = sha1( wp_generate_password( 256 ) );
 		update_user_option( $friend_user->ID, 'friends_request_id', $request_id );
