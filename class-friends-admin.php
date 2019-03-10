@@ -415,7 +415,7 @@ class Friends_Admin {
 		//
 		*/
 		$user_login      = $this->friends->access_control->get_user_login_for_url( $friend_url );
-		$future_in_token = site_url() . sha1( wp_generate_password( 256 ) );
+		$future_in_token = sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(

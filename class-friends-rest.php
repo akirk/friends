@@ -657,7 +657,7 @@ class Friends_REST {
 		$friend_rest_url  = $this->friends->access_control->get_rest_url( $friend_user );
 		$request_id       = get_user_option( 'friends_request_id', $friend_user->ID );
 		$future_out_token = get_user_option( 'friends_future_out_token', $friend_user->ID );
-		$future_in_token  = site_url() . sha1( wp_generate_password( 256 ) );
+		$future_in_token  = sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
