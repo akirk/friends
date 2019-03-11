@@ -48,7 +48,7 @@ class Friends_Admin {
 		add_action( 'current_screen', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this, 'translate_user_role' ), 10, 4 );
-		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'render_preview_friend_rules' ) );
+		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
@@ -590,7 +590,7 @@ class Friends_Admin {
 			delete_option( 'friends_wrong_codeword_message' );
 		}
 
-		if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'restricted_friend' ), true ) ) {
+		if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'acquaintance' ), true ) ) {
 			update_option( 'friends_default_friend_role', $_POST['default_role'] );
 		}
 
@@ -832,10 +832,10 @@ class Friends_Admin {
 			}
 		} elseif ( isset( $_GET['change-to-restricted-friend'] ) && wp_verify_nonce( $_GET['change-to-restricted-friend'], 'change-to-restricted-friend-' . $friend->ID ) ) {
 			if ( $friend->has_cap( 'friend' ) ) {
-				$friend->set_role( 'restricted_friend' );
+				$friend->set_role( 'acquaintance' );
 			}
 		} elseif ( isset( $_GET['change-to-friend'] ) && wp_verify_nonce( $_GET['change-to-friend'], 'change-to-friend-' . $friend->ID ) ) {
-			if ( $friend->has_cap( 'restricted_friend' ) ) {
+			if ( $friend->has_cap( 'acquaintance' ) ) {
 				$friend->set_role( 'friend' );
 			}
 		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-' . $friend->ID ) ) {
@@ -1052,7 +1052,7 @@ class Friends_Admin {
 
 		$friend_requests = new WP_User_Query(
 			array(
-				'role__in' => array( 'friend', 'restricted_friend', 'pending_friend_request', 'friend_request', 'subscription' ),
+				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
 				'orderby'  => 'registered',
 				'order'    => 'DESC',
 			)
@@ -1111,7 +1111,7 @@ class Friends_Admin {
 	public function translate_user_role( $translations, $text, $context, $domain ) {
 		$roles = array(
 			'Friend',
-			'Restricted Friend',
+			'Acquaintance',
 			'Friend Request',
 			'Pending Friend Request',
 			'Subscription',
@@ -1549,7 +1549,7 @@ class Friends_Admin {
 	 */
 	public function dashboard_glance_items( $items ) {
 		$users = count_users();
-		$friend_count = $users['avail_roles']['friend'] + $users['avail_roles']['restricted_friend'];
+		$friend_count = $users['avail_roles']['friend'] + $users['avail_roles']['acquaintance'];
 		$friend_request_count = $users['avail_roles']['friend_request'];
 		$subscription_count = $users['avail_roles']['subscription'];
 		$friend_post_count = wp_count_posts( Friends::CPT );

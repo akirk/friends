@@ -87,7 +87,7 @@ class Friends_Feed {
 				$single_user,
 			);
 		} else {
-			$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'restricted_friend', 'pending_friend_request', 'subscription' ) ) );
+			$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
 			$friends = $friends->get_results();
 
 			if ( empty( $friends ) ) {
@@ -549,7 +549,7 @@ class Friends_Feed {
 			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
 		}
 
-		$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'restricted_friend', 'friend_request', 'subscription' ) ) );
+		$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
 		$feed    = $this->friends->feed;
 
 		include apply_filters( 'friends_template_path', 'admin/opml.php' );
@@ -613,7 +613,7 @@ class Friends_Feed {
 		}
 
 		$friend_user = $this->friends->access_control->get_authenticated_feed_user();
-		if ( ! $query->is_admin && $query->is_feed && $friend_user->has_cap( 'friend' ) && ! $friend_user->has_cap( 'restricted_friend' ) ) {
+		if ( ! $query->is_admin && $query->is_feed && $friend_user->has_cap( 'friend' ) && ! $friend_user->has_cap( 'acquaintance' ) ) {
 			$query->set( 'post_status', array( 'publish', 'private' ) );
 		}
 
@@ -628,7 +628,7 @@ class Friends_Feed {
 	 * @param  string $old_roles The old roles.
 	 */
 	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
-		if ( ( 'friend' === $new_role || 'restricted_friend' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
+		if ( ( 'friend' === $new_role || 'acquaintance' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
 			update_user_option( $user_id, 'friends_new_friend', true );
 			$this->retrieve_friend_posts( new WP_User( $user_id ) );
 		}

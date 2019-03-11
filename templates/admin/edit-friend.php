@@ -66,23 +66,23 @@
 							<?php _e( 'or' ); ?>
 							<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=suggest-friends-plugin&user=' . $friend->ID ) ); ?>"><?php esc_html_e( 'Suggest Friends Plugin', 'friends' ); ?></a>
 						</p>
-					<?php elseif ( $friend->has_cap( 'restricted_friend' ) ) : ?>
-						<?php echo esc_html( _x( 'Restricted Friend', 'User role', 'friends' ) ); ?>
+					<?php elseif ( $friend->has_cap( 'acquaintance' ) ) : ?>
+						<?php echo esc_html( _x( 'Acquaintance', 'User role', 'friends' ) ); ?>
 						<p class="description">
 							<?php
 							// translators: %s is a friend role.
 							echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'change-to-friend-' . $friend->ID, 'change-to-friend' ) ) . '">' . __( 'Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 							?>
-							<?php esc_html_e( 'A Restricted Friend has friend status but cannot read private posts.', 'friends' ); ?>
+							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
 						</p>
 					<?php elseif ( $friend->has_cap( 'friend' ) ) : ?>
 						<?php echo esc_html( _x( 'Friend', 'User role', 'friends' ) ); ?>
 						<p class="description">
 						<?php
 							// translators: %s is a friend role.
-						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'change-to-restricted-friend-' . $friend->ID, 'change-to-restricted-friend' ) ) . '">' . __( 'Restricted Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'change-to-restricted-friend-' . $friend->ID, 'change-to-restricted-friend' ) ) . '">' . __( 'Acquaintance', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
-							<?php esc_html_e( 'A Restricted Friend has friend status but cannot read private posts.', 'friends' ); ?>
+							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
 						</p>
 					<?php endif; ?>
 				</td>

@@ -169,15 +169,15 @@ class Friends {
 		$friend->add_cap( 'friend' );
 		$friend->add_cap( 'level_0' );
 
-		$restricted_friend = get_role( 'restricted_friend' );
-		if ( ! $restricted_friend ) {
-			_x( 'Restricted Friend', 'User role', 'friends' );
-			$restricted_friend = add_role( 'restricted_friend', 'Restricted Friend' );
+		$acquaintance = get_role( 'acquaintance' );
+		if ( ! $acquaintance ) {
+			_x( 'Acquaintance', 'User role', 'friends' );
+			$acquaintance = add_role( 'acquaintance', 'Acquaintance' );
 		}
-		$restricted_friend->add_cap( 'read' );
-		$restricted_friend->add_cap( 'friend' );
-		$restricted_friend->add_cap( 'restricted_friend' );
-		$restricted_friend->add_cap( 'level_0' );
+		$acquaintance->add_cap( 'read' );
+		$acquaintance->add_cap( 'friend' );
+		$acquaintance->add_cap( 'acquaintance' );
+		$acquaintance->add_cap( 'level_0' );
 
 		$friend_request = get_role( 'friend_request' );
 		if ( ! $friend_request ) {
@@ -210,7 +210,7 @@ class Friends {
 	public static function all_friends() {
 		static $all_friends;
 		if ( ! isset( $all_friends ) ) {
-			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'restricted_friend' ) ) );
+			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance' ) ) );
 		}
 		return $all_friends;
 	}
@@ -221,7 +221,7 @@ class Friends {
 	public static function all_friends_subscriptions() {
 		static $all_friends;
 		if ( ! isset( $all_friends ) ) {
-			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'restricted_friend', 'subscription' ) ) );
+			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'subscription' ) ) );
 		}
 		return $all_friends;
 	}
@@ -443,7 +443,7 @@ class Friends {
 	 * Delete all the data the plugin has stored in WordPress
 	 */
 	public static function uninstall_plugin() {
-		$affected_users = new WP_User_Query( array( 'role__in' => array( 'friend', 'restricted_friend', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
+		$affected_users = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {
 			$in_token = get_user_option( 'friends_in_token', $user->ID );
 			delete_option( 'friends_in_token_' . $in_token );
@@ -454,7 +454,7 @@ class Friends {
 
 		delete_option( 'friends_main_user_id' );
 		remove_role( 'friend' );
-		remove_role( 'restricted_friend' );
+		remove_role( 'acquaintance' );
 		remove_role( 'friend_request' );
 		remove_role( 'pending_friend_request' );
 		remove_role( 'subscription' );

@@ -653,7 +653,7 @@ class Friends_REST {
 	 * @param  string $old_roles The old roles.
 	 */
 	public function notify_remote_friend_request_accepted( $user_id, $new_role, $old_roles ) {
-		if ( 'friend' !== $new_role && 'restricted_friend' !== $new_role ) {
+		if ( 'friend' !== $new_role && 'acquaintance' !== $new_role ) {
 			return;
 		}
 

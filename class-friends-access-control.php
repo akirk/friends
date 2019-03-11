@@ -389,7 +389,7 @@ class Friends_Access_Control {
 	 */
 	public function option_comment_whitelist( $value ) {
 		// Don't moderate the first comment by a friend.
-		if ( current_user_can( 'friend' ) || current_user_can( 'restricted_friend' ) ) {
+		if ( current_user_can( 'friend' ) || current_user_can( 'acquaintance' ) ) {
 			return '0';
 		}
 		return $value;
