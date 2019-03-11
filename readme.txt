@@ -68,6 +68,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 4. Access the most important features using the site menu.
  
 == Changelog ==
+= 0.20 =
+- Revamp the friendship protocol, allow specifying a codeword and sending a message
+
 = 0.16 =
 - Bugfixes: Friend Request error handling, feed rules for author
 - Add some help texts

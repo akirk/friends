@@ -227,6 +227,17 @@ class Friends_REST {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_request( WP_REST_Request $request ) {
+		$version = $request->get_param( 'version' );
+		if ( 2 !== intval( $version ) ) {
+			return new WP_Error(
+				'friends_unsupported_protocol_version',
+				'Incompatible Friends protocol version.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
 		$codeword = $request->get_param( 'codeword' );
 		if ( get_option( 'friends_require_codeword' ) && get_option( 'friends_codeword', 'friends' ) !== $codeword ) {
 			return new WP_Error(

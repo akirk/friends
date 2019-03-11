@@ -422,6 +422,7 @@ class Friends_Admin {
 			$rest_url . '/friend-request',
 			array(
 				'body'        => array(
+					'version'  => 2,
 					'codeword' => $codeword,
 					'name'     => $current_user->display_name,
 					'url'      => site_url(),

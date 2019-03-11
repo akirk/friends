@@ -1,3 +1,7 @@
+0.20
+====
+- Revamp the friendship protocol, allow specifying a codeword and sending a message
+
 0.16
 ====
 - Bugfixes: Friend Request error handling, feed rules for author
