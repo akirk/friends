@@ -159,6 +159,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/friend-request' );
 		$request->set_param( 'url', $my_url );
 		$request->set_param( 'key', $future_in_token );
+		$request->set_param( 'version', 2 );
 
 		$friend_request_response = $this->server->dispatch( $request );
 		$this->assertArrayHasKey( 'request', $friend_request_response->data );
