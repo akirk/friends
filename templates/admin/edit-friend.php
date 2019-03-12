@@ -27,7 +27,7 @@
 						</label>
 					</fieldset>
 					<fieldset>
-					<a href="<?php echo esc_url( site_url( '/friends/' . sanitize_title_with_dashes( $friend->user_login ) . '/' ) ); ?>">
+					<a href="<?php echo esc_url( site_url( '/friends/' . $friend->user_login . '/' ) ); ?>">
 						<?php
 						// translators: %d is the number of posts.
 						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $friend_posts->found_posts, 'friends' ), $friend_posts->found_posts ) );

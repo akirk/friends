@@ -1003,7 +1003,7 @@ class Friends_Admin {
 						// translators: %s is a Site URL.
 						echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 						// translators: %s is the friends page URL.
-						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
@@ -1014,7 +1014,7 @@ class Friends_Admin {
 						// translators: %s is a Site URL.
 						echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 						// translators: %s is the friends page URL.
-						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
@@ -1029,7 +1029,7 @@ class Friends_Admin {
 						}
 						esc_html_e( 'We subscribed you to their updates.', 'friends' );
 						// translators: %s is the friends page URL.
-						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . sanitize_title_with_dashes( $friend_user->user_login ) . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+						echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 					</p></div>
 					<?php
