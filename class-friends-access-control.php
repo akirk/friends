@@ -207,7 +207,7 @@ class Friends_Access_Control {
 					return $user_icon_url;
 				}
 			} elseif ( $user->has_cap( 'subscription' ) ) {
-				update_user_option( $user_id, 'friends_gravatar', $gravatar );
+				update_user_option( $user_id, 'friends_user_icon_url', $gravatar );
 				return $gravatar;
 			}
 		}

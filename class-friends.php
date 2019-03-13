@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION       = '0.16.3';
+	const VERSION       = '0.20.1';
 	const CPT           = 'friend_post_cache';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'administrator';
@@ -296,11 +296,39 @@ class Friends {
 	}
 
 	/**
+	 * If a plugin version upgrade requires changes, they can be done here
+	 *
+	 * @param  string $previous_version The previous plugin version number.
+	 */
+	public static function upgrade_plugin( $previous_version ) {
+		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
+			$friends_subscriptions = self::all_friends_subscriptions();
+			foreach ( $friends_subscriptions->get_results() as $user ) {
+				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
+				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
+				if ( $gravatar ) {
+					if ( ! $user_icon_url ) {
+						update_user_option( $user->ID, 'friends_user_icon_url', $gravatar );
+					}
+					delete_user_option( $user->ID, 'friends_gravatar' );
+				}
+			}
+		}
+
+		update_option( 'friends_plugin_version', self::VERSION );
+	}
+
+	/**
 	 * Actions to take upon plugin activation.
 	 */
 	public static function activate_plugin() {
 		self::setup_roles();
 		self::create_friends_page();
+
+		$previous_version = get_option( 'friends_plugin_version' );
+		if ( self::VERSION !== $previous_version ) {
+			self::upgrade_plugin( $previous_version );
+		}
 
 		if ( false === get_option( 'friends_main_user_id' ) ) {
 			update_option( 'friends_main_user_id', get_current_user_id() );
