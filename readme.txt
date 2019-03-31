@@ -19,6 +19,8 @@ Decentralized Social Networking with WordPress. Connect WordPresses through frie
 - Subscribe to any RSS feed
 - Compatible with the WordPress mobile apps
 
+https://www.youtube.com/watch?v=4bz6GluXnsk
+
 On your WordPress site you can post anything you wish to share with the world. Sometimes the open nature of WordPress might be a little too open. What if you only want to share some posts with friends but not the whole world?
 
 With the Friends plugin, you can establish a connection with your friends' WordPress sites by making and accepting friend requests.
@@ -62,10 +64,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 == Screenshots ==
 
-1. An incoming Friend Request on the users page.
-2. The friend request has been accepted.
-3. On /friends/ your friends posts appear together with yours.
-4. Access the most important features using the site menu.
+1. On /friends/ your friends posts appear together with yours.
+2. You can send friend requests to other WordPresses or subscribe to them.
+3. Your friends and subscriptions show on the users page.
+4. Friends settings
  
 == Changelog ==
 = 0.20 =
