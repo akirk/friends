@@ -123,7 +123,7 @@
 	<p class="description" id="friend_url-description">
 		<?php
 		// translators: %s is the user URL.
-		echo wp_kses( sprintf( __( 'To unfriend this user, just <a href=%s>delete them on the users page</a>.', 'friends' ), '"' . self_admin_url( 'users.php' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+		echo wp_kses( sprintf( __( 'To unfriend this user, just <a href=%s>delete them on the users page</a>.', 'friends' ), '"' . self_admin_url( 'users.php?s=' . urlencode( $friend->user_login ) ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 		?>
 	</p>
 </form>

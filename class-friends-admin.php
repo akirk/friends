@@ -909,7 +909,7 @@ class Friends_Admin {
 		}
 
 		?>
-		<h1><?php echo esc_html( $friend->display_name ); ?></h1>
+		<h1><?php echo esc_html( $friend->user_login ); ?></h1>
 		<?php
 
 		if ( isset( $_GET['updated'] ) ) {
