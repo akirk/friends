@@ -288,12 +288,12 @@ class Friends_Admin {
 
 		add_action(
 			'friends_retrieve_friends_error',
-			function( $error, $friend_user ) {
+			function( $feed_url, $error, $friend_user ) {
 				esc_html_e( 'An error occurred while retrieving the posts.', 'friends' );
-				print_r( $error );
+				echo $error->get_error_message(), '<br/>';
 			},
 			10,
-			2
+			3
 		);
 
 		$this->friends->feed->retrieve_friend_posts( $friend );

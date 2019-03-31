@@ -25,6 +25,7 @@ include __DIR__ . '/class-friends-admin.php';
 include __DIR__ . '/class-friends-blocks.php';
 include __DIR__ . '/class-friends-feed.php';
 include __DIR__ . '/class-friends-frontend.php';
+include __DIR__ . '/class-friends-logging.php';
 include __DIR__ . '/class-friends-notifications.php';
 include __DIR__ . '/class-friends-reactions.php';
 include __DIR__ . '/class-friends-recommendation.php';

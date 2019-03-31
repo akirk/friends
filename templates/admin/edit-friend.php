@@ -43,8 +43,15 @@
 				</td>
 			</tr>
 			<tr>
-				<th><label for="url"><?php esc_html_e( 'Created', 'friends' ); ?></label></th>
+				<th><?php esc_html_e( 'Created', 'friends' ); ?></th>
 				<td><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $friend->user_registered ) ); ?></td>
+			</tr>
+			<tr>
+				<th><?php esc_html_e( 'Last feed retrieval', 'friends' ); ?></th>
+				<td>
+					<?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( get_user_option( 'friends_last_feed_retrieval', $friend->ID ) ) ); ?>:
+					<em><?php echo esc_html( get_user_option( 'friends_last_feed_retrieval_message', $friend->ID ) ); ?></em>
+				</td>
 			</tr>
 			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
