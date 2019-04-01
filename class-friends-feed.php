@@ -123,7 +123,7 @@ class Friends_Feed {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 		}
 
-		if ( $private && current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( $private && ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) ) {
 			$token = get_user_option( 'friends_out_token', $friend_user->ID );
 			if ( $token ) {
 				$feed_url .= '?friend=' . $token;
