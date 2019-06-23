@@ -17,17 +17,28 @@ class Friends_API {
 	/**
 	 * Register a post type with the Friends plugin
 	 *
-	 * @param  string $post_type The name of a post_type.
+	 * @param  string $post_type The name of a post type.
 	 */
 	public static function register_post_type( $post_type ) {
-		if ( ! post_type_exists( $post_type ) ) {
-			return false;
-		}
 		$friends = Friends::get_instance();
-		if ( $friends->is_known_post_type( $post_type ) ) {
+		if ( $friends->post_types->is_known( $post_type ) ) {
 			// Already registered.
 			return false;
 		}
-		$friends->registered_post_types[ $post_type ] = Friends::CPT_PREFIX . $post_type;
+		$friends->post_types->register( $post_type );
+	}
+
+	/**
+	 * Unregister a post type from the Friends plugin
+	 *
+	 * @param  string $post_type The name of a post type.
+	 */
+	public static function unregister_post_type( $post_type ) {
+		$friends = Friends::get_instance();
+		if ( ! $friends->post_types->is_known( $post_type ) ) {
+			// Already registered.
+			return false;
+		}
+		$friends->post_types->unregister( $post_type );
 	}
 }

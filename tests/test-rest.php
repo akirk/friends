@@ -165,21 +165,21 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'request', $friend_request_response->data );
 
 		// Verify that the user case created at remote.
-		$my_user_at_friend = $friends->access_control->get_user_for_url( $my_url );
+		$my_user_at_friend = Friend_User::get_user_for_url( $my_url );
 
-		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
+		$this->assertInstanceOf( 'Friend_User', $my_user_at_friend );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
 		$this->assertEquals( get_user_option( 'friends_request_id', $my_user_at_friend->ID ), $friend_request_response->data['request'] );
 
 		// We're just testing the REST api, so we need to create the user ourselves.
-		$friend_user = $friends->access_control->create_user( $friend_url, 'pending_friend_request' );
-		$this->assertInstanceOf( 'WP_User', $friend_user );
-		$friend_user = $friends->access_control->create_user( $friend_url, 'pending_friend_request' );
+		$friend_user = Friend_user::create( $friend_url, 'pending_friend_request' );
+		$this->assertInstanceOf( 'Friend_User', $friend_user );
+		$friend_user = Friend_user::create( $friend_url, 'pending_friend_request' );
 
 		update_option( 'friends_request_' . sha1( $friend_request_response->data['request'] ), $friend_user->ID );
-		update_user_option( $friend_user->ID, 'friends_future_in_token_' . sha1( $friend_request_response->data['request'] ), $future_in_token );
+		$friend_user->update_user_option( 'friends_future_in_token_' . sha1( $friend_request_response->data['request'] ), $future_in_token );
 
 		// Now let's accept the friend request.
 		update_option( 'siteurl', $my_url );
@@ -192,15 +192,15 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertArrayHasKey( 'signature', $friend_accept_response->data );
 		delete_user_option( $my_user_at_friend->ID, 'friends_request_token' );
 
-		$friends->access_control->make_friend( $my_user_at_friend, $future_in_token, $future_out_token );
+		$my_user_at_friend->make_friend( $future_in_token, $future_out_token );
 
 		// Check the token.
-		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), $future_in_token );
-		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), $future_out_token );
-		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $my_user_at_friend->ID ) ) );
-		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $my_user_at_friend->ID ) ) );
-		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
-		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
+		$this->assertEquals( $friend_user->get_user_option( 'friends_in_token' ), $future_in_token );
+		$this->assertEquals( $friend_user->get_user_option( 'friends_out_token' ), $future_out_token );
+		$this->assertTrue( boolval( $my_user_at_friend->get_user_option( 'friends_in_token' ) ) );
+		$this->assertTrue( boolval( $my_user_at_friend->get_user_option( 'friends_out_token' ) ) );
+		$this->assertEquals( $friend_user->get_user_option( 'friends_out_token' ), $my_user_at_friend->get_user_option( 'friends_in_token' ) );
+		$this->assertEquals( $friend_user->get_user_option( 'friends_in_token' ), $my_user_at_friend->get_user_option( 'friends_out_token' ) );
 	}
 
 	/**
@@ -213,16 +213,16 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( 'WP_User', $friend_user );
+		$this->assertInstanceOf( 'Friend_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend' ) );
 
 		// Verify that the user was created at remote.
-		$my_user_at_friend = $friends->access_control->get_user_for_url( $my_url );
+		$my_user_at_friend = Friend_User::get_user_for_url( $my_url );
 
-		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
+		$this->assertInstanceOf( 'Friend_User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -233,10 +233,10 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$my_user_at_friend->set_role( 'friend' );
 
 		// Refresh the users before querying them again.
-		$friend_user = new WP_User( $friend_user->ID );
+		$friend_user = new Friend_User( $friend_user->ID );
 		$this->assertTrue( $friend_user->has_cap( 'friend' ) );
 
-		$my_user_at_friend = new WP_User( $my_user_at_friend->ID );
+		$my_user_at_friend = new Friend_User( $my_user_at_friend->ID );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
@@ -256,16 +256,16 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( 'WP_User', $friend_user );
+		$this->assertInstanceOf( 'Friend_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend' ) );
 
 		// Verify that the user was created at remote.
-		$my_user_at_friend = $friends->access_control->get_user_for_url( $my_url );
+		$my_user_at_friend = Friend_User::get_user_for_url( $my_url );
 
-		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
+		$this->assertInstanceOf( 'Friend_User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -276,10 +276,10 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', array( $my_user_at_friend->ID ) );
 
 		// Refresh the users before querying them again.
-		$friend_user = new WP_User( $friend_user->ID );
+		$friend_user = new Friend_User( $friend_user->ID );
 		$this->assertTrue( $friend_user->has_cap( 'friend' ) );
 
-		$my_user_at_friend = new WP_User( $my_user_at_friend->ID );
+		$my_user_at_friend = new Friend_User( $my_user_at_friend->ID );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
@@ -308,15 +308,15 @@ class Friends_RestTest extends WP_UnitTestCase {
 		);
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( 'WP_User', $friend_user );
+		$this->assertInstanceOf( 'Friend_User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend' ) );
 
 		// Verify that the user was created at remote.
-		$my_user_at_friend = $friends->access_control->get_user_for_url( $my_url );
-		$this->assertInstanceOf( 'WP_User', $my_user_at_friend );
+		$my_user_at_friend = Friend_User::get_user_for_url( $my_url );
+		$this->assertInstanceOf( 'Friend_User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -327,10 +327,10 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', array( $my_user_at_friend->ID ) );
 
 		// Refresh the users before querying them again.
-		$friend_user = new WP_User( $friend_user->ID );
+		$friend_user = new Friend_User( $friend_user->ID );
 		$this->assertTrue( $friend_user->has_cap( 'friend' ) );
 
-		$my_user_at_friend = new WP_User( $my_user_at_friend->ID );
+		$my_user_at_friend = new Friend_User( $my_user_at_friend->ID );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// We could now access the remote feed with this token.
@@ -391,12 +391,12 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friends = Friends::get_instance();
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url );
-		$this->assertInstanceOf( 'WP_User', $friend_user );
+		$this->assertInstanceOf( 'Friend_User', $friend_user );
 		$this->assertEquals( rtrim( $friend_user->user_url, '/' ), $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'subscription' ) );
 
 		// Verify that the user was not created at remote.
-		$my_user_at_friend = $friends->access_control->get_user_for_url( $my_url );
+		$my_user_at_friend = Friend_User::get_user_for_url( $my_url );
 		$this->assertFalse( $my_user_at_friend );
 
 		// No tokens were generated.

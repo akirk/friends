@@ -70,11 +70,11 @@ class Friends {
 	public $rest;
 
 	/**
-	 * Post types registered by other plugins.
+	 * A reference to the Friends_Post_Types object.
 	 *
-	 * @var array
+	 * @var Friends_Post_Types
 	 */
-	private $registered_post_types = array();
+	public $post_types;
 
 	/**
 	 * Get the class singleton
@@ -99,6 +99,7 @@ class Friends {
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->frontend       = new Friends_Frontend( $this );
+		$this->post_types     = new Friends_Post_Types( $this );
 		$this->recommendation = new Friends_Recommendation( $this );
 		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
@@ -120,55 +121,6 @@ class Friends {
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
 		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
-	}
-
-	/**
-	 * Get all the post types that cache posts for friends.
-	 *
-	 * @return array The array of cache post types.
-	 */
-	public function get_all_cached_post_types() {
-		return array_values( $this->registered_post_types );
-	}
-
-	/**
-	 * Get all the cached and original post types.
-	 *
-	 * @return array The array of post types.
-	 */
-	public function get_all_post_types() {
-		return array_merge( array_keys( $this->registered_post_types ), array_values( $this->registered_post_types ) );
-	}
-
-	/**
-	 * Check whether a post type is a cached post type.
-	 *
-	 * @param  string $cached_post_type The post type to check.
-	 * @return boolean                  Whether the post type is a cached post type.
-	 */
-	public function is_cached_post_type( $cached_post_type ) {
-		return in_array( $cached_post_type, $this->registered_post_types, true );
-	}
-
-	/**
-	 * Check whether a post type has been registered with the Friends plugin.
-	 * Register this through Friends_API::register_post_type( $post_type );
-	 *
-	 * @param  string $post_type The post type to check.
-	 * @return boolean           Whether the post type has been registered.
-	 */
-	public function is_known_post_type( $post_type ) {
-		return isset( $this->registered_post_types[ $post_type ] );
-	}
-
-	/**
-	 * Get the corresponding cached post type for the given post type.
-	 *
-	 * @param  string $post_type The post type to check.
-	 * @return string            The post type to be used for caching.
-	 */
-	public function get_cache_post_type( $post_type ) {
-		return $this->registered_post_types[ $post_type ];
 	}
 
 	/**
@@ -211,8 +163,7 @@ class Friends {
 		);
 
 		register_post_type( self::CPT, $args );
-		$this->registered_post_types['post'] = self::CPT;
-		do_action( 'friends_register_post_type' );
+		$this->post_types->register( 'post' );
 	}
 
 	/**
@@ -265,61 +216,6 @@ class Friends {
 	}
 
 	/**
-	 * Gets all friends.
-	 */
-	public static function all_friends() {
-		static $all_friends;
-		if ( ! isset( $all_friends ) ) {
-			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance' ) ) );
-		}
-		return $all_friends;
-	}
-
-	/**
-	 * Gets all friends.
-	 */
-	public static function all_friends_subscriptions() {
-		static $all_friends;
-		if ( ! isset( $all_friends ) ) {
-			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'subscription' ) ) );
-		}
-		return $all_friends;
-	}
-
-	/**
-	 * Gets all friend requests.
-	 */
-	public static function all_friend_requests() {
-		static $all_friend_requests;
-		if ( ! isset( $all_friend_requests ) ) {
-			$all_friend_requests = new WP_User_Query( array( 'role' => 'friend_request' ) );
-		}
-		return $all_friend_requests;
-	}
-
-	/**
-	 * Gets all subscriptions.
-	 */
-	public static function all_subscriptions() {
-		static $all_subscriptions;
-		if ( ! isset( $all_subscriptions ) ) {
-			$all_subscriptions = new WP_User_Query( array( 'role' => 'subscription' ) );
-		}
-		return $all_subscriptions;
-	}
-
-	/**
-	 * Gets all admin users.
-	 */
-	public static function all_admin_users() {
-		static $all_admin_users;
-		if ( ! isset( $all_admin_users ) ) {
-			$all_admin_users = new WP_User_Query( array( 'role' => self::REQUIRED_ROLE ) );
-		}
-		return $all_admin_users;
-	}
-
-	/**
 	 * Creates a page /friends/ to enable customization via.
 	 */
 	public static function create_friends_page() {
@@ -362,7 +258,7 @@ class Friends {
 	 */
 	public static function upgrade_plugin( $previous_version ) {
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
-			$friends_subscriptions = self::all_friends_subscriptions();
+			$friends_subscriptions = Friend_User_Query::all_friends_subscriptions();
 			foreach ( $friends_subscriptions->get_results() as $user ) {
 				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
 				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
@@ -475,7 +371,7 @@ class Friends {
 			if ( get_current_user_id() ) {
 				$main_user_id = get_current_user_id();
 			} else {
-				$users = self::all_admin_users();
+				$users = Friend_User_Query::all_admin_users();
 				foreach ( $users->get_results() as $user ) {
 					$main_user_id = $user->ID;
 					break;

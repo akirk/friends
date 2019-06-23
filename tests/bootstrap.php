@@ -82,3 +82,5 @@ if ( defined( 'TESTS_VERBOSE' ) && TESTS_VERBOSE ) {
 		4
 	);
 }
+
+Friend_User_query::$cache = false;

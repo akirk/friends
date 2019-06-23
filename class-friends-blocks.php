@@ -129,23 +129,23 @@ class Friends_Blocks {
 	public function render_block_friends_list( $attributes, $content ) {
 		switch ( $attributes['user_types'] ) {
 			case 'friend_requests':
-				$friends  = Friends::all_friend_requests();
+				$friends  = Friend_User_Query::all_friend_requests();
 				$no_users = __( "You currently don't have any friend requests.", 'friends' );
 				break;
 
 			case 'friends_subscriptions':
-				$friends  = Friends::all_friends_subscriptions();
+				$friends  = Friend_User_Query::all_friends_subscriptions();
 				$no_users = __( "You don't have any friends or subscriptions yet.", 'friends' );
 				break;
 
 			case 'subscriptions':
-				$friends  = Friends::all_subscriptions();
+				$friends  = Friend_User_Query::all_subscriptions();
 				$no_users = __( "You don't have any subscriptions yet.", 'friends' );
 				break;
 
 			case 'friends':
 			default:
-				$friends  = Friends::all_friends();
+				$friends  = Friend_User_Query::all_friends();
 				$no_users = __( "You don't have any friends yet.", 'friends' );
 		}
 
@@ -238,7 +238,7 @@ class Friends_Blocks {
 				array(
 					'numberposts' => $count,
 					'offset'      => $offset,
-					'post_type'   => $this->friends->get_all_cached_post_types(),
+					'post_type'   => $this->friends->post_types->get_all_cached(),
 				)
 			);
 			if ( count( $recent_posts ) === 0 ) {

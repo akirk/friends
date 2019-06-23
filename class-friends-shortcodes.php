@@ -95,7 +95,7 @@ class Friends_Shortcodes {
 			$atts
 		);
 
-		$friends = Friends::all_friends();
+		$friends = Friend_User_Query::all_friends();
 		$ret     = '<ul class="friend-list">';
 
 		foreach ( $friends->get_results() as $friend_user ) {
@@ -127,7 +127,7 @@ class Friends_Shortcodes {
 	 * @return string The content to be output.
 	 */
 	public function friends_count_shortcode( $atts ) {
-		$friends = Friends::all_friends();
+		$friends = Friend_User_Query::all_friends();
 		return $friends->get_total();
 	}
 

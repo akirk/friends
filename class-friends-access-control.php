@@ -63,7 +63,7 @@ class Friends_Access_Control {
 	/**
 	 * Get authenticated feed user
 	 *
-	 * @return WP_User|null The authentication status of the feed.
+	 * @return Friend_User|null The authentication status of the feed.
 	 */
 	public function get_authenticated_feed_user() {
 		if ( is_null( $this->feed_authenticated ) ) {
@@ -74,7 +74,7 @@ class Friends_Access_Control {
 			return null;
 		}
 
-		return new WP_User( $this->feed_authenticated );
+		return new Friend_User( $this->feed_authenticated );
 	}
 
 	/**
@@ -246,7 +246,7 @@ class Friends_Access_Control {
 		if ( ! $user_id ) {
 			return;
 		}
-		$user = new WP_User( $user_id );
+		$user = new Friend_User( $user_id );
 		if ( ! $user->has_cap( 'friend' ) ) {
 			return;
 		}
@@ -270,7 +270,7 @@ class Friends_Access_Control {
 		if ( isset( $_GET['friend'] ) ) {
 			$user_id = $this->verify_token( $_GET['friend'] );
 			if ( $user_id ) {
-				$user = new WP_User( $user_id );
+				$user = new Friend_User( $user_id );
 				if ( $user->has_cap( 'friend' ) ) {
 					$this->feed_authenticated = $user_id;
 					return $this->feed_authenticated;
@@ -294,7 +294,7 @@ class Friends_Access_Control {
 			delete_option( 'friends_in_token_' . $current_secret );
 		}
 
-		$user = new WP_User( $user_id );
+		$user = new Friend_User( $user_id );
 
 		// No need to delete user options as the user will be deleted.
 		return $current_secret;
@@ -314,71 +314,7 @@ class Friends_Access_Control {
 			return;
 		}
 
-		do_action( 'notify_new_friend_request', new WP_User( $user_id ) );
-	}
-
-	/**
-	 * Convert a user to a friend
-	 *
-	 * @param  WP_User $user  The user to become a friend of the blog.
-	 * @param  string  $out_token The token to authenticate against the remote.
-	 * @param  string  $in_token The token the remote needs to use to authenticate to us.
-	 * @return WP_User|WP_Error The user or an error.
-	 */
-	public function make_friend( WP_User $user, $out_token, $in_token ) {
-		if ( ! $user || is_wp_error( $user ) ) {
-			return $user;
-		}
-		update_user_option( $user->ID, 'friends_out_token', $out_token );
-		if ( update_user_option( $user->ID, 'friends_in_token', $in_token ) ) {
-			update_option( 'friends_in_token_' . $in_token, $user->ID );
-		}
-		$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
-
-		return $user;
-	}
-
-	/**
-	 * Check whether a user is a valid friend
-	 *
-	 * @param  WP_User $user The potential friend user.
-	 * @return boolean       Whether the user has valid friend data.
-	 */
-	public function is_valid_friend( WP_User $user ) {
-		if ( ! $user->has_cap( 'friend' ) ) {
-			return false;
-		}
-
-		if ( ! $user->data->user_url ) {
-			return false;
-		}
-
-		if ( ! get_user_option( 'friends_in_token', $user->ID ) ) {
-			return false;
-		}
-
-		if ( ! get_user_option( 'friends_out_token', $user->ID ) ) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * Get the REST URL for the friend
-	 *
-	 * @param  WP_User $user A friend user.
-	 * @return string        The REST URL.
-	 */
-	public function get_rest_url( WP_User $user ) {
-		$rest_url = get_user_option( 'friends_rest_url', $user->ID );
-		if ( ! $rest_url || false === strpos( $rest_url, Friends_REST::PREFIX ) ) {
-			$rest_url = $this->friends->rest->discover_rest_url( $user->user_url );
-			if ( $rest_url ) {
-				update_user_option( $user->ID, 'friends_rest_url', $rest_url );
-			}
-		}
-		return $rest_url;
+		do_action( 'notify_new_friend_request', new Friend_User( $user_id ) );
 	}
 
 	/**

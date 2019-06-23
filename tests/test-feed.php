@@ -1,21 +1,14 @@
 <?php
 /**
- * Class Friends_NoticiationTest
+ * Class Friends_FeedTest
  *
  * @package Friends
  */
 
 /**
- * Test the Notifications
+ * Test the Feed
  */
 class Friends_FeedTest extends WP_UnitTestCase {
-	/**
-	 * Current User ID
-	 *
-	 * @var int
-	 */
-	private $user_id;
-
 	/**
 	 * User ID of a friend at friend.local
 	 *
@@ -107,7 +100,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->friend_id );
+		$user = new Friend_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
@@ -127,7 +120,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->friend_id );
+		$user = new Friend_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
@@ -147,7 +140,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->friend_id );
+		$user = new Friend_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
@@ -167,7 +160,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->friend_id );
+		$user = new Friend_User( $this->friend_id );
 
 		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );

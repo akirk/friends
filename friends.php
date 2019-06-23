@@ -20,13 +20,18 @@
 
 defined( 'ABSPATH' ) || exit;
 
+include __DIR__ . '/class-friend-user.php';
+include __DIR__ . '/class-friend-user-query.php';
+
 include __DIR__ . '/class-friends-access-control.php';
 include __DIR__ . '/class-friends-admin.php';
+include __DIR__ . '/class-friends-api.php';
 include __DIR__ . '/class-friends-blocks.php';
 include __DIR__ . '/class-friends-feed.php';
 include __DIR__ . '/class-friends-frontend.php';
 include __DIR__ . '/class-friends-logging.php';
 include __DIR__ . '/class-friends-notifications.php';
+include __DIR__ . '/class-friends-post-types.php';
 include __DIR__ . '/class-friends-reactions.php';
 include __DIR__ . '/class-friends-recommendation.php';
 include __DIR__ . '/class-friends-rest.php';
