@@ -650,7 +650,7 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
-		$friend = new WP_User( intval( $_GET['user'] ) );
+		$friend = new Friend_User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
@@ -701,9 +701,8 @@ class Friends_Admin {
 	 */
 	public function render_admin_edit_friend_rules() {
 		$friend    = $this->check_admin_edit_friend_rules();
-		$catch_all = $this->friends->feed->get_feed_catch_all( $friend );
-		$rules     = $this->friends->feed->get_feed_rules( $friend );
-
+		$catch_all = $friend->get_feed_catch_all();
+		$rules     = $friend->get_feed_rules();
 		?>
 		<h1>
 		<?php
@@ -764,9 +763,10 @@ class Friends_Admin {
 			)
 		);
 
-		$feed                                = $this->friends->feed;
-		$feed->feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );
-		$feed->feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $catch_all );
+		$feed = $this->friends->feed;
+
+		Friend_User::$feed_rules[ $friend->ID ]     = $feed->validate_feed_rules( $rules );
+		Friend_User::$feed_catch_all[ $friend->ID ] = $feed->validate_feed_catch_all( $catch_all );
 
 		include apply_filters( 'friends_template_path', 'admin/preview-rules.php' );
 	}
@@ -783,7 +783,7 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
-		$friend = new WP_User( intval( $_GET['user'] ) );
+		$friend = new Friend_User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
@@ -903,8 +903,7 @@ class Friends_Admin {
 				'author'      => $friend->ID,
 			)
 		);
-
-		$rules = $this->friends->feed->get_feed_rules( $friend );
+		$rules = $friend->get_feed_rules();
 		$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 		if ( ! $hide_from_friends_page ) {
 			$hide_from_friends_page = array();
@@ -1290,7 +1289,7 @@ class Friends_Admin {
 
 		$accepted = 0;
 		foreach ( $users as $user_id ) {
-			$user = new WP_User( $user_id );
+			$user = new Friend_User( $user_id );
 			if ( ! $user || is_wp_error( $user ) ) {
 				continue;
 			}
@@ -1332,7 +1331,7 @@ class Friends_Admin {
 			$actions['accept_friend_request'] = __( 'Accept Friend Request', 'friends' );
 		}
 
-		$friends = new WP_User_Query( array( 'role' => 'subscription' ) );
+		$friends = Friend_User_Query::all_subscriptions();
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
