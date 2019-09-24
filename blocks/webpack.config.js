@@ -2,9 +2,9 @@ let webpack = require( 'webpack' ),
 	NODE_ENV = process.env.NODE_ENV || 'development',
 	webpackConfig = {
 		entry: {
-			'block-visibility': './block-visibility.js',
-			'friends-list': './friends-list.js',
-			'friend-posts': './friend-posts.js',
+			'block-visibility': './src/block-visibility.js',
+			'friends-list': './src/friends-list.js',
+			'friend-posts': './src/friend-posts.js',
 		},
 		output: {
 			path: __dirname,
