@@ -1,6 +1,6 @@
 <?php
 /**
- * Class Friends_NoticiationTest
+ * Class Friends_NotificationTest
  *
  * @package Friends
  */
@@ -45,7 +45,6 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				'role'       => 'friend',
 			)
 		);
-
 		remove_filter( 'friends_send_mail', '__return_false' );
 	}
 
@@ -89,9 +88,11 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->friend_id );
+		$user = new Friend_User( $this->friend_id );
 
-		$friends->feed->process_friend_feed( $user, $feed );
+		$new_posts = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
+		$friends->feed->notify_about_new_friend_posts( $user, array( 'post' => $new_posts ) );
+
 	}
 
 	/**
@@ -119,13 +120,14 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new WP_User( $this->friend_id );
+		$user = new Friend_User( $this->friend_id );
 
 		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
 
 		$friends = Friends::get_instance();
-		$friends->feed->process_friend_feed( $user, $feed );
+		$new_posts = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
+		$friends->feed->notify_about_new_friend_posts( $user, array( 'post' => $new_posts ) );
 	}
 
 	/**
@@ -228,7 +230,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			)
 		);
 
-		$me = new WP_User( $me_id );
+		$me = new Friend_User( $me_id );
 		$me->set_role( 'friend' );
 		do_action( 'notify_accepted_friend_request', $me );
 	}

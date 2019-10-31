@@ -46,7 +46,7 @@ include __DIR__ . '/header.php'; ?>
 		<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
 			<header class="entry-header">
 				<div class="avatar">
-					<?php if ( Friends::CPT === get_post_type() ) : ?>
+					<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 						<?php if ( $recommendation ) : ?>
 							<a href="<?php the_permalink(); ?>" rel="noopener noreferrer">
 								<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
@@ -64,7 +64,7 @@ include __DIR__ . '/header.php'; ?>
 				</div>
 				<div class="post-meta">
 					<div class="author">
-						<?php if ( Friends::CPT === get_post_type() ) : ?>
+						<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 							<?php if ( $recommendation ) : ?>
 								<a href="<?php the_permalink(); ?>" rel="noopener noreferrer" ><strong><?php echo esc_html( get_post_meta( get_the_ID(), 'author', true ) ); ?></strong></a>
 							<?php else : ?>
@@ -81,7 +81,7 @@ include __DIR__ . '/header.php'; ?>
 					<span class="post-date" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
 					<?php edit_post_link(); ?>
 				</div>
-				<?php if ( false && Friends::CPT === get_post_type() ) : ?>
+				<?php if ( false && $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 					<button class="friends-trash-post" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
 						&#x1F5D1;
 					</button>
@@ -89,7 +89,7 @@ include __DIR__ . '/header.php'; ?>
 			</header>
 
 			<h4 class="entry-title">
-				<?php if ( Friends::CPT === get_post_type() ) : ?>
+				<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 					<?php if ( $recommendation ) : ?>
 						<a href="<?php the_permalink(); ?>" target="_blank" rel="noopener noreferrer" class="auth-link" data-token="<?php echo esc_attr( $token ); ?>">
 							<?php
@@ -109,7 +109,7 @@ include __DIR__ . '/header.php'; ?>
 
 			<div class="entry-content">
 				<?php
-				if ( Friends::CPT === get_post_type() && $recommendation ) {
+				if ( $friends->post_types->is_cached_post_type( get_post_type() ) && $recommendation ) {
 					$friend_name = '<a href="' . esc_url( get_the_author_meta( 'url' ) ) . '" class="auth-link" data-token="' . esc_attr( $token ) . '">' . esc_html( get_the_author() ) . '</a>';
 					?>
 					<p class="friend-recommendation">
@@ -150,12 +150,12 @@ include __DIR__ . '/header.php'; ?>
 			</div>
 
 			<footer class="entry-meta">
-				<?php if ( Friends::CPT === get_post_type() && $token ) : ?>
+				<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) && $token ) : ?>
 				<button href="<?php comments_link(); ?>" target="_blank" rel="noopener noreferrer" class="comments auth-link" data-token="<?php echo esc_attr( $token ); ?>">
 					<span class="dashicons dashicons-admin-comments"></span>
 					<?php comments_number( '', 1, '%' ); ?>
 				</button>
-				<?php elseif ( Friends::CPT === get_post_type() ) : ?>
+				<?php elseif ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 				<a href="<?php comments_link(); ?>" target="_blank" rel="noopener noreferrer" class="comments button">
 					<span class="dashicons dashicons-admin-comments"></span>
 					<?php comments_number( '', 1, '%' ); ?>
@@ -167,7 +167,7 @@ include __DIR__ . '/header.php'; ?>
 				</a>
 				<?php endif; ?>
 				<?php echo $friends->reactions->post_reactions(); ?>
-				<?php if ( Friends::CPT === get_post_type() ) : ?>
+				<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 					<?php echo $friends->recommendation->post_recommendation(); ?>
 				<?php endif; ?>
 			</footer>

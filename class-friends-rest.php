@@ -152,7 +152,7 @@ class Friends_REST {
 		$friend_user_id = get_option( 'friends_request_' . sha1( $request_id ) );
 		$friend_user    = false;
 		if ( $friend_user_id ) {
-			$friend_user = new WP_User( $friend_user_id );
+			$friend_user = new Friend_User( $friend_user_id );
 		}
 
 		if ( ! $request_id || ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->user_url ) {
@@ -177,7 +177,7 @@ class Friends_REST {
 			);
 		}
 
-		$friend_user_login = $this->friends->access_control->get_user_login_for_url( $friend_user->user_url );
+		$friend_user_login = Friend_User::get_user_login_for_url( $friend_user->user_url );
 		if ( $friend_user_login !== $friend_user->user_login ) {
 			return new WP_Error(
 				'friends_offer_no_longer_valid',
@@ -198,9 +198,9 @@ class Friends_REST {
 				)
 			);
 		}
-		$this->friends->access_control->make_friend( $friend_user, $future_out_token, $future_in_token );
+		$friend_user->make_friend( $future_out_token, $future_in_token );
 
-		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ) );
+		$friend_user->update_user_icon_url( $request->get_param( 'icon_url' ) );
 		if ( $request->get_param( 'name' ) ) {
 			wp_update_user(
 				array(
@@ -271,20 +271,19 @@ class Friends_REST {
 			);
 		}
 
-		$friend_user = $this->friends->access_control->create_user( $url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
+		$friend_user = Friend_User::create( $url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
 		if ( $friend_user->has_cap( 'friend' ) ) {
 			if ( get_user_option( 'friends_out_token', $friend_user->ID ) && ! get_user_option( 'friends_out_token', $friend_user->ID ) ) {
 				// TODO: trigger an accept friend request right away?
 			}
 			$friend_user->set_role( 'friend_request' );
 		}
-		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $request->get_param( 'icon_url' ) );
-
-		update_user_option( $friend_user->ID, 'friends_future_out_token', $request->get_param( 'key' ) );
-		update_user_option( $friend_user->ID, 'friends_request_message', mb_substr( $request->get_param( 'message' ), 0, 2000 ) );
+		$friend_user->update_user_icon_url( $request->get_param( 'icon_url' ) );
+		$friend_user->update_user_option( 'friends_future_out_token', $request->get_param( 'key' ) );
+		$friend_user->update_user_option( 'friends_request_message', mb_substr( $request->get_param( 'message' ), 0, 2000 ) );
 
 		$request_id = sha1( wp_generate_password( 256 ) );
-		update_user_option( $friend_user->ID, 'friends_request_id', $request_id );
+		$friend_user->update_user_option( 'friends_request_id', $request_id );
 
 		return array(
 			'request' => $request_id,
@@ -302,18 +301,18 @@ class Friends_REST {
 			return;
 		}
 
-		$friends = Friends::all_friends();
+		$friends = Friend_User_Query::all_friends();
 		$friends = $friends->get_results();
 
 		foreach ( $friends as $friend_user ) {
-			$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
+			$friend_rest_url = $friend_user->get_rest_url();
 
 			$response = wp_safe_remote_post(
 				$friend_rest_url . '/post-deleted',
 				array(
 					'body'        => array(
 						'post_id' => $post_id,
-						'friend'  => get_user_option( 'friends_out_token', $friend_user->ID ),
+						'friend'  => $friend_user->get_user_option( 'friends_out_token' ),
 					),
 					'timeout'     => 20,
 					'redirection' => 5,
@@ -340,7 +339,7 @@ class Friends_REST {
 				)
 			);
 		}
-		$friend_user     = new WP_User( $user_id );
+		$friend_user     = new Friend_User( $user_id );
 		$remote_post_id  = $request->get_param( 'post_id' );
 		$remote_post_ids = $this->friends->feed->get_remote_post_ids( $friend_user );
 
@@ -352,7 +351,7 @@ class Friends_REST {
 
 		$post_id = $remote_post_ids[ $remote_post_id ];
 		$post    = WP_Post::get_instance( $post_id );
-		if ( Friends::CPT === $post->post_type ) {
+		if ( $this->friends->post_types->is_cached_post_type( $post->post_type ) ) {
 			wp_delete_post( $post_id );
 		}
 
@@ -374,7 +373,7 @@ class Friends_REST {
 			return;
 		}
 
-		$friends = new WP_User_Query(
+		$friends = new Friend_User_Query(
 			array(
 				'role'    => 'friend',
 				'exclude' => array( $exclude_friend_user_id ),
@@ -417,7 +416,7 @@ class Friends_REST {
 				)
 			);
 		}
-		$friend_user     = new WP_User( $user_id );
+		$friend_user     = new Friend_User( $user_id );
 		$remote_post_id  = $request->get_param( 'post_id' );
 		$remote_post_ids = $this->friends->feed->get_remote_post_ids( $friend_user );
 
@@ -443,16 +442,16 @@ class Friends_REST {
 	 */
 	public function notify_friend_of_my_reaction( $post_id ) {
 		$post = WP_Post::get_instance( $post_id );
-		if ( Friends::CPT !== $post->post_type ) {
+		if ( ! $this->friends->post_types->is_cached_post_type( $post->post_type ) ) {
 			return;
 		}
 
-		$friend_user = new WP_User( $post->post_author );
+		$friend_user = new Friend_User( $post->post_author );
 
 		$reactions      = $this->friends->reactions->get_my_reactions( $post->ID );
 		$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
 
-		$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
+		$friend_rest_url = $friend_user->get_rest_url( $friend_user );
 
 		$response = wp_safe_remote_post(
 			$friend_rest_url . '/my-reactions',
@@ -486,7 +485,7 @@ class Friends_REST {
 				)
 			);
 		}
-		$friend_user = new WP_User( $user_id );
+		$friend_user = new Friend_User( $user_id );
 		$post_id     = $request->get_param( 'post_id' );
 		$post        = WP_Post::get_instance( $post_id );
 
@@ -530,9 +529,8 @@ class Friends_REST {
 		$standard_response = array(
 			'thank' => 'you',
 		);
-		$standard_response = false;
 
-		$friend_user = new WP_User( $user_id );
+		$friend_user = new Friend_User( $user_id );
 
 		$permalink = $request->get_param( 'link' );
 		$sha1_link = $request->get_param( 'sha1_link' );
@@ -571,13 +569,25 @@ class Friends_REST {
 			);
 		}
 
+		$post_type = $this->friends->is_known_post_type( $request->get_param( 'post_type' ) );
+		if ( ! $post_type ) {
+			if ( $standard_response ) {
+				return $standard_response;
+			}
+
+			return array(
+				'post_type' => 'unknown',
+			);
+
+		}
+
 		$post_data = array(
 			'post_title'   => $request->get_param( 'title' ),
 			'post_content' => $request->get_param( 'description' ),
 			'post_status'  => 'publish',
 			'post_author'  => $friend_user->ID,
 			'guid'         => $permalink,
-			'post_type'    => Friends::CPT,
+			'post_type'    => $this->friends->post_types->get_cache_post_type( $request->get_param( 'post_type' ) ),
 			'tags_input'   => array( 'recommendation' ),
 		);
 
@@ -663,11 +673,11 @@ class Friends_REST {
 			return;
 		}
 
-		$friend_user = new WP_User( $user_id );
+		$friend_user = new Friend_User( $user_id );
 
-		$friend_rest_url  = $this->friends->access_control->get_rest_url( $friend_user );
-		$request_id       = get_user_option( 'friends_request_id', $friend_user->ID );
-		$future_out_token = get_user_option( 'friends_future_out_token', $friend_user->ID );
+		$friend_rest_url  = $friend_user->get_rest_url();
+		$request_id       = $friend_user->get_user_option( 'friends_request_id' );
+		$future_out_token = $friend_user->get_user_option( 'friends_future_out_token' );
 		$future_in_token  = sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
@@ -698,9 +708,9 @@ class Friends_REST {
 			return;
 		}
 
-		$this->friends->access_control->make_friend( $friend_user, $future_out_token, $future_in_token );
-		delete_user_option( $friend_user->ID, 'friends_request_id' );
-		delete_user_option( $friend_user->ID, 'friends_future_out_token' );
+		$friend_user->make_friend( $future_out_token, $future_in_token );
+		$friend_user->delete_user_option( 'friends_request_id' );
+		$friend_user->delete_user_option( 'friends_future_out_token' );
 
 		/*
 		TODO

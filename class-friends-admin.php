@@ -104,7 +104,7 @@ class Friends_Admin {
 			return;
 		}
 
-		$friends_subscriptions = Friends::all_friends_subscriptions();
+		$friends_subscriptions = Friend_User_Query::all_friends_subscriptions();
 		if ( $friends_subscriptions->get_total() ) {
 			return;
 		}
@@ -127,7 +127,7 @@ class Friends_Admin {
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
-		$friend_requests = Friends::all_friend_requests();
+		$friend_requests = Friend_User_Query::all_friend_requests();
 		$friend_request_count = $friend_requests->get_total();
 		$unread_badge = $this->get_unread_badge( $friend_request_count );
 
@@ -239,14 +239,6 @@ class Friends_Admin {
 	 * Admin menu to refresh the friend posts.
 	 */
 	public function admin_refresh_friend_posts() {
-		$friend = null;
-		if ( isset( $_GET['user'] ) ) {
-			$friend = new WP_User( intval( $_GET['user'] ) );
-			if ( ! $friend || is_wp_error( $friend ) ) {
-				wp_die( esc_html__( 'Invalid user ID.' ) );
-			}
-		}
-
 		?>
 		<h1><?php esc_html_e( "Refreshing Your Friends' Posts", 'friends' ); ?></h1>
 		<?php
@@ -267,8 +259,12 @@ class Friends_Admin {
 		add_action(
 			'friends_retrieved_new_posts',
 			function( $new_posts, $friend_user ) {
+				$count = 0;
+				foreach ( $new_posts as $post_type => $posts ) {
+					$count += count( $posts );
+				}
 				// translators: %s is the number of new posts found.
-				printf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) );
+				printf( _n( 'Found %d new post.', 'Found %d new posts.', $count, 'friends' ) . '<br/>', $count );
 			},
 			10,
 			2
@@ -296,7 +292,15 @@ class Friends_Admin {
 			3
 		);
 
-		$this->friends->feed->retrieve_friend_posts( $friend );
+		if ( isset( $_GET['user'] ) ) {
+			$friend_user = new Friend_User( intval( $_GET['user'] ) );
+			if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+				wp_die( esc_html__( 'Invalid user ID.' ) );
+			}
+			$friend_user->retrieve_posts();
+		} else {
+			$this->friends->feed->retrieve_friend_posts();
+		}
 	}
 
 	/**
@@ -330,8 +334,8 @@ class Friends_Admin {
 			$url = substr( $feed_url, 0, -6 );
 		}
 
-		$user = $this->friends->access_control->get_user_for_url( $url );
-		if ( $user && ! is_wp_error( $user ) && $this->friends->access_control->is_valid_friend( $user ) ) {
+		$friend_user = Friend_User::get_user_for_url( $url );
+		if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->is_valid_friend() ) {
 			return new WP_Error( 'already-friend', __( 'You are already subscribed to this site.', 'friends' ) );
 		}
 
@@ -366,13 +370,13 @@ class Friends_Admin {
 			}
 		}
 		$feed_title = trim( str_replace( '&raquo; Feed', '', $feed->get_title() ) );
-		$user = $this->friends->access_control->create_user( $url, 'subscription', $feed_title, $favicon );
-		if ( ! is_wp_error( $user ) ) {
-			$this->friends->feed->process_friend_feed( $user, $feed );
-			update_user_option( $user->ID, 'friends_feed_url', $feed_url );
+		$friend_user = Friend_User::create( $url, 'subscription', $feed_title, $favicon );
+		if ( ! is_wp_error( $friend_user ) ) {
+			$this->friends->feed->process_friend_feed( $friend_user, $feed, Friends::CPT );
+			$friend_user->update_user_option( 'friends_feed_url', $feed_url );
 		}
 
-		return $user;
+		return $friend_user;
 	}
 
 	/**
@@ -392,8 +396,8 @@ class Friends_Admin {
 			return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 		}
 
-		$friend_user = $this->friends->access_control->get_user_for_url( $friend_url );
-		if ( $friend_user && ! is_wp_error( $friend_user ) && $this->friends->access_control->is_valid_friend( $friend_user ) ) {
+		$friend_user = Friend_User::get_user_for_url( $friend_url );
+		if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->is_valid_friend() ) {
 			return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
 		}
 
@@ -414,7 +418,7 @@ class Friends_Admin {
 		// }
 		//
 		*/
-		$user_login      = $this->friends->access_control->get_user_login_for_url( $friend_url );
+		$user_login      = Friend_User::get_user_login_for_url( $friend_url );
 		$future_in_token = sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
@@ -450,52 +454,50 @@ class Friends_Admin {
 			return new WP_Error( 'unexpected-rest-response', 'Unexpected remote response.', $response );
 		}
 
-		$friend_user = $this->friends->access_control->create_user( $friend_url, 'pending_friend_request' );
-		if ( ! is_wp_error( $friend_user ) ) {
-			update_user_option( $friend_user->ID, 'friends_rest_url', $rest_url );
-
-			if ( isset( $json->request ) ) {
-				update_option( 'friends_request_' . sha1( $json->request ), $friend_user->ID );
-				update_user_option( $friend_user->ID, 'friends_future_in_token_' . sha1( $json->request ), $future_in_token );
-				$friend_user->set_role( 'pending_friend_request' );
-				// } elseif ( isset( $json->friend ) ) {
-				// $this->friends->access_control->make_friend( $user, $json->friend );
-				// if ( isset( $json->gravatar ) ) {
-				// $this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
-				// }
-				// if ( isset( $json->name ) ) {
-				// wp_update_user(
-				// array(
-				// 'ID'           => $user->ID,
-				// 'nickname'     => $json->name,
-				// 'first_name'   => $json->name,
-				// 'display_name' => $json->name,
-				// )
-				// );
-				// }
-				// $response = wp_safe_remote_post(
-				// $friend_rest_url . '/friend-request-accepted',
-				// array(
-				// 'body'        => array(
-				// 'token'  => $json->token,
-				// 'friend' => $this->friends->access_control->update_in_token( $user->ID ),
-				// 'proof'  => sha1( $json->token . $friend_request_token ),
-				// ),
-				// 'timeout'     => 20,
-				// 'redirection' => 5,
-				// )
-				// );
-				// delete_user_option( $user->ID, 'friends_request_token' );
-				// $json = json_decode( wp_remote_retrieve_body( $response ) );
-				// if ( $json->friend ) {
-				// update_user_option( $user->ID, 'friends_out_token', $json->friend );
-				// }
-			}
+		$friend_user = Friend_User::create( $friend_url, 'pending_friend_request' );
+		if ( is_wp_error( $friend_user ) ) {
+			return $friend_user;
 		}
+		$friend_user->update_user_option( 'friends_rest_url', $rest_url );
 
-		if ( ! is_wp_error( $friend_user ) ) {
-			$this->friends->feed->retrieve_friend_posts( $friend_user );
+		if ( isset( $json->request ) ) {
+			update_option( 'friends_request_' . sha1( $json->request ), $friend_user->ID );
+			$friend_user->update_user_option( 'friends_future_in_token_' . sha1( $json->request ), $future_in_token );
+			$friend_user->set_role( 'pending_friend_request' );
+			// } elseif ( isset( $json->friend ) ) {
+			// $this->friends->access_control->make_friend( $user, $json->friend );
+			// if ( isset( $json->gravatar ) ) {
+			// $this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
+			// }
+			// if ( isset( $json->name ) ) {
+			// wp_update_user(
+			// array(
+			// 'ID'           => $user->ID,
+			// 'nickname'     => $json->name,
+			// 'first_name'   => $json->name,
+			// 'display_name' => $json->name,
+			// )
+			// );
+			// }
+			// $response = wp_safe_remote_post(
+			// $friend_rest_url . '/friend-request-accepted',
+			// array(
+			// 'body'        => array(
+			// 'token'  => $json->token,
+			// 'friend' => $this->friends->access_control->update_in_token( $user->ID ),
+			// 'proof'  => sha1( $json->token . $friend_request_token ),
+			// ),
+			// 'timeout'     => 20,
+			// 'redirection' => 5,
+			// )
+			// );
+			// delete_user_option( $user->ID, 'friends_request_token' );
+			// $json = json_decode( wp_remote_retrieve_body( $response ) );
+			// if ( $json->friend ) {
+			// update_user_option( $user->ID, 'friends_out_token', $json->friend );
+			// }
 		}
+		$friend_user->retrieve_posts();
 
 		return $friend_user;
 	}
@@ -629,7 +631,7 @@ class Friends_Admin {
 			<?php
 		}
 
-		$potential_main_users = Friends::all_admin_users();
+		$potential_main_users = Friend_User_Query::all_admin_users();
 		$main_user_id         = $this->friends->get_main_friend_user_id();
 		$default_role         = get_option( 'friends_default_friend_role', 'friend' );
 
@@ -648,7 +650,7 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
-		$friend = new WP_User( intval( $_GET['user'] ) );
+		$friend = new Friend_User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
@@ -699,9 +701,8 @@ class Friends_Admin {
 	 */
 	public function render_admin_edit_friend_rules() {
 		$friend    = $this->check_admin_edit_friend_rules();
-		$catch_all = $this->friends->feed->get_feed_catch_all( $friend );
-		$rules     = $this->friends->feed->get_feed_rules( $friend );
-
+		$catch_all = $friend->get_feed_catch_all();
+		$rules     = $friend->get_feed_rules();
 		?>
 		<h1>
 		<?php
@@ -755,16 +756,17 @@ class Friends_Admin {
 		$friend       = $this->check_admin_edit_friend_rules();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'      => Friends::CPT,
+				'post_type'      => $this->friends->post_types->get_all_cached(),
 				'post_status'    => array( 'publish', 'private', 'trash' ),
 				'author'         => $friend->ID,
 				'posts_per_page' => 25,
 			)
 		);
 
-		$feed                                = $this->friends->feed;
-		$feed->feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );
-		$feed->feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $catch_all );
+		$feed = $this->friends->feed;
+
+		Friend_User::$feed_rules[ $friend->ID ]     = $feed->validate_feed_rules( $rules );
+		Friend_User::$feed_catch_all[ $friend->ID ] = $feed->validate_feed_catch_all( $catch_all );
 
 		include apply_filters( 'friends_template_path', 'admin/preview-rules.php' );
 	}
@@ -781,7 +783,7 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
-		$friend = new WP_User( intval( $_GET['user'] ) );
+		$friend = new Friend_User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
@@ -896,13 +898,12 @@ class Friends_Admin {
 		$friend = $this->check_admin_edit_friend();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => Friends::CPT,
+				'post_type'   => $this->friends->post_types->get_all_cached(),
 				'post_status' => array( 'publish', 'private' ),
 				'author'      => $friend->ID,
 			)
 		);
-
-		$rules = $this->friends->feed->get_feed_rules( $friend );
+		$rules = $friend->get_feed_rules();
 		$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 		if ( ! $hide_from_friends_page ) {
 			$hide_from_friends_page = array();
@@ -992,7 +993,7 @@ class Friends_Admin {
 				?>
 				</div>
 				<?php
-			} elseif ( $friend_user instanceof WP_User ) {
+			} elseif ( $friend_user instanceof Friend_User ) {
 				$friend_link = '<a href="' . esc_url( $friend_user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->user_url ) . '</a>';
 				if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
 					?>
@@ -1141,7 +1142,7 @@ class Friends_Admin {
 		}
 
 		if ( ! $friend && isset( $_GET['url'] ) ) {
-			$friend = $this->friends->access_control->get_user_for_url( $_GET['url'] );
+			$friend = Friend_User::get_user_for_url( $_GET['url'] );
 			$url    = $_GET['url'];
 			if ( 'http' !== substr( $url, 0, 4 ) ) {
 				$url = 'http://' . $url;
@@ -1288,7 +1289,7 @@ class Friends_Admin {
 
 		$accepted = 0;
 		foreach ( $users as $user_id ) {
-			$user = new WP_User( $user_id );
+			$user = new Friend_User( $user_id );
 			if ( ! $user || is_wp_error( $user ) ) {
 				continue;
 			}
@@ -1323,14 +1324,14 @@ class Friends_Admin {
 	 * @return array The extended bulk options.
 	 */
 	public function add_user_bulk_options( $actions ) {
-		$friends = Friends::all_friend_requests();
+		$friends = Friend_User_Query::all_friend_requests();
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
 			$actions['accept_friend_request'] = __( 'Accept Friend Request', 'friends' );
 		}
 
-		$friends = new WP_User_Query( array( 'role' => 'subscription' ) );
+		$friends = Friend_User_Query::all_subscriptions();
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
@@ -1377,7 +1378,7 @@ class Friends_Admin {
 
 		$friends_main_url = $friends_url;
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			$friend_requests = Friends::all_friend_requests();
+			$friend_requests = Friend_User_Query::all_friend_requests();
 			$friend_request_count = $friend_requests->get_total();
 			if ( $friend_request_count > 0 ) {
 				$friends_main_url = self_admin_url( 'users.php?role=friend_request' );

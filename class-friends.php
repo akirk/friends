@@ -16,6 +16,7 @@
 class Friends {
 	const VERSION       = '0.20.1';
 	const CPT           = 'friend_post_cache';
+	const CPT_PREFIX    = 'friends_cache';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'administrator';
 
@@ -69,6 +70,13 @@ class Friends {
 	public $rest;
 
 	/**
+	 * A reference to the Friends_Post_Types object.
+	 *
+	 * @var Friends_Post_Types
+	 */
+	public $post_types;
+
+	/**
 	 * Get the class singleton
 	 *
 	 * @return Friends A class instance.
@@ -91,6 +99,7 @@ class Friends {
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->frontend       = new Friends_Frontend( $this );
+		$this->post_types     = new Friends_Post_Types( $this );
 		$this->recommendation = new Friends_Recommendation( $this );
 		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
@@ -119,24 +128,24 @@ class Friends {
 	 */
 	public function register_custom_post_type() {
 		$labels = array(
-			'name'               => _x( 'Friend Posts', 'taxonomy plural name', 'friends' ),
-			'singular_name'      => _x( 'Friend Post', 'taxonomy singular name', 'friends' ),
-			'add_new'            => _x( 'Add New', 'post' ),
-			'add_new_item'       => __( 'Add New Friend Post', 'friends' ),
-			'edit_item'          => __( 'Edit Friend Post', 'friends' ),
-			'new_item'           => __( 'New Friend Post', 'friends' ),
-			'all_items'          => __( 'All Friend Posts', 'friends' ),
-			'view_item'          => __( 'View Friend Post', 'friends' ),
-			'search_items'       => __( 'Search Friend Posts', 'friends' ),
-			'not_found'          => __( 'No Friend Posts found', 'friends' ),
-			'not_found_in_trash' => __( 'No Friend Posts found in the Trash', 'friends' ),
+			'name'               => 'Friend Posts',
+			'singular_name'      => 'Friend Post',
+			'add_new'            => 'Add New',
+			'add_new_item'       => 'Add New Friend Post',
+			'edit_item'          => 'Edit Friend Post',
+			'new_item'           => 'New Friend Post',
+			'all_items'          => 'All Friend Posts',
+			'view_item'          => 'View Friend Post',
+			'search_items'       => 'Search Friend Posts',
+			'not_found'          => 'No Friend Posts found',
+			'not_found_in_trash' => 'No Friend Posts found in the Trash',
 			'parent_item_colon'  => '',
-			'menu_name'          => __( 'Cached Friend Posts' ),
+			'menu_name'          => 'Cached Friend Posts',
 		);
 
 		$args = array(
 			'labels'              => $labels,
-			'description'         => __( "A cached friend's post", 'friends' ),
+			'description'         => "A cached friend's post",
 			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated(),
 			'show_ui'             => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
@@ -154,6 +163,7 @@ class Friends {
 		);
 
 		register_post_type( self::CPT, $args );
+		$this->post_types->register( 'post' );
 	}
 
 	/**
@@ -206,61 +216,6 @@ class Friends {
 	}
 
 	/**
-	 * Gets all friends.
-	 */
-	public static function all_friends() {
-		static $all_friends;
-		if ( ! isset( $all_friends ) ) {
-			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance' ) ) );
-		}
-		return $all_friends;
-	}
-
-	/**
-	 * Gets all friends.
-	 */
-	public static function all_friends_subscriptions() {
-		static $all_friends;
-		if ( ! isset( $all_friends ) ) {
-			$all_friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'subscription' ) ) );
-		}
-		return $all_friends;
-	}
-
-	/**
-	 * Gets all friend requests.
-	 */
-	public static function all_friend_requests() {
-		static $all_friend_requests;
-		if ( ! isset( $all_friend_requests ) ) {
-			$all_friend_requests = new WP_User_Query( array( 'role' => 'friend_request' ) );
-		}
-		return $all_friend_requests;
-	}
-
-	/**
-	 * Gets all subscriptions.
-	 */
-	public static function all_subscriptions() {
-		static $all_subscriptions;
-		if ( ! isset( $all_subscriptions ) ) {
-			$all_subscriptions = new WP_User_Query( array( 'role' => 'subscription' ) );
-		}
-		return $all_subscriptions;
-	}
-
-	/**
-	 * Gets all admin users.
-	 */
-	public static function all_admin_users() {
-		static $all_admin_users;
-		if ( ! isset( $all_admin_users ) ) {
-			$all_admin_users = new WP_User_Query( array( 'role' => self::REQUIRED_ROLE ) );
-		}
-		return $all_admin_users;
-	}
-
-	/**
 	 * Creates a page /friends/ to enable customization via.
 	 */
 	public static function create_friends_page() {
@@ -303,7 +258,7 @@ class Friends {
 	 */
 	public static function upgrade_plugin( $previous_version ) {
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
-			$friends_subscriptions = self::all_friends_subscriptions();
+			$friends_subscriptions = Friend_User_Query::all_friends_subscriptions();
 			foreach ( $friends_subscriptions->get_results() as $user ) {
 				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
 				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
@@ -416,7 +371,7 @@ class Friends {
 			if ( get_current_user_id() ) {
 				$main_user_id = get_current_user_id();
 			} else {
-				$users = self::all_admin_users();
+				$users = Friend_User_Query::all_admin_users();
 				foreach ( $users->get_results() as $user ) {
 					$main_user_id = $user->ID;
 					break;
@@ -506,7 +461,7 @@ class Friends {
 
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => self::CPT,
+				'post_type'   => $this->get_all_cached_post_types(),
 				'post_status' => array( 'publish', 'private', 'trash' ),
 			)
 		);

@@ -52,7 +52,7 @@ class Friends_Notifications {
 			return;
 		}
 
-		$users = Friends::all_admin_users();
+		$users = Friend_User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -94,7 +94,7 @@ class Friends_Notifications {
 			return;
 		}
 
-		$users = Friends::all_admin_users();
+		$users = Friend_User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -132,7 +132,7 @@ class Friends_Notifications {
 	 * @param  WP_User $friend_user The user who accepted friendship.
 	 */
 	public function notify_accepted_friend_request( WP_User $friend_user ) {
-		$users = Friends::all_admin_users();
+		$users = Friend_User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {

@@ -26,20 +26,6 @@ class Friends_Feed {
 	private $friends;
 
 	/**
-	 * Caches the feed rules.
-	 *
-	 * @var array
-	 */
-	public $feed_rules = array();
-
-	/**
-	 * Caches the feed catch all action.
-	 *
-	 * @var array
-	 */
-	public $feed_catch_all = array();
-
-	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -77,107 +63,80 @@ class Friends_Feed {
 	}
 
 	/**
-	 * Retrieve posts from a remote WordPress for a user or all friend users.
+	 * Retrieve posts from a remote WordPress for a friend.
 	 *
-	 * @param  WP_User|null $single_user A single user or null to fetch all.
+	 * @param  Friend_User $friend_user A single user to fetch.
 	 */
-	public function retrieve_friend_posts( WP_User $single_user = null ) {
-		if ( $single_user ) {
-			$friends = array(
-				$single_user,
-			);
-		} else {
-			$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
-			$friends = $friends->get_results();
-
-			if ( empty( $friends ) ) {
-				return;
-			}
-		}
-
-		foreach ( $friends as $friend_user ) {
-			$feed_url = $this->get_feed_url( $friend_user );
+	public function retrieve_single_friend_posts( Friend_User $friend_user ) {
+		$new_posts = array();
+		foreach ( $friend_user->get_post_types() as $post_type ) {
+			$feed_url = $friend_user->get_feed_url( $post_type );
 
 			$feed = $this->fetch_feed( $feed_url );
 			if ( is_wp_error( $feed ) ) {
 				do_action( 'friends_retrieve_friends_error', $feed_url, $feed, $friend_user );
 				continue;
 			}
-
-			$feed      = apply_filters( 'friends_feed_content', $feed, $friend_user );
-			$new_posts = $this->process_friend_feed( $friend_user, $feed );
-			do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
+			$cache_post_type = $this->friends->post_types->get_cache_post_type( $post_type );
+			$feed = apply_filters( 'friends_feed_content', $feed, $friend_user, $cache_post_type );
+			$new_posts[ $post_type ] = $this->process_friend_feed( $friend_user, $feed, $cache_post_type );
 		}
+
+		$this->notify_about_new_friend_posts( $friend_user, $new_posts );
+
+		do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
+		return $new_posts;
 	}
 
 	/**
-	 * Get the (private) feed URL for a friend.
+	 * Notify users about new posts of this friend
 	 *
-	 * @param  WP_User $friend_user The friend user.
-	 * @param  boolean $private     Whether to generate a private feed URL (if possible).
-	 * @return string               The feed URL.
+	 * @param  Friend_User $friend_user The friend.
+	 * @param  array       $new_posts   The new posts of this friend.
 	 */
-	public function get_feed_url( WP_User $friend_user, $private = true ) {
-		$feed_url = get_user_option( 'friends_feed_url', $friend_user->ID );
-		if ( ! $feed_url ) {
-			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
-		}
-
-		if ( $private && ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) ) {
-			$token = get_user_option( 'friends_out_token', $friend_user->ID );
-			if ( $token ) {
-				$feed_url .= '?friend=' . $token;
-			}
-		}
-		return apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
-	}
-
-	/**
-	 * Retrieve the remote post ids.
-	 *
-	 * @param  WP_User $friend_user The friend user.
-	 * @return array A mapping of the remote post ids.
-	 */
-	public function get_remote_post_ids( WP_User $friend_user ) {
-		$remote_post_ids = array();
-		$existing_posts  = new WP_Query(
-			array(
-				'post_type'   => Friends::CPT,
-				'post_status' => array( 'publish', 'private', 'trash' ),
-				'author'      => $friend_user->ID,
-				'nopaging'    => true,
-			)
-		);
-
-		if ( $existing_posts->have_posts() ) {
-			while ( $existing_posts->have_posts() ) {
-				$post           = $existing_posts->next_post();
-				$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
-				if ( $remote_post_id ) {
-					$remote_post_ids[ $remote_post_id ] = $post->ID;
+	public function notify_about_new_friend_posts( Friend_User $friend_user, $new_posts ) {
+		if ( $friend_user->is_new() ) {
+			$friend_user->set_not_new();
+		} else {
+			foreach ( $new_posts as $post_type => $posts ) {
+				foreach ( $posts as $post_id ) {
+					$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
+					if ( $notify_users ) {
+						do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
+					}
 				}
-				$permalink                     = get_permalink( $post );
-				$remote_post_ids[ $permalink ] = $post->ID;
-				$permalink                     = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( $permalink ) );
-				$remote_post_ids[ $permalink ] = $post->ID;
 			}
 		}
 
-		do_action( 'friends_remote_post_ids', $remote_post_ids );
-		return $remote_post_ids;
+	}
+
+	/**
+	 * Retrieve posts from all friend.
+	 */
+	public function retrieve_friend_posts() {
+		$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
+		$friends = $friends->get_results();
+
+		if ( empty( $friends ) ) {
+			return;
+		}
+
+		foreach ( $friends as $friend_user ) {
+			$this->retrieve_single_friend_posts( $friend_user );
+		}
 	}
 
 	/**
 	 * Apply the feed rules
 	 *
-	 * @param  object  $item         The feed item.
-	 * @param  object  $feed         The feed object.
-	 * @param  WP_User $friend_user The friend user.
+	 * @param  object      $item         The feed item.
+	 * @param  object      $feed         The feed object.
+	 * @param  Friend_User $friend_user The friend user.
 	 * @return object The modified feed item.
 	 */
-	public function apply_feed_rules( $item, $feed, WP_User $friend_user ) {
-		$rules  = $this->get_feed_rules( $friend_user );
-		$action = $this->get_feed_catch_all( $friend_user );
+	public function apply_feed_rules( $item, $feed, Friend_User $friend_user ) {
+		$rules  = $friend_user->get_feed_rules();
+		$action = $friend_user->get_feed_catch_all();
 
 		foreach ( $rules as $rule ) {
 			$field = $this->get_feed_rule_field( $rule['field'], $item );
@@ -246,19 +205,6 @@ class Friends_Feed {
 	}
 
 	/**
-	 * Retrieve the rules for this feed.
-	 *
-	 * @param  WP_User $friend_user The friend user.
-	 * @return array The rules set by the user for this feed.
-	 */
-	public function get_feed_rules( WP_User $friend_user ) {
-		if ( ! isset( $this->feed_rules[ $friend_user->ID ] ) ) {
-			$this->feed_rules[ $friend_user->ID ] = $this->validate_feed_rules( get_option( 'friends_feed_rules_' . $friend_user->ID ) );
-		}
-		return $this->feed_rules[ $friend_user->ID ];
-	}
-
-	/**
 	 * Validate feed item rules
 	 *
 	 * @param  array $rules The rules to validate.
@@ -318,19 +264,6 @@ class Friends_Feed {
 	}
 
 	/**
-	 * Retrieve the catch_all value for this feed.
-	 *
-	 * @param  WP_User $friend_user The friend user.
-	 * @return array The rules set by the user for this feed.
-	 */
-	public function get_feed_catch_all( WP_User $friend_user ) {
-		if ( ! isset( $this->feed_catch_all[ $friend_user->ID ] ) ) {
-			$this->feed_catch_all[ $friend_user->ID ] = $this->validate_feed_catch_all( get_option( 'friends_feed_catch_all_' . $friend_user->ID ) );
-		}
-		return $this->feed_catch_all[ $friend_user->ID ];
-	}
-
-	/**
 	 * Validate feed catch_all
 	 *
 	 * @param  array $catch_all The catch_all value to.
@@ -347,14 +280,13 @@ class Friends_Feed {
 	/**
 	 * Process the feed of a friend user.
 	 *
-	 * @param  WP_User   $friend_user The friend user.
-	 * @param  SimplePie $feed        The RSS feed object of the friend user.
+	 * @param  Friend_User $friend_user The friend user.
+	 * @param  SimplePie   $feed        The RSS feed object of the friend user.
+	 * @param  string      $cache_post_type The post type to be used for caching the feed items.
 	 */
-	public function process_friend_feed( WP_User $friend_user, SimplePie $feed ) {
-		$new_friend = get_user_option( 'friends_new_friend', $friend_user->ID );
-
-		$remote_post_ids = $this->get_remote_post_ids( $friend_user );
-		$rules           = $this->get_feed_rules( $friend_user );
+	public function process_friend_feed( Friend_User $friend_user, SimplePie $feed, $cache_post_type ) {
+		$remote_post_ids = $friend_user->get_remote_post_ids();
+		$rules           = $friend_user->get_feed_rules();
 		$new_posts       = array();
 
 		foreach ( $feed->get_items() as $item ) {
@@ -427,7 +359,7 @@ class Friends_Feed {
 				wp_update_post( $post_data );
 			} else {
 				$post_data['post_author']   = $friend_user->ID;
-				$post_data['post_type']     = Friends::CPT;
+				$post_data['post_type']     = $cache_post_type;
 				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
 				$post_data['comment_count'] = $item->comment_count;
 				$post_id                    = wp_insert_post( $post_data, true );
@@ -455,17 +387,6 @@ class Friends_Feed {
 
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
-		}
-
-		if ( $new_friend ) {
-			delete_user_option( $friend_user->ID, 'friends_new_friend' );
-		} else {
-			foreach ( $new_posts as $post_id ) {
-				$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
-				if ( $notify_users ) {
-					do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
-				}
-			}
 		}
 
 		return $new_posts;
@@ -549,7 +470,7 @@ class Friends_Feed {
 			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
 		}
 
-		$friends = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
+		$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
 		$feed    = $this->friends->feed;
 
 		include apply_filters( 'friends_template_path', 'admin/opml.php' );
@@ -630,7 +551,8 @@ class Friends_Feed {
 	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
 		if ( ( 'friend' === $new_role || 'acquaintance' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
 			update_user_option( $user_id, 'friends_new_friend', true );
-			$this->retrieve_friend_posts( new WP_User( $user_id ) );
+			$friend = new Friend_User( $user_id );
+			$friend->retrieve_posts();
 		}
 	}
 

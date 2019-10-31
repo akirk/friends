@@ -41,9 +41,9 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		echo $args['before_widget'];
 		echo $args['before_title'];
 
-		$friends         = Friends::all_friends();
-		$friend_requests = Friends::all_friend_requests();
-		$subscriptions   = Friends::all_subscriptions();
+		$friends         = Friend_User_Query::all_friends();
+		$friend_requests = Friend_User_Query::all_friend_requests();
+		$subscriptions   = Friend_User_Query::all_subscriptions();
 
 		// translators: %s is the number of your friends.
 		$friends_title = sprintf( _n( '%s Friend', '%s Friends', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' );
