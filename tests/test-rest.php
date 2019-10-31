@@ -24,7 +24,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		// Manually activate the REST server.
 		global $wp_rest_server;
-		$wp_rest_server = new \WP_REST_Server;
+		$wp_rest_server = new \Spy_REST_Server;
 		$this->server   = $wp_rest_server;
 		do_action( 'rest_api_init' );
 

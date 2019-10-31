@@ -306,7 +306,7 @@ class Friends_Admin {
 	 * @return WP_User|WP_error $user The new associated user or an error object.
 	 */
 	public function subscribe( $feed_url ) {
-		if ( ! is_string( $feed_url ) || ! wp_http_validate_url( $feed_url ) ) {
+		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
 			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
 		}
 		$url = $feed_url;
@@ -384,7 +384,7 @@ class Friends_Admin {
 	 * @return WP_User|WP_error $user The new associated user or an error object.
 	 */
 	public function send_friend_request( $friend_url, $codeword = 'friends', $message = '' ) {
-		if ( ! is_string( $friend_url ) || ! wp_http_validate_url( $friend_url ) ) {
+		if ( ! is_string( $friend_url ) || ! Friends::check_url( $friend_url ) ) {
 			return new WP_Error( 'invalid-url', __( 'You entererd an invalid URL.', 'friends' ) );
 		}
 

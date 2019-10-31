@@ -468,6 +468,22 @@ class Friends {
 	public static function get_html_link_rel_friends_base_url() {
 		return '<link rel="friends-base-url" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" />';
 	}
+
+	/**
+	 * Check whether this is a valid URL
+	 *
+	 * @param string $url The URL to check.
+	 * @return false|string URL or false on failure.
+	 */
+	public static function check_url( $url ) {
+		$host = parse_url( $url, PHP_URL_HOST );
+		if ( 'me.local' === $host || 'friend.local' === $host || 'example.org' === $host ) {
+			// Hosts used for test cases.
+			return $url;
+		}
+		return wp_http_validate_url( $url );
+	}
+
 	/**
 	 * Delete all the data the plugin has stored in WordPress
 	 */

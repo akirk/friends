@@ -250,7 +250,7 @@ class Friends_REST {
 		}
 
 		$url = trim( $request->get_param( 'url' ) );
-		if ( ! is_string( $url ) || ! wp_http_validate_url( $url ) || 0 === strcasecmp( site_url(), $url ) ) {
+		if ( ! is_string( $url ) || ! Friends::check_url( $url ) || 0 === strcasecmp( site_url(), $url ) ) {
 			return new WP_Error(
 				'friends_invalid_site',
 				'An invalid site was provided.',
@@ -607,7 +607,7 @@ class Friends_REST {
 	 * @return string|WP_Error The REST URL or an error.
 	 */
 	public function discover_rest_url( $url ) {
-		if ( ! is_string( $url ) || ! wp_http_validate_url( $url ) ) {
+		if ( ! is_string( $url ) || ! Friends::check_url( $url ) ) {
 			return new WP_Error( 'invalid-url-given', 'An invalid URL was given.' );
 		}
 
@@ -633,7 +633,7 @@ class Friends_REST {
 			foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
 				if ( 'friends-base-url' === $link->getAttribute( 'rel' ) ) {
 					$rest_url = $link->getAttribute( 'href' );
-					if ( is_string( $rest_url ) && wp_http_validate_url( $rest_url ) ) {
+					if ( is_string( $rest_url ) && Friends::check_url( $rest_url ) ) {
 						return $rest_url;
 					}
 				}

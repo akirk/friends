@@ -192,7 +192,7 @@ class Friends_Access_Control {
 	 * @return string|false The URL that was set or false.
 	 */
 	public function update_user_icon_url( $user_id, $user_icon_url ) {
-		if ( $user_icon_url && wp_http_validate_url( $user_icon_url ) ) {
+		if ( $user_icon_url && Friends::check_url( $user_icon_url ) ) {
 			$user = new WP_User( $user_id );
 			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
 				$icon_host_parts = array_reverse( explode( '.', parse_url( strtolower( $user_icon_url ), PHP_URL_HOST ) ) );
