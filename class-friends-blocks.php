@@ -298,7 +298,7 @@ class Friends_Blocks {
 				if ( $attributes['show_date'] ) {
 					$post_date = strtotime( $post['post_date_gmt'] );
 					foreach ( $date_formats as $compare => $date_format ) {
-						if ( date( $compare ) === date( $compare, $post_date ) ) {
+						if ( gmdate( $compare ) === gmdate( $compare, $post_date ) ) {
 							break;
 						}
 					}

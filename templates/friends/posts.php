@@ -78,7 +78,7 @@ include __DIR__ . '/header.php'; ?>
 							</a>
 						<?php endif; ?>
 					</div>
-					<span class="post-date" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ); ?></span>
+					<span class="post-date" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ); ?></span>
 					<?php edit_post_link(); ?>
 				</div>
 				<?php if ( false && Friends::CPT === get_post_type() ) : ?>

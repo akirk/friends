@@ -13,7 +13,7 @@ echo '<' . '?xml version="1.0" encoding="utf-8"?' . '>'
 <opml version="2.0">
 	<head>
 		<title><?php esc_html_e( 'My Friends', 'friends' ); ?></title>
-		<dateCreated><?php echo esc_html( date( 'r' ) ); ?></dateCreated>
+		<dateCreated><?php echo esc_html( gmdate( 'r' ) ); ?></dateCreated>
 		<ownerName><?php echo esc_html( wp_get_current_user()->display_name ); ?></ownerName>
 		</head>
 	<body>
