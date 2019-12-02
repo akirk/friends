@@ -48,7 +48,7 @@ class Friends_Logging {
 	 * @param WP_User $friend_user The user for which the feed was fetched.
 	 */
 	public function log_feed_successfully_fetched( $new_posts, $friend_user ) {
-		update_user_option( $friend_user->ID, 'friends_last_feed_retrieval', date( 'Y-m-d H:i:s' ) );
+		update_user_option( $friend_user->ID, 'friends_last_feed_retrieval', gmdate( 'Y-m-d H:i:s' ) );
 		update_user_option(
 			$friend_user->ID,
 			'friends_last_feed_retrieval_message',
@@ -66,7 +66,7 @@ class Friends_Logging {
 	 * @param WP_User  $friend_user The user for which the feed was fetched.
 	 */
 	public function log_feed_error( $feed_url, $error, $friend_user ) {
-		update_user_option( $friend_user->ID, 'friends_last_feed_retrieval', date( 'Y-m-d H:i:s' ) );
+		update_user_option( $friend_user->ID, 'friends_last_feed_retrieval', gmdate( 'Y-m-d H:i:s' ) );
 		update_user_option(
 			$friend_user->ID,
 			'friends_last_feed_retrieval_message',
