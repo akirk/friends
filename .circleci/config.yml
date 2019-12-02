@@ -9,7 +9,7 @@ workflows:
       - php73-build
       - php74-build
 
-version: 2
+version: 2.1
 jobs:
   php56-build:
     docker:
