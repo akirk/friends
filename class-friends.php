@@ -459,9 +459,10 @@ class Friends {
 		remove_role( 'pending_friend_request' );
 		remove_role( 'subscription' );
 
+		$friends = Friends::get_instance();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => $this->get_all_cached_post_types(),
+				'post_type'   => $friends->post_types->get_all_cached(),
 				'post_status' => array( 'publish', 'private', 'trash' ),
 			)
 		);
