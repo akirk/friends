@@ -22,6 +22,9 @@
 			border: 0;
 			border-left: 2px solid #cccccc;
 		}
+		figure img, img.size-full {
+			max-width: 100% !important;
+		}
 	</style>
 	<title><?php echo $email_title; ?></title>
 	<!--[if gte mso 12]>

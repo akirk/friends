@@ -1,3 +1,6 @@
 comments.json
+composer.lock
 html
 md
+package-lock.json
+vendor
