@@ -400,7 +400,7 @@ class Friends {
 			}
 		}
 
-		if ( is_numeric( $id_or_email ) ) {
+		if ( is_numeric( $id_or_email ) && $id_or_email > 0 ) {
 			$url = get_user_option( 'friends_user_icon_url', $id_or_email );
 			if ( $url ) {
 				$args['url']          = $url;

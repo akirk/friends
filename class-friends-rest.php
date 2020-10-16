@@ -55,56 +55,63 @@ class Friends_REST {
 			self::PREFIX,
 			'friend-request',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'rest_friend_request' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_friend_request' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 		register_rest_route(
 			self::PREFIX,
 			'accept-friend-request',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'rest_accept_friend_request' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_accept_friend_request' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 		register_rest_route(
 			self::PREFIX,
 			'hello',
 			array(
-				'methods'  => 'GET,POST',
-				'callback' => array( $this, 'rest_hello' ),
+				'methods'             => 'GET,POST',
+				'callback'            => array( $this, 'rest_hello' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 		register_rest_route(
 			self::PREFIX,
 			'post-deleted',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'rest_friend_post_deleted' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_friend_post_deleted' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 		register_rest_route(
 			self::PREFIX,
 			'update-post-reactions',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'rest_update_friend_post_reactions' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_update_friend_post_reactions' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 		register_rest_route(
 			self::PREFIX,
 			'my-reactions',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'rest_update_reactions_on_my_post' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_update_reactions_on_my_post' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 		register_rest_route(
 			self::PREFIX,
 			'recommendation',
 			array(
-				'methods'  => 'POST',
-				'callback' => array( $this, 'rest_receive_recommendation' ),
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_receive_recommendation' ),
+				'permission_callback' => '__return_true',
 			)
 		);
 	}
