@@ -24,12 +24,12 @@ jobs:
           name: "Setup Environment Variables"
           command: |
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
-            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
           name: "Install Dependencies"
           command: |
             sudo apt-get update && sudo apt install subversion mariadb-client-10.1
+            sudo -E docker-php-ext-install mysqli
       - run:
           name: "Run Tests"
           command: |
@@ -67,7 +67,6 @@ jobs:
           name: "Setup Environment Variables"
           command: |
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
-            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
           name: "Install Dependencies"
@@ -99,7 +98,6 @@ jobs:
           name: "Setup Environment Variables"
           command: |
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
-            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
           name: "Install Dependencies"
@@ -131,7 +129,6 @@ jobs:
           name: "Setup Environment Variables"
           command: |
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
-            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
           name: "Install Dependencies"
@@ -163,7 +160,6 @@ jobs:
           name: "Setup Environment Variables"
           command: |
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
-            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
           name: "Install Dependencies"
@@ -195,7 +191,6 @@ jobs:
           name: "Setup Environment Variables"
           command: |
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
-            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
           name: "Install Dependencies"
