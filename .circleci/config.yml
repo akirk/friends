@@ -28,10 +28,7 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt-get install gcc-8-base subversion
-            sudo -E docker-php-ext-install mysqli
-            sudo sh -c "printf '\ndeb http://ftp.us.debian.org/debian sid main\n' >> /etc/apt/sources.list"
-            sudo apt-get update && sudo apt-get install mysql-client-5.7
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
       - run:
           name: "Run Tests"
           command: |
@@ -73,10 +70,8 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt-get install gcc-8-base subversion
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
             sudo -E docker-php-ext-install mysqli
-            sudo sh -c "printf '\ndeb http://ftp.us.debian.org/debian sid main\n' >> /etc/apt/sources.list"
-            sudo apt-get update && sudo apt-get install mysql-client-5.7
       - run:
           name: "Run Tests"
           command: |
@@ -106,10 +101,8 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt-get install gcc-8-base subversion
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
             sudo -E docker-php-ext-install mysqli
-            sudo sh -c "printf '\ndeb http://ftp.us.debian.org/debian sid main\n' >> /etc/apt/sources.list"
-            sudo apt-get update && sudo apt-get install mysql-client-5.7
       - run:
           name: "Run Tests"
           command: |
@@ -139,10 +132,8 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt-get install gcc-8-base subversion
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
             sudo -E docker-php-ext-install mysqli
-            sudo sh -c "printf '\ndeb http://ftp.us.debian.org/debian sid main\n' >> /etc/apt/sources.list"
-            sudo apt-get update && sudo apt-get install mysql-client-5.7
       - run:
           name: "Run Tests"
           command: |
@@ -172,10 +163,8 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt-get install gcc-8-base subversion
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
             sudo -E docker-php-ext-install mysqli
-            sudo sh -c "printf '\ndeb http://ftp.us.debian.org/debian sid main\n' >> /etc/apt/sources.list"
-            sudo apt-get update && sudo apt-get install mysql-client-5.7
       - run:
           name: "Run Tests"
           command: |
@@ -205,10 +194,8 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt-get install gcc-8-base subversion
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
             sudo -E docker-php-ext-install mysqli
-            sudo sh -c "printf '\ndeb http://ftp.us.debian.org/debian sid main\n' >> /etc/apt/sources.list"
-            sudo apt-get update && sudo apt-get install mysql-client-5.7
       - run:
           name: "Run Tests"
           command: |
