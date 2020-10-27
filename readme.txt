@@ -8,16 +8,17 @@ License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Stable tag: trunk
 
-Decentralized Social Networking with WordPress. Connect WordPresses through friend requests and read each other’s (private) posts in a feed reader.
+Use your WordPress to follow your friends (and other websites) and establish friendship relationships with friends who also run the Friends plugin. Consume content inside WordPress and comment at your friends with auto-authentication.
 
 == Description ==
- 
-= Decentralized Social Networking with WordPress =
 
-- Connect WordPresses through friendship requests
-- Read each other’s (private) posts in a feed reader UI
-- Subscribe to any RSS feed
-- Compatible with the WordPress mobile apps
+Use WordPress not only to create and publish but also consume content:
+
+You can follow RSS feeds of your friends (or other publications), filter incoming content with rules.
+
+Upgrade a subscription to friendships for people who also use the Friends plugin. They can then read your private (=just for friends) posts and comment on your posts through their friend user with automatic authentication.
+
+This allows for direct (and possibly private) communication with your friends, without relying on a third party, thus creating a decentralized social network.
 
 https://www.youtube.com/watch?v=4bz6GluXnsk
 
@@ -46,6 +47,14 @@ The logo was created by Ramon Dodd, @ramonopoly. Thank you!
  
 == Frequently Asked Questions ==
  
+= Does this plugin create custom tables? =
+No, all the functionality is achieved with standard WordPress means. Subscriptions or Friends are minimal-permission users on your install. External posts are cached in a custom post types and attributed to those users.
+
+= Why does this create users on my WordPress install? =
+I believe this is a very elegant way to attribute content and it allows to delete the users content when you delete them. The users have minimal privileges, so they cannot be used to post actual content to your site.
+
+The users can only be used for login through your specific friend's WordPress install (they are created with a strong password throw-away password), if they have been upgraded to a "friend" or "aquaintance" user.
+
 = Why is the friendship established between WordPress sites and not WordPress users? =
 For one, this allows to stick with established WordPress configurations and terminologies. For example, you can use the WordPress mobile apps to post privately to your site.
 
