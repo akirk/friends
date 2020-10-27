@@ -28,7 +28,7 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.1
       - run:
           name: "Run Tests"
           command: |
@@ -70,7 +70,7 @@ jobs:
       - run:
           name: "Install Dependencies"
           command: |
-            sudo apt-get update && sudo apt install subversion mariadb-client-10.3
+            sudo apt-get update && sudo apt install subversion mariadb-client-10.1
             sudo -E docker-php-ext-install mysqli
       - run:
           name: "Run Tests"
