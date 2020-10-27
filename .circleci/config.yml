@@ -23,6 +23,7 @@ jobs:
       - run:
           name: "Setup Environment Variables"
           command: |
+            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
@@ -65,6 +66,7 @@ jobs:
       - run:
           name: "Setup Environment Variables"
           command: |
+            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
@@ -96,6 +98,7 @@ jobs:
       - run:
           name: "Setup Environment Variables"
           command: |
+            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
@@ -127,6 +130,7 @@ jobs:
       - run:
           name: "Setup Environment Variables"
           command: |
+            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
@@ -158,6 +162,7 @@ jobs:
       - run:
           name: "Setup Environment Variables"
           command: |
+            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
@@ -189,6 +194,7 @@ jobs:
       - run:
           name: "Setup Environment Variables"
           command: |
+            echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> $BASH_ENV
             echo "export PATH=$HOME/.composer/vendor/bin:$PATH" >> /home/circleci/.bashrc
             source /home/circleci/.bashrc
       - run:
