@@ -246,7 +246,7 @@ class Friends_Admin {
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 
 		add_filter(
-			'friends_friend_feed_url',
+			'friends_friend_private_feed_url',
 			function( $feed_url, $friend_user ) {
 				// translators: %1s is the name of the friend, %2$s is the feed URL.
 				printf( __( 'Refreshing %1$s at %2$s', 'friends' ) . '<br/>', '<b>' . esc_html( $friend_user->user_login ) . '</b>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $feed_url ) . '</a>' );
@@ -320,7 +320,8 @@ class Friends_Admin {
 			return $feed;
 		}
 
-		if ( $feed->all_discovered_feeds ) {
+		if ( count( $feed->all_discovered_feeds ) > 1 ) {
+
 			$feed_url = $feed->all_discovered_feeds[0]->url;
 			$feed     = $this->friends->feed->fetch_feed( $feed_url );
 		}
@@ -818,6 +819,8 @@ class Friends_Admin {
 				$response = $this->send_friend_request( $friend->user_url );
 				if ( is_wp_error( $response ) ) {
 					$arg = 'error';
+				} elseif ( $response instanceof Friends_Multiple_Feeds ) {
+
 				} elseif ( $response instanceof WP_User ) {
 					if ( $response->has_cap( 'pending_friend_request' ) ) {
 						$arg = 'sent-request';

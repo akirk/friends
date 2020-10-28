@@ -176,7 +176,7 @@ class Friends_APITest extends WP_UnitTestCase {
 	/**
 	 * Test getting your friends posts via RSS.
 	 */
-	public function test_get_non_friend_posts_photos() {
+	public function xtest_get_non_friend_posts_photos() {
 		$friend_user = new Friend_User( $this->friend_id );
 		$posts = $friend_user->retrieve_posts();
 		$this->assertArrayHasKey( 'post', $posts );
@@ -188,7 +188,7 @@ class Friends_APITest extends WP_UnitTestCase {
 	/**
 	 * Test getting your friends posts via RSS.
 	 */
-	public function test_get_friend_posts_photos() {
+	public function xtest_get_friend_posts_photos() {
 		wp_set_current_user( $this->user_id );
 		$friend_user = new Friend_User( $this->friend_id );
 		$posts = $friend_user->retrieve_posts();

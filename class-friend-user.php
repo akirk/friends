@@ -232,34 +232,33 @@ class Friend_User extends WP_User {
 	}
 
 	/**
-	 * Get the (private) feed URL for a friend.
+	 * Get the user's feeds (and potentially convert old-style feed URL).
 	 *
-	 * @param  string  $post_type   The post type for which to get the feed.
-	 * @param  boolean $private     Whether to generate a private feed URL (if possible).
-	 * @return string               The feed URL.
+	 * @return array An array of Friend_User_Feed items.
 	 */
-	public function get_feed_url( $post_type = 'post', $private = true ) {
-		$feed_url = $this->get_user_option( 'friends_feed_url' );
-		if ( ! $feed_url ) {
-			$feed_url = rtrim( $this->user_url, '/' ) . '/feed/';
+	public function get_feeds() {
+		$feeds = Friend_User_Feed::get_for_user( $this );
+		if ( empty( $feeds ) ) {
+			$feeds = Friend_User_Feed::convert_user( $this );
 		}
 
-		$sep = '?';
-		if ( $private && ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) ) {
-			$token = $this->get_user_option( 'friends_out_token' );
-			if ( $token ) {
-				$feed_url .= $sep . 'friend=' . $token;
-				$sep = '&';
-			}
-		}
-		if ( 'post' !== $post_type ) {
-			$feed_url .= $sep . 'post_type=' . $post_type;
-			$sep = '&';
-		}
-
-		return apply_filters( 'friends_friend_feed_url', $feed_url, $this );
+		return $feeds;
 	}
 
+	/**
+	 * Get just the user's active feeds.
+	 *
+	 * @return array An array of active Friend_User_Feed items.
+	 */
+	public function get_active_feeds() {
+		$active_feeds = array();
+		foreach ( $this->get_feeds() as $feed ) {
+			if ( $feed->is_active() ) {
+				$active_feeds[] = $feed;
+			}
+		}
+		return $active_feeds;
+	}
 
 	/**
 	 * Convert a user to a friend

@@ -17,6 +17,7 @@ class Friends {
 	const VERSION       = '0.20.1';
 	const CPT           = 'friend_post_cache';
 	const CPT_PREFIX    = 'friends_cache';
+	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'administrator';
 
@@ -117,6 +118,7 @@ class Friends {
 	 */
 	private function register_hooks() {
 		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
+		add_filter( 'init', array( Friend_User_Feed::class, 'register_taxonomy' ) );
 		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
@@ -157,7 +159,7 @@ class Friends {
 			'delete_with_user'    => true,
 			'menu_position'       => 5,
 			'menu_icon'           => 'dashicons-groups',
-			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments' ),
+			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
 			'taxonomies'          => array( 'post_tag' ),
 			'has_archive'         => true,
 		);

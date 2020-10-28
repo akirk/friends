@@ -14,8 +14,13 @@
 				<td><input type="text" name="user_url" value="<?php echo esc_attr( $friend->user_url ); ?>" class="regular-text" /></td>
 			</tr>
 			<tr>
-				<th><label for="url"><?php esc_html_e( 'Feed URL', 'friends' ); ?></label></th>
-				<td><input type="text" name="friends_feed_url" value="<?php echo esc_attr( get_user_option( 'friends_feed_url', $friend->ID ) ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Will discover the feed from the URL above', 'friends' ); ?>" /></td>
+				<th><label for="url"><?php esc_html_e( 'Feeds', 'friends' ); ?></label></th>
+				<td>
+					<ul>
+					<?php foreach ( $friend->get_feeds() as $feed ) : ?>
+						<li><?php echo esc_html( $feed->get_url() ); ?></li>
+					<?php endforeach; ?>
+					</ul>
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>

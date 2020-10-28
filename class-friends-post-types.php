@@ -1,6 +1,6 @@
 <?php
 /**
- * Friends REST
+ * Friends Post Types
  *
  * This contains the functions for post types.
  *

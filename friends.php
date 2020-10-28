@@ -21,6 +21,7 @@
 defined( 'ABSPATH' ) || exit;
 
 include __DIR__ . '/class-friend-user.php';
+include __DIR__ . '/class-friend-user-feed.php';
 include __DIR__ . '/class-friend-user-query.php';
 
 include __DIR__ . '/class-friends-access-control.php';

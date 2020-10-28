@@ -69,14 +69,17 @@ class Friends_Feed {
 	 */
 	public function retrieve_single_friend_posts( Friend_User $friend_user ) {
 		$new_posts = array();
-		foreach ( $friend_user->get_post_types() as $post_type ) {
-			$feed_url = $friend_user->get_feed_url( $post_type );
-
-			$feed = $this->fetch_feed( $feed_url );
-			if ( is_wp_error( $feed ) ) {
-				do_action( 'friends_retrieve_friends_error', $feed_url, $feed, $friend_user );
+		foreach ( $friend_user->get_feeds() as $user_feed ) {
+			if ( 'simplepie' !== $user_feed->get_parser() ) {
+				// Not supported yet.
 				continue;
 			}
+			$feed = $this->fetch_feed( $user_feed->get_private_url() );
+			if ( is_wp_error( $feed ) ) {
+				do_action( 'friends_retrieve_friends_error', $user_feed, $feed, $friend_user );
+				continue;
+			}
+			$post_type = $user_feed->get_post_type();
 			$cache_post_type = $this->friends->post_types->get_cache_post_type( $post_type );
 			$feed = apply_filters( 'friends_feed_content', $feed, $friend_user, $cache_post_type );
 			$new_posts[ $post_type ] = $this->process_friend_feed( $friend_user, $feed, $cache_post_type );
@@ -563,7 +566,7 @@ class Friends_Feed {
 	 * @param int    $author_id The id of the author.
 	 * @return int Post ID, or 0 on failure.
 	 */
-	function url_to_postid( $url, $author_id = false ) {
+	public function url_to_postid( $url, $author_id = false ) {
 		global $wpdb;
 		if ( $author_id ) {
 			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) AND post_author = %d LIMIT 1', $url, esc_attr( $url ), $author_id ) );
@@ -571,5 +574,16 @@ class Friends_Feed {
 			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) LIMIT 1', $url, esc_attr( $url ) ) );
 		}
 		return $post_id;
+	}
+
+	/**
+	 * The list of currently supported parsers.
+	 *
+	 * @return array A list of parsers. Key is the slug, value is the parser name.
+	 */
+	public function get_registered_parsers() {
+		return array(
+			'simplepie' => 'RSS (SimplePie)',
+		);
 	}
 }
