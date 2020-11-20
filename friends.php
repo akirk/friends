@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 0.20.1
+ * Version: 0.30
  *
  * Description: Decentralized Social Networking with WordPress. Connect WordPresses through friend requests and read each other’s (private) posts in a feed reader.
  *
@@ -23,6 +23,8 @@ defined( 'ABSPATH' ) || exit;
 include __DIR__ . '/class-friend-user.php';
 include __DIR__ . '/class-friend-user-feed.php';
 include __DIR__ . '/class-friend-user-query.php';
+
+include __DIR__ . '/class-friends-feed-parser.php';
 
 include __DIR__ . '/class-friends-access-control.php';
 include __DIR__ . '/class-friends-admin.php';
@@ -44,6 +46,14 @@ add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( 'Friends', 'uninstall_plugin' ) );
+
+add_action(
+	'friends_register_parser',
+	function( Friends_Feed $friends_feed ) {
+		include __DIR__ . '/class-friends-feed-parser-simplepie.php';
+		$friends_feed->register_parser( 'simplepie', new Friends_Feed_Parser_SimplePie );
+	}
+);
 
 include __DIR__ . '/widgets/class-friends-widget-refresh.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Refresh', 'register' ) );

@@ -26,6 +26,13 @@ class Friends_Feed {
 	private $friends;
 
 	/**
+	 * Contains the registered parsers.
+	 *
+	 * @var array
+	 */
+	private $parsers = array();
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -34,6 +41,7 @@ class Friends_Feed {
 		$this->friends = $friends;
 		$this->register_hooks();
 	}
+
 	/**
 	 * Register the WordPress hooks
 	 */
@@ -56,6 +64,20 @@ class Friends_Feed {
 	}
 
 	/**
+	 * Allow registering a parser
+	 */
+	public function register_parser( $slug, Friends_Feed_Parser $parser ) {
+		$this->parsers[ $slug ] = $parser;
+	}
+
+	/**
+	 * Allow unregistering a parser
+	 */
+	public function unregister_parser( $slug ) {
+		unset( $this->parsers[ $slug ] );
+	}
+
+	/**
 	 * Cron function to refresh the feeds of the friends' blogs
 	 */
 	public function cron_friends_refresh_feeds() {
@@ -68,23 +90,24 @@ class Friends_Feed {
 	 * @param  Friend_User $friend_user A single user to fetch.
 	 */
 	public function retrieve_single_friend_posts( Friend_User $friend_user ) {
-		$new_posts = array();
 		foreach ( $friend_user->get_feeds() as $user_feed ) {
-			if ( 'simplepie' !== $user_feed->get_parser() ) {
-				// Not supported yet.
+			$parser = $user_feed->get_parser();
+			$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
+
+			if ( is_wp_error( $items ) ) {
+				do_action( 'friends_retrieve_friends_error', $user_feed, $items, $friend_user );
 				continue;
 			}
-			$feed = $this->fetch_feed( $user_feed->get_private_url() );
-			if ( is_wp_error( $feed ) ) {
-				do_action( 'friends_retrieve_friends_error', $user_feed, $feed, $friend_user );
-				continue;
-			}
+
 			$post_type = $user_feed->get_post_type();
 			$cache_post_type = $this->friends->post_types->get_cache_post_type( $post_type );
-			$feed = apply_filters( 'friends_feed_content', $feed, $friend_user, $cache_post_type );
-			$new_posts[ $post_type ] = $this->process_friend_feed( $friend_user, $feed, $cache_post_type );
-		}
+			if ( ! isset( $new_posts[ $post_type ] ) ) {
+				$new_posts[ $post_type ] = array();
+			}
 
+			$posts = $this->process_incoming_feed_items( $items, $user_feed, $cache_post_type );
+			$new_posts[ $post_type ] = array_merge( $new_posts[ $post_type ], $posts );
+		}
 		$this->notify_about_new_friend_posts( $friend_user, $new_posts );
 
 		do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
@@ -283,23 +306,35 @@ class Friends_Feed {
 	/**
 	 * Process the feed of a friend user.
 	 *
-	 * @param  Friend_User $friend_user The friend user.
+	 * @param  array $friend_user The friend user.
 	 * @param  SimplePie   $feed        The RSS feed object of the friend user.
 	 * @param  string      $cache_post_type The post type to be used for caching the feed items.
 	 */
-	public function process_friend_feed( Friend_User $friend_user, SimplePie $feed, $cache_post_type ) {
+
+
+	/**
+	 * Process incomimng feed items
+	 *
+	 * @param  array            $items           The incoming items.
+	 * @param  Friend_User_Feed $user_feed       The feed to which these items belong.
+	 * @param  string           $cache_post_type The post type to be used for caching the feed items.
+	 * @return array                             The post ids of the new posts.
+	 */
+	public function process_incoming_feed_items( array $items, Friend_User_Feed $user_feed, $cache_post_type ) {
+		$friend_user     = $user_feed->get_friend_user();
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 		$rules           = $friend_user->get_feed_rules();
-		$new_posts       = array();
 
-		foreach ( $feed->get_items() as $item ) {
-			$item = apply_filters( 'friends_modify_feed_item', $item, $feed, $friend_user );
+		$new_posts = array();
+		foreach ( $items as $item ) {
+			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
+			$title     = trim( $item->title );
+			$content   = wp_kses_post( trim( $item->content ) );
+
+			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
 			if ( ! $item || ( isset( $item->feed_rule_delete ) && $item->feed_rule_delete ) ) {
 				continue;
 			}
-			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->get_permalink() ) ) );
-			$title     = trim( $item->get_title() );
-			$content   = wp_kses_post( trim( $item->get_content() ) );
 
 			// Fallback, when no friends plugin is installed.
 			$item->{'post-id'}     = $permalink;
@@ -315,22 +350,7 @@ class Friends_Feed {
 				if ( ! isset( $item->{$key} ) ) {
 					$item->{$key} = false;
 				}
-				foreach ( array( self::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
-					if ( ! isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
-						continue;
-					}
-
-					if ( 'reaction' === $key ) {
-						$item->reaction = $item->data['child'][ $xmlns ][ $key ];
-						break;
-					}
-
-					$item->{$key} = $item->data['child'][ $xmlns ][ $key ][0]['data'];
-					break;
-				}
 			}
-
-			$item->comments_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
 
 			$post_id = null;
 			if ( isset( $remote_post_ids[ $item->{'post-id'} ] ) ) {
@@ -347,7 +367,7 @@ class Friends_Feed {
 			$post_data = array(
 				'post_title'        => $title,
 				'post_content'      => $content,
-				'post_modified_gmt' => $item->get_updated_gmdate( 'Y-m-d H:i:s' ),
+				'post_modified_gmt' => $item->updated_date,
 				'post_status'       => $item->{'post-status'},
 				'guid'              => $permalink,
 			);
@@ -363,23 +383,19 @@ class Friends_Feed {
 			} else {
 				$post_data['post_author']   = $friend_user->ID;
 				$post_data['post_type']     = $cache_post_type;
-				$post_data['post_date_gmt'] = $item->get_gmdate( 'Y-m-d H:i:s' );
+				$post_data['post_date_gmt'] = $item->date;
 				$post_data['comment_count'] = $item->comment_count;
 				$post_id                    = wp_insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
+
+				set_post_format( $post_id, $user_feed->get_post_format() );
+
 				$new_posts[]                   = $post_id;
 				$remote_post_ids[ $permalink ] = $post_id;
 			}
 
-			$author = $item->get_author();
-			if ( $author ) {
-				update_post_meta( $post_id, 'author', $author->name );
-			}
-			if ( $item->gravatar ) {
-				update_post_meta( $post_id, 'gravatar', $item->gravatar );
-			}
 			if ( $item->reaction ) {
 				$this->friends->reactions->update_remote_feed_reactions( $post_id, $item->reaction );
 			}
@@ -495,34 +511,133 @@ class Friends_Feed {
 		}
 	}
 
-	/**
-	 * SimplePie autoloader
-	 *
-	 * @param  string $class The SimplePie class name.
-	 */
-	public function wp_simplepie_autoload( $class ) {
-		if ( 0 !== strpos( $class, 'SimplePie_' ) ) {
-			return;
+	private function fetch( $url ) {
+		static $cache = array();
+		// Todo: normalize URL.
+		if ( ! isset( $cache[ $url ] ) ) {
+			$cache[ $url ] = null;
+			$response = wp_safe_remote_get(
+				$url,
+				array(
+					'timeout'     => 20,
+					'redirection' => 1,
+				)
+			);
+
+			if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
+				$dom = new DOMDocument();
+
+				set_error_handler( '__return_null' );
+				wp_remote_retrieve_body( $response );
+				restore_error_handler();
+
+				$cache[ $url ] = $content;
+			}
 		}
 
-		$file = __DIR__ . '/lib/' . str_replace( '_', '/', $class ) . '.php';
-		include( $file );
+		return $cache[ $url ];
 	}
 
 	/**
-	 * Wrapper around fetch_feed that uses the bundled version
+	 * Is this a supported feed?
 	 *
 	 * @param  string $url The feed URL.
-	 * @return object The parsed feed.
+	 * @return boolean Whether the URL supplied is a feed URL.
 	 */
-	public function fetch_feed( $url ) {
-		if ( ! class_exists( 'SimplePie', false ) ) {
-			spl_autoload_register( array( $this, 'wp_simplepie_autoload' ) );
+	public function is_supported_feed( $url ) {
+		$content = $this->fetch( $url );
+		return apply_filters( 'friends_is_supported_feed', false, $content, $url );
+	}
 
-			require_once __DIR__ . '/lib/SimplePie.php';
+	/**
+	 * Discover available feeds.
+	 *
+	 * @param  string $url The feed URL.
+	 * @return array The available feeds.
+	 */
+	public function discover_available_feeds( $url ) {
+		$response = wp_safe_remote_get(
+			$url,
+			array(
+				'timeout'     => 20,
+				'redirection' => 1,
+			)
+		);
+
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return $discovered_feeds;
 		}
 
-		return fetch_feed( $url );
+		$doc = new DOMDocument();
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+		$content = wp_remote_retrieve_body( $response );
+
+		// We'll determine the obvious feeds ourself:
+		$available_feeds  = array();
+		$discovered_feeds = $this->discover_link_rel_feeds( $content );
+
+		foreach ( $discovered_feeds as $link_url => $feed ) {
+			foreach ( $this->parsers as $slug => $parser ) {
+				if ( $feed['type'] === 'friends-base-url' || $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
+					$available_feeds[ $link_url ] = $feed;
+					$available_feeds[ $link_url ]['parser'] = $slug;
+					$available_feeds[ $link_url ]['url'] = $link_url;
+					$available_feeds[ $link_url ] = $parser->update_feed_details( $available_feeds[ $link_url ] );
+					if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
+						$new_url = $available_feeds[ $link_url ]['url'];
+						$available_feeds[ $new_url ] = $available_feeds[ $link_url ];
+						unset( $available_feeds[ $link_url ] );
+					}
+					continue 2;
+				}
+			}
+		}
+
+		foreach ( $this->parsers as $slug => $parser ) {
+			$available_feeds = array_merge( $available_feeds, $parser->discover_available_feeds( $url, $content ) );
+		}
+
+		return apply_filters( 'friends_available_feeds', $available_feeds, $url );
+	}
+
+	private function discover_link_rel_feeds( $content ) {
+		$doc = new DomDocument;
+		set_error_handler( '__return_null' );
+		$doc->loadHTML( $content );
+		restore_error_handler();
+
+		if ( ! class_exists( 'DOMXpath' ) ) {
+			return array();
+		}
+
+		$xpath = new DOMXpath( $doc );
+
+		if ( ! $xpath ) {
+			return array();
+		}
+
+		$discovered_feeds = array();
+		foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
+			$rel = $link->getAttribute( 'rel' );
+			if ( $rel !== 'alternate' && $rel !== 'me' && $rel !== 'friends-base-url' ) {
+				continue;
+			}
+
+			$link_url = $link->getAttribute( 'href' );
+			if ( ! is_string( $link_url ) || isset( $discovered_feeds[ $link_url ] ) || ! Friends::check_url( $link_url ) ) {
+				continue;
+			}
+
+			$discovered_feeds[ $link_url ] = array(
+				'title' => $link->getAttribute( 'title' ),
+				'type'  => $link->getAttribute( 'type' ),
+				'rel'   => $rel,
+			);
+		}
+
+		return $discovered_feeds;
 	}
 
 	/**

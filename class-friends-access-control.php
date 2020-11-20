@@ -83,7 +83,7 @@ class Friends_Access_Control {
 	 * @return bool The authentication status of the feed.
 	 */
 	public function private_rss_is_authenticated() {
-		if ( isset( $_GET['auth'] ) && get_option( 'friends_private_rss_key' ) === $_GET['auth'] ) {
+		if ( ! isset( $_GET['auth'] ) && get_option( 'friends_private_rss_key' ) === $_GET['auth'] ) {
 			return true;
 		}
 
@@ -221,14 +221,26 @@ class Friends_Access_Control {
 	 * @param  string $token The token to verify.
 	 * @return int|bool The user id or false.
 	 */
-	public function verify_token( $token ) {
+	public function verify_token( $token, $until, $auth ) {
 		$user_id = get_option( 'friends_in_token_' . $token );
 		if ( ! $user_id ) {
 			return false;
 		}
+
 		settype( $user_id, 'int' );
 		if ( get_user_option( 'friends_in_token', $user_id ) !== $token ) {
 			return false;
+		}
+
+		// Allow for some grace period by skipping the auth check for older versions.
+		if ( ! is_null( $until ) && ! is_null( $auth ) ) {
+			if ( ! password_verify( $until . get_user_option( 'friends_out_token', $user_id ), $auth ) ) {
+				return false;
+			}
+
+			if ( time() > $until ) {
+				return false;
+			}
 		}
 
 		return $user_id;
@@ -241,8 +253,9 @@ class Friends_Access_Control {
 		if ( ! isset( $_GET['friend_auth'] ) ) {
 			return;
 		}
+		$tokens = explode( '-', $_GET['friend_auth'] );
 
-		$user_id = $this->verify_token( $_GET['friend_auth'] );
+		$user_id = $this->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
 		if ( ! $user_id ) {
 			return;
 		}
@@ -268,7 +281,7 @@ class Friends_Access_Control {
 		}
 
 		if ( isset( $_GET['friend'] ) ) {
-			$user_id = $this->verify_token( $_GET['friend'] );
+			$user_id = $this->verify_token( $_GET['friend'], isset( $_GET['until'] ) ? $_GET['until'] : null, isset( $_GET['auth'] ) ? $_GET['auth'] : null );
 			if ( $user_id ) {
 				$user = new Friend_User( $user_id );
 				if ( $user->has_cap( 'friend' ) ) {
@@ -279,6 +292,39 @@ class Friends_Access_Control {
 		}
 
 		return $incoming_user_id;
+	}
+
+	public function get_friend_auth( Friend_User $friend_user, $validity = 3600 ) {
+		$out_token = $friend_user->get_user_option( 'friends_out_token' );
+		$in_token = $friend_user->get_user_option( 'friends_in_token' );
+
+		if ( $in_token && $out_token ) {
+			$until = time() + $validity;
+			$auth = password_hash( $until . $in_token, PASSWORD_DEFAULT );
+			return array(
+				'friend' => $out_token,
+				'until'  => $until,
+				'auth'   => $auth,
+			);
+		}
+
+		return array();
+	}
+
+	public function append_auth( $url, Friend_User $friend_user, $validity = 3600 ) {
+		if ( $validity < 0 ) {
+			return $url;
+		}
+		$friend_auth = $this->get_friend_auth( $friend_user, $validity );
+		if ( ! empty( $friend_auth ) ) {
+			$sep = false === strpos( $url, '?' ) ? '?' : '&';
+
+			$url .= $sep . 'friend=' . urlencode( $friend_auth['friend'] );
+			$url .= '&until=' . urlencode( $friend_auth['until'] );
+			$url .= '&auth=' . urlencode( $friend_auth['auth'] );
+		}
+
+		return $url;
 	}
 
 	/**

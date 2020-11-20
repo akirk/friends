@@ -39,8 +39,9 @@ include __DIR__ . '/header.php'; ?>
 	<?php while ( have_posts() ) : ?>
 		<?php
 		the_post();
-		$token          = get_user_option( 'friends_out_token', get_the_author_meta( 'ID' ) );
-		$avatar         = get_post_meta( get_the_ID(), 'gravatar', true );
+		$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
+		$token = $friend_user->get_friend_auth();
+		$avatar = get_post_meta( get_the_ID(), 'gravatar', true );
 		$recommendation = get_post_meta( get_the_ID(), 'recommendation', true );
 		?>
 		<article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
@@ -52,7 +53,7 @@ include __DIR__ . '/header.php'; ?>
 								<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
 							</a>
 						<?php else : ?>
-							<a href="<?php echo esc_attr( site_url( '/friends/' . get_the_author_meta( 'login' ) . '/' ) ); ?>"class="author-avatar">
+							<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>"class="author-avatar">
 								<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
 							</a>
 						<?php endif; ?>
@@ -68,7 +69,7 @@ include __DIR__ . '/header.php'; ?>
 							<?php if ( $recommendation ) : ?>
 								<a href="<?php the_permalink(); ?>" rel="noopener noreferrer" ><strong><?php echo esc_html( get_post_meta( get_the_ID(), 'author', true ) ); ?></strong></a>
 							<?php else : ?>
-								<a href="<?php echo esc_attr( site_url( '/friends/' . get_the_author_meta( 'login' ) . '/' ) ); ?>">
+								<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
 									<strong><?php the_author(); ?></strong>
 								</a>
 							<?php endif; ?>

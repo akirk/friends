@@ -131,6 +131,35 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Subscribe to a friends site without becoming a friend
+	 *
+	 * @param  string $feed_url The feed URL to subscribe to.
+	 * @return WP_User|WP_error $user The new associated user or an error object.
+	 */
+	public function subscribe( $feed_url, $options = array() ) {
+		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
+			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
+		}
+
+		$default_options = array(
+			'active'      => true,
+			'parser'      => 'simplepie',
+			'post_format' => 'standard',
+			'post_type'   => 'post',
+			'mime_type'   => 'application/rss+xml',
+			'title'       => $this->display_name . ' RSS Feed',
+		);
+
+		$feed = Friend_User_Feed::save(
+			$this,
+			$feed_url,
+			array_merge( $default_options, $options ),
+		);
+
+		return $feed;
+	}
+
+	/**
 	 * Retrieve the posts for this user
 	 *
 	 * @return array The new posts.
@@ -297,6 +326,19 @@ class Friend_User extends WP_User {
 		}
 
 		return true;
+	}
+
+	function get_local_friends_page_url() {
+		return site_url( '/friends/' . $this->user_login . '/' );
+	}
+
+	function get_friend_auth( $validity = 3600 ) {
+		$friends = Friends::get_instance();
+		$friend_auth = $friends->access_control->get_friend_auth( $this, $validity );
+		if ( empty( $friend_auth ) ) {
+			return '';
+		}
+		return $friend_auth['friend'] . '-' . $friend_auth['until'] . '-' . $friend_auth['auth'];
 	}
 
 	/**

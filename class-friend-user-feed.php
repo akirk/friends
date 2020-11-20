@@ -10,7 +10,7 @@
 /**
  * This is the class for the feed URLs part of the Friends Plugin.
  *
- * @since 0.22
+ * @since 1.0
  *
  * @package Friends
  * @author Alex Kirk
@@ -70,13 +70,8 @@ class Friend_User_Feed {
 		$feed_url = $this->get_url();
 		$friend_user = $this->get_friend_user();
 
-		$sep = false === strpos( $feed_url, '?' ) ? '?' : '&';
 		if ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) {
-			$token = $friend_user->get_user_option( 'friends_out_token' );
-			if ( $token ) {
-				$feed_url .= $sep . 'friend=' . $token;
-				$sep = '&';
-			}
+			$feed_url = $this->friends->access_control->append_auth( $feed_url, $friend_user );
 		}
 
 		return apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
@@ -264,7 +259,6 @@ class Friend_User_Feed {
 	 * Registers the taxonomy
 	 */
 	public static function register_taxonomy() {
-
 		$args = array(
 			'labels'            => array(
 				'name'          => _x( 'Feed URL', 'taxonomy general name' ),

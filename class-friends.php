@@ -14,7 +14,7 @@
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION       = '0.20.1';
+	const VERSION       = '1.0';
 	const CPT           = 'friend_post_cache';
 	const CPT_PREFIX    = 'friends_cache';
 	const FEED_URL      = 'friends-feed-url';
@@ -111,6 +111,8 @@ class Friends {
 		new Friends_Shortcodes( $this );
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+		do_action( 'friends_init', $this );
+		do_action( 'friends_register_parser', $this->feed );
 	}
 
 	/**
@@ -251,6 +253,37 @@ class Friends {
 			'post_status'  => 'publish',
 		);
 		$post_id   = wp_insert_post( $post_data );
+	}
+
+	/**
+	 * Enable translated user roles.
+	 * props https://wordpress.stackexchange.com/a/141705/74893
+	 *
+	 * @param string $translations    The potentially translated text.
+	 * @param string $text    Text to translate.
+	 * @param string $context Context information for the translators.
+	 * @param string $domain  Unique identifier for retrieving translated strings.
+	 * @return string Translated text on success, original text on failure.
+	 */
+	public static function translate_user_role( $translations, $text, $context, $domain ) {
+		$roles = array(
+			'Friend',
+			'Acquaintance',
+			'Friend Request',
+			'Pending Friend Request',
+			'Subscription',
+		);
+
+		if (
+			'User role' === $context
+			&& in_array( $text, $roles, true )
+			&& 'friends' !== $domain
+		) {
+			// @codingStandardsIgnoreLine
+			return translate_with_gettext_context( $text, $context, 'friends' );
+		}
+
+		return $translations;
 	}
 
 	/**

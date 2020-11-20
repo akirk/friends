@@ -336,7 +336,8 @@ class Friends_REST {
 	 */
 	public function rest_friend_post_deleted( $request ) {
 		$token   = $request->get_param( 'friend' );
-		$user_id = $this->friends->access_control->verify_token( $token );
+		$auth    = $request->get_param( 'auth' );
+		$user_id = $this->friends->access_control->verify_token( $token, $auth );
 		if ( ! $user_id ) {
 			return new WP_Error(
 				'friends_request_failed',
@@ -413,7 +414,8 @@ class Friends_REST {
 	 */
 	public function rest_update_friend_post_reactions( $request ) {
 		$token   = $request->get_param( 'friend' );
-		$user_id = $this->friends->access_control->verify_token( $token );
+		$auth    = $request->get_param( 'auth' );
+		$user_id = $this->friends->access_control->verify_token( $token, $auth );
 		if ( ! $user_id ) {
 			return new WP_Error(
 				'friends_request_failed',
@@ -482,7 +484,8 @@ class Friends_REST {
 	 */
 	public function rest_update_reactions_on_my_post( $request ) {
 		$token   = $request->get_param( 'friend' );
-		$user_id = $this->friends->access_control->verify_token( $token );
+		$auth    = $request->get_param( 'auth' );
+		$user_id = $this->friends->access_control->verify_token( $token, $auth );
 		if ( ! $user_id ) {
 			return new WP_Error(
 				'friends_request_failed',
@@ -623,37 +626,10 @@ class Friends_REST {
 	 * @param  string $url The URL of the site.
 	 * @return string|WP_Error The REST URL or an error.
 	 */
-	public function discover_rest_url( $url ) {
-		if ( ! is_string( $url ) || ! Friends::check_url( $url ) ) {
-			return new WP_Error( 'invalid-url-given', 'An invalid URL was given.' );
-		}
-
-		$response = wp_safe_remote_get(
-			$url,
-			array(
-				'timeout'     => 20,
-				'redirection' => 5,
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
-
-		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-			$dom = new DOMDocument();
-			set_error_handler( '__return_null' );
-			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
-			restore_error_handler();
-
-			$xpath = new DOMXpath( $dom );
-			foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
-				if ( 'friends-base-url' === $link->getAttribute( 'rel' ) ) {
-					$rest_url = $link->getAttribute( 'href' );
-					if ( is_string( $rest_url ) && Friends::check_url( $rest_url ) ) {
-						return $rest_url;
-					}
-				}
+	public function get_rest_url( $feeds ) {
+		foreach ( $feeds as $feed_url => $feed ) {
+			if ( $feed['rel'] === 'friends-base-url' ) {
+				return $feed_url;
 			}
 		}
 
