@@ -33,13 +33,18 @@ class Friend_User extends WP_User {
 	/**
 	 * Create a Friend_User with a specific Friends-related role
 	 *
-	 * @param  string $url     The site URL for which to create the user.
-	 * @param  string $role         The role: subscription, pending_friend_request, or friend_request.
-	 * @param  string $display_name The user's display name.
-	 * @param  string $icon_url     The user_icon_url URL.
-	 * @return Friend_User|WP_Error The created user or an error.
+	 * @param      string $user_login    The user login.
+	 * @param      string $role          The role: subscription,
+	 *                                   pending_friend_request,
+	 *                                   or friend_request.
+	 * @param      string $url           The site URL for which
+	 *                                   to create the user.
+	 * @param      string $display_name  The user's display name.
+	 * @param      string $icon_url      The user_icon_url URL.
+	 *
+	 * @return     Friend_User|WP_Error  The created user or an error.
 	 */
-	public static function create( $url, $role, $display_name = null, $icon_url = null ) {
+	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null ) {
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -51,7 +56,7 @@ class Friend_User extends WP_User {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$friend_user = self::get_user_for_url( $url );
+		$friend_user = self::get_user( $user_login );
 		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 			if ( is_multisite() ) {
 				$current_site = get_current_site();
@@ -74,7 +79,7 @@ class Friend_User extends WP_User {
 		}
 
 		$userdata  = array(
-			'user_login'   => self::get_user_login_for_url( $url ),
+			'user_login'   => $user_login,
 			'display_name' => $display_name,
 			'first_name'   => $display_name,
 			'nickname'     => $display_name,
@@ -86,7 +91,7 @@ class Friend_User extends WP_User {
 		update_user_option( $friend_id, 'friends_new_friend', true );
 
 		$friend_user = new Friend_User( $friend_id );
-		$friend_user->update_user_icon_url( $icon_url, $url );
+		$friend_user->update_user_icon_url( $icon_url );
 		return $friend_user;
 	}
 
@@ -106,14 +111,13 @@ class Friend_User extends WP_User {
 	}
 
 	/**
-	 * Checks whether a user already exists for a site URL.
+	 * Get a friend user for a user_login.
 	 *
-	 * @param  string $url The site URL for which to create the user.
-	 * @return Friend_User|false Whether the user already exists
+	 * @param  string $user_login The user login.
+	 * @return Friend_User|false The friend user or false.
 	 */
-	public static function get_user_for_url( $url ) {
-		$user_login = self::get_user_login_for_url( $url );
-		$user       = get_user_by( 'login', $user_login );
+	public static function get_user( $user_login ) {
+		$user = get_user_by( 'login', $user_login );
 		if ( $user && ! $user->data->user_url ) {
 			wp_update_user(
 				array(
@@ -124,8 +128,11 @@ class Friend_User extends WP_User {
 			$user = get_user_by( 'login', $user_login );
 		}
 		if ( $user ) {
-			// Ensure we return a Friend_User.
-			return new self( $user );
+			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
+				return new self( $user );
+			}
+
+			return false;
 		}
 		return $user;
 	}
@@ -133,8 +140,10 @@ class Friend_User extends WP_User {
 	/**
 	 * Subscribe to a friends site without becoming a friend
 	 *
-	 * @param  string $feed_url The feed URL to subscribe to.
-	 * @return WP_User|WP_error $user The new associated user or an error object.
+	 * @param      string $feed_url  The feed URL to subscribe to.
+	 * @param      array  $options   The options.
+	 *
+	 * @return     WP_User|WP_error  $user The new associated user or an error object.
 	 */
 	public function subscribe( $feed_url, $options = array() ) {
 		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
@@ -153,7 +162,7 @@ class Friend_User extends WP_User {
 		$feed = Friend_User_Feed::save(
 			$this,
 			$feed_url,
-			array_merge( $default_options, $options ),
+			array_merge( $default_options, $options )
 		);
 
 		return $feed;
@@ -328,10 +337,22 @@ class Friend_User extends WP_User {
 		return true;
 	}
 
+	/**
+	 * Gets the local friends page url.
+	 *
+	 * @return     string  The local friends page url.
+	 */
 	function get_local_friends_page_url() {
 		return site_url( '/friends/' . $this->user_login . '/' );
 	}
 
+	/**
+	 * Gets the friend auth to be used as a GET parameter.
+	 *
+	 * @param      integer $validity  The validity in seconds.
+	 *
+	 * @return     string   The friend auth.
+	 */
 	function get_friend_auth( $validity = 3600 ) {
 		$friends = Friends::get_instance();
 		$friend_auth = $friends->access_control->get_friend_auth( $this, $validity );

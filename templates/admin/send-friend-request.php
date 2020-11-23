@@ -24,7 +24,7 @@
 					<p class="description" id="friend_url-description">
 						<?php esc_html_e( "If the site is not compatible with the Friends plugin, you'll subscribe the site's RSS feed.", 'friends' ); ?>
 					</p>
-					<p><a href="" id="send-friends-advanced"><?php _e( 'Advanced »', 'friends' ); ?></a></p>
+					<p><a href="" class="show-hidden"><?php _e( 'Advanced »', 'friends' ); ?></a></p>
 				</td>
 			</tr>
 			<tr class="hidden">

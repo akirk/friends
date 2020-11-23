@@ -268,8 +268,8 @@ class Friends_REST {
 				)
 			);
 		}
-
-		$friend_user = Friend_User::create( $url, 'friend_request', $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
+		$user_login = Friend_User::get_user_login_for_url( $url );
+		$friend_user = Friend_User::create( $user_login, 'friend_request', $url, $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
 		if ( $friend_user->has_cap( 'friend' ) ) {
 			if ( get_user_option( 'friends_out_token', $friend_user->ID ) && ! get_user_option( 'friends_out_token', $friend_user->ID ) ) {
 				// TODO: trigger an accept friend request right away?
@@ -380,7 +380,7 @@ class Friends_REST {
 		);
 		foreach ( $friends->get_results() as $friend_user ) {
 			$reactions       = $this->friends->reactions->get_reactions( $post->ID, $friend_user->ID );
-			$friend_rest_url = $this->friends->access_control->get_rest_url( $friend_user );
+			$friend_rest_url = $friend_user->get_rest_url();
 
 			$response = wp_safe_remote_post(
 				$friend_rest_url . '/update-post-reactions',
@@ -451,7 +451,7 @@ class Friends_REST {
 		$reactions      = $this->friends->reactions->get_my_reactions( $post->ID );
 		$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
 
-		$friend_rest_url = $friend_user->get_rest_url( $friend_user );
+		$friend_rest_url = $friend_user->get_rest_url();
 
 		$response = wp_safe_remote_post(
 			$friend_rest_url . '/my-reactions',
@@ -627,15 +627,57 @@ class Friends_REST {
 		return false;
 	}
 
-	/**
-	 * Notify the friend's site via REST about the accepted friend request.
-	 *
-	 * Accepting a friend request is simply setting the role to "friend".
-	 *
-	 * @param  int    $user_id   The user id.
-	 * @param  string $new_role  The new role.
-	 * @param  string $old_roles The old roles.
-	 */
+		/**
+		 * Discover the REST URL for a friend site
+		 *
+		 * @param  string $url The URL of the site.
+		 * @return string|WP_Error The REST URL or an error.
+		 */
+	public function discover_rest_url( $url ) {
+		if ( ! is_string( $url ) || ! Friends::check_url( $url ) ) {
+			return new WP_Error( 'invalid-url-given', 'An invalid URL was given.' );
+		}
+
+		$response = wp_safe_remote_get(
+			$url,
+			array(
+				'timeout'     => 20,
+				'redirection' => 5,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
+			$dom = new DOMDocument();
+			set_error_handler( '__return_null' );
+			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
+			restore_error_handler();
+
+			$xpath = new DOMXpath( $dom );
+			foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
+				if ( 'friends-base-url' === $link->getAttribute( 'rel' ) ) {
+					$rest_url = $link->getAttribute( 'href' );
+					if ( is_string( $rest_url ) && Friends::check_url( $rest_url ) ) {
+						return $rest_url;
+					}
+				}
+			}
+		}
+
+		return null;
+	}
+		/**
+		 * Notify the friend's site via REST about the accepted friend request.
+		 *
+		 * Accepting a friend request is simply setting the role to "friend".
+		 *
+		 * @param  int    $user_id   The user id.
+		 * @param  string $new_role  The new role.
+		 * @param  string $old_roles The old roles.
+		 */
 	public function notify_remote_friend_request_accepted( $user_id, $new_role, $old_roles ) {
 		if ( 'friend' !== $new_role && 'acquaintance' !== $new_role ) {
 			return;

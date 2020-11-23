@@ -10,7 +10,13 @@ jQuery( function( $ ) {
 	} );
 
 	jQuery( document ).on( 'click', 'a#send-friends-advanced', function() {
-		jQuery( 'tr.hidden' ).removeClass( 'hidden' );
+		jQuery( 'tr.friends-advanced' ).removeClass( 'hidden' ).find( 'input:visible:first' ).focus();
+		jQuery( this ).remove();
+		return false;
+	} );
+
+	jQuery( document ).on( 'click', 'a#add-another-feed', function() {
+		jQuery( 'tr.another-feed' ).removeClass( 'hidden' ).find( 'input:visible:first' ).focus();
 		jQuery( this ).remove();
 		return false;
 	} );

@@ -360,43 +360,20 @@ class Friends_Admin {
 	/**
 	 * Send a friend request to another WordPress with the Friends plugin
 	 *
-	 * @param  string $friend_url The site URL of the friend's WordPress.
-	 * @param  string $codeword   A codeword to send along.
-	 * @param  string $message    A message to send along.
-	 * @return WP_User|WP_error $user The new associated user or an error object.
+	 * @param      string $rest_url    The site URL of the friend's
+	 *                                 WordPress.
+	 * @param      string $user_login  The user login.
+	 * @param      string $user_url    The user url.
+	 * @param      string $codeword    A codeword to send along.
+	 * @param      string $message     A message to send along.
+	 *
+	 * @return     WP_User|WP_error  $user The new associated user or an error object.
 	 */
-	public function send_friend_request( $friend_url, $codeword = 'friends', $message = '' ) {
-		if ( ! is_string( $friend_url ) || ! Friends::check_url( $friend_url ) ) {
-			return new WP_Error( 'invalid-url', __( 'You entererd an invalid URL.', 'friends' ) );
+	public function send_friend_request( $rest_url, $user_login, $user_url, $codeword = 'friends', $message = '' ) {
+		if ( ! is_string( $rest_url ) || ! Friends::check_url( $rest_url ) ) {
+			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 		}
 
-		if ( 0 === strcasecmp( site_url(), $friend_url ) ) {
-			return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
-		}
-
-		$friend_user = Friend_User::get_user_for_url( $friend_url );
-		if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->is_valid_friend() ) {
-			return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
-		}
-
-		$rest_url = $this->friends->rest->discover_rest_url( $friend_url );
-		if ( is_wp_error( $rest_url ) ) {
-			return $rest_url;
-		}
-
-		if ( ! $rest_url ) {
-			return $this->subscribe( $friend_url );
-		}
-
-		/*
-		// if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->has_cap( 'friend_request' ) ) {
-		// $this->update_in_token( $friend_user->ID );
-		// $friend_user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
-		// return $friend_user;
-		// }
-		//
-		*/
-		$user_login      = Friend_User::get_user_login_for_url( $friend_url );
 		$future_in_token = sha1( wp_generate_password( 256 ) );
 
 		$current_user = wp_get_current_user();
@@ -420,9 +397,6 @@ class Friends_Admin {
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
-				if ( 'rest_no_route' === $json->code ) {
-					return $this->subscribe( $friend_url );
-				}
 				// translators: %s is the message from the other server.
 				return new WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), $json->message ), $json->data );
 			}
@@ -432,7 +406,7 @@ class Friends_Admin {
 			return new WP_Error( 'unexpected-rest-response', 'Unexpected remote response.', $response );
 		}
 
-		$friend_user = Friend_User::create( $friend_url, 'pending_friend_request' );
+		$friend_user = Friend_User::create( $user_login, 'pending_friend_request', $user_url );
 		if ( is_wp_error( $friend_user ) ) {
 			return $friend_user;
 		}
@@ -490,10 +464,10 @@ class Friends_Admin {
 	public function admin_edit_user_link( $link, $user_id ) {
 		$user = new WP_User( $user_id );
 		if (
-			! $user->has_cap( 'friend_request' ) &&
-			! $user->has_cap( 'pending_friend_request' ) &&
-			! $user->has_cap( 'friend' ) &&
-			! $user->has_cap( 'subscription' )
+		! $user->has_cap( 'friend_request' ) &&
+		! $user->has_cap( 'pending_friend_request' ) &&
+		! $user->has_cap( 'friend' ) &&
+		! $user->has_cap( 'subscription' )
 		) {
 			return $link;
 		}
@@ -635,10 +609,10 @@ class Friends_Admin {
 		}
 
 		if (
-			! $friend->has_cap( 'friend_request' ) &&
-			! $friend->has_cap( 'pending_friend_request' ) &&
-			! $friend->has_cap( 'friend' ) &&
-			! $friend->has_cap( 'subscription' )
+		! $friend->has_cap( 'friend_request' ) &&
+		! $friend->has_cap( 'pending_friend_request' ) &&
+		! $friend->has_cap( 'friend' ) &&
+		! $friend->has_cap( 'subscription' )
 		) {
 			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
 		}
@@ -768,10 +742,10 @@ class Friends_Admin {
 		}
 
 		if (
-			! $friend->has_cap( 'friend_request' ) &&
-			! $friend->has_cap( 'pending_friend_request' ) &&
-			! $friend->has_cap( 'friend' ) &&
-			! $friend->has_cap( 'subscription' )
+		! $friend->has_cap( 'friend_request' ) &&
+		! $friend->has_cap( 'pending_friend_request' ) &&
+		! $friend->has_cap( 'friend' ) &&
+		! $friend->has_cap( 'subscription' )
 		) {
 			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
 		}
@@ -961,10 +935,10 @@ class Friends_Admin {
 		if ( ! $friend_user instanceof Friend_User ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-				<?php
-				// translators: %s is a username.
-				esc_html_e( 'Unknown error', 'friends' );
-				?>
+			<?php
+			// translators: %s is a username.
+			esc_html_e( 'Unknown error', 'friends' );
+			?>
 			</p></div>
 			<?php
 			return false;
@@ -974,14 +948,14 @@ class Friends_Admin {
 		if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-				<?php
-				// translators: %s is a Site URL.
-				echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-				// translators: %s is a Site URL.
-				echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-				?>
+			<?php
+			// translators: %s is a Site URL.
+			echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+			// translators: %s is a Site URL.
+			echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+			// translators: %s is the friends page URL.
+			echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+			?>
 			</p></div>
 			<?php
 			return true;
@@ -990,12 +964,12 @@ class Friends_Admin {
 		if ( $friend_user->has_cap( 'friend' ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-				<?php
-				// translators: %s is a Site URL.
-				echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-				?>
+			<?php
+			// translators: %s is a Site URL.
+			echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+			// translators: %s is the friends page URL.
+			echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+			?>
 			</p></div>
 			<?php
 			return true;
@@ -1004,26 +978,26 @@ class Friends_Admin {
 		if ( $friend_user->has_cap( 'subscription' ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-				<?php
-				if ( isset( $_POST['request-friendship'] ) ) {
-					// translators: %s is a Site URL.
-					echo wp_kses( sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-					echo ' ';
-				}
-				esc_html_e( 'We subscribed you to their updates.', 'friends' );
-				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-				?>
+			<?php
+			if ( isset( $_POST['request-friendship'] ) ) {
+				// translators: %s is a Site URL.
+				echo wp_kses( sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+				echo ' ';
+			}
+			esc_html_e( 'We subscribed you to their updates.', 'friends' );
+			// translators: %s is the friends page URL.
+			echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+			?>
 			</p></div>
 			<?php
 			return true;
 		}
 		?>
 		<div id="message" class="updated notice is-dismissible"><p>
-			<?php
-			// translators: %s is a username.
-			echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $friend_user->display_name ) );
-			?>
+		<?php
+		// translators: %s is a username.
+		echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $friend_user->display_name ) );
+		?>
 		</p></div>
 		<?php
 		return false;
@@ -1037,21 +1011,61 @@ class Friends_Admin {
 	 * @return     boolean A WP_Error or void.
 	 */
 	public function process_admin_add_friend( $vars ) {
-		$friend_url = trim( $vars['friend_url'] );
-		$codeword = trim( $vars['codeword'] );
-		$message = trim( $vars['message'] );
-		$protocol   = wp_parse_url( $friend_url, PHP_URL_SCHEME );
-		if ( ! $protocol ) {
-			$friend_url = 'https://' . $friend_url;
-		}
-
-		$feeds = $this->friends->feed->discover_available_feeds( $friend_url );
-		if ( ! $feeds ) {
-			return new WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
-		}
-
 		$friends_plugin = false;
-		$rest_url = $this->friends->rest->get_rest_url( $feeds );
+		$friend_url = trim( $vars['friend_url'] );
+		$friend_user_login = Friend_User::get_user_login_for_url( $friend_url );
+		$friend_roles = $this->get_friend_roles();
+		$default_role = get_option( 'friends_default_friend_role', 'friend' );
+		$registered_parsers = Friends::get_instance()->feed->get_registered_parsers();
+
+		$errors = new WP_Error();
+
+		if ( ( isset( $vars['step2'] ) && isset( $vars['feeds'] ) && is_array( $vars['feeds'] ) ) || isset( $vars['step3'] ) ) {
+			$friend_user_login = sanitize_user( $vars['user_login'] );
+			if ( ! $friend_user_login ) {
+				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is invalid because it uses illegal characters. Please enter a valid username.' ) );
+			} elseif ( username_exists( $friend_user_login ) ) {
+				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is already registered. Please choose another one.' ) );
+			}
+			$codeword = trim( $vars['codeword'] );
+			$message = trim( $vars['message'] );
+			$feeds = $vars['feeds'];
+
+			if ( ! $errors->has_errors() ) {
+				if ( isset( $vars['friendship'] ) ) {
+					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $codeword, $message );
+				} else {
+					$friend_user = Friend_User::create( $friend_user_login, 'pending_friend_request' );
+					if ( is_wp_error( $friend_user ) ) {
+						$errors = $friend_user;
+					}
+				}
+				var_dump( $vars );
+				exit;
+			}
+		} else {
+			$protocol = wp_parse_url( $friend_url, PHP_URL_SCHEME );
+			if ( ! $protocol ) {
+				$friend_url = 'https://' . $friend_url;
+			}
+
+			if ( 0 === strcasecmp( site_url(), $friend_url ) ) {
+				return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
+			}
+
+			$friend_user = Friend_User::get_user( $friend_user_login );
+			if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->is_valid_friend() ) {
+				return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
+			}
+
+			$feeds = $this->friends->feed->discover_available_feeds( $friend_url );
+			if ( ! $feeds ) {
+				return new WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
+			}
+
+			$rest_url = $this->friends->rest->get_rest_url( $feeds );
+		}
+
 		if ( $rest_url ) {
 			$friends_plugin = $rest_url;
 			unset( $feeds[ $rest_url ] );
@@ -1062,13 +1076,8 @@ class Friends_Admin {
 				return $this->subscribe( $friend_url );
 			}
 
-			// return $this->send_friend_request( $rest_url, $codeword, $message ); //.
+			return $this->send_friend_request( $rest_url, $friend_user_login, $friend_url, $codeword, $message );
 		}
-
-		$friend_username = Friend_User::get_user_login_for_url( $friend_url );
-		$registered_parsers = Friends::get_instance()->feed->get_registered_parsers();
-		$friend_roles = $this->get_friend_roles();
-		$default_role = get_option( 'friends_default_friend_role', 'friend' );
 
 		include apply_filters( 'friends_template_path', 'admin/select-feeds.php' );
 		return;

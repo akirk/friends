@@ -105,27 +105,6 @@ class Friends_Access_Control {
 	}
 
 	/**
-	 * Checks whether a user already exists for a site URL.
-	 *
-	 * @param  string $url The site URL for which to create the user.
-	 * @return WP_User|false Whether the user already exists
-	 */
-	public function get_user_for_url( $url ) {
-		$user_login = $this->get_user_login_for_url( $url );
-		$user       = get_user_by( 'login', $user_login );
-		if ( $user && ! $user->data->user_url ) {
-			wp_update_user(
-				array(
-					'ID'       => $user->ID,
-					'user_url' => $url,
-				)
-			);
-			$user = get_user_by( 'login', $user_login );
-		}
-		return $user;
-	}
-
-	/**
 	 * Create a WP_User with a specific Friends-related role
 	 *
 	 * @param  string $url     The site URL for which to create the user.
@@ -146,7 +125,8 @@ class Friends_Access_Control {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$friend_user = $this->get_user_for_url( $url );
+		$user_login = $this->get_user_login_for_url( $url );
+		$friend_user = $this->get_user( $user_login );
 		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 			if ( is_multisite() ) {
 				$current_site = get_current_site();
@@ -169,7 +149,7 @@ class Friends_Access_Control {
 		}
 
 		$userdata  = array(
-			'user_login'   => $this->get_user_login_for_url( $url ),
+			'user_login'   => $user_login,
 			'display_name' => $display_name,
 			'first_name'   => $display_name,
 			'nickname'     => $display_name,
@@ -218,8 +198,11 @@ class Friends_Access_Control {
 	/**
 	 * Verify a friend token
 	 *
-	 * @param  string $token The token to verify.
-	 * @return int|bool The user id or false.
+	 * @param      string  $token  The token to verify.
+	 * @param      integer $until  Valid until timestamp.
+	 * @param      string  $auth   The auth code.
+	 *
+	 * @return     int|bool  The user id or false.
 	 */
 	public function verify_token( $token, $until, $auth ) {
 		$user_id = get_option( 'friends_in_token_' . $token );
@@ -294,6 +277,14 @@ class Friends_Access_Control {
 		return $incoming_user_id;
 	}
 
+	/**
+	 * Gets the friend auth.
+	 *
+	 * @param      Friend_User $friend_user  The friend user.
+	 * @param      integer     $validity     The validity.
+	 *
+	 * @return     string       The friend auth.
+	 */
 	public function get_friend_auth( Friend_User $friend_user, $validity = 3600 ) {
 		$out_token = $friend_user->get_user_option( 'friends_out_token' );
 		$in_token = $friend_user->get_user_option( 'friends_in_token' );
@@ -311,6 +302,15 @@ class Friends_Access_Control {
 		return array();
 	}
 
+	/**
+	 * Appends an auth to an URL.
+	 *
+	 * @param      string      $url          The url.
+	 * @param      Friend_User $friend_user  The friend user.
+	 * @param      integer     $validity     The validity in seconds.
+	 *
+	 * @return     string       The url with an appended auth.
+	 */
 	public function append_auth( $url, Friend_User $friend_user, $validity = 3600 ) {
 		if ( $validity < 0 ) {
 			return $url;

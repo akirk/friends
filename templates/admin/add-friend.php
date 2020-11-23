@@ -27,31 +27,12 @@ $quick_subscribe = _x( 'Quick Subscribe', 'button', 'friends' );
 					<p class="description" id="friend_url-description">
 						<?php esc_html_e( "In the next step we'll give you a selection of available feeds.", 'friends' ); ?>
 					</p>
-					<p><a href="" id="send-friends-advanced"><?php _e( 'More Options »', 'friends' ); ?></a></p>
-				</td>
-			</tr>
-			<tr class="hidden">
-				<th scope="row"><label for="message"><?php esc_html_e( 'Message (Optional)', 'friends' ); ?></label></th>
-				<td>
-					<input type="text" autofocus id="message" name="message" value="<?php echo esc_attr( $message ); ?>" placeholder="<?php _e( 'Optionally enter a message for your friend', 'friends' ); ?>" class="large-text" />
-					<p class="description" id="message-description">
-						<?php esc_html_e( 'The short message you supply will be sent along with your friend request.', 'friends' ); ?>
-					</p>
-				</td>
-			</tr>
-			<tr class="hidden">
-				<th scope="row"><label for="codeword"><?php esc_html_e( 'Code word (Optional)', 'friends' ); ?></label></th>
-				<td>
-					<input type="text" autofocus id="codeword" name="codeword" value="<?php echo esc_attr( $codeword ); ?>" placeholder="None" class="regular-text" />
-					<p class="description" id="codeword-description">
-						<?php esc_html_e( 'Your friend might have told you to provide something here.', 'friends' ); ?>
-					</p>
 				</td>
 			</tr>
 			<tr>
 				<th></th>
 				<td>
-					<input type="submit" class="button button-primary" value="<?php echo esc_attr_x( 'Next »', 'button', 'friends' ); ?>" />
+					<input type="submit" name="step2" class="button button-primary" value="<?php echo esc_attr_x( 'Next »', 'button', 'friends' ); ?>" />
 
 					<input type="submit" name="quick-subscribe" class="button" value="<?php echo esc_attr( $quick_subscribe ); ?>" />
 
