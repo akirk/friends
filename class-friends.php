@@ -456,7 +456,7 @@ class Friends {
 	 * Generate a link tag with the friends base URL
 	 */
 	public static function get_html_link_rel_friends_base_url() {
-		return '<link rel="friends-base-url" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" />';
+		return '<link rel="friends-base-url" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" type="application/wp-friends-plugin" />';
 	}
 
 	/**

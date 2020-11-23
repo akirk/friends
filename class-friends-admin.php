@@ -275,7 +275,7 @@ class Friends_Admin {
 			function( $items ) {
 				// translators: %s is the number of posts found.
 				printf( _n( 'Found %d item in the feed.', 'Found %d items in the feed.', count( $items ), 'friends' ) . ' ', count( $items ) );
-			},
+			}
 		);
 
 		add_action(
@@ -302,8 +302,10 @@ class Friends_Admin {
 	/**
 	 * Subscribe to a friends site without becoming a friend
 	 *
-	 * @param  string $feed_url The feed URL to subscribe to.
-	 * @return WP_User|WP_error $user The new associated user or an error object.
+	 * @param      string $feed_url  The feed URL to subscribe to.
+	 * @param      array  $args      The arguments for the feed.
+	 *
+	 * @return     WP_User|WP_error  $user The new associated user or an error object.
 	 */
 	public function subscribe( $feed_url, $args = array() ) {
 		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
@@ -339,7 +341,7 @@ class Friends_Admin {
 
 					if ( ! $domain ) {
 						$parsed_url = wp_parse_url( $url );
-						// TODO relative urls
+						// TODO relative urls.
 						$favicon = $parsed_url['scheme'] . '://' . $parsed_url['host'] . '/' . ltrim( $favicon, '/' );
 					}
 					break;
@@ -608,8 +610,9 @@ class Friends_Admin {
 		}
 
 		$potential_main_users = Friend_User_Query::all_admin_users();
-		$main_user_id         = $this->friends->get_main_friend_user_id();
-		$default_role         = get_option( 'friends_default_friend_role', 'friend' );
+		$main_user_id = $this->friends->get_main_friend_user_id();
+		$friend_roles = $this->get_friend_roles();
+		$default_role = get_option( 'friends_default_friend_role', 'friend' );
 
 		include apply_filters( 'friends_template_path', 'admin/settings.php' );
 	}
@@ -916,6 +919,13 @@ class Friends_Admin {
 		include apply_filters( 'friends_template_path', 'admin/edit-friend.php' );
 	}
 
+	/**
+	 * Previous process the Add Friend form. Todo: re-integrate.
+	 *
+	 * @param      Friend_User $friend_user  The Friend user.
+	 *
+	 * @return     boolean  ( description_of_the_return_value )
+	 */
 	function process_admin_add_friend_response( $friend_user ) {
 		if ( is_wp_error( $friend_user ) ) {
 			?>
@@ -1019,6 +1029,13 @@ class Friends_Admin {
 		return false;
 	}
 
+	/**
+	 * Process the Add Friend form.
+	 *
+	 * @param      array $vars   The POST or GET variables.
+	 *
+	 * @return     boolean A WP_Error or void.
+	 */
 	public function process_admin_add_friend( $vars ) {
 		$friend_url = trim( $vars['friend_url'] );
 		$codeword = trim( $vars['codeword'] );
@@ -1033,20 +1050,25 @@ class Friends_Admin {
 			return new WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
 		}
 
+		$friends_plugin = false;
 		$rest_url = $this->friends->rest->get_rest_url( $feeds );
 		if ( $rest_url ) {
+			$friends_plugin = $rest_url;
 			unset( $feeds[ $rest_url ] );
 		}
 
-		if ( count( $feeds ) == 1 || $rest_url ) {
-			if ( isset( $vars['quick-subscribe'] ) || ! $rest_url ) {
+		if ( 1 === count( $feeds ) && isset( $vars['quick-subscribe'] ) ) {
+			if ( ! $rest_url ) {
 				return $this->subscribe( $friend_url );
 			}
 
-			return $this->send_friend_request( $rest_url, $codeword, $message );
+			// return $this->send_friend_request( $rest_url, $codeword, $message ); //.
 		}
 
 		$friend_username = Friend_User::get_user_login_for_url( $friend_url );
+		$registered_parsers = Friends::get_instance()->feed->get_registered_parsers();
+		$friend_roles = $this->get_friend_roles();
+		$default_role = get_option( 'friends_default_friend_role', 'friend' );
 
 		include apply_filters( 'friends_template_path', 'admin/select-feeds.php' );
 		return;
@@ -1233,6 +1255,18 @@ class Friends_Admin {
 		}
 
 		include apply_filters( 'friends_template_path', 'admin/suggest-friends-plugin.php' );
+	}
+
+	/**
+	 * Gets the friend roles.
+	 *
+	 * @return     array  The friend roles.
+	 */
+	public function get_friend_roles() {
+		return array(
+			'friend'       => _x( 'Friend', 'User role', 'friends' ),
+			'acquaintance' => _x( 'Acquaintance', 'User role', 'friends' ),
+		);
 	}
 
 	/**

@@ -84,10 +84,7 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 				<td>
 					<select name="default_role">
 						<?php
-						foreach ( array(
-							'friend'       => _x( 'Friend', 'User role', 'friends' ),
-							'acquaintance' => _x( 'Acquaintance', 'User role', 'friends' ),
-						) as $role => $title ) :
+						foreach ( $friend_roles as $role => $title ) :
 							?>
 							<option value="<?php echo esc_attr( $role ); ?>" <?php selected( $default_role, $role ); ?>><?php echo esc_html( $title ); ?></option>
 

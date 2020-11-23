@@ -71,15 +71,6 @@ class Friends_REST {
 		);
 		register_rest_route(
 			self::PREFIX,
-			'hello',
-			array(
-				'methods'             => 'GET,POST',
-				'callback'            => array( $this, 'rest_hello' ),
-				'permission_callback' => '__return_true',
-			)
-		);
-		register_rest_route(
-			self::PREFIX,
 			'post-deleted',
 			array(
 				'methods'             => 'POST',
@@ -623,12 +614,12 @@ class Friends_REST {
 	/**
 	 * Discover the REST URL for a friend site
 	 *
-	 * @param  string $url The URL of the site.
+	 * @param  string $feeds The URL of the site.
 	 * @return string|WP_Error The REST URL or an error.
 	 */
 	public function get_rest_url( $feeds ) {
 		foreach ( $feeds as $feed_url => $feed ) {
-			if ( $feed['rel'] === 'friends-base-url' ) {
+			if ( 'friends' === $feed['parser'] ) {
 				return $feed_url;
 			}
 		}

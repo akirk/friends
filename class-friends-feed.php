@@ -65,16 +65,33 @@ class Friends_Feed {
 
 	/**
 	 * Allow registering a parser
+	 *
+	 * @param      string              $slug    The slug.
+	 * @param      Friends_Feed_Parser $parser  The parser that extends the Friends_Feed_Parser class.
 	 */
 	public function register_parser( $slug, Friends_Feed_Parser $parser ) {
+		if ( 'friends' === $slug ) {
+			// translators: %s is the slug of a parser.
+			return new WP_Error( 'resevered-slug', sprintf( __( 'The slug "%s" cannot be used.', 'friends' ), $slug ) );
+		}
+		if ( isset( $this->parsers[ $slug ] ) ) {
+			// translators: %s is the slug of a parser.
+			return new WP_Error( 'parser-already-registered', sprintf( __( 'There is already a parser registered with the slug "%s".', 'friends' ), $slug ) );
+		}
 		$this->parsers[ $slug ] = $parser;
+
+		return true;
 	}
 
 	/**
 	 * Allow unregistering a parser
+	 *
+	 * @param      string $slug    The slug.
 	 */
 	public function unregister_parser( $slug ) {
-		unset( $this->parsers[ $slug ] );
+		if ( 'friends' !== $slug ) {
+			unset( $this->parsers[ $slug ] );
+		}
 	}
 
 	/**
@@ -175,7 +192,7 @@ class Friends_Feed {
 
 			if ( 'author' === $rule['field'] && ! isset( $item->$field ) ) {
 				if ( $item instanceof WP_Post ) {
-					$item->$field = get_post_meta( get_the_ID( $post ), 'author', true );
+					$item->$field = get_post_meta( get_the_ID( $item ), 'author', true );
 				} else {
 					$item->$field = $item->get_author()->name;
 				}
@@ -511,44 +528,6 @@ class Friends_Feed {
 		}
 	}
 
-	private function fetch( $url ) {
-		static $cache = array();
-		// Todo: normalize URL.
-		if ( ! isset( $cache[ $url ] ) ) {
-			$cache[ $url ] = null;
-			$response = wp_safe_remote_get(
-				$url,
-				array(
-					'timeout'     => 20,
-					'redirection' => 1,
-				)
-			);
-
-			if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-				$dom = new DOMDocument();
-
-				set_error_handler( '__return_null' );
-				wp_remote_retrieve_body( $response );
-				restore_error_handler();
-
-				$cache[ $url ] = $content;
-			}
-		}
-
-		return $cache[ $url ];
-	}
-
-	/**
-	 * Is this a supported feed?
-	 *
-	 * @param  string $url The feed URL.
-	 * @return boolean Whether the URL supplied is a feed URL.
-	 */
-	public function is_supported_feed( $url ) {
-		$content = $this->fetch( $url );
-		return apply_filters( 'friends_is_supported_feed', false, $content, $url );
-	}
-
 	/**
 	 * Discover available feeds.
 	 *
@@ -573,14 +552,21 @@ class Friends_Feed {
 			return array();
 		}
 		$content = wp_remote_retrieve_body( $response );
+		$headers = wp_remote_retrieve_headers( $response );
 
-		// We'll determine the obvious feeds ourself:
+		// We'll determine the obvious feeds ourself.
 		$available_feeds  = array();
-		$discovered_feeds = $this->discover_link_rel_feeds( $content );
+		$discovered_feeds = $this->discover_link_rel_feeds( $content, $url, $headers );
 
 		foreach ( $discovered_feeds as $link_url => $feed ) {
+			if ( 'friends-base-url' === $feed['rel'] ) {
+				$available_feeds[ $link_url ] = $feed;
+				$available_feeds[ $link_url ]['parser'] = 'friends';
+				$available_feeds[ $link_url ]['url'] = $link_url;
+				continue;
+			}
 			foreach ( $this->parsers as $slug => $parser ) {
-				if ( $feed['type'] === 'friends-base-url' || $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
+				if ( $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
 					$available_feeds[ $link_url ] = $feed;
 					$available_feeds[ $link_url ]['parser'] = $slug;
 					$available_feeds[ $link_url ]['url'] = $link_url;
@@ -596,24 +582,33 @@ class Friends_Feed {
 		}
 
 		foreach ( $this->parsers as $slug => $parser ) {
-			$available_feeds = array_merge( $available_feeds, $parser->discover_available_feeds( $url, $content ) );
+			$available_feeds = array_merge( $available_feeds, $parser->discover_available_feeds( $content, $url ) );
 		}
 
 		return apply_filters( 'friends_available_feeds', $available_feeds, $url );
 	}
 
-	private function discover_link_rel_feeds( $content ) {
+	/**
+	 * Discover feeds specified in the <link> section.
+	 *
+	 * @param      string $content  The content to search.
+	 * @param      string $url      The url.
+	 * @param      object $headers  The headers from the request.
+	 *
+	 * @return     array   ( description_of_the_return_value )
+	 */
+	private function discover_link_rel_feeds( $content, $url, $headers ) {
+		if ( ! class_exists( 'DOMXpath' ) ) {
+			return array();
+		}
+
+		// Convert to a DomDocument and silence the errors while doing so.
 		$doc = new DomDocument;
 		set_error_handler( '__return_null' );
 		$doc->loadHTML( $content );
 		restore_error_handler();
 
-		if ( ! class_exists( 'DOMXpath' ) ) {
-			return array();
-		}
-
 		$xpath = new DOMXpath( $doc );
-
 		if ( ! $xpath ) {
 			return array();
 		}
@@ -621,7 +616,7 @@ class Friends_Feed {
 		$discovered_feeds = array();
 		foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
 			$rel = $link->getAttribute( 'rel' );
-			if ( $rel !== 'alternate' && $rel !== 'me' && $rel !== 'friends-base-url' ) {
+			if ( 'alternate' !== $rel && 'me' !== $rel && 'friends-base-url' !== $rel ) {
 				continue;
 			}
 
@@ -636,6 +631,7 @@ class Friends_Feed {
 				'rel'   => $rel,
 			);
 		}
+		// TODO: implement searching the headers.
 
 		return $discovered_feeds;
 	}

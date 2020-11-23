@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 0.30
+ * Version: 1.0
  *
  * Description: Decentralized Social Networking with WordPress. Connect WordPresses through friend requests and read each other’s (private) posts in a feed reader.
  *
@@ -47,14 +47,7 @@ register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( 'Friends', 'uninstall_plugin' ) );
 
-add_action(
-	'friends_register_parser',
-	function( Friends_Feed $friends_feed ) {
-		include __DIR__ . '/class-friends-feed-parser-simplepie.php';
-		$friends_feed->register_parser( 'simplepie', new Friends_Feed_Parser_SimplePie );
-	}
-);
-
+// Register widgets.
 include __DIR__ . '/widgets/class-friends-widget-refresh.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Refresh', 'register' ) );
 
@@ -66,3 +59,12 @@ add_action( 'widgets_init', array( 'Friends_Widget_Friend_Request', 'register' )
 
 include __DIR__ . '/widgets/class-friends-widget-new-private-post.php';
 add_action( 'widgets_init', array( 'Friends_Widget_New_Private_Post', 'register' ) );
+
+// Register bundled parsers.
+add_action(
+	'friends_register_parser',
+	function( Friends_Feed $friends_feed ) {
+		include __DIR__ . '/class-friends-feed-parser-simplepie.php';
+		$friends_feed->register_parser( 'simplepie', new Friends_Feed_Parser_SimplePie );
+	}
+);
