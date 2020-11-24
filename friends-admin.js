@@ -10,7 +10,7 @@ jQuery( function( $ ) {
 	} );
 
 	jQuery( document ).on( 'click', 'a#send-friends-advanced', function() {
-		jQuery( 'tr.friends-advanced' ).removeClass( 'hidden' ).find( 'input:visible:first' ).focus();
+		jQuery( 'tr.friends-advanced' ).removeClass( 'hidden' ).first().find( 'input:visible:first' ).focus();
 		jQuery( this ).remove();
 		return false;
 	} );
@@ -18,6 +18,11 @@ jQuery( function( $ ) {
 	jQuery( document ).on( 'click', 'a#add-another-feed', function() {
 		jQuery( 'tr.another-feed' ).removeClass( 'hidden' ).find( 'input:visible:first' ).focus();
 		jQuery( this ).remove();
+		return false;
+	} );
+
+	jQuery( document ).on( 'click', 'a#show-details', function() {
+		jQuery( '.details' ).toggleClass( 'hidden' ).focus();
 		return false;
 	} );
 

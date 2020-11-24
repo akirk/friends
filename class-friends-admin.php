@@ -193,8 +193,8 @@ class Friends_Admin {
 						'id'      => 'overview',
 						'title'   => __( 'Overview' ),
 						'content' => '<p>' . __( 'Welcome to the Friends Settings! You can configure the Friends plugin here to your liking.', 'friends' ) . '</p>' .
-							// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
-							'<p>' . sprintf( __( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ), '"' . esc_attr( self_admin_url( 'users.php' ) ) . '"', __( 'Friends &amp; Requests', 'friends' ) ) . '</p>',
+								// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
+						'<p>' . sprintf( __( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ), '"' . esc_attr( self_admin_url( 'users.php' ) ) . '"', __( 'Friends &amp; Requests', 'friends' ) ) . '</p>',
 					)
 				);
 				break;
@@ -386,7 +386,7 @@ class Friends_Admin {
 					'name'     => $current_user->display_name,
 					'url'      => site_url(),
 					'icon_url' => get_avatar_url( $current_user->ID ),
-					'message'  => $message,
+					'message'  => mb_substr( trim( $message ), 0, 2000 ),
 					'key'      => $future_in_token,
 				),
 				'timeout'     => 20,
@@ -464,10 +464,10 @@ class Friends_Admin {
 	public function admin_edit_user_link( $link, $user_id ) {
 		$user = new WP_User( $user_id );
 		if (
-		! $user->has_cap( 'friend_request' ) &&
-		! $user->has_cap( 'pending_friend_request' ) &&
-		! $user->has_cap( 'friend' ) &&
-		! $user->has_cap( 'subscription' )
+			! $user->has_cap( 'friend_request' ) &&
+			! $user->has_cap( 'pending_friend_request' ) &&
+			! $user->has_cap( 'friend' ) &&
+			! $user->has_cap( 'subscription' )
 		) {
 			return $link;
 		}
@@ -609,10 +609,10 @@ class Friends_Admin {
 		}
 
 		if (
-		! $friend->has_cap( 'friend_request' ) &&
-		! $friend->has_cap( 'pending_friend_request' ) &&
-		! $friend->has_cap( 'friend' ) &&
-		! $friend->has_cap( 'subscription' )
+			! $friend->has_cap( 'friend_request' ) &&
+			! $friend->has_cap( 'pending_friend_request' ) &&
+			! $friend->has_cap( 'friend' ) &&
+			! $friend->has_cap( 'subscription' )
 		) {
 			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
 		}
@@ -658,10 +658,10 @@ class Friends_Admin {
 		$rules     = $friend->get_feed_rules();
 		?>
 		<h1>
-		<?php
-		// translators: %s is the name of a friend.
-		printf( __( 'Rules for %s', 'friends' ), esc_html( $friend->display_name ) );
-		?>
+			<?php
+			// translators: %s is the name of a friend.
+			printf( __( 'Rules for %s', 'friends' ), esc_html( $friend->display_name ) );
+			?>
 		</h1>
 		<?php
 
@@ -742,10 +742,10 @@ class Friends_Admin {
 		}
 
 		if (
-		! $friend->has_cap( 'friend_request' ) &&
-		! $friend->has_cap( 'pending_friend_request' ) &&
-		! $friend->has_cap( 'friend' ) &&
-		! $friend->has_cap( 'subscription' )
+			! $friend->has_cap( 'friend_request' ) &&
+			! $friend->has_cap( 'pending_friend_request' ) &&
+			! $friend->has_cap( 'friend' ) &&
+			! $friend->has_cap( 'subscription' )
 		) {
 			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
 		}
@@ -768,12 +768,16 @@ class Friends_Admin {
 			}
 		} elseif ( isset( $_GET['add-friend'] ) && wp_verify_nonce( $_GET['add-friend'], 'add-friend-' . $friend->ID ) ) {
 			if ( $friend->has_cap( 'pending_friend_request' ) || $friend->has_cap( 'subscription' ) ) {
-				$response = $this->send_friend_request( $friend->user_url );
+				$rest_url = $this->friends->rest->discover_rest_url( $friend->user_url );
+				if ( ! is_wp_error( $rest_url ) ) {
+					$response = $this->send_friend_request( $rest_url, $friend->user_login, $friend->user_url );
+				} else {
+					$response = $rest_url;
+				}
+
 				if ( is_wp_error( $response ) ) {
 					$arg = 'error';
-				} elseif ( $response instanceof Friends_Multiple_Feeds ) {
-
-				} elseif ( $response instanceof WP_User ) {
+				} elseif ( $response instanceof Friend_User ) {
 					if ( $response->has_cap( 'pending_friend_request' ) ) {
 						$arg = 'sent-request';
 						// translators: %s is a Site URL.
@@ -897,36 +901,38 @@ class Friends_Admin {
 	 * Previous process the Add Friend form. Todo: re-integrate.
 	 *
 	 * @param      Friend_User $friend_user  The Friend user.
+	 * @param      array       $vars         The variables from the admin
+	 *                                       submission.
 	 *
-	 * @return     boolean  ( description_of_the_return_value )
+	 * @return     boolean      true when there was no error.
 	 */
-	function process_admin_add_friend_response( $friend_user ) {
+	function process_admin_add_friend_response( $friend_user, $vars ) {
 		if ( is_wp_error( $friend_user ) ) {
 			?>
 			<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend_user->get_error_message() ); ?></p>
-			<?php
-			$error_data = $friend_user->get_error_data();
-			if ( isset( $error_data->error ) ) {
-				$error = unserialize( $error_data->error );
-				if ( is_wp_error( $error ) ) {
-					?>
-					<pre>
-					<?php
-					print_r( $error );
-					?>
-					</pre>
-					<?php
-				} elseif ( is_array( $error ) && isset( $error['body'] ) ) {
-					?>
-					<textarea>
-					<?php
-					echo esc_html( $error['body'] );
-					?>
-					</textarea>
-					<?php
+				<?php
+				$error_data = $friend_user->get_error_data();
+				if ( isset( $error_data->error ) ) {
+					$error = unserialize( $error_data->error );
+					if ( is_wp_error( $error ) ) {
+						?>
+						<pre>
+							<?php
+							print_r( $error );
+							?>
+						</pre>
+						<?php
+					} elseif ( is_array( $error ) && isset( $error['body'] ) ) {
+						?>
+						<textarea>
+							<?php
+							echo esc_html( $error['body'] );
+							?>
+						</textarea>
+						<?php
+					}
 				}
-			}
-			?>
+				?>
 			</div>
 			<?php
 			return false;
@@ -935,27 +941,42 @@ class Friends_Admin {
 		if ( ! $friend_user instanceof Friend_User ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-			<?php
-			// translators: %s is a username.
-			esc_html_e( 'Unknown error', 'friends' );
-			?>
+				<?php
+				// translators: %s is a username.
+				esc_html_e( 'Unknown error', 'friends' );
+				?>
 			</p></div>
 			<?php
 			return false;
+		}
+
+		$feed_options = array();
+		foreach ( $var['feeds'] as $feed ) {
+			$feed_options[ $feed['url'] ] = $feed;
+		}
+
+		$count = 0;
+		foreach ( $vars['subscribe'] as $feed_url ) {
+			if ( ! isset( $feed_options[ $feed_url ] ) ) {
+				continue;
+			}
+
+			$friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
+			$count += 1;
 		}
 
 		$friend_link = '<a href="' . esc_url( $friend_user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->user_url ) . '</a>';
 		if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-			<?php
-			// translators: %s is a Site URL.
-			echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-			// translators: %s is a Site URL.
-			echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-			// translators: %s is the friends page URL.
-			echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-			?>
+				<?php
+				// translators: %s is a Site URL.
+				echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+				// translators: %s is a Site URL.
+				echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+				// translators: %s is the friends page URL.
+				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+				?>
 			</p></div>
 			<?php
 			return true;
@@ -964,12 +985,12 @@ class Friends_Admin {
 		if ( $friend_user->has_cap( 'friend' ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-			<?php
-			// translators: %s is a Site URL.
-			echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-			// translators: %s is the friends page URL.
-			echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-			?>
+				<?php
+				// translators: %s is a Site URL.
+				echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+				// translators: %s is the friends page URL.
+				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+				?>
 			</p></div>
 			<?php
 			return true;
@@ -978,26 +999,26 @@ class Friends_Admin {
 		if ( $friend_user->has_cap( 'subscription' ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
-			<?php
-			if ( isset( $_POST['request-friendship'] ) ) {
-				// translators: %s is a Site URL.
-				echo wp_kses( sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-				echo ' ';
-			}
-			esc_html_e( 'We subscribed you to their updates.', 'friends' );
-			// translators: %s is the friends page URL.
-			echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-			?>
+				<?php
+				if ( isset( $_POST['request-friendship'] ) ) {
+					// translators: %s is a Site URL.
+					echo wp_kses( sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+					echo ' ';
+				}
+				esc_html_e( 'We subscribed you to their updates.', 'friends' );
+				// translators: %s is the friends page URL.
+				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+				?>
 			</p></div>
 			<?php
 			return true;
 		}
 		?>
 		<div id="message" class="updated notice is-dismissible"><p>
-		<?php
-		// translators: %s is a username.
-		echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $friend_user->display_name ) );
-		?>
+			<?php
+			// translators: %s is a username.
+			echo esc_html( sprintf( __( 'User %s could not be assigned the appropriate role.', 'friends' ), $friend_user->display_name ) );
+			?>
 		</p></div>
 		<?php
 		return false;
@@ -1016,6 +1037,7 @@ class Friends_Admin {
 		$friend_user_login = Friend_User::get_user_login_for_url( $friend_url );
 		$friend_roles = $this->get_friend_roles();
 		$default_role = get_option( 'friends_default_friend_role', 'friend' );
+		$post_formats = get_post_format_strings();
 		$registered_parsers = Friends::get_instance()->feed->get_registered_parsers();
 
 		$errors = new WP_Error();
@@ -1026,7 +1048,10 @@ class Friends_Admin {
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is invalid because it uses illegal characters. Please enter a valid username.' ) );
 			} elseif ( username_exists( $friend_user_login ) ) {
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is already registered. Please choose another one.' ) );
+			} elseif ( empty( $vars['subscribe'] ) && empty( $vars['friendship'] ) ) {
+				$errors->add( 'no_action', __( '<strong>Error</strong>: Nothing to subscribe selected.' ) );
 			}
+
 			$codeword = trim( $vars['codeword'] );
 			$message = trim( $vars['message'] );
 			$feeds = $vars['feeds'];
@@ -1035,13 +1060,12 @@ class Friends_Admin {
 				if ( isset( $vars['friendship'] ) ) {
 					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $codeword, $message );
 				} else {
-					$friend_user = Friend_User::create( $friend_user_login, 'pending_friend_request' );
+					$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url );
 					if ( is_wp_error( $friend_user ) ) {
 						$errors = $friend_user;
 					}
 				}
-				var_dump( $vars );
-				exit;
+				return process_admin_add_friend_response( $friend_user, $vars );
 			}
 		} else {
 			$protocol = wp_parse_url( $friend_url, PHP_URL_SCHEME );
@@ -1318,7 +1342,7 @@ class Friends_Admin {
 		}
 
 		if ( $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'subscription' ) ) {
-			$link = self_admin_url( wp_nonce_url( 'admin.php?page=add-friend&url=' . $user->user_url ) );
+			$link = wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ), 'add-friend-' . $user->ID, 'add-friend' );
 			if ( $user->has_cap( 'pending_friend_request' ) ) {
 				$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
 			} elseif ( $user->has_cap( 'subscription' ) ) {
@@ -1591,8 +1615,8 @@ class Friends_Admin {
 				<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Add friend', 'friends' ); ?></a>
 				<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Subscribe', 'friends' ); ?></a>
 			</p>
-			</div>
 		</div>
+	</div>
 		<?php
 	}
 

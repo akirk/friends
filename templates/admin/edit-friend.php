@@ -18,7 +18,7 @@
 				<td>
 					<ul>
 					<?php foreach ( $friend->get_feeds() as $feed ) : ?>
-						<li><?php echo esc_html( $feed->get_url() ); ?></li>
+						<li><?php echo esc_html( $feed->get_url() . ' → ' . $feed->get_post_format() ); ?></li>
 					<?php endforeach; ?>
 					</ul>
 			</tr>
@@ -69,12 +69,12 @@
 					<?php elseif ( $friend->has_cap( 'pending_friend_request' ) ) : ?>
 						<?php echo esc_html( _x( 'Pending Friend Request', 'User role', 'friends' ) ); ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=send-friend-request&url=' . $friend->user_url ) ), 'send-friend-request-' . $friend->ID, 'send-friend-request' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'add-friend-' . $friend->ID, 'add-friend' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
 						</p>
 					<?php elseif ( $friend->has_cap( 'subscription' ) ) : ?>
 						<?php echo esc_html( _x( 'Subscription', 'User role', 'friends' ) ); ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=send-friend-request&url=' . $friend->user_url ) ), 'send-friend-request-' . $friend->ID, 'send-friend-request' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'add-friend-' . $friend->ID, 'add-friend' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
 							<?php _e( 'or' ); ?>
 							<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=suggest-friends-plugin&user=' . $friend->ID ) ); ?>"><?php esc_html_e( 'Suggest Friends Plugin', 'friends' ); ?></a>
 						</p>

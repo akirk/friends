@@ -159,10 +159,19 @@ class Friend_User extends WP_User {
 			'title'       => $this->display_name . ' RSS Feed',
 		);
 
+		$feed_options = array();
+		foreach ( $default_options as $key => $value ) {
+			if ( isset( $options[ $key ] ) ) {
+				$feed_options[ $key ] = $options[ $key ];
+			} else {
+				$feed_options[ $key ] = $value;
+			}
+		}
+
 		$feed = Friend_User_Feed::save(
 			$this,
 			$feed_url,
-			array_merge( $default_options, $options )
+			$feed_options
 		);
 
 		return $feed;

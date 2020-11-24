@@ -50,6 +50,13 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 			$feed_details['autoselect'] = false;
 		}
 
+		foreach ( get_post_format_strings() as $format => $title ) {
+			if ( preg_match( '/\b' . preg_quote( $format, '/' ) . '\b/i', $feed_details['url'] ) ) {
+				$feed_details['post-format'] = $format;
+				break;
+			}
+		}
+
 		return $feed_details;
 	}
 
