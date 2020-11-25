@@ -506,7 +506,7 @@ class Friends_Admin {
 			return;
 		}
 
-		foreach ( array( 'ignore_incoming_friend_requests', 'ignore_recommendations' ) as $checkbox ) {
+		foreach ( array( 'ignore_incoming_friend_requests', 'ignore_recommendations', 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {

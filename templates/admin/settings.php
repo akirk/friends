@@ -99,6 +99,24 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 				</td>
 			</tr>
 			<tr>
+				<th scope="row"><?php esc_html_e( 'Post Formats', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="force_enable_post_formats">
+							<input name="force_enable_post_formats" type="checkbox" id="force_enable_post_formats" value="1" <?php checked( '1', get_option( 'friends_force_enable_post_formats' ) ); ?>>
+							<?php esc_html_e( 'Always enable Post Formats, regardless of the theme support.', 'friends' ); ?>
+						</label><br/>
+						<label for="expose_post_format_feeds">
+							<input name="expose_post_format_feeds" type="checkbox" id="expose_post_format_feeds" value="1" <?php checked( '1', get_option( 'friends_expose_post_format_feeds' ) ); ?>>
+							<?php
+							// translators: %s is a HTML snippet.
+							echo wp_kses( sprintf( __( 'Expose post formats as alternate feeds on your homepage (as %s).', 'friends' ), '<code>&lt;link rel="alternate"/ &gt;</code>' ), array( 'code' => array() ) );
+							?>
+						</label>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row"><?php esc_html_e( 'Recommendations', 'friends' ); ?></th>
 				<td>
 					<fieldset>

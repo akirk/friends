@@ -46,7 +46,7 @@ $c = -1;
 						<?php
 						foreach ( $friend_roles as $role => $title ) :
 							?>
-							<option value="<?php echo esc_attr( $role ); ?>" <?php selected( $default_role, $role ); ?>><?php echo esc_html( $title ); ?></option>
+							<option value="<?php echo esc_attr( $role ); ?>"<?php selected( $default_role, $role ); ?>><?php echo esc_html( $title ); ?></option>
 						<?php endforeach; ?>
 					</select></label>
 					<p class="description">
@@ -94,13 +94,18 @@ $c = -1;
 						<?php $c += 1; ?>
 						<li>
 							<?php foreach ( $details as $key => $value ) : ?>
+								<?php
+								if ( 'post-format' === $key ) {
+									continue;
+								}
+								?>
 								<input type="hidden" name="feeds[<?php echo esc_attr( $c ); ?>][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $value ); ?>" />
 							<?php endforeach; ?>
 							<label><input type="checkbox" name="subscribe[]" value="<?php echo esc_attr( $feed_url ); ?>" <?php echo ( isset( $details['autoselect'] ) && $details['autoselect'] ) ? ' checked' : ''; ?> />
 								<?php
 								$select = '<select name="feeds[' . esc_attr( $c ) . '][post-format]">';
 								foreach ( $post_formats as $format => $title ) {
-									$select .= '<option value="' . esc_attr( $format ) . '" ' . selected( $details['post-format'], $format, false ) . '>' . esc_html( $title ) . '</option>';
+									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $details['post-format'], $format, false ) . '>' . esc_html( $title ) . '</option>';
 								}
 								$select .= '</select>';
 
@@ -112,8 +117,13 @@ $c = -1;
 										$select
 									),
 									array(
-										'select' => array( 'name' => array() ),
-										'option' => array( 'value' => array() ),
+										'select' => array(
+											'name' => array(),
+										),
+										'option' => array(
+											'value'    => array(),
+											'selected' => array(),
+										),
 										'a'      => array(
 											'href'   => array(),
 											'rel'    => array(),

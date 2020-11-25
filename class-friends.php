@@ -124,7 +124,9 @@ class Friends {
 		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
+		add_filter( 'wp_head', array( $this, 'html_link_rel_alternate_post_formats' ) );
 		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
+		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 	}
 
 	/**
@@ -446,17 +448,53 @@ class Friends {
 	}
 
 	/**
+	 * Enables the post formats.
+	 */
+	public function enable_post_formats() {
+		if ( get_option( 'friends_force_enable_post_formats' ) ) {
+			add_theme_support( 'post-formats', get_post_format_strings() );
+		}
+	}
+
+	/**
+	 * Output the alternate post formats as a link in the HTML head.
+	 */
+	public static function html_link_rel_alternate_post_formats() {
+		if ( get_option( 'friends_expose_post_format_feeds' ) && current_theme_supports( 'post-formats' ) ) {
+			echo implode( PHP_EOL, self::get_html_link_rel_alternate_post_formats() ), PHP_EOL;
+		}
+	}
+
+	/**
+	 * Generate link tag(s) with the alternate post formats.
+	 */
+	public static function get_html_link_rel_alternate_post_formats() {
+		$separator = _x( '&raquo;', 'feed link' );
+		$blog_title = get_bloginfo( 'name' );
+
+		$links = array();
+		foreach ( get_post_format_strings() as $format => $title ) {
+			// translators: 1: Blog title, 2: Separator (raquo), 3: Post Format.
+			$title = sprintf( __( '%1$s %2$s %3$s Feed', 'friends' ), $blog_title, $separator, $title );
+			$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( site_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
+		}
+
+		return $links;
+	}
+
+
+	/**
 	 * Output the friends base URL as a link in the HTML head.
 	 */
 	public static function html_link_rel_friends_base_url() {
-		echo self::get_html_link_rel_friends_base_url();
+		echo self::get_html_link_rel_friends_base_url(), PHP_EOL;
 	}
 
 	/**
 	 * Generate a link tag with the friends base URL
 	 */
 	public static function get_html_link_rel_friends_base_url() {
-		return '<link rel="friends-base-url" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" type="application/wp-friends-plugin" />';
+		return '<link rel="friends-base-url" type="application/wp-friends-plugin" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" />';
 	}
 
 	/**
