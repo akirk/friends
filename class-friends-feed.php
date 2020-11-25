@@ -102,6 +102,28 @@ class Friends_Feed {
 	}
 
 	/**
+	 * Preview a URL using a parser.
+	 *
+	 * @param      string $parser  The parser slug.
+	 * @param      string $url     The url.
+	 *
+	 * @return     array  The feed items.
+	 */
+	public function preview( $parser, $url ) {
+		if ( ! isset( $this->parsers[ $parser ] ) ) {
+			return new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied', 'friends' ) );
+		}
+
+		$items = $this->parsers[ $parser ]->fetch_feed( $url );
+
+		if ( ! is_wp_error( $items ) && empty( $items ) ) {
+			$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
+		}
+
+		return $items;
+	}
+
+	/**
 	 * Retrieve posts from a remote WordPress for a friend.
 	 *
 	 * @param  Friend_User $friend_user A single user to fetch.
@@ -542,7 +564,6 @@ class Friends_Feed {
 				'redirection' => 1,
 			)
 		);
-
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			return $discovered_feeds;
 		}
@@ -621,7 +642,10 @@ class Friends_Feed {
 			}
 
 			$link_url = $link->getAttribute( 'href' );
-			if ( ! is_string( $link_url ) || isset( $discovered_feeds[ $link_url ] ) || ! Friends::check_url( $link_url ) ) {
+			if ( ! is_string( $link_url ) || isset( $discovered_feeds[ $link_url ] ) ) {
+				continue;
+			}
+			if ( false === parse_url( $href ) ) {
 				continue;
 			}
 

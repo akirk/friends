@@ -51,12 +51,11 @@ abstract class Friends_Feed_Parser {
 	/**
 	 * Fetches a feed and returns the processed items.
 	 *
-	 * @param      string           $url        The url.
-	 * @param      Friend_User_Feed $user_feed  The user feed.
+	 * @param      string $url        The url.
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url, Friend_User_Feed $user_feed ) {
+	public function fetch_feed( $url ) {
 		return array();
 	}
 }

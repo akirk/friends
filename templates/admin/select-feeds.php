@@ -13,7 +13,7 @@ $c = -1;
 		// translators: %s is a URL.
 		echo wp_kses(
 			// translators: %1$s is a URL, %2$s is an admin link.
-			sprintf( __( 'You\'re looking to add the URL %1$s (<a href="%2$s">edit</a>). The site has been analyzed and you now have the following options:', 'friends' ), '<strong>' . esc_html( $friend_url ) . '</strong>', admin_url( 'admin.php?page=add-friend' ) ),
+			sprintf( __( 'You\'re looking to add the URL %1$s (<a href=%2$s>edit</a>). The site has been analyzed and you now have the following options:', 'friends' ), '<strong>' . esc_html( $friend_url ) . '</strong>', '"' . admin_url( 'admin.php?page=add-friend' ) . '"' ),
 			array(
 				'strong' => array(),
 				'a'      => array( 'href' => array() ),
@@ -111,9 +111,10 @@ $c = -1;
 
 								echo wp_kses(
 									sprintf(
-									// translators: %1$s is a link to a feed with its name as text, %2$s is a select dropdown with post formats.
-										esc_html( __( 'Subscribe %1$s as %2$s', 'friends' ) ),
+									// translators: 1: is a link to a feed with its name as text, 2: url for a preview, 3: a select dropdown with post formats.
+										__( 'Subscribe %1$s (<a href=%2$s>preview</a>) as %3$s', 'friends' ),
 										'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>',
+										'"' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . $details['parser'] . '&preview=' . urlencode( $feed_url ) ) ), 'preview-feed-' . $feed_url ) ) . '" target="_blank"',
 										$select
 									),
 									array(

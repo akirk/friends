@@ -1146,6 +1146,46 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Sorry, you are not allowed to send friend requests.', 'friends' ) );
 		}
 
+		if ( ! empty( $_GET['preview'] ) ) {
+			$url = $_GET['preview'];
+			if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'preview-feed-' . $url ) ) {
+				?>
+				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'For security reasons, this preview is not available.', 'friends' ); ?></p>
+				</div>
+				<?php
+				exit;
+			}
+			?>
+			<h1>
+			<?php
+			// translators: %s is a URL.
+			echo esc_html( sprintf( __( 'Preview for %s', 'friends' ), $url ) );
+			?>
+			</h1>
+			<?php
+
+			$items = $this->friends->feed->preview( $_GET['parser'], $url );
+			if ( is_wp_error( $items ) ) {
+				?>
+				<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $items->get_error_message() ); ?></p>
+				</div>
+				<?php
+				exit;
+			}
+			?>
+			<ul>
+			<?php
+			foreach ( $items as $item ) {
+				?>
+				<li><?php echo esc_html( $item->date ); ?>: <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a></li>
+				<?php
+			}
+			?>
+			</ul>
+			<?php
+			exit;
+		}
+
 		$friend_url = '';
 		if ( apply_filters( 'friends_debug', false ) && isset( $_GET['next'] ) ) {
 			$_POST = $_REQUEST;

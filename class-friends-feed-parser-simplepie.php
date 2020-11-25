@@ -129,17 +129,15 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	/**
 	 * Fetches a feed and returns the processed items.
 	 *
-	 * @param      string           $url        The url.
-	 * @param      Friend_User_Feed $user_feed  The user feed.
+	 * @param      string $url        The url.
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url, Friend_User_Feed $user_feed ) {
+	public function fetch_feed( $url ) {
 		// Use SimplePie which is bundled with WordPress.
 		$feed = fetch_feed( $url );
 		if ( is_wp_error( $feed ) ) {
-			do_action( 'friends_retrieve_friends_error', $user_feed, $feed, $user_feed->get_friend_user() );
-			return false;
+			return $feed;
 		}
 
 		foreach ( $feed->get_items() as $item ) {
@@ -167,8 +165,8 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 
 			$feed_item->comments_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
 
-			$item->date         = $item->get_gmdate( 'Y-m-d H:i:s' );
-			$item->updated_date = $item->get_updated_gmdate( 'Y-m-d H:i:s' );
+			$feed_item->date         = $item->get_gmdate( 'Y-m-d H:i:s' );
+			$feed_item->updated_date = $item->get_updated_gmdate( 'Y-m-d H:i:s' );
 
 			$feed_items[] = $feed_item;
 		}
