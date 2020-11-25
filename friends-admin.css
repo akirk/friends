@@ -1,13 +1,17 @@
 .friends-notice b.headline {
 	font-size: 110%;
 }
-.friends-notice b.headline:before {
+#friends-welcome-panel {
+	padding: 10px;
+	padding-top: 23px;
+}
+.friends-notice b.headline:before, #friends-welcome-panel h2:before {
 	content: "\f307";
 	color: #82878c;
-	font: normal 20px/1 dashicons;
+	font-family: dashicons;
 	speak: none;
 	display: inline-block;
-	padding: 0 10px 0 0;
+	padding: 0 5px 0 0;
 	position: relative;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;

@@ -9,6 +9,25 @@ jQuery( function( $ ) {
 		}
 	} );
 
+	var welcomePanel = $( '#friends-welcome-panel' ),
+		updateWelcomePanel;
+
+	updateWelcomePanel = function( visible ) {
+		$.post( ajaxurl, {
+			action: 'update-welcome-panel',
+			visible: visible,
+			welcomepanelnonce: $( '#welcomepanelnonce' ).val()
+		});
+	};
+
+
+	// Hide the welcome panel when the dismiss button or close button is clicked.
+	$('.welcome-panel-close, .welcome-panel-dismiss a', welcomePanel).click( function(e) {
+		e.preventDefault();
+		welcomePanel.addClass('hidden');
+		updateWelcomePanel( 0 );
+	});
+
 	jQuery( document ).on( 'click', 'a#send-friends-advanced', function() {
 		jQuery( 'tr.friends-advanced' ).removeClass( 'hidden' ).first().find( 'input:visible:first' ).focus();
 		jQuery( this ).remove();

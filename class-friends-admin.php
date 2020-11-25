@@ -49,6 +49,7 @@ class Friends_Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
+		add_action( 'wp_ajax_friends_update_welcome_panel', array( $this, 'ajax_update_welcome_panel' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
@@ -60,23 +61,6 @@ class Friends_Admin {
 	}
 
 	/**
-	 * Display an admin notice.
-	 *
-	 * @param string $short_notice The message to display on the first line of the notice beside "Friends".
-	 * @param string $long_notice The message to display below the "Friends" line.
-	 * @param string $type The type of the message (error, warning, or success).
-	 */
-	private function show_admin_notice( $short_notice, $long_notice, $type = 'error' ) {
-
-		?>
-		<div class="friends-notice notice notice-<?php echo $type; ?>">
-			<p style="max-width:800px;"><?php echo $short_notice; // WPCS: xss ok. ?></p>
-			<p style="max-width:800px;"><?php echo $long_notice; // WPCS: xss ok. ?></p>
-		</div>
-		<?php
-	}
-
-	/**
 	 * Display admin notice about an unsupported permalink structure
 	 */
 	public function admin_notice_unsupported_permalink_structure() {
@@ -85,13 +69,18 @@ class Friends_Admin {
 		if ( 'plugins' !== $screen->id ) {
 			return;
 		}
-		$short_notice = '<b>' . __( 'Friends', 'friends' ) . '</b> ';
-		$short_notice .= __( '&#151; You are running an unsupported permalink structure.', 'friends' );
-		// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
-		$long_notice = __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' );
-		$long_notice = sprintf( $long_notice, admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) );
 
-		$this->show_admin_notice( $short_notice, $long_notice );
+		?>
+		<div class="friends-notice notice notice-error">
+			<p style="max-width:800px;"><b><?php esc_html_e( 'Friends', 'friends' ); ?></b><?php esc_html_e( '&#151; You are running an unsupported permalink structure.', 'friends' ); ?></p>
+			<p style="max-width:800px;">
+			<?php
+			// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
+			echo wp_kses( sprintf( __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' ), admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) ) );
+			?>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**
@@ -104,23 +93,47 @@ class Friends_Admin {
 			return;
 		}
 
+		$option = (int) get_user_meta( get_current_user_id(), 'friends_show_welcome_panel', true );
+		// 0 = hide, 1 = toggled to show or single site creator, 2 = multisite site owner.
+		if ( 0 === $option || ( 2 === $option && wp_get_current_user()->user_email !== get_option( 'admin_email' ) ) ) {
+			return;
+		}
+
 		$friends_subscriptions = Friend_User_Query::all_friends_subscriptions();
 		if ( $friends_subscriptions->get_total() ) {
 			return;
 		}
 
-		$short_notice = '<b class="headline">' . __( 'Welcome to the Friends Plugin!', 'friends' ) . '</b>';
-		$long_notice = '<p>' . __( "You're seeing this message because you haven't connected with friends or made any subscriptions yet. Here is how to get started:", 'friends' ) . '</p>';
-		$long_notice .= '<p>' . __( 'The Friends plugin is all about connecting with friends and news.', 'friends' );
-		// translators: 1: URL to add-friend, 2: the name of the Send Friend Request page.
-		$long_notice .= ' ' . sprintf( __( "First, you'll want to go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website or blog you'd like to subscribe to.", 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', __( 'Send Friend Request', 'friends' ) );
-		// translators: %s is the URL of the user's friends page.
-		$long_notice .= ' ' . sprintf( __( "As soon as you have done this, you'll be able see all the compiled posts of your friends (and subscriptions) on your <a href=%s>Friends page</a>.", 'friends' ), site_url( '/friends/' ) ) . '</p>';
+		?>
+			<div id="friends-welcome-panel" class="welcome-panel notice">
+			<?php wp_nonce_field( 'friends-welcome-panel-nonce', 'friendswelcomepanelnonce', false ); ?>
+			<a class="welcome-panel-close" href="<?php echo esc_url( admin_url( '?friends-welcome=0' ) ); ?>" aria-label="<?php esc_attr_e( 'Dismiss the welcome panel' ); ?>"><?php _e( 'Dismiss' ); ?></a>
+			<div class="welcome-panel-content">
+				<h2><?php esc_html_e( 'Welcome to the Friends Plugin!', 'friends' ); ?></h2>
+				<p><?php esc_html_e( "You're seeing this message because you haven't connected with friends or made any subscriptions yet. Here is how to get started:", 'friends' ); ?></p>
 
-		$long_notice .= '<p>' . __( 'Furthermore, your friends will be able to see your private posts. This means you can submit posts on your own blog that only they will be able to see and vica versa.', 'friends' ) . ' ';
-		$long_notice .= __( 'This allows building your own decentralized social network, no third party involved.', 'friends' ) . '</p>';
+				<p>
+				<?php
+				esc_html_e( 'The Friends plugin is all about connecting with friends and news.', 'friends' );
+				echo ' ';
+				// translators: 1: URL to add-friend, 2: the name of the Send Friend Request page.
+				echo wp_kses( sprintf( __( "First, you'll want to go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website or blog you'd like to subscribe to.", 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', __( 'Send Friend Request', 'friends' ) ), array( 'a' => array( 'href' => array() ) ) );
+				echo ' ';
+				// translators: %s is the URL of the user's friends page.
+				echo wp_kses( sprintf( __( "As soon as you have done this, you'll be able see all the compiled posts of your friends (and subscriptions) on your <a href=%s>Friends page</a>.", 'friends' ), site_url( '/friends/' ) ), array( 'a' => array( 'href' => array() ) ) );
+				?>
+				</p>
 
-		$this->show_admin_notice( $short_notice, $long_notice, '' );
+				<p>
+				<?php
+				esc_html_e( 'Furthermore, your friends will be able to see your private posts. This means you can submit posts on your own blog that only they will be able to see and vica versa.', 'friends' );
+				echo ' ';
+				esc_html_e( 'This allows building your own decentralized social network, no third party involved.', 'friends' );
+				?>
+				</p>
+			</div>
+		</div>
+		<?php
 	}
 
 	/**
@@ -695,8 +708,28 @@ class Friends_Admin {
 	 * Respond to the Ajax request to the Friend rules preview
 	 */
 	public function ajax_preview_friend_rules() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_die( -1 );
+		}
+
 		$this->render_preview_friend_rules( $_POST['rules'], $_POST['catch_all'] );
-		exit;
+		wp_die( 1 );
+	}
+
+
+	/**
+	 * Respond to the Ajax request to the Friend Welcome Panel
+	 */
+	public function ajax_update_welcome_panel() {
+		check_ajax_referer( 'friends-welcome-panel-nonce', 'friendswelcomepanelnonce' );
+
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_die( -1 );
+		}
+
+		update_user_meta( get_current_user_id(), 'friends_show_welcome_panel', empty( $_POST['visible'] ) ? 0 : 1 );
+
+		wp_die( 1 );
 	}
 
 	/**
