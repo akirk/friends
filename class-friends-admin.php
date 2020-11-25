@@ -93,9 +93,7 @@ class Friends_Admin {
 			return;
 		}
 
-		$option = (int) get_user_meta( get_current_user_id(), 'friends_show_welcome_panel', true );
-		// 0 = hide, 1 = toggled to show or single site creator, 2 = multisite site owner.
-		if ( 0 === $option || ( 2 === $option && wp_get_current_user()->user_email !== get_option( 'admin_email' ) ) ) {
+		if ( ! get_user_meta( get_current_user_id(), 'friends_show_welcome_panel', true ) ) {
 			return;
 		}
 
