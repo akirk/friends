@@ -33,6 +33,13 @@ class Friends_Feed {
 	private $parsers = array();
 
 	/**
+	 * These parsers cannot be registered.
+	 *
+	 * @var        array
+	 */
+	private $reservered_parser_slugs = array( 'friends', 'unsupported' );
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -70,7 +77,7 @@ class Friends_Feed {
 	 * @param      Friends_Feed_Parser $parser  The parser that extends the Friends_Feed_Parser class.
 	 */
 	public function register_parser( $slug, Friends_Feed_Parser $parser ) {
-		if ( 'friends' === $slug ) {
+		if ( in_array( $slug, $this->reservered_parser_slugs, true ) ) {
 			// translators: %s is the slug of a parser.
 			return new WP_Error( 'resevered-slug', sprintf( __( 'The slug "%s" cannot be used.', 'friends' ), $slug ) );
 		}
@@ -89,7 +96,7 @@ class Friends_Feed {
 	 * @param      string $slug    The slug.
 	 */
 	public function unregister_parser( $slug ) {
-		if ( 'friends' !== $slug ) {
+		if ( ! in_array( $slug, $this->reservered_parser_slugs, true ) ) {
 			unset( $this->parsers[ $slug ] );
 		}
 	}
@@ -576,21 +583,34 @@ class Friends_Feed {
 		$headers = wp_remote_retrieve_headers( $response );
 
 		// We'll determine the obvious feeds ourself.
-		$available_feeds  = array();
-		$discovered_feeds = $this->discover_link_rel_feeds( $content, $url, $headers );
+		$available_feeds = $this->discover_link_rel_feeds( $content, $url, $headers );
 
-		foreach ( $discovered_feeds as $link_url => $feed ) {
+		if ( empty( $available_feeds ) ) {
+			$available_feeds[ $url ] = array(
+				'url'  => $url,
+				'type' => $headers->{'content-type'},
+			);
+		}
+
+		foreach ( $available_feeds as $link_url => $feed ) {
+			$feed['url'] = $link_url;
+			$available_feeds[ $link_url ]['url'] = $link_url;
 			if ( 'friends-base-url' === $feed['rel'] ) {
-				$available_feeds[ $link_url ] = $feed;
 				$available_feeds[ $link_url ]['parser'] = 'friends';
-				$available_feeds[ $link_url ]['url'] = $link_url;
 				continue;
 			}
+
+			if ( empty( $feed['title'] ) ) {
+				$host = wp_parse_url( $link_url, PHP_URL_HOST );
+				$path = wp_parse_url( $link_url, PHP_URL_PATH );
+
+				$feed['title'] = trim( preg_replace( '#^www\.#i', '', preg_replace( '#[^a-z0-9.:-]#i', ' ', ucwords( $host . ': ' . $path ) ) ), ': ' );
+				$available_feeds[ $link_url ]['title'] = $feed['title'];
+			}
+
 			foreach ( $this->parsers as $slug => $parser ) {
 				if ( $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
-					$available_feeds[ $link_url ] = $feed;
 					$available_feeds[ $link_url ]['parser'] = $slug;
-					$available_feeds[ $link_url ]['url'] = $link_url;
 					$available_feeds[ $link_url ] = $parser->update_feed_details( $available_feeds[ $link_url ] );
 					if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
 						$new_url = $available_feeds[ $link_url ]['url'];
@@ -600,6 +620,8 @@ class Friends_Feed {
 					continue 2;
 				}
 			}
+
+			$available_feeds[ $link_url ]['parser'] = 'unsupported';
 		}
 
 		foreach ( $this->parsers as $slug => $parser ) {
@@ -637,7 +659,12 @@ class Friends_Feed {
 		$discovered_feeds = array();
 		foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
 			$rel = $link->getAttribute( 'rel' );
-			if ( 'alternate' !== $rel && 'me' !== $rel && 'friends-base-url' !== $rel ) {
+			if ( 'alternate' === $rel ) {
+				$hreflang = $link->getAttribute( 'hreflang' );
+				if ( $hreflang ) {
+					continue;
+				}
+			} elseif ( 'me' !== $rel && 'friends-base-url' !== $rel ) {
 				continue;
 			}
 

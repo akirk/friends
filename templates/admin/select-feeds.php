@@ -6,6 +6,14 @@
  */
 
 $c = -1;
+$unsupported_feeds = array();
+foreach ( $feeds as $feed_url => $details ) {
+	if ( 'unsupported' === $details['parser'] ) {
+		$unsupported_feeds[ $feed_url ] = $details;
+		unset( $feeds[ $feed_url ] );
+	}
+}
+
 ?><div class="wrap"><form method="post">
 	<?php wp_nonce_field( 'add-friend' ); ?>
 	<p>
@@ -13,7 +21,7 @@ $c = -1;
 		// translators: %s is a URL.
 		echo wp_kses(
 			// translators: %1$s is a URL, %2$s is an admin link.
-			sprintf( __( 'You\'re looking to add the URL %1$s (<a href=%2$s>edit</a>). The site has been analyzed and you now have the following options:', 'friends' ), '<strong>' . esc_html( $friend_url ) . '</strong>', '"' . admin_url( 'admin.php?page=add-friend' ) . '"' ),
+			sprintf( __( 'You\'re looking to add the URL %1$s (<a href=%2$s>edit</a>). The site has been analyzed and you now have the following options:', 'friends' ), '<strong>' . esc_html( $friend_url ) . '</strong>', '"' . admin_url( 'admin.php?page=add-friend&url=' . $friend_url ) . '"' ),
 			array(
 				'strong' => array(),
 				'a'      => array( 'href' => array() ),
@@ -115,12 +123,13 @@ $c = -1;
 										__( 'Subscribe %1$s (<a href=%2$s>preview</a>) as %3$s', 'friends' ),
 										'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>',
 										'"' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . $details['parser'] . '&preview=' . urlencode( $feed_url ) ) ), 'preview-feed-' . $feed_url ) ) . '" target="_blank"',
-										$select
+										'</label>' . $select
 									),
 									array(
 										'select' => array(
 											'name' => array(),
 										),
+										'label'  => array(),
 										'option' => array(
 											'value'    => array(),
 											'selected' => array(),
@@ -144,10 +153,49 @@ $c = -1;
 							</p>
 						</li>
 					<?php endforeach; ?>
+				</ul>
+					<?php if ( ! empty( $unsupported_feeds ) ) : ?>
+						<p class="description detaisl">
+							<?php
+							echo wp_kses(
+								// translators: %s is a URL to the plugin install page.
+								sprintf( _n( 'The following feed is not supported. <a href=%s>There might be a plugin available</a> to add support for it.', 'The following feeds are not supported. <a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_urL( 'plugins.php?s=friends' ) ) . '"',
+								array( 'a' => array( 'href' => array() ) )
+							);
+							?>
+						</p>
+						<?php endif; ?>
+
+				<ul>
+					<?php foreach ( $unsupported_feeds as $feed_url => $details ) : ?>
+						<?php $c += 1; ?>
 						<li>
-							<a href="" id="add-another-feed"><?php esc_html_e( '+ Add another feed' ); ?></a> | <a href="" id="show-details"><?php esc_html_e( 'Show more feed details' ); ?></a>
+							<?php foreach ( $details as $key => $value ) : ?>
+								<input type="hidden" name="feeds[<?php echo esc_attr( $c ); ?>][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $value ); ?>" />
+							<?php endforeach; ?>
+								<?php
+								echo wp_kses(
+									sprintf(
+										// translators: %s is a link to a feed with its name as text.
+										__( 'Unsupported: %s', 'friends' ),
+										'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>'
+									),
+									array(
+										'a' => array(
+											'href'   => array(),
+											'rel'    => array(),
+											'target' => array(),
+										),
+									)
+								);
+								?>
 						</li>
+					<?php endforeach; ?>
+
 					</ul>
+					<p>
+						<a href="" id="add-another-feed"><?php esc_html_e( '+ Add another feed' ); ?></a> | <a href="" id="show-details"><?php esc_html_e( 'Show more feed details' ); ?></a>
+					</p>
 				</td>
 			</tr>
 			<tr class="another-feed hidden">
