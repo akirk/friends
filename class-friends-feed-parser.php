@@ -31,9 +31,9 @@ abstract class Friends_Feed_Parser {
 	 * The incoming $feed_details array looks like this:
 	 *
 	 *  $feed_details = array(
-	 *      'url'   => 'https://url.of/the/feed',
-	 *      'title' => 'Title from the <link> tag if any',
-	 *      'type'  => 'mime-type from the <link> tag if any',
+	 *      'url'         => 'https://url.of/the/feed',
+	 *      'title'       => 'Title from the <link> tag if any',
+	 *      'mime-type'   => 'mime-type from the <link> tag if any',
 	 *      // You can add these fields in the response:
 	 *      'autoselect'  => true|false,
 	 *      'post-format' => 'standard', // or 'aside', etc. see get_post_format_strings() of WordPress core
@@ -57,10 +57,10 @@ abstract class Friends_Feed_Parser {
 	 *
 	 *  return array(
 	 *      array(
-	 *          'url'   => 'https://url.of/the/feed',
-	 *          'title' => 'Title for the feed',
-	 *          'type'  => 'mime-type for the feed',
-	 *          'rel'   => 'e.g. alternate',
+	 *          'url'       => 'https://url.of/the/feed',
+	 *          'title'     => 'Title for the feed',
+	 *          'mime-type' => 'mime-type for the feed',
+	 *          'rel'       => 'e.g. alternate',
 	 *      ),
 	 *  );
 	 *

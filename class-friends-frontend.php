@@ -263,12 +263,34 @@ class Friends_Frontend {
 		$query->is_page = false;
 		$query->set( 'pagename', null );
 
+		$post_formats = get_post_format_strings();
+		$post_format = false;
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
-			$this->author = get_user_by( 'login', $pagename_parts[1] );
-			$query->set( 'author_name', $pagename_parts[1] );
 			$query->is_singular = false;
-			$query->is_author   = true;
+			if ( isset( $post_formats[ $pagename_parts[1] ] ) ) {
+				$post_format = $pagename_parts[1];
+			} else {
+				$this->author = get_user_by( 'login', $pagename_parts[1] );
+				$query->set( 'author_name', $pagename_parts[1] );
+				$query->is_author = true;
+				if ( isset( $pagename_parts[2] ) && isset( $post_formats[ $pagename_parts[2] ] ) ) {
+					$post_format = $pagename_parts[2];
+				}
+			}
+
+			if ( isset( $post_formats[ $post_format ] ) ) {
+				$query->set(
+					'tax_query',
+					array(
+						array(
+							'taxonomy' => 'post_format',
+							'field'    => 'slug',
+							'terms'    => array( 'post-format-' . $post_format ),
+						),
+					)
+				);
+			}
 		} elseif ( $page_id ) {
 			$query->set( 'page_id', $page_id );
 			$query->is_singular = true;

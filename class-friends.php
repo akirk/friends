@@ -164,7 +164,7 @@ class Friends {
 			'menu_position'       => 5,
 			'menu_icon'           => 'dashicons-groups',
 			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
-			'taxonomies'          => array( 'post_tag' ),
+			'taxonomies'          => array( 'post_tag', 'post_format' ),
 			'has_archive'         => true,
 		);
 

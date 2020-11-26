@@ -188,6 +188,7 @@ class Friend_User_Feed {
 	 */
 	public static function validate_post_format( $post_format ) {
 		$post_formats = get_post_format_strings();
+		$post_formats['use-contained-format'] = true;
 		return isset( $post_formats[ $post_format ] ) ? $post_format : reset( array_keys( $post_formats ) );
 	}
 
@@ -346,6 +347,15 @@ class Friend_User_Feed {
 	}
 
 	/**
+	 * Delete all feeds for a user (when it its being deleted).
+	 *
+	 * @param      integer $user_id  The user id.
+	 */
+	public static function delete_user_terms( $user_id ) {
+		wp_delete_object_term_relationships( $user_id, self::TAXONOMY );
+	}
+
+	/**
 	 * Convert the previous storage of a feed URL as a user option to use terms.
 	 *
 	 * @param  Friend_User $friend_user The user to be converted.
@@ -394,8 +404,8 @@ class Friend_User_Feed {
 		}
 		$term_id = reset( $term_ids );
 		foreach ( $args as $key => $value ) {
-			if ( in_array( $key, array( 'active', 'parser', 'post_format', 'post_type', 'mime_type', 'title' ) ) ) {
-				add_metadata( 'term', $term_id, $key, $value, true );
+			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'post-type', 'mime-type', 'title' ) ) ) {
+				add_metadata( 'term', $term_id, $key, $value, false );
 			}
 		}
 

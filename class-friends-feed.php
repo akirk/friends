@@ -370,6 +370,7 @@ class Friends_Feed {
 		$friend_user     = $user_feed->get_friend_user();
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 		$rules           = $friend_user->get_feed_rules();
+		$post_formats    = get_post_format_strings();
 
 		$new_posts = array();
 		foreach ( $items as $item ) {
@@ -392,7 +393,7 @@ class Friends_Feed {
 				continue;
 			}
 
-			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id', 'reaction' ) as $key ) {
+			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id', 'reaction' ) as $key ) {
 				if ( ! isset( $item->{$key} ) ) {
 					$item->{$key} = false;
 				}
@@ -436,8 +437,17 @@ class Friends_Feed {
 					continue;
 				}
 
-				set_post_format( $post_id, $user_feed->get_post_format() );
-
+				$post_format = $user_feed->get_post_format();
+				if ( 'use-contained-format' === $post_format ) {
+					if ( isset( $item->{'post-format'} ) && isset( $post_formats[ $item->{'post-format'} ] ) ) {
+						$post_format = $item->{'post-format'};
+					} else {
+						$post_format = false;
+					}
+				}
+				if ( $post_format ) {
+					set_post_format( $post_id, $post_format );
+				}
 				$new_posts[]                   = $post_id;
 				$remote_post_ids[ $permalink ] = $post_id;
 			}
@@ -488,21 +498,21 @@ class Friends_Feed {
 	 * Output an additional XMLNS for the feed.
 	 */
 	public function additional_feed_namespaces() {
-		if ( $this->friends->access_control->feed_is_authenticated() ) {
-			echo 'xmlns:friends="' . esc_attr( self::XMLNS ) . '"';
-		}
+		echo 'xmlns:friends="' . esc_attr( self::XMLNS ) . '"';
 	}
 
 	/**
 	 * Additional fields for the friends feed.
 	 */
 	public function feed_additional_fields() {
+		global $post;
+		echo '<friends:post-format>' . esc_html( get_post_format( $post ) ) . '</friends:post-format>' . PHP_EOL;
+
 		$authenticated_user_id = $this->friends->access_control->feed_is_authenticated();
 		if ( ! $authenticated_user_id ) {
 			return;
 		}
 
-		global $post;
 		echo '<friends:gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</friends:gravatar>' . PHP_EOL;
 		echo '<friends:post-status>' . esc_html( $post->post_status ) . '</friends:post-status>' . PHP_EOL;
 		echo '<friends:post-id>' . esc_html( $post->ID ) . '</friends:post-id>' . PHP_EOL;

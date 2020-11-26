@@ -45,11 +45,6 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	public function update_feed_details( $feed_details ) {
 		$feed_details['title'] = trim( str_replace( array( '&raquo; Feed', '» Feed' ), '', $feed_details['title'] ) );
 
-		$feed_details['autoselect'] = true;
-		if ( stripos( $feed_details['url'], 'comments' ) !== false ) {
-			$feed_details['autoselect'] = false;
-		}
-
 		foreach ( get_post_format_strings() as $format => $title ) {
 			if ( preg_match( '/\b' . preg_quote( $format, '/' ) . '\b/i', $feed_details['url'] ) ) {
 				$feed_details['post-format'] = $format;
@@ -116,9 +111,9 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				}
 
 				$discovered_feeds[ $feed_url ] = array(
-					'type'  => $mime_type,
-					'title' => $feed->get_title(),
-					'rel'   => 'alternate',
+					'mime-type' => $mime_type,
+					'title'     => $feed->get_title(),
+					'rel'       => 'alternate',
 				);
 			}
 		}
@@ -146,8 +141,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				'title'     => $item->get_title(),
 				'content'   => $item->get_content(),
 			);
-
-			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-id', 'reaction' ) as $key ) {
+			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id', 'reaction' ) as $key ) {
 				foreach ( array( Friends_Feed::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
 					if ( ! isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
 						continue;

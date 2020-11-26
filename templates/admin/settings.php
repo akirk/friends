@@ -46,6 +46,9 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 							<label for="codeword">
 								<?php _e( 'This code word must be provided to send you a friend request:', 'friends' ); ?> <input name="codeword" type="text" id="codeword" placeholder="friends" value="<?php echo esc_attr( get_option( 'friends_codeword', '' ) ); ?>" />
 							</label>
+							<p class="description">
+								<?php _e( "You'll need to communicate the code word to potential friends through another medium." ); ?>
+							</p>
 						</fieldset>
 						<fieldset>
 							<label for="wrong_codeword_message">

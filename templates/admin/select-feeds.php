@@ -7,10 +7,18 @@
 
 $c = -1;
 $unsupported_feeds = array();
+$friends_host = false;
+if ( $friends_plugin ) {
+	$friends_host = parse_url( $friends_plugin, PHP_URL_HOST );
+}
 foreach ( $feeds as $feed_url => $details ) {
 	if ( 'unsupported' === $details['parser'] ) {
 		$unsupported_feeds[ $feed_url ] = $details;
 		unset( $feeds[ $feed_url ] );
+	} elseif ( ! isset( $details['post-format'] ) && $friends_host && ! isset( $post_formats['use-contained-format'] ) && parse_url( $feed_url, PHP_URL_HOST ) === $friends_host ) {
+		$post_formats['use-contained-format'] = __( 'Use contained post format', 'friends' );
+		$feeds[ $feed_url ]['post-format'] = 'use-contained-format';
+		$feeds[ $feed_url ]['autoselect'] = true;
 	}
 }
 
@@ -66,7 +74,7 @@ foreach ( $feeds as $feed_url => $details ) {
 			<tr class="friends-advanced hidden">
 				<th scope="row"><label for="message"><?php esc_html_e( 'Message (Optional)', 'friends' ); ?></label></th>
 				<td>
-					<input type="text" autofocus id="message" name="message" value="<?php echo esc_attr( $message ); ?>" placeholder="<?php esc_attr_e( 'Optionally enter a message for your friend', 'friends' ); ?>" class="large-text" maxlength="2000" />
+					<input type="text" autofocus id="message" name="message" value="<?php echo esc_attr( $message ); ?>" placeholder="<?php esc_attr_e( 'Enter a message for your friend', 'friends' ); ?>" class="large-text" maxlength="2000" />
 					<p class="description" id="message-description">
 						<?php esc_html_e( 'The short message you supply will be sent along with your friend request.', 'friends' ); ?>
 					</p>
@@ -145,7 +153,7 @@ foreach ( $feeds as $feed_url => $details ) {
 							<p class="description details hidden">
 								<?php
 								// translators: %s is the type of a feed, for example Atom or RSS.
-								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
+								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['mime-type'] ) );
 								echo ' ';
 								// translators: %s is the name of a parser, e.g. simplepie.
 								echo esc_html( sprintf( __( 'Parser: %s', 'friends' ), $details['parser'] ) );
@@ -155,7 +163,7 @@ foreach ( $feeds as $feed_url => $details ) {
 					<?php endforeach; ?>
 				</ul>
 					<?php if ( ! empty( $unsupported_feeds ) ) : ?>
-						<p class="description detaisl">
+						<p class="description details">
 							<?php
 							echo wp_kses(
 								// translators: %s is a URL to the plugin install page.

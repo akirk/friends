@@ -153,9 +153,9 @@ class Friend_User extends WP_User {
 		$default_options = array(
 			'active'      => true,
 			'parser'      => 'simplepie',
-			'post_format' => 'standard',
-			'post_type'   => 'post',
-			'mime_type'   => 'application/rss+xml',
+			'post-format' => 'standard',
+			'post-type'   => 'post',
+			'mime-type'   => 'application/rss+xml',
 			'title'       => $this->display_name . ' RSS Feed',
 		);
 

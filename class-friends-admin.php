@@ -51,6 +51,7 @@ class Friends_Admin {
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'wp_ajax_friends_update_welcome_panel', array( $this, 'ajax_update_welcome_panel' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
+		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
 
@@ -982,8 +983,15 @@ class Friends_Admin {
 		}
 
 		$feed_options = array();
-		foreach ( $var['feeds'] as $feed ) {
+		if ( ! isset( $vars['feeds'] ) ) {
+			$vars['feeds'] = array();
+		}
+		foreach ( $vars['feeds'] as $feed ) {
 			$feed_options[ $feed['url'] ] = $feed;
+		}
+
+		if ( ! isset( $vars['subscribe'] ) ) {
+			$vars['subscribe'] = array();
 		}
 
 		$count = 0;
@@ -995,6 +1003,8 @@ class Friends_Admin {
 			$friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
 			$count += 1;
 		}
+
+		$friend_user->retrieve_posts();
 
 		$friend_link = '<a href="' . esc_url( $friend_user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->user_url ) . '</a>';
 		if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
@@ -1031,9 +1041,13 @@ class Friends_Admin {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
 				<?php
-				if ( isset( $_POST['request-friendship'] ) ) {
+				if ( isset( $vars['friendship'] ) ) {
 					// translators: %s is a Site URL.
 					echo wp_kses( sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+					echo ' ';
+				} else {
+					// translators: %s is a Site URL.
+					echo wp_kses( sprintf( __( "You're now subscribing %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 					echo ' ';
 				}
 				esc_html_e( 'We subscribed you to their updates.', 'friends' );
@@ -1092,11 +1106,8 @@ class Friends_Admin {
 					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $codeword, $message );
 				} else {
 					$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url );
-					if ( is_wp_error( $friend_user ) ) {
-						$errors = $friend_user;
-					}
 				}
-				return process_admin_add_friend_response( $friend_user, $vars );
+				return $this->process_admin_add_friend_response( $friend_user, $vars );
 			}
 		} else {
 			$protocol = wp_parse_url( $friend_url, PHP_URL_SCHEME );
@@ -1177,7 +1188,7 @@ class Friends_Admin {
 			<?php
 			foreach ( $items as $item ) {
 				?>
-				<li><?php echo esc_html( $item->date ); ?>: <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a></li>
+				<li><?php echo esc_html( $item->date ); ?>: <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a><pre><?php var_dump( $item ); ?></pre></li>
 				<?php
 			}
 			?>
@@ -1211,14 +1222,15 @@ class Friends_Admin {
 			} else {
 				$response = $this->process_admin_add_friend( $_POST );
 			}
-
-			if ( ! is_wp_error( $response ) ) {
+			if ( is_wp_error( $response ) ) {
+				?>
+				<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p>
+				</div>
+				<?php
+			}
+			if ( is_null( $response ) ) {
 				return;
 			}
-			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p>
-			</div>
-			<?php
 		}
 
 		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {
@@ -1671,6 +1683,15 @@ class Friends_Admin {
 			</script>
 			<?php
 		}
+	}
+
+	/**
+	 * Actions when a (friend) user is deleted.
+	 *
+	 * @param      integer $user_id  The user identifier.
+	 */
+	public function delete_user( $user_id ) {
+		Friend_User_Feed::delete_user_terms( $user_id );
 	}
 
 	/**
