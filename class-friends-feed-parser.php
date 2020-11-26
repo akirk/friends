@@ -28,7 +28,7 @@ abstract class Friends_Feed_Parser {
 	/**
 	 * Allow augmenting or modifying the details of a feed.
 	 *
-	 * Incoming $feed_details array look like this:
+	 * The incoming $feed_details array looks like this:
 	 *
 	 *  $feed_details = array(
 	 *      'url'   => 'https://url.of/the/feed',
