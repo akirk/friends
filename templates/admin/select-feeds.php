@@ -11,13 +11,13 @@ $friends_host = false;
 if ( $friends_plugin ) {
 	$friends_host = parse_url( $friends_plugin, PHP_URL_HOST );
 }
+
 foreach ( $feeds as $feed_url => $details ) {
 	if ( 'unsupported' === $details['parser'] ) {
 		$unsupported_feeds[ $feed_url ] = $details;
 		unset( $feeds[ $feed_url ] );
-	} elseif ( ! isset( $details['post-format'] ) && $friends_host && ! isset( $post_formats['use-contained-format'] ) && parse_url( $feed_url, PHP_URL_HOST ) === $friends_host ) {
-		$post_formats['use-contained-format'] = __( 'Use contained post format', 'friends' );
-		$feeds[ $feed_url ]['post-format'] = 'use-contained-format';
+	} elseif ( ! isset( $details['post-format'] ) && $friends_host && ! isset( $post_formats['autodetect'] ) && parse_url( $feed_url, PHP_URL_HOST ) === $friends_host ) {
+		$feeds[ $feed_url ]['post-format'] = 'autodetect';
 		$feeds[ $feed_url ]['autoselect'] = true;
 	}
 }
@@ -154,9 +154,12 @@ foreach ( $feeds as $feed_url => $details ) {
 								<?php
 								// translators: %s is the type of a feed, for example Atom or RSS.
 								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['mime-type'] ) );
-								echo ' ';
+								echo ' | ';
 								// translators: %s is the name of a parser, e.g. simplepie.
 								echo esc_html( sprintf( __( 'Parser: %s', 'friends' ), $details['parser'] ) );
+								echo ' | ';
+								// translators: %s is relation to the URL, e.g. self or alternate.
+								echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );
 								?>
 							</p>
 						</li>

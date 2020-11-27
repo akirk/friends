@@ -438,11 +438,11 @@ class Friends_Feed {
 				}
 
 				$post_format = $user_feed->get_post_format();
-				if ( 'use-contained-format' === $post_format ) {
+				if ( 'autosort' === $post_format ) {
 					if ( isset( $item->{'post-format'} ) && isset( $post_formats[ $item->{'post-format'} ] ) ) {
 						$post_format = $item->{'post-format'};
 					} else {
-						$post_format = false;
+						$post_format = $this->post_type_discovery();
 					}
 				}
 				if ( $post_format ) {
@@ -602,20 +602,22 @@ class Friends_Feed {
 			);
 		}
 
+		foreach ( $this->parsers as $slug => $parser ) {
+			foreach ( $parser->discover_available_feeds( $content, $url ) as $link_url => $feed ) {
+				if ( isset( $available_feeds[ $link_url ] ) ) {
+					continue;
+				}
+				$available_feeds[ $link_url ] = $feed;
+				$available_feeds[ $link_url ]['url'] = $link_url;
+			}
+		}
+
 		foreach ( $available_feeds as $link_url => $feed ) {
 			$feed['url'] = $link_url;
 			$available_feeds[ $link_url ]['url'] = $link_url;
 			if ( 'friends-base-url' === $feed['rel'] ) {
 				$available_feeds[ $link_url ]['parser'] = 'friends';
 				continue;
-			}
-
-			if ( empty( $feed['title'] ) ) {
-				$host = wp_parse_url( $link_url, PHP_URL_HOST );
-				$path = wp_parse_url( $link_url, PHP_URL_PATH );
-
-				$feed['title'] = trim( preg_replace( '#^www\.#i', '', preg_replace( '#[^a-z0-9.:-]#i', ' ', ucwords( $host . ': ' . $path ) ) ), ': ' );
-				$available_feeds[ $link_url ]['title'] = $feed['title'];
 			}
 
 			foreach ( $this->parsers as $slug => $parser ) {
@@ -634,9 +636,38 @@ class Friends_Feed {
 			$available_feeds[ $link_url ]['parser'] = 'unsupported';
 		}
 
-		foreach ( $this->parsers as $slug => $parser ) {
-			$available_feeds = array_merge( $available_feeds, $parser->discover_available_feeds( $content, $url ) );
+		// Backfill titles.
+		foreach ( $available_feeds as $link_url => $feed ) {
+			if ( empty( $feed['title'] ) ) {
+				$host = wp_parse_url( $link_url, PHP_URL_HOST );
+				$path = wp_parse_url( $link_url, PHP_URL_PATH );
+
+				$feed['title'] = trim( preg_replace( '#^www\.#i', '', preg_replace( '#[^a-z0-9.:-]#i', ' ', ucwords( $host . ': ' . $path ) ) ), ': ' );
+				$available_feeds[ $link_url ]['title'] = $feed['title'];
+			}
+
+			if ( isset( $feed['rel'] ) && 'self' === $feed['rel'] ) {
+				$available_feeds[ $link_url ]['autoselect'] = true;
+			}
 		}
+
+		uasort(
+			$available_feeds,
+			function ( $a, $b ) {
+				foreach ( array( 'self', 'alternate', 'me' ) as $rel_sort ) {
+					if ( $rel_sort === $a['rel'] ) {
+						if ( $rel_sort !== $b['rel'] ) {
+							return -1;
+						}
+						break;
+					} elseif ( $rel_sort === $b['rel'] ) {
+						return 1;
+					}
+				}
+
+				return strcmp( $a['title'], $b['title'] );
+			}
+		);
 
 		return apply_filters( 'friends_available_feeds', $available_feeds, $url );
 	}

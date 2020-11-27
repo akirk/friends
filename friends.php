@@ -68,3 +68,11 @@ add_action(
 		$friends_feed->register_parser( 'simplepie', new Friends_Feed_Parser_SimplePie );
 	}
 );
+
+add_action(
+	'friends_register_parser',
+	function( Friends_Feed $friends_feed ) {
+		include __DIR__ . '/class-friends-feed-parser-microformats.php';
+		$friends_feed->register_parser( 'microformats', new Friends_Feed_Parser_Microformats );
+	}
+);

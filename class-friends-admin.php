@@ -196,7 +196,6 @@ class Friends_Admin {
 		if ( ! ( $screen instanceof WP_Screen ) ) {
 			return;
 		}
-		global $friends_debug;
 
 		switch ( $screen->id ) {
 			case 'toplevel_page_friends-settings':
@@ -220,7 +219,7 @@ class Friends_Admin {
 				);
 				break;
 			default:
-				if ( strpos( $screen->id, 'friends' ) && isset( $friends_debug ) && $friends_debug ) {
+				if ( strpos( $screen->id, 'friends' ) && apply_filters( 'friends_debug', false ) ) {
 					$screen->add_help_tab(
 						array(
 							'id'      => 'friends_' . $screen->id,
@@ -1083,6 +1082,7 @@ class Friends_Admin {
 		$friend_roles = $this->get_friend_roles();
 		$default_role = get_option( 'friends_default_friend_role', 'friend' );
 		$post_formats = get_post_format_strings();
+		$post_formats['autodetect'] = __( 'Autodetect', 'friends' );
 		$registered_parsers = Friends::get_instance()->feed->get_registered_parsers();
 
 		$errors = new WP_Error();
@@ -1187,8 +1187,12 @@ class Friends_Admin {
 			<ul>
 			<?php
 			foreach ( $items as $item ) {
+				$post_format = 'standard';
+				if ( isset( $item->{'post-format'} ) ) {
+					$post_format = $item->{'post-format'};
+				}
 				?>
-				<li><?php echo esc_html( $item->date ); ?>: <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a><pre><?php var_dump( $item ); ?></pre></li>
+				<li><?php echo esc_html( $item->date ); ?> (<?php echo esc_html( $post_format ); ?>): <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a></li>
 				<?php
 			}
 			?>

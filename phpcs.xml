@@ -20,5 +20,5 @@
 
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
-	<exclude-pattern>*/lib/*</exclude-pattern>
+	<exclude-pattern>*/libs/*</exclude-pattern>
 </ruleset>

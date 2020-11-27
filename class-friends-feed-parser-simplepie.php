@@ -113,7 +113,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				$discovered_feeds[ $feed_url ] = array(
 					'mime-type' => $mime_type,
 					'title'     => $feed->get_title(),
-					'rel'       => 'alternate',
+					'rel'       => 'self',
 				);
 			}
 		}
@@ -129,13 +129,18 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	 * @return     array            An array of feed items.
 	 */
 	public function fetch_feed( $url ) {
+		// Ensure we'll parse microformats in Simplepie.
+		if ( ! function_exists( 'Mf2\parse' ) ) {
+			require_once __DIR__ . '/libs/Mf2/Parser.php';
+		}
+
 		// Use SimplePie which is bundled with WordPress.
 		$feed = fetch_feed( $url );
 		if ( is_wp_error( $feed ) ) {
 			return $feed;
 		}
 
-		foreach ( $feed->get_items() as $item ) {
+		foreach ( $feed->get_items() as $c => $item ) {
 			$feed_item = (object) array(
 				'permalink' => $item->get_permalink(),
 				'title'     => $item->get_title(),
