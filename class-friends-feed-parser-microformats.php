@@ -70,15 +70,18 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 		$mf = Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
-				if ( in_array( 'me', $link['rels'] ) ) {
-					$discovered_feeds[ $feed_url ] = array(
-						'rel' => 'me',
-					);
-				} elseif ( in_array( 'alternate', $link['rels'] ) ) {
-					$discovered_feeds[ $feed_url ] = array(
-						'rel' => 'me',
-					);
+				foreach ( array( 'me', 'alternate' ) as $rel ) {
+					if ( in_array( $rel, $link['rels'] ) ) {
+						$discovered_feeds[ $feed_url ] = array(
+							'rel' => $rel,
+						);
+					}
 				}
+
+				if ( ! isset( $discovered_feeds[ $feed_url ] ) ) {
+					continue;
+				}
+
 				if ( isset( $link['type'] ) ) {
 					$discovered_feeds[ $feed_url ]['type'] = $link['type'];
 				}

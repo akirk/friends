@@ -713,7 +713,7 @@ class Friends_Feed {
 			if ( ! is_string( $link_url ) || isset( $discovered_feeds[ $link_url ] ) ) {
 				continue;
 			}
-			if ( false === parse_url( $href ) ) {
+			if ( false === parse_url( $link_url ) ) {
 				continue;
 			}
 
