@@ -525,6 +525,12 @@ class Friends_Admin {
 			}
 		}
 
+		if ( isset( $_POST['limit_homepage_post_format'] ) && $_POST['limit_homepage_post_format'] && in_array( $_POST['limit_homepage_post_format'], get_post_format_slugs() ) ) {
+			update_option( 'friends_limit_homepage_post_format', $_POST['limit_homepage_post_format'] );
+		} else {
+			delete_option( 'friends_limit_homepage_post_format' );
+		}
+
 		foreach ( array( 'friend_request_notification' ) as $negative_user_checkbox ) {
 			if ( isset( $_POST[ $negative_user_checkbox ] ) && $_POST[ $negative_user_checkbox ] ) {
 				delete_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox );

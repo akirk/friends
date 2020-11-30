@@ -241,9 +241,11 @@ class Friends_Frontend {
 			return $query;
 		}
 
+		// Not available for the general public or friends.
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return $query;
 		}
+
 		$this->on_friends_page = true;
 		$this->friends->reactions->unregister_content_hooks();
 		$this->friends->recommendation->unregister_content_hooks();

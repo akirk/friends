@@ -127,6 +127,7 @@ class Friends {
 		add_filter( 'wp_head', array( $this, 'html_link_rel_alternate_post_formats' ) );
 		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
+		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ) );
 	}
 
 	/**
@@ -277,9 +278,9 @@ class Friends {
 		);
 
 		if (
-			'User role' === $context
-			&& in_array( $text, $roles, true )
-			&& 'friends' !== $domain
+		'User role' === $context
+		&& in_array( $text, $roles, true )
+		&& 'friends' !== $domain
 		) {
 			// @codingStandardsIgnoreLine
 			return translate_with_gettext_context( $text, $context, 'friends' );
@@ -452,22 +453,79 @@ class Friends {
 	 */
 	public function enable_post_formats() {
 		if ( get_option( 'friends_force_enable_post_formats' ) ) {
-			add_theme_support( 'post-formats', get_post_format_strings() );
+			add_theme_support( 'post-formats', get_post_format_slugs() );
 		}
 	}
 
 	/**
-	 * Output the alternate post formats as a link in the HTML head.
+	 * Modify the main query to allow limiting the post format on the homepage.
+	 *
+	 * @param      WP_Query $query  The query.
 	 */
+	public function pre_get_posts_filter_by_post_format( $query ) {
+		global $wp_query;
+
+		if ( $query->is_main_query() ) {
+			return;
+		}
+
+		$filter_by_post_format = get_option( 'friends_limit_homepage_post_format', false );
+
+		if ( ! $filter_by_post_format ) {
+			return;
+		}
+
+		if ( 'standard' === $filter_by_post_format ) {
+			$formats = array();
+			$post_formats = get_theme_support( 'post-formats' );
+			if ( is_array( get_theme_support( 'post-formats' ) ) ) {
+				foreach ( $post_formats as $format ) {
+					if ( ! in_array( $format, array( 'standard ' ) ) ) {
+						$formats[] = 'post-format-' . $format;
+					}
+				}
+			}
+
+			if ( ! empty( $formats ) ) {
+				$query->set(
+					'tax_query',
+					array(
+						'relation' => 'AND',
+						array(
+							'operator' => 'NOT IN',
+							'taxonomy' => 'post_format',
+							'field'    => 'slug',
+							'terms'    => $formats,
+						),
+					)
+				);
+			}
+		} else {
+			$query->set(
+				'tax_query',
+				array(
+					array(
+						'taxonomy' => 'post_format',
+						'field'    => 'slug',
+						'terms'    => array( 'post-format-' . $filter_by_post_format ),
+					),
+				)
+			);
+		}
+	}
+
+		/**
+		 * Output the alternate post formats as a link in the HTML head.
+		 */
 	public static function html_link_rel_alternate_post_formats() {
 		if ( get_option( 'friends_expose_post_format_feeds' ) && current_theme_supports( 'post-formats' ) ) {
 			echo implode( PHP_EOL, self::get_html_link_rel_alternate_post_formats() ), PHP_EOL;
 		}
 	}
 
-	/**
-	 * Generate link tag(s) with the alternate post formats.
-	 */
+		/**
+		 * Generate link tag(s) with the alternate post formats.
+		 */
 	public static function get_html_link_rel_alternate_post_formats() {
 		$separator = _x( '&raquo;', 'feed link' );
 		$blog_title = get_bloginfo( 'name' );
@@ -476,33 +534,32 @@ class Friends {
 		foreach ( get_post_format_strings() as $format => $title ) {
 			// translators: 1: Blog title, 2: Separator (raquo), 3: Post Format.
 			$title = sprintf( __( '%1$s %2$s %3$s Feed', 'friends' ), $blog_title, $separator, $title );
-			$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( site_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
+				$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( site_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
 		}
 
-		return $links;
+			return $links;
 	}
 
-
-	/**
-	 * Output the friends base URL as a link in the HTML head.
-	 */
+		/**
+		 * Output the friends base URL as a link in the HTML head.
+		 */
 	public static function html_link_rel_friends_base_url() {
 		echo self::get_html_link_rel_friends_base_url(), PHP_EOL;
 	}
 
-	/**
-	 * Generate a link tag with the friends base URL
-	 */
+		/**
+		 * Generate a link tag with the friends base URL
+		 */
 	public static function get_html_link_rel_friends_base_url() {
 		return '<link rel="friends-base-url" type="application/wp-friends-plugin" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" />';
 	}
 
-	/**
-	 * Check whether this is a valid URL
-	 *
-	 * @param string $url The URL to check.
-	 * @return false|string URL or false on failure.
-	 */
+		/**
+		 * Check whether this is a valid URL
+		 *
+		 * @param string $url The URL to check.
+		 * @return false|string URL or false on failure.
+		 */
 	public static function check_url( $url ) {
 		$host = parse_url( $url, PHP_URL_HOST );
 		if ( 'me.local' === $host || 'friend.local' === $host || 'example.org' === $host ) {
@@ -512,9 +569,9 @@ class Friends {
 		return wp_http_validate_url( $url );
 	}
 
-	/**
-	 * Delete all the data the plugin has stored in WordPress
-	 */
+		/**
+		 * Delete all the data the plugin has stored in WordPress
+		 */
 	public static function uninstall_plugin() {
 		$affected_users = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {

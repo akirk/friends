@@ -105,17 +105,74 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 				<th scope="row"><?php esc_html_e( 'Post Formats', 'friends' ); ?></th>
 				<td>
 					<fieldset>
+						<label for="limit_homepage_post_format">
+								<?php
+								$limit_homepage_post_format = get_option( 'friends_limit_homepage_post_format', false );
+								$select = '<select name="limit_homepage_post_format" id="limit_homepage_post_format">';
+								$select .= '<option value="0"' . selected( $limit_homepage_post_format, false, false ) . '>' . esc_html( _x( 'All', 'All post', 'friends' ) ) . '</option>';
+								foreach ( get_post_format_strings() as $format => $title ) {
+									// translators: %s is a post format title.
+									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $limit_homepage_post_format, $format, false ) . '>' . esc_html( sprintf( _x( '%s only', 'post-format only', 'friends' ), $title ) ) . '</option>';
+								}
+								$select .= '</select>';
+
+								echo wp_kses(
+									sprintf(
+									// translators: %s is a Select dropdown.
+										__( 'On your homepage, show %s posts', 'friends' ),
+										$select
+									),
+									array(
+										'select' => array(
+											'name' => array(),
+										),
+										'label'  => array(),
+										'option' => array(
+											'value'    => array(),
+											'selected' => array(),
+										),
+										'a'      => array(
+											'href'   => array(),
+											'rel'    => array(),
+											'target' => array(),
+										),
+									)
+								);
+								?>
+						</label>
+						<br/>
+
 						<label for="force_enable_post_formats">
 							<input name="force_enable_post_formats" type="checkbox" id="force_enable_post_formats" value="1" <?php checked( '1', get_option( 'friends_force_enable_post_formats' ) ); ?>>
 							<?php esc_html_e( 'Always enable Post Formats, regardless of the theme support.', 'friends' ); ?>
+							<p class="description">
+								<?php
+								echo wp_kses(
+									__( 'With <a href="https://wordpress.org/support/article/post-formats/#supported-formats">Post Formats</a> you can categorize your content in a more detailed way. Examples for post formats are "photo" or "link."', 'friends' ),
+									array(
+										'a' => array(
+											'href'   => array(),
+											'rel'    => array(),
+											'target' => array(),
+										),
+									)
+								);
+
+
+								?>
+							</p>
 						</label><br/>
-						<label for="expose_post_format_feeds">
+
+						<label for="limit_homepage_post_format">
+							<?php if ( current_theme_supports( 'post-format-feeds' ) ) : ?>
+								<?php esc_html_e( 'Your theme already supports exposing Post Formats as alternate feeds on your homepage.' ); ?>
+							<?php else : ?>
 							<input name="expose_post_format_feeds" type="checkbox" id="expose_post_format_feeds" value="1" <?php checked( '1', get_option( 'friends_expose_post_format_feeds' ) ); ?>>
-							<?php
-							// translators: %s is a HTML snippet.
-							echo wp_kses( sprintf( __( 'Expose post formats as alternate feeds on your homepage (as %s).', 'friends' ), '<code>&lt;link rel="alternate"/ &gt;</code>' ), array( 'code' => array() ) );
-							?>
-						</label>
+								<?php
+								// translators: %s is a HTML snippet.
+								echo wp_kses( sprintf( __( 'Expose Post Formats as alternate feeds on your homepage (as %s).', 'friends' ), '<code>&lt;link rel="alternate"/ &gt;</code>' ), array( 'code' => array() ) );
+								?>
+						<?php endif; ?>
 					</fieldset>
 				</td>
 			</tr>
