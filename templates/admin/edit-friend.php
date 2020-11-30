@@ -16,11 +16,29 @@
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Feeds', 'friends' ); ?></label></th>
 				<td>
-					<ul>
-					<?php foreach ( $friend->get_feeds() as $feed ) : ?>
-						<li><?php echo esc_html( $feed->get_url() . ' → ' . $feed->get_post_format() ); ?></li>
-					<?php endforeach; ?>
-					</ul>
+					<table>
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>URL</th>
+								<th>Parser</th>
+								<th>Format</th>
+								<th>Last Log</th>
+							</tr>
+						</thead>
+						<tbody>
+						<?php foreach ( $friend->get_feeds() as $feed ) : ?>
+							<tr>
+								<td><?php echo esc_html( $feed->get_title() ); ?></td>
+								<td><?php echo esc_html( $feed->get_url() ); ?></td>
+								<td><?php echo esc_html( $feed->get_parser() ); ?></td>
+								<td><?php echo esc_html( $feed->get_post_format() ); ?></td>
+								<td><?php echo esc_html( $feed->get_last_log() ); ?></td>
+							</tr>
+						<?php endforeach; ?>
+						</tbody>
+					</table>
+				</td>
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>

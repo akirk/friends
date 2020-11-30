@@ -16,6 +16,8 @@
  * @author Alex Kirk
  */
 class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
+	const NAME = 'SimplePie (bundled with WordPress)';
+	const URL = 'http://simplepie.org';
 	/**
 	 * Determines if this is a supported feed.
 	 *
@@ -43,8 +45,6 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	 * @return     array  The (potentially) modified feed details.
 	 */
 	public function update_feed_details( $feed_details ) {
-		$feed_details['title'] = trim( str_replace( array( '&raquo; Feed', '» Feed' ), '', $feed_details['title'] ) );
-
 		foreach ( get_post_format_strings() as $format => $title ) {
 			if ( preg_match( '/\b' . preg_quote( $format, '/' ) . '\b/i', $feed_details['url'] ) ) {
 				$feed_details['post-format'] = $format;

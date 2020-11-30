@@ -75,7 +75,7 @@ class Friend_User_Feed {
 			$feed_url = $friends->access_control->append_auth( $feed_url, $friend_user );
 		}
 
-		return apply_filters( 'friends_friend_feed_url', $feed_url, $friend_user );
+		return apply_filters( 'friends_friend_private_feed_url', $feed_url, $friend_user );
 	}
 
 	/**
@@ -214,7 +214,7 @@ class Friend_User_Feed {
 		if ( isset( $parsers[ $parser ] ) ) {
 			return $parser;
 		}
-		return false;
+		return 'simplepie';
 	}
 
 	/**
@@ -402,14 +402,30 @@ class Friend_User_Feed {
 		if ( is_wp_error( $term_ids ) ) {
 			return $term_ids;
 		}
+
 		$term_id = reset( $term_ids );
 		foreach ( $args as $key => $value ) {
 			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'post-type', 'mime-type', 'title' ) ) ) {
-				add_metadata( 'term', $term_id, $key, $value, false );
+				if ( metadata_exists( 'term', $term_id, $key ) ) {
+					update_metadata( 'term', $term_id, $key, $value );
+				} else {
+					add_metadata( 'term', $term_id, $key, $value, true );
+				}
 			}
 		}
+			return get_term( $term_id );
+	}
 
-		return get_term( $term_id );
+	/**
+	 * Update the last-log metadata.
+	 *
+	 * @param      string $value  The value to log.
+	 *
+	 * @return     int|false The inserted term id.
+	 */
+	public function update_last_log( $value ) {
+		$value = gmdate( 'Y-m-d H:i:s' ) . ': ' . $value;
+		return add_metadata( 'term', $this->term->term_id, 'last-log', $value, false );
 	}
 
 	/**

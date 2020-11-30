@@ -178,10 +178,9 @@ class Friends_Admin {
 		if ( 'friend_request' === $_GET['role'] ) {
 			?>
 			<script type="text/javascript">
-				jQuery(document).ready( function($)
-				{
+				jQuery( document ).ready( function ( $ ) {
 					$("#toplevel_page_friends-settings, #toplevel_page_friends-settings > a").addClass('wp-has-current-submenu');
-				});
+				} );
 			</script>
 			<?php
 		}
@@ -258,7 +257,7 @@ class Friends_Admin {
 
 		add_filter(
 			'friends_friend_private_feed_url',
-			function( $feed_url, $friend_user ) {
+			function ( $feed_url, $friend_user ) {
 				// translators: %1s is the name of the friend, %2$s is the feed URL.
 				printf( __( 'Refreshing %1$s at %2$s', 'friends' ) . '<br/>', '<b>' . esc_html( $friend_user->user_login ) . '</b>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $feed_url ) . '</a>' );
 				return $feed_url;
@@ -269,7 +268,7 @@ class Friends_Admin {
 
 		add_action(
 			'friends_retrieved_new_posts',
-			function( $new_posts, $friend_user ) {
+			function ( $user_feed, $new_posts ) {
 				$count = 0;
 				foreach ( $new_posts as $post_type => $posts ) {
 					$count += count( $posts );
@@ -283,7 +282,7 @@ class Friends_Admin {
 
 		add_action(
 			'friends_incoming_feed_items',
-			function( $items ) {
+			function ( $items ) {
 				// translators: %s is the number of posts found.
 				printf( _n( 'Found %d item in the feed.', 'Found %d items in the feed.', count( $items ), 'friends' ) . ' ', count( $items ) );
 			}
@@ -291,12 +290,12 @@ class Friends_Admin {
 
 		add_action(
 			'friends_retrieve_friends_error',
-			function( $feed_url, $error, $friend_user ) {
+			function ( $user_feed, $error ) {
 				esc_html_e( 'An error occurred while retrieving the posts.', 'friends' );
 				echo $error->get_error_message(), '<br/>';
 			},
 			10,
-			3
+			2
 		);
 
 		if ( isset( $_GET['user'] ) ) {
@@ -460,7 +459,6 @@ class Friends_Admin {
 			// update_user_option( $user->ID, 'friends_out_token', $json->friend );
 			// }
 		}
-		$friend_user->retrieve_posts();
 
 		return $friend_user;
 	}
@@ -992,6 +990,10 @@ class Friends_Admin {
 			$vars['feeds'] = array();
 		}
 		foreach ( $vars['feeds'] as $feed ) {
+			if ( isset( $feed['type'] ) ) {
+				$feed['mime-type'] = $feed['type'];
+				unset( $feed['type'] );
+			}
 			$feed_options[ $feed['url'] ] = $feed;
 		}
 
@@ -1004,7 +1006,6 @@ class Friends_Admin {
 			if ( ! isset( $feed_options[ $feed_url ] ) ) {
 				continue;
 			}
-
 			$friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
 			$count += 1;
 		}
@@ -1088,7 +1089,7 @@ class Friends_Admin {
 		$friend_roles = $this->get_friend_roles();
 		$default_role = get_option( 'friends_default_friend_role', 'friend' );
 		$post_formats = get_post_format_strings();
-		$post_formats['autodetect'] = __( 'Autodetect', 'friends' );
+		$post_formats['autodetect'] = __( 'Autodetect Post Format', 'friends' );
 		$registered_parsers = Friends::get_instance()->feed->get_registered_parsers();
 
 		$errors = new WP_Error();
@@ -1108,6 +1109,7 @@ class Friends_Admin {
 			$feeds = $vars['feeds'];
 
 			if ( ! $errors->has_errors() ) {
+
 				if ( isset( $vars['friendship'] ) ) {
 					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $codeword, $message );
 				} else {
@@ -1686,10 +1688,9 @@ class Friends_Admin {
 
 		if ( $only_friends_affiliated ) {
 			?>
-			<script type="text/javascript">
-				jQuery( function() {
-					jQuery( '#delete_option1' ).closest( 'li' ).hide();
-				} );
+			<script type ="text /javascrip t ">
+				jQuery( function () { 	jQuery( '#delete_option1' ).closest( 'li' ).hide();
+				}  );
 			</script>
 			<?php
 		}

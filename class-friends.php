@@ -465,27 +465,26 @@ class Friends {
 	public function pre_get_posts_filter_by_post_format( $query ) {
 		global $wp_query;
 
-		if ( $query->is_main_query() ) {
+		if ( ! $query->is_main_query() || ! empty( $wp_query->query['post_format'] ) ) {
 			return;
 		}
 
 		$filter_by_post_format = get_option( 'friends_limit_homepage_post_format', false );
-
 		if ( ! $filter_by_post_format ) {
 			return;
 		}
 
 		if ( 'standard' === $filter_by_post_format ) {
 			$formats = array();
+
 			$post_formats = get_theme_support( 'post-formats' );
-			if ( is_array( get_theme_support( 'post-formats' ) ) ) {
-				foreach ( $post_formats as $format ) {
-					if ( ! in_array( $format, array( 'standard ' ) ) ) {
+			if ( $post_formats && is_array( $post_formats[0] ) && count( $post_formats[0] ) ) {
+				foreach ( $post_formats[0] as $format ) {
+					if ( ! in_array( $format, array( 'standard' ) ) ) {
 						$formats[] = 'post-format-' . $format;
 					}
 				}
 			}
-
 			if ( ! empty( $formats ) ) {
 				$query->set(
 					'tax_query',

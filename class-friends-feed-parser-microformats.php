@@ -16,6 +16,9 @@
  * @author Alex Kirk
  */
 class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
+	const NAME = 'Microformats';
+	const URL = 'https://www.microformats.org/';
+
 	/**
 	 * Determines if this is a supported feed.
 	 *
@@ -63,11 +66,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 	 * @return     array  A list of supported feeds at the URL.
 	 */
 	public function discover_available_feeds( $content, $url ) {
-		if ( ! function_exists( 'Mf2\parse' ) ) {
-			require_once __DIR__ . '/libs/Mf2/Parser.php';
-		}
-
-		$mf = Mf2\parse( $content, $url );
+		$mf = Friends_Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
 				foreach ( array( 'me', 'alternate' ) as $rel ) {
@@ -85,22 +84,29 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 				if ( isset( $link['type'] ) ) {
 					$discovered_feeds[ $feed_url ]['type'] = $link['type'];
 				}
+
 				if ( isset( $link['title'] ) ) {
-					$discovered_feeds[ $feed_url ]['title'] = $link['text'];
+					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
+				} elseif ( isset( $link['text'] ) ) {
+					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
 				}
 			}
 		}
 
 		if ( isset( $mf['items'] ) ) {
-			$discovered_feeds[ $url ] = array(
-				'type'        => 'text/html',
-				'rel'         => 'self',
-				'post-format' => 'autodetect',
-			);
+			$feed_items = $this->parse_hfeed( $mf );
+			if ( count( $feed_items ) > 0 ) {
+				$discovered_feeds[ $url ] = array(
+					'type'        => 'text/html',
+					'rel'         => 'self',
+					'post-format' => 'autodetect',
+					'parser'      => 'microformats',
+				);
 
-			if ( isset( $mf['items'][0]['properties']['name'] ) ) {
-				if ( is_array( $mf['items'][0]['properties']['name'] ) ) {
-					$discovered_feeds[ $url ]['title'] = reset( $mf['items'][0]['properties']['name'] );
+				if ( isset( $mf['items'][0]['properties']['name'] ) ) {
+					if ( is_array( $mf['items'][0]['properties']['name'] ) ) {
+						$discovered_feeds[ $url ]['title'] = reset( $mf['items'][0]['properties']['name'] );
+					}
 				}
 			}
 		}
@@ -109,7 +115,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 	}
 
 	/**
-	 * Parse a h-card.
+	 * Parse an h-card.
 	 *
 	 * @param      array $data      The data.
 	 * @param      bool  $category  It is a category.
@@ -140,27 +146,21 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 	}
 
 	/**
-	 * Fetches a feed and returns the processed items.
+	 * Parse an h-feed.
 	 *
-	 * @param      string $url        The url.
+	 * @param      array $mf     The microfeeds2 parser response.
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url ) {
-		if ( ! function_exists( 'Mf2\parse' ) ) {
-			require_once __DIR__ . '/libs/Mf2/Parser.php';
+	public function parse_hfeed( $mf ) {
+		if ( ! is_array( $mf ) ) {
+			return array();
 		}
-
-		$mf = Mf2\fetch( $url );
-		if ( ! $mf ) {
-			// translators: %s is a URL.
-			return new Wp_Error( 'microformats Parser', sprintf( __( 'Could not parse %s.', 'friends' ), $url ) );
-		}
-
 		$feed_items = array();
 		$entries = array();
 
 		// The following section is adapted from the SimplePie source.
+		// 2020-11-30: Modifications: set post format, handle videos.
 		$h_feed = array();
 		foreach ( $mf['items'] as $mf_item ) {
 			if ( in_array( 'h-feed', $mf_item['type'] ) ) {
@@ -210,7 +210,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 				if ( isset( $link['value'] ) ) {
 					$link = $link['value'];
 				}
-				$item['permalink'] = array( array( 'data' => $link ) );
+				$item['permalink'] = $link;
 			}
 
 			if ( isset( $entry['properties']['uid'][0] ) ) {
@@ -229,38 +229,55 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 				$item['title'] = $title;
 			}
 
-			if ( isset( $entry['properties']['photo'][0] ) ) {
-				// If a photo is also in content, don't need to add it again here.
+			foreach ( array( 'photo', 'video' ) as $media ) {
+				if ( ! isset( $entry['properties'][ $media ][0] ) ) {
+					continue;
+				}
+
+				// If a $media is also in content, don't need to add it again here.
 				$content = '';
 				if ( isset( $entry['properties']['content'][0]['html'] ) ) {
 					$content = $entry['properties']['content'][0]['html'];
 				}
-				$photo_list = array();
-				for ( $j = 0; $j < count( $entry['properties']['photo'] ); $j++ ) {
-					$photo = $entry['properties']['photo'][ $j ];
-					if ( ! empty( $photo ) && strpos( $content, $photo ) === false ) {
-						$photo_list[] = $photo;
+				$el_list = array();
+				for ( $j = 0; $j < count( $entry['properties'][ $media ] ); $j++ ) {
+					$el = $entry['properties'][ $media ][ $j ];
+					if ( ! empty( $el ) && strpos( $content, $el ) === false ) {
+						$el_list[] = $el;
 					}
 				}
-				// When there's more than one photo show the first and use a lightbox.
-				// Need a permanent, unique name for the image set, but don't have
-				// anything unique except for the content itself, so use that.
-				$count = count( $photo_list );
-				if ( $count > 1 ) {
-					$image_set_id = preg_replace( '/[[:^alnum:]]/', '', $photo_list[0] );
-					$content = '<p>';
-					foreach ( $photo_list as $j => $photo ) {
-						$hidden = 0 === $j ? '' : 'class="hidden" ';
-						$content .= '<a href="' . $photo . '" ' . $hidden .
-							'data-lightbox="image-set-' . $image_set_id . '">' .
-							'<img src="' . $photo . '"></a>';
+
+				$set_id = preg_replace( '/[[:^alnum:]]/', '', $el_list[0] );
+				$content = '<p>';
+				foreach ( $el_list as $j => $el ) {
+					$hidden = 0 === $j ? '' : 'class="hidden" ';
+					$content .= '<a href="' . $el . '" ' . $hidden .
+					'data-lightbox="set-' . $set_id . '">';
+					switch ( $media ) {
+						case 'photo':
+							$content .= '<img src="' . esc_url( $el ) . '" />';
+							break;
+						case 'video':
+							$content .= '<video src="' . esc_url( $el ) . '" />';
+							break;
 					}
-					$content .= '<br><b>' . $count . ' photos</b></p>';
-				} elseif ( 1 === $count ) {
-					$content = '<p><img src="' . $photo_list[0] . '"></p>';
+					$content .= '</a>';
 				}
-				$item['post-format'] = 'photo';
+				$content .= '<br><b>';
+				switch ( $media ) {
+					case 'photo':
+							// translators: %s is the number of photos.
+						$content .= _n( '%d photo', '%d photos', $count, 'friends' );
+						break;
+					case 'video':
+							// translators: %s is the number of videos.
+						$content .= _n( '%d video', '%d videos', $count, 'friends' );
+						break;
+				}
+				$content .= '</b></p>';
+				$item['post-format'] = $media;
 			}
+
 			if ( isset( $entry['properties']['content'][0]['html'] ) ) {
 				// e-content['value'] is the same as p-name when they are on the same
 				// element. Use this to replace title with a strip_tags version so
@@ -306,5 +323,22 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 		}
 
 		return $feed_items;
+	}
+
+	/**
+	 * Fetches a feed and returns the processed items.
+	 *
+	 * @param      string $url        The url.
+	 *
+	 * @return     array            An array of feed items.
+	 */
+	public function fetch_feed( $url ) {
+		$mf = Friends_Mf2\fetch( $url );
+		if ( ! $mf ) {
+			// translators: %s is a URL.
+			return new Wp_Error( 'microformats Parser', sprintf( __( 'Could not parse %s.', 'friends' ), $url ) );
+		}
+
+		return $this->parse_hfeed( $mf );
 	}
 }

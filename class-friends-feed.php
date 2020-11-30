@@ -154,19 +154,20 @@ class Friends_Feed {
 			$posts = $this->process_incoming_feed_items( $items, $user_feed, $cache_post_type );
 			$new_posts[ $post_type ] = array_merge( $new_posts[ $post_type ], $posts );
 		}
-		$this->notify_about_new_friend_posts( $friend_user, $new_posts );
+		$this->notify_about_new_friend_posts( $friend_user, $user_feed, $new_posts );
 
-		do_action( 'friends_retrieved_new_posts', $new_posts, $friend_user );
+		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
 		return $new_posts;
 	}
 
 	/**
 	 * Notify users about new posts of this friend
 	 *
-	 * @param  Friend_User $friend_user The friend.
-	 * @param  array       $new_posts   The new posts of this friend.
+	 * @param      Friend_User      $friend_user  The friend.
+	 * @param      Friend_User_Feed $user_feed    The user feed.
+	 * @param      array            $new_posts    The new posts of this friend.
 	 */
-	public function notify_about_new_friend_posts( Friend_User $friend_user, $new_posts ) {
+	public function notify_about_new_friend_posts( Friend_User $friend_user, Friend_User_Feed $user_feed, $new_posts ) {
 		if ( $friend_user->is_new() ) {
 			$friend_user->set_not_new();
 		} else {
@@ -594,7 +595,6 @@ class Friends_Feed {
 
 		// We'll determine the obvious feeds ourself.
 		$available_feeds = $this->discover_link_rel_feeds( $content, $url, $headers );
-
 		if ( empty( $available_feeds ) ) {
 			$available_feeds[ $url ] = array(
 				'url'  => $url,
@@ -605,7 +605,10 @@ class Friends_Feed {
 		foreach ( $this->parsers as $slug => $parser ) {
 			foreach ( $parser->discover_available_feeds( $content, $url ) as $link_url => $feed ) {
 				if ( isset( $available_feeds[ $link_url ] ) ) {
-					continue;
+					// If this parser tells us it can parse it right away, allow it to override.
+					if ( isset( $available_feeds[ $link_url ]['parser'] ) || ! isset( $feed['parser'] ) ) {
+						continue;
+					}
 				}
 				$available_feeds[ $link_url ] = $feed;
 				$available_feeds[ $link_url ]['url'] = $link_url;
@@ -621,7 +624,7 @@ class Friends_Feed {
 			}
 
 			foreach ( $this->parsers as $slug => $parser ) {
-				if ( $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
+				if ( ( isset( $feed['parser'] ) && $slug === $feed['parser'] ) || $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
 					$available_feeds[ $link_url ]['parser'] = $slug;
 					$available_feeds[ $link_url ] = $parser->update_feed_details( $available_feeds[ $link_url ] );
 					if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
@@ -698,32 +701,32 @@ class Friends_Feed {
 		}
 
 		$discovered_feeds = array();
-		foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
-			$rel = $link->getAttribute( 'rel' );
-			if ( 'alternate' === $rel ) {
-				$hreflang = $link->getAttribute( 'hreflang' );
-				if ( $hreflang ) {
+		$mf = Friends_Mf2\parse( $content, $url );
+		if ( isset( $mf['rel-urls'] ) ) {
+			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
+				foreach ( array( 'friends-base-url', 'me', 'alternate' ) as $rel ) {
+					if ( in_array( $rel, $link['rels'] ) ) {
+						$discovered_feeds[ $feed_url ] = array(
+							'rel' => $rel,
+						);
+					}
+				}
+
+				if ( ! isset( $discovered_feeds[ $feed_url ] ) ) {
 					continue;
 				}
-			} elseif ( 'me' !== $rel && 'friends-base-url' !== $rel ) {
-				continue;
-			}
 
-			$link_url = $link->getAttribute( 'href' );
-			if ( ! is_string( $link_url ) || isset( $discovered_feeds[ $link_url ] ) ) {
-				continue;
-			}
-			if ( false === parse_url( $link_url ) ) {
-				continue;
-			}
+				if ( isset( $link['type'] ) ) {
+					$discovered_feeds[ $feed_url ]['type'] = $link['type'];
+				}
 
-			$discovered_feeds[ $link_url ] = array(
-				'title' => $link->getAttribute( 'title' ),
-				'type'  => $link->getAttribute( 'type' ),
-				'rel'   => $rel,
-			);
+				if ( isset( $link['title'] ) ) {
+					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
+				} elseif ( isset( $link['text'] ) ) {
+					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
+				}
+			}
 		}
-		// TODO: implement searching the headers.
 
 		return $discovered_feeds;
 	}
@@ -785,8 +788,17 @@ class Friends_Feed {
 	 * @return array A list of parsers. Key is the slug, value is the parser name.
 	 */
 	public function get_registered_parsers() {
-		return array(
-			'simplepie' => 'RSS (SimplePie)',
-		);
+		$parsers = array();
+		foreach ( $this->parsers as $slug => $parser ) {
+			$name = $slug;
+			if ( defined( get_class( $parser ) . '::NAME' ) ) {
+				$name = esc_html( $parser::NAME );
+			}
+			if ( defined( get_class( $parser ) . '::URL' ) ) {
+				$name = '<a href="' . esc_url( $parser::URL ) . '" target="_blank" rel="noopener noreferrer">' . $name . '</a>';
+			}
+			$parsers[ $slug ] = $name;
+		}
+		return $parsers;
 	}
 }

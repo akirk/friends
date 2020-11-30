@@ -153,7 +153,7 @@ foreach ( $feeds as $feed_url => $details ) {
 							<p class="description details hidden">
 								<?php
 								// translators: %s is the type of a feed, for example Atom or RSS.
-								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['mime-type'] ) );
+								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
 								echo ' | ';
 								// translators: %s is the name of a parser, e.g. simplepie.
 								echo esc_html( sprintf( __( 'Parser: %s', 'friends' ), $details['parser'] ) );
@@ -216,8 +216,17 @@ foreach ( $feeds as $feed_url => $details ) {
 					<input type="submit" class="button" name="step2" value="<?php echo esc_attr_x( 'Check & add feed', 'button', 'friends' ); ?>" />
 					<p class="description">
 						<?php
-						// translators: %s is a list of parser names.
-						echo esc_html( sprintf( __( 'The following parsers are available: %s', 'friends' ), implode( ', ', $registered_parsers ) ) );
+						echo wp_kses(
+							// translators: %s is a list of parser names.
+							sprintf( __( 'The following parsers are available: %s', 'friends' ), implode( ', ', $registered_parsers ) ),
+							array(
+								'a' => array(
+									'href'   => array(),
+									'rel'    => array(),
+									'target' => array(),
+								),
+							)
+						);
 						?>
 					</p>
 				</td>

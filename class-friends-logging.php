@@ -38,39 +38,35 @@ class Friends_Logging {
 	 */
 	private function register_hooks() {
 		add_action( 'friends_retrieved_new_posts', array( $this, 'log_feed_successfully_fetched' ), 10, 2 );
-		add_action( 'friends_retrieve_friends_error', array( $this, 'log_feed_error' ), 10, 3 );
+		add_action( 'friends_retrieve_friends_error', array( $this, 'log_feed_error' ), 10, 2 );
 	}
 
 	/**
 	 * Log that a feed was sucessfully fetched.
 	 *
-	 * @param array   $new_posts   The new posts that were fetched (potentially empty array).
-	 * @param WP_User $friend_user The user for which the feed was fetched.
+	 * @param      Friend_User_Feed $user_feed  The user feed.
+	 * @param      array            $new_posts  The new posts that were fetched
+	 *                                          (potentially empty array).
 	 */
-	public function log_feed_successfully_fetched( $new_posts, $friend_user ) {
-		update_user_option( $friend_user->ID, 'friends_last_feed_retrieval', gmdate( 'Y-m-d H:i:s' ) );
-		update_user_option(
-			$friend_user->ID,
-			'friends_last_feed_retrieval_message',
-			// translators: %s is the number of new posts found.
-			sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ), count( $new_posts ) )
-		);
-
+	public function log_feed_successfully_fetched( Friend_User_Feed $user_feed, $new_posts ) {
+		$count = 0;
+		if ( is_array( $new_posts ) ) {
+			foreach ( $new_posts as $post_type => $posts ) {
+				$count += count( $posts );
+			}
+		}
+		// translators: %s is the number of new posts found.
+		$user_feed->update_last_log( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', $count, 'friends' ), $count ) );
 	}
 
 	/**
 	 * Log that an error occurred when fetching a feed.
 	 *
-	 * @param string   $feed_url    The feed url that was fetched.
-	 * @param WP_Error $error       The error that occurred when fetching the feed.
-	 * @param WP_User  $friend_user The user for which the feed was fetched.
+	 * @param      Friend_User_Feed $user_feed  The user feed.
+	 * @param      WP_Error         $error      The error that occurred when
+	 *                                          fetching the feed.
 	 */
-	public function log_feed_error( $feed_url, $error, $friend_user ) {
-		update_user_option( $friend_user->ID, 'friends_last_feed_retrieval', gmdate( 'Y-m-d H:i:s' ) );
-		update_user_option(
-			$friend_user->ID,
-			'friends_last_feed_retrieval_message',
-			$error->get_error_message()
-		);
+	public function log_feed_error( Friend_User_Feed $user_feed, $error ) {
+		$user_feed->update_last_log( $error->get_error_message() );
 	}
 }

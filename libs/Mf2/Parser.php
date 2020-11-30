@@ -1,6 +1,6 @@
 <?php
 
-namespace Mf2;
+namespace Friends_Mf2;
 
 use DOMDocument;
 use DOMElement;
@@ -63,27 +63,31 @@ function parse($input, $url = null, $convertClassic = true) {
  * @return array|null canonical microformats2 array structure on success, null on failure
  */
 function fetch($url, $convertClassic = true, &$curlInfo=null) {
-	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $url);
-	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-	curl_setopt($ch, CURLOPT_HEADER, 0);
-	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-	curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
-	curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-		'Accept: text/html'
-	));
-	$html = curl_exec($ch);
-	$info = $curlInfo = curl_getinfo($ch);
-	curl_close($ch);
+	// Friends modification: use wp_safe_remote_get() instead of curl directly.
+	$response = wp_safe_remote_get(
+		$url,
+		array(
+			'timeout' => 20,
+			'redirection' => 5,
+			'headers' => array(
+				'Accept: text/html',
+			),
+		)
+	);
+	if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+		return null;
+	}
+	$html = wp_remote_retrieve_body( $response );
+	$headers = wp_remote_retrieve_headers( $response );
 
-	if (strpos(strtolower($info['content_type']), 'html') === false) {
+	if (stripos($headers['content-type'], 'html') === false) {
 		// The content was not delivered as HTML, do not attempt to parse it.
 		return null;
 	}
 
 	# ensure the final URL is used to resolve relative URLs
-	$url = $info['url'];
-
+	$url = $response['http_response']->get_response_object()->url;
+	// end modification.
 	return parse($html, $url, $convertClassic);
 }
 
