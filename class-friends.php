@@ -465,7 +465,7 @@ class Friends {
 	public function pre_get_posts_filter_by_post_format( $query ) {
 		global $wp_query;
 
-		if ( ! $query->is_main_query() || ! empty( $wp_query->query['post_format'] ) ) {
+		if ( ! $query->is_main_query() || ! empty( $wp_query->query['post_format'] ) || ! $query->is_feed() ) {
 			return;
 		}
 
