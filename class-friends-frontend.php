@@ -38,6 +38,13 @@ class Friends_Frontend {
 	public $author = false;
 
 	/**
+	 * Whether a post-format is being displayed
+	 *
+	 * @var string|false
+	 */
+	public $post_format = false;
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -53,6 +60,7 @@ class Friends_Frontend {
 	private function register_hooks() {
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
 		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 4 );
+		add_filter( 'friends_header_widget_title', array( $this, 'header_widget_title' ) );
 		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ), 10, 2 );
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
@@ -175,6 +183,24 @@ class Friends_Frontend {
 	}
 
 	/**
+	 * Modify the Friends page title depending on context, for example add an author name or post format.
+	 *
+	 * @param      string $title  The original title.
+	 *
+	 * @return     string  The modified title.
+	 */
+	function header_widget_title( $title ) {
+		if ( $this->author ) {
+			$title .= ' &raquo; ' . $this->author->display_name;
+		}
+		if ( $this->post_format ) {
+			$post_formats = get_post_format_strings();
+			$title .= ' &raquo; ' . $post_formats[ $this->post_format ];
+		}
+		return $title;
+	}
+
+	/**
 	 * Don't show the edit link for friend posts.
 	 *
 	 * @param  string $link    The edit link.
@@ -282,6 +308,7 @@ class Friends_Frontend {
 			}
 
 			if ( isset( $post_formats[ $post_format ] ) ) {
+				$this->post_format = $post_format;
 				$query->set(
 					'tax_query',
 					array(

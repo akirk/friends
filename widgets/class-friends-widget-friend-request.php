@@ -53,7 +53,6 @@ class Friends_Widget_Friend_Request extends WP_Widget {
 		echo $args['after_widget'];
 	}
 
-
 	/**
 	 * Update widget configuration.
 	 *

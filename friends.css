@@ -105,6 +105,10 @@ body.friends-page form button {
 	transition: background 0.2s;
 }
 
+body.friends-page #post-format-switcher {
+	float: right;
+}
+
 .friends-post-inline input, .friends-post-inline textarea, .friends-sidebar input, .friends-sidebar textarea {
 	color: #666;
 	background: #fff;

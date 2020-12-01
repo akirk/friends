@@ -353,9 +353,10 @@ class Friends {
 
 		foreach ( array(
 			'friends-topbar'  => array(
-				'friends-widget-new-private-post' => array(
+				'friends-widget-header'           => array(
 					'title' => 'Friends',
 				),
+				'friends-widget-new-private-post' => array(),
 			),
 			'friends-sidebar' => array(
 				'friends-widget-refresh'        => array(),

@@ -66,7 +66,7 @@ class Friend_User_Query extends WP_User_Query {
 	public static function all_friends_subscriptions() {
 		static $all_friends;
 		if ( ! self::$cache || ! isset( $all_friends ) ) {
-			$all_friends = new self( array( 'role__in' => array( 'friend', 'acquaintance', 'subscription' ) ) );
+			$all_friends = new self( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
 		}
 		return $all_friends;
 	}
@@ -88,7 +88,7 @@ class Friend_User_Query extends WP_User_Query {
 	public static function all_subscriptions() {
 		static $all_subscriptions;
 		if ( ! self::$cache || ! isset( $all_subscriptions ) ) {
-			$all_subscriptions = new self( array( 'role' => 'subscription' ) );
+			$all_subscriptions = new self( array( 'role__in' => array( 'pending_friend_request', 'subscription' ) ) );
 		}
 		return $all_subscriptions;
 	}
