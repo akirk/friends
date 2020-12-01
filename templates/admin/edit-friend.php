@@ -16,28 +16,45 @@
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Feeds', 'friends' ); ?></label></th>
 				<td>
-					<table>
+					<?php if ( empty( $friend->get_active_feeds() ) ) : ?>
+						<?php _e( 'There are no active feeds.', 'friends' ); ?>
+					<?php endif; ?>
+					<table class="feed-table<?php echo empty( $friend->get_active_feeds() ) ? ' hidden' : ''; ?>">
 						<thead>
 							<tr>
-								<th>Name</th>
-								<th>URL</th>
-								<th>Parser</th>
-								<th>Format</th>
-								<th>Last Log</th>
+								<th class="checkbox"><?php _e( 'Active', 'friends' ); ?></th>
+								<th><?php _e( 'Feed Name', 'friends' ); ?></th>
+								<th><?php _e( 'Feed URL', 'friends' ); ?></th>
+								<th><?php _e( 'Parser', 'friends' ); ?></th>
+								<th><?php _e( 'Post Format' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
-						<?php foreach ( $friend->get_feeds() as $feed ) : ?>
+						<?php foreach ( $friend->get_feeds() as $term_id => $feed ) : ?>
+							<tr class="<?php echo $feed->get_active() ? 'active' : 'inactive hidden'; ?>">
+								<td><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php _e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></td>
+								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][title]" value="<?php echo esc_attr( $feed->get_title() ); ?>" size="20" aria-label="<?php _e( 'Feed Name', 'friends' ); ?>" /></td>
+								<td><input type="url" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="20" aria-label="<?php _e( 'Feed URL', 'friends' ); ?>" /></td>
+								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php _e( 'Parser', 'friends' ); ?>">
+									<?php foreach ( $registered_parsers as $slug => $parser_name ) : ?>
+										<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
+									<?php endforeach; ?>
+								</select> <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $feed->get_parser() ) . '&preview=' . urlencode( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php _e( 'Preview', 'friends' ); ?></a></td>
+								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][post-format]" aria-label="<?php _e( 'Post Format' ); ?>">
+									<?php foreach ( $post_formats as $format => $title ) : ?>
+										<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $format, $feed->get_post_format() ); ?>><?php echo esc_html( $title ); ?></option>
+									<?php endforeach; ?>
+								</select></td>
+							</tr>
 							<tr>
-								<td><?php echo esc_html( $feed->get_title() ); ?></td>
-								<td><?php echo esc_html( $feed->get_url() ); ?></td>
-								<td><?php echo esc_html( $feed->get_parser() ); ?></td>
-								<td><?php echo esc_html( $feed->get_post_format() ); ?></td>
-								<td><?php echo esc_html( $feed->get_last_log() ); ?></td>
+								<td class="lastlog hidden" colspan="5"><?php echo esc_html( $feed->get_last_log() ); ?></td>
 							</tr>
 						<?php endforeach; ?>
 						</tbody>
 					</table>
+					<?php if ( count( $friend->get_active_feeds() ) !== count( $friend->get_feeds() ) ) : ?>
+					<a href="" class="show-inactive-feeds"><?php _e( 'Show inactive feeds', 'friends' ); ?></a>
+					<?php endif; ?>
 				</td>
 			</tr>
 			<tr>

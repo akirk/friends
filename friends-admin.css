@@ -46,3 +46,11 @@ tr .row-actions span.friends {
 tr:hover .row-actions span.friends {
 	display: inline;
 }
+
+table.feed-table th.checkbox {
+	width: 30px;
+}
+
+table.feed-table td {
+	padding: 0;
+}

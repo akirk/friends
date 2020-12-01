@@ -16,9 +16,6 @@ foreach ( $feeds as $feed_url => $details ) {
 	if ( 'unsupported' === $details['parser'] ) {
 		$unsupported_feeds[ $feed_url ] = $details;
 		unset( $feeds[ $feed_url ] );
-	} elseif ( ! isset( $details['post-format'] ) && $friends_host && ! isset( $post_formats['autodetect'] ) && parse_url( $feed_url, PHP_URL_HOST ) === $friends_host ) {
-		$feeds[ $feed_url ]['post-format'] = 'autodetect';
-		$feeds[ $feed_url ]['autoselect'] = true;
 	}
 }
 
@@ -130,7 +127,7 @@ foreach ( $feeds as $feed_url => $details ) {
 									// translators: 1: is a link to a feed with its name as text, 2: url for a preview, 3: a select dropdown with post formats.
 										__( 'Subscribe %1$s (<a href=%2$s>preview</a>) as %3$s', 'friends' ),
 										'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>',
-										'"' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . $details['parser'] . '&preview=' . urlencode( $feed_url ) ) ), 'preview-feed-' . $feed_url ) ) . '" target="_blank"',
+										'"' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $details['parser'] ) . '&preview=' . urlencode( $feed_url ) ) ), 'preview-feed' ) ) . '" target="_blank"',
 										'</label>' . $select
 									),
 									array(
@@ -155,8 +152,27 @@ foreach ( $feeds as $feed_url => $details ) {
 								// translators: %s is the type of a feed, for example Atom or RSS.
 								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
 								echo ' | ';
-								// translators: %s is the name of a parser, e.g. simplepie.
-								echo esc_html( sprintf( __( 'Parser: %s', 'friends' ), $details['parser'] ) );
+
+								$select = '<select name="feeds[' . esc_attr( $c ) . '][parser]">';
+								foreach ( $registered_parsers as $slug => $parser_name ) {
+									$select .= '<option value="' . esc_attr( $slug ) . '"' . selected( $details['parser'], $slug, false ) . '>' . esc_html( strip_tags( $parser_name ) ) . '</option>';
+								}
+								$select .= '</select>';
+
+								echo wp_kses(
+									// translators: %s is the name of a parser, e.g. simplepie.
+									sprintf( __( 'Parser: %s', 'friends' ), $select ),
+									array(
+										'select' => array(
+											'name' => array(),
+										),
+										'label'  => array(),
+										'option' => array(
+											'value'    => array(),
+											'selected' => array(),
+										),
+									)
+								);
 								echo ' | ';
 								// translators: %s is relation to the URL, e.g. self or alternate.
 								echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );

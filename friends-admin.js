@@ -66,6 +66,15 @@ jQuery( function( $ ) {
 		return false;
 	} );
 
+	jQuery( document ).on( 'click', 'a.preview-parser', function() {
+		this.href = this.href.replace( /&parser=[^&$]+/, '&parser=' + jQuery( this ).closest( 'td' ).find( 'select' ).val() );
+	} );
+
+	jQuery( document ).on( 'click', 'a.show-inactive-feeds', function() {
+		jQuery( 'table.feed-table' ).show().find( 'tr.inactive' ).toggleClass( 'hidden' );
+		return false;
+	} );
+
 	jQuery( '<a href="' + friends.add_friend_url + '" class="page-title-action">' + friends.add_friend_text + '</a>' ).insertAfter( 'a.page-title-action[href$="user-new.php"]' );
 
 } );

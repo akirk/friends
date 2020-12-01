@@ -118,7 +118,7 @@ class Friends_Feed {
 	 */
 	public function preview( $parser, $url ) {
 		if ( ! isset( $this->parsers[ $parser ] ) ) {
-			return new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied', 'friends' ) );
+			return new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
 		}
 
 		$items = $this->parsers[ $parser ]->fetch_feed( $url );
@@ -136,8 +136,12 @@ class Friends_Feed {
 	 * @param  Friend_User $friend_user A single user to fetch.
 	 */
 	public function retrieve_single_friend_posts( Friend_User $friend_user ) {
-		foreach ( $friend_user->get_feeds() as $user_feed ) {
+		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
 			$parser = $user_feed->get_parser();
+			if ( ! isset( $this->parsers[ $parser ] ) ) {
+				do_action( 'friends_retrieve_friends_error', $user_feed, new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) ), $friend_user );
+					continue;
+			}
 			$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
 
 			if ( is_wp_error( $items ) ) {
@@ -153,10 +157,10 @@ class Friends_Feed {
 
 			$posts = $this->process_incoming_feed_items( $items, $user_feed, $cache_post_type );
 			$new_posts[ $post_type ] = array_merge( $new_posts[ $post_type ], $posts );
-		}
-		$this->notify_about_new_friend_posts( $friend_user, $user_feed, $new_posts );
+			$this->notify_about_new_friend_posts( $friend_user, $user_feed, $new_posts );
 
-		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
+			do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
+		}
 		return $new_posts;
 	}
 
@@ -351,16 +355,19 @@ class Friends_Feed {
 	}
 
 	/**
-	 * Process the feed of a friend user.
+	 * Discover the post format for the item.
 	 *
-	 * @param  array $friend_user The friend user.
-	 * @param  SimplePie   $feed        The RSS feed object of the friend user.
-	 * @param  string      $cache_post_type The post type to be used for caching the feed items.
+	 * @param      object $item   The feed item.
+	 *
+	 * @return     string  The discovered post format.
 	 */
-
+	public function post_format_discovery( $item ) {
+		// Not implemented yet.
+		return 'standard';
+	}
 
 	/**
-	 * Process incomimng feed items
+	 * Process incoming feed items
 	 *
 	 * @param  array            $items           The incoming items.
 	 * @param  Friend_User_Feed $user_feed       The feed to which these items belong.
@@ -424,7 +431,7 @@ class Friends_Feed {
 			if ( isset( $item->feed_rule_transform ) ) {
 				$post_data = array_merge( $post_data, $item->feed_rule_transform );
 			}
-
+				$post_format = $user_feed->get_post_format();
 			if ( ! is_null( $post_id ) ) {
 				$post_data['ID'] = $post_id;
 				wp_update_post( $post_data );
@@ -439,16 +446,18 @@ class Friends_Feed {
 				}
 
 				$post_format = $user_feed->get_post_format();
-				if ( 'autosort' === $post_format ) {
+				if ( 'autodetect' === $post_format ) {
 					if ( isset( $item->{'post-format'} ) && isset( $post_formats[ $item->{'post-format'} ] ) ) {
 						$post_format = $item->{'post-format'};
 					} else {
-						$post_format = $this->post_type_discovery();
+						$post_format = $this->post_format_discovery( $item );
 					}
 				}
+
 				if ( $post_format ) {
 					set_post_format( $post_id, $post_format );
 				}
+
 				$new_posts[]                   = $post_id;
 				$remote_post_ids[ $permalink ] = $post_id;
 			}
@@ -615,11 +624,13 @@ class Friends_Feed {
 			}
 		}
 
+		$has_friends_plugin = false;
 		foreach ( $available_feeds as $link_url => $feed ) {
 			$feed['url'] = $link_url;
 			$available_feeds[ $link_url ]['url'] = $link_url;
 			if ( 'friends-base-url' === $feed['rel'] ) {
 				$available_feeds[ $link_url ]['parser'] = 'friends';
+				$has_friends_plugin = $link_url;
 				continue;
 			}
 
@@ -639,25 +650,58 @@ class Friends_Feed {
 			$available_feeds[ $link_url ]['parser'] = 'unsupported';
 		}
 
-		// Backfill titles.
+		$autoselected = false;
 		foreach ( $available_feeds as $link_url => $feed ) {
+			$path = wp_parse_url( $link_url, PHP_URL_PATH );
+
+			// Backfill titles.
 			if ( empty( $feed['title'] ) ) {
 				$host = wp_parse_url( $link_url, PHP_URL_HOST );
-				$path = wp_parse_url( $link_url, PHP_URL_PATH );
-
-				$feed['title'] = trim( preg_replace( '#^www\.#i', '', preg_replace( '#[^a-z0-9.:-]#i', ' ', ucwords( $host . ': ' . $path ) ) ), ': ' );
+				if ( trim( $path, '/' ) ) {
+					$feed['title'] = trim( preg_replace( '#^www\.#i', '', preg_replace( '#[^a-z0-9.:-]#i', ' ', ucwords( $host . ': ' . $path ) ) ), ': ' );
+				} else {
+					$feed['title'] = strtolower( $host );
+				}
 				$available_feeds[ $link_url ]['title'] = $feed['title'];
 			}
 
-			if ( isset( $feed['rel'] ) && 'self' === $feed['rel'] ) {
+			// Autoselect heuristic.
+			if ( $autoselected ) {
+				continue;
+			}
+			if ( $has_friends_plugin ) {
+				// Prefer the main RSS feed.
+				if ( 'feed' === trim( $path, '/' ) ) {
+					$available_feeds[ $link_url ]['post-format'] = 'autodetect';
+					$autoselected = true;
+				}
+			} elseif ( isset( $feed['rel'] ) && 'self' === $feed['rel'] ) {
+				$autoselected = true;
+			}
+
+			if ( $autoselected ) {
 				$available_feeds[ $link_url ]['autoselect'] = true;
 			}
 		}
 
+		$feed_sort_order = array( 'self', 'alternate', 'me' );
+		if ( $has_friends_plugin ) {
+			// If we have the Friends plugin, we prefer an (augmented) RSS feed over, for example, microformats.
+			$feed_sort_order = array( 'alternate', 'self', 'me' );
+		}
+
 		uasort(
 			$available_feeds,
-			function ( $a, $b ) {
-				foreach ( array( 'self', 'alternate', 'me' ) as $rel_sort ) {
+			function ( $a, $b ) use ( $feed_sort_order ) {
+				if ( isset( $a['autoselect'] ) && $a['autoselect'] ) {
+					if ( ! isset( $b['autoselect'] ) || ! $b['autoselect'] ) {
+						return -1;
+					}
+				} elseif ( isset( $b['autoselect'] ) && $b['autoselect'] ) {
+					return 1;
+				}
+
+				foreach ( $feed_sort_order as $rel_sort ) {
 					if ( $rel_sort === $a['rel'] ) {
 						if ( $rel_sort !== $b['rel'] ) {
 							return -1;
@@ -780,6 +824,21 @@ class Friends_Feed {
 			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) LIMIT 1', $url, esc_attr( $url ) ) );
 		}
 		return $post_id;
+	}
+
+	/**
+	 * Gets the registered parser.
+	 *
+	 * @param      string $parser  The parser slug.
+	 *
+	 * @return     string  The parser name.
+	 */
+	public function get_registered_parser( $parser ) {
+		if ( ! isset( $this->parsers[ $parser ] ) ) {
+			return null;
+		}
+		$parsers = $this->get_registered_parsers();
+		return $parsers[ $parser ];
 	}
 
 	/**

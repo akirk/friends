@@ -270,14 +270,14 @@ class Friends_Frontend {
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
 			$query->is_singular = false;
-			if ( isset( $post_formats[ $pagename_parts[1] ] ) ) {
-				$post_format = $pagename_parts[1];
+			if ( 'type' === $pagename_parts[1] && isset( $post_formats[ $pagename_parts[2] ] ) ) {
+				$post_format = $pagename_parts[2];
 			} else {
 				$this->author = get_user_by( 'login', $pagename_parts[1] );
 				$query->set( 'author_name', $pagename_parts[1] );
 				$query->is_author = true;
-				if ( isset( $pagename_parts[2] ) && isset( $post_formats[ $pagename_parts[2] ] ) ) {
-					$post_format = $pagename_parts[2];
+				if ( isset( $pagename_parts[3] ) && isset( $post_formats[ $pagename_parts[3] ] ) ) {
+					$post_format = $pagename_parts[3];
 				}
 			}
 

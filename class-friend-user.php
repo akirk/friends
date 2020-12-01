@@ -138,20 +138,68 @@ class Friend_User extends WP_User {
 	}
 
 	/**
-	 * Subscribe to a friends site without becoming a friend
+	 * Save multiple feeds for a user.
+	 *
+	 * @param      string $feeds  The feed URLs to subscribe to.
+	 *
+	 * @return     WP_User|WP_error  $user The new associated user or an error object.
+	 */
+	public function save_feeds( $feeds = array() ) {
+		$errors = new WP_Error();
+		foreach ( $feeds as $feed_url => $options ) {
+			if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
+				$errors->add( 'invalid-url', 'An invalid URL was provided' );
+				unset( $feeds[ $feed_url ] );
+				continue;
+			}
+
+			$default_options = array(
+				'active'      => false,
+				'parser'      => 'simplepie',
+				'post-format' => 'standard',
+				'post-type'   => 'post',
+				'mime-type'   => 'application/rss+xml',
+				'title'       => $this->display_name . ' RSS Feed',
+			);
+
+			$feed_options = array();
+			foreach ( $default_options as $key => $value ) {
+				if ( isset( $options[ $key ] ) ) {
+					$feed_options[ $key ] = $options[ $key ];
+				} else {
+					$feed_options[ $key ] = $value;
+				}
+			}
+			$feeds[ $feed_url ] = $feed_options;
+		}
+
+		$user_feeds = Friend_User_Feed::save_multiple(
+			$this,
+			$feeds
+		);
+
+		if ( $errors->has_errors() ) {
+			return $errors;
+		}
+
+		return $user_feeds;
+	}
+
+	/**
+	 * Save a feed url for a user.
 	 *
 	 * @param      string $feed_url  The feed URL to subscribe to.
 	 * @param      array  $options   The options.
 	 *
 	 * @return     WP_User|WP_error  $user The new associated user or an error object.
 	 */
-	public function subscribe( $feed_url, $options = array() ) {
+	public function save_feed( $feed_url, $options = array() ) {
 		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
 			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
 		}
 
 		$default_options = array(
-			'active'      => true,
+			'active'      => false,
 			'parser'      => 'simplepie',
 			'post-format' => 'standard',
 			'post-type'   => 'post',
@@ -168,13 +216,26 @@ class Friend_User extends WP_User {
 			}
 		}
 
-		$feed = Friend_User_Feed::save(
+		$user_feed = Friend_User_Feed::save(
 			$this,
 			$feed_url,
 			$feed_options
 		);
 
-		return $feed;
+		return $user_feed;
+	}
+
+	/**
+	 * Subscribe to a friends site without becoming a friend
+	 *
+	 * @param      string $feed_url  The feed URL to subscribe to.
+	 * @param      array  $options   The options.
+	 *
+	 * @return     WP_User|WP_error  $user The new associated user or an error object.
+	 */
+	public function subscribe( $feed_url, $options = array() ) {
+		$options['active'] = true;
+		return $this->save_feed( $feed_url, $options );
 	}
 
 	/**

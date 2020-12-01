@@ -16,7 +16,7 @@
  * @author Alex Kirk
  */
 class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
-	const NAME = 'SimplePie (bundled with WordPress)';
+	const NAME = 'SimplePie';
 	const URL = 'http://simplepie.org';
 	/**
 	 * Determines if this is a supported feed.
@@ -129,11 +129,6 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	 * @return     array            An array of feed items.
 	 */
 	public function fetch_feed( $url ) {
-		// Ensure we'll parse microformats in Simplepie.
-		if ( ! function_exists( 'Mf2\parse' ) ) {
-			require_once __DIR__ . '/libs/Mf2/Parser.php';
-		}
-
 		// Use SimplePie which is bundled with WordPress.
 		$feed = fetch_feed( $url );
 		if ( is_wp_error( $feed ) ) {

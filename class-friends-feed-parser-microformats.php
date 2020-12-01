@@ -161,6 +161,8 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 
 		// The following section is adapted from the SimplePie source.
 		// 2020-11-30: Modifications: set post format, handle videos.
+		// This should implement the https://www.w3.org/TR/post-type-discovery/ algorithm.
+
 		$h_feed = array();
 		foreach ( $mf['items'] as $mf_item ) {
 			if ( in_array( 'h-feed', $mf_item['type'] ) ) {
@@ -246,35 +248,36 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 						$el_list[] = $el;
 					}
 				}
-
-				$set_id = preg_replace( '/[[:^alnum:]]/', '', $el_list[0] );
-				$content = '<p>';
-				foreach ( $el_list as $j => $el ) {
-					$hidden = 0 === $j ? '' : 'class="hidden" ';
-					$content .= '<a href="' . $el . '" ' . $hidden .
-					'data-lightbox="set-' . $set_id . '">';
+				if ( count( $el_list ) > 0 ) {
+					$set_id = preg_replace( '/[[:^alnum:]]/', '', $el_list[0] );
+					$content = '<p>';
+					foreach ( $el_list as $j => $el ) {
+						$hidden = 0 === $j ? '' : 'class="hidden" ';
+						$content .= '<a href="' . $el . '" ' . $hidden .
+						'data-lightbox="set-' . $set_id . '">';
+						switch ( $media ) {
+							case 'photo':
+								$content .= '<img src="' . esc_url( $el ) . '" />';
+								break;
+							case 'video':
+								$content .= '<video src="' . esc_url( $el ) . '" />';
+								break;
+						}
+						$content .= '</a>';
+					}
+					$content .= '<br><b>';
 					switch ( $media ) {
 						case 'photo':
-							$content .= '<img src="' . esc_url( $el ) . '" />';
+							// translators: %s is the number of photos.
+							$content .= sprintf( _n( '%d photo', '%d photos', count( $el_list ), 'friends' ), count( $el_list ) );
 							break;
 						case 'video':
-							$content .= '<video src="' . esc_url( $el ) . '" />';
+							// translators: %s is the number of videos.
+							$content .= sprintf( _n( '%d video', '%d videos', count( $el_list ), 'friends' ), count( $el_list ) );
 							break;
 					}
-					$content .= '</a>';
+					$content .= '</b></p>';
 				}
-				$content .= '<br><b>';
-				switch ( $media ) {
-					case 'photo':
-							// translators: %s is the number of photos.
-						$content .= _n( '%d photo', '%d photos', $count, 'friends' );
-						break;
-					case 'video':
-							// translators: %s is the number of videos.
-						$content .= _n( '%d video', '%d videos', $count, 'friends' );
-						break;
-				}
-				$content .= '</b></p>';
 				$item['post-format'] = $media;
 			}
 

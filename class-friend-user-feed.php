@@ -118,6 +118,15 @@ class Friend_User_Feed {
 	}
 
 	/**
+	 * Whether the feed is active (=subscribed).
+	 *
+	 * @return bool Feed is active if true.
+	 */
+	public function get_active() {
+		return self::validate_active( get_metadata( 'term', $this->term->term_id, 'active', true ) );
+	}
+
+	/**
 	 * The post format to which the feed items should be imported.
 	 *
 	 * @return string The post format.
@@ -224,7 +233,7 @@ class Friend_User_Feed {
 	 * @return string            A validated mime-type.
 	 */
 	public static function validate_mime_type( $mime_type ) {
-		return substr( $mime_type, 0, 100 );
+		return substr( preg_replace( '/[^a-z0-9\/_-]/', '', $mime_type ), 0, 100 );
 	}
 
 	/**
@@ -356,6 +365,14 @@ class Friend_User_Feed {
 	}
 
 	/**
+	 * Delete this feed.
+	 */
+	public static function delete() {
+		$friend_user = $this->get_friend_user();
+		wp_remove_object_terms( $friend_user->ID, $this->term->term_id, self::TAXONOMY );
+	}
+
+	/**
 	 * Convert the previous storage of a feed URL as a user option to use terms.
 	 *
 	 * @param  Friend_User $friend_user The user to be converted.
@@ -373,9 +390,9 @@ class Friend_User_Feed {
 			array(
 				'active'      => true,
 				'parser'      => 'simplepie',
-				'post_format' => 'standard',
-				'post_type'   => 'post',
-				'mime_type'   => 'application/rss+xml',
+				'post-format' => 'standard',
+				'post-type'   => 'post',
+				'mime-type'   => 'application/rss+xml',
 				'title'       => $friend_user->display_name . ' RSS Feed',
 			)
 		);
@@ -390,6 +407,49 @@ class Friend_User_Feed {
 	}
 
 	/**
+	 * Saves multiple feeds for a user.
+	 *
+	 * See save() for possible options.
+	 *
+	 * @param      Friend_User $friend_user  The associated user.
+	 * @param      array       $feeds        The feeds in the format array( url => options ).
+	 *
+	 * @return     array      Array of the newly created terms.
+	 */
+	public static function save_multiple( Friend_User $friend_user, array $feeds ) {
+		$all_urls = array();
+		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
+			$all_urls[ $term->name ] = $term->term_id;
+		}
+
+		$term_ids = wp_set_object_terms( $friend_user->ID, array_keys( array_merge( $all_urls, $feeds ) ), self::TAXONOMY );
+		if ( is_wp_error( $term_ids ) ) {
+			return $term_ids;
+		}
+
+		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
+			$all_urls[ $term->name ] = $term->term_id;
+		}
+
+		foreach ( $feeds as $url => $options ) {
+			if ( ! isset( $all_urls[ $url ] ) ) {
+				continue;
+			}
+			$term_id = $all_urls[ $url ];
+			foreach ( $options as $key => $value ) {
+				if ( in_array( $key, array( 'active', 'parser', 'post-format', 'post-type', 'mime-type', 'title' ) ) ) {
+					if ( metadata_exists( 'term', $term_id, $key ) ) {
+						update_metadata( 'term', $term_id, $key, $value );
+					} else {
+						add_metadata( 'term', $term_id, $key, $value, true );
+					}
+				}
+			}
+		}
+		return $term_ids;
+	}
+
+	/**
 	 * Saves a new feed as a term for the user.
 	 *
 	 * @param  Friend_User $friend_user The user to be associated.
@@ -398,12 +458,28 @@ class Friend_User_Feed {
 	 * @return WP_Term                  A newly created term.
 	 */
 	public static function save( Friend_User $friend_user, $url, $args = array() ) {
-		$term_ids = wp_set_object_terms( $friend_user->ID, $url, self::TAXONOMY );
-		if ( is_wp_error( $term_ids ) ) {
-			return $term_ids;
+		$all_urls = array();
+		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
+			$all_urls[ $term->name ] = $term->term_id;
 		}
 
-		$term_id = reset( $term_ids );
+		if ( ! isset( $all_urls[ $url ] ) ) {
+			$all_urls[ $url ] = false;
+
+			$term_ids = wp_set_object_terms( $friend_user->ID, array_keys( $all_urls ), self::TAXONOMY );
+			if ( is_wp_error( $term_ids ) ) {
+				return $term_ids;
+			}
+			foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
+				$all_urls[ $term->name ] = $term->term_id;
+			}
+		}
+
+		if ( ! isset( $all_urls[ $url ] ) ) {
+			return false;
+		}
+
+		$term_id = $all_urls[ $url ];
 		foreach ( $args as $key => $value ) {
 			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'post-type', 'mime-type', 'title' ) ) ) {
 				if ( metadata_exists( 'term', $term_id, $key ) ) {
@@ -413,7 +489,21 @@ class Friend_User_Feed {
 				}
 			}
 		}
-			return get_term( $term_id );
+
+		return get_term( $term_id );
+	}
+
+	/**
+	 * Generic function for updating User_Feed metadata.
+	 *
+	 * @param      string $key    The key.
+	 * @param      string $value  The value.
+	 */
+	public function update_metadata( $key, $value ) {
+		if ( metadata_exists( 'term', $this->term->term_id, $key ) ) {
+			return update_metadata( 'term', $this->term->term_id, $key, $value );
+		}
+		return add_metadata( 'term', $this->term->term_id, $key, $value, true );
 	}
 
 	/**
@@ -424,8 +514,7 @@ class Friend_User_Feed {
 	 * @return     int|false The inserted term id.
 	 */
 	public function update_last_log( $value ) {
-		$value = gmdate( 'Y-m-d H:i:s' ) . ': ' . $value;
-		return add_metadata( 'term', $this->term->term_id, 'last-log', $value, false );
+		return $this->update_metadata( 'last-log', gmdate( 'Y-m-d H:i:s' ) . ': ' . $value );
 	}
 
 	/**
@@ -443,9 +532,18 @@ class Friend_User_Feed {
 		);
 		$feeds = array();
 		foreach ( $term_query->get_terms() as $term ) {
-			$feeds[] = new self( $term, $friend_user );
+			$feeds[ $term->term_id ] = new self( $term, $friend_user );
 		}
 
 		return $feeds;
+	}
+
+	/**
+	 * Gets the identifier.
+	 *
+	 * @return     int  The identifier.
+	 */
+	public function get_id() {
+		return $this->term->term_id;
 	}
 }

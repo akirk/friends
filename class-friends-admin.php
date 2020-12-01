@@ -323,8 +323,9 @@ class Friends_Admin {
 		}
 
 		$friend_user = Friend_User::get_user_for_url( $feed_url );
-		if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->is_valid_friend() ) {
-			return new WP_Error( 'already-friend', __( 'You are already subscribed to this site.', 'friends' ) );
+		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
+				// translators: %s is the name of a friend / site.
+				return new WP_Error( 'already-subscribed', sprintf( __( 'You are already subscribed to this site: %s', 'friends' ), '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '">' . esc_html( $friend_user->display_name ) . '</a>' ) );
 		}
 
 		$favicon  = null;
@@ -868,10 +869,46 @@ class Friends_Admin {
 				}
 			}
 
-			if ( isset( $_POST['friends_feed_url'] ) && filter_var( $_POST['friends_feed_url'], FILTER_VALIDATE_URL ) ) {
-				update_user_option( $friend->ID, 'friends_feed_url', $_POST['friends_feed_url'] );
-			} else {
-				delete_user_option( $friend->ID, 'friends_feed_url' );
+			if ( isset( $_POST['feeds'] ) ) {
+				$existing_feeds = $friend->get_feeds();
+				foreach ( $_POST['feeds'] as $term_id => $feed ) {
+					if ( ! isset( $existing_feeds[ $term_id ] ) ) {
+						continue;
+					}
+					$user_feed = $existing_feeds[ $term_id ];
+
+					if ( $user_feed->get_url() !== $feed['url'] ) {
+						$options = array(
+							'parser'      => $feed['parser'],
+							'post-format' => $feed['post-format'],
+							'post-type'   => $feed['post-type'],
+							'mime-type'   => $user_feed->get_mime_type(),
+							'title'       => $feed['title'],
+						);
+
+						if ( $feed['active'] ) {
+							$friend->subscribe( $user_feed->get_url(), $options );
+						} else {
+							$friend->save_feed( $user_feed->get_url(), $options );
+						}
+						$user_feed->delete();
+						continue;
+					}
+
+					$user_feed->update_metadata( 'active', isset( $feed['active'] ) && $feed['active'] );
+
+					if ( $user_feed->get_title() !== $feed['title'] ) {
+						$user_feed->update_metadata( 'title', $feed['title'] );
+					}
+
+					if ( $user_feed->get_parser() !== $feed['parser'] ) {
+						$user_feed->update_metadata( 'parser', $feed['parser'] );
+					}
+
+					if ( $user_feed->get_post_format() !== $feed['post_format'] ) {
+						$user_feed->update_metadata( 'post-format', $feed['post-format'] );
+					}
+				}
 			}
 		} else {
 			return;
@@ -898,6 +935,8 @@ class Friends_Admin {
 			)
 		);
 		$rules = $friend->get_feed_rules();
+		$post_formats = array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() );
+		$registered_parsers = $this->friends->feed->get_registered_parsers();
 		$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 		if ( ! $hide_from_friends_page ) {
 			$hide_from_friends_page = array();
@@ -997,6 +1036,9 @@ class Friends_Admin {
 			$feed_options[ $feed['url'] ] = $feed;
 		}
 
+		// Save the all feeds for possible later activation.
+		$friend_user->save_feeds( $feed_options );
+
 		if ( ! isset( $vars['subscribe'] ) ) {
 			$vars['subscribe'] = array();
 		}
@@ -1012,7 +1054,7 @@ class Friends_Admin {
 
 		$friend_user->retrieve_posts();
 
-		$friend_link = '<a href="' . esc_url( $friend_user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->user_url ) . '</a>';
+		$friend_link = '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->display_name ) . '</a>';
 		if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
@@ -1022,7 +1064,7 @@ class Friends_Admin {
 				// translators: %s is a Site URL.
 				echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . esc_url( $friend_user->get_local_friends_page_url() ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 				?>
 			</p></div>
 			<?php
@@ -1053,7 +1095,7 @@ class Friends_Admin {
 					echo ' ';
 				} else {
 					// translators: %s is a Site URL.
-					echo wp_kses( sprintf( __( "You're now subscribing %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+					echo wp_kses( sprintf( __( "You're now subscribed to %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 					echo ' ';
 				}
 				esc_html_e( 'We subscribed you to their updates.', 'friends' );
@@ -1088,9 +1130,8 @@ class Friends_Admin {
 		$friend_user_login = Friend_User::get_user_login_for_url( $friend_url );
 		$friend_roles = $this->get_friend_roles();
 		$default_role = get_option( 'friends_default_friend_role', 'friend' );
-		$post_formats = get_post_format_strings();
-		$post_formats['autodetect'] = __( 'Autodetect Post Format', 'friends' );
-		$registered_parsers = Friends::get_instance()->feed->get_registered_parsers();
+		$post_formats = array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() );
+		$registered_parsers = $this->friends->feed->get_registered_parsers();
 
 		$errors = new WP_Error();
 
@@ -1107,7 +1148,6 @@ class Friends_Admin {
 			$codeword = trim( $vars['codeword'] );
 			$message = trim( $vars['message'] );
 			$feeds = $vars['feeds'];
-
 			if ( ! $errors->has_errors() ) {
 
 				if ( isset( $vars['friendship'] ) ) {
@@ -1128,8 +1168,13 @@ class Friends_Admin {
 			}
 
 			$friend_user = Friend_User::get_user( $friend_user_login );
-			if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->is_valid_friend() ) {
-				return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
+			if ( $friend_user && ! is_wp_error( $friend_user ) ) {
+				if ( $friend_user->is_valid_friend() ) {
+					return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
+				}
+
+				// translators: %s is the name of a friend / site.
+				return new WP_Error( 'already-subscribed', sprintf( __( 'You are already subscribed to this site: %s', 'friends' ), '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '">' . esc_html( $friend_user->display_name ) . '</a>' ) );
 			}
 
 			$feeds = $this->friends->feed->discover_available_feeds( $friend_url );
@@ -1162,18 +1207,12 @@ class Friends_Admin {
 	 */
 	public function render_admin_add_friend() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to send friend requests.', 'friends' ) );
+			wp_die( esc_html__( 'Sorry, you are not allowed to add friends.', 'friends' ) );
 		}
 
 		if ( ! empty( $_GET['preview'] ) ) {
 			$url = $_GET['preview'];
-			if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'preview-feed-' . $url ) ) {
-				?>
-				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'For security reasons, this preview is not available.', 'friends' ); ?></p>
-				</div>
-				<?php
-				exit;
-			}
+
 			?>
 			<h1>
 			<?php
@@ -1181,6 +1220,45 @@ class Friends_Admin {
 			echo esc_html( sprintf( __( 'Preview for %s', 'friends' ), $url ) );
 			?>
 			</h1>
+			<?php
+
+			if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'preview-feed' ) ) {
+				?>
+				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'For security reasons, this preview is not available.', 'friends' ); ?></p>
+				</div>
+				<?php
+				exit;
+			}
+
+			$parser_name = $this->friends->feed->get_registered_parser( $_GET['parser'] );
+			if ( ! $parser_name ) {
+				?>
+				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'An unknown parser name was supplied.', 'friends' ); ?></p>
+				</div>
+				<?php
+				exit;
+			}
+			?>
+			<h3><?php _e( 'Parser Details', 'friends-parser-rss-bridge' ); ?></h3>
+			<ul id="parser">
+				<li>
+					<?php
+					echo wp_kses(
+						// translators: %s is the name of a parser.
+						sprintf( __( 'Parser: %s', 'friends' ), $parser_name ),
+						array(
+							'a' => array(
+								'href'   => array(),
+								'rel'    => array(),
+								'target' => array(),
+							),
+						)
+					);
+					?>
+				</li>
+			</ul>
+			<h3><?php _e( 'Items in the Feed', 'friends-parser-rss-bridge' ); ?></h3>
+
 			<?php
 
 			$items = $this->friends->feed->preview( $_GET['parser'], $url );
@@ -1192,6 +1270,7 @@ class Friends_Admin {
 				exit;
 			}
 			?>
+
 			<ul>
 			<?php
 			foreach ( $items as $item ) {
@@ -1236,7 +1315,21 @@ class Friends_Admin {
 			}
 			if ( is_wp_error( $response ) ) {
 				?>
-				<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $response->get_error_message() ); ?></p>
+				<div id="message" class="updated notice is-dismissible"><p>
+				<?php
+				echo wp_kses(
+					$response->get_error_message(),
+					array(
+						'strong' => array(),
+						'a'      => array(
+							'href'   => array(),
+							'rel'    => array(),
+							'target' => array(),
+						),
+					)
+				);
+				?>
+					</p>
 				</div>
 				<?php
 			}
@@ -1688,8 +1781,9 @@ class Friends_Admin {
 
 		if ( $only_friends_affiliated ) {
 			?>
-			<script type ="text /javascrip t ">
-				jQuery( function () { 	jQuery( '#delete_option1' ).closest( 'li' ).hide();
+			<script type="text/javascript">
+				jQuery( function () {
+					jQuery( '#delete_option1' ).closest( 'li' ).hide();
 				}  );
 			</script>
 			<?php
