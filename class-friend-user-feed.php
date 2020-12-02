@@ -70,7 +70,7 @@ class Friend_User_Feed {
 		$feed_url = $this->get_url();
 		$friend_user = $this->get_friend_user();
 
-		if ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) {
+		if ( $friend_user->is_friend_url( $feed_url ) && ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) ) {
 			$friends = Friends::get_instance();
 			$feed_url = $friends->access_control->append_auth( $feed_url, $friend_user );
 		}
