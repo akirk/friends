@@ -433,6 +433,23 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Determines whether the specified url is friend url.
+	 *
+	 * @param      string $url    The url.
+	 *
+	 * @return     bool    True if the specified url is friend url, False otherwise.
+	 */
+	function is_friend_url( $url ) {
+		if ( ! $this->user_url ) {
+			return false;
+		}
+		if ( 0 === strpos( $url, $this->user_url ) ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Get the REST URL for the friend
 	 *
 	 * @return string        The REST URL.

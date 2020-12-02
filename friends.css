@@ -107,6 +107,8 @@ body.friends-page form button {
 
 body.friends-page #post-format-switcher {
 	float: right;
+	margin-top: -4em;
+	margin-right: 3em;
 }
 
 .friends-post-inline input, .friends-post-inline textarea, .friends-sidebar input, .friends-sidebar textarea {
@@ -193,6 +195,18 @@ body.friends-page a:hover {
 }
 
 body.friends-page a:visited {
+	color: #00aadc;
+}
+
+body.friends-page a.post-date, body.friends-page a.post-date:link, body.friends-page a.post-date:active {
+	color: #33bbe3;
+}
+
+body.friends-page a.post-date:hover {
+	color: #78dcfa;
+}
+
+body.friends-page a.post-date:visited {
 	color: #00aadc;
 }
 
@@ -389,3 +403,20 @@ ul.friend-posts img.avatar {
 	vertical-align: middle;
 	margin-right: .3em;
 }
+
+a.explanation-friends-auth-link, a.friends-auth-link, a.friends-auth-link:link, a.friends-auth-link:active, body.friends-page a.friends-auth-link, body.friends-page a.friends-auth-link:link, body.friends-page a.friends-auth-link:active {
+	color: #32c170;
+}
+
+a.button.friends-auth-link, a.button.friends-auth-link span, button.friends-auth-link, button.friends-auth-link span {
+	color: #32c170;
+}
+
+a.friends-auth-link, body.friends-page a.friends-auth-link:hover {
+	color: #32c170;
+}
+
+a.friends-auth-link, body.friends-page a.friends-auth-link:visited {
+	color: #32c170;
+}
+

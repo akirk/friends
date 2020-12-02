@@ -28,7 +28,7 @@ class Friends_Frontend {
 	 *
 	 * @var boolean
 	 */
-	private $on_friends_page = false;
+	private $is_friends_page = false;
 
 	/**
 	 * Whether an author is being displayed
@@ -120,7 +120,7 @@ class Friends_Frontend {
 	 * @return array The modified CSS classes.
 	 */
 	public function add_body_class( $classes ) {
-		if ( $this->on_friends_page ) {
+		if ( $this->is_friends_page ) {
 			$classes[] = 'friends-page';
 		}
 
@@ -157,29 +157,22 @@ class Friends_Frontend {
 	 * @return string The new template to be loaded.
 	 */
 	public function template_override( $template ) {
-		if ( ! $this->is_friends_frontend() ) {
+		if ( ! $this->is_friends_frontend() || ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			return $template;
 		}
 
-		if ( current_user_can( 'edit_posts' ) ) {
-			if ( isset( $_GET['refresh'] ) ) {
-				add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-				add_filter(
-					'wp_feed_options',
-					function( $feed ) {
-						$feed->enable_cache( false );
-					}
-				);
-				$this->friends->feed->retrieve_friend_posts( null, true );
-			}
-
-			if ( ! have_posts() && ! get_query_var( 'author_name' ) ) {
-				return apply_filters( 'friends_template_path', 'friends/no-posts.php' );
-			}
-			return apply_filters( 'friends_template_path', 'friends/posts.php' );
+		if ( isset( $_GET['refresh'] ) ) {
+			add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+			add_filter(
+				'wp_feed_options',
+				function( $feed ) {
+					$feed->enable_cache( false );
+				}
+			);
+			$this->friends->feed->retrieve_friend_posts( null, true );
 		}
 
-		return $template;
+		return apply_filters( 'friends_template_path', 'friends/posts.php' );
 	}
 
 	/**
@@ -190,14 +183,73 @@ class Friends_Frontend {
 	 * @return     string  The modified title.
 	 */
 	function header_widget_title( $title ) {
+		$title = '<a href="' . esc_url( site_url( '/friends/' ) ) . '">' . esc_html( $title ) . '</a>';
 		if ( $this->author ) {
-			$title .= ' &raquo; ' . $this->author->display_name;
+			$title .= ' &raquo; ' . '<a href="' . esc_url( $this->author->get_local_friends_page_url() ) . '">' . esc_html( $this->author->display_name ) . '</a>';
 		}
 		if ( $this->post_format ) {
 			$post_formats = get_post_format_strings();
 			$title .= ' &raquo; ' . $post_formats[ $this->post_format ];
 		}
 		return $title;
+	}
+
+	/**
+	 * Output a link, potentially augmented with authication information.
+	 *
+	 * @param      string      $url          The url.
+	 * @param      string      $text             The link text.
+	 * @param      array       $html_attributes    HTML attributes.
+	 * @param      Friend_User $friend_user  The friend user.
+	 */
+	function link( $url, $text, array $html_attributes = array(), Friend_User $friend_user = null ) {
+		echo $this->get_link( $url, $text, $html_attributes, $friend_user );
+	}
+
+	/**
+	 * Get a link, potentially augmented with authication information.
+	 *
+	 * @param      string      $url              The url.
+	 * @param      string      $text             The link text.
+	 * @param      array       $html_attributes  HTML attributes.
+	 * @param      Friend_User $friend_user      The friend user.
+	 *
+	 * @return     string       The link.
+	 */
+	function get_link( $url, $text, array $html_attributes = array(), Friend_User $friend_user = null ) {
+		if ( is_null( $friend_user ) ) {
+			$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
+		}
+
+		if ( $friend_user->is_friend_url( $url ) ) {
+			$html_attributes['target'] = '_blank';
+			$html_attributes['rel'] = 'noopener noreferrer';
+			if ( ! isset( $html_attributes['class'] ) ) {
+				$html_attributes['class'] = '';
+			}
+			$html_attributes['class'] .= ' friends-auth-link';
+			if ( ! isset( $html_attributes['dashicon'] ) ) {
+				$html_attributes['dashicon'] = 'admin-users';
+			}
+			$html_attributes['data-token'] = $friend_user->get_friend_auth();
+		}
+
+		$link = '<a href="' . esc_url( $url ) . '"';
+		foreach ( $html_attributes as $name => $value ) {
+			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'data-token' ) ) ) {
+				continue;
+			}
+			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';
+		}
+		$link .= '>';
+		if ( isset( $html_attributes['dashicon'] ) ) {
+			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon'] ) . '"></span>' . esc_html( $text );
+		} else {
+			$link .= esc_html( $text );
+		}
+		$link .= '</a>';
+
+		return $link;
 	}
 
 	/**
@@ -211,7 +263,7 @@ class Friends_Frontend {
 		global $post;
 
 		if ( $post && $this->friends->post_types->is_cached_post_type( $post->post_type ) ) {
-			if ( $this->on_friends_page ) {
+			if ( $this->is_friends_page ) {
 				return false;
 			}
 			return get_the_guid( $post );
@@ -272,7 +324,8 @@ class Friends_Frontend {
 			return $query;
 		}
 
-		$this->on_friends_page = true;
+		$this->is_friends_page = true;
+		$query->is_friends_page = true;
 		$this->friends->reactions->unregister_content_hooks();
 		$this->friends->recommendation->unregister_content_hooks();
 
@@ -299,26 +352,23 @@ class Friends_Frontend {
 			if ( 'type' === $pagename_parts[1] && isset( $post_formats[ $pagename_parts[2] ] ) ) {
 				$post_format = $pagename_parts[2];
 			} else {
-				$this->author = get_user_by( 'login', $pagename_parts[1] );
-				$query->set( 'author_name', $pagename_parts[1] );
-				$query->is_author = true;
-				if ( isset( $pagename_parts[3] ) && isset( $post_formats[ $pagename_parts[3] ] ) ) {
-					$post_format = $pagename_parts[3];
+				$author = get_user_by( 'login', $pagename_parts[1] );
+				if ( false !== $author ) {
+					$this->author = new Friend_User( $author );
+					$query->set( 'author_name', $pagename_parts[1] );
+					$query->is_author = true;
+					if ( isset( $pagename_parts[3] ) && isset( $post_formats[ $pagename_parts[3] ] ) ) {
+						$post_format = $pagename_parts[3];
+					}
 				}
 			}
 
 			if ( isset( $post_formats[ $post_format ] ) ) {
 				$this->post_format = $post_format;
-				$query->set(
-					'tax_query',
-					array(
-						array(
-							'taxonomy' => 'post_format',
-							'field'    => 'slug',
-							'terms'    => array( 'post-format-' . $post_format ),
-						),
-					)
-				);
+				$tax_query = $this->friends->wp_query_get_post_format_tax_query( $post_format );
+				if ( $tax_query ) {
+					$query->set( 'tax_query', $tax_query );
+				}
 			}
 		} elseif ( $page_id ) {
 			$query->set( 'page_id', $page_id );

@@ -54,3 +54,21 @@ table.feed-table th.checkbox {
 table.feed-table td {
 	padding: 0;
 }
+
+#available-widgets [class*="friends-widget"] .widget-title:before { content: "\f307"; }
+
+a.explanation-friends-auth-link, a.friends-auth-link, a.friends-auth-link:link, a.friends-auth-link:active, body.friends-page a.friends-auth-link, body.friends-page a.friends-auth-link:link, body.friends-page a.friends-auth-link:active {
+	color: #32c170;
+}
+
+a.button.friends-auth-link, a.button.friends-auth-link span, button.friends-auth-link, button.friends-auth-link span {
+	color: #32c170;
+}
+
+a.friends-auth-link, body.friends-page a.friends-auth-link:hover {
+	color: #32c170;
+}
+
+a.friends-auth-link, body.friends-page a.friends-auth-link:visited {
+	color: #32c170;
+}

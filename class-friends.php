@@ -278,9 +278,9 @@ class Friends {
 		);
 
 		if (
-		'User role' === $context
-		&& in_array( $text, $roles, true )
-		&& 'friends' !== $domain
+			'User role' === $context
+			&& in_array( $text, $roles, true )
+			&& 'friends' !== $domain
 		) {
 			// @codingStandardsIgnoreLine
 			return translate_with_gettext_context( $text, $context, 'friends' );
@@ -470,9 +470,22 @@ class Friends {
 			return;
 		}
 
-		$filter_by_post_format = get_option( 'friends_limit_homepage_post_format', false );
+		$tax_query = $this->wp_query_get_post_format_tax_query( get_option( 'friends_limit_homepage_post_format', false ) );
+		if ( $tax_query ) {
+			$query->set( 'tax_query', $tax_query );
+		}
+	}
+
+	/**
+	 * Add a post_format filter to a WP_Query.
+	 *
+	 * @param      string $filter_by_post_format  The filter by post format.
+	 *
+	 * @return     array|null  The tax query, if any.
+	 */
+	public function wp_query_get_post_format_tax_query( $filter_by_post_format ) {
 		if ( ! $filter_by_post_format ) {
-			return;
+			return null;
 		}
 
 		if ( 'standard' === $filter_by_post_format ) {
@@ -486,46 +499,41 @@ class Friends {
 					}
 				}
 			}
+
 			if ( ! empty( $formats ) ) {
-				$query->set(
-					'tax_query',
+				return array(
+					'relation' => 'AND',
 					array(
-						'relation' => 'AND',
-						array(
-							'operator' => 'NOT IN',
-							'taxonomy' => 'post_format',
-							'field'    => 'slug',
-							'terms'    => $formats,
-						),
-					)
-				);
-			}
-		} else {
-			$query->set(
-				'tax_query',
-				array(
-					array(
+						'operator' => 'NOT IN',
 						'taxonomy' => 'post_format',
 						'field'    => 'slug',
-						'terms'    => array( 'post-format-' . $filter_by_post_format ),
+						'terms'    => $formats,
 					),
-				)
-			);
+				);
+			}
 		}
+
+		return array(
+			array(
+				'taxonomy' => 'post_format',
+				'field'    => 'slug',
+				'terms'    => array( 'post-format-' . $filter_by_post_format ),
+			),
+		);
 	}
 
-		/**
-		 * Output the alternate post formats as a link in the HTML head.
-		 */
+	/**
+	 * Output the alternate post formats as a link in the HTML head.
+	 */
 	public static function html_link_rel_alternate_post_formats() {
 		if ( get_option( 'friends_expose_post_format_feeds' ) && current_theme_supports( 'post-formats' ) ) {
 			echo implode( PHP_EOL, self::get_html_link_rel_alternate_post_formats() ), PHP_EOL;
 		}
 	}
 
-		/**
-		 * Generate link tag(s) with the alternate post formats.
-		 */
+	/**
+	 * Generate link tag(s) with the alternate post formats.
+	 */
 	public static function get_html_link_rel_alternate_post_formats() {
 		$separator = _x( '&raquo;', 'feed link' );
 		$blog_title = get_bloginfo( 'name' );
@@ -534,32 +542,32 @@ class Friends {
 		foreach ( get_post_format_strings() as $format => $title ) {
 			// translators: 1: Blog title, 2: Separator (raquo), 3: Post Format.
 			$title = sprintf( __( '%1$s %2$s %3$s Feed', 'friends' ), $blog_title, $separator, $title );
-				$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( site_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
+			$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( site_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
 		}
 
-			return $links;
+		return $links;
 	}
 
-		/**
-		 * Output the friends base URL as a link in the HTML head.
-		 */
+	/**
+	 * Output the friends base URL as a link in the HTML head.
+	 */
 	public static function html_link_rel_friends_base_url() {
 		echo self::get_html_link_rel_friends_base_url(), PHP_EOL;
 	}
 
-		/**
-		 * Generate a link tag with the friends base URL
-		 */
+	/**
+	 * Generate a link tag with the friends base URL
+	 */
 	public static function get_html_link_rel_friends_base_url() {
 		return '<link rel="friends-base-url" type="application/wp-friends-plugin" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" />';
 	}
 
-		/**
-		 * Check whether this is a valid URL
-		 *
-		 * @param string $url The URL to check.
-		 * @return false|string URL or false on failure.
-		 */
+	/**
+	 * Check whether this is a valid URL
+	 *
+	 * @param string $url The URL to check.
+	 * @return false|string URL or false on failure.
+	 */
 	public static function check_url( $url ) {
 		$host = parse_url( $url, PHP_URL_HOST );
 		if ( 'me.local' === $host || 'friend.local' === $host || 'example.org' === $host ) {
@@ -569,9 +577,9 @@ class Friends {
 		return wp_http_validate_url( $url );
 	}
 
-		/**
-		 * Delete all the data the plugin has stored in WordPress
-		 */
+	/**
+	 * Delete all the data the plugin has stored in WordPress
+	 */
 	public static function uninstall_plugin() {
 		$affected_users = new WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {

@@ -39,27 +39,37 @@ class Friends_Widget_Header extends WP_Widget {
 		$friends = Friends::get_instance();
 
 		$title = apply_filters( 'friends_header_widget_title', $instance['title'] );
-		$title = apply_filters( 'widget_title', $title );
+		$title = apply_filters( 'wptexturize', $title );
+		$title = apply_filters( 'convert_chars', $title );
+
 		echo $args['before_widget'];
 		if ( ! empty( $title ) ) {
 			echo $args['before_title'] . $title . $args['after_title'];
 		}
-
-		?><div id="post-format-switcher">
+		if ( $instance['show_post_formats'] ) {
+			?><div id="post-format-switcher">
 			<select name="post-format">
 				<option value=""><?php _e( 'All Posts', 'friends' ); ?></option>
 				<?php foreach ( get_post_format_strings() as $format => $title ) : ?>
-					<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_attr( $title ); ?></option>
+					<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $format, $friends->frontend->post_format ); ?>><?php echo esc_attr( $title ); ?></option>
 				<?php endforeach; ?>
 			</select>
-			</div>
+		</div>
+			<?php
+		}
 
-			<?php if ( $friends->frontend->author ) : ?>
+		if ( $friends->frontend->author ) {
+			?>
 				<p>
 				<?php
 				echo wp_kses(
+					sprintf(
 					// translators: %1$s is a site name, %2$s is a URL.
-					sprintf( __( 'Visit %1$s. Back to <a href=%2$s>your friends page</a>.', 'friends' ), '<a href="' . esc_url( $friends->frontend->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->frontend->author->ID ) ) . '">' . esc_html( $friends->frontend->author->display_name ) . '</a>', '"' . esc_attr( site_url( '/friends/' ) ) . '"' ),
+						__( 'Visit %1$s. Back to <a href=%2$s>your friends page</a>.', 'friends' ),
+						// translators: 1: a friend's display name, 2: a URL.
+						'<a href="' . esc_url( $friends->frontend->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->frontend->author->ID ) ) . '">' . esc_html( sprintf( __( '%1$s\'s external site at %2$s', 'friends' ), $friends->frontend->author->display_name, preg_replace( '#https?://#', '', trim( $friends->frontend->author->user_url, '/' ) ) ) ) . '</a>',
+						'"' . esc_attr( site_url( '/friends/' ) ) . '"'
+					),
 					array(
 						'a' => array(
 							'href'       => array(),
@@ -70,9 +80,9 @@ class Friends_Widget_Header extends WP_Widget {
 				);
 				?>
 				</p>
-			<?php endif; ?>
+			<?php
+		}
 
-		<?php
 		echo $args['after_widget'];
 	}
 

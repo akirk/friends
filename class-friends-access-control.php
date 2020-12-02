@@ -286,20 +286,26 @@ class Friends_Access_Control {
 	 * @return     string       The friend auth.
 	 */
 	public function get_friend_auth( Friend_User $friend_user, $validity = 3600 ) {
-		$out_token = $friend_user->get_user_option( 'friends_out_token' );
-		$in_token = $friend_user->get_user_option( 'friends_in_token' );
+		static $tokens = array();
 
-		if ( $in_token && $out_token ) {
-			$until = time() + $validity;
-			$auth = password_hash( $until . $in_token, PASSWORD_DEFAULT );
-			return array(
-				'friend' => $out_token,
-				'until'  => $until,
-				'auth'   => $auth,
-			);
+		if ( ! isset( $tokens[ $friend_user->ID ] ) ) {
+			$tokens[ $friend_user->ID ] = array();
+			$out_token = $friend_user->get_user_option( 'friends_out_token' );
+			$in_token = $friend_user->get_user_option( 'friends_in_token' );
+
+			if ( $in_token && $out_token ) {
+				$until = time() + $validity;
+				$auth = password_hash( $until . $in_token, PASSWORD_DEFAULT );
+
+				$tokens[ $friend_user->ID ] = array(
+					'friend' => $out_token,
+					'until'  => $until,
+					'auth'   => $auth,
+				);
+			}
 		}
 
-		return array();
+		return $tokens[ $friend_user->ID ];
 	}
 
 	/**

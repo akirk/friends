@@ -1514,7 +1514,7 @@ class Friends_Admin {
 			$actions = array_merge( array( 'edit' => '<a href="' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ) . '">' . __( 'Edit' ) . '</a>' ), $actions );
 		}
 
-		$actions['view'] = '<a href="' . esc_url( $user->user_url ) . '" target="_blank" rel="noopener noreferrer">' . __( 'Visit' ) . '</a>';
+		$actions['view'] = $this->friends->frontend->get_link( $user->user_url, __( 'Visit' ), array(), new Friend_User( $user ) );
 
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );

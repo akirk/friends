@@ -1,4 +1,4 @@
-jQuery( document ).on( 'click', 'a.auth-link, button.comments.auth-link', function() {
+jQuery( document ).on( 'click', 'a.friends-auth-link, button.comments.friends-auth-link', function() {
 	var $this = jQuery( this ), href = $this.attr( 'href' );
 	if ( ! $this.data( 'token' ) ) {
 		return;
@@ -41,6 +41,17 @@ jQuery( function( $ ) {
 	} );
 	$( '#only_subscribe' ).on( 'change', function() {
 		$( this ).closest( 'form' ).find( '#submit' ).text( this.checked ? '1' : '2' );
+	} );
+	$( '#post-format-switcher select' ).on( 'change', function() {
+		var re = new RegExp( '/type/[^/$]+' ), v = $( this ).val();
+		var url, url_part = v ? ( '/type/' + v + '/' ) : '/';
+		if ( location.href.match( re ) ) {
+			url = location.href.replace( re, url_part );
+		} else {
+			url = location.href.replace( /\/$/, '' ) + url_part;
+		}
+		// alert(url);
+		location.href = url;
 	} );
 } );
 
