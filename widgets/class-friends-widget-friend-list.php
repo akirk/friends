@@ -41,12 +41,13 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		echo $args['before_widget'];
 		echo $args['before_title'];
 
-		$friends         = Friend_User_Query::all_friends();
+		$friends = Friends::get_instance();
+		$all_friends     = Friend_User_Query::all_friends();
 		$friend_requests = Friend_User_Query::all_friend_requests();
 		$subscriptions   = Friend_User_Query::all_subscriptions();
 
 		// translators: %s is the number of your friends.
-		$friends_title = sprintf( _n( '%s Friend', '%s Friends', $friends->get_total(), 'friends' ), '<span class="friend-count">' . $friends->get_total() . '</span>' );
+		$friends_title = sprintf( _n( '%s Friend', '%s Friends', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
 
 		?><a href="<?php echo esc_attr( self_admin_url( 'users.php' ) ); ?>">
 		<?php
@@ -70,7 +71,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		<?php
 		echo $args['after_title'];
 
-		if ( 0 === $friends->get_total() + $subscriptions->get_total() ) {
+		if ( 0 === $all_friends->get_total() + $subscriptions->get_total() ) {
 			?>
 			<span class="friend-count-message">
 			<?php
@@ -78,7 +79,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			?>
 			</span>
 
-			<a href="<?php echo esc_attr( self_admin_url( 'admin.php?page=send_friend_request' ) ); ?>">
+			<a href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>">
 			<?php
 				esc_html_e( 'Send a request', 'friends' );
 			?>
@@ -88,15 +89,19 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			?>
 			<ul class="friend-list">
 			<?php
-			foreach ( $friends->get_results() as $friend_user ) :
+			foreach ( $all_friends->get_results() as $friend_user ) :
+				$friend_user = new Friend_User( $friend_user );
 				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-					$url = site_url( '/friends/' . $friend_user->user_login . '/' );
+					$url = $friend_user->get_local_friends_page_url();
+					if ( $friends->frontend->post_format ) {
+						$url .= 'type/' . $friends->frontend->post_format . '/';
+					}
 				} else {
 					$url = $friend_user->user_url;
 				}
 				?>
 				<li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( $friend_user->get_friend_auth() ); ?>"><?php _e( 'visit', 'friends' ); ?></a></small></li>
+					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ) ); ?></small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php
@@ -106,9 +111,20 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			?>
 			<h5><?php _e( 'Subscriptions', 'friends' ); ?></h5>
 			<ul class="subscription-list">
-			<?php foreach ( $subscriptions->get_results() as $friend_user ) : ?>
-				<li><a href="<?php echo esc_url( site_url( '/friends/' . $friend_user->user_login . '/' ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small><a href="<?php echo esc_url( $friend_user->user_url ); ?>" class="auth-link" data-token="<?php echo esc_attr( $friend_user->get_friend_auth() ); ?>"><?php _e( 'visit', 'friends' ); ?></a></small></li>
+			<?php
+			foreach ( $subscriptions->get_results() as $friend_user ) :
+				$friend_user = new Friend_User( $friend_user );
+				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+					$url = $friend_user->get_local_friends_page_url();
+					if ( $friends->frontend->post_format ) {
+						$url .= 'type/' . $friends->frontend->post_format . '/';
+					}
+				} else {
+					$url = $friend_user->user_url;
+				}
+				?>
+				<li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ) ); ?></small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php

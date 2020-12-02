@@ -15,5 +15,8 @@
 </head>
 
 <body <?php body_class(); ?>>
+	<div class="friends-topbar">
+		<?php dynamic_sidebar( 'friends-topbar' ); ?>
+	</div>
 	<div class="container">
 

@@ -8,9 +8,6 @@
 $friends = Friends::get_instance();
 include __DIR__ . '/header.php'; ?>
 <section class="posts">
-	<div class="friends-topbar">
-		<?php dynamic_sidebar( 'friends-topbar' ); ?>
-	</div>
 	<?php
 	if ( ! have_posts() ) {
 		if ( $friends->frontend->post_format ) {

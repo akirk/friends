@@ -60,7 +60,6 @@ body.friends-page {
 	margin: 0;
 	background-color: #fff;
 	color: #333;
-	padding: 0 2em;
 }
 
 body.friends-page div.container {
@@ -145,7 +144,8 @@ body.friends-page form input, body.friends-page form input:focus, body.friends-p
 }
 
 body.friends-page div.friends-topbar {
-	padding-bottom: 2em;
+	padding: 2em 3em;
+	background-color: #f0f0f0;
 }
 
 body.friends-page img.avatar {
@@ -156,6 +156,10 @@ body.friends-page div.friends-widget {
 	margin-bottom: 2em;
 }
 
+body.friends-page div.friends-main-widget h1 a {
+	color: #222;
+	text-decoration: none;
+}
 body.friends-page div.friends-widget h4 a {
 	color: #222;
 	text-decoration: none;
