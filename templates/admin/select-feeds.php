@@ -21,6 +21,7 @@ foreach ( $feeds as $feed_url => $details ) {
 
 ?><div class="wrap"><form method="post">
 	<?php wp_nonce_field( 'add-friend' ); ?>
+	<input type="hidden" name="friend_url" value="<?php echo esc_url( $friend_url ); ?>" />
 	<p>
 		<?php
 		// translators: %s is a URL.

@@ -221,7 +221,7 @@ class Friends_Frontend {
 			$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
 		}
 
-		if ( $friend_user->is_friend_url( $url ) ) {
+		if ( $friend_user->is_friend_url( $url ) && $friend_user->is_valid_friend() ) {
 			$html_attributes['target'] = '_blank';
 			$html_attributes['rel'] = 'noopener noreferrer';
 			if ( ! isset( $html_attributes['class'] ) ) {

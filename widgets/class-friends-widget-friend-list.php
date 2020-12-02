@@ -101,7 +101,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 				}
 				?>
 				<li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ) ); ?></small></li>
+					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array(), $friend_user ); ?></small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php
@@ -124,7 +124,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 				}
 				?>
 				<li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ) ); ?></small></li>
+					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array(), $friend_user ); ?></small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php
