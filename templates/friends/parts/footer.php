@@ -12,8 +12,8 @@
 			get_comments_link(),
 			get_comments_number( '', 1, '%' ),
 			array(
-				'class'    => 'comments button',
-				'dashicon' => 'admin-comments',
+				'class'          => 'comments button',
+				'dashicon_front' => 'admin-comments',
 			)
 		);
 		?>

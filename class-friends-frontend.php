@@ -227,9 +227,9 @@ class Friends_Frontend {
 			if ( ! isset( $html_attributes['class'] ) ) {
 				$html_attributes['class'] = '';
 			}
-			$html_attributes['class'] .= ' friends-auth-link';
-			if ( ! isset( $html_attributes['dashicon'] ) ) {
-				$html_attributes['dashicon'] = 'admin-users';
+			$html_attributes['class'] = trim( $html_attributes['class'] . ' friends-auth-link' );
+			if ( ! isset( $html_attributes['dashicon_back'] ) ) {
+				$html_attributes['dashicon_back'] = 'admin-users';
 			}
 			$html_attributes['data-token'] = $friend_user->get_friend_auth();
 		}
@@ -242,10 +242,12 @@ class Friends_Frontend {
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';
 		}
 		$link .= '>';
-		if ( isset( $html_attributes['dashicon'] ) ) {
-			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon'] ) . '"></span>' . esc_html( $text );
-		} else {
-			$link .= esc_html( $text );
+		if ( isset( $html_attributes['dashicon_front'] ) ) {
+			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon_front'] ) . '"></span>';
+		}
+		$link .= esc_html( $text );
+		if ( isset( $html_attributes['dashicon_back'] ) ) {
+			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon_back'] ) . '"></span>';
 		}
 		$link .= '</a>';
 
@@ -344,31 +346,29 @@ class Friends_Frontend {
 		$query->is_page = false;
 		$query->set( 'pagename', null );
 
-		$post_formats = get_post_format_strings();
 		$post_format = false;
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
 			$query->is_singular = false;
-			if ( 'type' === $pagename_parts[1] && isset( $post_formats[ $pagename_parts[2] ] ) ) {
-				$post_format = $pagename_parts[2];
+			$potential_post_format = false;
+			if ( 'type' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
+				$potential_post_format = $pagename_parts[2];
 			} else {
 				$author = get_user_by( 'login', $pagename_parts[1] );
 				if ( false !== $author ) {
 					$this->author = new Friend_User( $author );
 					$query->set( 'author_name', $pagename_parts[1] );
 					$query->is_author = true;
-					if ( isset( $pagename_parts[3] ) && isset( $post_formats[ $pagename_parts[3] ] ) ) {
-						$post_format = $pagename_parts[3];
+					if ( isset( $pagename_parts[3] ) ) {
+						$potential_post_format = $pagename_parts[3];
 					}
 				}
 			}
 
-			if ( isset( $post_formats[ $post_format ] ) ) {
-				$this->post_format = $post_format;
-				$tax_query = $this->friends->wp_query_get_post_format_tax_query( $post_format );
-				if ( $tax_query ) {
-					$query->set( 'tax_query', $tax_query );
-				}
+			$tax_query = $this->friends->wp_query_get_post_format_tax_query( $potential_post_format );
+			if ( $tax_query ) {
+				$this->post_format = $potential_post_format;
+				$query->set( 'tax_query', $tax_query );
 			}
 		} elseif ( $page_id ) {
 			$query->set( 'page_id', $page_id );

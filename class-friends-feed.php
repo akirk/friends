@@ -379,6 +379,7 @@ class Friends_Feed {
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 		$rules           = $friend_user->get_feed_rules();
 		$post_formats    = get_post_format_strings();
+		$feed_post_format = $user_feed->get_post_format();
 
 		$new_posts = array();
 		foreach ( $items as $item ) {
@@ -431,7 +432,6 @@ class Friends_Feed {
 			if ( isset( $item->feed_rule_transform ) ) {
 				$post_data = array_merge( $post_data, $item->feed_rule_transform );
 			}
-				$post_format = $user_feed->get_post_format();
 			if ( ! is_null( $post_id ) ) {
 				$post_data['ID'] = $post_id;
 				wp_update_post( $post_data );
@@ -445,21 +445,21 @@ class Friends_Feed {
 					continue;
 				}
 
-				$post_format = $user_feed->get_post_format();
-				if ( 'autodetect' === $post_format ) {
-					if ( isset( $item->{'post-format'} ) && isset( $post_formats[ $item->{'post-format'} ] ) ) {
-						$post_format = $item->{'post-format'};
-					} else {
-						$post_format = $this->post_format_discovery( $item );
-					}
-				}
-
-				if ( $post_format ) {
-					set_post_format( $post_id, $post_format );
-				}
-
 				$new_posts[]                   = $post_id;
 				$remote_post_ids[ $permalink ] = $post_id;
+			}
+
+			$post_format = $feed_post_format;
+			if ( 'autodetect' === $post_format ) {
+				if ( isset( $item->{'post-format'} ) && isset( $post_formats[ $item->{'post-format'} ] ) ) {
+					$post_format = $item->{'post-format'};
+				} else {
+					$post_format = $this->post_format_discovery( $item );
+				}
+			}
+
+			if ( $post_format ) {
+				set_post_format( $post_id, $post_format );
 			}
 
 			if ( $item->reaction ) {

@@ -487,16 +487,17 @@ class Friends {
 		if ( ! $filter_by_post_format ) {
 			return null;
 		}
+		$post_formats = get_post_format_slugs();
+		if ( ! isset( $post_formats[ $filter_by_post_format ] ) ) {
+			return null;
+		}
 
 		if ( 'standard' === $filter_by_post_format ) {
 			$formats = array();
 
-			$post_formats = get_theme_support( 'post-formats' );
-			if ( $post_formats && is_array( $post_formats[0] ) && count( $post_formats[0] ) ) {
-				foreach ( $post_formats[0] as $format ) {
-					if ( ! in_array( $format, array( 'standard' ) ) ) {
-						$formats[] = 'post-format-' . $format;
-					}
+			foreach ( $post_formats as $format ) {
+				if ( ! in_array( $format, array( 'standard' ) ) ) {
+					$formats[] = 'post-format-' . $format;
 				}
 			}
 
