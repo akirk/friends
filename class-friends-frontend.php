@@ -101,12 +101,13 @@ class Friends_Frontend {
 	 */
 	public function enqueue_scripts() {
 		if ( is_user_logged_in() ) {
-			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), array( 'jquery' ), Friends::VERSION );
+			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
 			$variables = array(
-				'emojis_json' => plugins_url( 'emojis.json', __FILE__ ),
-				'ajax_url'    => admin_url( 'admin-ajax.php' ),
-				'spinner_url' => admin_url( 'images/wpspin_light.gif' ),
-				'text_undo'   => __( 'Undo' ),
+				'emojis_json'       => plugins_url( 'emojis.json', __FILE__ ),
+				'ajax_url'          => admin_url( 'admin-ajax.php' ),
+				'spinner_url'       => admin_url( 'images/wpspin_light.gif' ),
+				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
+				'text_undo'         => __( 'Undo' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
 			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ), array(), Friends::VERSION );
@@ -232,11 +233,13 @@ class Friends_Frontend {
 				$html_attributes['dashicon_back'] = 'admin-users';
 			}
 			$html_attributes['data-token'] = $friend_user->get_friend_auth();
+			$html_attributes['data-nonce'] = wp_create_nonce( 'auth-link-' . $url );
+			$html_attributes['data-friend'] = $friend_user->user_login;
 		}
 
 		$link = '<a href="' . esc_url( $url ) . '"';
 		foreach ( $html_attributes as $name => $value ) {
-			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'data-token' ) ) ) {
+			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'data-nonce', 'data-token', 'data-friend' ) ) ) {
 				continue;
 			}
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';

@@ -50,6 +50,7 @@ class Friends_Admin {
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'wp_ajax_friends_update_welcome_panel', array( $this, 'ajax_update_welcome_panel' ) );
+		add_action( 'wp_ajax_friends_refresh_link_token', array( $this, 'ajax_refresh_link_token' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
@@ -719,7 +720,6 @@ class Friends_Admin {
 		wp_die( 1 );
 	}
 
-
 	/**
 	 * Respond to the Ajax request to the Friend Welcome Panel
 	 */
@@ -733,6 +733,35 @@ class Friends_Admin {
 		update_user_meta( get_current_user_id(), 'friends_show_welcome_panel', empty( $_POST['visible'] ) ? 0 : 1 );
 
 		wp_die( 1 );
+	}
+	/**
+	 * Respond to the Ajax request to the Friend Welcome Panel
+	 */
+	public function ajax_refresh_link_token() {
+		if ( ! isset( $_POST['url'] ) || ! isset( $_POST['friend'] ) ) {
+			wp_die( -1 );
+		}
+		$url = $_POST['url'];
+		check_ajax_referer( 'auth-link-' . $url );
+
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_die( -1 );
+		}
+
+		$friend_user = Friend_User::get_user( $_POST['friend'] );
+		if ( ! $friend_user ) {
+			wp_die( -1 );
+		}
+
+		wp_send_json_success(
+			array(
+				'success' => true,
+				'data'    => array(
+					'token' => $friend_user->get_friend_auth(),
+				),
+			)
+		);
+		wp_die();
 	}
 
 	/**

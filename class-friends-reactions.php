@@ -204,7 +204,7 @@ class Friends_Reactions {
 	 * @return string        The post content with buttons or nothing if echoed.
 	 */
 	public function post_reactions( $text = '', $echo = false ) {
-		if ( is_user_logged_in() ) {
+		if ( is_user_logged_in() ) { // TODO: Make configurable.
 			$reactions = $this->get_reactions( get_the_ID() );
 
 			ob_start();
