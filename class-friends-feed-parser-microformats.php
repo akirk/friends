@@ -66,6 +66,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 	 * @return     array  A list of supported feeds at the URL.
 	 */
 	public function discover_available_feeds( $content, $url ) {
+		$discovered_feeds = array();
 		$mf = Friends_Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {

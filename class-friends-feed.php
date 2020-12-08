@@ -729,26 +729,12 @@ class Friends_Feed {
 	 * @return     array   ( description_of_the_return_value )
 	 */
 	private function discover_link_rel_feeds( $content, $url, $headers ) {
-		if ( ! class_exists( 'DOMXpath' ) ) {
-			return array();
-		}
-
-		// Convert to a DomDocument and silence the errors while doing so.
-		$doc = new DomDocument;
-		set_error_handler( '__return_null' );
-		$doc->loadHTML( $content );
-		restore_error_handler();
-
-		$xpath = new DOMXpath( $doc );
-		if ( ! $xpath ) {
-			return array();
-		}
-
 		$discovered_feeds = array();
+		$has_self = false;
 		$mf = Friends_Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
-				foreach ( array( 'friends-base-url', 'me', 'alternate' ) as $rel ) {
+				foreach ( array( 'friends-base-url', 'me', 'alternate', 'self' ) as $rel ) {
 					if ( in_array( $rel, $link['rels'] ) ) {
 						$discovered_feeds[ $feed_url ] = array(
 							'rel' => $rel,
@@ -758,6 +744,10 @@ class Friends_Feed {
 
 				if ( ! isset( $discovered_feeds[ $feed_url ] ) ) {
 					continue;
+				}
+
+				if ( 'self' === $rel ) {
+					$has_self = false;
 				}
 
 				if ( isset( $link['type'] ) ) {
@@ -770,6 +760,23 @@ class Friends_Feed {
 					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
 				}
 			}
+		}
+
+		if ( ! $has_self && class_exists( 'DOMXpath' ) ) {
+			// Convert to a DomDocument and silence the errors while doing so.
+			$doc = new DomDocument;
+			set_error_handler( '__return_null' );
+			$doc->loadHTML( $content );
+			restore_error_handler();
+
+			$xpath = new DOMXpath( $doc );
+			if ( ! $xpath ) {
+				return array();
+			}
+			$discovered_feeds[ $url ] = array(
+				'rel'   => 'self',
+				'title' => $xpath->query( '//title' )->item( 0 )->textContent,
+			);
 		}
 
 		return $discovered_feeds;

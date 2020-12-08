@@ -376,12 +376,13 @@ class Friends_Admin {
 	 *                                 WordPress.
 	 * @param      string $user_login  The user login.
 	 * @param      string $user_url    The user url.
+	 * @param      string $display_name    The display name.
 	 * @param      string $codeword    A codeword to send along.
 	 * @param      string $message     A message to send along.
 	 *
 	 * @return     WP_User|WP_error  $user The new associated user or an error object.
 	 */
-	public function send_friend_request( $rest_url, $user_login, $user_url, $codeword = 'friends', $message = '' ) {
+	public function send_friend_request( $rest_url, $user_login, $user_url, $display_name, $codeword = 'friends', $message = '' ) {
 		if ( ! is_string( $rest_url ) || ! Friends::check_url( $rest_url ) ) {
 			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 		}
@@ -418,7 +419,7 @@ class Friends_Admin {
 			return new WP_Error( 'unexpected-rest-response', 'Unexpected remote response.', $response );
 		}
 
-		$friend_user = Friend_User::create( $user_login, 'pending_friend_request', $user_url );
+		$friend_user = Friend_User::create( $user_login, 'pending_friend_request', $user_url, $display_name );
 		if ( is_wp_error( $friend_user ) ) {
 			return $friend_user;
 		}
@@ -835,7 +836,7 @@ class Friends_Admin {
 			if ( $friend->has_cap( 'pending_friend_request' ) || $friend->has_cap( 'subscription' ) ) {
 				$rest_url = $this->friends->rest->discover_rest_url( $friend->user_url );
 				if ( ! is_wp_error( $rest_url ) ) {
-					$response = $this->send_friend_request( $rest_url, $friend->user_login, $friend->user_url );
+					$response = $this->send_friend_request( $rest_url, $friend->user_login, $friend->user_url, $friend->display_name );
 				} else {
 					$response = $rest_url;
 				}
@@ -1157,6 +1158,7 @@ class Friends_Admin {
 		$friends_plugin = false;
 		$friend_url = trim( $vars['friend_url'] );
 		$friend_user_login = Friend_User::get_user_login_for_url( $friend_url );
+		$friend_display_name = Friend_User::get_display_name_for_url( $friend_url );
 		$friend_roles = $this->get_friend_roles();
 		$default_role = get_option( 'friends_default_friend_role', 'friend' );
 		$post_formats = array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() );
@@ -1166,6 +1168,7 @@ class Friends_Admin {
 
 		if ( ( isset( $vars['step2'] ) && isset( $vars['feeds'] ) && is_array( $vars['feeds'] ) ) || isset( $vars['step3'] ) ) {
 			$friend_user_login = sanitize_user( $vars['user_login'] );
+			$friend_display_name = sanitize_text_field( $vars['display_name'] );
 			if ( ! $friend_user_login ) {
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is invalid because it uses illegal characters. Please enter a valid username.' ) );
 			} elseif ( username_exists( $friend_user_login ) ) {
@@ -1180,9 +1183,9 @@ class Friends_Admin {
 			if ( ! $errors->has_errors() ) {
 
 				if ( isset( $vars['friendship'] ) ) {
-					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $codeword, $message );
+					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $friend_display_name, $codeword, $message );
 				} else {
-					$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url );
+					$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
 				}
 				return $this->process_admin_add_friend_response( $friend_user, $vars );
 			}
@@ -1210,6 +1213,11 @@ class Friends_Admin {
 			if ( ! $feeds ) {
 				return new WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
 			}
+			$better_display_name = Friend_User::get_display_name_from_feeds( $feeds );
+			if ( $better_display_name ) {
+				$friend_display_name = $better_display_name;
+				$friend_user_login = sanitize_title( $better_display_name );
+			}
 
 			$rest_url = $this->friends->rest->get_rest_url( $feeds );
 		}
@@ -1225,6 +1233,13 @@ class Friends_Admin {
 			}
 
 			return $this->send_friend_request( $rest_url, $friend_user_login, $friend_url, $codeword, $message );
+		}
+
+		if ( $errors->has_errors() ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php echo wp_kses( $errors->get_error_message(), array( 'strong' => array() ) ); ?></p>
+			</div>
+			<?php
 		}
 
 		include apply_filters( 'friends_template_path', 'admin/select-feeds.php' );

@@ -38,6 +38,32 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	}
 
 	/**
+	 * Rewrite known URLs to their RSS feeds.
+	 *
+	 * @param      string $url    The url.
+	 *
+	 * @return     array  An equivalent link array.
+	 */
+	public function rewrite_known_url( $url ) {
+		$host = parse_url( strtolower( $url ), PHP_URL_HOST );
+
+		switch ( $host ) {
+			case 'youtube.com':
+				if ( preg_match( '#/channel/([^?&$]+)#i', $url, $m ) ) {
+					return array(
+						'title' => 'Youtube',
+						'rel'   => 'alternate',
+						'type'  => 'application/rss+xml',
+						'url'   => 'https://www.youtube.com/feeds/videos.xml?channel_id=' . $m[1],
+					);
+				}
+				return array();
+		}
+
+		return array();
+	}
+
+	/**
 	 * Format the feed title and autoselect the posts feed.
 	 *
 	 * @param      array $feed_details  The feed details.

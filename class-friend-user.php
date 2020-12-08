@@ -95,7 +95,6 @@ class Friend_User extends WP_User {
 		return $friend_user;
 	}
 
-
 	/**
 	 * Convert a site URL to a username
 	 *
@@ -106,8 +105,38 @@ class Friend_User extends WP_User {
 		$host = wp_parse_url( $url, PHP_URL_HOST );
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
-		$user_login = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
+		$user_login = sanitize_title( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
 		return $user_login;
+	}
+
+	/**
+	 * Convert a site URL to a display name
+	 *
+	 * @param  string $url The site URL in question.
+	 * @return string The corresponding display name.
+	 */
+	public static function get_display_name_for_url( $url ) {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+
+		$display_name = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
+		return $display_name;
+	}
+
+	/**
+	 * Discover a display name from feeds
+	 *
+	 * @param  array $feeds A list of feeds.
+	 * @return string The corresponding display name.
+	 */
+	public static function get_display_name_from_feeds( $feeds ) {
+		foreach ( $feeds as $feed ) {
+			if ( 'self' === $feed['rel'] ) {
+				return sanitize_text_field( $feed['title'] );
+			}
+		}
+
+		return false;
 	}
 
 	/**
