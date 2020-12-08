@@ -39,6 +39,19 @@ foreach ( $feeds as $feed_url => $details ) {
 	<table class="form-table">
 		<tbody>
 			<tr>
+				<th scope="row"><label for="user_login"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
+				<td>
+					<input type="text" id="user_login" name="display_name" value="<?php echo esc_attr( $friend_display_name ); ?>" required placeholder="" class="regular-text" />
+					<p class="description details hidden"><small>
+						<?php
+						// translators: %s is a URL.
+						echo esc_html( sprintf( __( 'API URL: %s', 'friends' ), $friends_plugin ) );
+						?>
+						</small>
+					</p>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row"><label for="user_login"><?php esc_html_e( 'Username', 'friends' ); ?></label></th>
 				<td>
 					<input type="text" id="user_login" name="user_login" value="<?php echo esc_attr( $friend_user_login ); ?>" required placeholder="" class="regular-text" />
@@ -192,6 +205,37 @@ foreach ( $feeds as $feed_url => $details ) {
 							);
 							?>
 						</p>
+						<p class="description details hidden">
+							<?php
+							// translators: %s is the type of a feed, for example Atom or RSS.
+							echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
+							echo ' | ';
+
+							$select = '<select name="feeds[' . esc_attr( $c ) . '][parser]">';
+							foreach ( $registered_parsers as $slug => $parser_name ) {
+								$select .= '<option value="' . esc_attr( $slug ) . '"' . selected( $details['parser'], $slug, false ) . '>' . esc_html( strip_tags( $parser_name ) ) . '</option>';
+							}
+							$select .= '</select>';
+
+							echo wp_kses(
+								// translators: %s is the name of a parser, e.g. simplepie.
+								sprintf( __( 'Parser: %s', 'friends' ), $select ),
+								array(
+									'select' => array(
+										'name' => array(),
+									),
+									'label'  => array(),
+									'option' => array(
+										'value'    => array(),
+										'selected' => array(),
+									),
+								)
+							);
+							echo ' | ';
+							// translators: %s is relation to the URL, e.g. self or alternate.
+							echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );
+							?>
+						</p>
 						<?php endif; ?>
 
 				<ul>
@@ -217,6 +261,15 @@ foreach ( $feeds as $feed_url => $details ) {
 									)
 								);
 								?>
+							<p class="description details hidden">
+								<?php
+								// translators: %s is the type of a feed, for example Atom or RSS.
+								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
+								echo ' | ';
+								// translators: %s is relation to the URL, e.g. self or alternate.
+								echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );
+								?>
+							</p>
 						</li>
 					<?php endforeach; ?>
 

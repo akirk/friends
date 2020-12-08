@@ -1,0 +1,383 @@
+$primary-color: #2e5bec;
+$dark-color: #3e396b;
+
+// Spectre: Variables and mixins
+@import "node_modules/spectre.css/src/variables";
+@import "node_modules/spectre.css/src/mixins";
+
+// Spectre: Reset and dependencies
+@import "node_modules/spectre.css/src/normalize";
+@import "node_modules/spectre.css/src/base";
+
+// Spectre: Elements
+@import "node_modules/spectre.css/src/typography";
+@import "node_modules/spectre.css/src/asian";
+@import "node_modules/spectre.css/src/forms";
+@import "node_modules/spectre.css/src/buttons";
+
+// Spectre: Layout
+@import "node_modules/spectre.css/src/layout";
+@import "node_modules/spectre.css/src/navbar";
+@import "node_modules/spectre.css/src/off-canvas";
+
+// Spectre: Components
+@import "node_modules/spectre.css/src/cards";
+@import "node_modules/spectre.css/src/navs";
+@import "node_modules/spectre.css/src/menus";
+
+
+.off-canvas .off-canvas-content {
+	margin-top: 32px;
+	padding-top: 1rem;
+	padding-left: 2rem;
+	padding-right: 2rem;
+}
+
+
+.off-canvas .off-canvas-content header.navbar {
+	margin-bottom: 32px;
+}
+
+.off-canvas .off-canvas-sidebar {
+	margin-top: 32px;
+	width: 12rem;
+	background: #f7f8f9;
+}
+
+.friends-page {
+	button, input {
+	min-height: auto;
+}
+
+.card {
+	border: 0;
+	box-shadow: 0 .25rem 1rem rgba(48,55,66,.15);
+	padding: 1rem;
+	height: 100%;
+}
+
+.card .card-title {
+	padding-left: 1rem;
+}
+
+.card .card-body {
+	padding: 1rem;
+}
+
+.card .card-body ul {
+	margin-left: 1rem;
+}
+
+.card .card-body .wp-block-image.alignfull, .card .card-body .wp-block-image.alignwide {
+	margin: 0;
+}
+
+.friends-brand {
+	position: fixed;
+.friends-logo h2 {
+	display: inline-block;
+	font-size: 1.2rem;
+	font-weight: 700;
+	line-height: 1.5rem;
+	margin-top: 1rem;
+	margin-bottom: 0;
+	margin-left: 1.5rem;
+	margin-right: .3rem;
+	text-transform: uppercase;
+}
+}
+
+#friends-sidebar .friends-nav {
+    bottom: 1.5rem;
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    padding: .5rem 1.5rem;
+    position: fixed;
+    top: 5.5rem;
+    width: 12rem;
+}
+
+.friends-post-inline input, .friends-post-inline textarea, .friends-sidebar input, .friends-sidebar textarea {
+	color: #666;
+	background: #fff;
+	border: 1px solid #bbb;
+	border-radius: 3px;
+	display: block;
+	padding: 0.7em;
+	width: 100%;
+	margin: 0;
+}
+
+.friends-post-inline select, .friends-sidebar select {
+	border: 1px solid #bbb;
+	border-radius: 3px;
+	height: 3em;
+	max-width: 100%;
+}
+
+.friends-post-inline input:focus, .friends-post-inline textarea:focus {
+	color: #222;
+	border-color: #333;
+}
+
+pre {
+	max-width: 100%;
+	overflow: auto;
+}
+
+form input, form input:focus, form textarea:focus, form textarea, .friends-post-inline form button {
+	color: #222;
+	border: 1px solid grey;
+}
+
+div.friends-topbar {
+	padding: 2em 3em;
+	background-color: #f0f0f0;
+}
+
+img.avatar {
+	border-radius: 100%;
+}
+
+div.friends-widget {
+	margin-bottom: 2em;
+}
+
+div.friends-main-widget h1 a {
+	color: #222;
+	text-decoration: none;
+}
+div.friends-widget h4 a {
+	color: #222;
+	text-decoration: none;
+}
+
+div.friends-widget a.open-requests {
+	font-size: 90%;
+	font-weight: normal;
+}
+
+div.friends-widget ul {
+	margin: .5em 0 1em 0;
+	padding: 0;
+}
+
+div.friends-widget h5 {
+	margin-bottom: .5em;
+}
+
+section.posts article.hentry:before {
+	display: none;
+}
+
+section.posts article.hentry {
+	border-bottom: 1px solid #87a6bc;
+	padding: 0 0 1em 0;
+	margin: 0 0 1em 0;
+}
+
+section.posts article.hentry header.entry-header {
+	display: flex;
+	font-size: 88%;
+	line-height: 1.4;
+}
+
+section.posts article.hentry header.entry-header div.avatar {
+	margin-right: .5em;
+}
+
+section.posts article.hentry h4.entry-title {
+	font-size: 130%;
+	line-height: 1.4;
+	margin: 0 0 1em 0;
+	text-align: left;
+}
+
+section.posts article.hentry header.entry-header:after {
+	display: none;
+}
+
+section.posts article.hentry header.entry-header a {
+	text-decoration: none;
+}
+
+section.posts article.hentry h4.entry-title a span.dashicons {
+	margin-top: 4px;
+	margin-left: 6px;
+	color: #32c170;
+}
+
+button.friends-trash-post, button.friends-untrash-post {
+	float: right;
+	border: 0;
+	background: transparent;
+	color: #333;
+	cursor: pointer;
+	font-size: 90%;
+}
+
+section.posts article.hentry h4.entry-title a {
+	text-decoration: none;
+	color: #333;
+}
+
+section.posts article.hentry div.entry-content {
+	float: none;
+	line-height: 1.5;
+	font-size: 110%;
+	word-break: break-word;
+}
+
+section.posts article.hentry div.entry-content p {
+	margin: 0;
+	margin-bottom: .5em;
+}
+
+section.posts article.hentry footer.entry-meta {
+	font-size: 1.5em;
+	display: flex;
+	justify-content: flex-end;
+}
+
+button.friends-action, section.posts article.hentry footer.entry-meta button,
+a.button.friends-action, section.posts article.hentry footer.entry-meta a.button {
+	font-size: 14px;
+	border: 0;
+	background-color: #fff;
+	cursor: pointer;
+	color: #87a6bc;
+	padding: 4px;
+	margin: 3px;
+	font-weight: normal;
+	border: 1px solid #cccccc;
+	border-radius: 4px;
+	line-height: 20px;
+	box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+	height: 30px;
+}
+
+button.friends-action:hover, section.posts article.hentry footer.entry-meta button:hover,
+a.button.friends-action:hover, section.posts article.hentry footer.entry-meta button:hover {
+	border-color: #cccccc;
+	background-color: #fff;
+}
+
+button.friends-action:focus, section.posts article.hentry footer.entry-meta button:focus,
+a.button.friends-action:focus, section.posts article.hentry footer.entry-meta a.button:focus {
+	outline: none;
+}
+
+button.friends-action span,
+a.button.friends-action span {
+	font-size: 18px;
+	vertical-align: top;
+}
+button.friends-action.pressed, section.posts article.hentry footer.entry-meta button.pressed,
+a.button.friends-action.pressed, section.posts article.hentry footer.entry-meta a.button.pressed {
+	color: #f0821e;
+}
+
+button.new-reaction span,
+a.button.new-reaction span {
+	font-family: dashicons;
+	vertical-align: middle;
+}
+
+#friends-reaction-picker {
+	display: none;
+	position: absolute;
+	border: 1px solid #999999;
+	box-shadow: 2px 2px 5px #cccccc;
+	border-radius: .25em;
+	background-color: #fff;
+	padding: 1em;
+	max-width: 50%;
+	max-height: 20%;
+	overflow: auto;
+}
+
+#friends-reaction-picker button {
+	padding: .2em;
+	margin: 0;
+	font-size: 18px;
+	background-color: #fff;
+	border: 0;
+	cursor: pointer;
+	z-index: 999999;
+}
+
+#friends-reaction-picker button:focus {
+	outline: none;
+
+}
+
+#friends-reaction-picker .spinner {
+	background-size: 16px 16px;
+	opacity: .7;
+	width: 16px;
+	height: 16px;
+}
+
+#friends-recommendation-form {
+	display: none;
+	position: absolute;
+	border: 1px solid #999999;
+	box-shadow: 2px 2px 5px #cccccc;
+	border-radius: .25em;
+	background-color: #fff;
+	padding: 1em;
+	width: 20em;
+}
+
+#friends-recommendation-form fieldset {
+	margin-bottom: 1em;
+}
+
+p.friend-recommendation {
+	font-style: italic;
+}
+
+.only-friends {
+	background-color: #efe;
+	padding-left: .5em;
+}
+
+.not-friends {
+	background-color: #fee;
+	padding-left: .5em;
+}
+
+.only-friends .watermark, .not-friends .watermark {
+	float: right;
+	padding-top: .5em;
+	padding-right: .5em;
+	font-size: 80%;
+	color: #ccc;
+}
+
+ul.friend-posts img.avatar {
+	vertical-align: middle;
+	margin-right: .3em;
+}
+
+a.explanation-friends-auth-link, a.friends-auth-link, a.friends-auth-link:link, a.friends-auth-link:active, a.friends-auth-link, a.friends-auth-link:link, a.friends-auth-link:active {
+	color: #333;
+}
+
+a.friends-auth-link span.dashicons, button.friends-auth-link span.dashicons {
+	color: #32c170;
+	margin-left: 6px;
+}
+
+a.explanation-friends-auth-link:hover, a.friends-auth-link :hover, a.friends-auth-link:hover, a.friends-auth-link:hover span.dashicons, button.friends-auth-link:hover span.dashicons {
+	color: #32c170;
+}
+
+a.explanation-friends-auth-link:hover, a.friends-auth-link :hover, a.friends-auth-link:hover {
+	text-decoration: underline;
+}
+
+a.explanation-friends-auth-link:hover span, a.friends-auth-link :hover span, a.friends-auth-link:hover span {
+	text-decoration: none;
+}
+}

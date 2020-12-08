@@ -83,7 +83,7 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Default Role', 'friends' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Roles', 'friends' ); ?></th>
 				<td>
 					<select name="default_role">
 						<?php
@@ -109,7 +109,7 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 								<?php
 								$limit_homepage_post_format = get_option( 'friends_limit_homepage_post_format', false );
 								$select = '<select name="limit_homepage_post_format" id="limit_homepage_post_format">';
-								$select .= '<option value="0"' . selected( $limit_homepage_post_format, false, false ) . '>' . esc_html( _x( 'All', 'All post', 'friends' ) ) . '</option>';
+								$select .= '<option value="0"' . selected( $limit_homepage_post_format, false, false ) . '>' . esc_html( _x( 'All', 'All post-formats', 'friends' ) ) . '</option>';
 								foreach ( get_post_format_strings() as $format => $title ) {
 									// translators: %s is a post format title.
 									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $limit_homepage_post_format, $format, false ) . '>' . esc_html( sprintf( _x( '%s only', 'post-format only', 'friends' ), $title ) ) . '</option>';
@@ -118,8 +118,8 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 
 								echo wp_kses(
 									sprintf(
-									// translators: %s is a Select dropdown.
-										__( 'On your homepage, show %s posts', 'friends' ),
+										// translators: %s is a Select dropdown of post formats, e.g. "All" or "Standard only" (see "post-format only").
+										__( 'On your homepage, show %s posts.', 'friends' ),
 										$select
 									),
 									array(

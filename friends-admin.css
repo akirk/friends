@@ -65,3 +65,8 @@ a.friends-auth-link span.dashicons, button.friends-auth-link span.dashicons {
 a.explanation-friends-auth-link:hover, a.friends-auth-link :hover, a.friends-auth-link:hover span.dashicons, button.friends-auth-link:hover span.dashicons {
 	color: #32c170;
 }
+
+tr.lastlog td {
+	padding: .8em 1em;
+	margin-bottom: 2em;
+}

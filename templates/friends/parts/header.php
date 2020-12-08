@@ -5,7 +5,7 @@
  * @package Friends
  */
 
-?><header class="entry-header">
+?><header class="entry-header card-header">
 	<div class="avatar">
 		<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 			<?php if ( $recommendation ) : ?>
@@ -39,21 +39,7 @@
 				</a>
 			<?php endif; ?>
 		</div>
-		<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
-			<?php
-			$friends->frontend->link(
-				get_the_permalink(),
-				// translators: %s is a time span.
-				sprintf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ),
-				array(
-					'class' => 'post-date',
-					'title' => get_the_time( 'r' ),
-				)
-			);
-			?>
-		<?php else : ?>
-			<a href="<?php the_permalink(); ?>" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ); ?></a>
-		<?php endif; ?>
+		<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ); ?>" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ); ?></a>
 
 		<?php edit_post_link(); ?>
 	</div>

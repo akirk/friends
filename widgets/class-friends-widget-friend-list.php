@@ -87,7 +87,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			<?php
 		} else {
 			?>
-			<ul class="friend-list">
+			<ul class="friend-list menu menu-nav">
 			<?php
 			foreach ( $all_friends->get_results() as $friend_user ) :
 				$friend_user = new Friend_User( $friend_user );
@@ -100,8 +100,8 @@ class Friends_Widget_Friend_List extends WP_Widget {
 					$url = $friend_user->user_url;
 				}
 				?>
-				<li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array(), $friend_user ); ?></small></li>
+				<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
+					<small class="label label-secondary"><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array( 'style' => 'display: inline' ), $friend_user ); ?></small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php
@@ -110,7 +110,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		if ( 0 !== $subscriptions->get_total() ) {
 			?>
 			<h5><?php _e( 'Subscriptions', 'friends' ); ?></h5>
-			<ul class="subscription-list">
+			<ul class="subscription-list menu menu-nav">
 			<?php
 			foreach ( $subscriptions->get_results() as $friend_user ) :
 				$friend_user = new Friend_User( $friend_user );
@@ -123,8 +123,8 @@ class Friends_Widget_Friend_List extends WP_Widget {
 					$url = $friend_user->user_url;
 				}
 				?>
-				<li><a href="<?php echo esc_url( $url ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array(), $friend_user ); ?></small></li>
+				<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
+					<small class="label label-secondary"><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array(), $friend_user ); ?></small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php

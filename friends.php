@@ -62,6 +62,9 @@ add_action( 'widgets_init', array( 'Friends_Widget_Friend_Request', 'register' )
 require_once __DIR__ . '/widgets/class-friends-widget-new-private-post.php';
 add_action( 'widgets_init', array( 'Friends_Widget_New_Private_Post', 'register' ) );
 
+require_once __DIR__ . '/widgets/class-friends-widget-post-formats.php';
+add_action( 'widgets_init', array( 'Friends_Widget_Post_Formats', 'register' ) );
+
 require_once __DIR__ . '/widgets/class-friends-widget-header.php';
 add_action( 'widgets_init', array( 'Friends_Widget_Header', 'register' ) );
 

@@ -6,7 +6,7 @@
  */
 
 ?>
-<div class="entry-content">
+<div class="card-body">
 	<?php
 	if ( $friends->post_types->is_cached_post_type( get_post_type() ) && $recommendation ) {
 		$friend_name = $friends->frontend->get_link( get_the_author_meta( 'url' ), get_the_author() );

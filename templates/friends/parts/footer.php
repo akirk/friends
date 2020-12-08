@@ -5,7 +5,7 @@
  * @package Friends
  */
 
-?><footer class="entry-meta">
+?><footer class="entry-meta card-footer">
 	<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 		<?php
 		$friends->frontend->link(

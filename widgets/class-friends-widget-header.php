@@ -46,17 +46,6 @@ class Friends_Widget_Header extends WP_Widget {
 		if ( ! empty( $title ) ) {
 			echo $args['before_title'] . $title . $args['after_title'];
 		}
-		if ( $instance['show_post_formats'] ) {
-			?><div id="post-format-switcher">
-			<select name="post-format">
-				<option value=""><?php _e( 'All Posts', 'friends' ); ?></option>
-				<?php foreach ( get_post_format_strings() as $format => $title ) : ?>
-					<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $format, $friends->frontend->post_format ); ?>><?php echo esc_attr( $title ); ?></option>
-				<?php endforeach; ?>
-			</select>
-		</div>
-			<?php
-		}
 
 		if ( $friends->frontend->author ) {
 			?>
@@ -95,12 +84,9 @@ class Friends_Widget_Header extends WP_Widget {
 		$instance = array_merge( $this->defaults(), $instance );
 		?>
 		<p>
-		<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
+		<label><?php _e( 'Title' ); ?><br/>
 		<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $instance['title'] ); ?>" />
-		</p>
-		<p>
-		<input id="<?php echo $this->get_field_id( 'show_post_formats' ); ?>" name="<?php echo $this->get_field_name( 'show_post_formats' ); ?>" type="checkbox" value="1"<?php checked( $instance['show_post_formats'] ); ?> /> <label for="<?php echo $this->get_field_id( 'show_post_formats' ); ?>"><?php _e( 'Show Post Formats', 'friends' ); ?></label>
-
+		</label>
 		</p>
 		<?php
 	}

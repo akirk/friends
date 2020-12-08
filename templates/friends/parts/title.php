@@ -5,7 +5,7 @@
  * @package Friends
  */
 
-?><h4 class="entry-title">
+?><h4 class="card-title">
 	<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 		<?php if ( $recommendation ) : ?>
 			<?php

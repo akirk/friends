@@ -5,3 +5,5 @@ md
 package-lock.json
 vendor
 .idea
+node_modules
+.sass-cache

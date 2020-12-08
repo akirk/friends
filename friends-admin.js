@@ -75,6 +75,11 @@ jQuery( function( $ ) {
 		return false;
 	} );
 
+	jQuery( document ).on( 'click', 'a.show-log-lines', function() {
+		jQuery( 'table.feed-table' ).find( 'tr.lastlog' ).toggleClass( 'hidden' );
+		return false;
+	} );
+
 	jQuery( '<a href="' + friends.add_friend_url + '" class="page-title-action">' + friends.add_friend_text + '</a>' ).insertAfter( 'a.page-title-action[href$="user-new.php"]' );
 
 } );

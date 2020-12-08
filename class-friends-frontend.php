@@ -74,6 +74,12 @@ class Friends_Frontend {
 	 * Registers the sidebar for the /friends page.
 	 */
 	public function register_friends_sidebar() {
+		add_theme_support(
+			'admin-bar',
+			array(
+				'callback' => '__return_false',
+			)
+		);
 		register_sidebar(
 			array(
 				'name'          => 'Friends Topbar',
@@ -239,7 +245,7 @@ class Friends_Frontend {
 
 		$link = '<a href="' . esc_url( $url ) . '"';
 		foreach ( $html_attributes as $name => $value ) {
-			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'data-nonce', 'data-token', 'data-friend' ) ) ) {
+			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'style', 'data-nonce', 'data-token', 'data-friend' ) ) ) {
 				continue;
 			}
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';
@@ -362,7 +368,10 @@ class Friends_Frontend {
 					$this->author = new Friend_User( $author );
 					$query->set( 'author_name', $pagename_parts[1] );
 					$query->is_author = true;
-					if ( isset( $pagename_parts[3] ) ) {
+					if ( $page_id ) {
+						$query->set( 'page_id', $page_id );
+						$query->is_singular = true;
+					} elseif ( isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
 						$potential_post_format = $pagename_parts[3];
 					}
 				}
