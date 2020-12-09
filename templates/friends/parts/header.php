@@ -5,8 +5,8 @@
  * @package Friends
  */
 
-?><header class="entry-header card-header">
-	<div class="avatar">
+?><header class="entry-header card-header columns">
+	<div class="avatar col-auto">
 		<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 			<?php if ( $recommendation ) : ?>
 				<a href="<?php the_permalink(); ?>" rel="noopener noreferrer">
@@ -23,7 +23,7 @@
 			</a>
 		<?php endif; ?>
 	</div>
-	<div class="post-meta">
+	<div class="post-meta col-auto">
 		<div class="author">
 			<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 				<?php if ( $recommendation ) : ?>
@@ -40,12 +40,27 @@
 			<?php endif; ?>
 		</div>
 		<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ); ?>" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ); ?></a>
-
-		<?php edit_post_link(); ?>
 	</div>
-	<?php if ( false && $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
-		<button class="friends-trash-post" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
-			&#x1F5D1;
-		</button>
-	<?php endif; ?>
+	<div class="overflow col-ml-auto">
+		<div class="dropdown dropdown-right">
+			<a href="#" class="btn btn-link dropdown-toggle" tabindex="0">
+				<i class="dashicons dashicons-menu-alt2"></i>
+			</a>
+			<!-- menu component -->
+			<ul class="menu">
+				<?php if ( current_user_can( 'edit_post' ) ) : ?>
+					<li class="menu-item"><?php edit_post_link(); ?></li>
+				<?php endif; ?>
+				<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
+					<li class="menu-item"><a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
+						<?php _e( 'Trash this post', 'friends' ); ?>
+					</button>
+					</li>
+				<?php endif; ?>
+
+				</li>
+			</ul>
+		</div>
+
+	</div>
 </header>

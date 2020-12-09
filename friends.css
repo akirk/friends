@@ -1695,6 +1695,28 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     .menu .menu-badge .label {
       margin-right: 0.4rem; }
 
+.dropdown {
+  display: inline-block;
+  position: relative; }
+  .dropdown .menu {
+    animation: slide-down .15s ease 1;
+    display: none;
+    left: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    position: absolute;
+    top: 100%; }
+  .dropdown.dropdown-right .menu {
+    left: auto;
+    right: 0; }
+  .dropdown.active .menu,
+  .dropdown .dropdown-toggle:focus + .menu,
+  .dropdown .menu:hover {
+    display: block; }
+  .dropdown .btn-group .dropdown-toggle:nth-last-child(2) {
+    border-bottom-right-radius: 0.1rem;
+    border-top-right-radius: 0.1rem; }
+
 .off-canvas .off-canvas-content {
   margin-top: 32px;
   padding-top: 1rem;
@@ -1813,51 +1835,34 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     border-bottom: 1px solid #87a6bc;
     padding: 0 0 1em 0;
     margin: 0 0 1em 0; }
-  .friends-page section.posts article.hentry header.entry-header {
-    display: flex;
-    font-size: 88%;
-    line-height: 1.4; }
-  .friends-page section.posts article.hentry header.entry-header div.avatar {
-    margin-right: .5em; }
-  .friends-page section.posts article.hentry h4.entry-title {
-    font-size: 130%;
-    line-height: 1.4;
-    margin: 0 0 1em 0;
-    text-align: left; }
-  .friends-page section.posts article.hentry header.entry-header:after {
-    display: none; }
-  .friends-page section.posts article.hentry header.entry-header a {
-    text-decoration: none; }
-  .friends-page section.posts article.hentry h4.entry-title a span.dashicons {
-    margin-top: 4px;
-    margin-left: 6px;
-    color: #32c170; }
-  .friends-page button.friends-trash-post, .friends-page button.friends-untrash-post {
-    float: right;
-    border: 0;
-    background: transparent;
-    color: #333;
-    cursor: pointer;
-    font-size: 90%; }
-  .friends-page section.posts article.hentry h4.entry-title a {
-    text-decoration: none; }
-  .friends-page section.posts article.hentry div.entry-content {
-    float: none;
-    line-height: 1.5;
-    font-size: 110%;
-    word-break: break-word; }
-  .friends-page section.posts article.hentry div.entry-content p {
-    margin: 0;
-    margin-bottom: .5em; }
-  .friends-page section.posts article.hentry footer.entry-meta {
+    .friends-page section.posts article.hentry header.entry-header {
+      display: flex;
+      font-size: 88%;
+      line-height: 1.4; }
+      .friends-page section.posts article.hentry header.entry-header div.avatar {
+        margin-right: .5em; }
+    .friends-page section.posts article.hentry h4.entry-title {
+      font-size: 130%;
+      line-height: 1.4;
+      margin: 0 0 1em 0;
+      text-align: left; }
+      .friends-page section.posts article.hentry h4.entry-title a {
+        text-decoration: none; }
+        .friends-page section.posts article.hentry h4.entry-title a span.dashicons {
+          margin-top: 4px;
+          margin-left: 6px;
+          color: #32c170; }
+      .friends-page section.posts article.hentry h4.entry-title:after {
+        display: none; }
+  .friends-page section.posts footer.entry-meta {
     font-size: 1.5em;
     display: flex;
     justify-content: flex-end; }
-    .friends-page section.posts article.hentry footer.entry-meta a {
+    .friends-page section.posts footer.entry-meta a {
       color: #2e5bec; }
-      .friends-page section.posts article.hentry footer.entry-meta a .dashicons {
+      .friends-page section.posts footer.entry-meta a .dashicons {
         vertical-align: middle; }
-    .friends-page section.posts article.hentry footer.entry-meta .btn:hover, .friends-page section.posts article.hentry footer.entry-meta .nav-links div a:hover, .friends-page .nav-links div section.posts article.hentry footer.entry-meta a:hover {
+    .friends-page section.posts footer.entry-meta .btn:hover, .friends-page section.posts footer.entry-meta .nav-links div a:hover, .friends-page .nav-links div section.posts footer.entry-meta a:hover {
       color: #2e5bec; }
   .friends-page button.new-reaction span,
   .friends-page a.button.new-reaction span {
