@@ -161,7 +161,20 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 			return $feed;
 		}
 
-		foreach ( $feed->get_items() as $c => $item ) {
+		return $this->process_items( $feed->get_items(), $url );
+	}
+
+	/**
+	 * Process the feed items.
+	 *
+	 * @param      array  $items  The items.
+	 * @param      string $url    The url.
+	 *
+	 * @return     array  The processed feed items.
+	 */
+	public function process_items( $items, $url ) {
+
+		foreach ( $items as $c => $item ) {
 			$feed_item = (object) array(
 				'permalink' => $item->get_permalink(),
 				'title'     => $item->get_title(),

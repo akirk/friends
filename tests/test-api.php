@@ -97,12 +97,7 @@ class Friends_APITest extends WP_UnitTestCase {
 		if ( update_user_option( $this->friend_id, 'friends_in_token', $this->friends_in_token ) ) {
 			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
 		}
-
-		if ( ! class_exists( 'SimplePie', false ) ) {
-			spl_autoload_register( array( $friends->feed, 'wp_simplepie_autoload' ) );
-
-			require_once __DIR__ . '/../lib/SimplePie.php';
-		}
+		fetch_feed( null ); // load SimplePie.
 		require_once __DIR__ . '/class-local-feed-fetcher.php';
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 100, 2 );
 		add_filter( 'local_fetch_feed', array( $this, 'local_fetch_feed' ), 100, 2 );

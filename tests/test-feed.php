@@ -60,11 +60,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
 		}
 
-		if ( ! class_exists( 'SimplePie', false ) ) {
-			spl_autoload_register( array( $friends->feed, 'wp_simplepie_autoload' ) );
-
-			require_once __DIR__ . '/../lib/SimplePie.php';
-		}
+		fetch_feed( null ); // load SimplePie.
 	}
 
 	/**
@@ -91,83 +87,61 @@ class Friends_FeedTest extends WP_UnitTestCase {
 	}
 
 	/**
-	 * Test parsing a feed.
+	 * Common code for testing parsing a feed.
+	 *
+	 * @param      SimplePie_File $file        The SimplePie_File.
+	 * @param      int            $new_items1  Number of new items to be found in the first attempt.
+	 * @param      int            $new_items2  Number of new items to be found in the second attempt.
 	 */
-	public function test_parse_feed() {
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+	private function feed_parsing_test( SimplePie_File $file, $new_items1 = 1, $new_items2 = 0 ) {
+		$parser = new Friends_Feed_Parser_SimplePie;
+
+		$user = new Friend_User( $this->friend_id );
+		$term = new WP_Term(
+			(object) array(
+				'url' => $user->user_url . '/feed/',
+			)
+		);
+		$user_feed = new Friend_User_Feed( $term, $user );
 
 		$feed = new SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
-		$user = new Friend_User( $this->friend_id );
-
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 1, $new_items );
+		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
+		$this->assertCount( $new_items1, $new_items );
 
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 0, $new_items );
+		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
+		$this->assertCount( $new_items2, $new_items );
+	}
+
+	/**
+	 * Test parsing a feed.
+	 */
+	public function test_parse_feed() {
+		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with ampersand URLs.
 	 */
 	public function test_parse_feed_with_url_ampersand() {
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' );
-
-		$feed = new SimplePie();
-		$feed->set_file( $file );
-		$feed->init();
-
-		$user = new Friend_User( $this->friend_id );
-
-		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 1, $new_items );
-
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 0, $new_items );
+		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts.
 	 */
 	public function test_parse_feed_with_identical_posts() {
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' );
-
-		$feed = new SimplePie();
-		$feed->set_file( $file );
-		$feed->init();
-
-		$user = new Friend_User( $this->friend_id );
-
-		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 1, $new_items );
-
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 0, $new_items );
+		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts after the fold.
 	 */
 	public function test_parse_feed_with_identical_posts_after_fold() {
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' );
-
-		$feed = new SimplePie();
-		$feed->set_file( $file );
-		$feed->init();
-
-		$user = new Friend_User( $this->friend_id );
-
-		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 11, $new_items );
-
-		$new_items = $friends->feed->process_friend_feed( $user, $feed, Friends::CPT );
-		$this->assertCount( 0, $new_items );
+		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' ), 11 );
 	}
 
 	/**

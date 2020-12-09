@@ -198,7 +198,11 @@ class Friend_User_Feed {
 	public static function validate_post_format( $post_format ) {
 		$post_formats = get_post_format_strings();
 		$post_formats['autodetect'] = true;
-		return isset( $post_formats[ $post_format ] ) ? $post_format : reset( array_keys( $post_formats ) );
+		if ( isset( $post_formats[ $post_format ] ) ) {
+			return $post_format;
+		}
+		$keys = array_keys( $post_formats );
+		return reset( $keys );
 	}
 
 	/**
