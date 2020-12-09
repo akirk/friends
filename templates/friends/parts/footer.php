@@ -12,13 +12,15 @@
 			get_comments_link(),
 			get_comments_number( '', 1, '%' ),
 			array(
-				'class'          => 'comments button',
+				'class'          => 'comments btn',
 				'dashicon_front' => 'admin-comments',
 			)
 		);
 		?>
 	<?php endif; ?>
+&nbsp;
 	<?php echo $friends->reactions->post_reactions(); ?>
+&nbsp;
 	<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 		<?php echo $friends->recommendation->post_recommendation(); ?>
 	<?php endif; ?>

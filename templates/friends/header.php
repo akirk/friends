@@ -5,6 +5,10 @@
  * @package Friends
  */
 
+$search = '';
+if ( isset( $_GET['s'] ) ) {
+	$search = $_GET['s'];
+}
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?> class="no-js no-svg">
 <head>
@@ -15,10 +19,6 @@
 </head>
 
 <body <?php body_class( 'off-canvas off-canvas-sidebar-show' ); ?>>
-	<a class="off-canvas-toggle btn btn-primary btn-action" href="#sidebar-id">
-		<i class="icon icon-menu"></i>
-	</a>
-
 	<div id="friends-sidebar" class="off-canvas-sidebar">
 		<div class="friends-brand">
 			<a class="friends-logo" href="<?php echo esc_attr( site_url( '/friends/' ) ); ?>"><h2><?php echo esc_html( 'Friends' ); ?></h2></a>
@@ -34,12 +34,16 @@
 <div class="off-canvas-content">
 	<header class="navbar">
 		<section class="navbar-section">
+		<a class="off-canvas-toggle btn btn-primary bt-action" href="#friends-sidebar">
+			<span class="ab-icon dashicons dashicons-menu-alt2"></span>
+		</a>
+
 		</section>
 		<section class="navbar-section">
-			<div class="input-group input-inline">
-				<input class="form-input" type="text" placeholder="search">
-				<button class="btn btn-primary input-group-btn">Search</button>
-			</div>
+			<form class="input-group input-inline">
+				<input class="form-input" type="text" name="s" placeholder="<?php _e( 'Search' ); ?>" value="<?php echo esc_attr( $search ); ?>"/>
+				<button class="btn btn-primary input-group-btn"><?php _e( 'Search' ); ?></button>
+			</form>
 		</section>
 	</header>
 

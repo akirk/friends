@@ -131,7 +131,7 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 		foreach ( get_post_format_strings() as $slug => $title ) {
 			$t = 'post_format_title_' . $slug;
 			$instance[ $t ] = ( ! empty( $new_instance[ $t ] ) ) ? strip_tags( $new_instance[ $t ] ) : $title;
-			$instance[ 'show_post_format_' . $slug ] = true;
+			$instance[ 'show_post_format_' . $slug ] = in_array( $slug, array( 'standard', 'status', 'image', 'video' ) );
 		}
 
 		return $instance;
