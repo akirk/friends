@@ -311,65 +311,6 @@ class Friends_Admin {
 	}
 
 	/**
-	 * Subscribe to a friends site without becoming a friend
-	 *
-	 * @param      string $feed_url  The feed URL to subscribe to.
-	 * @param      array  $args      The arguments for the feed.
-	 *
-	 * @return     WP_User|WP_error  $user The new associated user or an error object.
-	 */
-	public function subscribe( $feed_url, $args = array() ) {
-		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
-			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
-		}
-
-		$friend_user = Friend_User::get_user_for_url( $feed_url );
-		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
-				// translators: %s is the name of a friend / site.
-				return new WP_Error( 'already-subscribed', sprintf( __( 'You are already subscribed to this site: %s', 'friends' ), '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '">' . esc_html( $friend_user->display_name ) . '</a>' ) );
-		}
-
-		$favicon  = null;
-		$response = wp_safe_remote_get(
-			$url,
-			array(
-				'timeout'     => 20,
-				'redirection' => 5,
-			)
-		);
-		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-			$dom = new DOMDocument();
-
-			set_error_handler( '__return_null' );
-			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
-			restore_error_handler();
-
-			$xpath = new DOMXpath( $dom );
-			foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
-				if ( in_array( $link->getAttribute( 'rel' ), array( 'shortcut icon', 'icon' ) ) ) {
-					$favicon = $link->getAttribute( 'href' );
-
-					$domain = wp_parse_url( $favicon, PHP_URL_HOST );
-
-					if ( ! $domain ) {
-						$parsed_url = wp_parse_url( $url );
-						// TODO relative urls.
-						$favicon = $parsed_url['scheme'] . '://' . $parsed_url['host'] . '/' . ltrim( $favicon, '/' );
-					}
-					break;
-				}
-			}
-		}
-		$feed_title = trim( str_replace( '&raquo; Feed', '', $feed->get_title() ) );
-		$friend_user = Friend_User::create( $url, 'subscription', $feed_title, $favicon );
-		if ( ! is_wp_error( $friend_user ) ) {
-			$friend_user->subscribe( $feed_url, $feed_title );
-		}
-
-		return $friend_user;
-	}
-
-	/**
 	 * Send a friend request to another WordPress with the Friends plugin
 	 *
 	 * @param      string $rest_url    The site URL of the friend's
@@ -406,7 +347,6 @@ class Friends_Admin {
 				'redirection' => 5,
 			)
 		);
-
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
@@ -1185,12 +1125,15 @@ class Friends_Admin {
 			$message = trim( $vars['message'] );
 			$feeds = $vars['feeds'];
 			if ( ! $errors->has_errors() ) {
-
+				$friend_user = false;
 				if ( isset( $vars['friendship'] ) ) {
 					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $friend_display_name, $codeword, $message );
-				} else {
+				}
+
+				if ( ! $friend_user || is_wp_error( $friend_user ) ) {
 					$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
 				}
+
 				return $this->process_admin_add_friend_response( $friend_user, $vars );
 			}
 		} else {
@@ -1232,11 +1175,19 @@ class Friends_Admin {
 		}
 
 		if ( 1 === count( $feeds ) && isset( $vars['quick-subscribe'] ) ) {
-			if ( ! $rest_url ) {
-				return $this->subscribe( $friend_url );
+			$vars['feeds'] = $feeds;
+			$vars['subscribe'] = array_keys( $feeds );
+
+			$friend_user = false;
+			if ( isset( $rest_url ) ) {
+				$friend_user = $this->send_friend_request( $rest_url, $friend_user_login, $friend_url, $friend_display_name, $codeword, $message );
 			}
 
-			return $this->send_friend_request( $rest_url, $friend_user_login, $friend_url, $codeword, $message );
+			if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+				$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
+			}
+
+			return $this->process_admin_add_friend_response( $friend_user, $vars );
 		}
 
 		if ( $errors->has_errors() ) {
