@@ -407,6 +407,10 @@ class Friends_Admin {
 			)
 		);
 
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
