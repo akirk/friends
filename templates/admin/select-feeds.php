@@ -130,6 +130,9 @@ foreach ( $feeds as $feed_url => $details ) {
 							<?php endforeach; ?>
 							<label><input type="checkbox" name="subscribe[]" value="<?php echo esc_attr( $feed_url ); ?>" <?php echo ( isset( $details['autoselect'] ) && $details['autoselect'] ) ? ' checked' : ''; ?> />
 								<?php
+								if ( ! isset( $details['post-format'] ) ) {
+									$details['post-format'] = 'standard';
+								}
 								$select = '<select name="feeds[' . esc_attr( $c ) . '][post-format]">';
 								foreach ( $post_formats as $format => $title ) {
 									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $details['post-format'], $format, false ) . '>' . esc_html( $title ) . '</option>';
@@ -200,40 +203,9 @@ foreach ( $feeds as $feed_url => $details ) {
 							<?php
 							echo wp_kses(
 								// translators: %s is a URL to the plugin install page.
-								sprintf( _n( 'The following feed is not supported. <a href=%s>There might be a plugin available</a> to add support for it.', 'The following feeds are not supported. <a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_urL( 'plugins.php?s=friends' ) ) . '"',
+								sprintf( _n( 'The following feed is not supported. <a href=%s>There might be a plugin available</a> to add support for it.', 'The following feeds are not supported. <a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_url( 'plugins.php?s=friends' ) . '"' ),
 								array( 'a' => array( 'href' => array() ) )
 							);
-							?>
-						</p>
-						<p class="description details hidden">
-							<?php
-							// translators: %s is the type of a feed, for example Atom or RSS.
-							echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
-							echo ' | ';
-
-							$select = '<select name="feeds[' . esc_attr( $c ) . '][parser]">';
-							foreach ( $registered_parsers as $slug => $parser_name ) {
-								$select .= '<option value="' . esc_attr( $slug ) . '"' . selected( $details['parser'], $slug, false ) . '>' . esc_html( strip_tags( $parser_name ) ) . '</option>';
-							}
-							$select .= '</select>';
-
-							echo wp_kses(
-								// translators: %s is the name of a parser, e.g. simplepie.
-								sprintf( __( 'Parser: %s', 'friends' ), $select ),
-								array(
-									'select' => array(
-										'name' => array(),
-									),
-									'label'  => array(),
-									'option' => array(
-										'value'    => array(),
-										'selected' => array(),
-									),
-								)
-							);
-							echo ' | ';
-							// translators: %s is relation to the URL, e.g. self or alternate.
-							echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );
 							?>
 						</p>
 						<?php endif; ?>

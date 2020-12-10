@@ -619,7 +619,7 @@ class Friends_REST {
 	 */
 	public function get_rest_url( $feeds ) {
 		foreach ( $feeds as $feed_url => $feed ) {
-			if ( 'friends' === $feed['parser'] ) {
+			if ( isset( $feed['parser'] ) && 'friends' === $feed['parser'] ) {
 				return $feed_url;
 			}
 		}

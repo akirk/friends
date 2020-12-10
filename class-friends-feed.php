@@ -623,11 +623,20 @@ class Friends_Feed {
 				$available_feeds[ $link_url ]['url'] = $link_url;
 			}
 		}
-
 		$has_friends_plugin = false;
 		foreach ( $available_feeds as $link_url => $feed ) {
-			$feed['url'] = $link_url;
-			$available_feeds[ $link_url ]['url'] = $link_url;
+			$feed = array_merge(
+				array(
+					'url'    => $link_url,
+					'rel'    => 'unknown',
+					'type'   => 'unknown',
+					'title'  => '',
+					'parser' => 'unsupported',
+				),
+				$feed
+			);
+			$available_feeds[ $link_url ] = $feed;
+
 			if ( 'friends-base-url' === $feed['rel'] ) {
 				$available_feeds[ $link_url ]['parser'] = 'friends';
 				$has_friends_plugin = $link_url;
@@ -636,8 +645,8 @@ class Friends_Feed {
 
 			foreach ( $this->parsers as $slug => $parser ) {
 				if ( ( isset( $feed['parser'] ) && $slug === $feed['parser'] ) || $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
+					$available_feeds[ $link_url ] = $parser->update_feed_details( $feed );
 					$available_feeds[ $link_url ]['parser'] = $slug;
-					$available_feeds[ $link_url ] = $parser->update_feed_details( $available_feeds[ $link_url ] );
 					if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
 						$new_url = $available_feeds[ $link_url ]['url'];
 						$available_feeds[ $new_url ] = $available_feeds[ $link_url ];
@@ -646,8 +655,6 @@ class Friends_Feed {
 					continue 2;
 				}
 			}
-
-			$available_feeds[ $link_url ]['parser'] = 'unsupported';
 		}
 
 		$autoselected = false;

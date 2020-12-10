@@ -232,13 +232,13 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 				$item['title'] = $title;
 			}
 
+			$content = '';
 			foreach ( array( 'photo', 'video' ) as $media ) {
 				if ( ! isset( $entry['properties'][ $media ][0] ) ) {
 					continue;
 				}
 
 				// If a $media is also in content, don't need to add it again here.
-				$content = '';
 				if ( isset( $entry['properties']['content'][0]['html'] ) ) {
 					$content = $entry['properties']['content'][0]['html'];
 				}
