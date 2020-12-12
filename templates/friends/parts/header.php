@@ -48,7 +48,13 @@
 			</a>
 			<!-- menu component -->
 			<ul class="menu">
-				<?php if ( current_user_can( 'edit_post' ) ) : ?>
+				<?php
+				$edit_user_link = $friends->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
+				if ( $edit_user_link ) :
+					?>
+					<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>">Edit friend</a></li>
+				<?php endif; ?>
+				<?php if ( current_user_can( 'edit_post', $post->ID ) ) : ?>
 					<li class="menu-item"><?php edit_post_link(); ?></li>
 				<?php endif; ?>
 				<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>

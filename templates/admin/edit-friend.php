@@ -31,8 +31,13 @@ $has_last_log = false;
 							</tr>
 						</thead>
 						<tbody>
-						<?php foreach ( $friend->get_feeds() as $term_id => $feed ) : ?>
-							<?php $has_last_log |= $feed->get_last_log(); ?>
+						<?php
+						foreach ( $friend->get_feeds() as $term_id => $feed ) :
+							if ( $feed->get_last_log() ) {
+								$has_last_log = true;
+								$last_log = $feed->get_last_log();
+							}
+							?>
 							<tr class="<?php echo $feed->get_active() ? 'active' : 'inactive hidden'; ?>">
 								<td><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php _e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></td>
 								<td><input type="url" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="20" aria-label="<?php _e( 'Feed URL', 'friends' ); ?>" /></td>
@@ -48,7 +53,7 @@ $has_last_log = false;
 								</select></td>
 								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][title]" value="<?php echo esc_attr( $feed->get_title() ); ?>" size="20" aria-label="<?php _e( 'Feed Name', 'friends' ); ?>" /></td>
 							</tr>
-							<tr class="lastlog hidden">
+							<tr class="<?php echo $feed->get_active() ? 'active' : 'inactive hidden'; ?> lastlog hidden">
 								<td colspan="5" class="notice"><?php echo esc_html( $feed->get_last_log() ); ?></td>
 							</tr>
 						<?php endforeach; ?>
@@ -94,8 +99,8 @@ $has_last_log = false;
 			<tr>
 				<th><?php esc_html_e( 'Last feed retrieval', 'friends' ); ?></th>
 				<td>
-					<?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( get_user_option( 'friends_last_feed_retrieval', $friend->ID ) ) ); ?>:
-					<em><?php echo esc_html( get_user_option( 'friends_last_feed_retrieval_message', $friend->ID ) ); ?></em>
+					<?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( substr( $last_log, 0, 19 ) ) ); ?>:
+					<em><?php echo esc_html( substr( $last_log, 20 ) ); ?></em>
 				</td>
 			</tr>
 			<tr>
@@ -141,7 +146,7 @@ $has_last_log = false;
 			</tr>
 			<tr>
 				<?php
-				$friends_display_name = get_user_option( 'friends_display_name_' . $friend->ID, $user );
+				$friends_display_name = get_user_option( 'friends_display_name_' . $friend->ID, $friend );
 				?>
 				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
 				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( $friends_display_name ? $friends_display_name : $friend->display_name ); ?>" class="regular-text" /> <p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>

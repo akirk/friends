@@ -1,3 +1,6 @@
+div {
+  min-width: 0; }
+
 /* Manually forked from Normalize.css */
 /* normalize.css v5.0.0 | MIT License | github.com/necolas/normalize.css */
 /**

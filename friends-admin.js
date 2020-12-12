@@ -76,7 +76,7 @@ jQuery( function( $ ) {
 	} );
 
 	jQuery( document ).on( 'click', 'a.show-log-lines', function() {
-		jQuery( 'table.feed-table' ).find( 'tr.lastlog' ).toggleClass( 'hidden' );
+		jQuery( 'table.feed-table' ).find( 'tr:visible + tr.lastlog' ).toggleClass( 'hidden' );
 		return false;
 	} );
 

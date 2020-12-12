@@ -89,7 +89,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 				if ( isset( $link['title'] ) ) {
 					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
 				} elseif ( isset( $link['text'] ) ) {
-					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
+					$discovered_feeds[ $feed_url ]['title'] = $link['text'];
 				}
 			}
 		}
@@ -249,6 +249,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 						$el_list[] = $el;
 					}
 				}
+
 				if ( count( $el_list ) > 0 ) {
 					$set_id = preg_replace( '/[[:^alnum:]]/', '', $el_list[0] );
 					$content = '<p>';
@@ -283,13 +284,6 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 			}
 
 			if ( isset( $entry['properties']['content'][0]['html'] ) ) {
-				// e-content['value'] is the same as p-name when they are on the same
-				// element. Use this to replace title with a strip_tags version so
-				// that alt text from images is not included in the title.
-				if ( $entry['properties']['content'][0]['value'] === $title ) {
-					$title = strip_tags( $entry['properties']['content'][0]['html'] );
-					$item['title'] = $title;
-				}
 				$content .= $entry['properties']['content'][0]['html'];
 				if ( isset( $entry['properties']['in-reply-to'][0] ) ) {
 					$in_reply_to = '';
@@ -321,6 +315,11 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 					}
 				}
 				$item['category'] = $category_csv;
+			}
+
+			if ( ! isset( $item['post-format'] ) && in_array( 'h-as-note', $entry['type'] ) ) {
+				$item['post-format'] = 'status';
+				unset( $item['title'] );
 			}
 
 			$feed_items[] = (object) $item;

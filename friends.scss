@@ -1,6 +1,10 @@
 $primary-color: #2e5bec;
 $dark-color: #3e396b;
 
+div {
+	min-width: 0; // fixes overflowing <pre>
+}
+
 // Spectre: Variables and mixins
 @import "node_modules/spectre.css/src/variables";
 @import "node_modules/spectre.css/src/mixins";

@@ -1277,8 +1277,14 @@ class Friends_Admin {
 				if ( isset( $item->{'post-format'} ) ) {
 					$post_format = $item->{'post-format'};
 				}
+				$title = '';
+				if ( isset( $item->title ) ) {
+					$title = $item->title;
+				} elseif ( 'status' === $post_format ) {
+					$title = $item->content;
+				}
 				?>
-				<li><?php echo esc_html( $item->date ); ?> (<?php echo esc_html( $post_format ); ?>): <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->title ); ?></a></li>
+				<li><?php echo esc_html( $item->date ); ?> (<?php echo esc_html( $post_format ); ?>): <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a></li>
 				<?php
 			}
 			?>

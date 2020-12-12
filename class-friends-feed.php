@@ -420,10 +420,15 @@ class Friends_Feed {
 				$post_id = $this->url_to_postid( $permalink, $friend_user->ID );
 			}
 
+			$updated_date = $item->date;
+			if ( isset( $item->updated_date ) ) {
+				$updated_date = $item->updated_date;
+			}
+
 			$post_data = array(
 				'post_title'        => $title,
 				'post_content'      => $content,
-				'post_modified_gmt' => $item->updated_date,
+				'post_modified_gmt' => $updated_date,
 				'post_status'       => $item->{'post-status'},
 				'guid'              => $permalink,
 			);
@@ -764,7 +769,7 @@ class Friends_Feed {
 				if ( isset( $link['title'] ) ) {
 					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
 				} elseif ( isset( $link['text'] ) ) {
-					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
+					$discovered_feeds[ $feed_url ]['title'] = $link['text'];
 				}
 			}
 		}
