@@ -60,7 +60,7 @@
 				<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
 					<li class="menu-item"><a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
 						<?php _e( 'Trash this post', 'friends' ); ?>
-					</button>
+					</a>
 					</li>
 				<?php endif; ?>
 

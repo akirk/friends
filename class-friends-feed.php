@@ -383,9 +383,22 @@ class Friends_Feed {
 
 		$new_posts = array();
 		foreach ( $items as $item ) {
+			if ( ! isset( $item->permalink ) ) {
+				continue;
+			}
 			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
-			$title     = trim( $item->title );
-			$content   = wp_kses_post( trim( $item->content ) );
+
+			$title = '';
+			if ( isset( $item->title ) ) {
+				$title = $item->title;
+			}
+			$title = trim( $title );
+
+			$content = '';
+			if ( isset( $item->content ) ) {
+				$content = $item->content;
+			}
+			$content = wp_kses_post( trim( $content ) );
 
 			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
 			if ( ! $item || ( isset( $item->feed_rule_delete ) && $item->feed_rule_delete ) ) {
