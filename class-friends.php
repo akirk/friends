@@ -226,12 +226,11 @@ class Friends {
 	 * Creates a page /friends/ to enable customization via.
 	 */
 	public static function create_friends_page() {
-		$query = new WP_Query( array( 'tag' => 'friends-plugin' ) );
+		$query = new WP_Query( array( 'post_name' => 'friends' ) );
 		if ( $query->have_posts() ) {
 			return;
 		}
 
-		// TODO convert to Blocks.
 		$content  = '<!-- wp:paragraph {"friendsVisibility":"only-friends"} -->' . PHP_EOL . '<p>';
 		$content .= __( 'Hi Friend!', 'friends' );
 		$content .= '<br/><br/>';
@@ -253,7 +252,6 @@ class Friends {
 			'post_type'    => 'page',
 			'post_name'    => 'friends',
 			'post_status'  => 'publish',
-			'tags_input'   => array( 'friends-plugin' ),
 		);
 		$post_id   = wp_insert_post( $post_data );
 	}

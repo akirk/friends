@@ -16,21 +16,6 @@ const friendsBlockVisibilityAddAttribute = settings => {
 	return settings;
 };
 
-const friendsBlockVisibilitySave = 	(element, block, attributes) => {
-	if (attributes.friendsVisibility) {
-		return wp.element.cloneElement(
-			element,
-			{},
-			wp.element.cloneElement(
-				element.props.children,
-				{rel: attributes.friendsVisibility}
-			)
-		);
-	}
-	return element;
-};
-
-
 const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 	return ( props ) => {
 		const { attributes: {
@@ -76,4 +61,3 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 
 addFilter( 'editor.BlockEdit', 'friends/block-visibility', friendsBlockVisibility );
 addFilter( 'blocks.registerBlockType', 'friends/block-visibility-attribute', friendsBlockVisibilityAddAttribute );
-addFilter( 'blocks.getSaveElement', 'friends/block-visibility-save', friendsBlockVisibilitySave );

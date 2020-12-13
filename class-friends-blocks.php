@@ -369,7 +369,7 @@ class Friends_Blocks {
 	public function render_friends_block_visibility( $content, $block ) {
 		$visibility = ( empty( $block['attrs'] ) || empty( $block['attrs']['friendsVisibility'] ) ) ? 'default' : $block['attrs']['friendsVisibility'];
 		$class_only_friends = ' class="only-friends" style="background-color: #efe; padding-left: .5em;"';
-		$class_not_friends = ' class="only-friends" style="background-color: #fee; padding-left: .5em;"';
+		$class_not_friends = ' class="not-friends" style="background-color: #fee; padding-left: .5em;"';
 		$class_watermark = ' class="watermark" style="float: right; padding-top: .5em; padding-right: .5em; font-size: 80%; color: #ccc;"';
 
 		switch ( $visibility ) {
