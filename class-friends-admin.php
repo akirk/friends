@@ -176,7 +176,7 @@ class Friends_Admin {
 	 * Use JavaScript to keep the Friends menu open when responding to a Friend Request.
 	 */
 	public function keep_friends_open_on_users_screen() {
-		if ( 'friend_request' === $_GET['role'] ) {
+		if ( isset( $_GET['role'] ) && 'friend_request' === $_GET['role'] ) {
 			?>
 			<script type="text/javascript">
 				jQuery( document ).ready( function ( $ ) {

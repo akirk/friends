@@ -226,27 +226,26 @@ class Friends {
 	 * Creates a page /friends/ to enable customization via.
 	 */
 	public static function create_friends_page() {
-		$query = new WP_Query( array( 'name' => 'friends' ) );
+		$query = new WP_Query( array( 'tag' => 'friends-plugin' ) );
 		if ( $query->have_posts() ) {
 			return;
 		}
 
 		// TODO convert to Blocks.
-		$content  = '[only-friends]';
+		$content  = '<!-- wp:paragraph {"friendsVisibility":"only-friends"} -->' . PHP_EOL . '<p>';
 		$content .= __( 'Hi Friend!', 'friends' );
-		$content .= PHP_EOL;
+		$content .= '<br/><br/>';
 		$content .= __( 'Do you know any of my friends? Maybe you want to become friends with them as well?', 'friends' );
-		$content .= PHP_EOL;
-		$content .= '[friends-list include-links=true]';
-		$content .= '[/only-friends]';
+		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
 
-		$content .= '[not-friends]';
+		$content .= '<!-- wp:friends/friends-list {"friendsVisibility":"only-friends","user_types":"friends"} /-->' . PHP_EOL;
+
+		$content .= '<!-- wp:paragraph {"friendsVisibility":"not-friends"} -->' . PHP_EOL . '<p>';
 		$content .= __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' );
 		$content .= PHP_EOL;
 		// translators: %1$s and %2$s are URLs.
 		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, follow me and get your own <a href="%1$s">WordPress</a> now and install the <a href="%2$s">Friends plugin</a>!', 'friends' ), 'https://wordpress.org/', self::PLUGIN_URL );
-		$content .= PHP_EOL;
-		$content .= '[/not-friends]';
+		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
 
 		$post_data = array(
 			'post_title'   => __( 'Welcome my Friends Page', 'friends' ),
@@ -254,6 +253,7 @@ class Friends {
 			'post_type'    => 'page',
 			'post_name'    => 'friends',
 			'post_status'  => 'publish',
+			'tags_input'   => array( 'friends-plugin' ),
 		);
 		$post_id   = wp_insert_post( $post_data );
 	}

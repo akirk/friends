@@ -40,6 +40,7 @@ class Friends_Blocks {
 		if ( function_exists( 'register_block_type' ) ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
 			add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
+			add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
 			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
 			add_action( 'block_attributes', array( $this, 'block_attributes' ) );
 
@@ -127,6 +128,9 @@ class Friends_Blocks {
 	 * @return string The new block content.
 	 */
 	public function render_block_friends_list( $attributes, $content ) {
+		if ( ! isset( $attributes['user_types'] ) ) {
+			$attributes['user_types'] = 'friends';
+		}
 		switch ( $attributes['user_types'] ) {
 			case 'friend_requests':
 				$friends  = Friend_User_Query::all_friend_requests();
@@ -159,6 +163,7 @@ class Friends_Blocks {
 		} else {
 			$out = '<ul>';
 		}
+		$count = 0;
 		foreach ( $friends->get_results() as $friend_user ) {
 			$count += 1;
 			if ( $attributes['users_inline'] ) {
@@ -339,23 +344,21 @@ class Friends_Blocks {
 		);
 	}
 
-	/**
-	 * Add the friends_visibility attribute globally.
-	 *
-	 * @param  object $attributes Attributes for the block.
-	 * @return object             Attributes for the block.
-	 */
-	public function block_attributes( $attributes ) {
-		return array_merge(
-			$attributes,
-			array(
-				'friends_visibility' => array(
-					'type' => 'string',
-				),
-			)
-		);
-	}
 
+	/**
+	 * Adds a block visibility attribute.
+	 */
+	function add_block_visibility_attribute() {
+		$registered_blocks = WP_Block_Type_Registry::get_instance()->get_all_registered();
+
+		foreach ( $registered_blocks as $name => $block ) {
+
+			$block->attributes['friendsVisibility'] = array(
+				'type'    => 'string',
+				'default' => '',
+			);
+		}
+	}
 	/**
 	 * Render the "Only visible for friends" Blocks block
 	 *
@@ -364,17 +367,26 @@ class Friends_Blocks {
 	 * @return string             The rendered content.
 	 */
 	public function render_friends_block_visibility( $content, $block ) {
-		$visibility = ( empty( $block['attrs'] ) || empty( $block['attrs']['friends_visibility'] ) ) ? 'default' : $block['attrs']['friends_visibility'];
+		$visibility = ( empty( $block['attrs'] ) || empty( $block['attrs']['friendsVisibility'] ) ) ? 'default' : $block['attrs']['friendsVisibility'];
+		$class_only_friends = ' class="only-friends" style="background-color: #efe; padding-left: .5em;"';
+		$class_not_friends = ' class="only-friends" style="background-color: #fee; padding-left: .5em;"';
+		$class_watermark = ' class="watermark" style="float: right; padding-top: .5em; padding-right: .5em; font-size: 80%; color: #ccc;"';
 
 		switch ( $visibility ) {
 			case 'only-friends':
-				if ( current_user_can( 'friend' ) || current_user_can( 'administrator' ) ) {
+				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+					return '<div' . $class_only_friends . '><span' . $class_watermark . '>' . __( 'Only friends', 'friends' ) . '</span>' . $content . '</div>';
+				}
+				if ( current_user_can( 'friend' ) ) {
 					return $content;
 				}
 				return '';
 
 			case 'not-friends':
-				if ( current_user_can( 'friend' ) && ! current_user_can( 'administrator' ) ) {
+				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+					return '<div' . $class_not_friends . '><span' . $class_watermark . '>' . __( 'Not friends', 'friends' ) . '</span>' . $content . '</span></div>';
+				}
+				if ( current_user_can( 'friend' ) ) {
 					return '';
 				}
 				return $content;

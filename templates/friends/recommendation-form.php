@@ -6,7 +6,7 @@
  */
 
 ?>
-<div id="friends-recommendation-form">
+<div id="friends-recommendation-form" style="display: none">
 	<div class="message"></div>
 	<form>
 		<?php if ( 0 === $friends->get_total() ) : ?>

@@ -78,7 +78,7 @@ class Friends_Recommendation {
 	 * Output the form for sending a recommendation.
 	 */
 	public function recommendation_form() {
-		if ( is_user_logged_in() ) {
+		if ( is_user_logged_in() && current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$friends = Friend_User_Query::all_friends();
 			include apply_filters( 'friends_template_path', 'friends/recommendation-form.php' );
 		}

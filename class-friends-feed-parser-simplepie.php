@@ -28,6 +28,11 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	 * @return     boolean  True if supported feed, False otherwise.
 	 */
 	public function is_supported_feed( $url, $mime_type, $title ) {
+		$rewritten = $this->rewrite_known_url( $url );
+		if ( $rewritten ) {
+			$mime_type = $rewritten['type'];
+		}
+
 		switch ( $mime_type ) {
 			case 'application/rss+xml':
 			case 'application/atom+xml':
@@ -58,6 +63,12 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 					);
 				}
 				return array();
+			case 'github.com':
+				return array(
+					'rel'  => 'alternate',
+					'type' => 'application/rss+xml',
+					'url'  => $url . '?feed=rss',
+				);
 		}
 
 		return array();
@@ -71,6 +82,11 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	 * @return     array  The (potentially) modified feed details.
 	 */
 	public function update_feed_details( $feed_details ) {
+		$rewritten = $this->rewrite_known_url( $feed_details['url'] );
+		if ( $rewritten ) {
+			$feed_details = $rewritten;
+		}
+
 		foreach ( get_post_format_strings() as $format => $title ) {
 			if ( preg_match( '/\b' . preg_quote( $format, '/' ) . '\b/i', $feed_details['url'] ) ) {
 				$feed_details['post-format'] = $format;
@@ -113,7 +129,6 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 
 		$feed->init();
 		$feed->set_output_encoding( get_option( 'blog_charset' ) );
-
 		if ( $feed->error() ) {
 			return array();
 		}
