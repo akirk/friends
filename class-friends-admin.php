@@ -1272,6 +1272,8 @@ class Friends_Admin {
 
 			<ul>
 			<?php
+
+			apply_filters( 'friends_template_path', 'friends/posts.php' );
 			foreach ( $items as $item ) {
 				$post_format = 'standard';
 				if ( isset( $item->{'post-format'} ) ) {
@@ -1284,7 +1286,23 @@ class Friends_Admin {
 					$title = $item->content;
 				}
 				?>
-				<li><?php echo esc_html( $item->date ); ?> (<?php echo esc_html( $post_format ); ?>): <a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a></li>
+				<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (type: <?php echo esc_html( $post_format ); ?>):
+					<?php if ( $title ) : ?>
+						<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a>
+					<?php else : ?>
+						<p>
+						<?php
+						echo wp_kses(
+							wp_trim_excerpt( $item->content ),
+							array(
+								'a'   => array( 'href' => array() ),
+								'img' => array( 'src' => array() ),
+							)
+						);
+						?>
+						</p>
+					<?php endif; ?>
+				</li>
 				<?php
 			}
 			?>

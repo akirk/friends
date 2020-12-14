@@ -84,3 +84,11 @@ add_action(
 		$friends_feed->register_parser( 'microformats', new Friends_Feed_Parser_Microformats );
 	}
 );
+
+add_action(
+	'friends_register_parser',
+	function( Friends_Feed $friends_feed ) {
+		require_once __DIR__ . '/feed-parsers/class-friends-feed-parser-json-feed.php';
+		$friends_feed->register_parser( 'jsonfeed', new Friends_Feed_Parser_JSON_Feed );
+	}
+);
