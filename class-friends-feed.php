@@ -587,8 +587,6 @@ class Friends_Feed {
 	 * @param  string    $url  The URL to fetch.
 	 */
 	public function wp_feed_options( $feed, $url ) {
-		var_dump( 1, $feed );
-		exit;
 		$feed->useragent .= ' Friends/' . Friends::VERSION;
 		if ( isset( $_GET['page'] ) && 'page=friends-refresh' === $_GET['page'] ) {
 			$feed->enable_cache( false );

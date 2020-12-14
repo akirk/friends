@@ -65,9 +65,10 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				return array();
 			case 'github.com':
 				return array(
-					'rel'  => 'alternate',
-					'type' => 'application/rss+xml',
-					'url'  => $url . '?feed=rss',
+					'rel'         => 'alternate',
+					'type'        => 'application/atom+xml',
+					'url'         => $url,
+					'post-format' => 'aside',
 				);
 		}
 
@@ -98,14 +99,11 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	}
 
 	/**
-	 * Discover the feeds available at the URL specified.
+	 * Instanciate SimplePie the same way WordPress does it.
 	 *
-	 * @param      string $content  The content for the URL is already provided here.
-	 * @param      string $url      The url to search.
-	 *
-	 * @return     array  A list of supported feeds at the URL.
+	 * @return     SimplePie  A simplepie instance.
 	 */
-	public function discover_available_feeds( $content, $url ) {
+	private function get_simplepie() {
 		if ( ! class_exists( 'SimplePie', false ) ) {
 			require_once ABSPATH . WPINC . '/class-simplepie.php';
 		}
@@ -113,6 +111,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 		require_once ABSPATH . WPINC . '/class-wp-feed-cache.php';
 		require_once ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-file.php';
+		require_once __DIR__ . '/class-friends-simplepie-accept-only-rss.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
 		$feed = new SimplePie();
@@ -125,10 +124,28 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 		$feed->set_cache_class( 'WP_Feed_Cache' );
 		$feed->set_file_class( 'WP_SimplePie_File' );
 
+		return $feed;
+	}
+
+	/**
+	 * Discover the feeds available at the URL specified.
+	 *
+	 * @param      string $content  The content for the URL is already provided here.
+	 * @param      string $url      The url to search.
+	 *
+	 * @return     array  A list of supported feeds at the URL.
+	 */
+	public function discover_available_feeds( $content, $url ) {
+		$feed = $this->get_simplepie();
+		do_action_ref_array( 'wp_feed_options', array( &$feed, $url ) );
+
 		$feed->set_raw_data( $content );
 
 		$feed->init();
+
 		$feed->set_output_encoding( get_option( 'blog_charset' ) );
+
+		$feed->init();
 		if ( $feed->error() ) {
 			return array();
 		}
@@ -171,9 +188,27 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	 */
 	public function fetch_feed( $url ) {
 		// Use SimplePie which is bundled with WordPress.
-		$feed = fetch_feed( $url );
-		if ( is_wp_error( $feed ) ) {
-			return $feed;
+		$feed = $this->get_simplepie();
+
+		$host = parse_url( strtolower( $url ), PHP_URL_HOST );
+
+		switch ( $host ) {
+			case 'github.com':
+				$feed->set_file_class( 'Friends_SimplePie_Accept_Only_RSS' );
+				break;
+		}
+
+		$feed->set_feed_url( $url );
+		$feed->set_cache_duration( apply_filters( 'wp_feed_cache_transient_lifetime', 12 * HOUR_IN_SECONDS, $url ) );
+
+		do_action_ref_array( 'wp_feed_options', array( &$feed, $url ) );
+
+		$feed->init();
+
+		$feed->set_output_encoding( get_option( 'blog_charset' ) );
+
+		if ( $feed->error() ) {
+			return new WP_Error( 'simplepie-error', $feed->error() );
 		}
 
 		return $this->process_items( $feed->get_items(), $url );

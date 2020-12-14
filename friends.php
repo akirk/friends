@@ -26,7 +26,7 @@ require_once __DIR__ . '/class-friend-user.php';
 require_once __DIR__ . '/class-friend-user-feed.php';
 require_once __DIR__ . '/class-friend-user-query.php';
 
-require_once __DIR__ . '/class-friends-feed-parser.php';
+require_once __DIR__ . '/feed-parsers/class-friends-feed-parser.php';
 
 require_once __DIR__ . '/class-friends-access-control.php';
 require_once __DIR__ . '/class-friends-admin.php';
@@ -72,7 +72,7 @@ add_action( 'widgets_init', array( 'Friends_Widget_Header', 'register' ) );
 add_action(
 	'friends_register_parser',
 	function( Friends_Feed $friends_feed ) {
-		require_once __DIR__ . '/class-friends-feed-parser-simplepie.php';
+		require_once __DIR__ . '/feed-parsers/class-friends-feed-parser-simplepie.php';
 		$friends_feed->register_parser( 'simplepie', new Friends_Feed_Parser_SimplePie );
 	}
 );
@@ -80,7 +80,7 @@ add_action(
 add_action(
 	'friends_register_parser',
 	function( Friends_Feed $friends_feed ) {
-		require_once __DIR__ . '/class-friends-feed-parser-microformats.php';
+		require_once __DIR__ . '/feed-parsers/class-friends-feed-parser-microformats.php';
 		$friends_feed->register_parser( 'microformats', new Friends_Feed_Parser_Microformats );
 	}
 );
