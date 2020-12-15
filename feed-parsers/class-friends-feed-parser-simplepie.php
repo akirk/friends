@@ -108,7 +108,6 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 			require_once ABSPATH . WPINC . '/class-simplepie.php';
 		}
 
-		require_once ABSPATH . WPINC . '/class-wp-feed-cache.php';
 		require_once ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-file.php';
 		require_once __DIR__ . '/class-friends-simplepie-accept-only-rss.php';
@@ -121,7 +120,9 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 		// constructor sets it before we have a chance to set the sanitization class.
 		$feed->sanitize = new WP_SimplePie_Sanitize_KSES();
 
-		$feed->set_cache_class( 'WP_Feed_Cache' );
+		SimplePie_Cache::register( 'wp_transient', 'WP_Feed_Cache_Transient' );
+		$feed->set_cache_location( 'wp_transient' );
+
 		$feed->set_file_class( 'WP_SimplePie_File' );
 
 		return $feed;
