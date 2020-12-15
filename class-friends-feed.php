@@ -610,7 +610,7 @@ class Friends_Feed {
 			)
 		);
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return $discovered_feeds;
+			return array();
 		}
 
 		$doc = new DOMDocument();
@@ -772,7 +772,7 @@ class Friends_Feed {
 				}
 
 				if ( 'self' === $rel ) {
-					$has_self = false;
+					$has_self = true;
 				}
 
 				if ( isset( $link['type'] ) ) {
