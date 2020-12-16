@@ -67,6 +67,7 @@ class Friends_Feed {
 		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_opml' ), 100 );
+		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90, 2 );
 	}
 
@@ -577,6 +578,21 @@ class Friends_Feed {
 		$feed    = $this->friends->feed;
 
 		include apply_filters( 'friends_template_path', 'admin/opml.php' );
+		exit;
+	}
+
+	/**
+	 * Redirect
+	 */
+	public function friends_add_friend_redirect() {
+		if ( ! isset( $_GET['add-friend'] ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
+		}
+		wp_safe_redirect( self_admin_url( 'admin.php?page=add-friend&url=' . urlencode( $_GET['add-friend'] ) ) );
 		exit;
 	}
 
