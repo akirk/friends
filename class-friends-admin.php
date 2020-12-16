@@ -1829,11 +1829,18 @@ class Friends_Admin {
 		?>
 		<div class="card">
 			<h2 class="title"><?php _e( 'Friends', 'friends' ); ?></h2>
+			<h3><?php _e( 'Bookmarklets', 'friends' ); ?></h3>
 
 			<p><?php _e( "Drag one of these bookmarklets to your bookmarks bar and click it when you're on a site around the web for the appropriate action.", 'friends' ); ?></p>
 			<p>
 				<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Add friend', 'friends' ); ?></a>
 				<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Subscribe', 'friends' ); ?></a>
+			</p>
+			<h3><?php _e( 'Browser Extension', 'friends' ); ?></h3>
+
+			<p><?php _e( 'There is also the option to use a browser extension.', 'friends' ); ?></p>
+			<p>
+				<a href="https://addons.mozilla.org/en-US/firefox/addon/wpfriends/"><?php echo esc_html_e( 'Firefox Extension', 'friends' ); ?></a>
 			</p>
 		</div>
 	</div>
@@ -1847,10 +1854,19 @@ class Friends_Admin {
 	 * @return array        Items + our items.
 	 */
 	public function dashboard_glance_items( $items ) {
-		$users = count_users();
-		$friend_count = $users['avail_roles']['friend'] + $users['avail_roles']['acquaintance'];
-		$friend_request_count = $users['avail_roles']['friend_request'];
-		$subscription_count = $users['avail_roles']['subscription'];
+		$count_users = count_users();
+		$count = array_merge(
+			array(
+				'friend'         => 0,
+				'acquaintance'   => 0,
+				'friend_request' => 0,
+				'subscription'   => 0,
+			),
+			$count_users['avail_roles']
+		);
+		$friend_count = $count['friend'] + $count['acquaintance'];
+		$friend_request_count = $count['friend_request'];
+		$subscription_count = $count['subscription'];
 		$friend_post_count = wp_count_posts( Friends::CPT );
 		$friend_post_count = $friend_post_count->publish + $friend_post_count->private;
 
