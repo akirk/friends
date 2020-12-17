@@ -1750,6 +1750,10 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     color: #333; }
   .friends-page .menu .menu-item + .menu-item {
     margin-top: 0; }
+  .friends-page .menu .menu-item small.label-secondary {
+    display: none; }
+  .friends-page .menu .menu-item:hover small.label-secondary {
+    display: inline-block; }
   .friends-page button, .friends-page input {
     min-height: auto; }
   .friends-page .card {

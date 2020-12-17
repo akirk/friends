@@ -75,6 +75,13 @@ div {
 		.menu-item + .menu-item {
 			margin-top: 0;
 		}
+
+		.menu-item small.label-secondary {
+			display: none;
+		}
+		.menu-item:hover small.label-secondary {
+			display: inline-block;
+		}
 	}
 	button, input {
 		min-height: auto;
