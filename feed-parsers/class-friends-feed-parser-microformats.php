@@ -103,12 +103,6 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 					'post-format' => 'autodetect',
 					'parser'      => 'microformats',
 				);
-
-				if ( isset( $mf['items'][0]['properties']['name'] ) ) {
-					if ( is_array( $mf['items'][0]['properties']['name'] ) ) {
-						$discovered_feeds[ $url ]['title'] = reset( $mf['items'][0]['properties']['name'] );
-					}
-				}
 			}
 		}
 

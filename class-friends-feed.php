@@ -811,13 +811,12 @@ class Friends_Feed {
 			restore_error_handler();
 
 			$xpath = new DOMXpath( $doc );
-			if ( ! $xpath ) {
-				return array();
+			if ( $xpath ) {
+				$discovered_feeds[ $url ] = array(
+					'rel'   => 'self',
+					'title' => $xpath->query( '//title' )->item( 0 )->textContent,
+				);
 			}
-			$discovered_feeds[ $url ] = array(
-				'rel'   => 'self',
-				'title' => $xpath->query( '//title' )->item( 0 )->textContent,
-			);
 		}
 
 		return $discovered_feeds;

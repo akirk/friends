@@ -105,7 +105,7 @@ class Friend_User extends WP_User {
 		$host = wp_parse_url( $url, PHP_URL_HOST );
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
-		$user_login = sanitize_title( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
+		$user_login = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
 		return $user_login;
 	}
 
@@ -119,7 +119,7 @@ class Friend_User extends WP_User {
 		$host = wp_parse_url( $url, PHP_URL_HOST );
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
-		$display_name = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
+		$display_name = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
 		return $display_name;
 	}
 
