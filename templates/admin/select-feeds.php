@@ -19,6 +19,14 @@ foreach ( $feeds as $feed_url => $details ) {
 	}
 }
 
+if ( ! isset( $message ) ) {
+	$message = '';
+}
+
+if ( ! isset( $codeword ) ) {
+	$codeword = '';
+}
+
 ?><div class="wrap"><form method="post">
 	<?php wp_nonce_field( 'add-friend' ); ?>
 	<input type="hidden" name="friend_url" value="<?php echo esc_url( $friend_url ); ?>" />
