@@ -91,20 +91,6 @@ class Friends_Access_Control {
 	}
 
 	/**
-	 * Convert a site URL to a username
-	 *
-	 * @param  string $url The site URL in question.
-	 * @return string The corresponding username.
-	 */
-	public function get_user_login_for_url( $url ) {
-		$host = wp_parse_url( $url, PHP_URL_HOST );
-		$path = wp_parse_url( $url, PHP_URL_PATH );
-
-		$user_login = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#', ' ', strtolower( $host . ' ' . $path ) ) ) );
-		return $user_login;
-	}
-
-	/**
 	 * Create a WP_User with a specific Friends-related role
 	 *
 	 * @param  string $url     The site URL for which to create the user.
@@ -125,7 +111,7 @@ class Friends_Access_Control {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$user_login = $this->get_user_login_for_url( $url );
+		$user_login = Friend_User::get_user_login_for_url( $url );
 		$friend_user = $this->get_user( $user_login );
 		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 			if ( is_multisite() ) {
@@ -154,7 +140,7 @@ class Friends_Access_Control {
 			'first_name'   => $display_name,
 			'nickname'     => $display_name,
 			'user_url'     => $url,
-			'user_pass'    => wp_generate_password( 256 ),
+			'user_pass'    => wp_generate_password( 128 ),
 			'role'         => $role,
 		);
 		$friend_id = wp_insert_user( $userdata );

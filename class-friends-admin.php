@@ -328,7 +328,7 @@ class Friends_Admin {
 			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 		}
 
-		$future_in_token = sha1( wp_generate_password( 256 ) );
+		$future_in_token = wp_generate_password( 128, false );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
@@ -373,38 +373,6 @@ class Friends_Admin {
 			update_option( 'friends_request_' . sha1( $json->request ), $friend_user->ID );
 			$friend_user->update_user_option( 'friends_future_in_token_' . sha1( $json->request ), $future_in_token );
 			$friend_user->set_role( 'pending_friend_request' );
-			// } elseif ( isset( $json->friend ) ) {
-			// $this->friends->access_control->make_friend( $user, $json->friend );
-			// if ( isset( $json->gravatar ) ) {
-			// $this->friends->access_control->update_gravatar( $user->ID, $json->gravatar );
-			// }
-			// if ( isset( $json->name ) ) {
-			// wp_update_user(
-			// array(
-			// 'ID'           => $user->ID,
-			// 'nickname'     => $json->name,
-			// 'first_name'   => $json->name,
-			// 'display_name' => $json->name,
-			// )
-			// );
-			// }
-			// $response = wp_safe_remote_post(
-			// $friend_rest_url . '/friend-request-accepted',
-			// array(
-			// 'body'        => array(
-			// 'token'  => $json->token,
-			// 'friend' => $this->friends->access_control->update_in_token( $user->ID ),
-			// 'proof'  => sha1( $json->token . $friend_request_token ),
-			// ),
-			// 'timeout'     => 20,
-			// 'redirection' => 5,
-			// )
-			// );
-			// delete_user_option( $user->ID, 'friends_request_token' );
-			// $json = json_decode( wp_remote_retrieve_body( $response ) );
-			// if ( $json->friend ) {
-			// update_user_option( $user->ID, 'friends_out_token', $json->friend );
-			// }
 		}
 
 		return $friend_user;
@@ -1163,7 +1131,7 @@ class Friends_Admin {
 			$better_display_name = Friend_User::get_display_name_from_feeds( $feeds );
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
-				$friend_user_login = sanitize_title( $better_display_name );
+				$friend_user_login = sanitize_user( $better_display_name );
 			}
 
 			$rest_url = $this->friends->rest->get_rest_url( $feeds );

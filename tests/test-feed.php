@@ -55,7 +55,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 			)
 		);
 		$friends                = Friends::get_instance();
-		$this->friends_in_token = sha1( wp_generate_password( 256 ) );
+		$this->friends_in_token = wp_generate_password( 128, false );
 		if ( update_user_option( $this->friend_id, 'friends_in_token', $this->friends_in_token ) ) {
 			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
 		}

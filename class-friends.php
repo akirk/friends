@@ -327,7 +327,7 @@ class Friends {
 		}
 
 		if ( false === get_option( 'friends_private_rss_key' ) ) {
-			update_option( 'friends_private_rss_key', sha1( wp_generate_password( 256 ) ) );
+			update_option( 'friends_private_rss_key', wp_generate_password( 128, false ) );
 		}
 
 		if ( false === get_option( 'friends_default_friend_role' ) ) {

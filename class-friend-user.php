@@ -105,7 +105,7 @@ class Friend_User extends WP_User {
 		$host = wp_parse_url( $url, PHP_URL_HOST );
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
-		$user_login = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
+		$user_login = sanitize_user( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
 		return $user_login;
 	}
 
@@ -119,7 +119,7 @@ class Friend_User extends WP_User {
 		$host = wp_parse_url( $url, PHP_URL_HOST );
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
-		$display_name = trim( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
+		$display_name = sanitize_text_field( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
 		return $display_name;
 	}
 
@@ -147,15 +147,6 @@ class Friend_User extends WP_User {
 	 */
 	public static function get_user( $user_login ) {
 		$user = get_user_by( 'login', $user_login );
-		if ( $user && ! $user->data->user_url ) {
-			wp_update_user(
-				array(
-					'ID'       => $user->ID,
-					'user_url' => $url,
-				)
-			);
-			$user = get_user_by( 'login', $user_login );
-		}
 		if ( $user ) {
 			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
 				return new self( $user );

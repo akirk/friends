@@ -280,7 +280,7 @@ class Friends_REST {
 		$friend_user->update_user_option( 'friends_future_out_token', $request->get_param( 'key' ) );
 		$friend_user->update_user_option( 'friends_request_message', mb_substr( $request->get_param( 'message' ), 0, 2000 ) );
 
-		$request_id = sha1( wp_generate_password( 256 ) );
+		$request_id = wp_generate_password( 128, false );
 		$friend_user->update_user_option( 'friends_request_id', $request_id );
 
 		return array(
@@ -694,7 +694,7 @@ class Friends_REST {
 		$friend_rest_url  = $friend_user->get_rest_url();
 		$request_id       = $friend_user->get_user_option( 'friends_request_id' );
 		$future_out_token = $friend_user->get_user_option( 'friends_future_out_token' );
-		$future_in_token  = sha1( wp_generate_password( 256 ) );
+		$future_in_token  = wp_generate_password( 128, false );
 
 		$current_user = wp_get_current_user();
 		$response     = wp_safe_remote_post(
