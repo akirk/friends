@@ -367,7 +367,13 @@ class Friends_Blocks {
 	 * @return string             The rendered content.
 	 */
 	public function render_friends_block_visibility( $content, $block ) {
-		$visibility = ( empty( $block['attrs'] ) || empty( $block['attrs']['friendsVisibility'] ) ) ? 'default' : $block['attrs']['friendsVisibility'];
+		$css_class = ( empty( $block['attrs'] ) || empty( $block['attrs']['className'] ) ) ? 'default' : $block['attrs']['className'];
+		$visibility = '';
+		if ( preg_match( '/\bonly-friends\b/', $css_class ) ) {
+			$visibility = 'only-friends';
+		} elseif ( preg_match( '/\bnot-friends\b/', $css_class ) ) {
+			$visibility = 'not-friends';
+		}
 		$class_only_friends = ' class="only-friends" style="background-color: #efe; padding-left: .5em;"';
 		$class_not_friends = ' class="not-friends" style="background-color: #fee; padding-left: .5em;"';
 		$class_watermark = ' class="watermark" style="float: right; padding-top: .5em; padding-right: .5em; font-size: 80%; color: #ccc;"';

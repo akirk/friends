@@ -5,23 +5,18 @@ const { Fragment } = wp.element;
 const { InspectorControls } = wp.editor;
 const { PanelBody, SelectControl } = wp.components;
 
-const friendsBlockVisibilityAddAttribute = settings => {
-	settings.attributes = {
-		...settings.attributes,
-		friendsVisibility: {
-			type: 'string',
-			default: '',
-		},
-	};
-	return settings;
-};
-
 const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 	return ( props ) => {
-		const { attributes: {
-			friendsVisibility,
-		}, setAttributes } = props;
-
+		const { attributes, setAttributes } = props;
+		let friendsVisibility = '';
+		if ( typeof attributes.className !== 'undefined' ) {
+			if ( /\bonly-friends\b/.test( attributes.className ) ) {
+				friendsVisibility = 'only-friends';
+			} else if ( /\bnot-friends\b/.test( attributes.className ) ) {
+				friendsVisibility = 'not-friends';
+			}
+		}
+		console.log(attributes, friendsVisibility )
 		return (
 			<Fragment>
 				<BlockEdit { ...props } />
@@ -30,17 +25,14 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 					<SelectControl
 							label={ __( 'Block visibility', 'friends' ) }
 							onChange={ friendsVisibility => {
-								if ( friendsVisibility ) {
-									setAttributes( { friendsVisibility } )
-								} else {
-									setAttributes( { friendsVisibility: null } )
-								}
-							} }
+								const className = ((attributes.className || '').replace( /\b(only|not)-friends\b/g, '' ) + ' ' + friendsVisibility).replace(/^\s+|\s+$/, '' );
+								setAttributes( { className } ) }
+							}
 							value={ friendsVisibility }
 							options={ [
 								{
 									label: __( 'For everyone', 'friends' ),
-									value: 'default',
+									value: '',
 								},
 								{
 									label: __( 'Only friends', 'friends' ),
@@ -60,4 +52,3 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 }, 'withFriendsBlockVisibility' );
 
 addFilter( 'editor.BlockEdit', 'friends/block-visibility', friendsBlockVisibility );
-addFilter( 'blocks.registerBlockType', 'friends/block-visibility-attribute', friendsBlockVisibilityAddAttribute );
