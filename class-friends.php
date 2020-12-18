@@ -231,15 +231,15 @@ class Friends {
 			return;
 		}
 
-		$content  = '<!-- wp:paragraph {"friendsVisibility":"only-friends"} -->' . PHP_EOL . '<p>';
+		$content  = '<!-- wp:paragraph {"className":"only-friends"} -->' . PHP_EOL . '<p>';
 		$content .= __( 'Hi Friend!', 'friends' );
 		$content .= '<br/><br/>';
 		$content .= __( 'Do you know any of my friends? Maybe you want to become friends with them as well?', 'friends' );
 		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
 
-		$content .= '<!-- wp:friends/friends-list {"friendsVisibility":"only-friends","user_types":"friends"} /-->' . PHP_EOL;
+		$content .= '<!-- wp:friends/friends-list {"className":"only-friends","user_types":"friends"} /-->' . PHP_EOL;
 
-		$content .= '<!-- wp:paragraph {"friendsVisibility":"not-friends"} -->' . PHP_EOL . '<p>';
+		$content .= '<!-- wp:paragraph {"className":"not-friends"} -->' . PHP_EOL . '<p>';
 		$content .= __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' );
 		$content .= PHP_EOL;
 		// translators: %1$s and %2$s are URLs.
