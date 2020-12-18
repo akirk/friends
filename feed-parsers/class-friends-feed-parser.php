@@ -13,16 +13,16 @@
  */
 abstract class Friends_Feed_Parser {
 	/**
-	 * Determines if this is a supported feed.
+	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
 	 * @param      string $url        The url.
 	 * @param      string $mime_type  The mime type.
 	 * @param      string $title      The title.
 	 *
-	 * @return     boolean  Return True if supported feed, False otherwise.
+	 * @return     int  Return 0 if unsupported, a positive value representing the confidence for the feed, use 10 if you're reasonably confident.
 	 */
-	public function is_supported_feed( $url, $mime_type, $title ) {
-		return false;
+	public function feed_support_confidence( $url, $mime_type, $title ) {
+		return 0;
 	}
 
 	/**

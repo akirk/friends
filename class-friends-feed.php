@@ -657,15 +657,17 @@ class Friends_Feed {
 				$available_feeds[ $link_url ]['url'] = $link_url;
 			}
 		}
+
 		$has_friends_plugin = false;
 		foreach ( $available_feeds as $link_url => $feed ) {
 			$feed = array_merge(
 				array(
-					'url'    => $link_url,
-					'rel'    => 'unknown',
-					'type'   => 'unknown',
-					'title'  => '',
-					'parser' => 'unsupported',
+					'url'               => $link_url,
+					'rel'               => 'unknown',
+					'type'              => 'unknown',
+					'title'             => '',
+					'parser'            => 'unsupported',
+					'parser_confidence' => 0,
 				),
 				$feed
 			);
@@ -673,21 +675,30 @@ class Friends_Feed {
 
 			if ( 'friends-base-url' === $feed['rel'] ) {
 				$available_feeds[ $link_url ]['parser'] = 'friends';
+				$available_feeds[ $link_url ]['parser_confidence'] = 1000;
 				$has_friends_plugin = $link_url;
 				continue;
 			}
 
 			foreach ( $this->parsers as $slug => $parser ) {
-				if ( ( isset( $feed['parser'] ) && $slug === $feed['parser'] ) || $parser->is_supported_feed( $link_url, $feed['type'], $feed['rel'] ) ) {
-					$available_feeds[ $link_url ] = $parser->update_feed_details( $feed );
+				$confidence = $parser->feed_support_confidence( $link_url, $feed['type'], $feed['rel'] );
+				if ( $available_feeds[ $link_url ]['parser_confidence'] < $confidence ) {
+					$available_feeds[ $link_url ]['parser_confidence'] = $confidence;
 					$available_feeds[ $link_url ]['parser'] = $slug;
-					if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
-						$new_url = $available_feeds[ $link_url ]['url'];
-						$available_feeds[ $new_url ] = $available_feeds[ $link_url ];
-						unset( $available_feeds[ $link_url ] );
-					}
-					continue 2;
 				}
+			}
+		}
+
+		foreach ( $available_feeds as $link_url => $feed ) {
+			if ( ! isset( $this->parsers[ $feed['parser'] ] ) ) {
+				continue;
+			}
+			$parser = $this->parsers[ $feed['parser'] ];
+			$available_feeds[ $link_url ] = array_merge( $feed, $parser->update_feed_details( $feed ) );
+			if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
+				$new_url = $available_feeds[ $link_url ]['url'];
+				$available_feeds[ $new_url ] = $available_feeds[ $link_url ];
+				unset( $available_feeds[ $link_url ] );
 			}
 		}
 
