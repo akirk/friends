@@ -184,6 +184,10 @@ if ( ! isset( $codeword ) ) {
 								foreach ( $registered_parsers as $slug => $parser_name ) {
 									$select .= '<option value="' . esc_attr( $slug ) . '"' . selected( $details['parser'], $slug, false ) . '>' . esc_html( strip_tags( $parser_name ) ) . '</option>';
 								}
+								if ( ! isset( $registered_parsers[ $details['parser'] ] ) ) {
+									// translators: %s is the name of a deleted parser.
+									$select .= '<option value="' . esc_attr( $details['parser'] ) . '" selected="selected">' . esc_html( sprintf( __( '%s (deleted)', 'friends' ), $details['parser'] ) ) . '</option>';
+								}
 								$select .= '</select>';
 
 								echo wp_kses(

@@ -227,7 +227,8 @@ class Friend_User_Feed {
 		if ( isset( $parsers[ $parser ] ) ) {
 			return $parser;
 		}
-		return 'simplepie';
+		// We're lax with parsers to allow deactivating parser plugins without deleting this information.
+		return $parser;
 	}
 
 	/**

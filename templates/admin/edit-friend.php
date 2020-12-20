@@ -45,6 +45,16 @@ $has_last_log = false;
 									<?php foreach ( $registered_parsers as $slug => $parser_name ) : ?>
 										<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
 									<?php endforeach; ?>
+									<?php if ( ! isset( $registered_parsers[ $feed->get_parser() ] ) ) : ?>
+										<option value="<?php echo esc_attr( $feed->get_parser() ); ?>" selected="selected">
+											<?php
+											// translators: %s is the name of a deleted parser.
+											echo esc_html( sprintf( __( '%s (deleted)', 'friends' ), $feed->get_parser() ) );
+											?>
+										</option>
+									<?php endif; ?>
+								}
+
 								</select> <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $feed->get_parser() ) . '&preview=' . urlencode( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php _e( 'Preview', 'friends' ); ?></a></td>
 								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][post-format]" aria-label="<?php _e( 'Post Format' ); ?>">
 									<?php foreach ( $post_formats as $format => $title ) : ?>
