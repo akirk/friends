@@ -64,8 +64,9 @@ class Friends_Frontend {
 		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ), 10, 2 );
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
-		add_action( 'wp_ajax_friends_publish', array( $this, 'frontend_publish_post' ) );
-		add_action( 'wp_ajax_trash_friends_post', array( $this, 'trash_friends_post' ) );
+		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
+		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
+		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 	}
@@ -114,6 +115,7 @@ class Friends_Frontend {
 				'spinner_url'       => admin_url( 'images/wpspin_light.gif' ),
 				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
 				'text_undo'         => __( 'Undo' ),
+				'text_trash_post'   => __( 'Trash this post', 'friends' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
 			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ), array(), Friends::VERSION );
@@ -137,7 +139,7 @@ class Friends_Frontend {
 	/**
 	 * The Ajax function to be called upon posting from /friends
 	 */
-	public function frontend_publish_post() {
+	public function ajax_frontend_publish_post() {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
 			$post_id = wp_insert_post(
 				array(
@@ -155,6 +157,45 @@ class Friends_Frontend {
 				exit;
 			}
 		}
+	}
+
+	/**
+	 * The Ajax function to change the post format from the Frontend.
+	 */
+	public function ajax_change_post_format() {
+		$post_id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+		$post_format = isset( $_POST['format'] ) ? $_POST['format'] : 'standard';
+
+		check_ajax_referer( "friends-change-post-format_$post_id" );
+
+		if ( ! current_user_can( Friends::REQUIRED_ROLE, $post_id ) ) {
+			wp_send_json_error();
+		}
+
+		$post_formats = get_post_format_strings();
+		if ( ! isset( $post_formats[ $post_format ] ) ) {
+			wp_send_json_error();
+		}
+
+		if ( ! set_post_format( $post_id, $post_format ) ) {
+			wp_send_json_error();
+		}
+
+		wp_send_json_success();
+	}
+
+	/**
+	 * Ensure that untrashed friends posts go back to published.
+	 *
+	 * @param string $new_status      The new status of the post being restored.
+	 * @param int    $post_id         The ID of the post being restored.
+	 * @param string $previous_status The status of the post at the point where it was trashed.
+	 */
+	public function untrash_post_status( $new_status, $post_id, $previous_status ) {
+		if ( $this->friends->post_types->is_cached_post_type( get_post_type( $post_id ) ) ) {
+			return $previous_status;
+		}
+		return $new_status;
 	}
 
 	/**

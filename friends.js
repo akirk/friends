@@ -178,36 +178,50 @@
 		} );
 	});
 
-	/* Trash post */
-	$( function() {
-		$document.on( 'click', 'button.friends-trash-post', function() {
-			var button = $( this );
-			wp.ajax.send( {
-				action: friends.ajax_url,
+	$document.on( 'click', 'a.friends-trash-post', function() {
+		var button = $( this );
+
+		wp.ajax.send( 'trash-post', {
+			data: {
 				_ajax_nonce: button.data( 'trash-nonce' ),
-				action: 'trash-post',
-				id: button.data( 'id' ),
-			}, function( response ) {
-				if ( response ) {
-					button.text( friends.text_undo ).attr( 'class', 'friends-untrash-post' );
-				}
-			} );
-
-			return false;
+				id: button.data( 'id' )
+			},
+			success: function( response ) {
+				button.text( friends.text_undo ).attr( 'class', 'friends-untrash-post' );
+			}
 		} );
-		$document.on( 'click', 'button.friends-untrash-post', function() {
-			var button = $( this );
-			jQuery.post( friends.ajax_url, {
+		return false;
+	} );
+
+	$document.on( 'click', 'a.friends-untrash-post', function() {
+		var button = $( this );
+
+		wp.ajax.send( 'untrash-post', {
+			data: {
 				_ajax_nonce: button.data( 'untrash-nonce' ),
-				action: 'untrash-post',
-				id: button.data( 'id' ),
-			}, function( response ) {
-				if ( response ) {
-					button.html( '&#x1F5D1;' ).attr( 'class', 'friends-trash-post' );
-				}
-			} );
-
-			return false;
+				id: button.data( 'id' )
+			},
+			success: function( response ) {
+				button.text( friends.text_trash_post ).attr( 'class', 'friends-trash-post' );
+			}
 		} );
-	});
+		return false;
+	} );
+
+	$document.on( 'change', 'select.friends-change-post-format', function() {
+		var select = $( this );
+
+		wp.ajax.send( 'friends-change-post-format', {
+			data: {
+				_ajax_nonce: select.data( 'change-post-format-nonce' ),
+				id: select.data( 'id' ),
+				format: select.val()
+			},
+			success: function( response ) {
+				// TODO: add some visual indication.
+			}
+		} );
+		return false;
+	} );
+
 })( jQuery, window.wp, window.friends );

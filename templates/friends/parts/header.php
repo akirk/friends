@@ -43,22 +43,29 @@
 	</div>
 	<div class="overflow col-ml-auto">
 		<div class="dropdown dropdown-right">
-			<a href="#" class="btn btn-link dropdown-toggle" tabindex="0">
+			<a class="btn btn-link dropdown-toggle" tabindex="0">
 				<i class="dashicons dashicons-menu-alt2"></i>
 			</a>
-			<!-- menu component -->
 			<ul class="menu">
 				<?php
 				$edit_user_link = $friends->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
 				if ( $edit_user_link ) :
 					?>
-					<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>">Edit friend</a></li>
+					<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>"><?php _e( 'Edit friend', 'friends' ); ?></a></li>
 				<?php endif; ?>
+					<li class="menu-item dropdown">
+						<select name="post-format" class="friends-change-post-format form-select select-sm" data-change-post-format-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-change-post-format_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" >
+							<option disabled="disabled"><?php _e( 'Change post format', 'friends' ); ?></option>
+							<?php foreach ( get_post_format_strings() as $format => $title ) : ?>
+							<option value="<?php echo esc_attr( $format ); ?>"<?php selected( get_post_format(), $format ); ?>><?php echo esc_html( $title ); ?></option>
+						<?php endforeach; ?>
+						</select>
+					</li>
 				<?php if ( current_user_can( 'edit_post', $post->ID ) ) : ?>
 					<li class="menu-item"><?php edit_post_link(); ?></li>
 				<?php endif; ?>
 				<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
-					<li class="menu-item"><a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>">
+					<li class="menu-item"><a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
 						<?php _e( 'Trash this post', 'friends' ); ?>
 					</a>
 					</li>
