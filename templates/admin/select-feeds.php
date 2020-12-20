@@ -213,7 +213,7 @@ if ( ! isset( $codeword ) ) {
 							<?php
 							echo wp_kses(
 								// translators: %s is a URL to the plugin install page.
-								sprintf( _n( 'The following feed is not supported. <a href=%s>There might be a plugin available</a> to add support for it.', 'The following feeds are not supported. <a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_url( 'plugins.php?s=friends' ) . '"' ),
+								sprintf( _n( 'The following feed is not supported. <a href=%s>There might be a plugin available</a> to add support for it.', 'The following feeds are not supported. <a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_url( 'admin.php?page=friends-plugin-installer' ) . '"' ),
 								array( 'a' => array( 'href' => array() ) )
 							);
 							?>

@@ -36,6 +36,7 @@ require_once __DIR__ . '/class-friends-feed.php';
 require_once __DIR__ . '/class-friends-frontend.php';
 require_once __DIR__ . '/class-friends-logging.php';
 require_once __DIR__ . '/class-friends-notifications.php';
+require_once __DIR__ . '/class-friends-plugin-installer.php';
 require_once __DIR__ . '/class-friends-post-types.php';
 require_once __DIR__ . '/class-friends-reactions.php';
 require_once __DIR__ . '/class-friends-recommendation.php';
@@ -45,6 +46,7 @@ require_once __DIR__ . '/class-friends-3rd-parties.php';
 require_once __DIR__ . '/class-friends.php';
 
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
+add_action( 'admin_init', array( 'Friends_Plugin_Installer', 'register_hooks' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( 'Friends', 'uninstall_plugin' ) );
