@@ -618,6 +618,10 @@ class Friends_Feed {
 	 * @return array The available feeds.
 	 */
 	public function discover_available_feeds( $url ) {
+		$available_feeds = array();
+		$content = null;
+		$content_type = 'text/html';
+
 		$response = wp_safe_remote_get(
 			$url,
 			array(
@@ -625,36 +629,39 @@ class Friends_Feed {
 				'redirection' => 1,
 			)
 		);
-		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return array();
+				var_dump( wp_remote_retrieve_response_code( $response ) );
+		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
+			$doc = new DOMDocument();
+			if ( is_wp_error( $response ) ) {
+				return array();
+			}
+			$content = wp_remote_retrieve_body( $response );
+			$headers = wp_remote_retrieve_headers( $response );
+
+			// We'll determine the obvious feeds ourself.
+			$available_feeds = $this->discover_link_rel_feeds( $content, $url, $headers );
+			$content_type = $headers->{'content-type'};
 		}
 
-		$doc = new DOMDocument();
-		if ( is_wp_error( $response ) ) {
-			return array();
-		}
-		$content = wp_remote_retrieve_body( $response );
-		$headers = wp_remote_retrieve_headers( $response );
-
-		// We'll determine the obvious feeds ourself.
-		$available_feeds = $this->discover_link_rel_feeds( $content, $url, $headers );
 		if ( empty( $available_feeds ) ) {
 			$available_feeds[ $url ] = array(
 				'url'  => $url,
-				'type' => $headers->{'content-type'},
+				'type' => $content_type,
 			);
 		}
 
-		foreach ( $this->parsers as $slug => $parser ) {
-			foreach ( $parser->discover_available_feeds( $content, $url ) as $link_url => $feed ) {
-				if ( isset( $available_feeds[ $link_url ] ) ) {
-					// If this parser tells us it can parse it right away, allow it to override.
-					if ( isset( $available_feeds[ $link_url ]['parser'] ) || ! isset( $feed['parser'] ) ) {
-						continue;
+		if ( $content ) {
+			foreach ( $this->parsers as $slug => $parser ) {
+				foreach ( $parser->discover_available_feeds( $content, $url ) as $link_url => $feed ) {
+					if ( isset( $available_feeds[ $link_url ] ) ) {
+						// If this parser tells us it can parse it right away, allow it to override.
+						if ( isset( $available_feeds[ $link_url ]['parser'] ) || ! isset( $feed['parser'] ) ) {
+							continue;
+						}
 					}
+					$available_feeds[ $link_url ] = $feed;
+					$available_feeds[ $link_url ]['url'] = $link_url;
 				}
-				$available_feeds[ $link_url ] = $feed;
-				$available_feeds[ $link_url ]['url'] = $link_url;
 			}
 		}
 
