@@ -23,18 +23,16 @@ class Friends_Plugin_Installer {
 	 *
 	 * @var        array
 	 */
-	private static $plugins = array(
-		'friends-parser-rss-bridge'   => 'https://wpfriends.at/plugins/friends-parser-rss-bridge/update.json',
-		'friends-parser-fraidyscrape' => 'https://wpfriends.at/plugins/friends-parser-fraidyscrape/update.json',
-	);
+	private static $plugins = array();
 
 	/**
 	 * Register the WordPress hooks
 	 */
 	public static function register_hooks() {
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
-		add_action( 'wp_ajax_cnkt_plugin_installer', array( __CLASS__, 'cnkt_plugin_installer' ) );
-		add_action( 'wp_ajax_cnkt_plugin_activation', array( __CLASS__, 'cnkt_plugin_activation' ) );
+		add_action( 'wp_ajax_friends_plugin_installer', array( __CLASS__, 'ajax_plugin_installer' ) );
+		add_action( 'wp_ajax_friends_plugin_activation', array( __CLASS__, 'ajax_plugin_activation' ) );
+		add_action( 'wp_ajax_friends_plugin_deactivation', array( __CLASS__, 'ajax_plugin_deactivation' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'override_plugin_info' ), 20, 3 );
 		add_filter( 'site_transient_update_plugins', array( __CLASS__, 'override_plugin_push_update' ) );
 	}
@@ -45,12 +43,14 @@ class Friends_Plugin_Installer {
 	 * @since      1.0
 	 */
 	public static function init() {
+
+		$plugins = self::get_plugins();
 		?>
-		<div class="cnkt-plugin-installer">
+		<div class="friends-plugin-installer">
 		<?php
 		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 
-		foreach ( array_keys( self::$plugins ) as $plugin_slug ) :
+		foreach ( array_keys( $plugins ) as $plugin_slug ) :
 
 			$button_classes = 'install button';
 			$button_text    = __( 'Install Now', 'friends' );
@@ -81,16 +81,14 @@ class Friends_Plugin_Installer {
 				$main_plugin_file = self::get_plugin_file( $plugin_slug );
 				if ( self::check_file_extension( $main_plugin_file ) ) {
 					if ( is_plugin_active( $main_plugin_file ) ) {
-						$button_classes = 'button disabled';
-						$button_text    = __( 'Activated', 'friends' );
+						$button_classes = 'button disabled installed';
+						$button_text    = __( 'Active' );
 					} else {
 						$button_classes = 'activate button button-primary';
-						$button_text    = __( 'Activate', 'friends' );
+						$button_text    = __( 'Activate' );
 					}
 				}
-
 				self::render_template( $plugin_slug, $api, $button_text, $button_classes );
-
 			}
 
 		endforeach;
@@ -100,20 +98,17 @@ class Friends_Plugin_Installer {
 	}
 
 	/**
-	 * Gets the plugin information from the rmeote server.
-	 *
-	 * @param      string $plugin_slug  The plugin slug.
+	 * Gets the available plugins from wpfriends.at.
 	 *
 	 * @return    object  The plugin information.
 	 */
-	public static function get_plugin_info( $plugin_slug ) {
-		if ( ! isset( self::$plugins[ $plugin_slug ] ) ) {
-			return new WP_Error( 'unknown-plugin' );
-		}
-		$remote = get_transient( 'friends_plugin_info_' . $plugin_slug );
-		if ( false === $remote ) {
+	public static function get_plugins() {
+		$cache_key = 'friends_plugins_info_v1';
+
+		$data = get_transient( $cache_key );
+		if ( false === $data || true ) {
 			$remote = wp_remote_get(
-				self::$plugins[ $plugin_slug ],
+				'https://wpfriends.at/plugins.json',
 				array(
 					'timeout' => 10,
 					'headers' => array(
@@ -123,17 +118,19 @@ class Friends_Plugin_Installer {
 			);
 
 			if ( ! is_wp_error( $remote ) && 200 === wp_remote_retrieve_response_code( $remote ) && ! empty( $remote['body'] ) ) {
-				set_transient( 'friends_plugin_info_' . $plugin_slug, $remote, 43200 ); // 12 hours cache
+				$data = array();
+				foreach ( json_decode( $remote['body'] ) as $slug => $plugin_data ) {
+					$data[ $slug ] = $plugin_data;
+				}
+				set_transient( $cache_key, $data, 43200 ); // 12 hours cache
 			}
 		}
 
-		return $remote;
+		return $data;
 	}
 
 	/**
 	 * Override the plugin info.
-	 *
-	 * Thanks https://rudrastyh.com/wordpress/self-hosted-plugin-update.html
 	 *
 	 * @param      stdClass $res     The resource.
 	 * @param      string   $action  The action.
@@ -146,12 +143,12 @@ class Friends_Plugin_Installer {
 			return false;
 		}
 
-		$remote = self::get_plugin_info( $args->slug );
-		if ( ! is_wp_error( $remote ) && 200 === wp_remote_retrieve_response_code( $remote ) && ! empty( $remote['body'] ) ) {
-			return json_decode( $remote['body'] );
+		$plugins = self::get_plugins();
+		if ( ! isset( $plugins[ $args->slug ] ) ) {
+			return false;
 		}
 
-		return false;
+		return $plugins[ $args->slug ];
 	}
 
 	/**
@@ -166,21 +163,15 @@ class Friends_Plugin_Installer {
 			return $transient;
 		}
 
-		foreach ( self::$plugins as $plugin_slug => $url ) {
-			$remote = self::get_plugin_info( $plugin_slug );
-			if ( ! is_wp_error( $remote ) && 200 === wp_remote_retrieve_response_code( $remote ) && ! empty( $remote['body'] ) ) {
-
-				$remote = json_decode( $remote['body'] );
-
-				if ( $remote && version_compare( '1.0', $remote->version, '<' ) && version_compare( $remote->requires, get_bloginfo( 'version' ), '<' ) ) {
-					$res = new stdClass();
-					$res->slug = $remote->slug;
-					$res->plugin = $remote->slug . '/' . $remote->slug . '.php';
-					$res->new_version = $remote->version;
-					$res->tested = $remote->tested;
-					$res->package = $remote->download_url;
-					$transient->response[ $res->plugin ] = $res;
-				}
+		foreach ( self::get_plugins() as $plugin_slug => $data ) {
+			if ( $data && version_compare( '1.0', $data->version, '<' ) && version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) {
+				$res = new stdClass();
+				$res->slug = $data->slug;
+				$res->plugin = $data->slug . '/' . $data->slug . '.php';
+				$res->new_version = $data->version;
+				$res->tested = $data->tested;
+				$res->package = $data->download_url;
+				$transient->response[ $res->plugin ] = $res;
 			}
 		}
 
@@ -198,44 +189,52 @@ class Friends_Plugin_Installer {
 	 * @since      1.0
 	 */
 	public static function render_template( $plugin, $api, $button_text, $button_classes ) {
-		if ( isset( $api->icons['1x'] ) ) {
-			$icon = $api->icons['1x'];
-		} else {
-			$icon = $api->icons['default'];
-		}
-
+		$more_info_url = $api->more_info;
 		$install_url = add_query_arg(
 			array(
-				'action'   => 'install-plugin',
+				'tab'      => 'install-plugin',
 				'plugin'   => $api->slug,
 				'_wpnonce' => wp_create_nonce( 'install-plugin_' . $api->slug ),
 			),
-			get_admin_url( null, '/update.php' )
+			admin_url( 'update.php' )
 		);
+		$deactivate_button_class = ( 'activate' === substr( $button_classes, 0, 8 ) ) ? ' hidden' : '';
 		?>
-		<div class="plugin">
-			<div class="plugin-wrap">
-				<img src="<?php echo esc_url( $icon ); ?>" alt="">
-				<h2><?php echo esc_html( $api->name ); ?></h2>
-				<p><?php echo esc_html( $api->short_description ); ?></p>
+		<div class="wp-list-table widefat plugin-install">
+			<div id="the-list">
+				<div class="plugin-card plugin-card-<?php echo $api->slug; ?>">
+					<div class="plugin-card-top">
+						<div class="name column-name">
+							<h3>
+								<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $more_info_url ); ?>"><?php echo $api->name; ?></a>
+							</h3>
+						</div>
 
-				<p class="plugin-author"><?php esc_html_e( 'By', 'friends' ); ?> <?php echo $api->author; // phpcs:ignore ?></p>
+						<div class="desc column-description">
+							<p><?php echo $api->short_description; ?></p>
+							<p class="authors">
+								<cite>
+									<?php /* translators: %s is a plugin author */ printf( __( 'By %s' ), $api->author ); ?>
+								</cite>
+							</p>
+						</div>
+					</div>
+
+					<div class="plugin-card-bottom">
+						<a class="<?php echo $button_classes; ?>" data-slug="<?php echo $api->slug; ?>" data-name="<?php echo $api->name; ?>" href="<?php echo esc_url( $install_url ); ?>" aria-label="<?php echo /* translators: %1$s is a plugin name, %2$s is a plugin version. */ sprintf( esc_html__( 'Install %1$s %2$s now', 'framework' ), $api->name, $api->version ); ?>"><?php echo esc_html( $button_text ); ?></a>
+
+						<a class="button thickbox" href="<?php echo esc_url( $more_info_url ); ?>" aria-label="<?php echo /* translators: %s is a plugin name. */ sprintf( esc_html__( 'More information about %s' ), $api->name ); ?>" data-title="<?php echo $api->name; ?>"><?php _e( 'More Details' ); ?></a>
+
+						<a class="button thickbox deactivate <?php echo $deactivate_button_class; ?>"
+							data-slug="<?php echo esc_attr( $api->slug ); ?>"
+							data-name="<?php echo esc_attr( $api->name ); ?>"
+							href="<?php echo esc_url( $install_url ); ?>">
+							<?php echo esc_html_e( 'Deactivate' ); ?>
+						</a>
+
+					</div>
+				</div>
 			</div>
-			<ul class="activation-row">
-				<li>
-					<a class="<?php echo esc_attr( $button_classes ); ?>"
-						data-slug="<?php echo esc_attr( $api->slug ); ?>"
-						data-name="<?php echo esc_attr( $api->name ); ?>"
-						href="<?php echo esc_url( $install_url ); ?>">
-						<?php echo esc_html( $button_text ); ?>
-					</a>
-				</li>
-				<li>
-					<a href="https://wordpress.org/plugins/<?php echo esc_attr( $api->slug ); ?>/" target="_blank">
-						<?php esc_html_e( 'More Details', 'friends' ); ?>
-					</a>
-				</li>
-			</ul>
 		</div>
 		<?php
 	}
@@ -243,7 +242,7 @@ class Friends_Plugin_Installer {
 	/**
 	 * An Ajax method for installing plugin.
 	 */
-	public static function cnkt_plugin_installer() {
+	public static function ajax_plugin_installer() {
 
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			wp_die( esc_html( __( 'Sorry, you are not allowed to install plugins on this site.', 'friends' ) ) );
@@ -253,7 +252,7 @@ class Friends_Plugin_Installer {
 		$plugin = $_POST['plugin']; // phpcs:ignore
 
 		// Check our nonce, if they don't match then bounce!
-		if ( ! wp_verify_nonce( $nonce, 'cnkt_installer_nonce' ) ) {
+		if ( ! wp_verify_nonce( $nonce, 'friends_installer_nonce' ) ) {
 			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
@@ -307,7 +306,7 @@ class Friends_Plugin_Installer {
 	/**
 	 * Activate plugin via Ajax.
 	 */
-	public static function cnkt_plugin_activation() {
+	public static function ajax_plugin_activation() {
 		if ( ! current_user_can( 'install_plugins' ) ) {
 			wp_die( esc_html( __( 'Sorry, you are not allowed to activate plugins on this site.', 'friends' ) ) );
 		}
@@ -316,7 +315,7 @@ class Friends_Plugin_Installer {
 		$plugin = $_POST['plugin']; // phpcs:ignore
 
 		// Check our nonce, if they don't match then bounce!
-		if ( ! wp_verify_nonce( $nonce, 'cnkt_installer_nonce' ) ) {
+		if ( ! wp_verify_nonce( $nonce, 'friends_installer_nonce' ) ) {
 			die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
@@ -366,8 +365,36 @@ class Friends_Plugin_Installer {
 
 	}
 
+	/**
+	 * Deativate plugin via Ajax.
+	 */
+	public static function ajax_plugin_deactivation() {
+		if ( ! current_user_can( 'install_plugins' ) ) {
+			wp_die( esc_html( __( 'Sorry, you are not allowed to activate plugins on this site.', 'friends' ) ) );
+		}
 
+		$nonce  = $_POST['nonce']; // phpcs:ignore
+		$plugin = $_POST['plugin']; // phpcs:ignore
 
+		// Check our nonce, if they don't match then bounce!
+		if ( ! wp_verify_nonce( $nonce, 'friends_installer_nonce' ) ) {
+			die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+		}
+
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+		deactivate_plugins( $plugin . '/' . $plugin . '.php' );
+
+		$msg = $plugin . ' successfully deactivated.';
+
+		$json = array(
+			'status' => 'success',
+			'msg'    => $msg,
+		);
+
+		wp_send_json( $json );
+
+	}
 
 	/**
 	 * A method to get the main plugin file.
@@ -419,20 +446,19 @@ class Friends_Plugin_Installer {
 	 * @since 1.0
 	 */
 	public static function enqueue_scripts() {
-		wp_enqueue_script( 'plugin-installer', plugins_url( 'plugin-installer.js', __FILE__ ), array( 'jquery' ), Friends::VERSION, true );
+		wp_enqueue_script( 'friends-plugin-installer', plugins_url( 'plugin-installer.js', __FILE__ ), array( 'jquery' ), Friends::VERSION, true );
 		wp_localize_script(
-			'plugin-installer',
-			'cnkt_installer_localize',
+			'friends-plugin-installer',
+			'friends_plugin_installer_localize',
 			array(
-				'ajax_url'      => admin_url( 'admin-ajax.php' ),
-				'admin_nonce'   => wp_create_nonce( 'cnkt_installer_nonce' ),
-				'install_now'   => __( 'Are you sure you want to install this plugin?', 'friends' ),
-				'install_btn'   => __( 'Install Now', 'friends' ),
-				'activate_btn'  => __( 'Activate', 'friends' ),
-				'installed_btn' => __( 'Activated', 'friends' ),
+				'ajax_url'       => admin_url( 'admin-ajax.php' ),
+				'admin_nonce'    => wp_create_nonce( 'friends_installer_nonce' ),
+				'install_now'    => __( 'Are you sure you want to install this plugin?', 'friends' ),
+				'install_btn'    => __( 'Install Now', 'friends' ),
+				'activate_btn'   => __( 'Activate' ),
+				'deactivate_btn' => __( 'Dectivate' ),
+				'installed_btn'  => __( 'Active' ),
 			)
 		);
-
-		wp_enqueue_style( 'plugin-installer', plugins_url( 'plugin-installer.css', __FILE__ ), array(), Friends::VERSION );
 	}
 }

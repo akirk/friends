@@ -6,6 +6,7 @@
  */
 
 $c = -1;
+$hidden_feed_count = 0;
 $unsupported_feeds = array();
 $friends_host = false;
 if ( $friends_plugin ) {
@@ -52,26 +53,12 @@ if ( ! isset( $codeword ) ) {
 				<th scope="row"><label for="user_login"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
 				<td>
 					<input type="text" id="user_login" name="display_name" value="<?php echo esc_attr( $friend_display_name ); ?>" required placeholder="" class="regular-text" />
-					<p class="description details hidden"><small>
-						<?php
-						// translators: %s is a URL.
-						echo esc_html( sprintf( __( 'API URL: %s', 'friends' ), $friends_plugin ) );
-						?>
-						</small>
-					</p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="user_login"><?php esc_html_e( 'Username', 'friends' ); ?></label></th>
 				<td>
 					<input type="text" id="user_login" name="user_login" value="<?php echo esc_attr( $friend_user_login ); ?>" required placeholder="" class="regular-text" />
-					<p class="description details hidden"><small>
-						<?php
-						// translators: %s is a URL.
-						echo esc_html( sprintf( __( 'API URL: %s', 'friends' ), $friends_plugin ) );
-						?>
-						</small>
-					</p>
 				</td>
 			</tr>
 			<?php if ( $friends_plugin ) : ?>
@@ -86,6 +73,13 @@ if ( ! isset( $codeword ) ) {
 							<option value="<?php echo esc_attr( $role ); ?>"<?php selected( $default_role, $role ); ?>><?php echo esc_html( $title ); ?></option>
 						<?php endforeach; ?>
 					</select></label>
+					<p class="description details hidden"><small>
+						<?php
+						// translators: %s is a URL.
+						echo esc_html( sprintf( __( 'API URL: %s', 'friends' ), $friends_plugin ) );
+						?>
+						</small>
+					</p>
 					<p class="description">
 						<?php esc_html_e( 'When the other side accepts your friend request, a trusted connection between your sites is established.' ); ?>
 					</p>
@@ -128,8 +122,15 @@ if ( ! isset( $codeword ) ) {
 				<td>
 					<ul>
 					<?php foreach ( $feeds as $feed_url => $details ) : ?>
-						<?php $c += 1; ?>
-						<li>
+						<?php
+						$c += 1;
+						$classes = '';
+						if ( $c > 0 && ! $details['autoselect'] ) {
+							$hidden_feed_count += 1;
+							$classes .= 'rel-alternate hidden';
+						}
+						?>
+						<li class="<?php echo esc_attr( $classes ); ?>">
 							<?php foreach ( $details as $key => $value ) : ?>
 								<?php
 								if ( 'post-format' === $key ) {
@@ -212,57 +213,73 @@ if ( ! isset( $codeword ) ) {
 						</li>
 					<?php endforeach; ?>
 				</ul>
-					<?php if ( ! empty( $unsupported_feeds ) ) : ?>
-						<p class="description details">
+					<p>
+						<a href="" id="show-alternate-feeds">
 							<?php
-							echo wp_kses(
-								// translators: %s is a URL to the plugin install page.
-								sprintf( _n( 'The following feed is not supported. <a href=%s>There might be a plugin available</a> to add support for it.', 'The following feeds are not supported. <a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_url( 'admin.php?page=friends-plugin-installer' ) . '"' ),
-								array( 'a' => array( 'href' => array() ) )
-							);
+							// translators: %d is the number of feeds.
+							echo esc_html( sprintf( _n( '%d more feed is available', '%d more feeds are available', $hidden_feed_count, 'friends' ), $hidden_feed_count ) );
 							?>
+						</a>
+						| <a href="" id="show-details"><?php esc_html_e( 'Display feed metadata' ); ?></a>
+					</p>
+					<?php if ( ! empty( $unsupported_feeds ) ) : ?>
+						<p>
+							<small>
+								<a href="" id="show-unsupported-feeds">
+															<?php
+															// translators: %d is the number of feeds.
+															echo esc_html( sprintf( _n( 'Show %d unsupported feed', 'Show %d unsupported feeds', count( $unsupported_feeds ), 'friends' ), count( $unsupported_feeds ) ) );
+															?>
+															</a>
+							</small>
 						</p>
-						<?php endif; ?>
-
-				<ul>
-					<?php foreach ( $unsupported_feeds as $feed_url => $details ) : ?>
-						<?php $c += 1; ?>
-						<li>
-							<?php foreach ( $details as $key => $value ) : ?>
-								<input type="hidden" name="feeds[<?php echo esc_attr( $c ); ?>][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $value ); ?>" />
-							<?php endforeach; ?>
+						<div id="unsupported-feeds" class="hidden">
+							<p class="description details">
 								<?php
 								echo wp_kses(
-									sprintf(
-										// translators: %s is a link to a feed with its name as text.
-										__( 'Unsupported: %s', 'friends' ),
-										'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>'
-									),
-									array(
-										'a' => array(
-											'href'   => array(),
-											'rel'    => array(),
-											'target' => array(),
-										),
-									)
+									// translators: %s is a URL to the plugin install page.
+									sprintf( _n( '<a href=%s>There might be a plugin available</a> to add support for it.', '<a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_url( 'admin.php?page=friends-plugins' ) . '"' ),
+									array( 'a' => array( 'href' => array() ) )
 								);
 								?>
-							<p class="description details hidden">
-								<?php
-								// translators: %s is the type of a feed, for example Atom or RSS.
-								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
-								echo ' | ';
-								// translators: %s is relation to the URL, e.g. self or alternate.
-								echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );
-								?>
 							</p>
-						</li>
-					<?php endforeach; ?>
-
-					</ul>
-					<p>
-						<a href="" id="add-another-feed"><?php esc_html_e( '+ Add another feed' ); ?></a> | <a href="" id="show-details"><?php esc_html_e( 'Show more feed details' ); ?></a>
-					</p>
+							<ul>
+								<?php foreach ( $unsupported_feeds as $feed_url => $details ) : ?>
+									<?php $c += 1; ?>
+									<li>
+										<?php foreach ( $details as $key => $value ) : ?>
+											<input type="hidden" name="feeds[<?php echo esc_attr( $c ); ?>][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $value ); ?>" />
+										<?php endforeach; ?>
+											<?php
+											echo wp_kses(
+												sprintf(
+													// translators: %s is a link to a feed with its name as text.
+													__( 'Unsupported: %s', 'friends' ),
+													'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>'
+												),
+												array(
+													'a' => array(
+														'href'   => array(),
+														'rel'    => array(),
+														'target' => array(),
+													),
+												)
+											);
+											?>
+										<p class="description details hidden">
+											<?php
+											// translators: %s is the type of a feed, for example Atom or RSS.
+											echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
+											echo ' | ';
+											// translators: %s is relation to the URL, e.g. self or alternate.
+											echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );
+											?>
+										</p>
+									</li>
+								<?php endforeach; ?>
+							</ul>
+						</div>
+					<?php endif; ?>
 				</td>
 			</tr>
 			<tr class="another-feed hidden">
