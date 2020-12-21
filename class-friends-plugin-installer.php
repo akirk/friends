@@ -81,7 +81,7 @@ class Friends_Plugin_Installer {
 				$main_plugin_file = self::get_plugin_file( $plugin_slug );
 				if ( self::check_file_extension( $main_plugin_file ) ) {
 					if ( is_plugin_active( $main_plugin_file ) ) {
-						$button_classes = 'button disabled installed';
+						$button_classes = 'installed button disabled';
 						$button_text    = __( 'Active' );
 					} else {
 						$button_classes = 'activate button button-primary';
@@ -198,7 +198,10 @@ class Friends_Plugin_Installer {
 			),
 			admin_url( 'update.php' )
 		);
-		$deactivate_button_class = ( 'activate' === substr( $button_classes, 0, 8 ) ) ? ' hidden' : '';
+		$deactivate_button_class = '';
+		if ( preg_match( '/\b(install|activate)\b/', $button_classes ) ) {
+			$deactivate_button_class = 'hidden';
+		}
 		?>
 		<div class="wp-list-table widefat plugin-install">
 			<div id="the-list">
