@@ -177,17 +177,6 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Recommendations', 'friends' ); ?></th>
-				<td>
-					<fieldset>
-						<label for="ignore_recommendations">
-							<input name="ignore_recommendations" type="checkbox" id="ignore_recommendations" value="1" <?php checked( '1', get_option( 'friends_ignore_recommendations' ) ); ?>>
-							<?php esc_html_e( 'Ignore post recommendations from friends', 'friends' ); ?>
-						</label>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
 				<th scope="row" rowspan="2"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
 				<td>
 					<?php
