@@ -689,6 +689,7 @@ class Friends_Feed {
 
 			foreach ( $this->parsers as $slug => $parser ) {
 				$confidence = $parser->feed_support_confidence( $link_url, $feed['type'], $feed['rel'] );
+				$confidence = apply_filters( 'friends_parser_confidence', $confidence, $slug, $link_url, $feed );
 				if ( $available_feeds[ $link_url ]['parser_confidence'] < $confidence ) {
 					$available_feeds[ $link_url ]['parser_confidence'] = $confidence;
 					$available_feeds[ $link_url ]['parser'] = $slug;
