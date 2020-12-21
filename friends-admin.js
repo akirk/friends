@@ -45,6 +45,16 @@ jQuery( function( $ ) {
 		return false;
 	} );
 
+	jQuery( document ).on( 'click', 'a#show-alternate-feeds', function() {
+		jQuery( 'li.rel-alternate' ).toggleClass( 'hidden' );
+		return false;
+	} );
+
+	jQuery( document ).on( 'click', 'a#show-unsupported-feeds', function() {
+		jQuery( '#unsupported-feeds' ).toggleClass( 'hidden' );
+		return false;
+	} );
+
 	jQuery( document ).on( 'click', 'a#toggle-raw-rules-data', function() {
 		jQuery( '#raw-rules-data' ).toggle();
 		return false;

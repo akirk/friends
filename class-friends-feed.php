@@ -629,7 +629,7 @@ class Friends_Feed {
 				'redirection' => 1,
 			)
 		);
-				var_dump( wp_remote_retrieve_response_code( $response ) );
+
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
 			$doc = new DOMDocument();
 			if ( is_wp_error( $response ) ) {

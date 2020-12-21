@@ -57,18 +57,20 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 			case 'youtube.com':
 				if ( preg_match( '#/channel/([^?&$]+)#i', $url, $m ) ) {
 					return array(
-						'title' => 'Youtube',
-						'rel'   => 'alternate',
-						'type'  => 'application/rss+xml',
-						'url'   => 'https://www.youtube.com/feeds/videos.xml?channel_id=' . $m[1],
+						'title'       => 'Youtube',
+						'rel'         => 'alternate',
+						'type'        => 'application/rss+xml',
+						'url'         => 'https://www.youtube.com/feeds/videos.xml?channel_id=' . $m[1],
+						'post-format' => 'video',
 					);
 				}
 				if ( preg_match( '#/user/([^?&$]+)#i', $url, $m ) ) {
 					return array(
-						'title' => 'Youtube',
-						'rel'   => 'alternate',
-						'type'  => 'application/rss+xml',
-						'url'   => 'https://www.youtube.com/feeds/videos.xml?user=' . $m[1],
+						'title'       => 'Youtube',
+						'rel'         => 'alternate',
+						'type'        => 'application/rss+xml',
+						'url'         => 'https://www.youtube.com/feeds/videos.xml?user=' . $m[1],
+						'post-format' => 'video',
 					);
 				}
 				return array();

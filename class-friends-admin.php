@@ -160,7 +160,7 @@ class Friends_Admin {
 		add_submenu_page( 'friends-settings', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, 'users.php' );
 
 		add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), Friends::REQUIRED_ROLE, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
-		add_submenu_page( 'friends-settings', __( 'Friends Plugins', 'friends' ), __( 'Friends Plugins', 'friends' ), Friends::REQUIRED_ROLE, 'friends-plugin-installer', array( $this, 'admin_plugin_installer' ) );
+		add_submenu_page( 'friends-settings', __( 'Friends Plugins', 'friends' ), __( 'Friends Plugins', 'friends' ), Friends::REQUIRED_ROLE, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
 
 		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
 			add_submenu_page( 'friends-settings', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
