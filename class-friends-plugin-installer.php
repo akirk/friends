@@ -164,7 +164,7 @@ class Friends_Plugin_Installer {
 		}
 
 		foreach ( self::get_plugins() as $plugin_slug => $data ) {
-			if ( $data && version_compare( $transient->checked[ $res->plugin ], $data->version, '<' ) && version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) {
+			if ( $data && version_compare( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ], $data->version, '<' ) && version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) {
 				$res = new stdClass();
 				$res->slug = $data->slug;
 				$res->plugin = $data->slug . '/' . $data->slug . '.php';
