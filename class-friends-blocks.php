@@ -335,12 +335,15 @@ class Friends_Blocks {
 		wp_enqueue_script(
 			'friends-block-visibility',
 			plugins_url( 'blocks/block-visibility.build.js', __FILE__ ),
-			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
+			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' ),
+			Friends::$version
 		);
 
 		wp_enqueue_style(
 			'friends-blocks',
-			plugins_url( 'friends-blocks.css', __FILE__ )
+			plugins_url( 'friends-blocks.css', __FILE__ ),
+			array(),
+			Friends::$version
 		);
 	}
 

@@ -238,7 +238,7 @@ class Friends {
 		if ( $query->have_posts() ) {
 			return;
 		}
-		$content  = '<!-- wp:paragraph {"className":"only-friends"} -->' . PHP_EOL . '<p>';
+		$content  = '<!-- wp:paragraph {"className":"only-friends"} -->' . PHP_EOL . '<p class="only-friends">';
 		$content .= __( 'Hi Friend!', 'friends' );
 		$content .= '<br/><br/>';
 		$content .= __( 'Do you know any of my friends? Maybe you want to become friends with them as well?', 'friends' );
@@ -246,7 +246,7 @@ class Friends {
 
 		$content .= '<!-- wp:friends/friends-list {"className":"only-friends","user_types":"friends"} /-->' . PHP_EOL;
 
-		$content .= '<!-- wp:paragraph {"className":"not-friends"} -->' . PHP_EOL . '<p>';
+		$content .= '<!-- wp:paragraph {"className":"not-friends"} -->' . PHP_EOL . '<p class="not-friends">';
 		$content .= __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' );
 		$content .= PHP_EOL;
 		// translators: %1$s and %2$s are URLs.
@@ -254,7 +254,7 @@ class Friends {
 		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
 
 		$post_data = array(
-			'post_title'   => __( 'Welcome my Friends Page', 'friends' ),
+			'post_title'   => __( 'Welcome to my Friends Page', 'friends' ),
 			'post_content' => $content,
 			'post_type'    => 'page',
 			'post_name'    => 'friends',

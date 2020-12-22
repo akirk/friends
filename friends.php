@@ -47,7 +47,6 @@ require_once __DIR__ . '/class-friends.php';
 
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
 add_action( 'admin_init', array( 'Friends_Plugin_Installer', 'register_hooks' ) );
-add_action( 'admin_init', array( 'Friends', 'create_friends_page' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( 'Friends', 'uninstall_plugin' ) );
