@@ -128,6 +128,9 @@ class Friends {
 		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ) );
+
+		remove_filter( 'request', '_post_format_request' );
+		add_filter( 'request', array( $this, '_post_format_request' ) );
 	}
 
 	/**
@@ -464,7 +467,7 @@ class Friends {
 	public function pre_get_posts_filter_by_post_format( $query ) {
 		global $wp_query;
 
-		if ( ! $query->is_main_query() || ! empty( $wp_query->query['post_format'] ) || ! $query->is_feed() ) {
+		if ( ! ( $query->is_main_query() || $query->is_feed() ) || ! empty( $wp_query->query['post_format'] ) ) {
 			return;
 		}
 
@@ -474,6 +477,30 @@ class Friends {
 		}
 	}
 
+	/**
+	 * Filters the request to allow for the format prefix.
+	 *
+	 * Version from core, fixing the blabing of the friend posts.
+	 * https://core.trac.wordpress.org/ticket/52153
+	 *
+	 * @param array $qvs Query variables.
+	 * @return array
+	 */
+	public function _post_format_request( $qvs ) {
+		if ( ! isset( $qvs['post_format'] ) ) {
+			return $qvs;
+		}
+		$slugs = get_post_format_slugs();
+		if ( isset( $slugs[ $qvs['post_format'] ] ) ) {
+			$qvs['post_format'] = 'post-format-' . $slugs[ $qvs['post_format'] ];
+		}
+		$tax = get_taxonomy( 'post_format' );
+		if ( ! is_admin() ) {
+			$qvs['post_type'] = array_filter( $tax->object_type, 'is_post_type_viewable' );
+		}
+
+		return $qvs;
+	}
 	/**
 	 * Add a post_format filter to a WP_Query.
 	 *
