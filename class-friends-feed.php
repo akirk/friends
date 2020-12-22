@@ -697,12 +697,13 @@ class Friends_Feed {
 			}
 		}
 
-		foreach ( $available_feeds as $link_url => $feed ) {
+		foreach ( array_keys( $available_feeds ) as $link_url ) {
 			if ( ! isset( $this->parsers[ $feed['parser'] ] ) ) {
 				continue;
 			}
-			$parser = $this->parsers[ $feed['parser'] ];
-			$available_feeds[ $link_url ] = array_merge( $feed, $parser->update_feed_details( $feed ) );
+			$parser = $this->parsers[ $available_feeds[ $link_url ]['parser'] ];
+			$available_feeds[ $link_url ] = array_merge( $available_feeds[ $link_url ], $parser->update_feed_details( $available_feeds[ $link_url ] ) );
+			$available_feeds[ $link_url ] = apply_filters( 'friends_update_feed_details', $available_feeds[ $link_url ], $slug );
 			if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
 				$new_url = $available_feeds[ $link_url ]['url'];
 				$available_feeds[ $new_url ] = $available_feeds[ $link_url ];
