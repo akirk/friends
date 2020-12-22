@@ -1013,6 +1013,8 @@ class Friends_Admin {
 			$count += 1;
 		}
 
+		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+
 		$friend_user->retrieve_posts();
 
 		$friend_link = '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->display_name ) . '</a>';
