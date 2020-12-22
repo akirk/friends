@@ -229,11 +229,15 @@ class Friends {
 	 * Creates a page /friends/ to enable customization via.
 	 */
 	public static function create_friends_page() {
-		$query = new WP_Query( array( 'post_name' => 'friends' ) );
+		$query = new WP_Query(
+			array(
+				'name'      => 'friends',
+				'post_type' => 'page',
+			)
+		);
 		if ( $query->have_posts() ) {
 			return;
 		}
-
 		$content  = '<!-- wp:paragraph {"className":"only-friends"} -->' . PHP_EOL . '<p>';
 		$content .= __( 'Hi Friend!', 'friends' );
 		$content .= '<br/><br/>';

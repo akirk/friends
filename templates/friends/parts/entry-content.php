@@ -44,6 +44,11 @@
 		</p>
 		<?php
 	}
+
+	if ( empty( get_the_content() ) ) {
+		the_title();
+	} else {
+		the_content();
+	}
 	?>
-	<?php the_content(); ?>
 </div>

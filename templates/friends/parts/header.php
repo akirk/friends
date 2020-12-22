@@ -39,7 +39,27 @@
 				</a>
 			<?php endif; ?>
 		</div>
-		<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ); ?>" title="<?php echo get_the_time( 'r' ); ?>"><?php /* translators: %s is a time span */ printf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ); ?></a>
+		<?php
+		echo wp_kses(
+			sprintf(
+			// translators: %1$s is a date or relative time, %2$s is a site name or domain.
+				__( '%1$s on %2$s', 'friends' ),
+				'<a href="' . esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ) . '" title="' . get_the_time( 'r' ) . '">' .
+				/* translators: %s is a time span */ sprintf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ) .
+				'</a>',
+				'<a href="' . esc_url( get_the_permalink() ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( parse_url( get_the_permalink(), PHP_URL_HOST ) ) . '</a>'
+			),
+			array(
+				'a' => array(
+					'href'   => array(),
+					'rel'    => array(),
+					'target' => array(),
+					'title'  => array(),
+				),
+			)
+		);
+		?>
+
 	</div>
 	<div class="overflow col-ml-auto">
 		<div class="dropdown dropdown-right">
