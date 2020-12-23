@@ -398,7 +398,8 @@ class Friends_Frontend {
 		$query->set( 'pagename', null );
 
 		$post_format = false;
-		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
+		$page_name = empty( $wp_query->query['pagename'] ) ? '' : $wp_query->query['pagename'];
+		$pagename_parts = explode( '/', trim( $page_name, '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
 			if ( 'opml' === $pagename_parts[1] ) {
 				$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
