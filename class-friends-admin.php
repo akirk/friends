@@ -1152,7 +1152,7 @@ class Friends_Admin {
 			$better_display_name = Friend_User::get_display_name_from_feeds( $feeds );
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
-				$friend_user_login = sanitize_user( $better_display_name );
+				$friend_user_login = Friend_User::sanitize_username( $better_display_name );
 			}
 
 			$rest_url = $this->friends->rest->get_rest_url( $feeds );

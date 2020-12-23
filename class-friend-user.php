@@ -102,10 +102,7 @@ class Friend_User extends WP_User {
 	 * @return string The corresponding username.
 	 */
 	public static function get_user_login_for_url( $url ) {
-		$host = wp_parse_url( $url, PHP_URL_HOST );
-		$path = wp_parse_url( $url, PHP_URL_PATH );
-
-		$user_login = sanitize_user( preg_replace( '#^www\.#', '', preg_replace( '#[^a-z0-9.-]+#i', ' ', strtolower( $host . ' ' . $path ) ) ) );
+		$user_login = self::sanitize_username( self::get_display_name_for_url( $url ) );
 		return $user_login;
 	}
 
@@ -137,6 +134,19 @@ class Friend_User extends WP_User {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Sanitize the username according to some more rules than just sanitize_user()
+	 *
+	 * @param      string $username  The username.
+	 *
+	 * @return     string  The sanitized username.
+	 */
+	public static function sanitize_username( $username ) {
+		$username = preg_replace( '/[^a-z0-9.]+/', '-', strtolower( $username ) );
+		$username = sanitize_user( $username );
+		return $username;
 	}
 
 	/**
