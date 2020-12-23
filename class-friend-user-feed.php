@@ -85,7 +85,7 @@ class Friend_User_Feed {
 	 */
 	public function get_local_url() {
 		$friend_user = $this->get_friend_user();
-		return home_url() . '/feed/friends/' . $friend_user->user_login . '/'; // TODO generate a local feed URL.
+		return home_url() . '/friends/' . $friend_user->user_login . '/feed/';
 	}
 
 	/**
@@ -96,7 +96,7 @@ class Friend_User_Feed {
 	 */
 	public function get_local_html_url() {
 		$friend_user = $this->get_friend_user();
-		return home_url() . '/friends/' . $friend_user->user_login . '/'; // TODO generate a local feed URL.
+		return home_url() . '/friends/' . $friend_user->user_login . '/';
 	}
 
 	/**

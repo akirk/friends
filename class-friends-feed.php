@@ -66,7 +66,6 @@ class Friends_Feed {
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
 		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
 
-		add_action( 'wp_loaded', array( $this, 'friends_opml' ), 100 );
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90, 2 );
 	}
@@ -535,7 +534,11 @@ class Friends_Feed {
 	 */
 	public function feed_additional_fields() {
 		global $post;
-		echo '<friends:post-format>' . esc_html( get_post_format( $post ) ) . '</friends:post-format>' . PHP_EOL;
+		$post_format = get_post_format( $post );
+		if ( empty( $post_format ) ) {
+			$post_format = 'standard';
+		}
+		echo '<friends:post-format>' . esc_html( $post_format ) . '</friends:post-format>' . PHP_EOL;
 
 		$authenticated_user_id = $this->friends->access_control->feed_is_authenticated();
 		if ( ! $authenticated_user_id ) {
@@ -556,29 +559,6 @@ class Friends_Feed {
 			}
 			echo '>' . esc_html( $reaction->usernames ) . '</friends:reaction>' . PHP_EOL;
 		}
-	}
-
-	/**
-	 * Offers the OPML file for download.
-	 */
-	public function friends_opml() {
-		if ( ! isset( $_GET['friends'] ) || 'opml' !== $_GET['friends'] ) {
-			return;
-		}
-
-		if ( ! isset( $_GET['auth'] ) || get_option( 'friends_private_rss_key' ) !== $_GET['auth'] ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
-		}
-
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
-		}
-
-		$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
-		$feed    = $this->friends->feed;
-
-		include apply_filters( 'friends_template_path', 'admin/opml.php' );
-		exit;
 	}
 
 	/**

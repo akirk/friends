@@ -367,12 +367,12 @@ class Friends_Frontend {
 	 */
 	public function friend_posts_query( $query ) {
 		global $wp_query;
-		if ( $wp_query !== $query || ! $this->is_friends_frontend() ) {
+		if ( $wp_query !== $query || ! ( $this->is_friends_frontend() || $query->is_feed() ) ) {
 			return $query;
 		}
 
 		// Not available for the general public or friends.
-		if ( ! current_user_can( 'edit_posts' ) ) {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) && ! $this->friends->access_control->private_rss_is_authenticated() ) {
 			return $query;
 		}
 
@@ -394,11 +394,20 @@ class Friends_Frontend {
 
 		$query->set( 'post_status', array( 'publish', 'private' ) );
 		$query->is_page = false;
+		$query->is_comment_feed = false;
 		$query->set( 'pagename', null );
 
 		$post_format = false;
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
+			if ( 'opml' === $pagename_parts[1] ) {
+				$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
+
+				$feed = $this->friends->feed;
+
+				include apply_filters( 'friends_template_path', 'admin/opml.php' );
+				exit;
+			}
 			$query->is_singular = false;
 			$potential_post_format = false;
 			if ( 'type' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {

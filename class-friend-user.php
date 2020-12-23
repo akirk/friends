@@ -428,6 +428,43 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Gets the role name.
+	 *
+	 * @param      bool $group_subscriptions  Whether to group all types of subscriptions into the name "Subscriptions".
+	 *
+	 * @return     string  The role name.
+	 */
+	public function get_role_name( $group_subscriptions = false ) {
+		if ( $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
+			return _x( 'Friend', 'User role', 'friends' );
+		}
+
+		if ( $this->has_cap( 'acquaintance' ) ) {
+			return _x( 'Acquaintance', 'User role', 'friends' );
+		}
+
+		if ( $this->has_cap( 'subscription' ) ) {
+			return _x( 'Subscription', 'User role', 'friends' );
+		}
+
+		if ( $this->has_cap( 'friend_request' ) ) {
+			if ( $group_subscriptions ) {
+				return _x( 'Subscription', 'User role', 'friends' );
+			}
+			return _x( 'Friend Request', 'User role', 'friends' );
+		}
+
+		if ( $this->has_cap( 'pending_friend_request' ) ) {
+			if ( $group_subscriptions ) {
+				return _x( 'Subscription', 'User role', 'friends' );
+			}
+			return _x( 'Pending Friend Request', 'User role', 'friends' );
+		}
+
+		return 'unknown';
+	}
+
+	/**
 	 * Gets the local friends page url.
 	 *
 	 * @return     string  The local friends page url.
