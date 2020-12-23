@@ -623,13 +623,6 @@ class Friends_Feed {
 			$content_type = $headers->{'content-type'};
 		}
 
-		if ( empty( $available_feeds ) ) {
-			$available_feeds[ $url ] = array(
-				'url'  => $url,
-				'type' => $content_type,
-			);
-		}
-
 		if ( $content ) {
 			foreach ( $this->parsers as $slug => $parser ) {
 				foreach ( $parser->discover_available_feeds( $content, $url ) as $link_url => $feed ) {
@@ -674,6 +667,31 @@ class Friends_Feed {
 					$available_feeds[ $link_url ]['parser_confidence'] = $confidence;
 					$available_feeds[ $link_url ]['parser'] = $slug;
 				}
+			}
+		}
+
+		if ( ! isset( $available_feeds[ $url ] ) ) {
+			$feed = array(
+				'url'               => $url,
+				'type'              => $content_type,
+				'rel'               => 'self',
+				'title'             => '',
+				'parser'            => 'unsupported',
+				'parser_confidence' => 0,
+
+			);
+
+			foreach ( $this->parsers as $slug => $parser ) {
+				$confidence = $parser->feed_support_confidence( $url, $feed['type'], $feed['rel'] );
+				$confidence = apply_filters( 'friends_parser_confidence', $confidence, $slug, $url, $feed );
+				if ( $feed['parser_confidence'] < $confidence ) {
+					$feed['parser_confidence'] = $confidence;
+					$feed['parser'] = $slug;
+				}
+			}
+
+			if ( 'unknown' !== $feed['parser'] ) {
+				$available_feeds[ $feed['url'] ] = $feed;
 			}
 		}
 
