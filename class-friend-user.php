@@ -275,6 +275,10 @@ class Friend_User extends WP_User {
 	 * @return string|false The URL that was set or false.
 	 */
 	public function update_user_icon_url( $user_icon_url ) {
+		if ( ! $user_icon_url ) {
+			$user_icon_url = Friends_Mf2\resolveUrl( $this->user_url, '/favicon.ico' );
+		}
+
 		if ( $user_icon_url && wp_http_validate_url( $user_icon_url ) ) {
 			if ( $this->has_cap( 'friend' ) || $this->has_cap( 'pending_friend_request' ) || $this->has_cap( 'friend_request' ) || $this->has_cap( 'subscription' ) ) {
 				$icon_host_parts = array_reverse( explode( '.', parse_url( strtolower( $user_icon_url ), PHP_URL_HOST ) ) );
@@ -428,40 +432,35 @@ class Friend_User extends WP_User {
 	}
 
 	/**
-	 * Gets the role name.
+	 * Gets the role name (for a specific count).
 	 *
 	 * @param      bool $group_subscriptions  Whether to group all types of subscriptions into the name "Subscriptions".
+	 * @param      int  $count                The count if more than one.
 	 *
 	 * @return     string  The role name.
 	 */
-	public function get_role_name( $group_subscriptions = false ) {
+	public function get_role_name( $group_subscriptions = false, $count = 1 ) {
 		if ( $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
-			return _x( 'Friend', 'User role', 'friends' );
+			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
 		}
 
 		if ( $this->has_cap( 'acquaintance' ) ) {
-			return _x( 'Acquaintance', 'User role', 'friends' );
+			return _nx( 'Acquaintance', 'Acquaintances', $count, 'User role', 'friends' );
 		}
 
-		if ( $this->has_cap( 'subscription' ) ) {
-			return _x( 'Subscription', 'User role', 'friends' );
+		if ( $this->has_cap( 'subscription' ) || ( $group_subscriptions && ( $this->has_cap( 'friend_request' ) || $this->has_cap( 'pending_friend_request' ) ) ) ) {
+			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
 		}
 
 		if ( $this->has_cap( 'friend_request' ) ) {
-			if ( $group_subscriptions ) {
-				return _x( 'Subscription', 'User role', 'friends' );
-			}
-			return _x( 'Friend Request', 'User role', 'friends' );
+			return _nx( 'Friend Request', 'Friend Requests', $count, 'User role', 'friends' );
 		}
 
 		if ( $this->has_cap( 'pending_friend_request' ) ) {
-			if ( $group_subscriptions ) {
-				return _x( 'Subscription', 'User role', 'friends' );
-			}
-			return _x( 'Pending Friend Request', 'User role', 'friends' );
+			return _nx( 'Pending Friend Request', 'Pending Friend Requests', $count, 'User role', 'friends' );
 		}
 
-		return 'unknown';
+		return _x( 'Unknown', 'User role', 'friends' );
 	}
 
 	/**

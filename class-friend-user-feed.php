@@ -64,15 +64,17 @@ class Friend_User_Feed {
 	/**
 	 * Get the private URL of the friend (= append authentication).
 	 *
-	 * @return string The (extended) URL.
+	 * @param      int $validity  The validity in seconds.
+	 *
+	 * @return     string  The (extended) URL.
 	 */
-	public function get_private_url() {
+	public function get_private_url( $validity = 3600 ) {
 		$feed_url = $this->get_url();
 		$friend_user = $this->get_friend_user();
 
 		if ( $friend_user->is_friend_url( $feed_url ) && ( current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) ) {
 			$friends = Friends::get_instance();
-			$feed_url = $friends->access_control->append_auth( $feed_url, $friend_user );
+			$feed_url = $friends->access_control->append_auth( $feed_url, $friend_user, $validity );
 		}
 
 		return apply_filters( 'friends_friend_private_feed_url', $feed_url, $friend_user );

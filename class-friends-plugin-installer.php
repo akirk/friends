@@ -122,7 +122,7 @@ class Friends_Plugin_Installer {
 				foreach ( json_decode( $remote['body'] ) as $slug => $plugin_data ) {
 					$data[ $slug ] = $plugin_data;
 				}
-				set_transient( $cache_key, $data, 43200 ); // 12 hours cache
+				set_transient( $cache_key, $data, 12 * HOUR_IN_SECONDS );
 			}
 		}
 
