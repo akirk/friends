@@ -289,7 +289,7 @@ class Friend_User extends WP_User {
 			$user_icon_url = Friends_Mf2\resolveUrl( $this->user_url, '/favicon.ico' );
 		}
 
-		if ( $user_icon_url && wp_http_validate_url( $user_icon_url ) ) {
+		if ( $user_icon_url && Friends::check_url( $user_icon_url ) ) {
 			if ( $this->has_cap( 'friend' ) || $this->has_cap( 'pending_friend_request' ) || $this->has_cap( 'friend_request' ) || $this->has_cap( 'subscription' ) ) {
 				$icon_host_parts = array_reverse( explode( '.', parse_url( strtolower( $user_icon_url ), PHP_URL_HOST ) ) );
 				if ( 'gravatar.com' === $icon_host_parts[1] . '.' . $icon_host_parts[0] ) {
