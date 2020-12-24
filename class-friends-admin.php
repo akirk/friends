@@ -842,7 +842,6 @@ class Friends_Admin {
 						$options = array(
 							'parser'      => $feed['parser'],
 							'post-format' => $feed['post-format'],
-							'post-type'   => $feed['post-type'],
 							'mime-type'   => $user_feed->get_mime_type(),
 							'title'       => $feed['title'],
 						);

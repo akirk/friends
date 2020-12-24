@@ -98,7 +98,7 @@ class Friend_User_Feed {
 	 */
 	public function get_local_html_url() {
 		$friend_user = $this->get_friend_user();
-		return home_url() . '/friends/' . $friend_user->user_login . '/';
+		return $friend_user->get_local_friends_page_url();
 	}
 
 	/**
@@ -135,15 +135,6 @@ class Friend_User_Feed {
 	 */
 	public function get_post_format() {
 		return self::validate_post_format( get_metadata( 'term', $this->term->term_id, 'post-format', true ) );
-	}
-
-	/**
-	 * The post type to which the feed items should be imported.
-	 *
-	 * @return string The post type.
-	 */
-	public function get_post_type() {
-		return self::validate_post_type( get_metadata( 'term', $this->term->term_id, 'post-type', true ) );
 	}
 
 	/**
@@ -205,16 +196,6 @@ class Friend_User_Feed {
 		}
 		$keys = array_keys( $post_formats );
 		return reset( $keys );
-	}
-
-	/**
-	 * Validates the post type against defined post types.
-	 *
-	 * @param  string $post_type The post type to be validated.
-	 * @return string              A validated post type.
-	 */
-	public static function validate_post_type( $post_type ) {
-		return post_type_exists( $post_type ) ? $post_type : 'post';
 	}
 
 	/**
@@ -290,16 +271,6 @@ class Friend_User_Feed {
 		);
 		register_taxonomy( self::TAXONOMY, 'user', $args );
 		register_taxonomy_for_object_type( self::TAXONOMY, 'user' );
-
-		register_term_meta(
-			self::TAXONOMY,
-			'post-type',
-			array(
-				'type'              => 'string',
-				'single'            => true,
-				'sanitize_callback' => array( __CLASS__, 'validate_post_type' ),
-			)
-		);
 
 		register_term_meta(
 			self::TAXONOMY,
@@ -398,7 +369,6 @@ class Friend_User_Feed {
 				'active'      => true,
 				'parser'      => 'simplepie',
 				'post-format' => 'standard',
-				'post-type'   => 'post',
 				'mime-type'   => 'application/rss+xml',
 				'title'       => $friend_user->display_name . ' RSS Feed',
 			)
@@ -444,7 +414,7 @@ class Friend_User_Feed {
 			}
 			$term_id = $all_urls[ $url ];
 			foreach ( $options as $key => $value ) {
-				if ( in_array( $key, array( 'active', 'parser', 'post-format', 'post-type', 'mime-type', 'title' ) ) ) {
+				if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title' ) ) ) {
 					if ( metadata_exists( 'term', $term_id, $key ) ) {
 						update_metadata( 'term', $term_id, $key, $value );
 					} else {
@@ -461,7 +431,7 @@ class Friend_User_Feed {
 	 *
 	 * @param  Friend_User $friend_user The user to be associated.
 	 * @param  string      $url         The feed URL.
-	 * @param  array       $args        Further parameters. Possibly array keys: active, parser, post_format, post_type, mime_type, title.
+	 * @param  array       $args        Further parameters. Possibly array keys: active, parser, post_format, mime_type, title.
 	 * @return WP_Term                  A newly created term.
 	 */
 	public static function save( Friend_User $friend_user, $url, $args = array() ) {
@@ -488,7 +458,7 @@ class Friend_User_Feed {
 
 		$term_id = $all_urls[ $url ];
 		foreach ( $args as $key => $value ) {
-			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'post-type', 'mime-type', 'title' ) ) ) {
+			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title' ) ) ) {
 				if ( metadata_exists( 'term', $term_id, $key ) ) {
 					update_metadata( 'term', $term_id, $key, $value );
 				} else {

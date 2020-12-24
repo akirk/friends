@@ -70,13 +70,6 @@ class Friends {
 	public $rest;
 
 	/**
-	 * A reference to the Friends_Post_Types object.
-	 *
-	 * @var Friends_Post_Types
-	 */
-	public $post_types;
-
-	/**
 	 * Get the class singleton
 	 *
 	 * @return Friends A class instance.
@@ -123,7 +116,7 @@ class Friends {
 		add_filter( 'wp_head', array( $this, 'html_link_rel_alternate_post_formats' ) );
 		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
-		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ) );
+		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
 
 		remove_filter( 'request', '_post_format_request' );
 		add_filter( 'request', array( $this, '_post_format_request' ) );
@@ -466,7 +459,7 @@ class Friends {
 	public function pre_get_posts_filter_by_post_format( $query ) {
 		global $wp_query;
 
-		if ( ! ( $query->is_main_query() || $query->is_feed() ) || ! empty( $wp_query->query['post_format'] ) ) {
+		if ( ! ( $query->is_main_query() || $query->is_feed() ) || ! empty( $wp_query->query['post_format'] ) || $query->is_friends_page ) {
 			return;
 		}
 
@@ -626,7 +619,7 @@ class Friends {
 		$friends = Friends::get_instance();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => Friends::CTP,
+				'post_type'   => Friends::CPT,
 				'post_status' => array( 'publish', 'private', 'trash' ),
 			)
 		);

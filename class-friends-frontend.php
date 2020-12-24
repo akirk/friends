@@ -389,7 +389,7 @@ class Friends_Frontend {
 
 		$post_format = false;
 		$page_name = empty( $wp_query->query['pagename'] ) ? '' : $wp_query->query['pagename'];
-		$pagename_parts = explode( '/', trim( $page_name, '/' ) );
+		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
 			if ( 'opml' === $pagename_parts[1] ) {
 				$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
@@ -407,7 +407,7 @@ class Friends_Frontend {
 				$author = get_user_by( 'login', $pagename_parts[1] );
 				if ( false !== $author ) {
 					$this->author = new Friend_User( $author );
-					$query->set( 'author_name', $pagename_parts[1] );
+					$query->set( 'author', $author->ID );
 					$query->is_author = true;
 					if ( $page_id ) {
 						$query->set( 'page_id', $page_id );
@@ -426,13 +426,14 @@ class Friends_Frontend {
 		} elseif ( $page_id ) {
 			$query->set( 'page_id', $page_id );
 			$query->is_singular = true;
-		} else {
+		}
+
+		if ( ! $query->is_singular && ! $query->is_author ) {
 			// This is the main friends page.
 			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 			if ( $hide_from_friends_page ) {
 				$query->set( 'author__not_in', $hide_from_friends_page );
 			}
-			$query->is_singular = false;
 		}
 
 		return $query;

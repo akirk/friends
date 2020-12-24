@@ -87,7 +87,7 @@ $has_last_log = false;
 						</label>
 					</fieldset>
 					<fieldset>
-					<a href="<?php echo esc_url( site_url( '/friends/' . $friend->user_login . '/' ) ); ?>">
+					<a href="<?php echo esc_url( $friend->get_local_friends_page_url() ); ?>">
 						<?php
 						// translators: %d is the number of posts.
 						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $friend_posts->found_posts, 'friends' ), $friend_posts->found_posts ) );

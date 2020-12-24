@@ -187,7 +187,6 @@ class Friend_User extends WP_User {
 				'active'      => false,
 				'parser'      => 'simplepie',
 				'post-format' => 'standard',
-				'post-type'   => 'post',
 				'mime-type'   => 'application/rss+xml',
 				'title'       => $this->display_name . ' RSS Feed',
 			);
@@ -232,7 +231,6 @@ class Friend_User extends WP_User {
 			'active'      => false,
 			'parser'      => 'simplepie',
 			'post-format' => 'standard',
-			'post-type'   => 'post',
 			'mime-type'   => 'application/rss+xml',
 			'title'       => $this->display_name . ' RSS Feed',
 		);
