@@ -24,6 +24,13 @@ class Friends_Blocks {
 	private $friends = null;
 
 	/**
+	 * Whether an excerpt is currently being generated.
+	 *
+	 * @var        int
+	 */
+	private $current_excerpt = null;
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -40,9 +47,10 @@ class Friends_Blocks {
 		if ( function_exists( 'register_block_type' ) ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
 			add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
+			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_start' ), 9, 2 );
+			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
 			add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
 			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
-			add_action( 'block_attributes', array( $this, 'block_attributes' ) );
 
 			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_list' ) );
 			register_block_type(
@@ -336,14 +344,14 @@ class Friends_Blocks {
 			'friends-block-visibility',
 			plugins_url( 'blocks/block-visibility.build.js', __FILE__ ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' ),
-			Friends::$version
+			Friends::VERSION
 		);
 
 		wp_enqueue_style(
 			'friends-blocks',
 			plugins_url( 'friends-blocks.css', __FILE__ ),
 			array(),
-			Friends::$version
+			Friends::VERSION
 		);
 	}
 
@@ -384,6 +392,9 @@ class Friends_Blocks {
 		switch ( $visibility ) {
 			case 'only-friends':
 				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+					if ( $this->current_excerpt ) {
+						return $content;
+					}
 					return '<div' . $class_only_friends . '><span' . $class_watermark . '>' . __( 'Only friends', 'friends' ) . '</span>' . $content . '</div>';
 				}
 				if ( current_user_can( 'friend' ) ) {
@@ -393,6 +404,10 @@ class Friends_Blocks {
 
 			case 'not-friends':
 				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+					if ( $this->current_excerpt ) {
+						return $content;
+					}
+
 					return '<div' . $class_not_friends . '><span' . $class_watermark . '>' . __( 'Not friends', 'friends' ) . '</span>' . $content . '</span></div>';
 				}
 				if ( current_user_can( 'friend' ) ) {
@@ -403,6 +418,36 @@ class Friends_Blocks {
 		}
 
 		return $content;
+	}
+
+	/**
+	 * Remember the current post being excerpted. With this we can change the visibility rendering.
+	 *
+	 * @param      string  $text   The text.
+	 * @param      WP_Post $post   The post.
+	 *
+	 * @return     string  The text.
+	 */
+	public function current_excerpt_start( $text = '', $post = null ) {
+		if ( $post ) {
+			$this->current_excerpt = $post->ID;
+		}
+		return $text;
+	}
+
+	/**
+	 * Stop remembering the current post being excerpted.
+	 *
+	 * @param      string  $text   The text.
+	 * @param      WP_Post $post   The post.
+	 *
+	 * @return     string  The text.
+	 */
+	public function current_excerpt_end( $text = '', $post = null ) {
+		if ( $post && $this->current_excerpt === $post->ID ) {
+			$this->current_excerpt = null;
+		}
+		return $text;
 	}
 
 	/**
