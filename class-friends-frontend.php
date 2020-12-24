@@ -378,6 +378,7 @@ class Friends_Frontend {
 
 		$this->is_friends_page = true;
 		$query->is_friends_page = true;
+		$query->is_singular = false;
 
 		$page_id = get_query_var( 'page' );
 
@@ -399,7 +400,6 @@ class Friends_Frontend {
 				include apply_filters( 'friends_template_path', 'admin/opml.php' );
 				exit;
 			}
-			$query->is_singular = false;
 			$potential_post_format = false;
 			if ( 'type' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
 				$potential_post_format = $pagename_parts[2];
