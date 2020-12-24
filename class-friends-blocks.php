@@ -243,7 +243,7 @@ class Friends_Blocks {
 				array(
 					'numberposts' => $count,
 					'offset'      => $offset,
-					'post_type'   => $this->friends->post_types->get_all_cached(),
+					'post_type'   => Friends::CPT,
 				)
 			);
 			if ( count( $recent_posts ) === 0 ) {

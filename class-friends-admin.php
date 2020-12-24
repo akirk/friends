@@ -449,7 +449,7 @@ class Friends_Admin {
 			return;
 		}
 
-		foreach ( array( 'ignore_incoming_friend_requests', 'ignore_recommendations', 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
+		foreach ( array( 'ignore_incoming_friend_requests', 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
@@ -706,7 +706,7 @@ class Friends_Admin {
 		$friend       = $this->check_admin_edit_friend_rules();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'      => $this->friends->post_types->get_all_cached(),
+				'post_type'      => Friends::CPT,
 				'post_status'    => array( 'publish', 'private', 'trash' ),
 				'author'         => $friend->ID,
 				'posts_per_page' => 25,
@@ -890,7 +890,7 @@ class Friends_Admin {
 		$friend = $this->check_admin_edit_friend();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => $this->friends->post_types->get_all_cached(),
+				'post_type'   => Friends::CPT,
 				'post_status' => array( 'publish', 'private' ),
 				'author'      => $friend->ID,
 			)

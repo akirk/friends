@@ -126,6 +126,10 @@ class Friends_Plugin_Installer {
 			}
 		}
 
+		if ( ! $data ) {
+			return array();
+		}
+
 		return $data;
 	}
 

@@ -26,7 +26,7 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 
 							<?php endforeach; ?>
 						</select>
-						<p class="description"><?php esc_html_e( 'When remotely reacting to a post, it will be attributed to this user.', 'friends' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Since there are multiple users on this site, we need to know which one should be considered the main one.', 'friends' ); ?></p>
 					</td>
 				</tr>
 				<?php

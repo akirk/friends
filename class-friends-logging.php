@@ -49,14 +49,8 @@ class Friends_Logging {
 	 *                                          (potentially empty array).
 	 */
 	public function log_feed_successfully_fetched( Friend_User_Feed $user_feed, $new_posts ) {
-		$count = 0;
-		if ( is_array( $new_posts ) ) {
-			foreach ( $new_posts as $post_type => $posts ) {
-				$count += count( $posts );
-			}
-		}
 		// translators: %s is the number of new posts found.
-		$user_feed->update_last_log( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', $count, 'friends' ), $count ) );
+		$user_feed->update_last_log( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ), count( $new_posts ) ) );
 	}
 
 	/**

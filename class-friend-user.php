@@ -348,7 +348,7 @@ class Friend_User extends WP_User {
 		$remote_post_ids = array();
 		$existing_posts  = new WP_Query(
 			array(
-				'post_type'   => $friends->post_types->get_all_cached(),
+				'post_type'   => Friends::CPT,
 				'post_status' => array( 'publish', 'private', 'trash' ),
 				'author'      => $this->ID,
 				'nopaging'    => true,
@@ -546,29 +546,6 @@ class Friend_User extends WP_User {
 	 */
 	public function set_not_new() {
 		$this->delete_user_option( 'friends_new_friend' );
-	}
-
-	/**
-	 * Get the whitelisted post types for this user
-	 *
-	 * @return array All the post types.
-	 */
-	public function get_post_types() {
-		$post_types = $this->get_user_option( 'friends_post_types' );
-
-		if ( false === $post_types ) {
-			$post_types = get_option( 'friends_default_post_types' );
-			if ( false === $post_types ) {
-				$post_types = 'all';
-			}
-		}
-
-		if ( 'all' === $post_types ) {
-			$friends = Friends::get_instance();
-			return $friends->post_types->get_all_registered();
-		}
-
-		return explode( ',', $post_types );
 	}
 
 	/**

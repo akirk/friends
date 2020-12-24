@@ -242,15 +242,10 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				'title'     => $item->get_title(),
 				'content'   => $item->get_content(),
 			);
-			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id', 'reaction' ) as $key ) {
+			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id' ) as $key ) {
 				foreach ( array( Friends_Feed::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
 					if ( ! isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
 						continue;
-					}
-
-					if ( 'reaction' === $key ) {
-						$feed_item->reaction = $item->data['child'][ $xmlns ][ $key ];
-						break;
 					}
 
 					$feed_item->{$key} = $item->data['child'][ $xmlns ][ $key ][0]['data'];

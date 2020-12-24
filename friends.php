@@ -30,16 +30,12 @@ require_once __DIR__ . '/feed-parsers/class-friends-feed-parser.php';
 
 require_once __DIR__ . '/class-friends-access-control.php';
 require_once __DIR__ . '/class-friends-admin.php';
-require_once __DIR__ . '/class-friends-api.php';
 require_once __DIR__ . '/class-friends-blocks.php';
 require_once __DIR__ . '/class-friends-feed.php';
 require_once __DIR__ . '/class-friends-frontend.php';
 require_once __DIR__ . '/class-friends-logging.php';
 require_once __DIR__ . '/class-friends-notifications.php';
 require_once __DIR__ . '/class-friends-plugin-installer.php';
-require_once __DIR__ . '/class-friends-post-types.php';
-require_once __DIR__ . '/class-friends-reactions.php';
-require_once __DIR__ . '/class-friends-recommendation.php';
 require_once __DIR__ . '/class-friends-rest.php';
 require_once __DIR__ . '/class-friends-shortcodes.php';
 require_once __DIR__ . '/class-friends-3rd-parties.php';

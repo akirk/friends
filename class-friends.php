@@ -16,7 +16,6 @@
 class Friends {
 	const VERSION       = '1.0';
 	const CPT           = 'friend_post_cache';
-	const CPT_PREFIX    = 'friends_cache';
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'administrator';
@@ -100,9 +99,6 @@ class Friends {
 		$this->feed           = new Friends_Feed( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->frontend       = new Friends_Frontend( $this );
-		$this->post_types     = new Friends_Post_Types( $this );
-		$this->recommendation = new Friends_Recommendation( $this );
-		$this->reactions      = new Friends_Reactions( $this );
 		$this->rest           = new Friends_REST( $this );
 
 		new Friends_3rd_Parties( $this );
@@ -173,7 +169,6 @@ class Friends {
 		);
 
 		register_post_type( self::CPT, $args );
-		$this->post_types->register( 'post' );
 	}
 
 	/**
@@ -604,6 +599,7 @@ class Friends {
 			// Hosts used for test cases.
 			return $url;
 		}
+
 		return wp_http_validate_url( $url );
 	}
 
@@ -630,7 +626,7 @@ class Friends {
 		$friends = Friends::get_instance();
 		$friend_posts = new WP_Query(
 			array(
-				'post_type'   => $friends->post_types->get_all_cached(),
+				'post_type'   => Friends::CTP,
 				'post_status' => array( 'publish', 'private', 'trash' ),
 			)
 		);

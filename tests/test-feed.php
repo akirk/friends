@@ -109,10 +109,10 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		$feed->init();
 
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
+		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
 		$this->assertCount( $new_items1, $new_items );
 
-		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
+		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
 		$this->assertCount( $new_items2, $new_items );
 	}
 

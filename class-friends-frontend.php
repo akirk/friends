@@ -192,7 +192,7 @@ class Friends_Frontend {
 	 * @param string $previous_status The status of the post at the point where it was trashed.
 	 */
 	public function untrash_post_status( $new_status, $post_id, $previous_status ) {
-		if ( $this->friends->post_types->is_cached_post_type( get_post_type( $post_id ) ) ) {
+		if ( Friends::CPT === get_post_type( $post_id ) ) {
 			return $previous_status;
 		}
 		return $new_status;
@@ -314,7 +314,7 @@ class Friends_Frontend {
 	public function friend_post_edit_link( $link, $post_id ) {
 		global $post;
 
-		if ( $post && $this->friends->post_types->is_cached_post_type( $post->post_type ) ) {
+		if ( $post && Friends::CPT === $post->post_type ) {
 			if ( $this->is_friends_page ) {
 				return false;
 			}
@@ -333,7 +333,7 @@ class Friends_Frontend {
 	 * @reeturn string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, WP_Post $post, $leavename, $sample ) {
-		if ( $post && $this->friends->post_types->is_cached_post_type( $post->post_type ) ) {
+		if ( $post && Friends::CPT === $post->post_type ) {
 			return get_the_guid( $post );
 		}
 		return $post_link;
@@ -378,20 +378,10 @@ class Friends_Frontend {
 
 		$this->is_friends_page = true;
 		$query->is_friends_page = true;
-		$this->friends->reactions->unregister_content_hooks();
-		$this->friends->recommendation->unregister_content_hooks();
 
 		$page_id = get_query_var( 'page' );
 
-		// Potentially limit post types to be displayed on the friends page.
-		$post_types = get_user_option( 'friends_page_post_types' );
-		if ( false === $post_types ) {
-			$post_types = $this->friends->post_types->get_all();
-		} else {
-			$post_types = explode( ',', $post_types );
-		}
-		$query->set( 'post_type', $post_types );
-
+		$query->set( 'post_type', Friends::CPT );
 		$query->set( 'post_status', array( 'publish', 'private' ) );
 		$query->is_page = false;
 		$query->is_comment_feed = false;

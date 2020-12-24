@@ -1871,49 +1871,6 @@ input:disabled + .form-icon, input.disabled + .form-icon {
         vertical-align: middle; }
     .friends-page section.posts footer.entry-meta .btn:hover, .friends-page section.posts footer.entry-meta .nav-links div a:hover, .friends-page .nav-links div section.posts footer.entry-meta a:hover {
       color: #2e5bec; }
-  .friends-page button.new-reaction span,
-  .friends-page a.button.new-reaction span {
-    font-family: dashicons;
-    vertical-align: middle; }
-  .friends-page #friends-reaction-picker {
-    display: none;
-    position: absolute;
-    border: 1px solid #999999;
-    box-shadow: 2px 2px 5px #cccccc;
-    border-radius: .25em;
-    background-color: #fff;
-    padding: 1em;
-    max-width: 50%;
-    max-height: 20%;
-    overflow: auto; }
-  .friends-page #friends-reaction-picker button {
-    padding: .2em;
-    margin: 0;
-    font-size: 18px;
-    background-color: #fff;
-    border: 0;
-    cursor: pointer;
-    z-index: 999999; }
-  .friends-page #friends-reaction-picker button:focus {
-    outline: none; }
-  .friends-page #friends-reaction-picker .spinner {
-    background-size: 16px 16px;
-    opacity: .7;
-    width: 16px;
-    height: 16px; }
-  .friends-page #friends-recommendation-form {
-    display: none;
-    position: absolute;
-    border: 1px solid #999999;
-    box-shadow: 2px 2px 5px #cccccc;
-    border-radius: .25em;
-    background-color: #fff;
-    padding: 1em;
-    width: 20em; }
-  .friends-page #friends-recommendation-form fieldset {
-    margin-bottom: 1em; }
-  .friends-page p.friend-recommendation {
-    font-style: italic; }
   .friends-page .only-friends {
     background-color: #efe;
     padding-left: .5em; }

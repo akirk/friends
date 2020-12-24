@@ -268,68 +268,8 @@ div {
 				color: $link-color;
 			}
 		}
-
 	}
-	button.new-reaction span,
-	a.button.new-reaction span {
-		font-family: dashicons;
-		vertical-align: middle;
-	}
-
-	#friends-reaction-picker {
-		display: none;
-		position: absolute;
-		border: 1px solid #999999;
-		box-shadow: 2px 2px 5px #cccccc;
-		border-radius: .25em;
-		background-color: #fff;
-		padding: 1em;
-		max-width: 50%;
-		max-height: 20%;
-		overflow: auto;
-	}
-
-	#friends-reaction-picker button {
-		padding: .2em;
-		margin: 0;
-		font-size: 18px;
-		background-color: #fff;
-		border: 0;
-		cursor: pointer;
-		z-index: 999999;
-	}
-
-	#friends-reaction-picker button:focus {
-		outline: none;
-
-	}
-
-	#friends-reaction-picker .spinner {
-		background-size: 16px 16px;
-		opacity: .7;
-		width: 16px;
-		height: 16px;
-	}
-
-	#friends-recommendation-form {
-		display: none;
-		position: absolute;
-		border: 1px solid #999999;
-		box-shadow: 2px 2px 5px #cccccc;
-		border-radius: .25em;
-		background-color: #fff;
-		padding: 1em;
-		width: 20em;
-	}
-
-	#friends-recommendation-form fieldset {
-		margin-bottom: 1em;
-	}
-
-	p.friend-recommendation {
-		font-style: italic;
-	}
-
+	
 	.only-friends {
 		background-color: #efe;
 		padding-left: .5em;

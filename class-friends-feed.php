@@ -136,6 +136,7 @@ class Friends_Feed {
 	 * @param  Friend_User $friend_user A single user to fetch.
 	 */
 	public function retrieve_single_friend_posts( Friend_User $friend_user ) {
+		$new_posts = array();
 		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
 			$parser = $user_feed->get_parser();
 			if ( ! isset( $this->parsers[ $parser ] ) ) {
@@ -149,18 +150,12 @@ class Friends_Feed {
 				continue;
 			}
 
-			$post_type = $user_feed->get_post_type();
-			$cache_post_type = $this->friends->post_types->get_cache_post_type( $post_type );
-			if ( ! isset( $new_posts[ $post_type ] ) ) {
-				$new_posts[ $post_type ] = array();
-			}
-
-			$posts = $this->process_incoming_feed_items( $items, $user_feed, $cache_post_type );
-			$new_posts[ $post_type ] = array_merge( $new_posts[ $post_type ], $posts );
-			$this->notify_about_new_friend_posts( $friend_user, $user_feed, $new_posts );
-
-			do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
+			$posts = $this->process_incoming_feed_items( $items, $user_feed );
+			$this->notify_about_new_friend_posts( $friend_user, $user_feed, $posts );
+			$new_posts = array_merge( $new_posts, $posts );
 		}
+
+		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
 		return $new_posts;
 	}
 
@@ -175,12 +170,10 @@ class Friends_Feed {
 		if ( $friend_user->is_new() ) {
 			$friend_user->set_not_new();
 		} else {
-			foreach ( $new_posts as $post_type => $posts ) {
-				foreach ( $posts as $post_id ) {
-					$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
-					if ( $notify_users ) {
-						do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
-					}
+			foreach ( $new_posts as $post_id ) {
+				$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
+				if ( $notify_users ) {
+					do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
 				}
 			}
 		}
@@ -371,10 +364,9 @@ class Friends_Feed {
 	 *
 	 * @param  array            $items           The incoming items.
 	 * @param  Friend_User_Feed $user_feed       The feed to which these items belong.
-	 * @param  string           $cache_post_type The post type to be used for caching the feed items.
 	 * @return array                             The post ids of the new posts.
 	 */
-	public function process_incoming_feed_items( array $items, Friend_User_Feed $user_feed, $cache_post_type ) {
+	public function process_incoming_feed_items( array $items, Friend_User_Feed $user_feed ) {
 		$friend_user     = $user_feed->get_friend_user();
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 		$rules           = $friend_user->get_feed_rules();
@@ -415,7 +407,7 @@ class Friends_Feed {
 				continue;
 			}
 
-			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id', 'reaction' ) as $key ) {
+			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id' ) as $key ) {
 				if ( ! isset( $item->{$key} ) ) {
 					$item->{$key} = false;
 				}
@@ -455,7 +447,7 @@ class Friends_Feed {
 				wp_update_post( $post_data );
 			} else {
 				$post_data['post_author']   = $friend_user->ID;
-				$post_data['post_type']     = $cache_post_type;
+				$post_data['post_type']     = Friends::CPT;
 				$post_data['post_date_gmt'] = $item->date;
 				$post_data['comment_count'] = $item->comment_count;
 				$post_id                    = wp_insert_post( $post_data, true );
@@ -478,10 +470,6 @@ class Friends_Feed {
 
 			if ( $post_format ) {
 				set_post_format( $post_id, $post_format );
-			}
-
-			if ( $item->reaction ) {
-				$this->friends->reactions->update_remote_feed_reactions( $post_id, $item->reaction );
 			}
 
 			if ( is_numeric( $item->{'post-id'} ) ) {
@@ -548,17 +536,6 @@ class Friends_Feed {
 		echo '<friends:gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</friends:gravatar>' . PHP_EOL;
 		echo '<friends:post-status>' . esc_html( $post->post_status ) . '</friends:post-status>' . PHP_EOL;
 		echo '<friends:post-id>' . esc_html( $post->ID ) . '</friends:post-id>' . PHP_EOL;
-
-		$reactions = $this->friends->reactions->get_reactions( $post->ID, $authenticated_user_id );
-		foreach ( $reactions as $slug => $reaction ) {
-			echo '<friends:reaction';
-			echo ' friends:slug="' . esc_attr( $slug ) . '"';
-			echo ' friends:count="' . esc_attr( $reaction->count ) . '"';
-			if ( $reaction->user_reacted ) {
-				echo ' friends:you-reacted="1"';
-			}
-			echo '>' . esc_html( $reaction->usernames ) . '</friends:reaction>' . PHP_EOL;
-		}
 	}
 
 	/**

@@ -25,7 +25,6 @@ include __DIR__ . '/header.php'; ?>
 			the_post();
 			$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
 			$avatar = get_post_meta( get_the_ID(), 'gravatar', true );
-			$recommendation = get_post_meta( get_the_ID(), 'recommendation', true );
 
 			$part_base = __DIR__ . '/parts/content';
 			$part = $part_base . '.php';

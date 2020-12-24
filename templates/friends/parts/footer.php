@@ -6,7 +6,7 @@
  */
 
 ?><footer class="entry-meta card-footer">
-	<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
+	<?php if ( Friends::CPT === get_post_type() ) : ?>
 		<?php
 		$friends->frontend->link(
 			get_comments_link(),
@@ -17,11 +17,5 @@
 			)
 		);
 		?>
-	<?php endif; ?>
-&nbsp;
-	<?php echo $friends->reactions->post_reactions(); ?>
-&nbsp;
-	<?php if ( $friends->post_types->is_cached_post_type( get_post_type() ) ) : ?>
-		<?php echo $friends->recommendation->post_recommendation(); ?>
 	<?php endif; ?>
 </footer>

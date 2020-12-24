@@ -53,26 +53,6 @@ class Friends_APITest extends WP_UnitTestCase {
 				'post_status'   => 'publish',
 			)
 		);
-		register_post_type( 'photo' );
-		Friends_API::register_post_type( 'photo' );
-
-		$this->factory->post->create(
-			array(
-				'post_type'     => 'photo',
-				'post_title'    => 'First Friend Photo',
-				'post_date_gmt' => '2018-05-03 10:00:00',
-				'post_status'   => 'private',
-			)
-		);
-
-		$this->factory->post->create(
-			array(
-				'post_type'     => 'photo',
-				'post_title'    => 'Public Friend Photo',
-				'post_date_gmt' => '2018-05-04 10:00:00',
-				'post_status'   => 'publish',
-			)
-		);
 
 		$this->user_id = $this->factory->user->create(
 			array(
@@ -101,15 +81,6 @@ class Friends_APITest extends WP_UnitTestCase {
 		require_once __DIR__ . '/class-local-feed-fetcher.php';
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 100, 2 );
 		add_filter( 'local_fetch_feed', array( $this, 'local_fetch_feed' ), 100, 2 );
-	}
-
-	/**
-	 * Clean up after unit tests
-	 */
-	public function tearDown() {
-		parent::tearDown();
-		unregister_post_type( 'photo' );
-		Friends_API::unregister_post_type( 'photo' );
 	}
 
 	/**
@@ -153,8 +124,7 @@ class Friends_APITest extends WP_UnitTestCase {
 	public function test_get_non_friend_posts() {
 		$friend_user = new Friend_User( $this->friend_id );
 		$posts = $friend_user->retrieve_posts();
-		$this->assertArrayHasKey( 'post', $posts );
-		$this->assertCount( 1, $posts['post'] );
+		$this->assertCount( 1, $posts );
 	}
 
 	/**
@@ -164,32 +134,6 @@ class Friends_APITest extends WP_UnitTestCase {
 		wp_set_current_user( $this->user_id );
 		$friend_user = new Friend_User( $this->friend_id );
 		$posts = $friend_user->retrieve_posts();
-		$this->assertArrayHasKey( 'post', $posts );
-		$this->assertCount( 2, $posts['post'] );
-	}
-
-	/**
-	 * Test getting your friends posts via RSS.
-	 */
-	public function xtest_get_non_friend_posts_photos() {
-		$friend_user = new Friend_User( $this->friend_id );
-		$posts = $friend_user->retrieve_posts();
-		$this->assertArrayHasKey( 'post', $posts );
-		$this->assertArrayHasKey( 'photo', $posts );
-		$this->assertCount( 1, $posts['post'] );
-		$this->assertCount( 1, $posts['photo'] );
-	}
-
-	/**
-	 * Test getting your friends posts via RSS.
-	 */
-	public function xtest_get_friend_posts_photos() {
-		wp_set_current_user( $this->user_id );
-		$friend_user = new Friend_User( $this->friend_id );
-		$posts = $friend_user->retrieve_posts();
-		$this->assertArrayHasKey( 'post', $posts );
-		$this->assertArrayHasKey( 'photo', $posts );
-		$this->assertCount( 2, $posts['post'] );
-		$this->assertCount( 2, $posts['photo'] );
+		$this->assertCount( 2, $posts );
 	}
 }
