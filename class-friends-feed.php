@@ -183,9 +183,9 @@ class Friends_Feed {
 	/**
 	 * Retrieve posts from all friends.
 	 *
-	 * @param      int $max_age     The maximum age of the last retrieval.
+	 * @param      int $max_age     The maximum age of the last retrieval. Default: a bit less than an hour to not block cron jobs.
 	 */
-	public function retrieve_friend_posts( $max_age = 3600 ) {
+	public function retrieve_friend_posts( $max_age = 3000 ) {
 		$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
 		$friends = $friends->get_results();
 
@@ -197,6 +197,14 @@ class Friends_Feed {
 		foreach ( $friends as $friend_user ) {
 			$feeds = array_merge( $feeds, $friend_user->get_active_feeds() );
 		}
+
+		$max_age = gmdate( 'Y-m-d H:i:s', time() - $max_age );
+		$feeds = array_filter(
+			$feeds,
+			function( $feed ) use ( $max_age ) {
+				return strcmp( $feed->get_last_log(), $max_age ) < 0;
+			}
+		);
 
 		usort(
 			$feeds,
