@@ -158,6 +158,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 		// 2020-11-30: Modifications: set post format, handle videos.
 		// This should implement the https://www.w3.org/TR/post-type-discovery/ algorithm.
 
+		$feed_author = null;
 		$h_feed = array();
 		foreach ( $mf['items'] as $mf_item ) {
 			if ( in_array( 'h-feed', $mf_item['type'] ) ) {
@@ -199,7 +200,8 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 			}
 
 			$item = array(
-				'date' => gmdate( 'Y-m-d H:i:s', strtotime( $entry['properties']['published'][0] ) ),
+				'date'   => gmdate( 'Y-m-d H:i:s', strtotime( $entry['properties']['published'][0] ) ),
+				'author' => $feed_author,
 			);
 
 			if ( isset( $entry['properties']['url'][0] ) ) {

@@ -253,6 +253,10 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				}
 			}
 
+			if ( is_object( $item->get_author() ) ) {
+				$feed_item->author = $item->get_author()->name;
+			}
+
 			$feed_item->comments_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
 
 			$feed_item->date         = $item->get_gmdate( 'Y-m-d H:i:s' );

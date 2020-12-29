@@ -135,25 +135,31 @@ class Friends_Feed {
 	 *
 	 * @param  Friend_User $friend_user A single user to fetch.
 	 */
-	public function retrieve_single_friend_posts( Friend_User $friend_user ) {
-		$new_posts = array();
-		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
-			$parser = $user_feed->get_parser();
-			if ( ! isset( $this->parsers[ $parser ] ) ) {
-				do_action( 'friends_retrieve_friends_error', $user_feed, new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) ), $friend_user );
-					continue;
-			}
-			$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
 
-			if ( is_wp_error( $items ) ) {
-				do_action( 'friends_retrieve_friends_error', $user_feed, $items, $friend_user );
-				continue;
-			}
-
-			$posts = $this->process_incoming_feed_items( $items, $user_feed );
-			$this->notify_about_new_friend_posts( $friend_user, $user_feed, $posts );
-			$new_posts = array_merge( $new_posts, $posts );
+	/**
+	 * Retrieves a user feed.
+	 *
+	 * @param      Friend_User_Feed $user_feed  The user feed.
+	 *
+	 * @return     array|WP_Error             The retrieved items.
+	 */
+	public function retrieve_feed( Friend_User_Feed $user_feed ) {
+		$friend_user = $user_feed->get_friend_user();
+		$parser = $user_feed->get_parser();
+		if ( ! isset( $this->parsers[ $parser ] ) ) {
+			$error = new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
+			do_action( 'friends_retrieve_friends_error', $user_feed, $error, $friend_user );
+			return $error;
 		}
+		$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
+
+		if ( is_wp_error( $items ) ) {
+			do_action( 'friends_retrieve_friends_error', $user_feed, $items, $friend_user );
+			return $items;
+		}
+
+		$new_posts = $this->process_incoming_feed_items( $items, $user_feed );
+		$this->notify_about_new_friend_posts( $friend_user, $user_feed, $new_posts );
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
 		return $new_posts;
@@ -162,28 +168,24 @@ class Friends_Feed {
 	/**
 	 * Notify users about new posts of this friend
 	 *
-	 * @param      Friend_User      $friend_user  The friend.
-	 * @param      Friend_User_Feed $user_feed    The user feed.
-	 * @param      array            $new_posts    The new posts of this friend.
+	 * @param      Friend_User $friend_user  The friend.
+	 * @param      array       $new_posts    The new posts of this friend.
 	 */
-	public function notify_about_new_friend_posts( Friend_User $friend_user, Friend_User_Feed $user_feed, $new_posts ) {
-		if ( $friend_user->is_new() ) {
-			$friend_user->set_not_new();
-		} else {
-			foreach ( $new_posts as $post_id ) {
-				$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
-				if ( $notify_users ) {
-					do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
-				}
+	public function notify_about_new_friend_posts( Friend_User $friend_user, $new_posts ) {
+		foreach ( $new_posts as $post_id ) {
+			$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
+			if ( $notify_users ) {
+				do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
 			}
 		}
-
 	}
 
 	/**
-	 * Retrieve posts from all friend.
+	 * Retrieve posts from all friends.
+	 *
+	 * @param      int $max_age     The maximum age of the last retrieval.
 	 */
-	public function retrieve_friend_posts() {
+	public function retrieve_friend_posts( $max_age = 3600 ) {
 		$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
 		$friends = $friends->get_results();
 
@@ -191,8 +193,21 @@ class Friends_Feed {
 			return;
 		}
 
+		$feeds = array();
 		foreach ( $friends as $friend_user ) {
-			$this->retrieve_single_friend_posts( $friend_user );
+			$feeds = array_merge( $feeds, $friend_user->get_active_feeds() );
+		}
+
+		usort(
+			$feeds,
+			function( $a, $b ) {
+				return strcmp( $a->get_last_log(), $b->get_last_log() );
+			}
+		);
+
+		$new_posts = array();
+		foreach ( $feeds as $feed ) {
+			$this->retrieve_feed( $feed );
 		}
 	}
 
@@ -211,21 +226,13 @@ class Friends_Feed {
 		foreach ( $rules as $rule ) {
 			$field = $this->get_feed_rule_field( $rule['field'], $item );
 
-			if ( 'title' === $rule['field'] && ! isset( $item->$field ) ) {
-				if ( ! ( $item instanceof WP_Post ) ) {
-					$item->$field = $item->get_title();
-				}
-			}
-
 			if ( 'author' === $rule['field'] && ! isset( $item->$field ) ) {
 				if ( $item instanceof WP_Post ) {
 					$item->$field = get_post_meta( get_the_ID( $item ), 'author', true );
-				} else {
-					$item->$field = $item->get_author()->name;
 				}
 			}
 
-			if ( preg_match( '/' . $rule['regex'] . '/iu', $item->$field ) ) {
+			if ( isset( $item->$field ) && preg_match( '/' . $rule['regex'] . '/iu', $item->$field ) ) {
 				if ( 'replace' === $rule['action'] ) {
 					$item->$field = preg_replace( '/' . $rule['regex'] . '/iu', $rule['replace'], $item->$field );
 					continue;

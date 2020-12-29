@@ -273,7 +273,12 @@ class Friend_User extends WP_User {
 	 */
 	public function retrieve_posts() {
 		$friends = Friends::get_instance();
-		return $friends->feed->retrieve_single_friend_posts( $this );
+		$new_posts = array();
+		foreach ( $this->get_active_feeds() as $feed ) {
+			$posts = $friends->feed->retrieve_feed( $feed );
+			$new_posts = array_merge( $new_posts, $posts );
+		}
+		return $new_posts;
 	}
 
 	/**
@@ -528,22 +533,6 @@ class Friend_User extends WP_User {
 			}
 		}
 		return $rest_url;
-	}
-
-	/**
-	 * Is this a new user?
-	 *
-	 * @return boolean [description]
-	 */
-	public function is_new() {
-		return $this->get_user_option( 'friends_new_friend' );
-	}
-
-	/**
-	 * Flag the user as no lopnger new
-	 */
-	public function set_not_new() {
-		$this->delete_user_option( 'friends_new_friend' );
 	}
 
 	/**

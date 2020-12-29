@@ -131,6 +131,9 @@ class Friends_Feed_Parser_JSON_Feed extends Friends_Feed_Parser {
 			if ( isset( $item->title ) ) {
 				$feed_item->title = $item->title;
 			}
+			if ( isset( $item->authors ) && isset( $item->authors[0] ) && is_object( $item->authors[0] ) ) {
+				$feed_item->author = $item->authors[0]->name;
+			}
 			if ( isset( $item->date_published ) ) {
 				$feed_item->date = gmdate( 'Y-m-d H:i:s', strtotime( $item->date_published ) );
 			}
