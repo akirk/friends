@@ -47,7 +47,7 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 								<?php _e( 'This code word must be provided to send you a friend request:', 'friends' ); ?> <input name="codeword" type="text" id="codeword" placeholder="friends" value="<?php echo esc_attr( get_option( 'friends_codeword', '' ) ); ?>" />
 							</label>
 							<p class="description">
-								<?php _e( "You'll need to communicate the code word to potential friends through another medium." ); ?>
+								<?php _e( "You'll need to communicate the code word to potential friends through another medium.", 'friends' ); ?>
 							</p>
 						</fieldset>
 						<fieldset>
@@ -55,7 +55,7 @@ if ( 'friends' === get_option( 'friends_codeword', 'friends' ) || ! get_option( 
 								<p><?php _e( 'Error message for a wrong code word:', 'friends' ); ?></p>
 							</label>
 							<p>
-								<textarea name="wrong_codeword_message" id="wrong_codeword_message" class="regular-text" rows="3" cols="80" placeholder="<?php echo esc_attr( __( 'Return this message to the friend requestor if a wrong code word was provided.' ) ); ?>"><?php echo esc_html( get_option( 'friends_wrong_codeword_message' ) ); ?></textarea>
+								<textarea name="wrong_codeword_message" id="wrong_codeword_message" class="regular-text" rows="3" cols="80" placeholder="<?php echo esc_attr( __( 'Return this message to the friend requestor if a wrong code word was provided.', 'friends' ) ); ?>"><?php echo esc_html( get_option( 'friends_wrong_codeword_message' ) ); ?></textarea>
 							</p>
 						</fieldset>
 					</div>
