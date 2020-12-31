@@ -1,15 +1,15 @@
 <?php
 /**
- * Friends: Friends_SimplePie_File class
+ * Friends: Friends_SimplePie_Misc class
  *
  * @package Friends
  * @since 1.0
  */
 
 /**
- * Core class for fetching remote files and reading local files with SimplePie.
+ * Overrides SimplePie_Misc functions as necessary.
  *
- * @see WP_SimplePie_File
+ * @see SimplePie_Misc
  */
 class Friends_SimplePie_Misc extends SimplePie_Misc {
 	/**

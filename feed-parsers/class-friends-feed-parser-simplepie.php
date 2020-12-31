@@ -121,7 +121,8 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 
 		require_once ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-file.php';
-		require_once __DIR__ . '/class-friends-simplepie-accept-only-rss.php';
+		require_once __DIR__ . '/SimplePie/class-friends-simplepie-file-accept-only-rss.php';
+		require_once __DIR__ . '/SimplePie/class-friends-simplepie-misc.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
 		$feed = new SimplePie();
@@ -135,6 +136,8 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 		$feed->set_cache_location( 'wp_transient' );
 
 		$feed->set_file_class( 'WP_SimplePie_File' );
+		$registry = $feed->get_registry();
+		$registry->register( 'Misc', 'Friends_SimplePie_Misc' );
 
 		return $feed;
 	}

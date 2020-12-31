@@ -1,17 +1,17 @@
 <?php
 /**
- * Friends: Friends_SimplePie_File class
+ * Friends: Friends_SimplePie_File_Accept_Only_RSS class
  *
  * @package Friends
  * @since 1.0
  */
 
 /**
- * Core class for fetching remote files and reading local files with SimplePie.
+ * Send an accept header that only allows for Atom or RSS.
  *
  * @see WP_SimplePie_File
  */
-class Friends_SimplePie_Accept_Only_RSS extends WP_SimplePie_File {
+class Friends_SimplePie_File_Accept_Only_RSS extends WP_SimplePie_File {
 
 	/**
 	 * Constructor.
