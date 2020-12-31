@@ -159,7 +159,7 @@ class Friends_Feed {
 		}
 
 		$new_posts = $this->process_incoming_feed_items( $items, $user_feed );
-		$this->notify_about_new_friend_posts( $friend_user, $user_feed, $new_posts );
+		$this->notify_about_new_friend_posts( $friend_user, $new_posts );
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
 		return $new_posts;

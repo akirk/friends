@@ -1767,7 +1767,7 @@ input:disabled + .form-icon, input.disabled + .form-icon {
       padding: 0; }
       .friends-page .card .card-body ul, .friends-page .card .card-body ol {
         margin-left: 1rem; }
-      .friends-page .card .card-body .wp-block-image.alignfull, .friends-page .card .card-body .wp-block-image.alignwide {
+      .friends-page .card .card-body .wp-block-image.alignfull, .friends-page .card .card-body .wp-block-image.alignwide, .friends-page .card .card-body .wp-block-gallery.alignfull, .friends-page .card .card-body .wp-block-gallery.alignwide {
         margin: 0; }
     @media (min-width: 960px) {
       .friends-page .card {
@@ -1871,18 +1871,6 @@ input:disabled + .form-icon, input.disabled + .form-icon {
         vertical-align: middle; }
     .friends-page section.posts footer.entry-meta .btn:hover, .friends-page section.posts footer.entry-meta .nav-links div a:hover, .friends-page .nav-links div section.posts footer.entry-meta a:hover {
       color: #2e5bec; }
-  .friends-page .only-friends {
-    background-color: #efe;
-    padding-left: .5em; }
-  .friends-page .not-friends {
-    background-color: #fee;
-    padding-left: .5em; }
-  .friends-page .only-friends .watermark, .friends-page .not-friends .watermark {
-    float: right;
-    padding-top: .5em;
-    padding-right: .5em;
-    font-size: 80%;
-    color: #ccc; }
   .friends-page ul.friend-posts img.avatar {
     vertical-align: middle;
     margin-right: .3em; }

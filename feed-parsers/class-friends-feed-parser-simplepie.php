@@ -211,7 +211,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 		}
 
 		$feed->set_feed_url( $url );
-		$feed->set_cache_duration( apply_filters( 'wp_feed_cache_transient_lifetime', 12 * HOUR_IN_SECONDS, $url ) );
+		$feed->set_cache_duration( apply_filters( 'wp_feed_cache_transient_lifetime', HOUR_IN_SECONDS - 600, $url ) );
 
 		do_action_ref_array( 'wp_feed_options', array( &$feed, $url ) );
 
