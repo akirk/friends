@@ -1,4 +1,4 @@
-Ð<?php
+<?php
 /**
  * Friends SimplePie Parser Wrapper
  *
