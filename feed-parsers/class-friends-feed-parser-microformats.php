@@ -22,16 +22,20 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
-	 * @param      string $url        The url.
-	 * @param      string $mime_type  The mime type.
-	 * @param      string $title      The title.
+	 * @param      string      $url        The url.
+	 * @param      string      $mime_type  The mime type.
+	 * @param      string      $title      The title.
+	 * @param      string|null $content    The content, it can't be assumed that it's always available.
 	 *
 	 * @return     int  Return 0 if unsupported, a positive value representing the confidence for the feed, use 10 if you're reasonably confident.
 	 */
-	public function feed_support_confidence( $url, $mime_type, $title ) {
-		switch ( $mime_type ) {
-			case 'text/html':
-				return 10;
+	public function feed_support_confidence( $url, $mime_type, $title, $content = null ) {
+		if ( ! $content ) {
+			return 0;
+		}
+		$feeds = self::discover_available_feeds( $content, $url );
+		if ( isset( $feeds[ $url ] ) ) {
+			return 10;
 		}
 
 		return 0;
@@ -198,18 +202,16 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 			if ( isset( $entry['properties']['deleted'][0] ) || ! isset( $entry['properties']['published'][0] ) ) {
 				continue;
 			}
-
-			$item = array(
-				'date'   => gmdate( 'Y-m-d H:i:s', strtotime( $entry['properties']['published'][0] ) ),
-				'author' => $feed_author,
-			);
+			$item = new Friends_Feed_Item();
+			$item->date = $entry['properties']['published'][0];
+			$item->author = $feed_author;
 
 			if ( isset( $entry['properties']['url'][0] ) ) {
 				$link = $entry['properties']['url'][0];
 				if ( isset( $link['value'] ) ) {
 					$link = $link['value'];
 				}
-				$item['permalink'] = $link;
+				$item->permalink = $link;
 			}
 
 			if ( isset( $entry['properties']['uid'][0] ) ) {
@@ -217,7 +219,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 				if ( isset( $guid['value'] ) ) {
 					$guid = $guid['value'];
 				}
-				$item['permalink'] = $guid;
+				$item->permalink = $guid;
 			}
 
 			if ( isset( $entry['properties']['name'][0] ) ) {
@@ -225,7 +227,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 				if ( isset( $title['value'] ) ) {
 					$title = $title['value'];
 				}
-				$item['title'] = $title;
+				$item->title = $title;
 			}
 
 			$content = '';
@@ -276,7 +278,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 					}
 					$content .= '</b></p>';
 				}
-				$item['post-format'] = $media;
+				$item->format = $media;
 			}
 
 			if ( isset( $entry['properties']['content'][0]['html'] ) ) {
@@ -293,7 +295,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 							'<a href="' . $in_reply_to . '">' . $in_reply_to . '</a><p>';
 					}
 				}
-				$item['content'] = $content;
+				$item->content = $content;
 			}
 
 			if ( isset( $entry['properties']['category'] ) ) {
@@ -310,15 +312,15 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 						$category_csv .= $this->parse_hcard( $category, true );
 					}
 				}
-				$item['category'] = $category_csv;
+				$item->category = $category_csv;
 			}
 
-			if ( ! isset( $item['post-format'] ) && in_array( 'h-as-note', $entry['type'] ) ) {
-				$item['post-format'] = 'status';
-				unset( $item['title'] );
+			if ( ! $item->post_format && in_array( 'h-as-note', $entry['type'] ) ) {
+				$item->post_format = 'status';
+				$item->title = '';
 			}
 
-			$feed_items[] = (object) $item;
+			$feed_items[] = $item;
 		}
 
 		return $feed_items;

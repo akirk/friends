@@ -26,7 +26,9 @@ require_once __DIR__ . '/class-friend-user.php';
 require_once __DIR__ . '/class-friend-user-feed.php';
 require_once __DIR__ . '/class-friend-user-query.php';
 
+// Classes to be implemented or used by parser plugins.
 require_once __DIR__ . '/feed-parsers/class-friends-feed-parser.php';
+require_once __DIR__ . '/feed-parsers/class-friends-feed-item.php';
 
 require_once __DIR__ . '/class-friends-access-control.php';
 require_once __DIR__ . '/class-friends-admin.php';

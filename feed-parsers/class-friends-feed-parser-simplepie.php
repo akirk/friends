@@ -1,4 +1,4 @@
-<?php
+Ð<?php
 /**
  * Friends SimplePie Parser Wrapper
  *
@@ -21,13 +21,14 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
-	 * @param      string $url        The url.
-	 * @param      string $mime_type  The mime type.
-	 * @param      string $title      The title.
+	 * @param      string      $url        The url.
+	 * @param      string      $mime_type  The mime type.
+	 * @param      string      $title      The title.
+	 * @param      string|null $content    The content, it can't be assumed that it's always available.
 	 *
 	 * @return     int  Return 0 if unsupported, a positive value representing the confidence for the feed, use 10 if you're reasonably confident.
 	 */
-	public function feed_support_confidence( $url, $mime_type, $title ) {
+	public function feed_support_confidence( $url, $mime_type, $title, $content = null ) {
 		$rewritten = $this->rewrite_known_url( $url );
 		if ( $rewritten ) {
 			$mime_type = $rewritten['type'];
@@ -240,18 +241,26 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	public function process_items( $items, $url ) {
 		$feed_items = array();
 		foreach ( $items as $c => $item ) {
-			$feed_item = (object) array(
-				'permalink' => $item->get_permalink(),
-				'title'     => $item->get_title(),
-				'content'   => $item->get_content(),
+			$feed_item = new Friends_Feed_Item(
+				array(
+					'permalink' => $item->get_permalink(),
+					'title'     => $item->get_title(),
+					'content'   => $item->get_content(),
+				)
 			);
-			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id' ) as $key ) {
+			foreach ( array(
+				'gravatar'      => 'gravatar',
+				'comment_count' => 'comments',
+				'status'        => 'post-status',
+				'format'        => 'post-format',
+				'id'            => 'post-id',
+			) as $key => $lookup_key ) {
 				foreach ( array( Friends_Feed::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
-					if ( ! isset( $item->data['child'][ $xmlns ][ $key ][0]['data'] ) ) {
+					if ( ! isset( $item->data['child'][ $xmlns ][ $lookup_key ][0]['data'] ) ) {
 						continue;
 					}
 
-					$feed_item->{$key} = $item->data['child'][ $xmlns ][ $key ][0]['data'];
+					$feed_item->{$key} = $item->data['child'][ $xmlns ][ $lookup_key ][0]['data'];
 					break;
 				}
 			}
@@ -260,10 +269,10 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				$feed_item->author = $item->get_author()->name;
 			}
 
-			$feed_item->comments_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
+			$feed_item->comment_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
 
-			$feed_item->date         = $item->get_gmdate( 'Y-m-d H:i:s' );
-			$feed_item->updated_date = $item->get_updated_gmdate( 'Y-m-d H:i:s' );
+			$feed_item->date         = $item->get_gmdate( 'U' );
+			$feed_item->updated_date = $item->get_updated_gmdate( 'U' );
 
 			$feed_items[] = $feed_item;
 		}

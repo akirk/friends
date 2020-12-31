@@ -1263,18 +1263,12 @@ class Friends_Admin {
 
 			apply_filters( 'friends_template_path', 'friends/posts.php' );
 			foreach ( $items as $item ) {
-				$post_format = 'standard';
-				if ( isset( $item->{'post-format'} ) ) {
-					$post_format = $item->{'post-format'};
-				}
-				$title = '';
-				if ( isset( $item->title ) ) {
-					$title = $item->title;
-				} elseif ( 'status' === $post_format ) {
+				$title = $item->title;
+				if ( 'status' === $item->post_format ) {
 					$title = $item->content;
 				}
 				?>
-				<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (type: <?php echo esc_html( $post_format ); ?>):
+				<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (type: <?php echo esc_html( $item->post_format ); ?>):
 					<?php if ( $title ) : ?>
 						<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a>
 					<?php else : ?>

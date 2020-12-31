@@ -252,11 +252,11 @@ class Friends_Feed {
 
 		switch ( $action ) {
 			case 'delete':
-				$item->feed_rule_delete = true;
+				$item->_feed_rule_delete = true;
 				return $item;
 
 			case 'trash':
-				$item->feed_rule_transform = array(
+				$item->_feed_rule_transform = array(
 					'post_status' => 'trash',
 				);
 				return $item;
@@ -390,31 +390,22 @@ class Friends_Feed {
 
 		$new_posts = array();
 		foreach ( $items as $item ) {
-			if ( ! isset( $item->permalink ) ) {
+			if ( ! $item->permalink ) {
 				continue;
 			}
 			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
 
-			$title = '';
-			if ( isset( $item->title ) ) {
-				$title = $item->title;
-			}
-			$title = trim( $title );
-
-			$content = '';
-			if ( isset( $item->content ) ) {
-				$content = $item->content;
-			}
-			$content = wp_kses_post( trim( $content ) );
+			$title = $item->title;
+			$content = wp_kses_post( trim( $item->content ) );
 
 			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
-			if ( ! $item || ( isset( $item->feed_rule_delete ) && $item->feed_rule_delete ) ) {
+			if ( ! $item || $item->_feed_rule_delete ) {
 				continue;
 			}
 
 			// Fallback, when no friends plugin is installed.
-			$item->{'post-id'}     = $permalink;
-			$item->{'post-status'} = 'publish';
+			$item->post_id     = $permalink;
+			$item->post_status = 'publish';
 			if ( ! isset( $item->comment_count ) ) {
 				$item->comment_count = 0;
 			}
@@ -422,15 +413,9 @@ class Friends_Feed {
 				continue;
 			}
 
-			foreach ( array( 'gravatar', 'comments', 'post-status', 'post-format', 'post-id' ) as $key ) {
-				if ( ! isset( $item->{$key} ) ) {
-					$item->{$key} = false;
-				}
-			}
-
 			$post_id = null;
-			if ( isset( $remote_post_ids[ $item->{'post-id'} ] ) ) {
-				$post_id = $remote_post_ids[ $item->{'post-id'} ];
+			if ( isset( $remote_post_ids[ $item->post_id ] ) ) {
+				$post_id = $remote_post_ids[ $item->post_id ];
 			}
 			if ( is_null( $post_id ) && isset( $remote_post_ids[ $permalink ] ) ) {
 				$post_id = $remote_post_ids[ $permalink ];
@@ -441,7 +426,7 @@ class Friends_Feed {
 			}
 
 			$updated_date = $item->date;
-			if ( isset( $item->updated_date ) ) {
+			if ( ! empty( $item->updated_date ) ) {
 				$updated_date = $item->updated_date;
 			}
 
@@ -449,13 +434,13 @@ class Friends_Feed {
 				'post_title'        => $title,
 				'post_content'      => $content,
 				'post_modified_gmt' => $updated_date,
-				'post_status'       => $item->{'post-status'},
+				'post_status'       => $item->post_status,
 				'guid'              => $permalink,
 			);
 
 			// Modified via feed rules.
-			if ( isset( $item->feed_rule_transform ) ) {
-				$post_data = array_merge( $post_data, $item->feed_rule_transform );
+			if ( isset( $item->_feed_rule_transform ) ) {
+				$post_data = array_merge( $post_data, $item->_feed_rule_transform );
 			}
 			if ( ! is_null( $post_id ) ) {
 				$post_data['ID'] = $post_id;
@@ -487,7 +472,7 @@ class Friends_Feed {
 				set_post_format( $post_id, $post_format );
 			}
 
-			if ( is_numeric( $item->{'post-id'} ) ) {
+			if ( is_numeric( $item->post_id ) ) {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
 
@@ -674,7 +659,7 @@ class Friends_Feed {
 			);
 
 			foreach ( $this->parsers as $slug => $parser ) {
-				$confidence = $parser->feed_support_confidence( $url, $feed['type'], $feed['rel'] );
+				$confidence = $parser->feed_support_confidence( $url, $feed['type'], $feed['rel'], $content );
 				$confidence = apply_filters( 'friends_parser_confidence', $confidence, $slug, $url, $feed );
 				if ( $feed['parser_confidence'] < $confidence ) {
 					$feed['parser_confidence'] = $confidence;
@@ -688,7 +673,7 @@ class Friends_Feed {
 		}
 
 		foreach ( array_keys( $available_feeds ) as $link_url ) {
-			if ( ! isset( $this->parsers[ $feed['parser'] ] ) ) {
+			if ( ! isset( $this->parsers[ $available_feeds[ $link_url ]['parser'] ] ) ) {
 				continue;
 			}
 			$parser = $this->parsers[ $available_feeds[ $link_url ]['parser'] ];

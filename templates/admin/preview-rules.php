@@ -22,9 +22,9 @@
 				<td class="date column-date" data-colname="<?php esc_attr_e( 'Date' ); ?>"><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $post->post_date ) ); ?></td>
 				<td class="action column-action" data-colname="<?php esc_attr_e( 'Action', 'friends' ); ?>">
 					<?php
-					if ( ! $modified_post || ( isset( $modified_post->feed_rule_delete ) && $modified_post->feed_rule_delete ) ) {
+					if ( ! $modified_post || $modified_post->_feed_rule_delete ) {
 						echo esc_html( _x( 'Delete', 'verb', 'friends' ) );
-					} elseif ( isset( $post->feed_rule_transform['post_status'] ) && 'trash' === $post->feed_rule_transform['post_status'] ) {
+					} elseif ( isset( $post->_feed_rule_transform['post_status'] ) && 'trash' === $post->_feed_rule_transform['post_status'] ) {
 						echo esc_html( _x( 'Trash', 'verb' ) );
 					} else {
 						echo esc_html( _x( 'Accept', 'verb', 'friends' ) );
