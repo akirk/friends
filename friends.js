@@ -106,6 +106,19 @@
 		return false;
 	} );
 
+	$document.on( 'click', 'a.collapse-post', function() {
+		var contents = $( this ).closest( 'article' ).find( 'div.card-body' );
+		if ( contents.is(':visible') ) {
+			contents.hide();
+			$( this ).find( 'i' ).removeClass( 'dashicons-fullscreen-exit-alt' ).addClass( 'dashicons-fullscreen-alt' );
+		} else {
+			contents.show();
+			$( this ).find( 'i' ).removeClass( 'dashicons-fullscreen-exit-alt' ).addClass( 'dashicons-fullscreen-alt' );
+		}
+
+		return false;
+	} );
+
 	$document.on( 'change', 'select.friends-change-post-format', function() {
 		var select = $( this );
 

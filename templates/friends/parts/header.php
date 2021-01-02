@@ -52,6 +52,10 @@
 
 	</div>
 	<div class="overflow col-ml-auto">
+		<a class="btn btn-link collapse-post" tabindex="0">
+			<i class="dashicons dashicons-fullscreen-exit-alt"></i>
+		</a>
+
 		<div class="dropdown dropdown-right">
 			<a class="btn btn-link dropdown-toggle" tabindex="0">
 				<i class="dashicons dashicons-menu-alt2"></i>
