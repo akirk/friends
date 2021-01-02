@@ -119,6 +119,11 @@
 		return false;
 	} );
 
+	$document.on( 'dblclick', 'a.collapse-post', function() {
+		$('a.collapse-post').trigger('click');
+		return false;
+	} );
+
 	$document.on( 'change', 'select.friends-change-post-format', function() {
 		var select = $( this );
 
