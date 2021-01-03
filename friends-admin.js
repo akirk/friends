@@ -77,7 +77,8 @@ jQuery( function( $ ) {
 	} );
 
 	jQuery( document ).on( 'click', 'a.preview-parser', function() {
-		this.href = this.href.replace( /&parser=[^&$]+/, '&parser=' + jQuery( this ).closest( 'td' ).find( 'select' ).val() );
+		this.href = this.href.replace( /&parser(=[^&$]+)?([&$])/, '&parser=' + encodeURIComponent( jQuery( this ).closest( 'td' ).find( 'select' ).val() ) + '&' );
+		this.href = this.href.replace( /&preview(=[^&$]+)?([&$])/, '&preview=' + encodeURIComponent( jQuery( this ).closest( 'tr' ).find( 'input.url' ).val() ) + '&' );
 	} );
 
 	jQuery( document ).on( 'click', 'a.show-inactive-feeds', function() {
@@ -87,6 +88,12 @@ jQuery( function( $ ) {
 
 	jQuery( document ).on( 'click', 'a.show-log-lines', function() {
 		jQuery( 'table.feed-table' ).find( 'tr:visible + tr.lastlog' ).toggleClass( 'hidden' );
+		return false;
+	} );
+
+	jQuery( document ).on( 'click', 'a.add-feed', function() {
+		jQuery( 'table.feed-table' ).find( 'tr.template' ).removeClass( 'hidden' ).find( 'input:first' ).focus();
+		jQuery( this ).remove();
 		return false;
 	} );
 

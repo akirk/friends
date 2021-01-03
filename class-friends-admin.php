@@ -271,12 +271,8 @@ class Friends_Admin {
 		add_action(
 			'friends_retrieved_new_posts',
 			function ( $user_feed, $new_posts ) {
-				$count = 0;
-				foreach ( $new_posts as $post_type => $posts ) {
-					$count += count( $posts );
-				}
 				// translators: %s is the number of new posts found.
-				printf( _n( 'Found %d new post.', 'Found %d new posts.', $count, 'friends' ) . '<br/>', $count );
+				printf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) );
 			},
 			10,
 			2
@@ -832,7 +828,39 @@ class Friends_Admin {
 
 			if ( isset( $_POST['feeds'] ) ) {
 				$existing_feeds = $friend->get_feeds();
+				if ( '' === trim( $_POST['feeds']['new']['url'] ) ) {
+					unset( $_POST['feeds']['new'] );
+				} else {
+					foreach ( $existing_feeds as $term_id => $feed ) {
+						if ( $feed->get_url() === trim( $_POST['feeds']['new']['url'] ) ) {
+							// Let a newly entered feed overrule an existing one.
+							$_POST['feeds'][ $term_id ] = array_merge( $_POST['feeds'][ $term_id ], $_POST['feeds']['new'] );
+							$_POST['feeds'][ $term_id ]['active'] = 1;
+							unset( $_POST['feeds']['new'] );
+							break;
+						}
+					}
+				}
 				foreach ( $_POST['feeds'] as $term_id => $feed ) {
+					if ( 'new' === $term_id ) {
+						if ( '' === trim( $feed['url'] ) ) {
+							continue;
+						}
+
+						$term = Friend_User_Feed::save(
+							$friend,
+							$feed['url'],
+							array(
+								'active'      => true,
+								'parser'      => $feed['parser'],
+								'post-format' => $feed['post-format'],
+								'title'       => $feed['title'],
+							)
+						);
+
+						continue;
+					}
+
 					if ( ! isset( $existing_feeds[ $term_id ] ) ) {
 						continue;
 					}
@@ -851,6 +879,7 @@ class Friends_Admin {
 						} else {
 							$friend->save_feed( $user_feed->get_url(), $options );
 						}
+						// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
 						$user_feed->delete();
 						continue;
 					}
