@@ -24,7 +24,7 @@
 					<?php
 					if ( ! $modified_post || $modified_post->_feed_rule_delete ) {
 						echo esc_html( _x( 'Delete', 'verb', 'friends' ) );
-					} elseif ( isset( $post->_feed_rule_transform['post_status'] ) && 'trash' === $post->_feed_rule_transform['post_status'] ) {
+					} elseif ( isset( $modified_post->_feed_rule_transform['post_status'] ) && 'trash' === $modified_post->_feed_rule_transform['post_status'] ) {
 						echo esc_html( _x( 'Trash', 'verb' ) );
 					} else {
 						echo esc_html( _x( 'Accept', 'verb', 'friends' ) );

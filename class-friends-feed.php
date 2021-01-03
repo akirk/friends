@@ -232,15 +232,17 @@ class Friends_Feed {
 		$action = $friend_user->get_feed_catch_all();
 
 		foreach ( $rules as $rule ) {
-			$field = $this->get_feed_rule_field( $rule['field'], $item );
+			if ( $item instanceof WP_Post ) {
+				$field = $this->get_feed_rule_field( $rule['field'], $item );
 
-			if ( 'author' === $rule['field'] && ! isset( $item->$field ) ) {
-				if ( $item instanceof WP_Post ) {
+				if ( 'author' === $rule['field'] ) {
 					$item->$field = get_post_meta( get_the_ID( $item ), 'author', true );
 				}
+			} else {
+				$field = $rule['field'];
 			}
 
-			if ( isset( $item->$field ) && preg_match( '/' . $rule['regex'] . '/iu', $item->$field ) ) {
+			if ( $item->$field && preg_match( '/' . $rule['regex'] . '/iu', $item->$field ) ) {
 				if ( 'replace' === $rule['action'] ) {
 					$item->$field = preg_replace( '/' . $rule['regex'] . '/iu', $rule['replace'], $item->$field );
 					continue;
@@ -439,9 +441,10 @@ class Friends_Feed {
 			);
 
 			// Modified via feed rules.
-			if ( isset( $item->_feed_rule_transform ) ) {
+			if ( is_array( $item->_feed_rule_transform ) ) {
 				$post_data = array_merge( $post_data, $item->_feed_rule_transform );
 			}
+
 			if ( ! is_null( $post_id ) ) {
 				$post_data['ID'] = $post_id;
 				wp_update_post( $post_data );
