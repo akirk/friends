@@ -196,11 +196,11 @@ class Friends_Feed_Item {
 	 * @return     string|WP_Error  The validated date.
 	 */
 	public function validate_date( $date, $error_code ) {
-		if ( ! is_int( $date ) ) {
+		if ( ! is_numeric( $date ) ) {
 			$date = strtotime( $date );
 		}
 
-		if ( 0 < $date ) {
+		if ( 0 > $date ) {
 			return new WP_Error( $error_code, 'An invalid timestamp was supplied.' );
 		}
 
