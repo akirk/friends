@@ -1750,6 +1750,9 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     color: #333; }
   .friends-page .menu .menu-item + .menu-item {
     margin-top: 0; }
+  .friends-page .menu .menu-item.dropdown {
+    margin-top: 0.2rem;
+    margin-bottom: 0.4rem; }
   .friends-page .menu .menu-item small.label-secondary {
     display: none; }
   .friends-page .menu .menu-item:hover small.label-secondary {
