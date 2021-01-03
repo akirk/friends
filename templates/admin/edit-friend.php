@@ -154,7 +154,6 @@ $has_last_log = false;
 							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
 						</p>
 					<?php elseif ( $friend->has_cap( 'friend' ) ) : ?>
-						<?php echo esc_html( _x( 'Friend', 'User role', 'friends' ) ); ?>
 						<p class="description">
 						<?php
 							// translators: %s is a friend role.
