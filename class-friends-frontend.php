@@ -64,6 +64,7 @@ class Friends_Frontend {
 		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ), 10, 2 );
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
+		add_action( 'wp', array( $this, 'remove_top_margin' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
@@ -74,13 +75,22 @@ class Friends_Frontend {
 	/**
 	 * Registers the sidebar for the /friends page.
 	 */
+	public function remove_top_margin() {
+		if ( $this->is_friends_frontend() ) {
+			// remove the margin-top on the friends page.
+			add_theme_support(
+				'admin-bar',
+				array(
+					'callback' => '__return_false',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Registers the sidebar for the /friends page.
+	 */
 	public function register_friends_sidebar() {
-		add_theme_support(
-			'admin-bar',
-			array(
-				'callback' => '__return_false',
-			)
-		);
 		register_sidebar(
 			array(
 				'name'          => 'Friends Topbar',
@@ -107,7 +117,7 @@ class Friends_Frontend {
 	 * Reference our script for the /friends page
 	 */
 	public function enqueue_scripts() {
-		if ( is_user_logged_in() ) {
+		if ( is_user_logged_in() && $this->is_friends_frontend() ) {
 			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
 			$variables = array(
 				'emojis_json'       => plugins_url( 'emojis.json', __FILE__ ),
