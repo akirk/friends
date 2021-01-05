@@ -1698,10 +1698,10 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     .menu .menu-badge .label {
       margin-right: 0.4rem; }
 
-.dropdown {
+.friends-dropdown {
   display: inline-block;
   position: relative; }
-  .dropdown .menu {
+  .friends-dropdown .menu {
     animation: slide-down .15s ease 1;
     display: none;
     left: 0;
@@ -1709,14 +1709,14 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     overflow-y: auto;
     position: absolute;
     top: 100%; }
-  .dropdown.dropdown-right .menu {
+  .friends-dropdown.friends-dropdown-right .menu {
     left: auto;
     right: 0; }
-  .dropdown.active .menu,
-  .dropdown .dropdown-toggle:focus + .menu,
-  .dropdown .menu:hover {
+  .friends-dropdown.active .menu,
+  .friends-dropdown .friends-dropdown-toggle:focus + .menu,
+  .friends-dropdown .menu:hover {
     display: block; }
-  .dropdown .btn-group .dropdown-toggle:nth-last-child(2) {
+  .friends-dropdown .btn-group .friends-dropdown-toggle:nth-last-child(2) {
     border-bottom-right-radius: 0.1rem;
     border-top-right-radius: 0.1rem; }
 
@@ -1743,6 +1743,7 @@ input:disabled + .form-icon, input.disabled + .form-icon {
   background: #f7f8f9; }
 
 .friends-page {
+  background-color: #fff;
   min-height: 100vh; }
   .friends-page a:visited {
     color: #1341d4; }
@@ -1750,7 +1751,7 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     color: #333; }
   .friends-page .menu .menu-item + .menu-item {
     margin-top: 0; }
-  .friends-page .menu .menu-item.dropdown {
+  .friends-page .menu .menu-item.friends-dropdown {
     margin-top: 0.2rem;
     margin-bottom: 0.4rem; }
   .friends-page .menu .menu-item small.label-secondary {

@@ -28,8 +28,42 @@ div {
 @import "node_modules/spectre.css/src/cards";
 @import "node_modules/spectre.css/src/navs";
 @import "node_modules/spectre.css/src/menus";
-@import "node_modules/spectre.css/src/dropdowns";
 
+.friends-dropdown {
+  display: inline-block;
+  position: relative;
+
+  .menu {
+    animation: slide-down .15s ease 1;
+    display: none;
+    left: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+    position: absolute;
+    top: 100%;
+  }
+
+  &.friends-dropdown-right {
+    .menu {
+      left: auto;
+      right: 0;
+    }
+  }
+
+  &.active .menu,
+  .friends-dropdown-toggle:focus + .menu,
+  .menu:hover {
+    display: block;
+  }
+
+  // Fix friends-dropdown-toggle border radius in button groups
+  .btn-group {
+    .friends-dropdown-toggle:nth-last-child(2) {
+      border-bottom-right-radius: $border-radius;
+      border-top-right-radius: $border-radius;
+    }
+  }
+}
 
 .off-canvas .off-canvas-content {
 	margin-top: 32px;
@@ -61,6 +95,8 @@ div {
 }
 
 .friends-page {
+	background-color: $body-bg;
+
 	min-height: 100vh;
 	a:visited {
 		color: $link-color-dark;
@@ -76,7 +112,7 @@ div {
 			margin-top: 0;
 		}
 
-		.menu-item.dropdown {
+		.menu-item.friends-dropdown {
 			margin-top: 0.2rem;
 			margin-bottom: 0.4rem;
 		}
