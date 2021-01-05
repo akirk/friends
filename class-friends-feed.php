@@ -123,8 +123,14 @@ class Friends_Feed {
 
 		$items = $this->parsers[ $parser ]->fetch_feed( $url );
 
-		if ( ! is_wp_error( $items ) && empty( $items ) ) {
-			$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
+		if ( ! is_wp_error( $items ) ) {
+			if ( empty( $items ) ) {
+				$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
+			} else {
+				foreach ( $items as $key => $item ) {
+					$items[ $key ] = apply_filters( 'friends_modify_feed_item', $item, null, null );
+				}
+			}
 		}
 
 		return $items;
@@ -222,12 +228,16 @@ class Friends_Feed {
 	/**
 	 * Apply the feed rules
 	 *
-	 * @param  object      $item         The feed item.
-	 * @param  object      $feed         The feed object.
-	 * @param  Friend_User $friend_user The friend user.
+	 * @param  object           $item         The feed item.
+	 * @param  Friend_User_Feed $feed         The feed object.
+	 * @param  Friend_User      $friend_user The friend user.
 	 * @return object The modified feed item.
 	 */
-	public function apply_feed_rules( $item, $feed, Friend_User $friend_user ) {
+	public function apply_feed_rules( $item, Friend_User_Feed $feed = null, Friend_User $friend_user = null ) {
+		if ( is_null( $friend_user ) ) {
+			return $item;
+		}
+
 		$rules  = $friend_user->get_feed_rules();
 		$action = $friend_user->get_feed_catch_all();
 

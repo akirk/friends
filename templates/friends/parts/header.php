@@ -86,8 +86,7 @@
 						<?php _e( 'Trash this post', 'friends' ); ?>
 					</a></li>
 				<?php endif; ?>
-
-				</li>
+				<?php do_action( 'friends_entry_dropdown_menu' ); ?>
 			</ul>
 		</div>
 
