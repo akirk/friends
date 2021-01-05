@@ -1,0 +1,17 @@
+assets	export-ignore
+*.scss	export-ignore
+.circleci	export-ignore
+.git*	export-ignore
+.gitignore	export-ignore
+.idea	export-ignore
+.sass-cache	export-ignore
+bin	export-ignore
+comments.json	export-ignore
+composer.lock	export-ignore
+html	export-ignore
+md	export-ignore
+node_modules	export-ignore
+package-lock.json	export-ignore
+package.*	export-ignore
+sftp-config.json	export-ignore
+vendor	export-ignore
