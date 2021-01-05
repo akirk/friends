@@ -213,7 +213,7 @@ class Friends_Plugin_Installer {
 					<div class="plugin-card-top">
 						<div class="name column-name">
 							<h3>
-								<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $more_info_url ); ?>"><?php echo $api->name; ?></a>
+								<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $more_info_url ); ?>"><?php echo $api->name; ?> <?php echo $api->version; ?></a>
 							</h3>
 						</div>
 
