@@ -26,7 +26,7 @@ echo PHP_EOL . PHP_EOL;
 echo __( 'Via the following link you should then be able to send me a friend request:', 'friends' );
 echo PHP_EOL . PHP_EOL;
 
-echo trailingslashit( $friend->user_url ) . 'wp-admin/admin.php?page=send-friend-request&url=' . site_url();
+echo trailingslashit( $friend->user_url ) . 'wp-admin/admin.php?page=add-friend&url=' . site_url();
 echo PHP_EOL . PHP_EOL;
 
 echo __( 'Best,', 'friends' );
