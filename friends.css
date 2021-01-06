@@ -1744,6 +1744,7 @@ input:disabled + .form-icon, input.disabled + .form-icon {
 
 .friends-page {
   background-color: #fff;
+  color: #48427c;
   min-height: 100vh; }
   .friends-page a:visited {
     color: #1341d4; }
@@ -1849,7 +1850,11 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     .friends-page section.posts article.hentry header.entry-header {
       display: flex;
       font-size: 88%;
-      line-height: 1.4; }
+      line-height: 1.4;
+      max-width: 100%;
+      margin: auto -0.4rem;
+      padding: 0.8rem;
+      padding-bottom: 1.5em; }
       .friends-page section.posts article.hentry header.entry-header div.avatar {
         margin-right: .5em; }
     .friends-page section.posts article.hentry h4.entry-title {

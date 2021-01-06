@@ -96,6 +96,7 @@ div {
 
 .friends-page {
 	background-color: $body-bg;
+	color: $body-font-color;
 
 	min-height: 100vh;
 	a:visited {
@@ -270,6 +271,10 @@ div {
 				display: flex;
 				font-size: 88%;
 				line-height: 1.4;
+				max-width: 100%;
+				margin: auto -0.4rem;
+				padding: 0.8rem;
+				padding-bottom: 1.5em;
 
 				div.avatar {
 					margin-right: .5em;
