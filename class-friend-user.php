@@ -453,6 +453,10 @@ class Friend_User extends WP_User {
 	 * @return     string  The role name.
 	 */
 	public function get_role_name( $group_subscriptions = false, $count = 1 ) {
+		if ( is_multisite() && is_super_admin( $this->ID ) ) {
+			return _x( 'Super Admin', 'User role' );
+		}
+
 		if ( $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
 			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
 		}

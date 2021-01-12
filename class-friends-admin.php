@@ -402,6 +402,9 @@ class Friends_Admin {
 	 */
 	public function admin_edit_user_link( $link, $user_id ) {
 		$user = new WP_User( $user_id );
+		if ( is_multisite() && is_super_admin( $user->ID ) ) {
+			return $link;
+		}
 		if (
 			! $user->has_cap( 'friend_request' ) &&
 			! $user->has_cap( 'pending_friend_request' ) &&
@@ -725,12 +728,16 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Sorry, you are not allowed to edit this user.' ) );
 		}
 
-		if ( ! isset( $_GET['user'] ) ) {
+		if ( ! isset( $_GET['user'] ) || ! is_numeric( $_GET['user'] ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
 		$friend = new Friend_User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
+			wp_die( esc_html__( 'Invalid user ID.' ) );
+		}
+
+		if ( is_multisite() && is_super_admin( $_GET['user'] ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
@@ -1545,6 +1552,10 @@ class Friends_Admin {
 		}
 
 		if ( is_multisite() ) {
+			if ( is_super_admin( $user->ID ) ) {
+				return $actions;
+			}
+
 			$actions = array_merge( array( 'edit' => '<a href="' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ) . '">' . __( 'Edit' ) . '</a>' ), $actions );
 		}
 

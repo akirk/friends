@@ -215,7 +215,7 @@ class Friends_Frontend {
 	 * @return string The new template to be loaded.
 	 */
 	public function template_override( $template ) {
-		if ( ! $this->is_friends_frontend() || ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! $this->is_friends_frontend() ) {
 			return $template;
 		}
 
@@ -365,6 +365,10 @@ class Friends_Frontend {
 			return false;
 		}
 
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) || ( is_multisite() && is_super_admin( get_current_user_id() ) ) ) {
+			return false;
+		}
+
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
 	}
@@ -383,6 +387,11 @@ class Friends_Frontend {
 
 		// Not available for the general public or friends.
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) && ! $this->friends->access_control->private_rss_is_authenticated() ) {
+			return $query;
+		}
+
+		// Super Admins cannot view other's friend pages.
+		if ( is_multisite() && is_super_admin( get_current_user_id() ) ) {
 			return $query;
 		}
 
