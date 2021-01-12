@@ -95,7 +95,11 @@ class Friends_Admin {
 			return;
 		}
 
-		if ( ! get_user_meta( get_current_user_id(), 'friends_show_welcome_panel', true ) ) {
+		if ( isset( $_GET['friends-welcome'] ) ) {
+			update_user_meta( get_current_user_id(), 'friends_hide_welcome_panel', ! $_GET['friends-welcome'] );
+		}
+
+		if ( get_user_meta( get_current_user_id(), 'friends_hide_welcome_panel', true ) ) {
 			return;
 		}
 
@@ -661,7 +665,7 @@ class Friends_Admin {
 			wp_die( -1 );
 		}
 
-		update_user_meta( get_current_user_id(), 'friends_show_welcome_panel', empty( $_POST['visible'] ) ? 0 : 1 );
+		update_user_meta( get_current_user_id(), 'friends_hide_welcome_panel', empty( $_POST['hide'] ) ? 0 : 1 );
 
 		wp_die( 1 );
 	}

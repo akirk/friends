@@ -12,11 +12,11 @@ jQuery( function( $ ) {
 	var welcomePanel = $( '#friends-welcome-panel' ),
 		updateWelcomePanel;
 
-	updateWelcomePanel = function( visible ) {
+	updateWelcomePanel = function( hide ) {
 		$.post( ajaxurl, {
-			action: 'update-welcome-panel',
-			visible: visible,
-			welcomepanelnonce: $( '#welcomepanelnonce' ).val()
+			action: 'friends_update_welcome_panel',
+			hide: hide,
+			friendswelcomepanelnonce: $( '#friendswelcomepanelnonce' ).val()
 		});
 	};
 
@@ -25,7 +25,7 @@ jQuery( function( $ ) {
 	$('.welcome-panel-close, .welcome-panel-dismiss a', welcomePanel).click( function(e) {
 		e.preventDefault();
 		welcomePanel.addClass('hidden');
-		updateWelcomePanel( 0 );
+		updateWelcomePanel( 1 );
 	});
 
 	jQuery( document ).on( 'click', 'a#send-friends-advanced', function() {
