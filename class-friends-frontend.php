@@ -68,7 +68,7 @@ class Friends_Frontend {
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 99999 );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 	}
 
@@ -128,6 +128,24 @@ class Friends_Frontend {
 				'text_trash_post'   => __( 'Trash this post', 'friends' ),
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
+
+			$non_theme_styles = array_flip(
+				apply_filters(
+					'friends_page_allowed_styles',
+					array(
+						'admin-bar',
+						'wp-block-library',
+						'wp-block-library-theme',
+					)
+				)
+			);
+
+			foreach ( wp_styles()->queue as $style ) {
+				if ( ! isset( $non_theme_styles[ $style ] ) ) {
+					wp_dequeue_style( $style );
+				}
+			}
+
 			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ), array(), Friends::VERSION );
 		}
 	}

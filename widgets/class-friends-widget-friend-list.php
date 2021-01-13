@@ -71,21 +71,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		<?php
 		echo $args['after_title'];
 
-		if ( 0 === $all_friends->get_total() + $subscriptions->get_total() ) {
-			?>
-			<span class="friend-count-message">
-			<?php
-				esc_html_e( "You don't have any friends or subscriptions yet.", 'friends' );
-			?>
-			</span>
-
-			<a href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>">
-			<?php
-				esc_html_e( 'Send a request', 'friends' );
-			?>
-			</a>
-			<?php
-		} else {
+		if ( $all_friends->get_total() + $subscriptions->get_total() > 0 ) {
 			?>
 			<ul class="friend-list menu menu-nav">
 			<?php
