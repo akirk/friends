@@ -1841,7 +1841,10 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     padding: 0; }
   .friends-page div.friends-widget h5 {
     margin-bottom: .5em;
-    font-size: .9rem; }
+    font-size: .7rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 2px; }
   .friends-page section.posts article.hentry:before {
     display: none; }
   .friends-page section.posts article.hentry {
