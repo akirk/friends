@@ -326,6 +326,7 @@ class Friends_Admin {
 			),
 		);
 
+		echo '<div class="wrap">';
 		echo '<h1>' . esc_html__( 'Friends Plugins', 'friends' ) . '</h1>';
 		echo '<p>' . esc_html__( 'Here you can find plugins that extend the functionality of the Friends plugin.', 'friends' ) . '</p>';
 		Friends_Plugin_Installer::init();
