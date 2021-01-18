@@ -63,8 +63,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 2. But it is centered around users; you can have multiple feeds per person, even on social networks (parsing capabilities provided by plugins)
 3. Extensible with plugins itself
 4. Use the customizer to adapt it to your liking
-5. Categorize incoming content with Post Formats and view all posts of a certain format across your friends.
+5. Categorize incoming content with Post Formats and view all posts of a certain format across your friends
 6. Use rules to filter incoming content (sometimes you’re not interested in everything your friends do)
+7. Friends users are plain WordPress users with low privileges
  
 == Changelog ==
 = 1.0 =
