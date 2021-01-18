@@ -1772,6 +1772,9 @@ input:disabled + .form-icon, input.disabled + .form-icon {
       padding: 0; }
       .friends-page .card .card-body ul, .friends-page .card .card-body ol {
         margin-left: 1rem; }
+      .friends-page .card .card-body img {
+        max-width: 100%;
+        height: auto; }
       .friends-page .card .card-body .wp-block-image.alignfull, .friends-page .card .card-body .wp-block-image.alignwide, .friends-page .card .card-body .wp-block-gallery.alignfull, .friends-page .card .card-body .wp-block-gallery.alignwide {
         margin: 0; }
     @media (min-width: 960px) {
