@@ -353,6 +353,7 @@ class Friends {
 			),
 			'friends-sidebar' => array(
 				'friends-widget-refresh'        => array(),
+				'friends-widget-post-formats'   => array(),
 				'friends-widget-friend-list'    => array(
 					'title' => 'Friends',
 				),
