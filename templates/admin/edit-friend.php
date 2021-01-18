@@ -121,13 +121,6 @@ $has_last_log = false;
 				<td><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $friend->user_registered ) ); ?></td>
 			</tr>
 			<tr>
-				<th><?php esc_html_e( 'Last feed retrieval', 'friends' ); ?></th>
-				<td>
-					<?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( substr( $last_log, 0, 19 ) ) ); ?>:
-					<em><?php echo esc_html( substr( $last_log, 20 ) ); ?></em>
-				</td>
-			</tr>
-			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
 				<td>
 					<?php echo esc_html( $friend->get_role_name() ); ?>
