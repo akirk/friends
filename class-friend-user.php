@@ -168,6 +168,24 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Get a friend user for a user_id.
+	 *
+	 * @param  string $user_id The user ID.
+	 * @return Friend_User|false The friend user or false.
+	 */
+	public static function get_user_by_id( $user_id ) {
+		$user = get_user_by( 'ID', $user_id );
+		if ( $user ) {
+			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
+				return new self( $user );
+			}
+
+			return false;
+		}
+		return $user;
+	}
+
+	/**
 	 * Save multiple feeds for a user.
 	 *
 	 * @param      string $feeds  The feed URLs to subscribe to.

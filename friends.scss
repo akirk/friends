@@ -144,7 +144,10 @@ div {
 			ul, ol {
 				margin-left: 1rem;
 			}
-
+			img {
+				max-width:100%;
+				height: auto;
+			}
 			.wp-block-image, .wp-block-gallery {
 				&.alignfull, &.alignwide {
 					margin: 0;

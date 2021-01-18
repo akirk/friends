@@ -134,8 +134,10 @@ class Friends_Frontend {
 					'friends_page_allowed_styles',
 					array(
 						'admin-bar',
+						'customize-preview',
 						'wp-block-library',
 						'wp-block-library-theme',
+						'wp-mediaelement',
 					)
 				)
 			);

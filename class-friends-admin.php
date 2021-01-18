@@ -42,6 +42,8 @@ class Friends_Admin {
 		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
+		add_filter( 'manage_users_columns', array( $this, 'user_list_columns' ) );
+		add_filter( 'manage_users_custom_column', array( $this, 'user_list_custom_column' ), 10, 3 );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_new_content' ), 71 );
@@ -1654,6 +1656,45 @@ class Friends_Admin {
 		}
 
 		return $actions;
+	}
+
+	/**
+	 * Add a column "Posts" (that emcompasses both user andfriend posts.)
+	 *
+	 * @param      array $columns  The columns.
+	 *
+	 * @return     array  The columns extended by the friends_posts.
+	 */
+	public function user_list_columns( $columns ) {
+		$columns['friends_posts'] = 'Posts';
+		return $columns;
+	}
+
+	/**
+	 * Return the results for the friends_posts column.
+	 *
+	 * @param string $output      Custom column output. Default empty.
+	 * @param string $column_name Column name.
+	 * @param int    $user_id     ID of the currently-listed user.
+	 *
+	 * @return     string  The column contents.
+	 */
+	public function user_list_custom_column( $output, $column_name, $user_id ) {
+		if ( 'friends_posts' !== $column_name ) {
+			return $output;
+		}
+		$numposts = count_user_posts( $user_id, array( 'post', Friends::CPT ) );
+		$user = Friend_User::get_user_by_id( $user_id );
+		return sprintf(
+			'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
+			$user ? $user->get_local_friends_page_url() : "edit.php?author={$user_id}",
+			$numposts,
+			sprintf(
+				/* translators: %s: Number of posts. */
+				_n( '%s post by this author', '%s posts by this author', $numposts ),
+				number_format_i18n( $numposts )
+			)
+		);
 	}
 
 	/**
