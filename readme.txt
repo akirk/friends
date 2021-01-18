@@ -12,31 +12,17 @@ Use your WordPress to follow your friends (and other websites) and establish fri
 
 == Description ==
 
-Use WordPress not only to create and publish but also consume content:
+With the Friends Plugin for WordPress you can now consume content your friends (or other blogs) create, and interact with your friends on their blogs with seamless authentication.
 
-You can follow RSS feeds of your friends (or other publications), filter incoming content with rules.
+As soon as you become friends, you both of you have accounts on each others WordPresses that you can then use post comments or read private posts. You can use your account on your friend’s server just by clicking through on your own Friends page.
 
-Upgrade a subscription to friendships for people who also use the Friends plugin. They can then read your private (=just for friends) posts and comment on your posts through their friend user with automatic authentication.
+You can also use the Friends plugin as a capable self-hosted feed reader. With added parser support through plugins you can subscribe to all sorts of content, also on other social networks, allowing you to see what your friends do across social network borders.
 
-This allows for direct (and possibly private) communication with your friends, without relying on a third party, thus creating a decentralized social network.
+A “friend” in the Friends Plugin doesn’t need to be a real friend, you can also subscribe to any site you like and that provides a viable means for retrieving your content.
+
+You can turn your favorite blog into your personal newsletter by receiving full-post notification e-mails, using feed rules to filter out content you are not interested in.
 
 https://www.youtube.com/watch?v=4bz6GluXnsk
-
-On your WordPress site you can post anything you wish to share with the world. Sometimes the open nature of WordPress might be a little too open. What if you only want to share some posts with friends but not the whole world?
-
-With the Friends plugin, you can establish a connection with your friends' WordPress sites by making and accepting friend requests.
-
-Let's look at an example:
-
-You want to connect with your friend Matt and send a friend request to his WordPress. He accepts the friend request–the connection is established.
-
-Actually you're now subscribed to his posts and he's now subscribed to your posts, so on your /friends/ pages you'll both now see each others posts.
-
-No big deal, this is just like subscribing to an RSS feed, right? It actually is, and that's also what's happening behind the scenes.
-
-Things start to get more interesting if you bring private posts to the game.
-
-When you post something with the post status sent to "Private," while not visible to the random (logged-out) visitor of your site, it is shared with your friends.
 
 The logo was created by Ramon Dodd, @ramonopoly. Thank you!
 
@@ -73,12 +59,19 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 == Screenshots ==
 
-1. On /friends/ your friends posts appear together with yours.
-2. You can send friend requests to other WordPresses or subscribe to them.
-3. Your friends and subscriptions show on the users page.
-4. Friends settings
+1. You can use it like a Feed Reader
+2. But it is centered around users; you can have multiple feeds per person, even on social networks (parsing capabilities provided by plugins)
+3. Extensible with plugins itself
+4. Use the customizer to adapt it to your liking
+5. Categorize incoming content with Post Formats and view all posts of a certain format across your friends.
+6. Use rules to filter incoming content (sometimes you’re not interested in everything your friends do)
  
 == Changelog ==
+= 1.0 =
+- Support for multiple feeds per person
+- Support for (parser) plugins
+- Touch-up the Friends page appearance
+
 = 0.20 =
 - Revamp the friendship protocol, allow specifying a codeword and sending a message
 
