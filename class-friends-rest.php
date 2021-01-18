@@ -147,7 +147,7 @@ class Friends_REST {
 		}
 
 		$friend_user_login = Friend_User::get_user_login_for_url( $friend_user->user_url );
-		if ( $friend_user_login !== $friend_user->user_login ) {
+		if ( ! $friend_user->has_cap( 'pending_friend_request' ) ) {
 			return new WP_Error(
 				'friends_offer_no_longer_valid',
 				'The friendship offer is no longer valid.',

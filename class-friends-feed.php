@@ -555,7 +555,7 @@ class Friends_Feed {
 	 * Redirect
 	 */
 	public function friends_add_friend_redirect() {
-		if ( ! isset( $_GET['add-friend'] ) ) {
+		if ( ! isset( $_GET['add-friend'] ) || isset( $_GET['page'] ) ) {
 			return;
 		}
 
