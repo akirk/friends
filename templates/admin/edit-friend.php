@@ -45,7 +45,14 @@ $has_last_log = false;
 									<?php foreach ( $registered_parsers as $slug => $parser_name ) : ?>
 										<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
 									<?php endforeach; ?>
-									<?php if ( ! isset( $registered_parsers[ $feed->get_parser() ] ) ) : ?>
+									<?php if ( 'unsupported' === $feed->get_parser() ) : ?>
+										<option value="<?php echo esc_attr( $feed->get_parser() ); ?>" selected="selected">
+											<?php
+											// translators: %s is the name of a deleted parser.
+											echo esc_html( $feed->get_parser() );
+											?>
+										</option>
+									<?php elseif ( ! isset( $registered_parsers[ $feed->get_parser() ] ) ) : ?>
 										<option value="<?php echo esc_attr( $feed->get_parser() ); ?>" selected="selected">
 											<?php
 											// translators: %s is the name of a deleted parser.
@@ -61,9 +68,11 @@ $has_last_log = false;
 								</select></td>
 								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][title]" value="<?php echo esc_attr( $feed->get_title() ); ?>" size="20" aria-label="<?php _e( 'Feed Name', 'friends' ); ?>" /></td>
 							</tr>
+							<?php if ( $feed->get_last_log() ) : ?>
 							<tr class="<?php echo $feed->get_active() ? 'active' : 'inactive hidden'; ?> lastlog hidden">
 								<td colspan="5" class="notice"><?php echo esc_html( $feed->get_last_log() ); ?></td>
 							</tr>
+							<?php endif; ?>
 						<?php endforeach; ?>
 						<tr class="template hidden">
 							<td></td>
