@@ -106,7 +106,7 @@ class Friends_Admin {
 		}
 
 		$friends_subscriptions = Friend_User_Query::all_friends_subscriptions();
-		if ( $friends_subscriptions->get_total() ) {
+		if ( $friends_subscriptions->get_total() && ! ( isset( $_GET['friends-welcome'] ) && $_GET['friends-welcome'] ) ) {
 			return;
 		}
 
