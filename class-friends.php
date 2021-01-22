@@ -118,8 +118,7 @@ class Friends {
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
 
-		remove_filter( 'request', '_post_format_request' );
-		add_filter( 'request', array( $this, '_post_format_request' ) );
+		add_filter( 'request', array( $this, 'limit_post_format_request' ), 20 );
 	}
 
 	/**
@@ -471,25 +470,14 @@ class Friends {
 	}
 
 	/**
-	 * Filters the request to allow for the format prefix.
-	 *
-	 * Version from core, fixing the blabing of the friend posts.
-	 * https://core.trac.wordpress.org/ticket/52153
+	 * Fix a bug in core where it outputs cached friend posts.
 	 *
 	 * @param array $qvs Query variables.
 	 * @return array
 	 */
-	public function _post_format_request( $qvs ) {
-		if ( ! isset( $qvs['post_format'] ) ) {
-			return $qvs;
-		}
-		$slugs = get_post_format_slugs();
-		if ( isset( $slugs[ $qvs['post_format'] ] ) ) {
-			$qvs['post_format'] = 'post-format-' . $slugs[ $qvs['post_format'] ];
-		}
-		$tax = get_taxonomy( 'post_format' );
-		if ( ! is_admin() ) {
-			$qvs['post_type'] = array_filter( $tax->object_type, 'is_post_type_viewable' );
+	public function limit_post_format_request( $qvs ) {
+		if ( isset( $qvs['post_type'] ) ) {
+			$qvs['post_type'] = array_filter( (array) $qvs['post_type'], 'is_post_type_viewable' );
 		}
 
 		return $qvs;
