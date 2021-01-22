@@ -24,6 +24,7 @@
 		}
 		figure img, img.size-full {
 			max-width: 100% !important;
+			height: auto !important;
 		}
 	</style>
 	<title><?php echo $email_title; ?></title>

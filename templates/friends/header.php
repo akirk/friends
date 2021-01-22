@@ -21,7 +21,7 @@ if ( isset( $_GET['s'] ) ) {
 <body <?php body_class( 'off-canvas off-canvas-sidebar-show' ); ?>>
 	<div id="friends-sidebar" class="off-canvas-sidebar">
 		<div class="friends-brand">
-			<a class="friends-logo" href="<?php echo esc_attr( site_url( '/friends/' ) ); ?>"><h2><?php echo esc_html( 'Friends', 'friends' ); ?></h2></a>
+			<a class="friends-logo" href="<?php echo esc_attr( site_url( '/friends/' ) ); ?>"><h2><?php esc_html_e( 'Friends', 'friends' ); ?></h2></a>
 		</div>
 		<div class="friends-nav accordion-container">
 			<?php dynamic_sidebar( 'friends-sidebar' ); ?>
