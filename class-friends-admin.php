@@ -1773,7 +1773,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'your-profile',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Your Profile' ),
+					'title'  => esc_html__( 'Your Profile', 'friends' ),
 					'href'   => site_url( '/friends/?public' ),
 				)
 			);
