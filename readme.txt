@@ -2,7 +2,7 @@
 Contributors: akirk
 Tags: friends, rss, decentralized, social-network, oyd, own-your-data
 Requires at least: 5.0
-Tested up to: 5.5
+Tested up to: 5.6
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -14,7 +14,7 @@ Use your WordPress to follow your friends (and other websites) and establish fri
 
 With the Friends Plugin for WordPress you can now consume content your friends (or other blogs) create, and interact with your friends on their blogs with seamless authentication.
 
-As soon as you become friends, you both of you have accounts on each others WordPresses that you can then use post comments or read private posts. You can use your account on your friend’s server just by clicking through on your own Friends page.
+As soon as you become friends, both of you get accounts on each other’s WordPresses that you can then use post comments or read private posts. You’ll use the account on your friend’s server just by clicking on their post on your own Friends page.
 
 You can also use the Friends plugin as a capable self-hosted feed reader. With added parser support through plugins you can subscribe to all sorts of content, also on other social networks, allowing you to see what your friends do across social network borders.
 
@@ -23,6 +23,17 @@ A “friend” in the Friends Plugin doesn’t need to be a real friend, you can
 You can turn your favorite blog into your personal newsletter by receiving full-post notification e-mails, using feed rules to filter out content you are not interested in.
 
 https://www.youtube.com/watch?v=4bz6GluXnsk
+
+=== Philosophy ===
+
+The Friends Plugin was built to make use of what WordPress provides:
+
+- You use the WordPress infrastructure (Gutenberg or Classic Editor, what you prefer) to create your posts.
+- If a post is private, only logged-in friends can see it. They can only log in through their own Friends plugin on their blog.
+- Therefore, your friend is just a user on your WordPress blog, their posts are theirs, you can delete them to unfriend them.
+- No extra tables: The Friends plugin just uses a post type, options and some taxonomies to store its data. When you delete the plugin, your WordPress will be slim like before.
+
+In future, I could see mobile apps instead of talking to a third party, to talk to your own blog. It will have your friends' posts already fetched. Maybe the apps will be specialized, like Twitter or Instagram, where you'd only interact with and create posts in the specific post format.
 
 The logo was created by Ramon Dodd, @ramonopoly. Thank you!
 
@@ -66,6 +77,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 5. Categorize incoming content with Post Formats and view all posts of a certain format across your friends
 6. Use rules to filter incoming content (sometimes you’re not interested in everything your friends do)
 7. Friends users are plain WordPress users with low privileges
+8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
  
 == Changelog ==
 = 1.0 =
