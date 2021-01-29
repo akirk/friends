@@ -33,7 +33,7 @@ class Friends_Frontend {
 	/**
 	 * Whether an author is being displayed
 	 *
-	 * @var string|false
+	 * @var object|false
 	 */
 	public $author = false;
 
@@ -59,9 +59,9 @@ class Friends_Frontend {
 	 */
 	private function register_hooks() {
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
-		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 4 );
+		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 2 );
 		add_filter( 'friends_header_widget_title', array( $this, 'header_widget_title' ) );
-		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ), 10, 2 );
+		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ) );
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
 		add_action( 'wp', array( $this, 'remove_top_margin' ) );
@@ -118,9 +118,9 @@ class Friends_Frontend {
 	 */
 	public function enqueue_scripts() {
 		if ( is_user_logged_in() && $this->is_friends_frontend() ) {
-			wp_enqueue_script( 'friends', plugins_url( 'friends.js', __FILE__ ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
+			wp_enqueue_script( 'friends', plugins_url( 'friends.js', FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
 			$variables = array(
-				'emojis_json'       => plugins_url( 'emojis.json', __FILE__ ),
+				'emojis_json'       => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
 				'ajax_url'          => admin_url( 'admin-ajax.php' ),
 				'spinner_url'       => admin_url( 'images/wpspin_light.gif' ),
 				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
@@ -148,7 +148,7 @@ class Friends_Frontend {
 				}
 			}
 
-			wp_enqueue_style( 'friends', plugins_url( 'friends.css', __FILE__ ), array(), Friends::VERSION );
+			wp_enqueue_style( 'friends', plugins_url( 'friends.css', FRIENDS_PLUGIN_FILE ), array(), Friends::VERSION );
 		}
 	}
 
@@ -250,7 +250,7 @@ class Friends_Frontend {
 			$this->friends->feed->retrieve_friend_posts( null, true );
 		}
 
-		return apply_filters( 'friends_template_path', 'friends/posts.php' );
+		return Friends::template_loader()->get_template_part( 'frontend/index', null, array(), false );
 	}
 
 	/**
@@ -338,10 +338,9 @@ class Friends_Frontend {
 	 * Don't show the edit link for friend posts.
 	 *
 	 * @param  string $link    The edit link.
-	 * @param  int    $post_id The post id.
 	 * @return string|bool The edit link or false.
 	 */
-	public function friend_post_edit_link( $link, $post_id ) {
+	public function friend_post_edit_link( $link ) {
 		global $post;
 
 		if ( $post && Friends::CPT === $post->post_type ) {
@@ -358,11 +357,9 @@ class Friends_Frontend {
 	 *
 	 * @param string  $post_link The post's permalink.
 	 * @param WP_Post $post      The post in question.
-	 * @param bool    $leavename Whether to keep the post name.
-	 * @param bool    $sample    Is it a sample permalink.
 	 * @reeturn string The overriden post link.
 	 */
-	public function friend_post_link( $post_link, WP_Post $post, $leavename, $sample ) {
+	public function friend_post_link( $post_link, WP_Post $post ) {
 		if ( $post && Friends::CPT === $post->post_type ) {
 			return get_the_guid( $post );
 		}
@@ -391,6 +388,87 @@ class Friends_Frontend {
 
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
+	}
+
+	/**
+	 * Render the Friends OPML
+	 */
+	protected function render_opml() {
+		$feeds = array();
+		$users = array();
+
+		$friend_users = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
+		foreach ( $friend_users->get_results() as $friend_user ) {
+			$role = $friend_user->get_role_name( true, 9 );
+			if ( ! isset( $users[ $role ] ) ) {
+				$users[ $role ] = array();
+			}
+			$users[ $role ][] = $friend_user;
+		}
+		ksort( $users );
+		foreach ( $users as $role => $friend_users ) {
+			foreach ( $friend_users as $friend_user ) {
+				$user_feeds = $friend_user->get_active_feeds();
+
+				$need_local_feed = false;
+
+				foreach ( $user_feeds as $feed ) {
+					switch ( $feed->get_mime_type() ) {
+						case 'application/atom+xml':
+						case 'application/atomxml':
+						case 'application/rss+xml':
+						case 'application/rssxml':
+							break;
+						default:
+							$need_local_feed = true;
+							break 2;
+					}
+				}
+
+				if ( $need_local_feed ) {
+					$user_feeds = array_slice( $user_feeds, 0, 1 );
+				}
+
+				$user = array(
+					'friend_user' => $friend_user,
+					'feeds'       => array(),
+				);
+
+				foreach ( $user_feeds as $feed ) {
+					$type = 'rss';
+					if ( $need_local_feed ) {
+						$xml_url = $feed->get_local_url() . '?auth=' . $_GET['auth'];
+						$title = $friend_user->display_name;
+					} else {
+						$xml_url = $feed->get_private_url( YEAR_IN_SECONDS );
+						if ( 'application/atom+xml' === $feed->get_mime_type() ) {
+							$type = 'atom';
+						}
+					}
+					$user['feeds'][] = array(
+						'xml_url'  => $xml_url,
+						'html_url' => $feed->get_local_html_url(),
+						'title'    => $title,
+						'type'     => $type,
+					);
+				}
+
+				if ( ! empty( $user['feeds'] ) ) {
+					if ( ! isset( $feeds[ $role ] ) ) {
+						$feeds[ $role ] = array();
+					}
+					$feeds[ $role ][] = $user;
+				}
+			}
+		}
+		Friends::template_loader()->get_template_part(
+			'admin/opml',
+			null,
+			array(
+				'feeds' => $feeds,
+			)
+		);
+		exit;
 	}
 
 	/**
@@ -427,17 +505,10 @@ class Friends_Frontend {
 		$query->is_comment_feed = false;
 		$query->set( 'pagename', null );
 
-		$post_format = false;
-		$page_name = empty( $wp_query->query['pagename'] ) ? '' : $wp_query->query['pagename'];
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
 			if ( 'opml' === $pagename_parts[1] ) {
-				$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
-
-				$feed = $this->friends->feed;
-
-				include apply_filters( 'friends_template_path', 'admin/opml.php' );
-				exit;
+				return $this->render_opml();
 			}
 			$potential_post_format = false;
 			if ( 'type' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {

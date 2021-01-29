@@ -2,17 +2,18 @@
 /**
  * This template contains the rules editor.
  *
+ * @version 1.0
  * @package Friends
  */
 
 ?><form method="post" id="edit-rules">
-	<?php wp_nonce_field( 'edit-friend-rules-' . $friend->ID ); ?>
-	<input type="hidden" name="friend" value="<?php echo esc_attr( $friend->ID ); ?>" />
+	<?php wp_nonce_field( 'edit-friend-rules-' . $args['friend']->ID ); ?>
+	<input type="hidden" name="friend" value="<?php echo esc_attr( $args['friend']->ID ); ?>" />
 	<p class="description"><?php esc_html_e( 'By specifying rules, you can automatically accept, trash, or transform individual feed items, thus filter incoming posts according to your interest.', 'friends' ); ?></p>
 	<p class="description"><?php esc_html_e( 'Save changes to add another rule, leave the rule text empty to delete the rule.', 'friends' ); ?></p>
 	<table>
 		<tbody>
-			<?php foreach ( $rules as $rule ) : ?>
+			<?php foreach ( $args['rules'] as $rule ) : ?>
 			<tr>
 				<th>
 					<select name="rules[field][]">
@@ -31,12 +32,7 @@
 						<option value="replace" <?php selected( 'replace', $rule['action'] ); ?>><?php echo esc_html_e( 'replace the match with this:', 'friends' ); ?></option>
 					</select>
 				</td>
-				<td style="
-				<?php
-				if ( 'replace' !== $rule['action'] ) {
-					echo 'display: none';}
-				?>
-				" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_attr( $rule['replace'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
+				<td style="<?php echo esc_attr( 'replace' !== $rule['action'] ? 'display: none' : '' ); ?>" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_attr( $rule['replace'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
 				<?php if ( empty( $rule['regex'] ) ) : ?>
 					<td><span class="description">(<?php _e( 'Unsubmitted rule', 'friends' ); ?>)</span></td>
 				<?php endif; ?>
@@ -46,9 +42,9 @@
 			<th><label for="field"><?php esc_html_e( 'In any other case', 'friends' ); ?></label></th>
 			<td colspan="3">
 				<select name="catch_all">
-					<option value="accept" <?php selected( 'accept', $catch_all ); ?>><?php echo esc_html_e( 'accept the item', 'friends' ); ?></option>
-					<option value="trash" <?php selected( 'trash', $catch_all ); ?>><?php echo esc_html_e( 'trash the item', 'friends' ); ?></option>
-					<option value="delete" <?php selected( 'delete', $catch_all ); ?>><?php echo esc_html_e( 'delete the item', 'friends' ); ?></option>
+					<option value="accept" <?php selected( 'accept', $args['catch_all'] ); ?>><?php echo esc_html_e( 'accept the item', 'friends' ); ?></option>
+					<option value="trash" <?php selected( 'trash', $args['catch_all'] ); ?>><?php echo esc_html_e( 'trash the item', 'friends' ); ?></option>
+					<option value="delete" <?php selected( 'delete', $args['catch_all'] ); ?>><?php echo esc_html_e( 'delete the item', 'friends' ); ?></option>
 				</select>
 			</td>
 		</tr>
@@ -56,6 +52,6 @@
 	</table>
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
-		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ); ?>" style="margin-left: 1em"><?php _e( 'Back' ); ?></a>
+		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ); ?>" style="margin-left: 1em"><?php _e( 'Back' ); ?></a>
 	</p>
 </form>

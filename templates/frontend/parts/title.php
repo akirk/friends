@@ -2,13 +2,14 @@
 /**
  * This template contains the content title part for an article on /friends/.
  *
+ * @version 1.0
  * @package Friends
  */
 
 ?><h4 class="card-title">
 	<?php if ( Friends::CPT === get_post_type() ) : ?>
 		<?php
-		$friends->frontend->link(
+		$args['friends']->frontend->link(
 			get_the_permalink(),
 			get_the_title()
 		);

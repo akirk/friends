@@ -13,9 +13,9 @@
 			<th class="column-date"><?php _e( 'Date' ); ?></th>
 			<th class="column-action"><?php _e( 'Action', 'friends' ); ?></th>
 		</tr>
-		<?php while ( $friend_posts->have_posts() ) : ?>
-			<?php $post = $friend_posts->next_post(); ?>
-			<?php $modified_post = $feed->apply_feed_rules( $post, null, $friend ); ?>
+		<?php while ( $args['friend_posts']->have_posts() ) : ?>
+			<?php $post = $args['friend_posts']->next_post(); ?>
+			<?php $modified_post = $args['feed']->apply_feed_rules( $post, null, $args['friend'] ); ?>
 			<tr>
 				<td class="title column-title column-primary" data-colname="<?php esc_attr_e( 'Title', 'friends' ); ?>"><a href="<?php the_permalink( $modified_post ? $modified_post : $post ); ?>" rel="noopener noreferrer"><?php echo esc_html( $modified_post ? $modified_post->post_title : $post->post_title ); ?></a></td>
 				<td class="author column-author" data-colname="<?php esc_attr_e( 'Author' ); ?>"><?php echo esc_html( $modified_post ? $modified_post->author : get_post_meta( get_the_ID( $post ), 'author', true ) ); ?></td>

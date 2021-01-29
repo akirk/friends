@@ -2,25 +2,11 @@
 /**
  * This template contains the Admin Send Friend Request form.
  *
+ * @version 1.0
  * @package Friends
  */
 
-$friend_requests = new WP_User_Query(
-	array(
-		'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
-		'orderby'  => 'registered',
-		'order'    => 'DESC',
-	)
-);
-$friend_requests = $friend_requests->get_results();
-
-$wp_roles = wp_roles();
-$roles    = array();
-foreach ( $wp_roles->get_names() as $role => $name ) {
-	$roles[ $role ] = Friends::translate_user_role( '', $name, 'User role', 'default' );
-}
-
-if ( empty( $friend_requests ) ) {
+if ( empty( $args['friend_requests'] ) ) {
 	return;
 }
 
@@ -35,14 +21,14 @@ if ( empty( $friend_requests ) ) {
 		</tr>
 	</thead>
 	<tbody>
-		<?php foreach ( $friend_requests as $friend_user ) : ?>
+		<?php foreach ( $args['friend_requests'] as $friend_user ) : ?>
 		<tr>
 			<td class="site column-site column-primary" data-colname="<?php esc_attr_e( 'Site', 'friends' ); ?>">
 				<a href="<?php echo esc_url( apply_filters( 'get_edit_user_link', $friend_user->user_url, $friend_user->ID ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
 				<button type="button" class="toggle-row"><span class="screen-reader-text"><?php _e( 'Show more details' ); ?></span></button>
 			</td>
 			<td class="date column-date" data-colname="<?php esc_attr_e( 'Date' ); ?>"><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $friend_user->user_registered ) ); ?></td>
-			<td class="status column-status" data-colname="<?php esc_attr_e( 'Status', 'friends' ); ?>"><?php echo esc_html( $roles[ $friend_user->roles[0] ] ); ?></td>
+			<td class="status column-status" data-colname="<?php esc_attr_e( 'Status', 'friends' ); ?>"><?php echo esc_html( $friend_user->get_role_name() ); ?></td>
 		</tr>
 		<?php endforeach; ?>
 	</tbody>

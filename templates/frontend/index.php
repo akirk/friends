@@ -2,11 +2,20 @@
 /**
  * This is the main /friends/ template.
  *
+ * @version 1.0
  * @package Friends
  */
 
 $friends = Friends::get_instance();
-include __DIR__ . '/header.php'; ?>
+Friends::template_loader()->get_template_part(
+	'frontend/header',
+	null,
+	array(
+		'friends' => $friends,
+	)
+);
+
+?>
 <section class="posts">
 	<?php
 	if ( ! have_posts() ) {
@@ -21,16 +30,9 @@ include __DIR__ . '/header.php'; ?>
 			} else {
 				$any_friends = Friend_User_Query::all_friends_subscriptions();
 				if ( $any_friends->get_total() > 0 ) {
-					if ( isset( $_GET['p'] ) && $_GET['p'] > 1 ) {
-						esc_html_e( 'No further posts of your friends could were found.', 'friends' );
-					} else {
-						esc_html_e( "Your friends haven't posted anything yet!", 'friends' );
-					}
+					Friends::template_loader()->get_template_part( 'frontend/no-posts' );
 				} else {
-					esc_html_e( "You haven't added any friends or subscriptions yet.", 'friends' );
-					?>
-					<a href="<?php echo self_admin_url( 'admin.php?page=add-friend' ); ?>"><?php esc_html_e( 'Add a friend now', 'friends' ); ?></a>
-					<?php
+					Friends::template_loader()->get_template_part( 'frontend/no-friends' );
 				}
 			}
 			?>
@@ -38,20 +40,19 @@ include __DIR__ . '/header.php'; ?>
 		</div>
 		<?php
 	} else {
-
 		while ( have_posts() ) {
 			the_post();
 			$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
-			$avatar = get_post_meta( get_the_ID(), 'gravatar', true );
 
-			$part_base = __DIR__ . '/parts/content';
-			$part = $part_base . '.php';
-			$part_post_format = $part_base . '-' . get_post_format() . '.php';
-			if ( file_exists( $part_post_format ) ) {
-				include $part_post_format;
-			} else {
-				include $part;
-			}
+			Friends::template_loader()->get_template_part(
+				'frontend/parts/content',
+				get_post_format(),
+				array(
+					'friends'     => $friends,
+					'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
+					'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
+				)
+			);
 		}
 
 		the_posts_navigation();
@@ -59,4 +60,10 @@ include __DIR__ . '/header.php'; ?>
 	?>
 </section>
 <?php
-include __DIR__ . '/footer.php';
+Friends::template_loader()->get_template_part(
+	'frontend/footer',
+	null,
+	array(
+		'friends' => $friends,
+	)
+);

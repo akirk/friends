@@ -114,7 +114,7 @@ class Friends_Feed {
 	 * @param      string $parser  The parser slug.
 	 * @param      string $url     The url.
 	 *
-	 * @return     array  The feed items.
+	 * @return     array|WP_error  The feed items.
 	 */
 	public function preview( $parser, $url ) {
 		if ( ! isset( $this->parsers[ $parser ] ) ) {

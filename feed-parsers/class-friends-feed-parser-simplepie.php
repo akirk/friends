@@ -136,7 +136,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 		SimplePie_Cache::register( 'wp_transient', 'WP_Feed_Cache_Transient' );
 		$feed->set_cache_location( 'wp_transient' );
 
-		$feed->set_file_class( 'WP_SimplePie_File' );
+		$feed->set_file_class( 'Friends_SimplePie_File_Accept_Only_RSS' );
 		$registry = $feed->get_registry();
 		$registry->register( 'Misc', 'Friends_SimplePie_Misc' );
 

@@ -2,6 +2,7 @@
 /**
  * The /friends/ footer
  *
+ * @version 1.0
  * @package Friends
  */
 

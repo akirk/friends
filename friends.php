@@ -19,29 +19,32 @@
  */
 
 defined( 'ABSPATH' ) || exit;
+define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/friends.php' );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 
-require_once __DIR__ . '/class-friend-user.php';
-require_once __DIR__ . '/class-friend-user-feed.php';
-require_once __DIR__ . '/class-friend-user-query.php';
+require_once __DIR__ . '/includes/class-friend-user.php';
+require_once __DIR__ . '/includes/class-friend-user-feed.php';
+require_once __DIR__ . '/includes/class-friend-user-query.php';
 
 // Classes to be implemented or used by parser plugins.
 require_once __DIR__ . '/feed-parsers/class-friends-feed-parser.php';
 require_once __DIR__ . '/feed-parsers/class-friends-feed-item.php';
 
-require_once __DIR__ . '/class-friends-access-control.php';
-require_once __DIR__ . '/class-friends-admin.php';
-require_once __DIR__ . '/class-friends-blocks.php';
-require_once __DIR__ . '/class-friends-feed.php';
-require_once __DIR__ . '/class-friends-frontend.php';
-require_once __DIR__ . '/class-friends-logging.php';
-require_once __DIR__ . '/class-friends-notifications.php';
-require_once __DIR__ . '/class-friends-plugin-installer.php';
-require_once __DIR__ . '/class-friends-rest.php';
-require_once __DIR__ . '/class-friends-shortcodes.php';
-require_once __DIR__ . '/class-friends-3rd-parties.php';
-require_once __DIR__ . '/class-friends.php';
+require_once __DIR__ . '/includes/class-friends-access-control.php';
+require_once __DIR__ . '/includes/class-friends-admin.php';
+require_once __DIR__ . '/includes/class-friends-blocks.php';
+require_once __DIR__ . '/includes/class-friends-feed.php';
+require_once __DIR__ . '/includes/class-friends-frontend.php';
+require_once __DIR__ . '/includes/class-friends-logging.php';
+require_once __DIR__ . '/includes/class-friends-notifications.php';
+require_once __DIR__ . '/includes/class-friends-plugin-installer.php';
+require_once __DIR__ . '/includes/class-friends-rest.php';
+require_once __DIR__ . '/includes/class-friends-shortcodes.php';
+require_once __DIR__ . '/includes/class-friends-template-loader.php';
+require_once __DIR__ . '/includes/class-friends-3rd-parties.php';
+require_once __DIR__ . '/includes/class-friends.php';
 
 add_action( 'plugins_loaded', array( 'Friends', 'init' ) );
 add_action( 'admin_init', array( 'Friends_Plugin_Installer', 'register_hooks' ) );

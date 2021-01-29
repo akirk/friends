@@ -45,13 +45,10 @@ class Friends_Plugin_Installer {
 	public static function init() {
 
 		$plugins = self::get_plugins();
-		?>
-		<div class="friends-plugin-installer wp-list-table widefat plugin-install">
-			<div id="the-list">
-		<?php
+
 		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 
-		foreach ( array_keys( $plugins ) as $plugin_slug ) :
+		foreach ( array_keys( (array) $plugins ) as $plugin_slug ) {
 
 			$button_classes = 'install button';
 			$button_text    = __( 'Install Now', 'friends' );
@@ -89,14 +86,9 @@ class Friends_Plugin_Installer {
 						$button_text    = __( 'Activate' );
 					}
 				}
-				self::render_template( $plugin_slug, $api, $button_text, $button_classes );
+				self::render_template( $api, $button_text, $button_classes );
 			}
-
-		endforeach;
-		?>
-			</div>
-		</div>
-		<?php
+		}
 	}
 
 	/**
@@ -138,15 +130,15 @@ class Friends_Plugin_Installer {
 	/**
 	 * Override the plugin info.
 	 *
-	 * @param      stdClass $res     The resource.
-	 * @param      string   $action  The action.
-	 * @param      array    $args    The arguments.
+	 * @param      false|object|array $res     The resource.
+	 * @param      string             $action  The action.
+	 * @param      object             $args    The arguments.
 	 *
 	 * @return     bool|stdClass  ( description_of_the_return_value )
 	 */
 	public static function override_plugin_info( $res, $action, $args ) {
 		if ( 'plugin_information' !== $action ) {
-			return false;
+			return $res;
 		}
 
 		$plugins = self::get_plugins();
@@ -169,7 +161,7 @@ class Friends_Plugin_Installer {
 			return $transient;
 		}
 
-		foreach ( self::get_plugins() as $plugin_slug => $data ) {
+		foreach ( self::get_plugins() as $data ) {
 			if ( $data && isset( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ] ) && version_compare( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ], $data->version, '<' ) && version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) {
 				$res = new stdClass();
 				$res->slug = $data->slug;
@@ -187,16 +179,21 @@ class Friends_Plugin_Installer {
 	/**
 	 * Render display template for each plugin.
 	 *
-	 * @param      array  $plugin          Original data passed to init().
-	 * @param      array  $api             Results from plugins_api.
+	 * @param      object $api             Results from plugins_api.
 	 * @param      string $button_text     Text for the button.
 	 * @param      string $button_classes  Classnames for the button.
 	 *
 	 * @since      1.0
 	 */
-	public static function render_template( $plugin, $api, $button_text, $button_classes ) {
-		$more_info_url = $api->more_info;
-		$install_url = add_query_arg(
+	public static function render_template( $api, $button_text, $button_classes ) {
+		$args = array(
+			'api'                     => $api,
+			'button_classes'          => $button_classes,
+			'button_text'             => $button_text,
+			'deactivate_button_class' => '',
+		);
+
+		$args['install_url'] = add_query_arg(
 			array(
 				'tab'      => 'install-plugin',
 				'plugin'   => $api->slug,
@@ -204,44 +201,12 @@ class Friends_Plugin_Installer {
 			),
 			admin_url( 'update.php' )
 		);
-		$deactivate_button_class = '';
+
 		if ( preg_match( '/\b(install|activate)\b/', $button_classes ) ) {
-			$deactivate_button_class = 'hidden';
+			$args['deactivate_button_class'] = 'hidden';
 		}
-		?>
-		<div class="plugin-card plugin-card-<?php echo $api->slug; ?>">
-			<div class="plugin-card-top">
-				<div class="name column-name">
-					<h3>
-						<a class="thickbox open-plugin-details-modal" href="<?php echo esc_url( $more_info_url ); ?>"><?php echo $api->name; ?> <?php echo $api->version; ?></a>
-					</h3>
-				</div>
 
-				<div class="desc column-description">
-					<p><?php echo $api->short_description; ?></p>
-					<p class="authors">
-						<cite>
-							<?php /* translators: %s is a plugin author */ printf( __( 'By %s' ), $api->author ); ?>
-						</cite>
-					</p>
-				</div>
-			</div>
-
-			<div class="plugin-card-bottom">
-				<a class="<?php echo $button_classes; ?>" data-slug="<?php echo $api->slug; ?>" data-name="<?php echo $api->name; ?>" href="<?php echo esc_url( $install_url ); ?>" aria-label="<?php echo /* translators: %1$s is a plugin name, %2$s is a plugin version. */ sprintf( esc_html__( 'Install %1$s %2$s now', 'framework' ), $api->name, $api->version ); ?>"><?php echo esc_html( $button_text ); ?></a>
-
-				<a class="button thickbox" href="<?php echo esc_url( $more_info_url ); ?>" aria-label="<?php echo /* translators: %s is a plugin name. */ sprintf( esc_html__( 'More information about %s' ), $api->name ); ?>" data-title="<?php echo $api->name; ?>"><?php _e( 'More Details' ); ?></a>
-
-				<a class="button thickbox deactivate <?php echo $deactivate_button_class; ?>"
-					data-slug="<?php echo esc_attr( $api->slug ); ?>"
-					data-name="<?php echo esc_attr( $api->name ); ?>"
-					href="<?php echo esc_url( $install_url ); ?>">
-					<?php echo esc_html_e( 'Deactivate' ); ?>
-				</a>
-
-			</div>
-		</div>
-		<?php
+		Friends::template_loader()->get_template_part( 'admin/plugin-info', null, $args );
 	}
 
 	/**
@@ -451,7 +416,7 @@ class Friends_Plugin_Installer {
 	 * @since 1.0
 	 */
 	public static function enqueue_scripts() {
-		wp_enqueue_script( 'friends-plugin-installer', plugins_url( 'plugin-installer.js', __FILE__ ), array( 'jquery' ), Friends::VERSION, true );
+		wp_enqueue_script( 'friends-plugin-installer', plugins_url( 'plugin-installer.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), Friends::VERSION, true );
 		wp_localize_script(
 			'friends-plugin-installer',
 			'friends_plugin_installer_localize',

@@ -2,6 +2,7 @@
 /**
  * This template contains the raw rules editor.
  *
+ * @version 1.0
  * @package Friends
  */
 
@@ -23,13 +24,13 @@ echo wp_kses(
 <div id="raw-rules-data" style="display: none">
 	<h2><?php esc_html_e( 'Raw Rules Data', 'friends' ); ?></h2>
 	<form method="post">
-		<?php wp_nonce_field( 'friend-rules-raw-' . $friend->ID ); ?>
+		<?php wp_nonce_field( 'friend-rules-raw-' . $args['friend']->ID ); ?>
 		<table>
 			<tbody>
 				<tr>
 					<th><label for="field"><?php esc_html_e( 'Rules as JSON', 'friends' ); ?></label></th>
 					<td>
-						<textarea name="rules" style="font-family: monospace" rows="5" cols="80"><?php echo esc_html( json_encode( $rules, JSON_PRETTY_PRINT ) ); ?></textarea>
+						<textarea name="rules" style="font-family: monospace" rows="5" cols="80"><?php echo esc_html( json_encode( $args['rules'], JSON_PRETTY_PRINT ) ); ?></textarea>
 					</td>
 				</tr>
 			</tbody>

@@ -2,25 +2,26 @@
 /**
  * This template contains the friend editor.
  *
+ * @version 1.0
  * @package Friends
  */
 
 $has_last_log = false;
 ?><form method="post">
-	<?php wp_nonce_field( 'edit-friend-' . $friend->ID ); ?>
+	<?php wp_nonce_field( 'edit-friend-' . $args['friend']->ID ); ?>
 	<table class="form-table">
 		<tbody>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'URL' ); ?></label></th>
-				<td><input type="text" name="user_url" value="<?php echo esc_attr( $friend->user_url ); ?>" class="regular-text" /></td>
+				<td><input type="text" name="user_url" value="<?php echo esc_attr( $args['friend']->user_url ); ?>" class="regular-text" /></td>
 			</tr>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Feeds', 'friends' ); ?></label></th>
 				<td>
-					<?php if ( empty( $friend->get_active_feeds() ) ) : ?>
+					<?php if ( empty( $args['friend']->get_active_feeds() ) ) : ?>
 						<?php _e( 'There are no active feeds.', 'friends' ); ?>
 					<?php endif; ?>
-					<table class="feed-table<?php echo empty( $friend->get_active_feeds() ) ? ' hidden' : ''; ?>">
+					<table class="feed-table<?php echo empty( $args['friend']->get_active_feeds() ) ? ' hidden' : ''; ?>">
 						<thead>
 							<tr>
 								<th class="checkbox"><?php _e( 'Active', 'friends' ); ?></th>
@@ -28,11 +29,14 @@ $has_last_log = false;
 								<th><?php _e( 'Parser', 'friends' ); ?></th>
 								<th><?php _e( 'Post Format' ); ?></th>
 								<th><?php _e( 'Remarks', 'friends' ); ?></th>
+								<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
+								<th><?php _e( 'MIME Type', 'friends' ); ?></th>
+								<?php endif; ?>
 							</tr>
 						</thead>
 						<tbody>
 						<?php
-						foreach ( $friend->get_feeds() as $term_id => $feed ) :
+						foreach ( $args['friend']->get_feeds() as $term_id => $feed ) :
 							if ( $feed->get_last_log() ) {
 								$has_last_log = true;
 								$last_log = $feed->get_last_log();
@@ -42,7 +46,7 @@ $has_last_log = false;
 								<td><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php _e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></td>
 								<td><input type="url" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="20" aria-label="<?php _e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
 								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php _e( 'Parser', 'friends' ); ?>">
-									<?php foreach ( $registered_parsers as $slug => $parser_name ) : ?>
+									<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
 										<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
 									<?php endforeach; ?>
 									<?php if ( 'unsupported' === $feed->get_parser() ) : ?>
@@ -52,7 +56,7 @@ $has_last_log = false;
 											echo esc_html( $feed->get_parser() );
 											?>
 										</option>
-									<?php elseif ( ! isset( $registered_parsers[ $feed->get_parser() ] ) ) : ?>
+									<?php elseif ( ! isset( $args['registered_parsers'][ $feed->get_parser() ] ) ) : ?>
 										<option value="<?php echo esc_attr( $feed->get_parser() ); ?>" selected="selected">
 											<?php
 											// translators: %s is the name of a deleted parser.
@@ -62,11 +66,14 @@ $has_last_log = false;
 									<?php endif; ?>
 								</select> <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $feed->get_parser() ) . '&preview=' . urlencode( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php _e( 'Preview', 'friends' ); ?></a></td>
 								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][post-format]" aria-label="<?php _e( 'Post Format' ); ?>">
-									<?php foreach ( $post_formats as $format => $title ) : ?>
+									<?php foreach ( $args['post_formats'] as $format => $title ) : ?>
 										<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $format, $feed->get_post_format() ); ?>><?php echo esc_html( $title ); ?></option>
 									<?php endforeach; ?>
 								</select></td>
 								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][title]" value="<?php echo esc_attr( $feed->get_title() ); ?>" size="20" aria-label="<?php _e( 'Feed Name', 'friends' ); ?>" /></td>
+								<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
+									<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][mime-type]" value="<?php echo esc_attr( $feed->get_mime_type() ); ?>" size="20" aria-label="<?php _e( 'Feed Type', 'friends' ); ?>" /></td>
+								<?php endif; ?>
 							</tr>
 							<?php if ( $feed->get_last_log() ) : ?>
 							<tr class="<?php echo $feed->get_active() ? 'active' : 'inactive hidden'; ?> lastlog hidden">
@@ -78,12 +85,12 @@ $has_last_log = false;
 							<td></td>
 							<td><input type="url" name="feeds[new][url]" value="" size="20" aria-label="<?php _e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
 							<td><select name="feeds[new][parser]" aria-label="<?php _e( 'Parser', 'friends' ); ?>">
-								<?php foreach ( $registered_parsers as $slug => $parser_name ) : ?>
+								<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
 									<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
 								<?php endforeach; ?>
 							</select> <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=&preview=' ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php _e( 'Preview', 'friends' ); ?></a></td>
 							<td><select name="feeds[new][post-format]" aria-label="<?php _e( 'Post Format' ); ?>">
-								<?php foreach ( $post_formats as $format => $title ) : ?>
+								<?php foreach ( $args['post_formats'] as $format => $title ) : ?>
 									<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( $title ); ?></option>
 								<?php endforeach; ?>
 							</select></td>
@@ -91,7 +98,7 @@ $has_last_log = false;
 						</tr>
 						</tbody>
 					</table>
-					<?php if ( count( $friend->get_active_feeds() ) !== count( $friend->get_feeds() ) ) : ?>
+					<?php if ( count( $args['friend']->get_active_feeds() ) !== count( $args['friend']->get_feeds() ) ) : ?>
 					<a href="" class="show-inactive-feeds"><?php _e( 'Show inactive feeds', 'friends' ); ?></a> |
 					<?php endif; ?>
 					<?php if ( $has_last_log ) : ?>
@@ -105,61 +112,59 @@ $has_last_log = false;
 				<td>
 					<fieldset>
 						<label for="show_on_friends_page">
-							<input name="show_on_friends_page" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $friend->ID, $hide_from_friends_page ) ); ?>>
+							<input name="show_on_friends_page" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $args['friend']->ID, $args['hide_from_friends_page'] ) ); ?>>
 							<?php esc_html_e( 'Show posts on your friends page', 'friends' ); ?>
 						</label>
 					</fieldset>
 					<fieldset>
-					<a href="<?php echo esc_url( $friend->get_local_friends_page_url() ); ?>">
+					<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url() ); ?>">
 						<?php
 						// translators: %d is the number of posts.
-						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $friend_posts->found_posts, 'friends' ), $friend_posts->found_posts ) );
+						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['friend_posts']->found_posts, 'friends' ), $args['friend_posts']->found_posts ) );
 						?>
 					</a>
 					</fieldset>
 					<p class="description">
 					<?php
 					// translators: %s is a URL.
-					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $friend->ID ) ) );
+					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->ID ) ) );
 					?>
 					</p>
 				</td>
 			</tr>
 			<tr>
 				<th><?php esc_html_e( 'Created', 'friends' ); ?></th>
-				<td><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $friend->user_registered ) ); ?></td>
+				<td><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ); ?></td>
 			</tr>
 			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
 				<td>
-					<?php echo esc_html( $friend->get_role_name() ); ?>
-					<?php if ( $friend->has_cap( 'friend_request' ) ) : ?>
+					<?php echo esc_html( $args['friend']->get_role_name() ); ?>
+					<?php if ( $args['friend']->has_cap( 'friend_request' ) ) : ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'accept-friend-request-' . $friend->ID, 'accept-friend-request' ) ); ?>"><?php esc_html_e( 'Accept Friend Request', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ), 'accept-friend-request-' . $args['friend']->ID, 'accept-friend-request' ) ); ?>"><?php esc_html_e( 'Accept Friend Request', 'friends' ); ?></a>
 						</p>
-					<?php elseif ( $friend->has_cap( 'pending_friend_request' ) ) : ?>
+					<?php elseif ( $args['friend']->has_cap( 'pending_friend_request' ) ) : ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'add-friend-' . $friend->ID, 'add-friend' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ), 'add-friend-' . $args['friend']->ID, 'add-friend' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
 						</p>
-					<?php elseif ( $friend->has_cap( 'subscription' ) ) : ?>
+					<?php elseif ( $args['friend']->has_cap( 'subscription' ) ) : ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'add-friend-' . $friend->ID, 'add-friend' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
-							<?php _e( 'or' ); ?>
-							<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=suggest-friends-plugin&user=' . $friend->ID ) ); ?>"><?php esc_html_e( 'Suggest Friends Plugin', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ), 'add-friend-' . $args['friend']->ID, 'add-friend' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
 						</p>
-					<?php elseif ( $friend->has_cap( 'acquaintance' ) ) : ?>
+					<?php elseif ( $args['friend']->has_cap( 'acquaintance' ) ) : ?>
 						<p class="description">
 							<?php
 							// translators: %s is a friend role.
-							echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'change-to-friend-' . $friend->ID, 'change-to-friend' ) ) . '">' . __( 'Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+							echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ), 'change-to-friend-' . $args['friend']->ID, 'change-to-friend' ) ) . '">' . __( 'Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 							?>
 							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
 						</p>
-					<?php elseif ( $friend->has_cap( 'friend' ) ) : ?>
+					<?php elseif ( $args['friend']->has_cap( 'friend' ) ) : ?>
 						<p class="description">
 						<?php
 							// translators: %s is a friend role.
-						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->ID ) ), 'change-to-restricted-friend-' . $friend->ID, 'change-to-restricted-friend' ) ) . '">' . __( 'Acquaintance', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ), 'change-to-restricted-friend-' . $args['friend']->ID, 'change-to-restricted-friend' ) ) . '">' . __( 'Acquaintance', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
 						</p>
@@ -168,7 +173,7 @@ $has_last_log = false;
 			</tr>
 			<tr>
 				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
-				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( $friend->display_name ); ?>" class="regular-text" /> <p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>
+				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( $args['friend']->display_name ); ?>" class="regular-text" /> <p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>
@@ -178,7 +183,7 @@ $has_last_log = false;
 					<?php else : ?>
 					<fieldset>
 						<label for="friends_new_post_notification">
-							<input name="friends_new_post_notification" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $friend->ID ) ); ?>>
+							<input name="friends_new_post_notification" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $args['friend']->ID ) ); ?>>
 							<?php esc_html_e( 'Send me an e-mail for posts of this friend', 'friends' ); ?>
 						</label>
 					</fieldset>
@@ -187,10 +192,10 @@ $has_last_log = false;
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Rules', 'friends' ); ?></th>
-				<td><a href="<?php echo self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $friend->ID ); ?>">
+				<td><a href="<?php echo self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend']->ID ); ?>">
 					<?php
 					// translators: %d is the number of rules.
-					echo esc_html( sprintf( _n( '%d rule', '%d rules', count( $rules ), 'friends' ), count( $rules ) ) );
+					echo esc_html( sprintf( _n( '%d rule', '%d rules', count( $args['rules'] ), 'friends' ), count( $args['rules'] ) ) );
 					?>
 				</td>
 			</tr>
@@ -202,7 +207,7 @@ $has_last_log = false;
 	<p class="description" id="friend_url-description">
 		<?php
 		// translators: %s is the user URL.
-		echo wp_kses( sprintf( __( 'To unfriend this user, just <a href=%s>delete them on the users page</a>.', 'friends' ), '"' . self_admin_url( 'users.php?s=' . urlencode( $friend->user_login ) ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+		echo wp_kses( sprintf( __( 'To unfriend this user, just <a href=%s>delete them on the users page</a>.', 'friends' ), '"' . self_admin_url( 'users.php?s=' . urlencode( $args['friend']->user_login ) ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 		?>
 	</p>
 </form>

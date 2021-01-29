@@ -2,13 +2,14 @@
 /**
  * This template contains the content footer part for an article on /friends/.
  *
+ * @version 1.0
  * @package Friends
  */
 
 ?><footer class="entry-meta card-footer">
 	<?php if ( Friends::CPT === get_post_type() ) : ?>
 		<?php
-		$friends->frontend->link(
+		$args['friends']->frontend->link(
 			get_comments_link(),
 			get_comments_number( '', 1, '%' ),
 			array(

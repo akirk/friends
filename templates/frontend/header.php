@@ -2,6 +2,7 @@
 /**
  * The /friends/ header
  *
+ * @version 1.0
  * @package Friends
  */
 

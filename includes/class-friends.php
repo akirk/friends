@@ -84,6 +84,19 @@ class Friends {
 	}
 
 	/**
+	 * Get the Friends_Template_Loader singleton
+	 *
+	 * @return Friends_Template_Loader A class instance.
+	 */
+	public static function template_loader() {
+		static $template_loader;
+		if ( ! isset( $template_loader ) ) {
+			$template_loader = new Friends_Template_Loader();
+		}
+		return $template_loader;
+	}
+
+	/**
 	 * Constructor
 	 */
 	public function __construct() {
@@ -99,7 +112,7 @@ class Friends {
 		new Friends_Logging( $this );
 		new Friends_Shortcodes( $this );
 		$this->register_hooks();
-		load_plugin_textdomain( 'friends', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
 		do_action( 'friends_init', $this );
 		do_action( 'friends_register_parser', $this->feed );
 	}

@@ -475,12 +475,12 @@ class Friend_User extends WP_User {
 			return _x( 'Super Admin', 'User role' );
 		}
 
-		if ( $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
-			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
-		}
-
 		if ( $this->has_cap( 'acquaintance' ) ) {
 			return _nx( 'Acquaintance', 'Acquaintances', $count, 'User role', 'friends' );
+		}
+
+		if ( $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
+			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
 		}
 
 		if ( $this->has_cap( 'subscription' ) || ( $group_subscriptions && ( $this->has_cap( 'friend_request' ) || $this->has_cap( 'pending_friend_request' ) ) ) ) {

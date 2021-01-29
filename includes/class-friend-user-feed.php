@@ -221,7 +221,7 @@ class Friend_User_Feed {
 	 * @return string            A validated mime-type.
 	 */
 	public static function validate_mime_type( $mime_type ) {
-		return substr( preg_replace( '/[^a-z0-9\/_-]/', '', $mime_type ), 0, 100 );
+		return substr( preg_replace( '/[^a-z0-9\/_+-]/', '', $mime_type ), 0, 100 );
 	}
 
 	/**

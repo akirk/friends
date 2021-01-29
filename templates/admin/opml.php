@@ -2,6 +2,7 @@
 /**
  * This template generates the OPML to read your friend posts in a feed reader.
  *
+ * @version 1.0
  * @package Friends
  */
 
@@ -10,15 +11,6 @@ header( 'Content-Type: text/opml+xml' );
 
 echo '<' . '?xml version="1.0" encoding="utf-8"?' . '>';
 
-$users = array();
-foreach ( $friends->get_results() as $friend_user ) {
-	$role = $friend_user->get_role_name( true, 9 );
-	if ( ! isset( $users[ $role ] ) ) {
-		$users[ $role ] = array();
-	}
-	$users[ $role ][] = $friend_user;
-}
-ksort( $users );
 ?>
 <opml version="2.0">
 	<head>
@@ -28,50 +20,19 @@ ksort( $users );
 	</head>
 	<body>
 <?php
-foreach ( $users as $role => $friend_users ) :
+foreach ( $args['feeds'] as $role => $users ) {
 	?>
-		<outline text="<?php echo esc_attr( $role ); ?>">
+	<outline text="<?php echo esc_attr( $role ); ?>">
 	<?php
-	foreach ( $friend_users as $friend_user ) {
-		$feeds = $friend_user->get_active_feeds();
-
-		$need_local_feed = false;
-
-		foreach ( $feeds as $k => $feed ) {
-			switch ( $feed->get_mime_type() ) {
-				case 'application/atom+xml':
-				case 'application/atomxml':
-				case 'application/rss+xml':
-				case 'application/rssxml':
-					break;
-				default:
-					$need_local_feed = true;
-					break 2;
-			}
-		}
-
-		if ( $need_local_feed ) {
-			$feeds = array_slice( $feeds, 0, 1 );
-		}
-
-		foreach ( $feeds as $feed ) {
-			$type = 'rss';
-			if ( $need_local_feed ) {
-				$xml_url = $feed->get_local_url() . '?auth=' . $_GET['auth'];
-				$title = $friend_user->display_name;
-			} else {
-				$xml_url = $feed->get_private_url( YEAR_IN_SECONDS );
-				if ( 'application/atom+xml' === $feed->get_mime_type() ) {
-					$type = 'atom';
-				}
-			}
+	foreach ( $users as $user ) {
+		foreach ( $user['feeds'] as $feed ) {
 			?>
-			<outline text="<?php echo esc_attr( $friend_user->display_name ); ?>" htmlUrl="<?php echo esc_url( $feed->get_local_html_url() ); ?>" title="<?php echo esc_attr( $title ); ?>" type="<?php echo esc_attr( $type ); ?>" xmlUrl="<?php echo esc_url( $xml_url ); ?>"/>
+		<outline text="<?php echo esc_attr( $user['friend_user']->display_name ); ?>" htmlUrl="<?php echo esc_url( $feed['html_url'] ); ?>" title="<?php echo esc_attr( $feed['title'] ); ?>" type="<?php echo esc_attr( $feed['type'] ); ?>" xmlUrl="<?php echo esc_url( $feed['xml_url'] ); ?>"/>
 			<?php
 		}
 	}
 	?>
-		</outline>
-<?php endforeach; ?>
+	</outline>
+<?php } ?>
 	</body>
 </opml>

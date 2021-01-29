@@ -122,7 +122,7 @@ class Friends_Blocks {
 
 		wp_enqueue_script(
 			'friends-friends-list',
-			plugins_url( 'blocks/friends-list.build.js', __FILE__ ),
+			plugins_url( 'blocks/friends-list.build.js', FRIENDS_PLUGIN_FILE ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
 		);
 
@@ -216,7 +216,7 @@ class Friends_Blocks {
 
 		wp_enqueue_script(
 			'friends-friend-posts',
-			plugins_url( 'blocks/friend-posts.build.js', __FILE__ ),
+			plugins_url( 'blocks/friend-posts.build.js', FRIENDS_PLUGIN_FILE ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
 		);
 	}
@@ -342,14 +342,14 @@ class Friends_Blocks {
 	public function register_friends_block_visibility() {
 		wp_enqueue_script(
 			'friends-block-visibility',
-			plugins_url( 'blocks/block-visibility.build.js', __FILE__ ),
+			plugins_url( 'blocks/block-visibility.build.js', FRIENDS_PLUGIN_FILE ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' ),
 			Friends::VERSION
 		);
 
 		wp_enqueue_style(
 			'friends-blocks',
-			plugins_url( 'friends-blocks.css', __FILE__ ),
+			plugins_url( 'friends-blocks.css', FRIENDS_PLUGIN_FILE ),
 			array(),
 			Friends::VERSION
 		);

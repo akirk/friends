@@ -80,7 +80,7 @@ class Friends_Admin {
 			<p style="max-width:800px;">
 			<?php
 			// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
-			echo wp_kses( sprintf( __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' ), admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) ) );
+			echo wp_kses_post( sprintf( __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' ), admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) ) );
 			?>
 			</p>
 		</div>
@@ -174,9 +174,6 @@ class Friends_Admin {
 			add_action( 'load-' . $page_type . '_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
 		}
-		if ( isset( $_GET['page'] ) && 'suggest-friends-plugin' === $_GET['page'] ) {
-			add_submenu_page( 'friends-settings', __( 'Suggest Friends Plugin', 'friends' ), __( 'Suggest Friends Plugin', 'friends' ), Friends::REQUIRED_ROLE, 'suggest-friends-plugin', array( $this, 'render_suggest_friends_plugin' ) );
-		}
 	}
 
 	/**
@@ -242,14 +239,14 @@ class Friends_Admin {
 	 * Reference our script for the /friends page
 	 */
 	public function admin_enqueue_scripts() {
-		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', __FILE__ ), array( 'jquery' ), Friends::VERSION );
+		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), Friends::VERSION );
 		$variables = array(
 			'ajax_url'        => admin_url( 'admin-ajax.php' ),
 			'add_friend_url'  => self_admin_url( 'admin.php?page=add-friend' ),
 			'add_friend_text' => __( 'Add a Friend', 'friends' ),
 		);
 		wp_localize_script( 'friends-admin', 'friends', $variables );
-		wp_enqueue_style( 'friends-admin', plugins_url( 'friends-admin.css', __FILE__ ), array(), Friends::VERSION );
+		wp_enqueue_style( 'friends-admin', plugins_url( 'friends-admin.css', FRIENDS_PLUGIN_FILE ), array(), Friends::VERSION );
 
 	}
 
@@ -317,19 +314,9 @@ class Friends_Admin {
 	 * Admin page for installing plugins.
 	 */
 	public function admin_plugin_installer() {
-		$plugin_array = array(
-			array(
-				'slug' => 'friends-parser-rss-bridge',
-			),
-			array(
-				'slug' => 'friends-parser-fraidyscrape',
-			),
-		);
-
-		echo '<div class="wrap">';
-		echo '<h1>' . esc_html__( 'Friends Plugins', 'friends' ) . '</h1>';
-		echo '<p>' . esc_html__( 'Here you can find plugins that extend the functionality of the Friends plugin.', 'friends' ) . '</p>';
+		Friends::template_loader()->get_template_part( 'admin/plugin-installer-header' );
 		Friends_Plugin_Installer::init();
+		Friends::template_loader()->get_template_part( 'admin/plugin-installer-footer' );
 	}
 
 	/**
@@ -537,13 +524,26 @@ class Friends_Admin {
 			</p></div>
 			<?php
 		}
-
-		$potential_main_users = Friend_User_Query::all_admin_users();
-		$main_user_id = $this->friends->get_main_friend_user_id();
-		$friend_roles = $this->get_friend_roles();
-		$default_role = get_option( 'friends_default_friend_role', 'friend' );
-
-		include apply_filters( 'friends_template_path', 'admin/settings.php' );
+		Friends::template_loader()->get_template_part(
+			'admin/settings',
+			null,
+			array(
+				'potential_main_users'           => Friend_User_Query::all_admin_users(),
+				'main_user_id'                   => $this->friends->get_main_friend_user_id(),
+				'friend_roles'                   => $this->get_friend_roles(),
+				'default_role'                   => get_option( 'friends_default_friend_role', 'friend' ),
+				'force_enable_post_formats'      => get_option( 'friends_force_enable_post_formats' ),
+				'post_format_strings'            => get_post_format_strings(),
+				'limit_homepage_post_format'     => get_option( 'friends_limit_homepage_post_format', false ),
+				'expose_post_format_feeds'       => get_option( 'friends_expose_post_format_feeds' ),
+				'private_rss_key'                => get_option( 'friends_private_rss_key' ),
+				'codeword'                       => get_option( 'friends_codeword', 'friends' ),
+				'require_codeword'               => get_option( 'friends_require_codeword' ),
+				'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message' ),
+				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
+				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
+			)
+		);
 	}
 
 	/**
@@ -635,15 +635,22 @@ class Friends_Admin {
 			'field' => 'title',
 			'regex' => '',
 		);
-		include apply_filters( 'friends_template_path', 'admin/edit-rules.php' );
 
-		include apply_filters( 'friends_template_path', 'admin/rules-examples.php' );
+		$args = array(
+			'rules'     => $rules,
+			'friend'    => $friend,
+			'catch_all' => $catch_all,
+		);
+		Friends::template_loader()->get_template_part( 'admin/edit-rules', null, $args );
+
+		Friends::template_loader()->get_template_part( 'admin/rules-examples', null, $args );
+
 		echo '<div id="preview-rules">';
 		$this->render_preview_friend_rules( $rules, $catch_all );
 		echo '</div>';
 
-		array_pop( $rules );
-		include apply_filters( 'friends_template_path', 'admin/edit-raw-rules.php' );
+		array_pop( $args['rules'] );
+		Friends::template_loader()->get_template_part( 'admin/edit-raw-rules', null, $args );
 	}
 
 	/**
@@ -709,22 +716,25 @@ class Friends_Admin {
 	 * @param  string $catch_all The catch all behavior.
 	 */
 	public function render_preview_friend_rules( $rules, $catch_all ) {
-		$friend       = $this->check_admin_edit_friend_rules();
-		$friend_posts = new WP_Query(
-			array(
-				'post_type'      => Friends::CPT,
-				'post_status'    => array( 'publish', 'private', 'trash' ),
-				'author'         => $friend->ID,
-				'posts_per_page' => 25,
-			)
+		$friend = $this->check_admin_edit_friend_rules();
+
+		$args = array(
+			'friend'       => $friend,
+			'friend_posts' => new WP_Query(
+				array(
+					'post_type'      => Friends::CPT,
+					'post_status'    => array( 'publish', 'private', 'trash' ),
+					'author'         => $friend->ID,
+					'posts_per_page' => 25,
+				)
+			),
+			'feed'         => $this->friends->feed,
 		);
 
-		$feed = $this->friends->feed;
+		Friend_User::$feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );
+		Friend_User::$feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $catch_all );
 
-		Friend_User::$feed_rules[ $friend->ID ]     = $feed->validate_feed_rules( $rules );
-		Friend_User::$feed_catch_all[ $friend->ID ] = $feed->validate_feed_catch_all( $catch_all );
-
-		include apply_filters( 'friends_template_path', 'admin/preview-rules.php' );
+		Friends::template_loader()->get_template_part( 'admin/preview-rules', null, $args );
 	}
 
 	/**
@@ -861,15 +871,11 @@ class Friends_Admin {
 							continue;
 						}
 
-						$term = Friend_User_Feed::save(
+						$feed['active'] = true;
+						Friend_User_Feed::save(
 							$friend,
 							$feed['url'],
-							array(
-								'active'      => true,
-								'parser'      => $feed['parser'],
-								'post-format' => $feed['post-format'],
-								'title'       => $feed['title'],
-							)
+							$feed
 						);
 
 						continue;
@@ -881,18 +887,16 @@ class Friends_Admin {
 					$user_feed = $existing_feeds[ $term_id ];
 
 					if ( $user_feed->get_url() !== $feed['url'] ) {
-						$options = array(
-							'parser'      => $feed['parser'],
-							'post-format' => $feed['post-format'],
-							'mime-type'   => $user_feed->get_mime_type(),
-							'title'       => $feed['title'],
-						);
+						if ( ! isset( $feed['mime-type'] ) ) {
+							$feed['mime-type'] = $user_feed->get_mime_type();
+						}
 
 						if ( $feed['active'] ) {
-							$friend->subscribe( $user_feed->get_url(), $options );
+							$friend->subscribe( $user_feed->get_url(), $feed );
 						} else {
-							$friend->save_feed( $user_feed->get_url(), $options );
+							$friend->save_feed( $user_feed->get_url(), $feed );
 						}
+
 						// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
 						$user_feed->delete();
 						continue;
@@ -908,8 +912,12 @@ class Friends_Admin {
 						$user_feed->update_metadata( 'parser', $feed['parser'] );
 					}
 
-					if ( $user_feed->get_post_format() !== $feed['post_format'] ) {
+					if ( $user_feed->get_post_format() !== $feed['post-format'] ) {
 						$user_feed->update_metadata( 'post-format', $feed['post-format'] );
+					}
+
+					if ( isset( $feed['mime-type'] ) && $user_feed->get_mime_type() !== $feed['mime-type'] ) {
+						$user_feed->update_metadata( 'mime-type', $feed['mime-type'] );
 					}
 				}
 			}
@@ -930,19 +938,22 @@ class Friends_Admin {
 	 */
 	public function render_admin_edit_friend() {
 		$friend = $this->check_admin_edit_friend();
-		$friend_posts = new WP_Query(
-			array(
-				'post_type'   => Friends::CPT,
-				'post_status' => array( 'publish', 'private' ),
-				'author'      => $friend->ID,
-			)
+		$args = array(
+			'friend'                 => $this->check_admin_edit_friend(),
+			'friend_posts'           => new WP_Query(
+				array(
+					'post_type'   => Friends::CPT,
+					'post_status' => array( 'publish', 'private' ),
+					'author'      => $friend->ID,
+				)
+			),
+			'rules'                  => $friend->get_feed_rules(),
+			'post_formats'           => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
+			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
+			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
 		);
-		$rules = $friend->get_feed_rules();
-		$post_formats = array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() );
-		$registered_parsers = $this->friends->feed->get_registered_parsers();
-		$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
-		if ( ! $hide_from_friends_page ) {
-			$hide_from_friends_page = array();
+		if ( ! $args['hide_from_friends_page'] ) {
+			$args['hide_from_friends_page'] = array();
 		}
 
 		?>
@@ -971,7 +982,7 @@ class Friends_Admin {
 			<?php
 		}
 
-		include apply_filters( 'friends_template_path', 'admin/edit-friend.php' );
+		Friends::template_loader()->get_template_part( 'admin/edit-friend', null, $args );
 	}
 
 	/**
@@ -1130,14 +1141,13 @@ class Friends_Admin {
 	 * @return     boolean A WP_Error or void.
 	 */
 	public function process_admin_add_friend( $vars ) {
-		$friends_plugin = false;
 		$friend_url = trim( $vars['friend_url'] );
+		$codeword = trim( $vars['codeword'] );
+		$message = trim( $vars['message'] );
+
+		$friends_plugin = false;
 		$friend_user_login = Friend_User::get_user_login_for_url( $friend_url );
 		$friend_display_name = Friend_User::get_display_name_for_url( $friend_url );
-		$friend_roles = $this->get_friend_roles();
-		$default_role = get_option( 'friends_default_friend_role', 'friend' );
-		$post_formats = array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() );
-		$registered_parsers = $this->friends->feed->get_registered_parsers();
 
 		$errors = new WP_Error();
 
@@ -1152,8 +1162,6 @@ class Friends_Admin {
 				$errors->add( 'no_action', __( '<strong>Error</strong>: Nothing to subscribe selected.' ) );
 			}
 
-			$codeword = trim( $vars['codeword'] );
-			$message = trim( $vars['message'] );
 			$feeds = $vars['feeds'];
 			if ( ! $errors->has_errors() ) {
 				$friend_user = false;
@@ -1228,8 +1236,21 @@ class Friends_Admin {
 			<?php
 		}
 
-		include apply_filters( 'friends_template_path', 'admin/select-feeds.php' );
-		return;
+		Friends::template_loader()->get_template_part(
+			'admin/select-feeds',
+			null,
+			array(
+				'friends_plugin'      => $friends_plugin,
+				'friend_url'          => $friend_url,
+				'friend_user_login'   => $friend_user_login,
+				'friend_display_name' => $friend_display_name,
+				'friend_roles'        => $this->get_friend_roles(),
+				'default_role'        => get_option( 'friends_default_friend_role', 'friend' ),
+				'post_formats'        => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
+				'registered_parsers'  => $this->friends->feed->get_registered_parsers(),
+				'feeds'               => $feeds,
+			)
+		);
 	}
 
 	/**
@@ -1303,8 +1324,6 @@ class Friends_Admin {
 
 			<ul>
 			<?php
-
-			apply_filters( 'friends_template_path', 'friends/posts.php' );
 			foreach ( $items as $item ) {
 				$title = $item->title;
 				if ( 'status' === $item->post_format ) {
@@ -1336,7 +1355,6 @@ class Friends_Admin {
 			exit;
 		}
 
-		$friend_url = '';
 		if ( apply_filters( 'friends_debug', false ) && isset( $_GET['next'] ) ) {
 			$_POST = $_REQUEST;
 			$_POST['_wpnonce'] = wp_create_nonce( 'add-friend' );
@@ -1386,144 +1404,39 @@ class Friends_Admin {
 			}
 		}
 
+		$args = array(
+			'friend_url' => '',
+		);
 		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {
 			$friend_url = isset( $_GET['url'] ) ? $_GET['url'] : $_POST['url'];
 			$parsed_url = parse_url( $friend_url );
 			if ( isset( $parsed_url['host'] ) ) {
 				if ( ! isset( $parsed_url['scheme'] ) ) {
-					$friend_url = 'https://' . ltrim( $friend_url, '/' );
+					$args['friend_url'] = 'https://' . ltrim( $friend_url, '/' );
+				} else {
+					$args['friend_url'] = $friend_url;
 				}
-			} else {
-				$friend_url = '';
 			}
 		}
 
-		include apply_filters( 'friends_template_path', 'admin/add-friend.php' );
-		include apply_filters( 'friends_template_path', 'admin/latest-friends.php' );
-	}
+		Friends::template_loader()->get_template_part( 'admin/add-friend', null, $args );
 
-	/**
-	 * Handles the submitted form when suggesting the friends plugin to a friend.
-	 */
-	public function process_suggest_friends_plugin() {
-		if ( empty( $_POST ) ) {
-			return;
-		}
+		$friend_requests = new Friend_User_Query(
+			array(
+				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
+				'orderby'  => 'registered',
+				'order'    => 'DESC',
+			)
+		);
 
-		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'suggest-friends-plugin' ) ) {
-			return;
-		}
-
-		$to = wp_unslash( $_POST['to'] );
-		if ( ! is_email( $to ) ) {
-			return new WP_Error( 'invalid-email', "You didn't specify a valid e-mail address of your friend." );
-		}
-
-		$subject = trim( wp_unslash( $_POST['subject'] ) );
-		if ( ! $subject ) {
-			return new WP_Error( 'empty-subject', 'You specified no subject to send to your friend.' );
-		}
-
-		$message = trim( wp_unslash( $_POST['message'] ) );
-		if ( ! $message ) {
-			return new WP_Error( 'empty-message', 'You specified an empty message to send to your friend.' );
-		}
-
-		return $this->friends->notifications->send_mail( $to, $subject, $message );
-	}
-
-	/**
-	 * Renders a form where the user can suggest the friends plugin to a friend.
-	 *
-	 * @param string  $string A string passed by the admin hook.
-	 * @param WP_User $friend The friend to which to suggest the plugin.
-	 */
-	public function render_suggest_friends_plugin( $string, WP_User $friend = null ) {
-		if ( ! isset( $_GET['tab'] ) ) {
-			$_GET['tab'] = 'e-mail';
-		}
-
-		if ( ! $friend && isset( $_GET['url'] ) ) {
-			$friend = Friend_User::get_user_for_url( $_GET['url'] );
-			$url    = $_GET['url'];
-			if ( 'http' !== substr( $url, 0, 4 ) ) {
-				$url = 'http://' . $url;
-			}
-		} else {
-			$url = $friend->user_url;
-		}
-
-		if ( $friend && ! is_wp_error( $friend ) ) {
-			$domain = wp_parse_url( $friend->user_url, PHP_URL_HOST );
-			$to     = '@' . $domain;
-		} else {
-			$domain = '';
-			$to     = '';
-		}
-
-		?>
-		<h1><?php echo esc_html( $friend->display_name ); ?></h1>
-		<p><?php esc_html_e( "Maybe you'll want to suggest your friend to install the friends plugin?", 'friends' ); ?> <?php esc_html_e( 'We have prepared some tools for you to give them instructions on how to do so.', 'friends' ); ?></p>
-		<?php
-
-		$error = $this->process_suggest_friends_plugin();
-		if ( is_wp_error( $error ) ) {
-			?>
-			<div id="message" class="updated error is-dismissible"><p><?php echo $error->get_error_message(); ?></p></div>
-			<?php
-		} elseif ( $error ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'The message to your friend was sent.', 'friends' ); ?></p></div>
-			<?php
-		}
-
-		$tweet = '@' . $domain . ' ';
-		// translators: %s is the URL of the blog.
-		$tweet .= sprintf( __( 'Would you like to install the Friends plugin to your WordPress blog %s to stay in touch with me?', 'friends' ), $url );
-		$tweet .= ' ' . Friends::PLUGIN_URL;
-
-		$tabs = array(
-			'E-Mail'   => admin_url( 'admin.php?page=suggest-friends-plugin&url=' . urlencode( $url ) ),
-			'Twitter'  => 'https://twitter.com/intent/tweet?text=' . urlencode( $tweet ),
-			'Facebook' => 'https://facebook.com/sharer/sharer.php?u=' . urlencode( Friends::PLUGIN_URL ),
-		)
-
-		?>
-		<h2 class="nav-tab-wrapper" style="margin-bottom: 2em">
-			<?php
-			foreach ( $tabs as $tab_title => $tab_url ) {
-				printf(
-					'<a href="%s" class="nav-tab %s">%s</a>',
-					esc_url( $tab_url ),
-					esc_attr( 'E-Mail' === $tab_title ? 'nav-tab-active' : '' ),
-					esc_html( $tab_title )
-				);
-			}
-			?>
-		</h2>
-		<?php
-
-		if ( isset( $_POST['to'] ) ) {
-			$to = wp_unslash( $_POST['to'] );
-		}
-
-		if ( isset( $_POST['subject'] ) ) {
-			$subject = wp_unslash( $_POST['subject'] );
-		} else {
-			// translators: %s is the domain of the friend's WordPress.
-			$subject = sprintf( __( 'Install the Friends plugin on %s' ), $domain );
-		}
-
-		if ( isset( $_POST['message'] ) ) {
-			$message = wp_unslash( $_POST['message'] );
-		} else {
-			ob_start();
-			include apply_filters( 'friends_template_path', 'email/suggest-friends-plugin.text.php' );
-			$message = ob_get_contents();
-			ob_end_clean();
-		}
-
-		include apply_filters( 'friends_template_path', 'admin/suggest-friends-plugin.php' );
+		Friends::template_loader()->get_template_part(
+			'admin/latest-friends',
+			null,
+			array(
+				'friend_requests' => $friend_requests->get_results(),
+				'roles'           => $roles,
+			)
+		);
 	}
 
 	/**
