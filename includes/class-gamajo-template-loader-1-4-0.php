@@ -183,6 +183,8 @@ if ( ! class_exists( 'Gamajo_Template_Loader_1_4_0' ) ) {
 			}
 
 			if ( $load && $located ) {
+				global $wp_query;
+				$wp_query->query_vars['args'] = $args;
 				load_template( $located, $require_once, $args );
 			}
 
