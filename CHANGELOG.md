@@ -1,3 +1,13 @@
+1.1
+===
+- Easier overloading of templates using the Gamajo Template Loader
+
+1.0
+===
+- Support for multiple feeds per person
+- Support for (parser) plugins
+- Touch-up the Friends page appearance
+
 0.20
 ====
 - Revamp the friendship protocol, allow specifying a codeword and sending a message
