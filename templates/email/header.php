@@ -2,6 +2,7 @@
 /**
  * This template contains the HTML header for HTML e-mails.
  *
+ * @version 1.0
  * @package Friends
  */
 
@@ -27,7 +28,7 @@
 			height: auto !important;
 		}
 	</style>
-	<title><?php echo $email_title; ?></title>
+	<title><?php echo esc_html( $args['email_title'] ); ?></title>
 	<!--[if gte mso 12]>
 	<style type="text/css" media="all">
 	body {

@@ -2,6 +2,7 @@
 /**
  * This template contains the HTML for the New Friend Request notification e-mail.
  *
+ * @version 1.0
  * @package Friends
  */
 
@@ -10,14 +11,14 @@
 <p>
 	<?php
 	// translators: %s is a user display name.
-		printf( __( 'Howdy, %s!' ), $user->display_name );
+		printf( __( 'Howdy, %s!' ), $args['user']->display_name );
 	?>
 </p>
 
 <p>
 	<?php
 	// translators: %s is a username.
-	printf( __( 'You have received a new friend request from %s.', 'friends' ), $friend_user->display_name );
+	printf( __( 'You have received a new friend request from %s.', 'friends' ), $args['friend_user']->display_name );
 	?>
 </p>
 

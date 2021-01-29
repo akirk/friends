@@ -71,12 +71,29 @@ class Friends_Notifications {
 
 			$message = array();
 			ob_start();
-			include apply_filters( 'friends_template_path', 'email/new-friend-post.php' );
+
+			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+			Friends::template_loader()->get_template_part(
+				'email/new-friend-post',
+				null,
+				array(
+					'author' => $author,
+					'post'   => $post,
+				)
+			);
+			Friends::template_loader()->get_template_part( 'email/footer' );
 			$message['html'] = ob_get_contents();
 			ob_end_clean();
 
 			ob_start();
-			include apply_filters( 'friends_template_path', 'email/new-friend-post.text.php' );
+			Friends::template_loader()->get_template_part(
+				'email/new-friend-post.text',
+				null,
+				array(
+					'author' => $author,
+					'post'   => $post,
+				)
+			);
 			$message['text'] = ob_get_contents();
 			ob_end_clean();
 
@@ -112,12 +129,28 @@ class Friends_Notifications {
 
 			$message = array();
 			ob_start();
-			include apply_filters( 'friends_template_path', 'email/new-friend-request.php' );
+			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+			Friends::template_loader()->get_template_part(
+				'email/new-friend-request',
+				null,
+				array(
+					'user'        => $user,
+					'friend_user' => $friend_user,
+				)
+			);
+			Friends::template_loader()->get_template_part( 'email/footer' );
 			$message['html'] = ob_get_contents();
 			ob_end_clean();
 
 			ob_start();
-			include apply_filters( 'friends_template_path', 'email/new-friend-request.text.php' );
+			Friends::template_loader()->get_template_part(
+				'email/new-friend-request.text',
+				null,
+				array(
+					'user'        => $user,
+					'friend_user' => $friend_user,
+				)
+			);
 			$message['text'] = ob_get_contents();
 			ob_end_clean();
 
@@ -149,12 +182,28 @@ class Friends_Notifications {
 
 			$message = array();
 			ob_start();
-			include apply_filters( 'friends_template_path', 'email/accepted-friend-request.php' );
+			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+			Friends::template_loader()->get_template_part(
+				'email/accepted-friend-request',
+				null,
+				array(
+					'user'        => $user,
+					'friend_user' => $friend_user,
+				)
+			);
+			Friends::template_loader()->get_template_part( 'email/footer' );
 			$message['html'] = ob_get_contents();
 			ob_end_clean();
 
 			ob_start();
-			include apply_filters( 'friends_template_path', 'email/accepted-friend-request.text.php' );
+			Friends::template_loader()->get_template_part(
+				'email/accepted-friend-request.text',
+				null,
+				array(
+					'user'        => $user,
+					'friend_user' => $friend_user,
+				)
+			);
 			$message['text'] = ob_get_contents();
 			ob_end_clean();
 
