@@ -7,7 +7,6 @@
  */
 
 ?>
-<?php include __DIR__ . '/header.php'; ?>
 <blockquote>
 	<?php
 	echo wp_kses_post( $args['post']->post_content );
@@ -52,4 +51,3 @@
 		echo wp_kses( sprintf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), '<a href="' . esc_attr( site_url() ) . '">' . ( is_multisite() ? get_site_option( 'site_name' ) : get_option( 'blogname' ) ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 	?>
 </p>
-<?php include __DIR__ . '/footer.php'; ?>
