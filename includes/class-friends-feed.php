@@ -128,7 +128,16 @@ class Friends_Feed {
 				$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
 			} else {
 				foreach ( $items as $key => $item ) {
-					$items[ $key ] = apply_filters( 'friends_modify_feed_item', $item, null, null );
+					$item = apply_filters( 'friends_modify_feed_item', $item, null, null );
+					if ( ! $item || $item->_feed_rule_delete ) {
+						unset( $items[ $key ] );
+						continue;
+					}
+					if ( is_array( $item->_feed_rule_transform ) ) {
+						if ( isset( $item->_feed_rule_transform['post_content'] ) ) {
+							$items[ $key ]->content = $item->_feed_rule_transform['post_content'];
+						}
+					}
 				}
 			}
 		}
