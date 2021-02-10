@@ -460,7 +460,7 @@ class Friends_Feed {
 			);
 
 			// Modified via feed rules.
-			if ( is_array( $item->_feed_rule_transform ) ) {
+			if ( ! empty( $item->_feed_rule_transform ) ) {
 				$post_data = array_merge( $post_data, $item->_feed_rule_transform );
 			}
 

@@ -55,6 +55,17 @@ class Friends_Feed_Item {
 	}
 
 	/**
+	 * Whether the specified key is set
+	 *
+	 * @param      string $key    The key.
+	 *
+	 * @return     bool  Whether the key is set.
+	 */
+	public function __isset( $key ) {
+		return isset( $this->data[ $key ] );
+	}
+
+	/**
 	 * Sets the value for the key and validates it.
 	 *
 	 * @param      string $key    The key.
