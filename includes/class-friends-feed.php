@@ -56,6 +56,7 @@ class Friends_Feed {
 		add_filter( 'pre_get_posts', array( $this, 'private_feed_query' ), 1 );
 		add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
 		add_filter( 'pre_option_rss_use_excerpt', array( $this, 'feed_use_excerpt' ), 90 );
+		add_filter( 'friends_early_modify_feed_item', array( $this, 'apply_early_feed_rules' ), 10, 3 );
 		add_filter( 'friends_modify_feed_item', array( $this, 'apply_feed_rules' ), 10, 3 );
 
 		add_action( 'rss_item', array( $this, 'feed_additional_fields' ) );
@@ -133,7 +134,7 @@ class Friends_Feed {
 						unset( $items[ $key ] );
 						continue;
 					}
-					if ( is_array( $item->_feed_rule_transform ) ) {
+					if ( ! empty( $item->_feed_rule_transform ) && is_array( $item->_feed_rule_transform ) ) {
 						if ( isset( $item->_feed_rule_transform['post_content'] ) ) {
 							$items[ $key ]->content = $item->_feed_rule_transform['post_content'];
 						}
@@ -233,14 +234,29 @@ class Friends_Feed {
 			$this->retrieve_feed( $feed );
 		}
 	}
+	/**
+	 * Apply the feed rules that need to be applied early.
+	 *
+	 * @param  Friends_Feed_Item $item         The feed item.
+	 * @param      Friend_User_Feed  $feed         The feed.
+	 * @param      Friend_User       $friend_user  The friend user.
+	 * @return Friends_Feed_Item The modified feed item.
+	 */
+	public function apply_early_feed_rules( $item, Friend_User_Feed $feed = null, Friend_User $friend_user = null ) {
+		$updated_item = $this->apply_feed_rules( $item, $feed, $friend_user );
+		if ( $updated_item->_feed_rule_delete ) {
+			return $updated_item;
+		}
+		return $item;
+	}
 
 	/**
 	 * Apply the feed rules
 	 *
-	 * @param  object           $item         The feed item.
-	 * @param  Friend_User_Feed $feed         The feed object.
-	 * @param  Friend_User      $friend_user The friend user.
-	 * @return object The modified feed item.
+	 * @param  Friends_Feed_Item $item         The feed item.
+	 * @param  Friend_User_Feed  $feed         The feed object.
+	 * @param  Friend_User       $friend_user The friend user.
+	 * @return Friends_Feed_Item The modified feed item.
 	 */
 	public function apply_feed_rules( $item, Friend_User_Feed $feed = null, Friend_User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
@@ -417,9 +433,9 @@ class Friends_Feed {
 			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
 
 			$title = $item->title;
-			$content = wp_kses_post( trim( $item->content ) );
+			$content = wp_kses_post( trim( $item->post_content ) );
 
-			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
+			$item = apply_filters( 'friends_early_modify_feed_item', $item, $user_feed, $friend_user );
 			if ( ! $item || $item->_feed_rule_delete ) {
 				continue;
 			}
@@ -445,6 +461,8 @@ class Friends_Feed {
 			if ( is_null( $post_id ) ) {
 				$post_id = $this->url_to_postid( $permalink, $friend_user->ID );
 			}
+			$item->_is_new = is_null( $post_id );
+			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
 
 			$updated_date = $item->date;
 			if ( ! empty( $item->updated_date ) ) {
@@ -460,7 +478,7 @@ class Friends_Feed {
 			);
 
 			// Modified via feed rules.
-			if ( ! empty( $item->_feed_rule_transform ) ) {
+			if ( ! empty( $item->_feed_rule_transform ) && is_array( $item->_feed_rule_transform ) ) {
 				$post_data = array_merge( $post_data, $item->_feed_rule_transform );
 			}
 

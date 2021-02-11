@@ -20,6 +20,7 @@ class Friends_Feed_Item {
 	private $data = array(
 		'post_format' => 'standard',
 		'post_status' => 'publish',
+		'is_new'      => false,
 	);
 
 	/**
@@ -41,7 +42,13 @@ class Friends_Feed_Item {
 	 * @return     mixed  The value.
 	 */
 	public function __get( $key ) {
-		if ( ! isset( $this->data[ $key ] ) ) {
+		if ( 'content' === $key ) {
+			$key = 'post_content';
+		} elseif ( 'title' === $key ) {
+			$key = 'post_title';
+		}
+
+		if ( ! $this->__isset( $key ) ) {
 			return null;
 		}
 
@@ -62,6 +69,12 @@ class Friends_Feed_Item {
 	 * @return     bool  Whether the key is set.
 	 */
 	public function __isset( $key ) {
+		if ( 'content' === $key ) {
+			$key = 'post_content';
+		} elseif ( 'title' === $key ) {
+			$key = 'post_title';
+		}
+
 		return isset( $this->data[ $key ] );
 	}
 
@@ -84,6 +97,8 @@ class Friends_Feed_Item {
 				break;
 
 			case 'title':
+			case 'post_title':
+				$key = 'post_title';
 				$value = $this->validate_string( $value, 300, 'invalid-title' );
 				break;
 
@@ -91,7 +106,9 @@ class Friends_Feed_Item {
 				$value = $this->validate_string( $value, 300, 'invalid-author' );
 				break;
 
+			case 'post_content':
 			case 'content':
+				$key = 'post_content';
 				$value = $this->validate_string( $value, 50000, 'invalid-content' );
 				break;
 
@@ -127,6 +144,9 @@ class Friends_Feed_Item {
 				if ( ! is_array( $value ) ) {
 					$value = new WP_Error( 'invalid-key', 'This value cannot be stored in a _feed_rule_transform.' );
 				}
+				break;
+			case '_is_new':
+				$value = boolval( $value );
 				break;
 
 			default:
@@ -251,5 +271,14 @@ class Friends_Feed_Item {
 
 		}
 		return $format;
+	}
+
+	/**
+	 * Determines if the item is new.
+	 *
+	 * @return     bool  True if new, False otherwise.
+	 */
+	public function is_new() {
+		return $this->data['_is_new'];
 	}
 }
