@@ -920,6 +920,8 @@ class Friends_Admin {
 						$user_feed->update_metadata( 'mime-type', $feed['mime-type'] );
 					}
 				}
+
+				do_action( 'friends_edit_friend_after_form_submit', $friend );
 			}
 		} else {
 			return;

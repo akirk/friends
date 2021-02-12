@@ -199,8 +199,10 @@ $has_last_log = false;
 					?>
 				</td>
 			</tr>
+			<?php do_action( 'friends_edit_friend_table_end', $args['friend'] ); ?>
 		</tbody>
 	</table>
+	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
 	</p>
