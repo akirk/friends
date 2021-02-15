@@ -123,13 +123,13 @@ class Friends {
 	private function register_hooks() {
 		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
 		add_filter( 'init', array( Friend_User_Feed::class, 'register_taxonomy' ) );
-		add_filter( 'friends_template_path', array( $this, 'friends_template_path' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
 		add_filter( 'wp_head', array( $this, 'html_link_rel_alternate_post_formats' ) );
 		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
+		add_filter( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_filter( 'request', array( $this, 'limit_post_format_request' ), 20 );
 	}
@@ -395,15 +395,6 @@ class Friends {
 	}
 
 	/**
-	 * Add the default path to the template file.
-	 *
-	 * @param string $template_file The relative file path of the template to load.
-	 */
-	public static function friends_template_path( $template_file ) {
-		return __DIR__ . '/templates/' . $template_file;
-	}
-
-	/**
 	 * Get the main friend user id.
 	 *
 	 * @return int The user_id.
@@ -461,6 +452,21 @@ class Friends {
 	public function enable_post_formats() {
 		if ( get_option( 'friends_force_enable_post_formats' ) ) {
 			add_theme_support( 'post-formats', get_post_format_slugs() );
+		}
+	}
+
+	/**
+	 * Disables the author page for friends users.
+	 */
+	public function disable_friends_author_page() {
+		global $wp_query;
+
+		if ( is_author() ) {
+			$author_obj = $wp_query->get_queried_object();
+			if ( Friend_User::is_friends_plugin_user( $author_obj ) ) {
+				$wp_query->set_404();
+				status_header( 404 );
+			}
 		}
 	}
 

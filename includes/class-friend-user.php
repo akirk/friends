@@ -150,6 +150,17 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Determines whether the specified user is a friends plugin user.
+	 *
+	 * @param      WP_User $user   The user.
+	 *
+	 * @return     bool     True if the specified user is a friends plugin user, False otherwise.
+	 */
+	public static function is_friends_plugin_user( WP_User $user ) {
+		return $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' );
+	}
+
+	/**
 	 * Get a friend user for a user_login.
 	 *
 	 * @param  string $user_login The user login.
@@ -158,7 +169,7 @@ class Friend_User extends WP_User {
 	public static function get_user( $user_login ) {
 		$user = get_user_by( 'login', $user_login );
 		if ( $user ) {
-			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
+			if ( self::is_friends_plugin_user( $user ) ) {
 				return new self( $user );
 			}
 
