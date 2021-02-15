@@ -345,7 +345,7 @@ class Friend_User_Feed {
 	/**
 	 * Delete this feed.
 	 */
-	public static function delete() {
+	public function delete() {
 		$friend_user = $this->get_friend_user();
 		wp_remove_object_terms( $friend_user->ID, $this->term->term_id, self::TAXONOMY );
 	}
