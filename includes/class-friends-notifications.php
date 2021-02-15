@@ -66,7 +66,7 @@ class Friends_Notifications {
 				continue;
 			}
 
-			$author      = new WP_User( $post->post_author );
+			$author      = new Friend_User( $post->post_author );
 			$email_title = $post->post_title;
 
 			$message = array();
@@ -104,9 +104,9 @@ class Friends_Notifications {
 	/**
 	 * Notify the users of this site about a new friend request
 	 *
-	 * @param  WP_User $friend_user The user requesting friendship.
+	 * @param  Friend_User $friend_user The user requesting friendship.
 	 */
-	public function notify_new_friend_request( WP_User $friend_user ) {
+	public function notify_new_friend_request( Friend_User $friend_user ) {
 		if ( ! $friend_user->has_cap( 'friend_request' ) ) {
 			return;
 		}
@@ -162,9 +162,9 @@ class Friends_Notifications {
 	/**
 	 * Notify the users of this site about an accepted friend request
 	 *
-	 * @param  WP_User $friend_user The user who accepted friendship.
+	 * @param  Friend_User $friend_user The user who accepted friendship.
 	 */
-	public function notify_accepted_friend_request( WP_User $friend_user ) {
+	public function notify_accepted_friend_request( Friend_User $friend_user ) {
 		$users = Friend_User_Query::all_admin_users();
 		$users = $users->get_results();
 
