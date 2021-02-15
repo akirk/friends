@@ -49,7 +49,7 @@ class Friends_Notifications {
 	 */
 	public function get_friends_plugin_from_email_address() {
 		$domain = parse_url( get_option( 'siteurl' ), PHP_URL_HOST );
-		return 'friends-plugin@' . $domain;
+		return apply_filters( 'wp_mail_from', 'friends-plugin@' . $domain );
 	}
 
 	/**
