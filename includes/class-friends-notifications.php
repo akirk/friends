@@ -43,6 +43,16 @@ class Friends_Notifications {
 	}
 
 	/**
+	 * Gets the friends plugin from email address.
+	 *
+	 * @return     string  The friends plugin from email address.
+	 */
+	public function get_friends_plugin_from_email_address() {
+		$domain = parse_url( get_option( 'siteurl' ), PHP_URL_HOST );
+		return 'friends-plugin@' . $domain;
+	}
+
+	/**
 	 * Notify the users of this site about a new friend request
 	 *
 	 * @param  WP_Post $post The new post by a friend.
@@ -243,8 +253,6 @@ class Friends_Notifications {
 			return;
 		}
 
-		$domain = parse_url( get_option( 'siteurl' ), PHP_URL_HOST );
-
 		$alt_function = null;
 		if ( is_array( $message ) ) {
 			if ( isset( $message['html'] ) ) {
@@ -268,7 +276,7 @@ class Friends_Notifications {
 				$message = $message['text'];
 			}
 		}
-		$headers[] = 'From: friends-plugin@' . $domain;
+		$headers[] = 'From: ' . $this->get_friends_plugin_from_email_address();
 
 		$mail = wp_mail( $to, $subject, $message, $headers, $attachments );
 		if ( $alt_function ) {
