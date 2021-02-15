@@ -80,6 +80,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
  
 == Changelog ==
+= 1.4 =
+- Versions 1.2 and 1.3 were skipped because of semantic versioning mistake
+- Removed author pages for friend users
+- Added some actions for futher friend plugins and improved the modifiability of feed items through hooks
+
 = 1.1 =
 - Easier overloading of templates using the Gamajo Template Loader
 
