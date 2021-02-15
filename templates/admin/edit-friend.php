@@ -107,6 +107,7 @@ $has_last_log = false;
 					<a href="" class="add-feed"><?php _e( 'Add a feed', 'friends' ); ?></a>
 				</td>
 			</tr>
+			<?php if ( $args['friend']->can_refresh_feeds() ) : ?>
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>
 				<td>
@@ -132,6 +133,7 @@ $has_last_log = false;
 					</p>
 				</td>
 			</tr>
+			<?php endif; ?>
 			<tr>
 				<th><?php esc_html_e( 'Created', 'friends' ); ?></th>
 				<td><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ); ?></td>

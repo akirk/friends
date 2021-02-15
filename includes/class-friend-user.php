@@ -424,6 +424,18 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Determines whether the user can have feeds refreshed.
+	 *
+	 * @return     bool  True if able to refresh feeds, False otherwise.
+	 */
+	public function can_refresh_feeds() {
+		return $this->has_cap( 'subscriptions' ) ||
+			$this->has_cap( 'acquaintance' ) ||
+			$this->has_cap( 'friend' ) ||
+			$this->has_cap( 'pending_friend_request' );
+	}
+
+	/**
 	 * Convert a user to a friend
 	 *
 	 * @param  string $out_token The token to authenticate against the remote.

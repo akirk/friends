@@ -301,7 +301,7 @@ class Friends_Admin {
 
 		if ( isset( $_GET['user'] ) ) {
 			$friend_user = new Friend_User( intval( $_GET['user'] ) );
-			if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
 				wp_die( esc_html__( 'Invalid user ID.' ) );
 			}
 			$friend_user->retrieve_posts();
