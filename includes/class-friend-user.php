@@ -440,7 +440,7 @@ class Friend_User extends WP_User {
 	 * @return     bool  True if able to refresh feeds, False otherwise.
 	 */
 	public function can_refresh_feeds() {
-		return $this->has_cap( 'subscriptions' ) ||
+		return $this->has_cap( 'subscription' ) ||
 			$this->has_cap( 'acquaintance' ) ||
 			$this->has_cap( 'friend' ) ||
 			$this->has_cap( 'pending_friend_request' );
