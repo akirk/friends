@@ -9,11 +9,11 @@
 
 	$document.on( 'keydown', 'input#master-search, .form-autocomplete a', function( e ) {
 		var code = e.keyCode ? e.keyCode : e.which;
-		var results = $( this ).closest( '.form-autocomplete' ).find( '.menu .menu-item:first-child a' );
+		var results = $( this ).closest( '.form-autocomplete' ).find( '.menu .menu-item a' );
 		if ( 40 === code ) {
 			if ( false === search_result_focused ) {
 				search_result_focused = 0;
-			} else {
+			} else if ( search_result_focused + 1 < results.length ) {
 				search_result_focused += 1;
 			}
 		} else if ( 38 === code ) {
@@ -29,6 +29,7 @@
 		} else {
 			return;
 		}
+
 		var el = results.get( search_result_focused );
 		if ( el ) {
 			el.focus();
