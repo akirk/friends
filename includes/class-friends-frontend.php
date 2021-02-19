@@ -122,7 +122,7 @@ class Friends_Frontend {
 
 		if ( is_user_logged_in() && $this->is_friends_frontend() ) {
 			wp_enqueue_script( 'friends', plugins_url( 'friends.js', FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
-			$query_vars = $this->get_minimal_query_vars( $wp_query->query_vars );
+			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) );
 
 			$variables = array(
 				'emojis_json'       => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
@@ -131,8 +131,8 @@ class Friends_Frontend {
 				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
 				'text_undo'         => __( 'Undo' ),
 				'text_trash_post'   => __( 'Trash this post', 'friends' ),
-				'query_vars'        => serialize( $query_vars ),
-				'qv_sign'           => sha1( wp_salt( 'nonce' ) . serialize( $query_vars ) ),
+				'query_vars'        => $query_vars,
+				'qv_sign'           => sha1( wp_salt( 'nonce' ) . $query_vars ),
 				'current_page'      => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
 				'max_page'          => $wp_query->max_num_pages,
 			);
@@ -183,30 +183,7 @@ class Friends_Frontend {
 	 * @return     array  The minimal query variables.
 	 */
 	private function get_minimal_query_vars( $query_vars ) {
-		$query_vars = array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query' ) ) ) );
-
-		foreach ( $query_vars as $k0 => $v0 ) {
-			if ( is_numeric( $v0 ) ) {
-				$query_vars[ $k0 ] = intval( $v0 );
-			} elseif ( is_array( $v0 ) ) {
-				foreach ( $v0 as $k1 => $v1 ) {
-					if ( is_numeric( $v1 ) ) {
-						$query_vars[ $k0 ][ $k1 ] = intval( $v1 );
-					} elseif ( is_array( $v1 ) ) {
-						foreach ( $v1 as $k2 => $v2 ) {
-							if ( is_numeric( $v2 ) ) {
-								$query_vars[ $k0 ][ $k1 ][ $k2 ] = intval( $v2 );
-							}
-						}
-						ksort( $query_vars[ $k0 ][ $k1 ] );
-					}
-				}
-				ksort( $query_vars[ $k0 ] );
-			}
-		}
-		ksort( $query_vars );
-
-		return $query_vars;
+		return array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query' ) ) ) );
 	}
 
 	/**
@@ -284,6 +261,8 @@ class Friends_Frontend {
 					)
 				);
 			}
+		} else {
+			esc_html_e( 'No further posts of your friends could were found.', 'friends' );
 		}
 
 		$posts = ob_get_contents();

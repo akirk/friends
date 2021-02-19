@@ -157,8 +157,11 @@
 				$('.friends-loading-more').remove();
 				if ( new_posts ) {
 					$('section.posts').find( 'article:last-of-type' ).after( new_posts );
-					already_loading = false;
-					friends.current_page++;
+					if ( ++friends.current_page <= friends.max_page && /<article/.test( new_posts ) ) {
+						already_loading = false;
+					} else {
+						$( 'section.posts .posts-navigation' ).remove();
+					}
 				}
 			}
 		} );
