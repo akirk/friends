@@ -7,20 +7,24 @@
 
 	wp = wp || { ajax: { send: function() {}, post: function() {} } };
 
-	$document.on( 'keydown', 'input#master-search', function( e ) {
+	$document.on( 'keydown', 'input#master-search, .form-autocomplete a', function( e ) {
 		var code = e.keyCode ? e.keyCode : e.which;
 		var results = $( this ).closest( '.form-autocomplete' ).find( '.menu .menu-item:first-child a' );
-		if (code == 40) {
+		if ( 40 === code ) {
 			if ( false === search_result_focused ) {
 				search_result_focused = 0;
 			} else {
 				search_result_focused += 1;
 			}
-		} else if (code == 38) {
+		} else if ( 38 === code ) {
 			if ( false === search_result_focused ) {
 				search_result_focused = -1;
 			} else {
 				search_result_focused -= 1;
+				if ( -1 === search_result_focused ) {
+					$( 'input#master-search' ).focus();
+					return false;
+				}
 			}
 		} else {
 			return;
@@ -28,9 +32,8 @@
 		var el = results.get( search_result_focused );
 		if ( el ) {
 			el.focus();
-		    return false;
 		}
-
+	    return false;
 	} );
 	$document.on( 'keyup', 'input#master-search', function() {
 		var input = $(this);
@@ -39,6 +42,10 @@
 		var menu = input.closest( '.form-autocomplete' ).find( '.menu' );
 
 		if ( already_searching === query ) {
+			return;
+		}
+		if ( ! query ) {
+			menu.hide();
 			return;
 		}
 		wp.ajax.send( 'friends-autocomplete', {

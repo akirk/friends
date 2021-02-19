@@ -93,10 +93,11 @@ class Friend_User_Query extends WP_User_Query {
 	public static function search( $query ) {
 		return new self(
 			array(
-				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
-				'order'    => 'ASC',
-				'orderby'  => 'display_name',
-				'search'   => $query,
+				'role__in'       => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+				'order'          => 'ASC',
+				'orderby'        => 'display_name',
+				'search'         => $query,
+				'search_columns' => 'display_name',
 			)
 		);
 	}

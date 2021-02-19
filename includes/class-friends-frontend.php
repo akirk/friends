@@ -276,12 +276,12 @@ class Friends_Frontend {
 	 */
 	function ajax_autocomplete() {
 		$q = stripslashes( $_POST['q'] );
-		$users = Friend_User_Query::search( $q . '*' );
+		$users = Friend_User_Query::search( '*' . $q . '*' );
 		$results = array();
 		foreach ( $users->get_results() as $friend ) {
 			$result = '<li class="menu-item">';
 			$result .= '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
-			$result .= $friend->display_name;
+			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->display_name );
 			$result .= '</a></li>';
 			$results[] = $result;
 		}
