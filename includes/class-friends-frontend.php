@@ -67,6 +67,7 @@ class Friends_Frontend {
 		add_action( 'wp', array( $this, 'remove_top_margin' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
+		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 99999 );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
@@ -117,8 +118,12 @@ class Friends_Frontend {
 	 * Reference our script for the /friends page
 	 */
 	public function enqueue_scripts() {
+		global $wp_query;
+
 		if ( is_user_logged_in() && $this->is_friends_frontend() ) {
 			wp_enqueue_script( 'friends', plugins_url( 'friends.js', FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
+			$query_vars = $this->get_minimal_query_vars( $wp_query->query_vars );
+
 			$variables = array(
 				'emojis_json'       => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
 				'ajax_url'          => admin_url( 'admin-ajax.php' ),
@@ -126,6 +131,10 @@ class Friends_Frontend {
 				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
 				'text_undo'         => __( 'Undo' ),
 				'text_trash_post'   => __( 'Trash this post', 'friends' ),
+				'query_vars'        => serialize( $query_vars ),
+				'qv_sign'           => sha1( wp_salt( 'nonce' ) . serialize( $query_vars ) ),
+				'current_page'      => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+				'max_page'          => $wp_query->max_num_pages,
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
 
@@ -164,6 +173,40 @@ class Friends_Frontend {
 		}
 
 		return $classes;
+	}
+
+	/**
+	 * Gets the minimal query variables.
+	 *
+	 * @param      array $query_vars  The query variables.
+	 *
+	 * @return     array  The minimal query variables.
+	 */
+	private function get_minimal_query_vars( $query_vars ) {
+		$query_vars = array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query' ) ) ) );
+
+		foreach ( $query_vars as $k0 => $v0 ) {
+			if ( is_numeric( $v0 ) ) {
+				$query_vars[ $k0 ] = intval( $v0 );
+			} elseif ( is_array( $v0 ) ) {
+				foreach ( $v0 as $k1 => $v1 ) {
+					if ( is_numeric( $v1 ) ) {
+						$query_vars[ $k0 ][ $k1 ] = intval( $v1 );
+					} elseif ( is_array( $v1 ) ) {
+						foreach ( $v1 as $k2 => $v2 ) {
+							if ( is_numeric( $v2 ) ) {
+								$query_vars[ $k0 ][ $k1 ][ $k2 ] = intval( $v2 );
+							}
+						}
+						ksort( $query_vars[ $k0 ][ $k1 ] );
+					}
+				}
+				ksort( $query_vars[ $k0 ] );
+			}
+		}
+		ksort( $query_vars );
+
+		return $query_vars;
 	}
 
 	/**
@@ -212,6 +255,41 @@ class Friends_Frontend {
 		}
 
 		wp_send_json_success();
+	}
+
+	/**
+	 * The Ajax function to load more posts for infinite scrolling.
+	 */
+	public function ajax_load_next_page() {
+		$query_vars = stripslashes( $_POST['query_vars'] );
+		if ( sha1( wp_salt( 'nonce' ) . $query_vars ) !== $_POST['qv_sign'] ) {
+			wp_send_json_error();
+		}
+		$query_vars = unserialize( $query_vars );
+		$query_vars['paged'] = intval( $_POST['page'] ) + 1;
+
+		query_posts( $query_vars );
+		ob_start();
+		if ( have_posts() ) {
+			while ( have_posts() ) {
+				the_post();
+
+				Friends::template_loader()->get_template_part(
+					'frontend/parts/content',
+					get_post_format(),
+					array(
+						'friends'     => $this->friends,
+						'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
+						'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
+					)
+				);
+			}
+		}
+
+		$posts = ob_get_contents();
+		ob_end_clean();
+
+		wp_send_json_success( $posts );
 	}
 
 	/**

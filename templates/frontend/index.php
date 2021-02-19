@@ -42,7 +42,6 @@ Friends::template_loader()->get_template_part(
 	} else {
 		while ( have_posts() ) {
 			the_post();
-			$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
 
 			Friends::template_loader()->get_template_part(
 				'frontend/parts/content',

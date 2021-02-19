@@ -50,7 +50,6 @@
 		}
 	} );
 
-
 	jQuery( function( $ ) {
 		$( '#only_subscribe' ).on( 'change', function() {
 			$( this ).closest( 'form' ).find( '#submit' ).text( this.checked ? '1' : '2' );
@@ -129,6 +128,40 @@
 			}
 		} );
 		return false;
+	} );
+
+	var already_loading = false;
+	var bottom_offset = 2000;
+
+	$( window ).scroll( function() {
+		if ( already_loading ) {
+			return;
+		}
+
+		if ( $( document ).scrollTop() < ( $( document ).height() - bottom_offset ) ) {
+			return;
+		}
+
+		wp.ajax.send( 'friends-load-next-page', {
+			data: {
+				query_vars: friends.query_vars,
+				page: friends.current_page,
+				qv_sign: friends.qv_sign,
+				qv_sign_test: friends.qv_sign_test
+			},
+			beforeSend: function() {
+				$('section.posts .posts-navigation').append( '<img src="'+friends.spinner_url+'" class="friends-loading-more"/>' );;
+				already_loading = true;
+			},
+			success: function( new_posts ) {
+				$('.friends-loading-more').remove();
+				if ( new_posts ) {
+					$('section.posts').find( 'article:last-of-type' ).after( new_posts );
+					already_loading = false;
+					friends.current_page++;
+				}
+			}
+		} );
 	} );
 
 })( jQuery, window.wp, window.friends );
