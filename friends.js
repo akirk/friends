@@ -1,8 +1,65 @@
 (function( $, wp, friends ) {
 	var $document = $( document );
+	var already_searching = '';
+	var already_loading = false;
+	var bottom_offset_load_next = 2000;
+	var search_result_focused = false;
 
-	wp = wp || {};
+	wp = wp || { ajax: { send: function() {}, post: function() {} } };
 
+	$document.on( 'keydown', 'input#master-search', function( e ) {
+		var code = e.keyCode ? e.keyCode : e.which;
+		var results = $( this ).closest( '.form-autocomplete' ).find( '.menu .menu-item:first-child a' );
+		if (code == 40) {
+			if ( false === search_result_focused ) {
+				search_result_focused = 0;
+			} else {
+				search_result_focused += 1;
+			}
+		} else if (code == 38) {
+			if ( false === search_result_focused ) {
+				search_result_focused = -1;
+			} else {
+				search_result_focused -= 1;
+			}
+		} else {
+			return;
+		}
+		var el = results.get( search_result_focused );
+		if ( el ) {
+			el.focus();
+		    return false;
+		}
+
+	} );
+	$document.on( 'keyup', 'input#master-search', function() {
+		var input = $(this);
+		var query = input.val().trim();
+		var search_indicator = input.closest( '.form-autocomplete-input' ).find( '.form-icon' );
+		var menu = input.closest( '.form-autocomplete' ).find( '.menu' );
+
+		if ( already_searching === query ) {
+			return;
+		}
+		wp.ajax.send( 'friends-autocomplete', {
+			data: {
+				q: query
+			},
+			beforeSend: function() {
+				search_indicator.addClass( 'loading' );
+				already_searching = query;
+			},
+			success: function( results ) {
+				search_indicator.removeClass( 'loading' );
+				search_result_focused = false;
+				if ( results ) {
+					menu.html( results ).show();
+				} else {
+					menu.hide();
+				}
+			}
+		} );
+	} );
 	$document.on( 'click', 'a.friends-auth-link, button.comments.friends-auth-link', function() {
 		var $this = jQuery( this ), href = $this.attr( 'href' ), token = $this.data( 'token' );
 		if ( ! token ) {
@@ -130,15 +187,12 @@
 		return false;
 	} );
 
-	var already_loading = false;
-	var bottom_offset = 2000;
-
 	$( window ).scroll( function() {
 		if ( already_loading ) {
 			return;
 		}
 
-		if ( $( document ).scrollTop() < ( $( document ).height() - bottom_offset ) ) {
+		if ( $( document ).scrollTop() < ( $( document ).height() - bottom_offset_load_next ) ) {
 			return;
 		}
 
@@ -150,11 +204,11 @@
 				qv_sign_test: friends.qv_sign_test
 			},
 			beforeSend: function() {
-				$('section.posts .posts-navigation').append( '<img src="'+friends.spinner_url+'" class="friends-loading-more"/>' );;
+				$('section.posts .posts-navigation .nav-previous').addClass( 'loading' );
 				already_loading = true;
 			},
 			success: function( new_posts ) {
-				$('.friends-loading-more').remove();
+				$('section.posts .posts-navigation .nav-previous').removeClass( 'loading' );
 				if ( new_posts ) {
 					$('section.posts').find( 'article:last-of-type' ).after( new_posts );
 					if ( ++friends.current_page <= friends.max_page && /<article/.test( new_posts ) ) {

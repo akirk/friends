@@ -68,6 +68,7 @@ class Friends_Frontend {
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
+		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 99999 );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
@@ -127,7 +128,6 @@ class Friends_Frontend {
 			$variables = array(
 				'emojis_json'       => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
 				'ajax_url'          => admin_url( 'admin-ajax.php' ),
-				'spinner_url'       => admin_url( 'images/wpspin_light.gif' ),
 				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
 				'text_undo'         => __( 'Undo' ),
 				'text_trash_post'   => __( 'Trash this post', 'friends' ),
@@ -269,6 +269,25 @@ class Friends_Frontend {
 		ob_end_clean();
 
 		wp_send_json_success( $posts );
+	}
+
+	/**
+	 * The Ajax function to autocomplete search.
+	 */
+	function ajax_autocomplete() {
+		$q = stripslashes( $_POST['q'] );
+		$users = Friend_User_Query::search( $q . '*' );
+		$results = array();
+		foreach ( $users->get_results() as $friend ) {
+			$result = '<li class="menu-item">';
+			$result .= '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
+			$result .= $friend->display_name;
+			$result .= '</a></li>';
+			$results[] = $result;
+		}
+
+		wp_send_json_success( implode( PHP_EOL, $results ) );
+
 	}
 
 	/**

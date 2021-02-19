@@ -10,6 +10,7 @@ div {
 @import "node_modules/spectre.css/src/mixins";
 
 // Spectre: Reset and dependencies
+@import "node_modules/spectre.css/src/animations";
 @import "node_modules/spectre.css/src/normalize";
 @import "node_modules/spectre.css/src/base";
 
@@ -28,6 +29,9 @@ div {
 @import "node_modules/spectre.css/src/cards";
 @import "node_modules/spectre.css/src/navs";
 @import "node_modules/spectre.css/src/menus";
+
+@import "node_modules/spectre.css/src/autocomplete";
+@import "node_modules/spectre.css/src/utilities/loading";
 
 .friends-dropdown {
   display: inline-block;

@@ -84,6 +84,24 @@ class Friend_User_Query extends WP_User_Query {
 	}
 
 	/**
+	 * Search friends.
+	 *
+	 * @param      string $query  The query.
+	 *
+	 * @return     self    The search result.
+	 */
+	public static function search( $query ) {
+		return new self(
+			array(
+				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+				'order'    => 'ASC',
+				'orderby'  => 'display_name',
+				'search'   => $query,
+			)
+		);
+	}
+
+	/**
 	 * Gets all friend requests.
 	 */
 	public static function all_friend_requests() {

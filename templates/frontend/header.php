@@ -40,8 +40,15 @@ if ( isset( $_GET['s'] ) ) {
 
 			</section>
 			<section class="navbar-section">
-				<form class="input-group input-inline">
-					<input class="form-input" type="text" name="s" placeholder="<?php _e( 'Search' ); ?>" value="<?php echo esc_attr( $search ); ?>"/>
+				<form class="input-group input-inline form-autocomplete">
+					<div class="form-autocomplete-input form-input">
+						<div class="has-icon-right">
+							<input class="form-input" type="text" name="s" placeholder="<?php _e( 'Search' ); ?>" value="<?php echo esc_attr( $search ); ?>" id="master-search" autocomplete="off"/>
+							<i class="form-icon"></i>
+						</div>
+					</div>
+					<ul class="menu" style="display: none">
+					</ul>
 					<button class="btn btn-primary input-group-btn"><?php _e( 'Search' ); ?></button>
 				</form>
 			</section>

@@ -1,6 +1,18 @@
 div {
   min-width: 0; }
 
+@keyframes loading {
+  0% {
+    transform: rotate(0deg); }
+  100% {
+    transform: rotate(360deg); } }
+@keyframes slide-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-1.6rem); }
+  100% {
+    opacity: 1;
+    transform: translateY(0); } }
 /* Manually forked from Normalize.css */
 /* normalize.css v5.0.0 | MIT License | github.com/necolas/normalize.css */
 /**
@@ -1697,6 +1709,70 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     top: 0; }
     .menu .menu-badge .label {
       margin-right: 0.4rem; }
+
+.form-autocomplete {
+  position: relative; }
+  .form-autocomplete .form-autocomplete-input {
+    align-content: flex-start;
+    display: flex;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 1.6rem;
+    padding: 0.1rem; }
+    .form-autocomplete .form-autocomplete-input.is-focused {
+      box-shadow: 0 0 0 0.1rem rgba(46, 91, 236, 0.2);
+      border-color: #2e5bec; }
+    .form-autocomplete .form-autocomplete-input .form-input {
+      border-color: transparent;
+      box-shadow: none;
+      display: inline-block;
+      flex: 1 0 auto;
+      height: 1.2rem;
+      line-height: 0.8rem;
+      margin: 0.1rem;
+      width: auto; }
+  .form-autocomplete .menu {
+    left: 0;
+    position: absolute;
+    top: 100%;
+    width: 100%; }
+  .form-autocomplete.autocomplete-oneline .form-autocomplete-input {
+    flex-wrap: nowrap;
+    overflow-x: auto; }
+  .form-autocomplete.autocomplete-oneline .chip {
+    flex: 1 0 auto; }
+
+.loading {
+  color: transparent !important;
+  min-height: 0.8rem;
+  pointer-events: none;
+  position: relative; }
+  .loading::after {
+    animation: loading 500ms infinite linear;
+    background: transparent;
+    border: 0.1rem solid #2e5bec;
+    border-radius: 50%;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    content: "";
+    display: block;
+    height: 0.8rem;
+    left: 50%;
+    margin-left: -0.4rem;
+    margin-top: -0.4rem;
+    opacity: 1;
+    padding: 0;
+    position: absolute;
+    top: 50%;
+    width: 0.8rem;
+    z-index: 1; }
+  .loading.loading-lg {
+    min-height: 2rem; }
+    .loading.loading-lg::after {
+      height: 1.6rem;
+      margin-left: -0.8rem;
+      margin-top: -0.8rem;
+      width: 1.6rem; }
 
 .friends-dropdown {
   display: inline-block;
