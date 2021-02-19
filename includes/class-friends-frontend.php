@@ -282,7 +282,9 @@ class Friends_Frontend {
 			$result = '<li class="menu-item">';
 			$result .= '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
 			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->display_name );
-			$result .= '</a></li>';
+			$result .= ' <small>';
+			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->user_login );
+			$result .= '</small></a></li>';
 			$results[] = $result;
 		}
 
