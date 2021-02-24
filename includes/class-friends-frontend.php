@@ -78,7 +78,7 @@ class Friends_Frontend {
 	 * Registers the sidebar for the /friends page.
 	 */
 	public function remove_top_margin() {
-		if ( $this->is_friends_frontend() ) {
+		if ( Friends::on_frontend() ) {
 			// remove the margin-top on the friends page.
 			add_theme_support(
 				'admin-bar',
@@ -121,7 +121,7 @@ class Friends_Frontend {
 	public function enqueue_scripts() {
 		global $wp_query;
 
-		if ( is_user_logged_in() && $this->is_friends_frontend() ) {
+		if ( is_user_logged_in() && Friends::on_frontend() ) {
 			wp_enqueue_script( 'friends', plugins_url( 'friends.js', FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
 			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) );
 
@@ -313,7 +313,7 @@ class Friends_Frontend {
 	 * @return string The new template to be loaded.
 	 */
 	public function template_override( $template ) {
-		if ( ! $this->is_friends_frontend() ) {
+		if ( ! Friends::on_frontend() ) {
 			return $template;
 		}
 
@@ -422,10 +422,12 @@ class Friends_Frontend {
 		global $post;
 
 		if ( $post && Friends::CPT === $post->post_type ) {
-			if ( $this->is_friends_page ) {
-				return false;
+			if ( Friends::on_frontend() ) {
+				$new_link = false;
+			} else {
+				$new_link = get_the_guid( $post );
 			}
-			return get_the_guid( $post );
+			return apply_filters( 'friend_post_edit_link', $new_link, $link );
 		}
 		return $link;
 	}
@@ -442,30 +444,6 @@ class Friends_Frontend {
 			return get_the_guid( $post );
 		}
 		return $post_link;
-	}
-
-	/**
-	 * Determine whether we are on the /friends/ page or a subpage.
-	 *
-	 * @return boolean Whether we are on a friends page URL.
-	 */
-	protected function is_friends_frontend() {
-		global $wp_query;
-
-		if ( ! isset( $wp_query ) || ! isset( $wp_query->query['pagename'] ) ) {
-			return false;
-		}
-
-		if ( isset( $_GET['public'] ) ) {
-			return false;
-		}
-
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) || ( is_multisite() && is_super_admin( get_current_user_id() ) ) ) {
-			return false;
-		}
-
-		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
-		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
 	}
 
 	/**
@@ -557,12 +535,25 @@ class Friends_Frontend {
 	 */
 	public function friend_posts_query( $query ) {
 		global $wp_query;
-		if ( $wp_query !== $query || ! ( $this->is_friends_frontend() || $query->is_feed() ) ) {
+		if ( $wp_query !== $query ) {
 			return $query;
 		}
 
 		// Not available for the general public or friends.
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) && ! $this->friends->access_control->private_rss_is_authenticated() ) {
+		$viewable = current_user_can( Friends::REQUIRED_ROLE );
+		if ( $query->is_feed() ) {
+			// Feeds can be viewed through extra authentication.
+			if ( $this->friends->access_control->private_rss_is_authenticated() ) {
+				$viewable = true;
+			} else {
+				$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
+				if ( apply_filters( 'friends_friend_feed_viewable', false, $pagename_parts[1] ) ) {
+					$viewable = true;
+				}
+			}
+		}
+
+		if ( ! ( Friends::on_frontend() || $query->is_feed() ) || ! $viewable ) {
 			return $query;
 		}
 
@@ -578,7 +569,9 @@ class Friends_Frontend {
 		$page_id = get_query_var( 'page' );
 
 		$query->set( 'post_type', Friends::CPT );
-		$query->set( 'post_status', array( 'publish', 'private' ) );
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			$query->set( 'post_status', array( 'publish', 'private' ) );
+		}
 		$query->is_page = false;
 		$query->is_comment_feed = false;
 		$query->set( 'pagename', null );

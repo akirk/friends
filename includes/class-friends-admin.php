@@ -941,7 +941,7 @@ class Friends_Admin {
 	public function render_admin_edit_friend() {
 		$friend = $this->check_admin_edit_friend();
 		$args = array(
-			'friend'                 => $this->check_admin_edit_friend(),
+			'friend'                 => $friend,
 			'friend_posts'           => new WP_Query(
 				array(
 					'post_type'   => Friends::CPT,
@@ -1619,7 +1619,7 @@ class Friends_Admin {
 	 * @param  int $friend_request_count The numbger of friend requests.
 	 * @return string The unread badge HTML.
 	 */
-	private function get_unread_badge( $friend_request_count ) {
+	public function get_unread_badge( $friend_request_count ) {
 		if ( 0 === $friend_request_count ) {
 			return '';
 		}
@@ -1826,7 +1826,6 @@ class Friends_Admin {
 				<a href="https://addons.mozilla.org/en-US/firefox/addon/wpfriends/"><?php echo esc_html_e( 'Firefox Extension', 'friends' ); ?></a>
 			</p>
 		</div>
-	</div>
 		<?php
 	}
 

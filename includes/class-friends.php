@@ -455,6 +455,31 @@ class Friends {
 		}
 	}
 
+
+	/**
+	 * Determine whether we are on the /friends/ page or a subpage.
+	 *
+	 * @return boolean Whether we are on a friends page URL.
+	 */
+	public static function on_frontend() {
+		global $wp_query;
+
+		if ( ! isset( $wp_query ) || ! isset( $wp_query->query['pagename'] ) ) {
+			return false;
+		}
+
+		if ( isset( $_GET['public'] ) ) {
+			return false;
+		}
+
+		if ( ! current_user_can( self::REQUIRED_ROLE ) || ( is_multisite() && is_super_admin( get_current_user_id() ) ) ) {
+			return false;
+		}
+
+		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
+		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
+	}
+
 	/**
 	 * Disables the author page for friends users.
 	 */
@@ -463,7 +488,7 @@ class Friends {
 
 		if ( is_author() ) {
 			$author_obj = $wp_query->get_queried_object();
-			if ( Friend_User::is_friends_plugin_user( $author_obj ) ) {
+			if ( Friend_User::is_friends_plugin_user( $author_obj ) && ! self::on_frontend() ) {
 				$wp_query->set_404();
 				status_header( 404 );
 			}

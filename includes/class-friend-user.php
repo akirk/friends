@@ -524,10 +524,16 @@ class Friend_User extends WP_User {
 	/**
 	 * Gets the local friends page url.
 	 *
-	 * @return     string  The local friends page url.
+	 * @param      int|string $post_id  The post identifier.
+	 *
+	 * @return     string      The local friends page url.
 	 */
-	function get_local_friends_page_url() {
-		return site_url( '/friends/' . $this->user_login . '/' );
+	function get_local_friends_page_url( int $post_id = null ) {
+		$path = '/';
+		if ( $post_id ) {
+			$path = '/' . $post_id . '/';
+		}
+		return site_url( '/friends/' . $this->user_login . $path );
 	}
 
 	/**

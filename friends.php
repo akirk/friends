@@ -20,7 +20,7 @@
 
 defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/friends.php' );
+define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 
