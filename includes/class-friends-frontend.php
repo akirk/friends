@@ -535,10 +535,10 @@ class Friends_Frontend {
 	 */
 	public function friend_posts_query( $query ) {
 		global $wp_query;
-		if ( $wp_query !== $query ) {
+
+		if ( $wp_query !== $query || $query->is_admin ) {
 			return $query;
 		}
-
 		// Not available for the general public or friends.
 		$viewable = current_user_can( Friends::REQUIRED_ROLE );
 		if ( $query->is_feed() ) {

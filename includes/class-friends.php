@@ -157,13 +157,13 @@ class Friends {
 		$args = array(
 			'labels'              => $labels,
 			'description'         => "A cached friend's post",
-			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated(),
+			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated() || ( is_admin() && current_user_can( Friends::REQUIRED_ROLE ) && apply_filters( 'friends_show_cached_posts', false ) ),
 			'show_ui'             => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_nav_menus'   => false,
 			'show_in_admin_bar'   => false,
 			'show_in_rest'        => false,
-			'exclude_from_search' => apply_filters( 'friends_show_cached_posts', false ),
+			'exclude_from_search' => true,
 			'public'              => false,
 			'delete_with_user'    => true,
 			'menu_position'       => 5,
@@ -454,7 +454,6 @@ class Friends {
 			add_theme_support( 'post-formats', get_post_format_slugs() );
 		}
 	}
-
 
 	/**
 	 * Determine whether we are on the /friends/ page or a subpage.
