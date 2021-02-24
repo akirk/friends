@@ -545,7 +545,7 @@ class Friends_Frontend {
 			// Feeds can be viewed through extra authentication.
 			if ( $this->friends->access_control->private_rss_is_authenticated() ) {
 				$viewable = true;
-			} else {
+			} elseif ( isset( $wp_query->query['pagename'] ) ) {
 				$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 				if ( apply_filters( 'friends_friend_feed_viewable', false, $pagename_parts[1] ) ) {
 					$viewable = true;
