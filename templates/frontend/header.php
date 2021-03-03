@@ -37,6 +37,20 @@ if ( isset( $_GET['s'] ) ) {
 			<a class="off-canvas-toggle btn btn-primary bt-action" href="#friends-sidebar">
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
 			</a>
+			<?php
+			if ( is_author() ) {
+				Friends::template_loader()->get_template_part(
+					'frontend/author-header',
+					null,
+					array_merge(
+						$args,
+						array(
+							'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
+						)
+					)
+				);
+			}
+			?>
 
 			</section>
 			<section class="navbar-section">

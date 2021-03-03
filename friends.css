@@ -1663,6 +1663,32 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     margin-bottom: 0.4rem;
     margin-left: 0.8rem; }
 
+.chip {
+  align-items: center;
+  background: #f5f5fa;
+  border-radius: 5rem;
+  display: inline-flex;
+  font-size: 90%;
+  height: 1.2rem;
+  line-height: 0.8rem;
+  margin: 0.1rem;
+  max-width: 320px;
+  overflow: hidden;
+  padding: 0.2rem 0.4rem;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap; }
+  .chip.active {
+    background: #2e5bec;
+    color: #fff; }
+  .chip .avatar {
+    margin-left: -0.4rem;
+    margin-right: 0.2rem; }
+  .chip .btn-clear {
+    border-radius: 50%;
+    transform: scale(0.75); }
+
 .menu {
   box-shadow: 0 0.05rem 0.2rem rgba(62, 57, 107, 0.3);
   background: #fff;

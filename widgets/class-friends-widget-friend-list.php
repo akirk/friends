@@ -87,7 +87,19 @@ class Friends_Widget_Friend_List extends WP_Widget {
 				}
 				?>
 				<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small class="label label-secondary"><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array( 'style' => 'display: inline' ), $friend_user ); ?></small></li>
+					<small class="label label-secondary">
+					<?php
+					$friends->frontend->link(
+						$friend_user->user_url,
+						'',
+						array(
+							'class' => 'dashicons dashicons-external',
+							'style' => 'display: inline',
+						),
+						$friend_user
+					);
+					?>
+					</small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php
@@ -110,7 +122,19 @@ class Friends_Widget_Friend_List extends WP_Widget {
 				}
 				?>
 				<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small class="label label-secondary"><?php $friends->frontend->link( $friend_user->user_url, __( 'visit', 'friends' ), array(), $friend_user ); ?></small></li>
+					<small class="label label-secondary">
+					<?php
+					$friends->frontend->link(
+						$friend_user->user_url,
+						'',
+						array(
+							'class' => 'dashicons dashicons-external',
+							'style' => 'display: inline',
+						),
+						$friend_user
+					);
+					?>
+					</small></li>
 			<?php endforeach; ?>
 			</ul>
 			<?php
