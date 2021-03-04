@@ -573,6 +573,45 @@ class Friends {
 	}
 
 	/**
+	 * Plural texts for post formats.
+	 *
+	 * @param      string $format  The post format.
+	 * @param      int    $count   The count.
+	 *
+	 * @return     string  The plural string.
+	 */
+	public function get_post_format_plural_string( $format, $count ) {
+		if ( ! in_array( $format, get_post_format_slugs(), true ) ) {
+			$format = 'standard';
+		}
+
+		$plurals = array(
+			// translators: %s is a count.
+			'standard' => _nx_noop( '%s post', '%s posts', 'Post format', 'friends' ), // Special case. Any value that evals to false will be considered standard.
+			// translators: %s is a count.
+			'aside'    => _nx_noop( '%s aside', '%s asides', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'chat'     => _nx_noop( '%s chat', '%s chats', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'gallery'  => _nx_noop( '%s gallery', '%s galleries', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'link'     => _nx_noop( '%s link', '%s links', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'image'    => _nx_noop( '%s image', '%s images', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'quote'    => _nx_noop( '%s quote', '%s quotes', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'status'   => _nx_noop( '%s status', '%s statuses', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'video'    => _nx_noop( '%s video', '%s videos', 'Post format', 'friends' ),
+			// translators: %s is a count.
+			'audio'    => _nx_noop( '%s audio', '%s audios', 'Post format', 'friends' ),
+		);
+
+		return sprintf( translate_nooped_plural( $plurals[ $format ], $count, 'friends' ), number_format_i18n( $count ) );
+	}
+
+	/**
 	 * Output the alternate post formats as a link in the HTML head.
 	 */
 	public static function html_link_rel_alternate_post_formats() {

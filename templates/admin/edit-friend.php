@@ -6,6 +6,16 @@
  * @package Friends
  */
 
+$total_size = 0;
+if ( $args['friend_posts']->have_posts() ) {
+	while ( $args['friend_posts']->have_posts() ) {
+		$args['friend_posts']->the_post();
+		$total_size += strlen( serialize( array_values( (array) $args['friend_posts']->post ) ) );
+	}
+}
+
+wp_reset_postdata();
+
 $has_last_log = false;
 ?><form method="post">
 	<?php wp_nonce_field( 'edit-friend-' . $args['friend']->ID ); ?>
@@ -130,6 +140,15 @@ $has_last_log = false;
 					// translators: %s is a URL.
 					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->ID ) ) );
 					?>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th><label for="url"><?php esc_html_e( 'Usage' ); ?></label></th>
+				<td>
+					<?php echo esc_html( size_format( $total_size, 1 ) ); ?>
+					</fieldset>
+					<p class="description">
 					</p>
 				</td>
 			</tr>

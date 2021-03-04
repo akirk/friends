@@ -947,6 +947,7 @@ class Friends_Admin {
 					'post_type'   => Friends::CPT,
 					'post_status' => array( 'publish', 'private' ),
 					'author'      => $friend->ID,
+					'nopaging'    => true,
 				)
 			),
 			'rules'                  => $friend->get_feed_rules(),

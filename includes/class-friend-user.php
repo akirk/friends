@@ -311,6 +311,48 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Gets the post counts by post format.
+	 *
+	 * @return     array  The post counts.
+	 */
+	public function get_post_count_by_post_format() {
+		global $wpdb;
+
+		$post_format_counts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+				FROM {$wpdb->posts} AS posts
+				JOIN {$wpdb->term_relationships} AS relationships
+				JOIN {$wpdb->term_taxonomy} AS taxonomy
+				JOIN {$wpdb->terms} AS terms
+
+				WHERE posts.post_author = %d
+				AND posts.post_status = 'publish'
+				AND posts.post_type = %s
+				AND relationships.object_id = posts.ID
+				AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+				AND taxonomy.taxonomy = 'post_format'
+
+				AND terms.term_id = taxonomy.term_id
+				GROUP BY terms.slug",
+				$this->ID,
+				Friends::CPT
+			)
+		);
+
+		$counts = array(
+			'standard' => count_user_posts( $this->ID, Friends::CPT ),
+		);
+
+		foreach ( $post_format_counts as $row ) {
+			$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
+			$counts['standard'] -= $row->count;
+		}
+
+		return $counts;
+	}
+
+	/**
 	 * Update a friend's avatar URL
 	 *
 	 * @param  string $user_icon_url  The user icon URL.
@@ -524,7 +566,7 @@ class Friend_User extends WP_User {
 	/**
 	 * Gets the local friends page url.
 	 *
-	 * @param      int|string $post_id  The post identifier.
+	 * @param      int $post_id  The post identifier.
 	 *
 	 * @return     string      The local friends page url.
 	 */
@@ -534,6 +576,17 @@ class Friend_User extends WP_User {
 			$path = '/' . $post_id . '/';
 		}
 		return site_url( '/friends/' . $this->user_login . $path );
+	}
+
+	/**
+	 * Gets the local friends page url for a post format.
+	 *
+	 * @param      string $post_format  The post format.
+	 *
+	 * @return     string      The local friends page url.
+	 */
+	function get_local_friends_page_post_format_url( $post_format ) {
+		return site_url( '/friends/' . $this->user_login . '/type/' . $post_format . '/' );
 	}
 
 	/**
