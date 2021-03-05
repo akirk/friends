@@ -2010,6 +2010,6 @@ input:disabled + .form-icon, input.disabled + .form-icon {
   .friends-page a.explanation-friends-auth-link:hover span, .friends-page a.friends-auth-link :hover span, .friends-page a.friends-auth-link:hover span {
     text-decoration: none; }
   .friends-page .form-autocomplete .form-autocomplete-input .form-input {
-    width: 1%; }
+    width: auto; }
 
 /*# sourceMappingURL=friends.css.map */
