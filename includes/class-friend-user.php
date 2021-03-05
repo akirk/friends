@@ -570,7 +570,7 @@ class Friend_User extends WP_User {
 	 *
 	 * @return     string      The local friends page url.
 	 */
-	function get_local_friends_page_url( int $post_id = null ) {
+	function get_local_friends_page_url( $post_id = null ) {
 		$path = '/';
 		if ( $post_id ) {
 			$path = '/' . $post_id . '/';
