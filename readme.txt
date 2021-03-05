@@ -80,6 +80,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
  
 == Changelog ==
+= 1.5 =
+- Show an info header for a specific friends when viewing all their posts
+
 = 1.4.4 =
 - Autocomplete friends via search
 - Infinite scroll on your friends page

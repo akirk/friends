@@ -144,7 +144,7 @@ $has_last_log = false;
 				</td>
 			</tr>
 			<tr>
-				<th><label for="url"><?php esc_html_e( 'Usage' ); ?></label></th>
+				<th><label for="url"><?php esc_html_e( 'Disk space used', 'friends' ); ?></label></th>
 				<td>
 					<?php echo esc_html( size_format( $total_size, 1 ) ); ?>
 					</fieldset>

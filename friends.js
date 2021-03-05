@@ -204,6 +204,10 @@
 			return;
 		}
 
+		if ( friends.current_page >= friends.max_page ) {
+			return;
+		}
+
 		wp.ajax.send( 'friends-load-next-page', {
 			data: {
 				query_vars: friends.query_vars,
