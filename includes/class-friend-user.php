@@ -566,7 +566,7 @@ class Friend_User extends WP_User {
 	/**
 	 * Gets the local friends page url.
 	 *
-	 * @param      int $post_id  The post identifier.
+	 * @param      integer $post_id  The post identifier.
 	 *
 	 * @return     string      The local friends page url.
 	 */
