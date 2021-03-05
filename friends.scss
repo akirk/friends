@@ -134,6 +134,10 @@ div {
 		min-height: auto;
 	}
 
+	header.navbar section.navbar-section.author {
+		flex: 3;
+	}
+
 	.card {
 		height: 100%;
 		box-shadow: none;
@@ -353,4 +357,10 @@ div {
 	a.explanation-friends-auth-link:hover span, a.friends-auth-link :hover span, a.friends-auth-link:hover span {
 		text-decoration: none;
 	}
+
+	.form-autocomplete .form-autocomplete-input .form-input {
+		width: 1%;
+	}
+
+
 }

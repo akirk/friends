@@ -33,7 +33,7 @@ if ( isset( $_GET['s'] ) ) {
 
 	<div class="off-canvas-content">
 		<header class="navbar">
-			<section class="navbar-section">
+			<section class="navbar-section author">
 			<a class="off-canvas-toggle btn btn-primary bt-action" href="#friends-sidebar">
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
 			</a>
