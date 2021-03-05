@@ -81,6 +81,7 @@ div {
 	.off-canvas .off-canvas-content {
 		padding-left: 2rem;
 		padding-right: 2rem;
+
 	}
 }
 
@@ -97,6 +98,15 @@ div {
 	margin-top: 32px;
 	width: 12rem;
 	background: #f7f8f9;
+}
+.off-canvas .off-canvas-content header.navbar #page-title {
+	margin-left: 3rem;
+}
+
+@media (min-width: $off-canvas-breakpoint) {
+	.off-canvas .off-canvas-content header.navbar #page-title {
+		margin-left: 0;
+	}
 }
 
 .friends-page {
@@ -168,7 +178,9 @@ div {
 			& {
 				border: 0;
 				box-shadow: 0 .25rem 1rem rgba(48,55,66,.15);
-				padding: 1rem;
+				border-bottom: 1px solid #87a6bc;
+				padding: 0 0 1em 0;
+				margin: 0 0 1em 0;
 
 				.card-body {
 					padding: 1rem;
@@ -274,14 +286,11 @@ div {
 	}
 
 	section.posts {
-		article.hentry:before {
+		article.card:before {
 			display: none;
 		}
 
-		article.hentry {
-			border-bottom: 1px solid #87a6bc;
-			padding: 0 0 1em 0;
-			margin: 0 0 1em 0;
+		article.card {
 
 			header.entry-header {
 				display: flex;

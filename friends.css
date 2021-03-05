@@ -1844,6 +1844,12 @@ input:disabled + .form-icon, input.disabled + .form-icon {
   width: 12rem;
   background: #f7f8f9; }
 
+.off-canvas .off-canvas-content header.navbar #page-title {
+  margin-left: 3rem; }
+
+@media (min-width: 960px) {
+  .off-canvas .off-canvas-content header.navbar #page-title {
+    margin-left: 0; } }
 .friends-page {
   background-color: #fff;
   color: #48427c;
@@ -1885,7 +1891,9 @@ input:disabled + .form-icon, input.disabled + .form-icon {
       .friends-page .card {
         border: 0;
         box-shadow: 0 0.25rem 1rem rgba(48, 55, 66, 0.15);
-        padding: 1rem; }
+        border-bottom: 1px solid #87a6bc;
+        padding: 0 0 1em 0;
+        margin: 0 0 1em 0; }
         .friends-page .card .card-body {
           padding: 1rem; } }
   .friends-page .friends-brand {
@@ -1952,35 +1960,31 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     text-transform: uppercase;
     font-weight: bold;
     letter-spacing: 2px; }
-  .friends-page section.posts article.hentry:before {
+  .friends-page section.posts article.card:before {
     display: none; }
-  .friends-page section.posts article.hentry {
-    border-bottom: 1px solid #87a6bc;
-    padding: 0 0 1em 0;
-    margin: 0 0 1em 0; }
-    .friends-page section.posts article.hentry header.entry-header {
-      display: flex;
-      font-size: 88%;
-      line-height: 1.4;
-      max-width: 100%;
-      margin: auto -0.4rem;
-      padding: 0.8rem;
-      padding-bottom: 1.5em; }
-      .friends-page section.posts article.hentry header.entry-header div.avatar {
-        margin-right: .5em; }
-    .friends-page section.posts article.hentry h4.entry-title {
-      font-size: 130%;
-      line-height: 1.4;
-      margin: 0 0 1em 0;
-      text-align: left; }
-      .friends-page section.posts article.hentry h4.entry-title a {
-        text-decoration: none; }
-        .friends-page section.posts article.hentry h4.entry-title a span.dashicons {
-          margin-top: 4px;
-          margin-left: 6px;
-          color: #32c170; }
-      .friends-page section.posts article.hentry h4.entry-title:after {
-        display: none; }
+  .friends-page section.posts article.card header.entry-header {
+    display: flex;
+    font-size: 88%;
+    line-height: 1.4;
+    max-width: 100%;
+    margin: auto -0.4rem;
+    padding: 0.8rem;
+    padding-bottom: 1.5em; }
+    .friends-page section.posts article.card header.entry-header div.avatar {
+      margin-right: .5em; }
+  .friends-page section.posts article.card h4.entry-title {
+    font-size: 130%;
+    line-height: 1.4;
+    margin: 0 0 1em 0;
+    text-align: left; }
+    .friends-page section.posts article.card h4.entry-title a {
+      text-decoration: none; }
+      .friends-page section.posts article.card h4.entry-title a span.dashicons {
+        margin-top: 4px;
+        margin-left: 6px;
+        color: #32c170; }
+    .friends-page section.posts article.card h4.entry-title:after {
+      display: none; }
   .friends-page section.posts footer.entry-meta {
     font-size: 1.5em;
     display: flex;
