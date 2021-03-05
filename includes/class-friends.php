@@ -487,7 +487,7 @@ class Friends {
 
 		if ( is_author() ) {
 			$author_obj = $wp_query->get_queried_object();
-			if ( Friend_User::is_friends_plugin_user( $author_obj ) && ! self::on_frontend() ) {
+			if ( $author_obj instanceof WP_User && Friend_User::is_friends_plugin_user( $author_obj ) && ! self::on_frontend() ) {
 				$wp_query->set_404();
 				status_header( 404 );
 			}

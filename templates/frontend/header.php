@@ -38,7 +38,7 @@ if ( isset( $_GET['s'] ) ) {
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
 			</a>
 			<?php
-			if ( is_author() ) {
+			if ( is_author() || is_singular() ) {
 				Friends::template_loader()->get_template_part(
 					'frontend/author-header',
 					null,

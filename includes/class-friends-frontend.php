@@ -534,7 +534,7 @@ class Friends_Frontend {
 	 * @return WP_Query The modified main query.
 	 */
 	public function friend_posts_query( $query ) {
-		global $wp_query;
+		global $wp_query, $wp;
 
 		if ( $wp_query !== $query || $query->is_admin ) {
 			return $query;
@@ -565,6 +565,7 @@ class Friends_Frontend {
 		$this->is_friends_page = true;
 		$query->is_friends_page = true;
 		$query->is_singular = false;
+		$query->is_single = false;
 
 		$page_id = get_query_var( 'page' );
 
@@ -590,10 +591,7 @@ class Friends_Frontend {
 					$this->author = new Friend_User( $author );
 					$query->set( 'author', $author->ID );
 					$query->is_author = true;
-					if ( $page_id ) {
-						$query->set( 'page_id', $page_id );
-						$query->is_singular = true;
-					} elseif ( isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
+					if ( ! $page_id && isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
 						$potential_post_format = $pagename_parts[3];
 					}
 				}
@@ -604,9 +602,13 @@ class Friends_Frontend {
 				$this->post_format = $potential_post_format;
 				$query->set( 'tax_query', $tax_query );
 			}
-		} elseif ( $page_id ) {
+		}
+
+		if ( $page_id ) {
 			$query->set( 'page_id', $page_id );
+			$query->is_single = true;
 			$query->is_singular = true;
+			$wp->set_query_var( 'page', null );
 		}
 
 		if ( ! $query->is_singular && ! $query->is_author ) {
