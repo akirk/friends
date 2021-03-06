@@ -512,6 +512,10 @@ class Friends_Feed {
 				set_post_format( $post_id, $post_format );
 			}
 
+			if ( $item->author ) {
+				update_post_meta( $post_id, 'author', $item->author );
+			}
+
 			if ( is_numeric( $item->post_id ) ) {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
@@ -628,7 +632,6 @@ class Friends_Feed {
 		);
 
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-			$doc = new DOMDocument();
 			if ( is_wp_error( $response ) ) {
 				return array();
 			}
@@ -637,7 +640,7 @@ class Friends_Feed {
 
 			// We'll determine the obvious feeds ourself.
 			$available_feeds = $this->discover_link_rel_feeds( $content, $url, $headers );
-			$content_type = $headers->{'content-type'};
+			$content_type = strtok( $headers['content-type'], ';' );
 		}
 
 		if ( $content ) {

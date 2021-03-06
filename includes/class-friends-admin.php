@@ -1333,7 +1333,7 @@ class Friends_Admin {
 					$title = $item->content;
 				}
 				?>
-				<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (type: <?php echo esc_html( $item->post_format ); ?>):
+				<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):
 					<?php if ( $title ) : ?>
 						<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a>
 					<?php else : ?>

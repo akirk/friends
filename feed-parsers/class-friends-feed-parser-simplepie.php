@@ -185,9 +185,10 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				}
 
 				$discovered_feeds[ $feed_url ] = array(
-					'mime-type' => $mime_type,
-					'title'     => $feed->get_title(),
-					'rel'       => 'self',
+					'type'       => $mime_type,
+					'title'      => $feed->get_title(),
+					'rel'        => 'self',
+					'autoselect' => true,
 				);
 			}
 		}
