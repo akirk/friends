@@ -25,6 +25,10 @@ $avatar = $args['avatar'];
 			<?php if ( Friends::CPT === get_post_type() ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
 					<strong><?php the_author(); ?></strong>
+					<?php if ( get_post_meta( get_the_id(), 'author', true ) ) : ?>
+						– <?php echo esc_html( get_post_meta( get_the_id(), 'author', true ) ); ?>
+					<?php endif; ?>
+
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">

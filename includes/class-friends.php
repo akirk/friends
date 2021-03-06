@@ -158,7 +158,7 @@ class Friends {
 			'labels'              => $labels,
 			'description'         => "A cached friend's post",
 			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated() || ( is_admin() && current_user_can( Friends::REQUIRED_ROLE ) && apply_filters( 'friends_show_cached_posts', false ) ),
-			'show_ui'             => apply_filters( 'friends_show_cached_posts', false ),
+			'show_ui'             => true,
 			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_nav_menus'   => false,
 			'show_in_admin_bar'   => false,
