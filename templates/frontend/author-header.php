@@ -32,6 +32,8 @@ $args['friends']->frontend->link(
 <?php foreach ( $args['friend_user']->get_post_count_by_post_format() as $post_format => $count ) : ?>
 	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_post_format_url( $post_format ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
+
+<?php if ( $edit_user_link ) : ?>
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>">
 	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), $active_feeds ) ); ?>
 
@@ -39,9 +41,10 @@ $args['friends']->frontend->link(
 	&nbsp;<small><?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '(+%s more)', '(+%s more)', $feeds - $active_feeds, 'friends' ), $feeds - $active_feeds ) ); ?></small>
 	<?php endif; ?>
 
-	</a>
+</a>
 
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>"><?php esc_html_e( 'Edit' ); ?></a>
+<?php endif; ?>
 
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
 <a class="chip" href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend_user']->ID ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
