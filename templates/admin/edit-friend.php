@@ -22,6 +22,15 @@ $has_last_log = false;
 	<table class="form-table">
 		<tbody>
 			<tr>
+				<th><label for="friends_avatar"><?php esc_html_e( 'Avatar' ); ?></label></th>
+				<td>				<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
+</td>
+			</tr>
+			<tr>
+				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
+				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( $args['friend']->display_name ); ?>" class="regular-text" /> <p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>
+			</tr>
+			<tr>
 				<th><label for="url"><?php esc_html_e( 'URL' ); ?></label></th>
 				<td><input type="text" name="user_url" value="<?php echo esc_attr( $args['friend']->user_url ); ?>" class="regular-text" /></td>
 			</tr>
@@ -191,10 +200,6 @@ $has_last_log = false;
 						</p>
 					<?php endif; ?>
 				</td>
-			</tr>
-			<tr>
-				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
-				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( $args['friend']->display_name ); ?>" class="regular-text" /> <p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>

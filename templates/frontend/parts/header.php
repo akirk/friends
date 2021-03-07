@@ -8,6 +8,8 @@
 
 $friend_user = $args['friend_user'];
 $avatar = $args['avatar'];
+$author_name = get_the_author_meta( 'display_name' );
+$override_author_name = get_post_meta( get_the_id(), 'author', true );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto">
 		<?php if ( Friends::CPT === get_post_type() ) : ?>
@@ -25,8 +27,8 @@ $avatar = $args['avatar'];
 			<?php if ( Friends::CPT === get_post_type() ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
 					<strong><?php the_author(); ?></strong>
-					<?php if ( get_post_meta( get_the_id(), 'author', true ) ) : ?>
-						– <?php echo esc_html( get_post_meta( get_the_id(), 'author', true ) ); ?>
+					<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
+						– <?php echo esc_html( $override_author_name ); ?>
 					<?php endif; ?>
 
 				</a>
