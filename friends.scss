@@ -350,6 +350,12 @@ div {
 		color: #333;
 	}
 
+	#author-header {
+		a.friends-auth-link span.dashicons-admin-users {
+			display: inline;
+		}
+	}
+
 	a.friends-auth-link span.dashicons, button.friends-auth-link span.dashicons {
 		color: #32c170;
 		margin-left: 6px;

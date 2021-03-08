@@ -9,7 +9,7 @@ $edit_user_link = $args['friends']->admin->admin_edit_user_link( false, get_the_
 $feeds = count( $args['friend_user']->get_feeds() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 
-?><div>
+?><div id="author-header">
 <h2 id="page-title"><?php echo get_the_author_meta( 'display_name' ); ?>
 <?php
 $args['friends']->frontend->link(
@@ -17,7 +17,7 @@ $args['friends']->frontend->link(
 	'',
 	array(
 		'class' => 'label dashicons dashicons-external',
-		'style' => 'vertical-align: middle; margin-left: .5em',
+		'style' => 'vertical-align: middle; margin-left: .5em;',
 	),
 	$args['friend_user']
 );

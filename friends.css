@@ -2000,6 +2000,8 @@ input:disabled + .form-icon, input.disabled + .form-icon {
     margin-right: .3em; }
   .friends-page a.explanation-friends-auth-link, .friends-page a.friends-auth-link, .friends-page a.friends-auth-link:link, .friends-page a.friends-auth-link:active, .friends-page a.friends-auth-link, .friends-page a.friends-auth-link:link, .friends-page a.friends-auth-link:active {
     color: #333; }
+  .friends-page #author-header a.friends-auth-link span.dashicons-admin-users {
+    display: inline; }
   .friends-page a.friends-auth-link span.dashicons, .friends-page button.friends-auth-link span.dashicons {
     color: #32c170;
     margin-left: 6px; }
