@@ -4,6 +4,8 @@
  *
  * Since the plugins are self-hosted, no language packs are available.
  *
+ * You can get this plugin at https://github.com/akirk/friends-autoresolve-links
+ *
  * @package Friends
  */
 
