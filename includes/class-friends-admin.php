@@ -1298,7 +1298,7 @@ class Friends_Admin {
 				<li>
 					<?php
 					echo wp_kses(
-						// translators: %s is the name of a parser.
+						// translators: %s is the name of a parser, e.g. simplepie.
 						sprintf( __( 'Parser: %s', 'friends' ), $parser_name ),
 						array(
 							'a' => array(
@@ -1853,8 +1853,11 @@ class Friends_Admin {
 		$friend_post_count = wp_count_posts( Friends::CPT );
 		$friend_post_count = $friend_post_count->publish + $friend_post_count->private;
 
-		// translators: %s is the number of friends.
-		$items[] = '<a class="friends" href="' . self_admin_url( 'users.php?role=friend' ) . '">' . sprintf( _n( '%s Friend', '%s Friends', $friend_count, 'friends' ), $friend_count ) . '</a>';
+		$items[] = '<a class="friends" href="' . self_admin_url( 'users.php?role=friend' ) . '">' . sprintf(
+			// translators: %s is the number of your friends.
+			_n( '%s Friend', '%s Friends', $friend_count, 'friends' ),
+			$friend_count
+		) . '</a>';
 		if ( $friend_request_count ) {
 			// translators: %s is the number of friend requests.
 			$items[] = '<a class="friend-requests" href="' . self_admin_url( 'users.php?role=friend_request' ) . '">' . sprintf( _n( '%s Friend Request', '%s Friend Requests', $friend_request_count, 'friends' ), $friend_request_count ) . '</a>';
