@@ -540,27 +540,35 @@ class Friend_User extends WP_User {
 			return _x( 'Super Admin', 'User role' );
 		}
 
-		if ( $this->has_cap( 'acquaintance' ) ) {
+		$name = false;
+
+		if ( ! $name && $this->has_cap( 'acquaintance' ) ) {
 			return _nx( 'Acquaintance', 'Acquaintances', $count, 'User role', 'friends' );
 		}
 
-		if ( $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
+		if ( ! $name && $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
 			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
 		}
 
-		if ( $this->has_cap( 'subscription' ) || ( $group_subscriptions && ( $this->has_cap( 'friend_request' ) || $this->has_cap( 'pending_friend_request' ) ) ) ) {
+		if ( ! $name && $this->has_cap( 'subscription' ) || ( $group_subscriptions && ( $this->has_cap( 'friend_request' ) || $this->has_cap( 'pending_friend_request' ) ) ) ) {
 			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
 		}
 
-		if ( $this->has_cap( 'friend_request' ) ) {
+		if ( ! $name && $this->has_cap( 'friend_request' ) ) {
 			return _nx( 'Friend Request', 'Friend Requests', $count, 'User role', 'friends' );
 		}
 
-		if ( $this->has_cap( 'pending_friend_request' ) ) {
+		if ( ! $name && $this->has_cap( 'pending_friend_request' ) ) {
 			return _nx( 'Pending Friend Request', 'Pending Friend Requests', $count, 'User role', 'friends' );
 		}
 
-		return _x( 'Unknown', 'User role', 'friends' );
+		$name = apply_filters( 'friend_user_role_name', $name, $this );
+
+		if ( ! $name ) {
+			$name = _x( 'Unknown', 'User role', 'friends' );
+		}
+
+		return $name;
 	}
 
 	/**
