@@ -264,7 +264,7 @@ class Friends_Admin {
 			'friends_friend_private_feed_url',
 			function ( $feed_url, $friend_user ) {
 				// translators: %1s is the name of the friend, %2$s is the feed URL.
-				printf( __( 'Refreshing %1$s at %2$s', 'friends' ) . '<br/>', '<b>' . esc_html( $friend_user->user_login ) . '</b>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $feed_url ) . '</a>' );
+				printf( __( 'Refreshing %1$s at %2$s', 'friends' ) . '<br/>', '<a href="' . esc_url( $friend_user->get_local_friends_page_url() ) . '">' . esc_html( $friend_user->user_login ) . '</a>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $feed_url ) . '</a>' );
 				return $feed_url;
 			},
 			10,
@@ -892,9 +892,9 @@ class Friends_Admin {
 						}
 
 						if ( $feed['active'] ) {
-							$friend->subscribe( $user_feed->get_url(), $feed );
+							$friend->subscribe( $feed['url'], $feed );
 						} else {
-							$friend->save_feed( $user_feed->get_url(), $feed );
+							$friend->save_feed( $feed['url'], $feed );
 						}
 
 						// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
