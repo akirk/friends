@@ -10,7 +10,7 @@ $feeds = count( $args['friend_user']->get_feeds() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 
 ?><div id="author-header">
-<h2 id="page-title"><?php echo get_the_author_meta( 'display_name' ); ?>
+<h2 id="page-title"><a href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_url() ); ?>"><?php echo get_the_author_meta( 'display_name' ); ?></a>
 <?php
 $args['friends']->frontend->link(
 	$args['friend_user']->user_url,

@@ -64,7 +64,7 @@ class Friends_Frontend {
 		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ) );
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
-		add_action( 'wp', array( $this, 'remove_top_margin' ) );
+		add_action( 'wp', array( $this, 'add_theme_supports' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
@@ -77,7 +77,7 @@ class Friends_Frontend {
 	/**
 	 * Registers the sidebar for the /friends page.
 	 */
-	public function remove_top_margin() {
+	public function add_theme_supports() {
 		if ( Friends::on_frontend() ) {
 			// remove the margin-top on the friends page.
 			add_theme_support(
@@ -86,7 +86,31 @@ class Friends_Frontend {
 					'callback' => '__return_false',
 				)
 			);
+
+			// We're asking WordPress to handle the title for us.
+			add_theme_support( 'title-tag' );
+			add_filter( 'document_title_parts', array( $this, 'modify_page_title' ) );
 		}
+	}
+
+	/**
+	 * Modify the page title to be output. This function is only invoked on the friends page.
+	 *
+	 * @param      array $title  The title.
+	 *
+	 * @return     array  The modified title.
+	 */
+	public function modify_page_title( $title ) {
+		if ( ! is_author() && ! is_single() ) {
+			$title = array(
+				'site' => __( 'Friends', 'friends' ),
+			);
+		} else {
+			unset( $title['page'] );
+			$title['author'] = __( 'Friends', 'friends' );
+			$title['site'] = get_the_author();
+		}
+		return $title;
 	}
 
 	/**
@@ -566,6 +590,8 @@ class Friends_Frontend {
 		$query->is_friends_page = true;
 		$query->is_singular = false;
 		$query->is_single = false;
+		$query->queried_object = null;
+		$query->queried_object_id = null;
 
 		$page_id = get_query_var( 'page' );
 
@@ -606,9 +632,19 @@ class Friends_Frontend {
 
 		if ( $page_id ) {
 			$query->set( 'page_id', $page_id );
+			if ( ! $this->author ) {
+				$post = get_post( $page_id );
+				$author = get_user_by( 'ID', $post->post_author );
+				if ( false !== $author ) {
+					$this->author = new Friend_User( $author );
+					$query->set( 'author', $author->ID );
+					$query->is_author = true;
+				}
+			}
 			$query->is_single = true;
 			$query->is_singular = true;
 			$wp->set_query_var( 'page', null );
+			$wp->set_query_var( 'page_id', $page_id );
 		}
 
 		if ( ! $query->is_singular && ! $query->is_author ) {
