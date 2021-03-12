@@ -7,6 +7,7 @@
 
 $edit_user_link = $args['friends']->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
 $feeds = count( $args['friend_user']->get_feeds() );
+$rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 
 ?><div id="author-header">
@@ -40,8 +41,16 @@ $args['friends']->frontend->link(
 	<?php if ( $feeds - $active_feeds > 1 ) : ?>
 	&nbsp;<small><?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '(+%s more)', '(+%s more)', $feeds - $active_feeds, 'friends' ), $feeds - $active_feeds ) ); ?></small>
 	<?php endif; ?>
-
 </a>
+
+	<?php if ( $rules > 0 ) : ?>
+<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend_user']->ID ) ); ?>">
+		<?php
+		// translators: %d is the number of rules.
+		echo esc_html( sprintf( _n( '%d rule', '%d rules', $rules, 'friends' ), $rules ) );
+		?>
+</a>
+	<?php endif; ?>
 
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>"><?php esc_html_e( 'Edit' ); ?></a>
 <?php endif; ?>
