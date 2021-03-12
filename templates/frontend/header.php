@@ -15,7 +15,6 @@ if ( isset( $_GET['s'] ) ) {
 <head>
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title><?php _e( 'Friends', 'friends' ); ?></title>
 	<?php wp_head(); ?>
 </head>
 

@@ -25,8 +25,25 @@ Friends::template_loader()->get_template_part(
 			<?php
 			if ( $friends->frontend->post_format ) {
 				$post_formats = get_post_format_strings();
-				// translators: %s is a post format title.
-				echo esc_html( sprintf( __( "Your friends haven't posted anything with the post format %s yet!", 'friends' ), $post_formats[ $friends->frontend->post_format ] ) );
+
+				if ( get_the_author() ) {
+					echo esc_html(
+						sprintf(
+						// translators: %s is the name of an author.
+							__( '%1$s hasn\'t posted anything with the post format %2$s yet!', 'friends' ),
+							get_the_author(),
+							$post_formats[ $friends->frontend->post_format ]
+						)
+					);
+				} else {
+					echo esc_html(
+						sprintf(
+						// translators: %s is a post format title.
+							__( "Your friends haven't posted anything with the post format %s yet!", 'friends' ),
+							$post_formats[ $friends->frontend->post_format ]
+						)
+					);
+				}
 			} else {
 				$any_friends = Friend_User_Query::all_friends_subscriptions();
 				if ( $any_friends->get_total() > 0 ) {

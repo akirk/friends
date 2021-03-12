@@ -26,6 +26,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 				'description' => __( 'Shows a list of your friends.', 'friends' ),
 			)
 		);
+		$this->friends = Friends::get_instance();
 	}
 
 	/**
@@ -41,7 +42,6 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		echo $args['before_widget'];
 		echo $args['before_title'];
 
-		$friends = Friends::get_instance();
 		$all_friends     = Friend_User_Query::all_friends();
 		$friend_requests = Friend_User_Query::all_friend_requests();
 		$subscriptions   = Friend_User_Query::all_subscriptions();
@@ -75,74 +75,63 @@ class Friends_Widget_Friend_List extends WP_Widget {
 			?>
 			<ul class="friend-list menu menu-nav">
 			<?php
-			foreach ( $all_friends->get_results() as $friend_user ) :
-				$friend_user = new Friend_User( $friend_user );
-				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-					$url = $friend_user->get_local_friends_page_url();
-					if ( $friends->frontend->post_format ) {
-						$url .= 'type/' . $friends->frontend->post_format . '/';
-					}
-				} else {
-					$url = $friend_user->user_url;
-				}
-				?>
-				<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small class="label label-secondary">
-					<?php
-					$friends->frontend->link(
-						$friend_user->user_url,
-						'',
-						array(
-							'class' => 'dashicons dashicons-external',
-							'style' => 'display: inline',
-						),
-						$friend_user
-					);
-					?>
-					</small></li>
-			<?php endforeach; ?>
+			$this->get_list_items( $all_friends->get_results() );
+			?>
 			</ul>
 			<?php
 		}
 
 		if ( 0 !== $subscriptions->get_total() ) {
 			?>
-			<h5><?php _e( 'Subscriptions', 'friends' ); ?></h5>
-			<ul class="subscription-list menu menu-nav">
+			<h5><?php esc_html_e( 'Subscriptions', 'friends' ); ?></h5>
+			<ul class="subscriptions-list menu menu-nav">
 			<?php
-			foreach ( $subscriptions->get_results() as $friend_user ) :
-				$friend_user = new Friend_User( $friend_user );
-				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-					$url = $friend_user->get_local_friends_page_url();
-					if ( $friends->frontend->post_format ) {
-						$url .= 'type/' . $friends->frontend->post_format . '/';
-					}
-				} else {
-					$url = $friend_user->user_url;
-				}
-				?>
-				<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
-					<small class="label label-secondary">
-					<?php
-					$friends->frontend->link(
-						$friend_user->user_url,
-						'',
-						array(
-							'class' => 'dashicons dashicons-external',
-							'style' => 'display: inline',
-						),
-						$friend_user
-					);
-					?>
-					</small></li>
-			<?php endforeach; ?>
+			$this->get_list_items( $subscriptions->get_results() );
+			?>
 			</ul>
 			<?php
 		}
 
+		do_action( 'friends_widget_friend_list_after', $this );
+
 		echo $args['after_widget'];
 	}
 
+	/**
+	 * Gets a section of the list.
+	 *
+	 * @param      array $users  The users.
+	 */
+	public function get_list_items( $users ) {
+		foreach ( $users as $friend_user ) {
+			$friend_user = new Friend_User( $friend_user );
+			if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+				if ( $this->friends->frontend->post_format ) {
+					$url = $friend_user->get_local_friends_page_post_format_url( $this->friends->frontend->post_format );
+				} else {
+					$url = $friend_user->get_local_friends_page_url();
+				}
+			} else {
+				$url = $friend_user->user_url;
+			}
+			?>
+			<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
+				<small class="label label-secondary">
+				<?php
+				$this->friends->frontend->link(
+					$friend_user->user_url,
+					'',
+					array(
+						'class' => 'dashicons dashicons-external',
+						'style' => 'display: inline',
+					),
+					$friend_user
+				);
+				?>
+				</small></li>
+			<?php
+		}
+	}
 
 	/**
 	 * Update widget configuration.

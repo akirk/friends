@@ -101,14 +101,16 @@ class Friends_Frontend {
 	 * @return     array  The modified title.
 	 */
 	public function modify_page_title( $title ) {
-		if ( ! is_author() && ! is_single() ) {
+		if ( is_single() ) {
+			$title['page'] = __( 'Friends', 'friends' );
+			$title['site'] = get_the_author();
+		} elseif ( is_author() ) {
+			$title['title'] = __( 'Friends', 'friends' );
+			$title['site'] = get_the_author();
+		} else {
 			$title = array(
 				'site' => __( 'Friends', 'friends' ),
 			);
-		} else {
-			unset( $title['page'] );
-			$title['author'] = __( 'Friends', 'friends' );
-			$title['site'] = get_the_author();
 		}
 		return $title;
 	}
@@ -558,7 +560,7 @@ class Friends_Frontend {
 	 * @return WP_Query The modified main query.
 	 */
 	public function friend_posts_query( $query ) {
-		global $wp_query, $wp;
+		global $wp_query, $wp, $authordata;
 
 		if ( $wp_query !== $query || $query->is_admin ) {
 			return $query;
@@ -615,6 +617,7 @@ class Friends_Frontend {
 				$author = get_user_by( 'login', $pagename_parts[1] );
 				if ( false !== $author ) {
 					$this->author = new Friend_User( $author );
+					$authordata = $this->author;
 					$query->set( 'author', $author->ID );
 					$query->is_author = true;
 					if ( ! $page_id && isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
@@ -637,6 +640,7 @@ class Friends_Frontend {
 				$author = get_user_by( 'ID', $post->post_author );
 				if ( false !== $author ) {
 					$this->author = new Friend_User( $author );
+					$authordata = $this->author;
 					$query->set( 'author', $author->ID );
 					$query->is_author = true;
 				}
