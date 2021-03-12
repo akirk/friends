@@ -617,9 +617,6 @@ class Friends_Frontend {
 				$author = get_user_by( 'login', $pagename_parts[1] );
 				if ( false !== $author ) {
 					$this->author = new Friend_User( $author );
-					$authordata = $this->author;
-					$query->set( 'author', $author->ID );
-					$query->is_author = true;
 					if ( ! $page_id && isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
 						$potential_post_format = $pagename_parts[3];
 					}
@@ -640,15 +637,20 @@ class Friends_Frontend {
 				$author = get_user_by( 'ID', $post->post_author );
 				if ( false !== $author ) {
 					$this->author = new Friend_User( $author );
-					$authordata = $this->author;
-					$query->set( 'author', $author->ID );
-					$query->is_author = true;
 				}
 			}
 			$query->is_single = true;
 			$query->is_singular = true;
 			$wp->set_query_var( 'page', null );
 			$wp->set_query_var( 'page_id', $page_id );
+		}
+
+		if ( $this->author ) {
+			$authordata = get_userdata( $this->author->ID );
+			$query->set( 'author', $this->author->ID );
+			if ( ! $page_id ) {
+				$query->is_author = true;
+			}
 		}
 
 		if ( ! $query->is_singular && ! $query->is_author ) {
