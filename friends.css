@@ -1854,7 +1854,7 @@ input:disabled + .form-icon, input.disabled + .form-icon {
   background-color: #fff;
   color: #48427c;
   min-height: 100vh; }
-  .friends-page a:visited {
+  .friends-page a:visited:not(.off-canvas-toggle) {
     color: #1341d4; }
   .friends-page .menu a, .friends-page .menu a:active, .friends-page .menu a:visited {
     color: #333; }

@@ -114,7 +114,7 @@ div {
 	color: $body-font-color;
 
 	min-height: 100vh;
-	a:visited {
+	a:visited:not(.off-canvas-toggle) {
 		color: $link-color-dark;
 	}
 	.nav-links div a, .nav-links div a:hover {
