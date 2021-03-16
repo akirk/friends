@@ -80,9 +80,14 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
  
 == Changelog ==
+= 1.5.2 =
+- Allow editing the friends description
+- Display feed rules in author header
+- Show author header on single post view
+
 = 1.5.1 =
 - Improved the author header a bit more, updated the page title on the friends page
-- Added some filters for the Post Collector plugin.
+- Added some filters for the Post Collection plugin.
 - Incorporate Friends Plugins strings in the main plugin to have them translatable on translate.wordpress.org.
 
 = 1.5 =
