@@ -84,7 +84,7 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 						<?php endforeach; ?>
 						</select>
 					</li>
-				<?php if ( current_user_can( 'edit_post', $post->ID ) ) : ?>
+				<?php if ( current_user_can( 'edit_post', get_the_ID() ) ) : ?>
 					<li class="menu-item"><?php edit_post_link(); ?></li>
 				<?php endif; ?>
 				<?php if ( Friends::CPT === get_post_type() ) : ?>
