@@ -588,6 +588,8 @@ class Friends_Frontend {
 			return $query;
 		}
 
+		switch_to_locale( get_user_locale() );
+
 		$this->is_friends_page = true;
 		$query->is_friends_page = true;
 		$query->is_singular = false;
