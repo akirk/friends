@@ -139,19 +139,19 @@ class Friends {
 	 */
 	public function register_custom_post_type() {
 		$labels = array(
-			'name'               => 'Friend Posts',
-			'singular_name'      => 'Friend Post',
-			'add_new'            => 'Add New',
-			'add_new_item'       => 'Add New Friend Post',
-			'edit_item'          => 'Edit Friend Post',
-			'new_item'           => 'New Friend Post',
-			'all_items'          => 'All Friend Posts',
-			'view_item'          => 'View Friend Post',
-			'search_items'       => 'Search Friend Posts',
-			'not_found'          => 'No Friend Posts found',
-			'not_found_in_trash' => 'No Friend Posts found in the Trash',
+			'name'               => __( 'Friend Posts', 'friends' ),
+			'singular_name'      => __( 'Friend Post', 'friends' ),
+			'add_new'            => __( 'Add New', 'friends' ),
+			'add_new_item'       => __( 'Add New Friend Post', 'friends' ),
+			'edit_item'          => __( 'Edit Friend Post', 'friends' ),
+			'new_item'           => __( 'New Friend Post', 'friends' ),
+			'all_items'          => __( 'All Friend Posts', 'friends' ),
+			'view_item'          => __( 'View Friend Post', 'friends' ),
+			'search_items'       => __( 'Search Friend Posts', 'friends' ),
+			'not_found'          => __( 'No Friend Posts found', 'friends' ),
+			'not_found_in_trash' => __( 'No Friend Posts found in the Trash', 'friends' ),
 			'parent_item_colon'  => '',
-			'menu_name'          => 'Cached Friend Posts',
+			'menu_name'          => __( 'Cached Friend Posts', 'friends' ),
 		);
 
 		$args = array(
@@ -168,7 +168,7 @@ class Friends {
 			'delete_with_user'    => true,
 			'menu_position'       => 5,
 			'menu_icon'           => 'dashicons-groups',
-			'supports'            => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
+			'supports'            => array( 'title', 'editor', 'author', 'revisions', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
 			'taxonomies'          => array( 'post_tag', 'post_format' ),
 			'has_archive'         => true,
 		);
