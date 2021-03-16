@@ -39,6 +39,6 @@ __( 'Don\'t send a notification', 'friends' );
 // translators: %s is an URL.
 __( 'You have not yet entered any e-readers. Go to the <a href=%s>Send to E-Reader settings</a> to add one.', 'friends' );
 // translators: %s is an E-Reader name.
-__( 'Send to %s', 'friends' );
+_x( 'Send to %s', 'e-reader', 'friends' );
 __( 'Friends', 'friends' );
 __( 'About', 'friends' );
