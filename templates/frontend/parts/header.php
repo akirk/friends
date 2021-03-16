@@ -69,7 +69,7 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 			<a class="btn btn-link friends-dropdown-toggle" tabindex="0">
 				<i class="dashicons dashicons-menu-alt2"></i>
 			</a>
-			<ul class="menu">
+			<ul class="menu" style="min-width: <?php echo esc_attr( intval( _x( '250', 'dropdown-menu-width', 'friends' ) ) ); ?>px">
 				<?php
 				$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
 				if ( $edit_user_link ) :

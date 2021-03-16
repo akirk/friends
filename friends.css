@@ -1800,6 +1800,46 @@ input:disabled + .form-icon, input.disabled + .form-icon {
       margin-top: -0.8rem;
       width: 1.6rem; }
 
+.divider,
+.divider-vert {
+  display: block;
+  position: relative; }
+  .divider[data-content]::after,
+  .divider-vert[data-content]::after {
+    background: #fff;
+    color: #d6d4e8;
+    content: attr(data-content);
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 0 0.4rem;
+    transform: translateY(-0.65rem); }
+
+.divider {
+  border-top: 0.05rem solid white;
+  height: 0.05rem;
+  margin: 0.4rem 0; }
+  .divider[data-content] {
+    margin: 0.8rem 0; }
+
+.divider-vert {
+  display: block;
+  padding: 0.8rem; }
+  .divider-vert::before {
+    border-left: 0.05rem solid #f6f6fa;
+    bottom: 0.4rem;
+    content: "";
+    display: block;
+    left: 50%;
+    position: absolute;
+    top: 0.4rem;
+    transform: translateX(-50%); }
+  .divider-vert[data-content]::after {
+    left: 50%;
+    padding: 0.2rem 0;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%); }
+
 .friends-dropdown {
   display: inline-block;
   position: relative; }
