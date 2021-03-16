@@ -26,6 +26,14 @@ $args['friends']->frontend->link(
 
 </h2>
 
+<?php if ( $args['friend_user']->description ) : ?>
+	<p>
+	<?php
+	echo wp_kses( $args['friend_user']->description, array( 'a' => array( 'href' => array() ) ) );
+	?>
+	</p>
+<?php endif; ?>
+
 <span class="chip"><?php echo esc_html( $args['friend_user']->get_role_name() ); ?></span>
 
 <span class="chip"><?php echo esc_html( sprintf( /* translators: %s is a localized date (F j, Y) */__( 'Since %s', 'friends' ), date_i18n( __( 'F j, Y' ), strtotime( $args['friend_user']->user_registered ) ) ) ); ?></span>
