@@ -52,27 +52,25 @@ class Friends_Blocks {
 			add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
 			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
 
-			$this->register_friends_list_block();
-			$this->register_friend_posts_block();
+			if ( ! function_exists( 'register_block_type_from_metadata' ) ) {
+				// Blocks is not active.
+				return;
+			}
+			register_block_type_from_metadata(
+				FRIENDS_PLUGIN_DIR . '/blocks/friends-list',
+				array(
+					'render_callback' => array( $this, 'render_friends_list_block' ),
+				)
+			);
+
+			register_block_type_from_metadata(
+				FRIENDS_PLUGIN_DIR . '/blocks/friend-posts',
+				array(
+					'render_callback' => array( $this, 'render_friend_posts_block' ),
+				)
+			);
+
 		}
-	}
-
-	/**
-	 * Register the Friends List block
-	 */
-	public function register_friends_list_block() {
-		if ( ! function_exists( 'register_block_type' ) ) {
-			// Blocks is not active.
-			return;
-		}
-
-		register_block_type_from_metadata(
-			FRIENDS_PLUGIN_DIR . '/blocks/friends-list',
-			array(
-				'render_callback' => array( $this, 'render_friends_list_block' ),
-			)
-		);
-
 	}
 
 	/**
@@ -149,24 +147,6 @@ class Friends_Blocks {
 		}
 
 		return $out;
-	}
-
-	/**
-	 * Register the Friend Posts block
-	 */
-	public function register_friend_posts_block() {
-		if ( ! function_exists( 'register_block_type' ) ) {
-			// Blocks is not active.
-			return;
-		}
-
-		register_block_type_from_metadata(
-			FRIENDS_PLUGIN_DIR . '/blocks/friend-posts',
-			array(
-				'render_callback' => array( $this, 'render_friend_posts_block' ),
-			)
-		);
-
 	}
 
 	/**

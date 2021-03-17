@@ -1,12 +1,13 @@
 import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
-import { InspectorControls } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { CheckboxControl, PanelBody, SelectControl, TextControl } from '@wordpress/components';
 import ServerSideRender from '@wordpress/server-side-render';
 
 registerBlockType( 'friends/friends-list', {
 	apiVersion: 2,
 	edit: function( { attributes, setAttributes } ) {
+		const blockProps = useBlockProps();
 		return (
 			<>
 				<InspectorControls>
@@ -41,10 +42,12 @@ registerBlockType( 'friends/friends-list', {
 						/>
 					</PanelBody>
 				</InspectorControls>
-				<ServerSideRender
-				block="friends/friends-list"
-					attributes={ attributes }
-				/>
+				<div {...blockProps}>
+					<ServerSideRender
+					block="friends/friends-list"
+						attributes={ attributes }
+					/>
+				</div>
 			</>
 		);
 	},
