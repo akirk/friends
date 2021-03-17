@@ -1,5 +1,6 @@
 $primary-color: #2e5bec;
 $dark-color: #3e396b;
+$border-color-light: #eee;
 
 div {
 	min-width: 0; // fixes overflowing <pre>
@@ -127,6 +128,10 @@ div {
 		}
 		.menu-item + .menu-item {
 			margin-top: 0;
+		}
+
+		.divider[data-content] {
+			margin: 0.8rem 0 0.4rem 0;
 		}
 
 		.menu-item.friends-dropdown {
