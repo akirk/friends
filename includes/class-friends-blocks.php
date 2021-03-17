@@ -128,7 +128,7 @@ class Friends_Blocks {
 			}
 
 			if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-				$url = site_url( '/friends/' . $friend_user->user_login . '/' );
+				$url = $friend_user->get_local_friends_page_url();
 			} else {
 				$url = $friend_user->user_url;
 			}
@@ -187,13 +187,13 @@ class Friends_Blocks {
 			$offset += $count;
 
 			foreach ( $recent_posts as $post ) {
-				$author = get_the_author_meta( 'display_name', $post['post_author'] );
+				$friend_user = new Friend_User( $post['post_author'] );
 
-				if ( ! empty( $only_users ) && ! isset( $only_users[ $author ] ) ) {
+				if ( ! empty( $only_users ) && ! isset( $only_users[ $friend_user->user_login ] ) && ! isset( $only_users[ $friend_user->ID ] ) && ! isset( $only_users[ $friend_user->display_name ] ) ) {
 					continue;
 				}
 
-				if ( ! empty( $exclude_users ) && isset( $exclude_users[ $author ] ) ) {
+				if ( ! empty( $exclude_users ) && isset( $exclude_users[ $friend_user->user_login ] ) && isset( $exclude_users[ $friend_user->ID ] ) && isset( $exclude_users[ $friend_user->display_name ] ) ) {
 					continue;
 				}
 
@@ -202,6 +202,7 @@ class Friends_Blocks {
 				}
 				$remaining -= 1;
 
+				$author = $friend_user->display_name;
 				if ( $attributes['author_name'] || $attributes['author_avatar'] || $attributes['author_inline'] ) {
 					if ( $attributes['author_inline'] || $last_author !== $author ) {
 						if ( $last_author && ! $attributes['author_inline'] ) {
@@ -231,7 +232,7 @@ class Friends_Blocks {
 
 				$out .= sprintf(
 					'<a class="wp-block-friends-friend-posts" href="%1$s">%2$s</a>',
-					esc_url( $attributes['internal_link'] ? ( '/friends/' . $post['ID'] . '/' ) : get_permalink( $post['ID'] ) ),
+					esc_url( $attributes['internal_link'] ? $friend_user->get_local_friends_page_url( $post['ID'] ) : get_permalink( $post['ID'] ) ),
 					esc_html( get_the_title( $post['ID'] ) )
 				);
 

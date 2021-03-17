@@ -26,7 +26,7 @@
 		'<strong><a href="' . get_permalink( $args['post'] ) . '">' . esc_html( $post_title ) . '</a></strong>'
 	);
 	?>
-	<a href="<?php echo site_url( '/friends/' . $args['post']->ID . '/' ); ?>">
+	<a href="<?php echo esc_url( $args['author']->get_local_friends_page_url( $args['post']->ID ) ); ?>">
 		<?php
 			esc_html_e( 'View the post on your friends page', 'friends' );
 		?>

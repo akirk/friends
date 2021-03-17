@@ -26,7 +26,7 @@ echo PHP_EOL;
 printf(
 	// translators: %s is a URL.
 	__( 'You can also view this post on your friends page: %s', 'friends' ),
-	site_url( '/friends/' . $args['post']->ID . '/' )
+	$args['author']->get_local_friends_page_url( $args['post']->ID )
 );
 echo PHP_EOL, PHP_EOL;
 
