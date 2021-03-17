@@ -229,11 +229,14 @@ class Friends_Blocks {
 				} else {
 					$out .= '<li>';
 				}
-
+				$title = get_the_title( $post['ID'] );
+				if ( empty( $title ) ) {
+					$title = get_the_excerpt( $post['ID'] );
+				}
 				$out .= sprintf(
 					'<a class="wp-block-friends-friend-posts" href="%1$s">%2$s</a>',
 					esc_url( $attributes['internal_link'] ? $friend_user->get_local_friends_page_url( $post['ID'] ) : get_permalink( $post['ID'] ) ),
-					esc_html( get_the_title( $post['ID'] ) )
+					esc_html( $title )
 				);
 
 				if ( $attributes['show_date'] ) {
