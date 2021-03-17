@@ -13,6 +13,7 @@
 __( 'Friends Post Collection', 'friends' );
 // Description of the Friends Post Collection plugin.
 __( 'Collect posts from around the web into your Friends UI.', 'friends' );
+__( 'Post Collection', 'friends' );
 __( 'Edit Post Collection', 'friends' );
 __( 'Make post public', 'friends' );
 __( 'Make post private', 'friends' );
@@ -22,9 +23,9 @@ __( 'This is not a user related to this plugin.', 'friends' );
 __( 'User was updated.', 'friends' );
 __( 'An error occurred.', 'friends' );
 __( 'Friends', 'friends' );
-__( 'Post Collection', 'friends' );
 __( 'About', 'friends' );
 __( 'Edit User', 'friends' );
+__( 'The Friends Post Collection plugin allows you to save external posts to your WordPress, either for just collecting them for yourself as a searchable archive, or to syndicate those posts into new feeds.', 'friends' );
 // translators: %s: URL to the Friends Plugin page on WordPress.org.
 __( 'The Friends plugin is all about connecting with friends and news. Learn more on its <a href=%s>plugin page on WordPress.org</a>.', 'friends' );
 // translators: %s: URL to the Embed library.
@@ -42,5 +43,7 @@ __( 'Publish this Post Collection at %s', 'friends' );
 __( 'Post Collection Name', 'friends' );
 __( 'External feed', 'friends' );
 __( 'Bookmarklet', 'friends' );
+__( 'disabled', 'friends' );
+__( 'Create another user', 'friends' );
 // translators: %s is a URL.
 __( 'To save posts from anywhere on the web, use the <a href=%s>bookmarklets</a>.', 'friends' );

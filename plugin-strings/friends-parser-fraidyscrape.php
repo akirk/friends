@@ -14,6 +14,7 @@ __( 'Friends Parser Fraidyscrape', 'friends' );
 // Description of the Friends Parser Fraidyscrape plugin.
 __( 'Provides the parsing capabilities of Fraidyscrape (the parser behind Fraidycat).', 'friends' );
 __( 'Default Confidence', 'friends' );
+__( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.', 'friends' );
 __( 'Save Changes', 'friends' );
 // translators: %s: URL to the Friends Plugin page on WordPress.org.
 __( 'The Friends plugin is all about connecting with friends and news. Learn more on its <a href=%s>plugin page on WordPress.org</a>.', 'friends' );

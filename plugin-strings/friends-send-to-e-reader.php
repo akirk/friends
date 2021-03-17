@@ -25,7 +25,7 @@ __( 'E-Reader', 'friends' );
 __( 'Add another E-Reader', 'friends' );
 __( 'Some E-Readers offer wireless delivery via an e-mail address which you\'ll first need to create.', 'friends' );
 // translators: %1$s and %2$s are URLs.
-__( 'Examples include Kindle (@free.kindle.com, <a href=\"%1$s\">Instructions</a>) or Pocketbook (@pbsync.com, <a href=\"%2$s\">Instructions</a>).', 'friends' );
+__( 'Examples include Kindle (@free.kindle.com, <a href="%1$s">Instructions</a>) or Pocketbook (@pbsync.com, <a href="%2$s">Instructions</a>).', 'friends' );
 // translators: %s is an e-mail address.
 __( 'Make sure that you whitelist the e-mail address which the friend plugin sends its e-mails from: %s', 'friends' );
 __( 'Theoretically you can enter any e-mail address.', 'friends' );

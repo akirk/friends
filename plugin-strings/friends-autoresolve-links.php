@@ -14,6 +14,8 @@ __( 'Friends Autoresolve Links', 'friends' );
 // Description of the Friends Autoresolve Links plugin.
 __( 'Experimental plugin to transform plaintext links of incoming content (especially t.co shortlinks) into rich(er) links.', 'friends' );
 __( 'Allow iframes', 'friends' );
+__( 'Use iframes to embed remote content (e.g. Youtube videos).', 'friends' );
+// translators: Placeholder for a field where a token can be entered.
 __( 'Leave empty if you don\'t have one', 'friends' );
 __( 'Save Changes', 'friends' );
 // translators: %s: URL to the Friends Plugin page on WordPress.org.
