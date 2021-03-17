@@ -52,78 +52,25 @@ class Friends_Blocks {
 			add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
 			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
 
-			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_list' ) );
-			register_block_type(
-				'friends/friends-list',
-				array(
-					'render_callback' => array( $this, 'render_block_friends_list' ),
-					'attributes'      => array(
-						'users_inline' => array(
-							'type'    => 'boolean',
-							'default' => false,
-						),
-						'user_types'   => array(
-							'type' => 'string',
-						),
-					),
-				)
-			);
-
-			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friend_posts' ) );
-			register_block_type(
-				'friends/friend-posts',
-				array(
-					'render_callback' => array( $this, 'render_block_friend_posts' ),
-					'attributes'      => array(
-						'author_inline' => array(
-							'type'    => 'boolean',
-							'default' => false,
-						),
-						'author_name'   => array(
-							'type'    => 'boolean',
-							'default' => true,
-						),
-						'author_avatar' => array(
-							'type'    => 'boolean',
-							'default' => true,
-						),
-						'show_date'     => array(
-							'type'    => 'boolean',
-							'default' => true,
-						),
-						'count'         => array(
-							'type'    => 'number',
-							'default' => 5,
-						),
-						'exclude_users' => array(
-							'type' => 'string',
-						),
-						'only_users'    => array(
-							'type' => 'string',
-						),
-						'internal_link' => array(
-							'type'    => 'boolean',
-							'default' => false,
-						),
-					),
-				)
-			);
+			$this->register_friends_list_block();
+			$this->register_friend_posts_block();
 		}
 	}
 
 	/**
 	 * Register the Friends List block
 	 */
-	public function register_friends_list() {
+	public function register_friends_list_block() {
 		if ( ! function_exists( 'register_block_type' ) ) {
 			// Blocks is not active.
 			return;
 		}
 
-		wp_enqueue_script(
-			'friends-friends-list',
-			plugins_url( 'blocks/friends-list.build.js', FRIENDS_PLUGIN_FILE ),
-			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
+		register_block_type_from_metadata(
+			FRIENDS_PLUGIN_DIR . '/blocks/friends-list',
+			array(
+				'render_callback' => array( $this, 'render_friends_list_block' ),
+			)
 		);
 
 	}
@@ -131,11 +78,10 @@ class Friends_Blocks {
 	/**
 	 * Render the Friends List block
 	 *
-	 * @param  array  $attributes Attributes set by Blocks.
-	 * @param  string $content    The JS block content.
+	 * @param  array $attributes Attributes set by Blocks.
 	 * @return string The new block content.
 	 */
-	public function render_block_friends_list( $attributes, $content ) {
+	public function render_friends_list_block( $attributes ) {
 		if ( ! isset( $attributes['user_types'] ) ) {
 			$attributes['user_types'] = 'friends';
 		}
@@ -208,27 +154,28 @@ class Friends_Blocks {
 	/**
 	 * Register the Friend Posts block
 	 */
-	public function register_friend_posts() {
+	public function register_friend_posts_block() {
 		if ( ! function_exists( 'register_block_type' ) ) {
 			// Blocks is not active.
 			return;
 		}
 
-		wp_enqueue_script(
-			'friends-friend-posts',
-			plugins_url( 'blocks/friend-posts.build.js', FRIENDS_PLUGIN_FILE ),
-			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' )
+		register_block_type_from_metadata(
+			FRIENDS_PLUGIN_DIR . '/blocks/friend-posts',
+			array(
+				'render_callback' => array( $this, 'render_friend_posts_block' ),
+			)
 		);
+
 	}
 
 	/**
 	 * Render the Friend Posts block
 	 *
-	 * @param  array  $attributes Attributes set by Blocks.
-	 * @param  string $content    The JS block content.
+	 * @param  array $attributes Attributes set by Blocks.
 	 * @return string The new block content.
 	 */
-	public function render_block_friend_posts( $attributes, $content ) {
+	public function render_friend_posts_block( $attributes ) {
 		$date_formats = array(
 			'Y m d H' => 'human',
 			'Y m d'   => 'H:i',
@@ -337,12 +284,12 @@ class Friends_Blocks {
 	}
 
 	/**
-	 * Register the Blocks Block Visibility
+	 * Register the Block Visibility script.
 	 */
 	public function register_friends_block_visibility() {
 		wp_enqueue_script(
 			'friends-block-visibility',
-			plugins_url( 'blocks/block-visibility.build.js', FRIENDS_PLUGIN_FILE ),
+			plugins_url( 'blocks/block-visibility/build/index.js', FRIENDS_PLUGIN_FILE ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' ),
 			Friends::VERSION
 		);
@@ -362,8 +309,7 @@ class Friends_Blocks {
 	function add_block_visibility_attribute() {
 		$registered_blocks = WP_Block_Type_Registry::get_instance()->get_all_registered();
 
-		foreach ( $registered_blocks as $name => $block ) {
-
+		foreach ( $registered_blocks as $block ) {
 			$block->attributes['friendsVisibility'] = array(
 				'type'    => 'string',
 				'default' => '',

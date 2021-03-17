@@ -1,0 +1,8 @@
+{
+  "packages": [
+    "blocks/block-visibility",
+    "blocks/friend-posts",
+    "blocks/friends-list"
+  ],
+  "version": "independent"
+}

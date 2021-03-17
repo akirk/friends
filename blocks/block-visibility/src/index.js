@@ -1,9 +1,8 @@
-const { __ } = wp.i18n;
-const { addFilter } = wp.hooks;
-const { createHigherOrderComponent } = wp.compose;
-const { Fragment } = wp.element;
-const { InspectorControls } = wp.editor;
-const { PanelBody, SelectControl } = wp.components;
+import { __ } from '@wordpress/i18n';
+import { addFilter } from '@wordpress/hooks';
+import { createHigherOrderComponent } from '@wordpress/compose';
+import { InspectorControls } from '@wordpress/block-editor';
+import { PanelBody, SelectControl } from '@wordpress/components';
 
 const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 	return ( props ) => {
@@ -16,9 +15,8 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 				friendsVisibility = 'not-friends';
 			}
 		}
-		console.log(attributes, friendsVisibility )
 		return (
-			<Fragment>
+			<>
 				<BlockEdit { ...props } />
 				<InspectorControls>
 					<PanelBody className="friends-block-visibility" title={ __( 'Friends Visibility', 'friends' ) }>
@@ -46,7 +44,7 @@ const friendsBlockVisibility = createHigherOrderComponent( ( BlockEdit ) => {
 						/>
 					</PanelBody>
 				</InspectorControls>
-			</Fragment>
+			</>
 		);
 	};
 }, 'withFriendsBlockVisibility' );

@@ -1,26 +1,14 @@
-const { __ } = wp.i18n;
-const { registerBlockType } = wp.blocks;
-const { Fragment } = wp.element;
-const { InspectorControls } = wp.editor;
-const { CheckboxControl, PanelBody, SelectControl, ServerSideRender } = wp.components;
+import { __ } from '@wordpress/i18n';
+import { registerBlockType } from '@wordpress/blocks';
+import { InspectorControls } from '@wordpress/block-editor';
+import { CheckboxControl, PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import ServerSideRender from '@wordpress/server-side-render';
 
 registerBlockType( 'friends/friends-list', {
-	title: __( 'Friends list', 'friends' ),
-	icon: 'groups',
-	category: 'widgets',
-	attributes: {
-		users_inline: {
-			type: 'boolean',
-			default: false,
-		},
-		user_types: {
-			type: 'string',
-		},
-	},
-
+	apiVersion: 2,
 	edit: function( { attributes, setAttributes } ) {
 		return (
-			<Fragment>
+			<>
 				<InspectorControls>
 					<PanelBody>
 					<CheckboxControl
@@ -57,7 +45,7 @@ registerBlockType( 'friends/friends-list', {
 				block="friends/friends-list"
 					attributes={ attributes }
 				/>
-			</Fragment>
+			</>
 		);
 	},
 

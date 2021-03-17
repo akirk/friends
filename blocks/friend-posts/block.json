@@ -1,0 +1,45 @@
+{
+	"apiVersion": 2,
+	"name": "friends/friend-posts",
+	"title": "Friend Posts",
+	"category": "widgets",
+	"text-domain": "friends",
+	"icon": "groups",
+	"attributes": {
+		"author_inline": {
+			"type": "boolean",
+			"default": false
+		},
+		"author_name": {
+			"type": "boolean",
+			"default": true
+		},
+		"author_avatar": {
+			"type": "boolean",
+			"default": true
+		},
+		"show_date": {
+			"type": "boolean",
+			"default": true
+		},
+		"count": {
+			"type": "number",
+			"default": 5
+		},
+		"exclude_users": {
+			"type": "string"
+		},
+		"only_users": {
+			"type": "string"
+		},
+		"internal_link": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"example": {
+		"attributes": {
+		}
+	},
+	"editorScript": "file:build/index.js"
+}

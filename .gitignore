@@ -7,3 +7,4 @@ vendor
 .idea
 node_modules
 .sass-cache
+blocks/*/build

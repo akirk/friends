@@ -1,49 +1,14 @@
-const { __ } = wp.i18n;
-const { registerBlockType } = wp.blocks;
-const { Fragment } = wp.element;
-const { InspectorControls } = wp.editor;
-const { CheckboxControl, PanelBody, RangeControl, SelectControl, ServerSideRender, TextControl } = wp.components;
+import { __ } from '@wordpress/i18n';
+import { registerBlockType } from '@wordpress/blocks';
+import { InspectorControls } from '@wordpress/block-editor';
+import { CheckboxControl, PanelBody, RangeControl, SelectControl, TextControl } from '@wordpress/components';
+import ServerSideRender from '@wordpress/server-side-render';
 
 registerBlockType( 'friends/friend-posts', {
-	title: __( 'Friend Posts', 'friends' ),
-	icon: 'groups',
-	category: 'widgets',
-	attributes: {
-		author_inline: {
-			type: 'boolean',
-			default: false,
-		},
-		author_name: {
-			type: 'boolean',
-			default: true,
-		},
-		author_avatar: {
-			type: 'boolean',
-			default: true,
-		},
-		show_date: {
-			type: 'boolean',
-			default: true,
-		},
-		count: {
-			type: 'number',
-			default: 5,
-		},
-		exclude_users: {
-			type: 'string',
-		},
-		only_users: {
-			type: 'string',
-		},
-		internal_link: {
-			type: 'boolean',
-			default: false,
-		},
-	},
-
+	apiVersion: 2,
 	edit: function( { attributes, setAttributes } ) {
 		return (
-			<Fragment>
+			<>
 				<InspectorControls>
 					<PanelBody>
 						<CheckboxControl
@@ -96,7 +61,7 @@ registerBlockType( 'friends/friend-posts', {
 					block="friends/friend-posts"
 					attributes={ attributes }
 				/>
-			</Fragment>
+			</>
 		);
 	},
 
