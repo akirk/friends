@@ -271,7 +271,7 @@ class Friends_Feed {
 				$field = $this->get_feed_rule_field( $rule['field'], $item );
 
 				if ( 'author' === $rule['field'] ) {
-					$item->$field = get_post_meta( get_the_ID( $item ), 'author', true );
+					$item->$field = get_post_meta( $item->ID, 'author', true );
 				}
 			} else {
 				$field = $rule['field'];

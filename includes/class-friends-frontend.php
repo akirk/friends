@@ -333,10 +333,10 @@ class Friends_Frontend {
 	 * @param string $previous_status The status of the post at the point where it was trashed.
 	 */
 	public function untrash_post_status( $new_status, $post_id, $previous_status ) {
-		if ( Friends::CPT === get_post_type( $post_id ) ) {
-			return $previous_status;
+		if ( Friends::CPT !== get_post_type( $post_id ) ) {
+			return $new_status;
 		}
-		return $new_status;
+		return 'publish';
 	}
 
 	/**
