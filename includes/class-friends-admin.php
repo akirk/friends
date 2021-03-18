@@ -635,8 +635,10 @@ class Friends_Admin {
 
 		$rules   = array_values( $rules );
 		$rules[] = array(
-			'field' => 'title',
-			'regex' => '',
+			'field'   => 'title',
+			'regex'   => '',
+			'action'  => '',
+			'replace' => '',
 		);
 
 		$args = array(
@@ -1488,6 +1490,7 @@ class Friends_Admin {
 		}
 
 		$actions['view'] = $this->friends->frontend->get_link( $user->user_url, __( 'Visit' ), array(), new Friend_User( $user ) );
+		unset( $actions['resetpassword'] );
 
 		if ( $user->has_cap( 'friend_request' ) ) {
 			$link = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
