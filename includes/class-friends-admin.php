@@ -641,17 +641,22 @@ class Friends_Admin {
 			'replace' => '',
 		);
 
+		if ( isset( $_GET['post'] ) && intval( $_GET['post'] ) ) {
+			$post = get_post( intval( $_GET['post'] ) );
+		} else {
+			$post = null;
+		}
+
 		$args = array(
 			'rules'     => $rules,
 			'friend'    => $friend,
 			'catch_all' => $catch_all,
+			'post'      => $post,
 		);
 		Friends::template_loader()->get_template_part( 'admin/edit-rules', null, $args );
 
-		Friends::template_loader()->get_template_part( 'admin/rules-examples', null, $args );
-
 		echo '<div id="preview-rules">';
-		$this->render_preview_friend_rules( $rules, $catch_all );
+		$this->render_preview_friend_rules( $rules, $catch_all, $post );
 		echo '</div>';
 
 		array_pop( $args['rules'] );
@@ -666,7 +671,13 @@ class Friends_Admin {
 			wp_die( -1 );
 		}
 
-		$this->render_preview_friend_rules( $_POST['rules'], $_POST['catch_all'] );
+		if ( isset( $_GET['post'] ) && intval( $_GET['post'] ) ) {
+			$post = get_post( intval( $_GET['post'] ) );
+		} else {
+			$post = null;
+		}
+
+		$this->render_preview_friend_rules( $_POST['rules'], $_POST['catch_all'], $post );
 		wp_die( 1 );
 	}
 
@@ -717,10 +728,11 @@ class Friends_Admin {
 	/**
 	 * Render the Friend rules preview
 	 *
-	 * @param  array  $rules     The rules to apply.
-	 * @param  string $catch_all The catch all behavior.
+	 * @param  array   $rules     The rules to apply.
+	 * @param  string  $catch_all The catch all behavior.
+	 * @param  WP_Post $post       The post.
 	 */
-	public function render_preview_friend_rules( $rules, $catch_all ) {
+	public function render_preview_friend_rules( $rules, $catch_all, WP_Post $post = null ) {
 		$friend = $this->check_admin_edit_friend_rules();
 
 		$args = array(
@@ -734,6 +746,7 @@ class Friends_Admin {
 				)
 			),
 			'feed'         => $this->friends->feed,
+			'post'         => $post,
 		);
 
 		Friend_User::$feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );

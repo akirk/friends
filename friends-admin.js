@@ -60,6 +60,18 @@ jQuery( function( $ ) {
 		return false;
 	} );
 
+	var preview_rules = function() {
+		$this = $( 'button#refresh-preview-rules' );
+		var url = friends.ajax_url + '?user=' + $this.data( 'id' );
+		if ( $this.data( 'post' ) ) {
+			url += '&post=' + $this.data( 'post' );
+		}
+		jQuery.post( url, $( 'form#edit-rules [name^=rules]' ).add( 'form#edit-rules [name=catch_all]' ).serialize() + '&_ajax_nonce=' + $this.data( 'nonce' ) + '&action=friends_preview_rules', function( response ) {
+			jQuery( '#preview-rules' ).html( response );
+		} );
+		return false;
+	}
+
 	jQuery( document ).on( 'change', 'select.rule-action', function() {
 		var td_replace = jQuery( this ).closest( 'tr' ).find( 'td.replace-with' );
 		if ( 'replace' === jQuery( this ).val() ) {
@@ -67,14 +79,12 @@ jQuery( function( $ ) {
 		} else {
 			td_replace.hide();
 		}
+		preview_rules();
 	} );
 
-	jQuery( document ).on( 'click', 'button#refresh-preview-rules', function() {
-		jQuery.post( friends.ajax_url + '?user=' + $( this ).data( 'id' ), $( 'form#edit-rules [name^=rules]' ).add( 'form#edit-rules [name=catch_all]' ).serialize() + '&_ajax_nonce=' + $( this ).data( 'nonce' ) + '&action=friends_preview_rules', function( response ) {
-			jQuery( '#preview-rules' ).html( response );
-		} );
-		return false;
-	} );
+	jQuery( document ).on( 'keyup click', '#edit-rules input, #edit-rules select', preview_rules );
+
+	jQuery( document ).on( 'click', 'button#refresh-preview-rules', preview_rules );
 
 	jQuery( document ).on( 'click', 'a.preview-parser', function() {
 		this.href = this.href.replace( /&parser(=[^&$]+)?([&$])/, '&parser=' + encodeURIComponent( jQuery( this ).closest( 'td' ).find( 'select' ).val() ) + '&' );

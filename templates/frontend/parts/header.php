@@ -88,7 +88,7 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 					<li class="menu-item"><?php edit_post_link(); ?></li>
 				<?php endif; ?>
 				<?php if ( Friends::CPT === get_post_type() ) : ?>
-					<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . get_the_author_meta( 'ID' ) ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
+					<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . get_the_author_meta( 'ID' ) . '&post=' . get_the_ID() ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
 						<?php _e( 'Muffle posts like these', 'friends' ); ?>
 					</a></li>
 					<li class="menu-item">

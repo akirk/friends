@@ -55,3 +55,5 @@
 		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ); ?>" style="margin-left: 1em"><?php _e( 'Back' ); ?></a>
 	</p>
 </form>
+
+<p class="description"><?php esc_html_e( 'See how the rules apply to these items:', 'friends' ); ?> <button id="refresh-preview-rules" data-id="<?php echo esc_attr( $args['friend']->ID ); ?>" data-post="<?php echo $args['post'] ? esc_attr( $args['post']->ID ) : ''; ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'preview-rules-' . $args['friend']->ID ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></button></p>
