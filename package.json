@@ -1,8 +1,8 @@
 {
-	"name": "friends",
-	"version": "0.1",
+	"name": "Friends",
+	"version": "1.5.4",
 	"private": true,
-	"description": "Friends Plugin",
+	"description": "Blocks of the Friends Plugin for WordPress",
 	"homepage": "https://wpfriends.at/",
 	"repository": "git+https://github.com/akirk/friends.git",
 	"author": "Alex Kirk",

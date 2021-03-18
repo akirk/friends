@@ -80,6 +80,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
  
 == Changelog ==
+= 1.5.4 =
+- Improve rules screen
+- Allow untrashing of posts (that have been autotrashed by rules)
+
 = 1.5.3 =
 - Update Gutenberg blocks structure
 
