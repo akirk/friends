@@ -638,7 +638,7 @@ class Friends_Admin {
 		$rules[] = array(
 			'field'   => 'title',
 			'regex'   => '',
-			'action'  => '',
+			'action'  => in_array( $catch_all, array( 'trash', 'delete' ), true ) ? 'accept' : 'trash',
 			'replace' => '',
 		);
 

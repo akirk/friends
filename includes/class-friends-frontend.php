@@ -609,7 +609,7 @@ class Friends_Frontend {
 		$query->set( 'post_type', Friends::CPT );
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$post_status = array( 'publish', 'private' );
-			if ( isset( $_GET['in-trash'] ) ) {
+			if ( isset( $_GET['maybe-in-trash'] ) ) {
 				$post_status[] = 'trash';
 			}
 			$query->set( 'post_status', $post_status );

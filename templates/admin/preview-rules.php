@@ -22,16 +22,23 @@ function preview_row( $post, $args ) {
 			<?php
 			if ( ! $modified_post || $modified_post->_feed_rule_delete ) {
 				echo esc_html( _x( 'Delete', 'verb', 'friends' ) );
-			} elseif ( isset( $modified_post->_feed_rule_transform['post_status'] ) && 'trash' === $modified_post->_feed_rule_transform['post_status'] ) {
 				?>
-				<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url( $post->ID ) ); ?>?in-trash"><?php echo esc_html( _x( 'Trash', 'verb' ) ); ?></a>
+				</td><td class="view column-view" data-colname="<?php esc_attr_e( 'View', 'friends' ); ?>">
 				<?php
 			} else {
+				if ( isset( $modified_post->_feed_rule_transform['post_status'] ) && 'trash' === $modified_post->_feed_rule_transform['post_status'] ) {
+					echo esc_html( _x( 'Trash', 'verb' ) );
+				} else {
+					echo esc_html( _x( 'Accept', 'verb', 'friends' ) );
+				}
 				?>
-				<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url( $post->ID ) ); ?>"><?php echo esc_html( _x( 'Accept', 'verb', 'friends' ) ); ?></a>
+				</td>
+				<td class="view column-view" data-colname="<?php esc_attr_e( 'View', 'friends' ); ?>">
+				<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url( $post->ID ) ); ?>?maybe-in-trash"><?php esc_html_e( 'View post', 'friends' ); ?></a>
 				<?php
 			}
 			?>
+			</td>
 		</td>
 	</tr>
 	<?php
@@ -53,10 +60,11 @@ if ( $args['post'] ) :
 				<th class="column-author"><?php _e( 'Author' ); ?></th>
 				<th class="column-date"><?php _e( 'Date' ); ?></th>
 				<th class="column-action"><?php _e( 'Action', 'friends' ); ?></th>
+				<th class="column-view"><?php _e( 'Friends Page', 'friends' ); ?></th>
 			</tr>
 			<?php preview_row( $args['post'], $args ); ?>
 			<tr>
-				<td colspan="4"><?php echo get_the_excerpt( $args['post'] ); ?></td>
+				<td colspan="5"><?php echo get_the_excerpt( $args['post'] ); ?></td>
 			</tr>
 		</tbody>
 	</table>
@@ -71,6 +79,7 @@ if ( $args['post'] ) :
 			<th class="column-author"><?php _e( 'Author' ); ?></th>
 			<th class="column-date"><?php _e( 'Date' ); ?></th>
 			<th class="column-action"><?php _e( 'Action', 'friends' ); ?></th>
+			<th class="column-view"><?php _e( 'Friends Page', 'friends' ); ?></th>
 		</tr>
 		<?php
 		while ( $args['friend_posts']->have_posts() ) {
