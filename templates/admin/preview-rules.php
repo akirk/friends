@@ -16,7 +16,7 @@ function preview_row( $post, $args ) {
 	?>
 	<tr>
 		<td class="title column-title column-primary" data-colname="<?php esc_attr_e( 'Title', 'friends' ); ?>"><a href="<?php the_permalink( $modified_post ? $modified_post : $post ); ?>" rel="noopener noreferrer"><?php echo esc_html( $modified_post ? $modified_post->post_title : $post->post_title ); ?></a></td>
-		<td class="author column-author" data-colname="<?php esc_attr_e( 'Author' ); ?>"><?php echo esc_html( $modified_post ? $modified_post->author : get_post_meta( get_the_ID( $post ), 'author', true ) ); ?></td>
+		<td class="author column-author" data-colname="<?php esc_attr_e( 'Author' ); ?>"><?php echo esc_html( get_post_meta( $post->ID, 'author', true ) ); ?></td>
 		<td class="date column-date" data-colname="<?php esc_attr_e( 'Date' ); ?>"><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $post->post_date ) ); ?></td>
 		<td class="action column-action" data-colname="<?php esc_attr_e( 'Action', 'friends' ); ?>">
 			<?php
