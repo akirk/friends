@@ -91,9 +91,17 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 					<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . get_the_author_meta( 'ID' ) ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
 						<?php _e( 'Muffle posts like these', 'friends' ); ?>
 					</a></li>
-					<li class="menu-item"><a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
-						<?php _e( 'Trash this post', 'friends' ); ?>
-					</a></li>
+					<li class="menu-item">
+						<?php if ( 'trash' === get_post_status() ) : ?>
+							<a href="#" title="<?php esc_attr_e( 'Untrash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-untrash-post">
+							<?php _e( 'Untrash this post', 'friends' ); ?>
+							</a>
+						<?php else : ?>
+							<a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
+							<?php _e( 'Trash this post', 'friends' ); ?>
+							</a>
+						<?php endif; ?>
+					</li>
 				<?php endif; ?>
 				<?php do_action( 'friends_entry_dropdown_menu' ); ?>
 			</ul>

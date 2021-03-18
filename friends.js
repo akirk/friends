@@ -139,7 +139,7 @@
 				_ajax_nonce: button.data( 'trash-nonce' ),
 				id: button.data( 'id' )
 			},
-			success: function( response ) {
+			success: function() {
 				button.text( friends.text_undo ).attr( 'class', 'friends-untrash-post' );
 			}
 		} );
@@ -154,7 +154,7 @@
 				_ajax_nonce: button.data( 'untrash-nonce' ),
 				id: button.data( 'id' )
 			},
-			success: function( response ) {
+			success: function() {
 				button.text( friends.text_trash_post ).attr( 'class', 'friends-trash-post' );
 			}
 		} );

@@ -64,7 +64,8 @@ class Friends_Frontend {
 		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ) );
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
-		add_action( 'wp', array( $this, 'add_theme_supports' ) );
+		add_action( 'init', array( $this, 'add_theme_support_title_tag' ) );
+		add_action( 'wp', array( $this, 'add_theme_support_admin_bar' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
@@ -75,21 +76,26 @@ class Friends_Frontend {
 	}
 
 	/**
-	 * Registers the sidebar for the /friends page.
+	 * We're asking WordPress to handle the title for us.
 	 */
-	public function add_theme_supports() {
+	public function add_theme_support_title_tag() {
 		if ( Friends::on_frontend() ) {
-			// remove the margin-top on the friends page.
+			add_theme_support( 'title-tag' );
+			add_filter( 'document_title_parts', array( $this, 'modify_page_title' ) );
+		}
+	}
+
+	/**
+	 * Remove the margin-top on the friends page.
+	 */
+	public function add_theme_support_admin_bar() {
+		if ( Friends::on_frontend() ) {
 			add_theme_support(
 				'admin-bar',
 				array(
 					'callback' => '__return_false',
 				)
 			);
-
-			// We're asking WordPress to handle the title for us.
-			add_theme_support( 'title-tag' );
-			add_filter( 'document_title_parts', array( $this, 'modify_page_title' ) );
 		}
 	}
 
@@ -170,6 +176,7 @@ class Friends_Frontend {
 					array(
 						'admin-bar',
 						'customize-preview',
+						'debug-bar',
 						'wp-block-library',
 						'wp-block-library-theme',
 						'wp-mediaelement',
@@ -601,7 +608,11 @@ class Friends_Frontend {
 
 		$query->set( 'post_type', Friends::CPT );
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			$query->set( 'post_status', array( 'publish', 'private' ) );
+			$post_status = array( 'publish', 'private' );
+			if ( isset( $_GET['in-trash'] ) ) {
+				$post_status[] = 'trash';
+			}
+			$query->set( 'post_status', $post_status );
 		}
 		$query->is_page = false;
 		$query->is_comment_feed = false;

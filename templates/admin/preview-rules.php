@@ -25,7 +25,9 @@
 					if ( ! $modified_post || $modified_post->_feed_rule_delete ) {
 						echo esc_html( _x( 'Delete', 'verb', 'friends' ) );
 					} elseif ( isset( $modified_post->_feed_rule_transform['post_status'] ) && 'trash' === $modified_post->_feed_rule_transform['post_status'] ) {
-						echo esc_html( _x( 'Trash', 'verb' ) );
+						?>
+						<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url( $post->ID ) ); ?>?in-trash"><?php echo esc_html( _x( 'Trash', 'verb' ) ); ?></a>
+						<?php
 					} else {
 						echo esc_html( _x( 'Accept', 'verb', 'friends' ) );
 					}
