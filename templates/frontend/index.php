@@ -57,20 +57,7 @@ Friends::template_loader()->get_template_part(
 		</div>
 		<?php
 	} else {
-		while ( have_posts() ) {
-			the_post();
-
-			Friends::template_loader()->get_template_part(
-				'frontend/parts/content',
-				get_post_format(),
-				array(
-					'friends'     => $friends,
-					'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
-					'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
-				)
-			);
-		}
-
+		Friends_Frontend::have_posts();
 		the_posts_navigation();
 	}
 	?>

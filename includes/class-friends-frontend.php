@@ -268,6 +268,76 @@ class Friends_Frontend {
 	}
 
 	/**
+	 * Calculates an estimating read time.
+	 *
+	 * @param      string $original_text  The original text.
+	 *
+	 * @return     float  The read time in seconds.
+	 */
+	private static function calculate_read_time( $original_text ) {
+		// from wp_trim_words().
+		$text = wp_strip_all_tags( $original_text );
+
+		/*
+		 * translators: If your word count is based on single characters (e.g. East Asian characters),
+		 * enter 'characters_excluding_spaces' or 'characters_including_spaces'. Otherwise, enter 'words'.
+		 * Do not translate into your own language.
+		 */
+		if ( strpos( _x( 'words', 'Word count type. Do not translate!' ), 'characters' ) === 0 && preg_match( '/^utf\-?8$/i', get_option( 'blog_charset' ) ) ) {
+			$text = trim( preg_replace( "/[\n\r\t ]+/", ' ', $text ), ' ' );
+			preg_match_all( '/./u', $text, $words_array );
+			$words_array = array_shift( $words_array );
+			$words_per_minute = 230;
+		} else {
+			$words_array = preg_split( "/[\n\r\t ]+/", $text, -1, PREG_SPLIT_NO_EMPTY );
+			$words_per_minute = 500;
+		}
+
+		$additional_time = 0;
+		$figures = substr_count( strtolower( $original_text ), '<figure' );
+		for ( $i = 0; $i < $figures; $i++ ) {
+			if ( $i < 10 ) {
+				$additional_time += 12 - $i;
+			} else {
+				$additional_time += 3;
+			}
+		}
+
+		return count( $words_array ) / $words_per_minute * 60 + $additional_time;
+	}
+
+	/**
+	 * Handles the post loop on the Friends page.
+	 */
+	public static function have_posts() {
+		$friends = Friends::get_instance();
+		while ( have_posts() ) {
+			the_post();
+			$args = array(
+				'friends'     => $friends,
+				'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
+				'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
+			);
+
+			$read_time = self::calculate_read_time( get_the_content() );
+			if ( $read_time >= 60 ) {
+				$mins = ceil( $read_time / MINUTE_IN_SECONDS );
+				/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
+				$args['read_time'] = sprintf( _n( '%s min', '%s mins', $mins ), $mins );
+			} elseif ( $read_time > 20 ) {
+				/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
+				$args['read_time'] = _x( '< 1 min', 'reading time', 'friends' );
+			}
+
+			Friends::template_loader()->get_template_part(
+				'frontend/parts/content',
+				get_post_format(),
+				$args
+			);
+		}
+	}
+
+	/**
 	 * The Ajax function to load more posts for infinite scrolling.
 	 */
 	public function ajax_load_next_page() {
@@ -281,19 +351,7 @@ class Friends_Frontend {
 		query_posts( $query_vars );
 		ob_start();
 		if ( have_posts() ) {
-			while ( have_posts() ) {
-				the_post();
-
-				Friends::template_loader()->get_template_part(
-					'frontend/parts/content',
-					get_post_format(),
-					array(
-						'friends'     => $this->friends,
-						'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
-						'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
-					)
-				);
-			}
+			self::have_posts();
 		} else {
 			esc_html_e( 'No further posts of your friends could were found.', 'friends' );
 		}
