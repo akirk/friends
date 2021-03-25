@@ -480,6 +480,133 @@ class Friends {
 	}
 
 	/**
+	 * Gets the post count by post format.
+	 *
+	 * @param      int $author_id  The author userid.
+	 *
+	 * @return     array  The post count by post format.
+	 */
+	public function get_post_count_by_post_format( $author_id = null ) {
+		$cache_key = 'friends_post_count_by_post_format';
+		if ( is_numeric( $author_id ) && $author_id > 0 ) {
+			$author_id = intval( $author_id );
+			$cache_key .= '_author_' . $author_id;
+		} else {
+			$author_id = null;
+		}
+
+		$counts = get_transient( $cache_key );
+		if ( false === $counts ) {
+			$counts = array();
+
+			global $wpdb;
+
+			if ( $author_id ) {
+				$post_format_counts = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+						FROM {$wpdb->posts} AS posts
+						JOIN {$wpdb->term_relationships} AS relationships
+						JOIN {$wpdb->term_taxonomy} AS taxonomy
+						JOIN {$wpdb->terms} AS terms
+
+						WHERE posts.post_author = %d
+						AND posts.post_status = 'publish'
+						AND posts.post_type = %s
+						AND relationships.object_id = posts.ID
+						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+						AND taxonomy.taxonomy = 'post_format'
+
+						AND terms.term_id = taxonomy.term_id
+						GROUP BY terms.slug",
+						$author_id,
+						self::CPT
+					)
+				);
+			} else {
+				$post_format_counts = $wpdb->get_results(
+					$wpdb->prepare(
+						"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+						FROM {$wpdb->posts} AS posts
+						JOIN {$wpdb->term_relationships} AS relationships
+						JOIN {$wpdb->term_taxonomy} AS taxonomy
+						JOIN {$wpdb->terms} AS terms
+
+						WHERE posts.post_status = 'publish'
+						AND posts.post_type = %s
+						AND relationships.object_id = posts.ID
+						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+						AND taxonomy.taxonomy = 'post_format'
+
+						AND terms.term_id = taxonomy.term_id
+						GROUP BY terms.slug",
+						self::CPT
+					)
+				);
+			}
+
+			$counts = array(
+				'standard' => count_user_posts( $this->ID, Friends::CPT ),
+			);
+
+			foreach ( $post_format_counts as $row ) {
+				$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
+				$counts['standard'] -= $row->count;
+			}
+
+			set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
+		}
+
+		return $counts;
+	}
+
+	/**
+	 * Gets the main header data.
+	 *
+	 * @return     array  The main header data.
+	 */
+	public function get_main_header_data() {
+		$data = array(
+			'description' => '',
+		);
+
+		global $wpdb;
+
+		$post_format_counts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+				FROM {$wpdb->posts} AS posts
+				JOIN {$wpdb->term_relationships} AS relationships
+				JOIN {$wpdb->term_taxonomy} AS taxonomy
+				JOIN {$wpdb->terms} AS terms
+
+				WHERE posts.post_status = 'publish'
+				AND posts.post_type = %s
+				AND relationships.object_id = posts.ID
+				AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+				AND taxonomy.taxonomy = 'post_format'
+
+				AND terms.term_id = taxonomy.term_id
+				GROUP BY terms.slug",
+				Friends::CPT
+			)
+		);
+
+		$counts = array(
+			'standard' => count_user_posts( $this->ID, Friends::CPT ),
+		);
+
+		foreach ( $post_format_counts as $row ) {
+			$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
+			$counts['standard'] -= $row->count;
+		}
+
+		$data['post_count_by_post_format'] = $counts;
+
+		return $data;
+	}
+
+	/**
 	 * Disables the author page for friends users.
 	 */
 	public function disable_friends_author_page() {

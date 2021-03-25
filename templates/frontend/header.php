@@ -48,6 +48,12 @@ if ( isset( $_GET['s'] ) ) {
 						)
 					)
 				);
+			} else {
+				Friends::template_loader()->get_template_part(
+					'frontend/main-feed-header',
+					null,
+					$args
+				);
 			}
 			?>
 

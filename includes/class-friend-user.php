@@ -316,40 +316,8 @@ class Friend_User extends WP_User {
 	 * @return     array  The post counts.
 	 */
 	public function get_post_count_by_post_format() {
-		global $wpdb;
-
-		$post_format_counts = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-				FROM {$wpdb->posts} AS posts
-				JOIN {$wpdb->term_relationships} AS relationships
-				JOIN {$wpdb->term_taxonomy} AS taxonomy
-				JOIN {$wpdb->terms} AS terms
-
-				WHERE posts.post_author = %d
-				AND posts.post_status = 'publish'
-				AND posts.post_type = %s
-				AND relationships.object_id = posts.ID
-				AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-				AND taxonomy.taxonomy = 'post_format'
-
-				AND terms.term_id = taxonomy.term_id
-				GROUP BY terms.slug",
-				$this->ID,
-				Friends::CPT
-			)
-		);
-
-		$counts = array(
-			'standard' => count_user_posts( $this->ID, Friends::CPT ),
-		);
-
-		foreach ( $post_format_counts as $row ) {
-			$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
-			$counts['standard'] -= $row->count;
-		}
-
-		return $counts;
+		$friends = Friends::get_instance();
+		return $friends->get_post_count_by_post_format( $this->ID );
 	}
 
 	/**
