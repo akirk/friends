@@ -101,5 +101,24 @@ abstract class Friends_Feed_Parser {
 	public function fetch_feed( $url ) {
 		return array();
 	}
+
+	/**
+	 * Convert relative URLs to absolute ones in incoming content.
+	 *
+	 * @param      string $html   The html.
+	 * @param      string $url    The url of the feed.
+	 *
+	 * @return     string  The HTML with URLs replaced to their absolute represenation.
+	 */
+	public function convert_relative_urls_to_absolute_urls( $html, $url ) {
+		// For now this only converts links and image srcs.
+		return preg_replace_callback(
+			'~(src|href)=(?:"([^"]+)|\'([^\']+))~i',
+			function ( $m ) use ( $url ) {
+				return str_replace( $m[2], Friends_Mf2\resolveUrl( $url, $m[2] ), $m[0] );
+			},
+			$html
+		);
+	}
 }
 
