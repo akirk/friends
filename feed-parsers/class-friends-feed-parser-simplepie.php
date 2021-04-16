@@ -249,7 +249,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 					'content'   => $this->convert_relative_urls_to_absolute_urls( $item->get_content(), $url ),
 				)
 			);
-			exit;
+
 			foreach ( array(
 				'gravatar'      => 'gravatar',
 				'comment_count' => 'comments',
