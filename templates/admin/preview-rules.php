@@ -17,7 +17,7 @@ function preview_row( $post, $args ) {
 	<tr>
 		<td class="title column-title column-primary" data-colname="<?php esc_attr_e( 'Title', 'friends' ); ?>"><a href="<?php the_permalink( $modified_post ? $modified_post : $post ); ?>" rel="noopener noreferrer"><?php echo esc_html( $modified_post ? $modified_post->post_title : $post->post_title ); ?></a></td>
 		<td class="author column-author" data-colname="<?php esc_attr_e( 'Author' ); ?>"><?php echo esc_html( get_post_meta( $post->ID, 'author', true ) ); ?></td>
-		<td class="date column-date" data-colname="<?php esc_attr_e( 'Date' ); ?>"><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $post->post_date ) ); ?></td>
+		<td class="date column-date" data-colname="<?php esc_attr_e( 'Date' ); ?>"><?php echo esc_html( date_i18n( __( 'F j, Y g:i a' ), strtotime( $post->post_date ) ) ); ?></td>
 		<td class="action column-action" data-colname="<?php esc_attr_e( 'Action', 'friends' ); ?>">
 			<?php
 			if ( ! $modified_post || $modified_post->_feed_rule_delete ) {
@@ -56,15 +56,15 @@ if ( $args['post'] ) :
 	<table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-bottom: 2em; margin-right: 1em">
 		<tbody>
 			<tr>
-				<th class="column-primary column-title"><?php _e( 'Title', 'friends' ); ?></th>
-				<th class="column-author"><?php _e( 'Author' ); ?></th>
-				<th class="column-date"><?php _e( 'Date' ); ?></th>
-				<th class="column-action"><?php _e( 'Action', 'friends' ); ?></th>
-				<th class="column-view"><?php _e( 'Friends Page', 'friends' ); ?></th>
+				<th class="column-primary column-title"><?php esc_html_e( 'Title', 'friends' ); ?></th>
+				<th class="column-author"><?php esc_html_e( 'Author' ); ?></th>
+				<th class="column-date"><?php esc_html_e( 'Date' ); ?></th>
+				<th class="column-action"><?php esc_html_e( 'Action', 'friends' ); ?></th>
+				<th class="column-view"><?php esc_html_e( 'Friends Page', 'friends' ); ?></th>
 			</tr>
 			<?php preview_row( $args['post'], $args ); ?>
 			<tr>
-				<td colspan="5"><?php echo get_the_excerpt( $args['post'] ); ?></td>
+				<td colspan="5"><?php echo esc_html( get_the_excerpt( $args['post'] ) ); ?></td>
 			</tr>
 		</tbody>
 	</table>
@@ -75,11 +75,11 @@ if ( $args['post'] ) :
 <table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-bottom: 2em; margin-right: 1em">
 	<tbody>
 		<tr>
-			<th class="column-primary column-title"><?php _e( 'Title', 'friends' ); ?></th>
-			<th class="column-author"><?php _e( 'Author' ); ?></th>
-			<th class="column-date"><?php _e( 'Date' ); ?></th>
-			<th class="column-action"><?php _e( 'Action', 'friends' ); ?></th>
-			<th class="column-view"><?php _e( 'Friends Page', 'friends' ); ?></th>
+			<th class="column-primary column-title"><?php esc_html_e( 'Title', 'friends' ); ?></th>
+			<th class="column-author"><?php esc_html_e( 'Author' ); ?></th>
+			<th class="column-date"><?php esc_html_e( 'Date' ); ?></th>
+			<th class="column-action"><?php esc_html_e( 'Action', 'friends' ); ?></th>
+			<th class="column-view"><?php esc_html_e( 'Friends Page', 'friends' ); ?></th>
 		</tr>
 		<?php
 		while ( $args['friend_posts']->have_posts() ) {

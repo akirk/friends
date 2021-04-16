@@ -77,11 +77,11 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 				$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
 				if ( $edit_user_link ) :
 					?>
-					<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>"><?php _e( 'Edit friend', 'friends' ); ?></a></li>
+					<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>"><?php esc_html_e( 'Edit friend', 'friends' ); ?></a></li>
 				<?php endif; ?>
 					<li class="menu-item friends-dropdown">
 						<select name="post-format" class="friends-change-post-format form-select select-sm" data-change-post-format-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-change-post-format_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" >
-							<option disabled="disabled"><?php _e( 'Change post format', 'friends' ); ?></option>
+							<option disabled="disabled"><?php esc_html_e( 'Change post format', 'friends' ); ?></option>
 							<?php foreach ( get_post_format_strings() as $format => $title ) : ?>
 							<option value="<?php echo esc_attr( $format ); ?>"<?php selected( get_post_format(), $format ); ?>><?php echo esc_html( $title ); ?></option>
 						<?php endforeach; ?>
@@ -92,16 +92,16 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 				<?php endif; ?>
 				<?php if ( Friends::CPT === get_post_type() ) : ?>
 					<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . get_the_author_meta( 'ID' ) . '&post=' . get_the_ID() ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
-						<?php _e( 'Muffle posts like these', 'friends' ); ?>
+						<?php esc_html_e( 'Muffle posts like these', 'friends' ); ?>
 					</a></li>
 					<li class="menu-item">
 						<?php if ( 'trash' === get_post_status() ) : ?>
 							<a href="#" title="<?php esc_attr_e( 'Untrash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-untrash-post">
-							<?php _e( 'Untrash this post', 'friends' ); ?>
+							<?php esc_html_e( 'Untrash this post', 'friends' ); ?>
 							</a>
 						<?php else : ?>
 							<a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
-							<?php _e( 'Trash this post', 'friends' ); ?>
+							<?php esc_html_e( 'Trash this post', 'friends' ); ?>
 							</a>
 						<?php endif; ?>
 					</li>

@@ -743,7 +743,16 @@ class Friends {
 	 */
 	public static function html_link_rel_alternate_post_formats() {
 		if ( get_option( 'friends_expose_post_format_feeds' ) && current_theme_supports( 'post-formats' ) ) {
-			echo implode( PHP_EOL, self::get_html_link_rel_alternate_post_formats() ), PHP_EOL;
+			echo wp_kses(
+				implode( PHP_EOL, self::get_html_link_rel_alternate_post_formats() ),
+				array(
+					'link' => array(
+						'rel'  => array(),
+						'type' => array(),
+						'href' => array(),
+					),
+				)
+			), PHP_EOL;
 		}
 	}
 
@@ -768,7 +777,16 @@ class Friends {
 	 * Output the friends base URL as a link in the HTML head.
 	 */
 	public static function html_link_rel_friends_base_url() {
-		echo self::get_html_link_rel_friends_base_url(), PHP_EOL;
+		echo wp_kses(
+			self::get_html_link_rel_friends_base_url(),
+			array(
+				'link' => array(
+					'rel'  => array(),
+					'type' => array(),
+					'href' => array(),
+				),
+			)
+		), PHP_EOL;
 	}
 
 	/**

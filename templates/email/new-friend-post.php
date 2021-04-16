@@ -23,7 +23,7 @@
 		// translators: %1$s is a username, %2$s is a post title as a link.
 		__( 'This post was published by your friend %1$s: %2$s', 'friends' ),
 		'<em>' . esc_html( $args['author']->display_name ) . '</em>',
-		'<strong><a href="' . get_permalink( $args['post'] ) . '">' . esc_html( $post_title ) . '</a></strong>'
+		'<strong><a href="' . esc_url( get_permalink( $args['post'] ) ) . '">' . esc_html( $post_title ) . '</a></strong>'
 	);
 	?>
 	<a href="<?php echo esc_url( $args['author']->get_local_friends_page_url( $args['post']->ID ) ); ?>">
@@ -40,7 +40,7 @@
 		__( 'Manage your <a href=%1$s>subscription settings</a> or <a href=%2$s>stop notifications for %3$s\'s posts</a>', 'friends' ),
 		'"' . esc_url( self_admin_url( 'admin.php?page=friends-settings' ) ) . '"',
 		'"' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['author']->ID ) ) . '"',
-		'<em>' . $args['author']->display_name . '</em>'
+		'<em>' . esc_html( $args['author']->display_name ) . '</em>'
 	);
 	?>
 </p>

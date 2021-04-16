@@ -234,7 +234,7 @@ class Friends_Frontend {
 			);
 			$result  = is_wp_error( $post_id ) ? 'error' : 'success';
 			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
-				echo $result;
+				echo esc_html( $result );
 			} else {
 				wp_safe_redirect( $_SERVER['HTTP_REFERER'] );
 				exit;
@@ -450,7 +450,23 @@ class Friends_Frontend {
 	 * @param      Friend_User $friend_user  The friend user.
 	 */
 	function link( $url, $text, array $html_attributes = array(), Friend_User $friend_user = null ) {
-		echo $this->get_link( $url, $text, $html_attributes, $friend_user );
+		echo wp_kses(
+			$this->get_link( $url, $text, $html_attributes, $friend_user ),
+			array(
+				'a'    => array(
+					'href',
+					'title',
+					'target',
+					'rel',
+					'class',
+					'style',
+					'data-nonce',
+					'data-token',
+					'data-friend',
+				),
+				'span' => array( 'class' ),
+			)
+		);
 	}
 
 	/**

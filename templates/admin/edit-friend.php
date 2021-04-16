@@ -169,7 +169,7 @@ $has_last_log = false;
 			<?php endif; ?>
 			<tr>
 				<th><?php esc_html_e( 'Created', 'friends' ); ?></th>
-				<td><?php echo date_i18n( __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ); ?></td>
+				<td><?php echo esc_html( date_i18n( __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ) ); ?></td>
 			</tr>
 			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
@@ -223,7 +223,7 @@ $has_last_log = false;
 			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Rules', 'friends' ); ?></th>
-				<td><a href="<?php echo self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend']->ID ); ?>">
+				<td><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend']->ID ) ); ?>">
 					<?php
 					// translators: %d is the number of rules.
 					echo esc_html( sprintf( _n( '%d rule', '%d rules', count( $args['rules'] ), 'friends' ), count( $args['rules'] ) ) );

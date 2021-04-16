@@ -38,9 +38,9 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 		$instance = wp_parse_args( $instance, $this->defaults() );
 		$friends = Friends::get_instance();
 
-		echo $args['before_widget'];
+		echo wp_kses( $args['before_widget'], 'post' );
 		if ( ! empty( $instance['title'] ) ) {
-			echo $args['before_title'] . $instance['title'] . $args['after_title'];
+			echo wp_kses( $args['before_title'] . $instance['title'] . $args['after_title'], 'post' );
 		}
 
 		?><ul class="friends-post-formats menu menu-nav">
@@ -60,7 +60,7 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 		</ul>
 		<?php
 
-		echo $args['after_widget'];
+		echo wp_kses( $args['after_widget'], 'post' );
 	}
 
 	/**
@@ -72,11 +72,11 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 		$instance = array_merge( $this->defaults(), $instance );
 		?>
 		<p>
-		<label><?php _e( 'Title' ); ?><br/>
-		<input class="widefat" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $instance['title'] ); ?>" />
+		<label><?php esc_html_e( 'Title' ); ?><br/>
+		<input class="widefat" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $instance['title'] ); ?>" />
 		</label>
 		</p>
-		<p><?php _e( 'Show Post Format Links:', 'friends' ); ?>
+		<p><?php esc_html_e( 'Show Post Format Links:', 'friends' ); ?>
 		<ul>
 			<?php
 			foreach ( get_post_format_strings() as $slug => $title ) :
@@ -84,8 +84,8 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 					$instance[ 'post_format_title_' . $slug ] = $title;
 				}
 				?>
-			<li><label><input id="<?php echo $this->get_field_id( 'show_post_format_' . $slug ); ?>" name="<?php echo $this->get_field_name( 'show_post_format_' . $slug ); ?>" type="checkbox" value="1"<?php checked( isset( $instance[ 'show_post_format_' . $slug ] ) && $instance[ 'show_post_format_' . $slug ] ); ?> /> <?php echo esc_html( $title ); ?></label><br/>
-				<input id="<?php echo $this->get_field_id( 'post_format_title_' . $slug ); ?>" name="<?php echo $this->get_field_name( 'post_format_title_' . $slug ); ?>" type="text" value="<?php echo esc_attr( $instance[ 'post_format_title_' . $slug ] ); ?>" placeholder="<?php echo esc_attr( $title ); ?>" /></li>
+			<li><label><input id="<?php echo esc_attr( $this->get_field_id( 'show_post_format_' . $slug ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'show_post_format_' . $slug ) ); ?>" type="checkbox" value="1"<?php checked( isset( $instance[ 'show_post_format_' . $slug ] ) && $instance[ 'show_post_format_' . $slug ] ); ?> /> <?php echo esc_html( $title ); ?></label><br/>
+				<input id="<?php echo esc_attr( $this->get_field_id( 'post_format_title_' . $slug ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'post_format_title_' . $slug ) ); ?>" type="text" value="<?php echo esc_attr( $instance[ 'post_format_title_' . $slug ] ); ?>" placeholder="<?php echo esc_attr( $title ); ?>" /></li>
 		<?php endforeach; ?>
 		</ul></p>
 		<?php

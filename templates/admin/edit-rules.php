@@ -34,7 +34,7 @@
 				</td>
 				<td style="<?php echo esc_attr( 'replace' !== $rule['action'] ? 'display: none' : '' ); ?>" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_attr( $rule['replace'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
 				<?php if ( empty( $rule['regex'] ) ) : ?>
-					<td><span class="description">(<?php _e( 'Unsubmitted rule', 'friends' ); ?>)</span></td>
+					<td><span class="description">(<?php esc_html_e( 'Unsubmitted rule', 'friends' ); ?>)</span></td>
 				<?php endif; ?>
 			</tr>
 		<?php endforeach; ?>
@@ -52,7 +52,7 @@
 	</table>
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
-		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ); ?>" style="margin-left: 1em"><?php _e( 'Back' ); ?></a>
+		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ); ?>" style="margin-left: 1em"><?php esc_html_e( 'Back' ); ?></a>
 	</p>
 </form>
 

@@ -10,21 +10,21 @@
 <p>
 	<?php
 	// translators: %s is a user display name.
-		printf( __( 'Howdy, %s!' ), $args['user']->display_name );
+		printf( __( 'Howdy, %s!' ), esc_html( $args['user']->display_name ) );
 	?>
 </p>
 
 <p>
 	<?php
 	// translators: %s is a username.
-	printf( __( 'You have received a new friend request from %s.', 'friends' ), $args['friend_user']->display_name );
+	printf( __( 'You have received a new friend request from %s.', 'friends' ), esc_html( $args['friend_user']->display_name ) );
 	?>
 </p>
 
 <p>
 	<?php
 	// translators: %s is a URL.
-	printf( __( 'Go to your <a href=%s>admin page</a> to review the request and approve or delete it.', 'friends' ), self_admin_url( 'users.php?role=friend_request' ) );
+	printf( __( 'Go to your <a href=%s>admin page</a> to review the request and approve or delete it.', 'friends' ), esc_url( self_admin_url( 'users.php?role=friend_request' ) ) );
 	?>
 </p>
 

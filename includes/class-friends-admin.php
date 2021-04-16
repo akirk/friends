@@ -114,7 +114,7 @@ class Friends_Admin {
 		?>
 			<div id="friends-welcome-panel" class="welcome-panel notice">
 			<?php wp_nonce_field( 'friends-welcome-panel-nonce', 'friendswelcomepanelnonce', false ); ?>
-			<a class="welcome-panel-close" href="<?php echo esc_url( admin_url( '?friends-welcome=0' ) ); ?>" aria-label="<?php esc_attr_e( 'Dismiss the welcome panel' ); ?>"><?php _e( 'Dismiss' ); ?></a>
+			<a class="welcome-panel-close" href="<?php echo esc_url( admin_url( '?friends-welcome=0' ) ); ?>" aria-label="<?php esc_attr_e( 'Dismiss the welcome panel' ); ?>"><?php esc_html_e( 'Dismiss' ); ?></a>
 			<div class="welcome-panel-content">
 				<h2><?php esc_html_e( 'Welcome to the Friends Plugin!', 'friends' ); ?></h2>
 				<p><?php esc_html_e( "You're seeing this message because you haven't connected with friends or made any subscriptions yet. Here is how to get started:", 'friends' ); ?></p>
@@ -279,7 +279,7 @@ class Friends_Admin {
 			'friends_retrieved_new_posts',
 			function ( $user_feed, $new_posts ) {
 				// translators: %s is the number of new posts found.
-				printf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) );
+				echo esc_html( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) ) );
 			},
 			10,
 			2
@@ -289,7 +289,7 @@ class Friends_Admin {
 			'friends_incoming_feed_items',
 			function ( $items ) {
 				// translators: %s is the number of posts found.
-				printf( _n( 'Found %d item in the feed.', 'Found %d items in the feed.', count( $items ), 'friends' ) . ' ', count( $items ) );
+				echo esc_html( sprintf( _n( 'Found %d item in the feed.', 'Found %d items in the feed.', count( $items ), 'friends' ) . ' ', count( $items ) ) );
 			}
 		);
 
@@ -297,7 +297,7 @@ class Friends_Admin {
 			'friends_retrieve_friends_error',
 			function ( $user_feed, $error ) {
 				esc_html_e( 'An error occurred while retrieving the posts.', 'friends' );
-				echo $error->get_error_message(), '<br/>';
+				echo esc_html( $error->get_error_message() ), '<br/>';
 			},
 			10,
 			2
@@ -1314,7 +1314,7 @@ class Friends_Admin {
 				exit;
 			}
 			?>
-			<h3><?php _e( 'Parser Details', 'friends-parser-rss-bridge' ); ?></h3>
+			<h3><?php esc_html_e( 'Parser Details', 'friends-parser-rss-bridge' ); ?></h3>
 			<ul id="parser">
 				<li>
 					<?php
@@ -1332,7 +1332,7 @@ class Friends_Admin {
 					?>
 				</li>
 			</ul>
-			<h3><?php _e( 'Items in the Feed', 'friends-parser-rss-bridge' ); ?></h3>
+			<h3><?php esc_html_e( 'Items in the Feed', 'friends-parser-rss-bridge' ); ?></h3>
 
 			<?php
 
@@ -1834,17 +1834,17 @@ class Friends_Admin {
 	public function toolbox_bookmarklets() {
 		?>
 		<div class="card">
-			<h2 class="title"><?php _e( 'Friends', 'friends' ); ?></h2>
-			<h3><?php _e( 'Bookmarklets', 'friends' ); ?></h3>
+			<h2 class="title"><?php esc_html_e( 'Friends', 'friends' ); ?></h2>
+			<h3><?php esc_html_e( 'Bookmarklets', 'friends' ); ?></h3>
 
-			<p><?php _e( "Drag one of these bookmarklets to your bookmarks bar and click it when you're on a site around the web for the appropriate action.", 'friends' ); ?></p>
+			<p><?php esc_html_e( "Drag one of these bookmarklets to your bookmarks bar and click it when you're on a site around the web for the appropriate action.", 'friends' ); ?></p>
 			<p>
 				<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd;text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Add friend', 'friends' ); ?></a>
 				<a href="javascript:void(location.href='<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend&url=' ) ); ?>'+encodeURIComponent(location.href))" style="display: inline-block; padding: .5em; border: 1px solid #999; border-radius: 4px; background-color: #ddd; text-decoration: none; margin-right: 3em"><?php echo esc_html_e( 'Subscribe', 'friends' ); ?></a>
 			</p>
-			<h3><?php _e( 'Browser Extension', 'friends' ); ?></h3>
+			<h3><?php esc_html_e( 'Browser Extension', 'friends' ); ?></h3>
 
-			<p><?php _e( 'There is also the option to use a browser extension.', 'friends' ); ?></p>
+			<p><?php esc_html_e( 'There is also the option to use a browser extension.', 'friends' ); ?></p>
 			<p>
 				<a href="https://addons.mozilla.org/en-US/firefox/addon/wpfriends/"><?php echo esc_html_e( 'Firefox Extension', 'friends' ); ?></a>
 			</p>

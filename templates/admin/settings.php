@@ -42,18 +42,18 @@ do_action( 'friends_settings_before_form' );
 							<?php esc_html_e( 'Require a code word to send you friend request', 'friends' ); ?>
 						</label>
 					</fieldset>
-					<div id="codeword_options" class="<?php echo $codeword_class; ?>">
+					<div id="codeword_options" class="<?php echo esc_attr( $codeword_class ); ?>">
 						<fieldset>
 							<label for="codeword">
-								<?php _e( 'This code word must be provided to send you a friend request:', 'friends' ); ?> <input name="codeword" type="text" id="codeword" placeholder="friends" value="<?php echo esc_attr( $args['codeword'] ); ?>" />
+								<?php esc_html_e( 'This code word must be provided to send you a friend request:', 'friends' ); ?> <input name="codeword" type="text" id="codeword" placeholder="friends" value="<?php echo esc_attr( $args['codeword'] ); ?>" />
 							</label>
 							<p class="description">
-								<?php _e( "You'll need to communicate the code word to potential friends through another medium.", 'friends' ); ?>
+								<?php esc_html_e( "You'll need to communicate the code word to potential friends through another medium.", 'friends' ); ?>
 							</p>
 						</fieldset>
 						<fieldset>
 							<label for="wrong_codeword_message">
-								<p><?php _e( 'Error message for a wrong code word:', 'friends' ); ?></p>
+								<p><?php esc_html_e( 'Error message for a wrong code word:', 'friends' ); ?></p>
 							</label>
 							<p>
 								<textarea name="wrong_codeword_message" id="wrong_codeword_message" class="regular-text" rows="3" cols="80" placeholder="<?php echo esc_attr( __( 'Return this message to the friend requestor if a wrong code word was provided.', 'friends' ) ); ?>"><?php echo esc_html( $args['wrong_codeword_message'] ); ?></textarea>
@@ -143,7 +143,7 @@ do_action( 'friends_settings_before_form' );
 						<br/>
 
 						<label for="force_enable_post_formats">
-							<input name="force_enable_post_formats" type="checkbox" id="force_enable_post_formats" value="1" <?php checked( '1', $args['friends_force_enable_post_formats'] ); ?>>
+							<input name="force_enable_post_formats" type="checkbox" id="force_enable_post_formats" value="1" <?php checked( '1', $args['force_enable_post_formats'] ); ?>>
 							<?php esc_html_e( 'Always enable Post Formats, regardless of the theme support.', 'friends' ); ?>
 							<p class="description">
 								<?php

@@ -11,6 +11,32 @@
 		<exclude-pattern>bin/tests/isolated/*</exclude-pattern>
 	</rule>
 
+	<rule ref="WordPress.Security.EscapeOutput">
+		<properties>
+			<!-- Some common functions that might technically require output escaping, but rarely cause anything but false positives -->
+			<property name="customAutoEscapedFunctions" type="array">
+				<element key="__" value="__" />
+				<element key="_e" value="_e" />
+				<element key="_x" value="_x" />
+				<element key="wp_create_nonce" value="wp_create_nonce" />
+				<element key="plugin_dir_url" value="plugin_dir_url" />
+				<element key="plugins_url" value="plugins_url" />
+				<element key="admin_url" value="admin_url" />
+				<element key="sanitize_text_field" value="sanitize_text_field" />
+				<element key="sanitize_textarea_field" value="sanitize_textarea_field" />
+				<element key="get_locale" value="get_locale" />
+				<element key="get_bloginfo" value="get_bloginfo" /> <!-- only safe if 'display' filter is used -->
+			</property>
+		</properties>
+		<type>warning</type>
+		<exclude-pattern>tests/bootstrap.php</exclude-pattern>
+		<exclude-pattern>*/widgets/*</exclude-pattern>
+		<exclude-pattern>*/templates/email/*.text.php</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.Security.EscapeOutput.UnsafePrintingFunction">
+		<type>warning</type>
+	</rule>
+
 	<!-- Check all PHP files in directory tree by default. -->
 	<arg name="extensions" value="php"/>
 	<file>.</file>
