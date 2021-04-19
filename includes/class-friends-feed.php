@@ -112,14 +112,24 @@ class Friends_Feed {
 	/**
 	 * Preview a URL using a parser.
 	 *
-	 * @param      string $parser  The parser slug.
-	 * @param      string $url     The url.
+	 * @param      string $parser   The parser slug.
+	 * @param      string $url      The url.
+	 * @param      int    $feed_id  The feed id.
 	 *
 	 * @return     array|WP_error  The feed items.
 	 */
-	public function preview( $parser, $url ) {
+	public function preview( $parser, $url, $feed_id = null ) {
 		if ( ! isset( $this->parsers[ $parser ] ) ) {
 			return new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
+		}
+
+		$user_feed = null;
+		$friend_user = null;
+		if ( ! is_null( $feed_id ) ) {
+			$user_feed = Friend_User_Feed::get_by_id( $feed_id );
+			if ( ! is_wp_error( $user_feed ) ) {
+				$friend_user = $user_feed->get_friend_user();
+			}
 		}
 
 		$items = $this->parsers[ $parser ]->fetch_feed( $url );
@@ -129,7 +139,8 @@ class Friends_Feed {
 				$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
 			} else {
 				foreach ( $items as $key => $item ) {
-					$item = apply_filters( 'friends_modify_feed_item', $item, null, null );
+					$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
+
 					if ( ! $item || $item->_feed_rule_delete ) {
 						unset( $items[ $key ] );
 						continue;
@@ -268,7 +279,7 @@ class Friends_Feed {
 
 		foreach ( $rules as $rule ) {
 			if ( $item instanceof WP_Post ) {
-				$field = $this->get_feed_rule_field( $rule['field'], $item );
+				$field = $this->get_feed_rule_field( $rule['field'] );
 
 				if ( 'author' === $rule['field'] ) {
 					$item->$field = get_post_meta( $item->ID, 'author', true );
@@ -279,14 +290,15 @@ class Friends_Feed {
 
 			if ( $item->$field && preg_match( '/' . $rule['regex'] . '/iu', $item->$field ) ) {
 				if ( 'replace' === $rule['action'] ) {
-					$item->$field = preg_replace( '/' . $rule['regex'] . '/iu', $rule['replace'], $item->$field );
+					$item->_feed_rule_transform = array(
+						$this->get_feed_rule_field( $rule['field'], $item ) => preg_replace( '/' . $rule['regex'] . '/iu', $rule['replace'], $item->$field ),
+					);
 					continue;
 				}
 				$action = $rule['action'];
 				break;
 			}
 		}
-
 		switch ( $action ) {
 			case 'delete':
 				$item->_feed_rule_delete = true;
@@ -309,20 +321,18 @@ class Friends_Feed {
 	 * Get the field name for the feed item.
 	 *
 	 * @param  string $field The field name.
-	 * @param  object $item  The feed item.
 	 * @return string        The adapted field name.
 	 */
-	private function get_feed_rule_field( $field, $item ) {
-		if ( $item instanceof WP_Post ) {
-			switch ( $field ) {
-				case 'title':
-					return 'post_title';
-				case 'permalink':
-					return 'guid';
-				case 'content':
-					return 'post_content';
-			}
+	private function get_feed_rule_field( $field ) {
+		switch ( $field ) {
+			case 'title':
+				return 'post_title';
+			case 'permalink':
+				return 'guid';
+			case 'content':
+				return 'post_content';
 		}
+
 		return $field;
 	}
 
@@ -344,7 +354,7 @@ class Friends_Feed {
 				$rule = array();
 				foreach ( $rules as $part => $keys ) {
 					if ( isset( $keys[ $key ] ) ) {
-						$rule[ $part ] = $keys[ $key ];
+						$rule[ $part ] = stripslashes( $keys[ $key ] );
 					}
 				}
 				$transformed_rules[] = $rule;

@@ -516,6 +516,27 @@ class Friend_User_Feed {
 	}
 
 	/**
+	 * Get the feed with the specific id.
+	 *
+	 * @param      int $id     The feed id.
+	 *
+	 * @return     object|WP_Error   A Friend_User_Feed object.
+	 */
+	public static function get_by_id( $id ) {
+		$term_query = new WP_Term_Query(
+			array(
+				'taxonomy' => self::TAXONOMY,
+				'include'  => $id,
+			)
+		);
+		foreach ( $term_query->get_terms() as $term ) {
+			return new self( $term );
+		}
+
+		return new WP_Error( 'term_not_found' );
+	}
+
+	/**
 	 * Gets the identifier.
 	 *
 	 * @return     int  The identifier.
