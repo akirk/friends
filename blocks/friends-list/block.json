@@ -3,7 +3,7 @@
 	"name": "friends/friends-list",
 	"title": "Friends List",
 	"category": "widgets",
-	"text-domain": "friends",
+	"textdomain": "friends",
 	"icon": "groups",
 	"attributes": {
 		"users_inline": {

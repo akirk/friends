@@ -3,7 +3,7 @@
 	"name": "friends/friend-posts",
 	"title": "Friend Posts",
 	"category": "widgets",
-	"text-domain": "friends",
+	"textdomain": "friends",
 	"icon": "groups",
 	"attributes": {
 		"author_inline": {
