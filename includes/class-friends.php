@@ -554,6 +554,8 @@ class Friends {
 				$counts['standard'] -= $row->count;
 			}
 
+			$counts = array_filter( $counts );
+
 			set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
 		}
 
