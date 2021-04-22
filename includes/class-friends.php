@@ -496,11 +496,12 @@ class Friends {
 		}
 
 		$counts = get_transient( $cache_key );
-		if ( false === $counts ) {
+		if ( true || false === $counts ) {
 			$counts = array();
 
 			global $wpdb;
 
+			$counts = array();
 			if ( $author_id ) {
 				$post_format_counts = $wpdb->get_results(
 					$wpdb->prepare(
@@ -511,7 +512,7 @@ class Friends {
 						JOIN {$wpdb->terms} AS terms
 
 						WHERE posts.post_author = %d
-						AND posts.post_status = 'publish'
+						AND posts.post_status IN ( 'publish', 'private' )
 						AND posts.post_type = %s
 						AND relationships.object_id = posts.ID
 						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
@@ -523,6 +524,7 @@ class Friends {
 						self::CPT
 					)
 				);
+				$counts['standard'] = count_user_posts( $author_id, self::CPT );
 			} else {
 				$post_format_counts = $wpdb->get_results(
 					$wpdb->prepare(
@@ -532,7 +534,7 @@ class Friends {
 						JOIN {$wpdb->term_taxonomy} AS taxonomy
 						JOIN {$wpdb->terms} AS terms
 
-						WHERE posts.post_status = 'publish'
+						WHERE posts.post_status IN ( 'publish', 'private' )
 						AND posts.post_type = %s
 						AND relationships.object_id = posts.ID
 						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
@@ -543,11 +545,9 @@ class Friends {
 						self::CPT
 					)
 				);
+				$post_count = wp_count_posts( self::CPT );
+				$counts['standard'] = $post_count->publish + $post_count->private;
 			}
-
-			$counts = array(
-				'standard' => count_user_posts( $this->ID, Friends::CPT ),
-			);
 
 			foreach ( $post_format_counts as $row ) {
 				$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
@@ -567,41 +567,9 @@ class Friends {
 	 */
 	public function get_main_header_data() {
 		$data = array(
-			'description' => '',
+			'description'               => '',
+			'post_count_by_post_format' => $this->get_post_count_by_post_format(),
 		);
-
-		global $wpdb;
-
-		$post_format_counts = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-				FROM {$wpdb->posts} AS posts
-				JOIN {$wpdb->term_relationships} AS relationships
-				JOIN {$wpdb->term_taxonomy} AS taxonomy
-				JOIN {$wpdb->terms} AS terms
-
-				WHERE posts.post_status = 'publish'
-				AND posts.post_type = %s
-				AND relationships.object_id = posts.ID
-				AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-				AND taxonomy.taxonomy = 'post_format'
-
-				AND terms.term_id = taxonomy.term_id
-				GROUP BY terms.slug",
-				Friends::CPT
-			)
-		);
-
-		$counts = array(
-			'standard' => count_user_posts( $this->ID, Friends::CPT ),
-		);
-
-		foreach ( $post_format_counts as $row ) {
-			$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
-			$counts['standard'] -= $row->count;
-		}
-
-		$data['post_count_by_post_format'] = $counts;
 
 		return $data;
 	}

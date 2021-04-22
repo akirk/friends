@@ -551,7 +551,7 @@ class Friend_User extends WP_User {
 		if ( $post_id ) {
 			$path = '/' . $post_id . '/';
 		}
-		return site_url( '/friends/' . $this->user_login . $path );
+		return site_url( '/friends/' . self::get_user_login_for_url( $this->user_login ) . $path );
 	}
 
 	/**

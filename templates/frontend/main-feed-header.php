@@ -7,7 +7,44 @@
 
 $data = $args['friends']->get_main_header_data();
 ?><div id="main-header">
-<h2 id="page-title"><a href="<?php echo esc_url( site_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Main Feed' ); ?></a></h2>
+<h2 id="page-title"><a href="<?php echo esc_url( site_url( '/friends/' ) ); ?>">
+<?php
+switch ( $args['friends']->frontend->post_format ) {
+	case 'standard':
+			echo esc_html( _x( 'Post feed', 'Post format', 'friends' ) );
+		break;
+	case 'aside':
+			echo esc_html( _x( 'Aside feed', 'Post format', 'friends' ) );
+		break;
+	case 'chat':
+			echo esc_html( _x( 'Chat feed', 'Post format', 'friends' ) );
+		break;
+	case 'gallery':
+			echo esc_html( _x( 'Gallery feed', 'Post format', 'friends' ) );
+		break;
+	case 'link':
+			echo esc_html( _x( 'Link feed', 'Post format', 'friends' ) );
+		break;
+	case 'image':
+			echo esc_html( _x( 'Image feed', 'Post format', 'friends' ) );
+		break;
+	case 'quote':
+			echo esc_html( _x( 'Quote feed', 'Post format', 'friends' ) );
+		break;
+	case 'status':
+			echo esc_html( _x( 'Status feed', 'Post format', 'friends' ) );
+		break;
+	case 'video':
+			echo esc_html( _x( 'Video feed', 'Post format', 'friends' ) );
+		break;
+	case 'audio':
+			echo esc_html( _x( 'Audio feed', 'Post format', 'friends' ) );
+		break;
+	default:
+			esc_html_e( 'Main Feed' );
+}
+?>
+</a></h2>
 
 <?php if ( $data['description'] ) : ?>
 	<p>

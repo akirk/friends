@@ -59,7 +59,13 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 		);
 
 		if ( isset( $args['read_time'] ) ) {
-			echo ' | <span title="', esc_html__( 'Estimated reading time', 'friends' ), '">', esc_html( $args['read_time'] ), '</span>';
+			echo ' | <span title="', esc_html__( 'Estimated reading time', 'friends' ), '">', esc_html(
+				sprintf(
+				// translators: %s is a timeframe, e.g. < 1 min or 2min.
+					__( '%s read', 'friends' ),
+					$args['read_time']
+				)
+			), '</span>';
 		}
 		?>
 	</div>
