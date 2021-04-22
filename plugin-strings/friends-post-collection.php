@@ -22,9 +22,10 @@ _x( 'Move to %s', 'post-collection', 'friends' );
 __( 'This is not a user related to this plugin.', 'friends' );
 __( 'User was updated.', 'friends' );
 __( 'An error occurred.', 'friends' );
+__( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' );
+__( 'Create Post Collection', 'friends' );
 __( 'Friends', 'friends' );
 __( 'About', 'friends' );
-__( 'Edit User', 'friends' );
 __( 'The Friends Post Collection plugin allows you to save external posts to your WordPress, either for just collecting them for yourself as a searchable archive, or to syndicate those posts into new feeds.', 'friends' );
 // translators: %s: URL to the Friends Plugin page on WordPress.org.
 __( 'The Friends plugin is all about connecting with friends and news. Learn more on its <a href=%s>plugin page on WordPress.org</a>.', 'friends' );
@@ -35,6 +36,7 @@ __( 'Do you want to send the article on this page to your blog?', 'friends' );
 _x( 'Post Collection', 'User role', 'friends' );
 _x( 'Post Collections', 'widget-header', 'friends' );
 __( 'Display Name', 'friends' );
+__( 'Username', 'friends' );
 __( 'Description', 'friends' );
 // translators: %d is the number of posts.
 _n( 'View %d post', 'View %d posts', 1, 'friends' );
