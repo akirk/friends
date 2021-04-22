@@ -496,7 +496,7 @@ class Friends {
 		}
 
 		$counts = get_transient( $cache_key );
-		if ( true || false === $counts ) {
+		if ( false === $counts ) {
 			$counts = array();
 
 			global $wpdb;
