@@ -454,17 +454,17 @@ class Friends_Frontend {
 			$this->get_link( $url, $text, $html_attributes, $friend_user ),
 			array(
 				'a'    => array(
-					'href',
-					'title',
-					'target',
-					'rel',
-					'class',
-					'style',
-					'data-nonce',
-					'data-token',
-					'data-friend',
+					'href'        => array(),
+					'title'       => array(),
+					'target'      => array(),
+					'rel'         => array(),
+					'class'       => array(),
+					'style'       => array(),
+					'data-nonce'  => array(),
+					'data-token'  => array(),
+					'data-friend' => array(),
 				),
-				'span' => array( 'class' ),
+				'span' => array( 'class' => array() ),
 			)
 		);
 	}

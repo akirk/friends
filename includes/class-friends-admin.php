@@ -1396,7 +1396,7 @@ class Friends_Admin {
 		?>
 		<h1><?php esc_html_e( 'Add New Friend', 'friends' ); ?></h1>
 		<?php
-
+		$response = null;
 		if ( ! empty( $_POST ) ) {
 			if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'add-friend' ) ) {
 				$response = new WP_Error( 'invalid-nonce', __( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' ) );

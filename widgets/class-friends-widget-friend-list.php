@@ -38,19 +38,24 @@ class Friends_Widget_Friend_List extends WP_Widget {
 	public function widget( $args, $instance ) {
 		$instance = wp_parse_args( $instance, $this->defaults() );
 
-		$title = apply_filters( 'widget_title', $instance['title'] );
 		echo $args['before_widget'];
-		echo $args['before_title'];
 
 		$all_friends     = Friend_User_Query::all_friends();
 		$friend_requests = Friend_User_Query::all_friend_requests();
 		$subscriptions   = Friend_User_Query::all_subscriptions();
 
+		$list_not_empty = $all_friends->get_total() + $subscriptions->get_total() > 0;
+
 		// translators: %s is the number of your friends.
 		$friends_title = sprintf( _n( '%s Friend', '%s Friends', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
 
-		?><a href="<?php echo esc_attr( self_admin_url( 'users.php' ) ); ?>">
-		<?php
+		if ( $list_not_empty ) {
+			?>
+			<details class="accordion" open>
+				<summary class="accordion-header">
+			<?php
+		}
+		echo $args['before_title'];
 		if ( $friend_requests->get_total() > 0 ) {
 			echo wp_kses(
 				// translators: %1$s is the string "%s Friend", %2$s is a URL, %3$s is the number of open friend requests.
@@ -66,33 +71,48 @@ class Friends_Widget_Friend_List extends WP_Widget {
 		} else {
 			echo wp_kses( $friends_title, array( 'span' => array( 'class' => array() ) ) );
 		}
-		?>
-		</a>
-		<?php
 		echo $args['after_title'];
 
-		if ( $all_friends->get_total() + $subscriptions->get_total() > 0 ) {
+		if ( $list_not_empty ) {
 			?>
+			</summary>
 			<ul class="friend-list menu menu-nav">
 			<?php
 			$this->get_list_items( $all_friends->get_results() );
 			?>
 			</ul>
+			</details>
 			<?php
 		}
 
 		if ( 0 !== $subscriptions->get_total() ) {
 			?>
-			<h5><?php esc_html_e( 'Subscriptions', 'friends' ); ?></h5>
-			<ul class="subscriptions-list menu menu-nav">
-			<?php
-			$this->get_list_items( $subscriptions->get_results() );
-			?>
-			</ul>
+			<details class="accordion" open>
+				<summary class="accordion-header">
+					<?php
+					echo $args['before_title'];
+					echo wp_kses(
+						sprintf(
+						// translators: %s is the number of subscriptions.
+							_n( '%s Subscription', '%s Subscriptions', $subscriptions->get_total(), 'friends' ),
+							'<span class="subscription-count">' . $subscriptions->get_total() . '</span>'
+						),
+						array( 'span' => array( 'class' => array() ) )
+					);
+
+					echo $args['after_title'];
+					?>
+				</summary>
+				<ul class="subscriptions-list menu menu-nav accordion-body">
+					<?php
+					$this->get_list_items( $subscriptions->get_results() );
+					?>
+				</ul>
+			</details>
 			<?php
 		}
 
-		do_action( 'friends_widget_friend_list_after', $this );
+		do_action( 'friends_widget_friend_list_after', $this, $args );
 
 		echo $args['after_widget'];
 	}

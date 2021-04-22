@@ -27,6 +27,7 @@ div {
 @import "node_modules/spectre.css/src/off-canvas";
 
 // Spectre: Components
+@import "node_modules/spectre.css/src/accordions";
 @import "node_modules/spectre.css/src/cards";
 @import "node_modules/spectre.css/src/navs";
 @import "node_modules/spectre.css/src/chips";
@@ -118,6 +119,13 @@ div {
 	min-height: 100vh;
 	a:visited:not(.off-canvas-toggle) {
 		color: $link-color-dark;
+	}
+
+	summary.accordion-header {
+		color: $link-color;
+		cursor: pointer;
+		white-space: nowrap;
+		text-overflow: ellipsis;
 	}
 	.nav-links div a, .nav-links div a:hover {
 		@extend .btn, .btn-primary;
@@ -231,6 +239,10 @@ div {
 		position: fixed;
 		top: 5.5rem;
 		width: 12rem;
+
+		.accordion-header {
+			padding: 0;
+		}
 	}
 
 	.friends-post-inline input, .friends-post-inline textarea, .friends-sidebar input, .friends-sidebar textarea {
@@ -356,10 +368,8 @@ div {
 		color: #333;
 	}
 
-	#author-header {
-		a.friends-auth-link span.dashicons-admin-users {
-			display: inline;
-		}
+	a.friends-auth-link span.dashicons-admin-users {
+		display: inline;
 	}
 
 	a.friends-auth-link span.dashicons, button.friends-auth-link span.dashicons {

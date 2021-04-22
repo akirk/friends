@@ -592,10 +592,10 @@ class Friend_User extends WP_User {
 		if ( ! $this->user_url ) {
 			return false;
 		}
-		if ( 0 === strpos( $url, $this->user_url ) ) {
-			return true;
+		if ( false === strpos( $url, $this->user_url ) ) {
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	/**

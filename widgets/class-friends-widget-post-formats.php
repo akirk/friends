@@ -39,25 +39,31 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 		$friends = Friends::get_instance();
 
 		echo wp_kses( $args['before_widget'], 'post' );
-		if ( ! empty( $instance['title'] ) ) {
-			echo wp_kses( $args['before_title'] . $instance['title'] . $args['after_title'], 'post' );
-		}
-
-		?><ul class="friends-post-formats menu menu-nav">
-			<li class="menu-item"><a href="<?php echo esc_attr( site_url( '/friends/' ) ); ?>"><?php _ex( 'All', 'all posts', 'friends' ); ?></a></li>
-			<?php
-			foreach ( get_post_format_strings() as $slug => $title ) :
-
-				if ( ! isset( $instance[ 'show_post_format_' . $slug ] ) || ! $instance[ 'show_post_format_' . $slug ] ) {
-					continue;
-				}
-				if ( ! isset( $instance[ 'post_format_title_' . $slug ] ) ) {
-					$instance[ 'post_format_title_' . $slug ] = $title;
+		?>
+		<details class="accordion" open>
+			<summary class="accordion-header">
+				<?php
+				if ( ! empty( $instance['title'] ) ) {
+					echo wp_kses( $args['before_title'] . $instance['title'] . $args['after_title'], 'post' );
 				}
 				?>
-				<li class="menu-item"><a href="<?php echo esc_attr( site_url( '/friends/type/' . $slug . '/' ) ); ?>"> <?php echo esc_attr( $instance[ 'post_format_title_' . $slug ] ); ?></a></li>
-			<?php endforeach; ?>
-		</ul>
+			</summary>
+			<ul class="friends-post-formats menu menu-nav accordion-body">
+				<li class="menu-item"><a href="<?php echo esc_attr( site_url( '/friends/' ) ); ?>"><?php _ex( 'All', 'all posts', 'friends' ); ?></a></li>
+				<?php
+				foreach ( get_post_format_strings() as $slug => $title ) :
+
+					if ( ! isset( $instance[ 'show_post_format_' . $slug ] ) || ! $instance[ 'show_post_format_' . $slug ] ) {
+						continue;
+					}
+					if ( ! isset( $instance[ 'post_format_title_' . $slug ] ) ) {
+						$instance[ 'post_format_title_' . $slug ] = $title;
+					}
+					?>
+					<li class="menu-item"><a href="<?php echo esc_attr( site_url( '/friends/type/' . $slug . '/' ) ); ?>"> <?php echo esc_attr( $instance[ 'post_format_title_' . $slug ] ); ?></a></li>
+				<?php endforeach; ?>
+			</ul>
+		</details>
 		<?php
 
 		echo wp_kses( $args['after_widget'], 'post' );
