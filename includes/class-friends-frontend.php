@@ -287,10 +287,10 @@ class Friends_Frontend {
 			$text = trim( preg_replace( "/[\n\r\t ]+/", ' ', $text ), ' ' );
 			preg_match_all( '/./u', $text, $words_array );
 			$words_array = array_shift( $words_array );
-			$words_per_minute = 230;
+			$words_per_minute = 500;
 		} else {
 			$words_array = preg_split( "/[\n\r\t ]+/", $text, -1, PREG_SPLIT_NO_EMPTY );
-			$words_per_minute = 500;
+			$words_per_minute = 200;
 		}
 
 		$additional_time = 0;
