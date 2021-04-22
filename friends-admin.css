@@ -70,3 +70,7 @@ tr.lastlog td {
 	padding: .8em 1em;
 	margin-bottom: 2em;
 }
+
+.friends-plugin-installer .plugin-card .desc, .friends-plugin-installer .plugin-card .name {
+	margin: auto;
+}

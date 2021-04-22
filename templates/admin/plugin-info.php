@@ -21,7 +21,7 @@ $more_info_url = $api->more_info;
 			<p><?php echo esc_html( $api->short_description ); ?></p>
 			<p class="authors">
 				<cite>
-					<?php /* translators: %s is a plugin author */ echo esc_html( sprintf( __( 'By %s' ), $api->author ) ); ?>
+					<?php /* translators: %s is a plugin author */ echo wp_kses( sprintf( __( 'By %s' ), $api->author ), array( 'a' => array( 'href' => array() ) ) ); ?>
 				</cite>
 			</p>
 		</div>
