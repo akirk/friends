@@ -35,6 +35,11 @@ Friends::template_loader()->get_template_part(
 							$post_formats[ $friends->frontend->post_format ]
 						)
 					);
+
+					$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
+					?>
+					<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url() ); ?>"><?php esc_html_e( 'Remove post format filter', 'friends' ); ?></a>
+					<?php
 				} else {
 					echo esc_html(
 						sprintf(
@@ -43,6 +48,9 @@ Friends::template_loader()->get_template_part(
 							$post_formats[ $friends->frontend->post_format ]
 						)
 					);
+					?>
+					<a href="<?php echo esc_url( site_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Remove post format filter', 'friends' ); ?></a>
+					<?php
 				}
 			} else {
 				$any_friends = Friend_User_Query::all_friends_subscriptions();
