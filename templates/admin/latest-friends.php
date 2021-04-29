@@ -1,6 +1,6 @@
 <?php
 /**
- * This template contains the Admin Send Friend Request form.
+ * This template shows the latest friends section.
  *
  * @version 1.0
  * @package Friends

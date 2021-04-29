@@ -156,7 +156,8 @@ class Friends_Admin {
 		add_menu_page( 'friends', $menu_title, Friends::REQUIRED_ROLE, 'friends-settings', null, 'dashicons-groups', 3.73 );
 		add_submenu_page( 'friends-settings', __( 'Settings' ), __( 'Settings' ), Friends::REQUIRED_ROLE, 'friends-settings', array( $this, 'render_admin_settings' ) );
 		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
-		add_submenu_page( 'friends-settings', __( 'Latest Posts', 'friends' ), __( 'Latest Posts', 'friends' ), Friends::REQUIRED_ROLE, 'friends-page', array( $this, 'redirect_to_friends_page' ) );
+		add_submenu_page( 'friends-settings', __( 'Notification Manager', 'friends' ), __( 'Notification Manager', 'friends' ), Friends::REQUIRED_ROLE, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
+		add_action( 'load-' . $page_type . '_page_friends-notification-manager', array( $this, 'process_admin_notification_manager' ) );
 		add_submenu_page( 'friends-settings', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), Friends::REQUIRED_ROLE, 'add-friend', array( $this, 'render_admin_add_friend' ) );
 		add_action( 'load-toplevel_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
@@ -817,7 +818,7 @@ class Friends_Admin {
 					if ( $response->has_cap( 'pending_friend_request' ) ) {
 						$arg = 'sent-request';
 						// translators: %s is a Site URL.
-						$arg_value = wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $user_link ), array( 'a' => array( 'href' => array() ) ) );
+						$arg_value = wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $response->get_local_friends_page_url() ), array( 'a' => array( 'href' => array() ) ) );
 					} elseif ( $response->has_cap( 'friend' ) ) {
 						$arg       = 'friend';
 						$arg_value = 1;
@@ -961,18 +962,30 @@ class Friends_Admin {
 	 */
 	public function render_admin_edit_friend() {
 		$friend = $this->check_admin_edit_friend();
+		$friend_posts = new WP_Query(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_status' => array( 'publish', 'private' ),
+				'author'      => $friend->ID,
+				'nopaging'    => true,
+			)
+		);
+		$total_size = 0;
+		if ( $friend_posts->have_posts() ) {
+			while ( $friend_posts->have_posts() ) {
+				$friend_posts->the_post();
+				$total_size += strlen( serialize( array_values( (array) $friend_posts->post ) ) );
+			}
+		}
+		wp_reset_postdata();
+
 		$args = array(
 			'friend'                 => $friend,
-			'friend_posts'           => new WP_Query(
-				array(
-					'post_type'   => Friends::CPT,
-					'post_status' => array( 'publish', 'private' ),
-					'author'      => $friend->ID,
-					'nopaging'    => true,
-				)
-			),
+			'friend_posts'           => $friend_posts,
+			'total_size'             => $total_size,
 			'rules'                  => $friend->get_feed_rules(),
 			'post_formats'           => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
+			'friends_settings_url'   => add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
 			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
 		);
@@ -1314,7 +1327,7 @@ class Friends_Admin {
 				exit;
 			}
 			?>
-			<h3><?php esc_html_e( 'Parser Details', 'friends-parser-rss-bridge' ); ?></h3>
+			<h3><?php esc_html_e( 'Parser Details', 'friends' ); ?></h3>
 			<ul id="parser">
 				<li>
 					<?php
@@ -1332,7 +1345,7 @@ class Friends_Admin {
 					?>
 				</li>
 			</ul>
-			<h3><?php esc_html_e( 'Items in the Feed', 'friends-parser-rss-bridge' ); ?></h3>
+			<h3><?php esc_html_e( 'Items in the Feed', 'friends' ); ?></h3>
 
 			<?php
 
@@ -1458,7 +1471,49 @@ class Friends_Admin {
 			null,
 			array(
 				'friend_requests' => $friend_requests->get_results(),
-				'roles'           => $roles,
+			)
+		);
+	}
+
+	/**
+	 * Process the admin notification manager form submission.
+	 */
+	public function process_admin_notification_manager() {
+	}
+
+	/**
+	 * Render the admin notification manager.
+	 */
+	public function render_admin_notification_manager() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to add friends.', 'friends' ) );
+		}
+
+		?>
+		<h1><?php esc_html_e( 'Notification Manager', 'friends' ); ?></h1>
+		<?php
+
+		$friend_users = new Friend_User_Query(
+			array(
+				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
+				'orderby'  => 'display_name',
+				'order'    => 'ASC',
+			)
+		);
+
+		$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
+		if ( ! $hide_from_friends_page ) {
+			$hide_from_friends_page = array();
+		}
+
+		Friends::template_loader()->get_template_part(
+			'admin/notification-manager',
+			null,
+			array(
+				'friend_users'             => $friend_users->get_results(),
+				'friends_settings_url'     => add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'hide_from_friends_page'   => $hide_from_friends_page,
+				'no_new_post_notification' => get_user_option( 'friends_no_new_post_notification' ),
 			)
 		);
 	}

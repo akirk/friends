@@ -127,6 +127,11 @@ div {
 		white-space: nowrap;
 		text-overflow: ellipsis;
 	}
+
+	.accordion[open] .accordion-body {
+	    max-height: 100rem;
+	}
+
 	.nav-links div a, .nav-links div a:hover {
 		@extend .btn, .btn-primary;
 	}

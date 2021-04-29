@@ -54,7 +54,7 @@ if ( $args['post'] ) :
 		?>
 	</p>
 	<table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-bottom: 2em; margin-right: 1em">
-		<tbody>
+		<thead>
 			<tr>
 				<th class="column-primary column-title"><?php esc_html_e( 'Title', 'friends' ); ?></th>
 				<th class="column-author"><?php esc_html_e( 'Author' ); ?></th>
@@ -62,6 +62,8 @@ if ( $args['post'] ) :
 				<th class="column-action"><?php esc_html_e( 'Action', 'friends' ); ?></th>
 				<th class="column-view"><?php esc_html_e( 'Friends Page', 'friends' ); ?></th>
 			</tr>
+		</thead>
+		<tbody>
 			<?php preview_row( $args['post'], $args ); ?>
 			<tr>
 				<td colspan="5"><?php echo esc_html( get_the_excerpt( $args['post'] ) ); ?></td>

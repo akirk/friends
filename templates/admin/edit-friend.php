@@ -6,16 +6,6 @@
  * @package Friends
  */
 
-$total_size = 0;
-if ( $args['friend_posts']->have_posts() ) {
-	while ( $args['friend_posts']->have_posts() ) {
-		$args['friend_posts']->the_post();
-		$total_size += strlen( serialize( array_values( (array) $args['friend_posts']->post ) ) );
-	}
-}
-
-wp_reset_postdata();
-
 $has_last_log = false;
 ?><form method="post">
 	<?php wp_nonce_field( 'edit-friend-' . $args['friend']->ID ); ?>
@@ -160,7 +150,7 @@ $has_last_log = false;
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Disk space used', 'friends' ); ?></label></th>
 				<td>
-					<?php echo esc_html( size_format( $total_size, 1 ) ); ?>
+					<?php echo esc_html( size_format( $args['total_size'], 1 ) ); ?>
 					</fieldset>
 					<p class="description">
 					</p>
@@ -214,7 +204,7 @@ $has_last_log = false;
 					<?php else : ?>
 					<fieldset>
 						<label for="friends_new_post_notification">
-							<input name="friends_new_post_notification" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $args['friend']->ID ) ); ?>>
+							<input name="friends_new_post_notification" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $args['friend']->ID ) ); ?> />
 							<?php esc_html_e( 'Send me an e-mail for posts of this friend', 'friends' ); ?>
 						</label>
 					</fieldset>

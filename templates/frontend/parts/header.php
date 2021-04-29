@@ -102,12 +102,12 @@ $override_author_name = get_post_meta( get_the_id(), 'author', true );
 					</a></li>
 					<li class="menu-item">
 						<?php if ( 'trash' === get_post_status() ) : ?>
-							<a href="#" title="<?php esc_attr_e( 'Untrash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-untrash-post">
-							<?php esc_html_e( 'Untrash this post', 'friends' ); ?>
+							<a href="#" title="<?php esc_attr_e( 'Restore from Trash' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-untrash-post">
+							<?php esc_html_e( 'Restore from Trash' ); ?>
 							</a>
 						<?php else : ?>
-							<a href="#" title="<?php esc_attr_e( 'Trash this post', 'friends' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
-							<?php esc_html_e( 'Trash this post', 'friends' ); ?>
+							<a href="#" title="<?php esc_attr_e( 'Move to Trash' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
+							<?php esc_html_e( 'Move to Trash' ); ?>
 							</a>
 						<?php endif; ?>
 					</li>
