@@ -737,7 +737,7 @@ class Friends {
 		foreach ( get_post_format_strings() as $format => $title ) {
 			// translators: 1: Blog title, 2: Separator (raquo), 3: Post Format.
 			$title = sprintf( __( '%1$s %2$s %3$s Feed', 'friends' ), $blog_title, $separator, $title );
-			$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( site_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
+			$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( home_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
 		}
 
 		return $links;

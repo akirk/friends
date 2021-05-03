@@ -57,7 +57,7 @@ class Friends_Widget_Header extends WP_Widget {
 						__( 'Visit %1$s. Back to <a href=%2$s>your friends page</a>.', 'friends' ),
 						// translators: 1: a friend's display name, 2: a URL.
 						'<a href="' . esc_url( $friends->frontend->author->user_url ) . '" class="auth-link" data-token="' . esc_attr( get_user_option( 'friends_out_token', $friends->frontend->author->ID ) ) . '">' . esc_html( sprintf( __( '%1$s\'s external site at %2$s', 'friends' ), $friends->frontend->author->display_name, preg_replace( '#https?://#', '', trim( $friends->frontend->author->user_url, '/' ) ) ) ) . '</a>',
-						'"' . esc_attr( site_url( '/friends/' ) ) . '"'
+						'"' . esc_attr( home_url( '/friends/' ) ) . '"'
 					),
 					array(
 						'a' => array(

@@ -49,7 +49,7 @@ Friends::template_loader()->get_template_part(
 						)
 					);
 					?>
-					<a href="<?php echo esc_url( site_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Remove post format filter', 'friends' ); ?></a>
+					<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Remove post format filter', 'friends' ); ?></a>
 					<?php
 				}
 			} else {

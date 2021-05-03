@@ -48,7 +48,7 @@ class Friends_Notifications {
 	 * @return     string  The friends plugin from email address.
 	 */
 	public function get_friends_plugin_from_email_address() {
-		$domain = parse_url( get_option( 'siteurl' ), PHP_URL_HOST );
+		$domain = parse_url( get_option( 'home' ), PHP_URL_HOST );
 		return apply_filters( 'wp_mail_from', 'friends-plugin@' . $domain );
 	}
 
