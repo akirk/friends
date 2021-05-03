@@ -38,12 +38,12 @@ In future, I could see mobile apps instead of talking to a third party, to talk 
 The logo was created by Ramon Dodd, @ramonopoly. Thank you!
 
 == Installation ==
- 
+
 1. Upload the `friends` directory to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
- 
+
 == Frequently Asked Questions ==
- 
+
 = Does this plugin create custom tables? =
 No, all the functionality is achieved with standard WordPress means. Subscriptions or Friends are minimal-permission users on your install. External posts are cached in a custom post types and attributed to those users.
 
@@ -78,8 +78,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 6. Use rules to filter incoming content (sometimes you’re not interested in everything your friends do)
 7. Friends users are plain WordPress users with low privileges
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
- 
+
 == Changelog ==
+= 1.5.6 =
+- Add a Notification Manager
+- Fix usage of site_url
+
 = 1.5.5 =
 - Allow collapsing of sidebar headers (accordion)
 - Lots of small styling changes
@@ -190,4 +194,4 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - All basic functionality:
 - Request and accept friendships
 - Subscribe to private feed
-- /friends/ page 
+- /friends/ page

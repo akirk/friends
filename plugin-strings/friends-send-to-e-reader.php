@@ -34,11 +34,12 @@ __( 'By default the plugin will send an e-mail with an ePub file attached.', 'fr
 __( 'The Friends plugin is all about connecting with friends and news. Learn more on its <a href=%s>plugin page on WordPress.org</a>.', 'friends' );
 // translators: %s: URL to the Embed library.
 __( 'This plugin is largely powered by the open source project <a href=%s>PHPePub</a>.', 'friends' );
-__( 'Send to E-Reader', 'friends' );
+__( 'Send to new posts to E-Reader', 'friends' );
 __( 'Don\'t send a notification', 'friends' );
 // translators: %s is an URL.
 __( 'You have not yet entered any e-readers. Go to the <a href=%s>Send to E-Reader settings</a> to add one.', 'friends' );
 // translators: %s is an E-Reader name.
 _x( 'Send to %s', 'e-reader', 'friends' );
+__( 'Send to E-Reader', 'friends' );
 __( 'Friends', 'friends' );
 __( 'About', 'friends' );
