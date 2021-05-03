@@ -31,7 +31,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		add_filter(
 			'rest_url',
 			function() {
-				return get_option( 'siteurl' ) . '/wp-json/';
+				return get_option( 'home' ) . '/wp-json/';
 			}
 		);
 
@@ -41,14 +41,14 @@ class Friends_RestTest extends WP_UnitTestCase {
 			function( $preempt, $request, $url ) {
 				$p = wp_parse_url( $url );
 
-				$site_url = home_url();
+				$home_url = home_url();
 
 				// Pretend the url now is the requested one.
-				update_option( 'siteurl', $p['scheme'] . '://' . $p['host'] );
+				update_option( 'home', $p['scheme'] . '://' . $p['host'] );
 				$rest_prefix = home_url() . '/wp-json';
 				if ( substr( $url, -6 ) === '/feed/' ) {
-					// Restore the old site_url.
-					update_option( 'siteurl', $site_url );
+					// Restore the old home_url.
+					update_option( 'home', $home_url );
 					return apply_filters(
 						'fake_http_response',
 						array(
@@ -67,8 +67,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 				} elseif ( false === strpos( $url, $rest_prefix ) ) {
 					$html = Friends::get_html_link_rel_friends_base_url();
 
-					// Restore the old site_url.
-					update_option( 'siteurl', $site_url );
+					// Restore the old home_url.
+					update_option( 'home', $home_url );
 					return apply_filters(
 						'fake_http_response',
 						array(
@@ -97,7 +97,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 				$response = $wp_rest_server->dispatch( $r );
 
 				// Restore the old url.
-				update_option( 'siteurl', $url );
+				update_option( 'home', $url );
 
 				return apply_filters(
 					'fake_http_response',
@@ -145,7 +145,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 	public function test_friend_request() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
-		update_option( 'siteurl', $my_url );
+		update_option( 'home', $my_url );
 		$friends = Friends::get_instance();
 		$future_in_token = 'future_in_token';
 		$future_out_token = 'future_out_token';
@@ -155,7 +155,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		update_option( 'friends_request_token_' . sha1( $friend_url . '/wp-json/' . Friends_REST::PREFIX ), $friend_request_token );
 
 		// Let's send a friend request to $friend_url.
-		update_option( 'siteurl', $friend_url );
+		update_option( 'home', $friend_url );
 		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/friend-request' );
 		$request->set_param( 'url', $my_url );
 		$request->set_param( 'key', $future_in_token );
@@ -184,7 +184,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$friend_user->update_user_option( 'friends_future_in_token_' . sha1( $friend_request_response->data['request'] ), $future_in_token );
 
 		// Now let's accept the friend request.
-		update_option( 'siteurl', $my_url );
+		update_option( 'home', $my_url );
 		$request = new WP_REST_Request( 'POST', '/' . Friends_REST::PREFIX . '/accept-friend-request' );
 		$request->set_param( 'request', $friend_request_response->data['request'] );
 		$request->set_param( 'key', $future_out_token );
@@ -211,7 +211,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 	public function test_friend_request_with_admin_and_accept_on_mobile() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
-		update_option( 'siteurl', $my_url );
+		update_option( 'home', $my_url );
 		$friends = Friends::get_instance();
 		$friend_username = Friend_User::get_user_login_for_url( $friend_url );
 
@@ -233,7 +233,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// Remote approves friend request = sets user to friend.
-		update_option( 'siteurl', $friend_url );
+		update_option( 'home', $friend_url );
 		$my_user_at_friend->set_role( 'friend' );
 
 		// Refresh the users before querying them again.
@@ -256,7 +256,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 	public function test_friend_request_with_admin() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
-		update_option( 'siteurl', $my_url );
+		update_option( 'home', $my_url );
 		$friends = Friends::get_instance();
 		$friend_username = Friend_User::get_user_login_for_url( $friend_url );
 
@@ -278,7 +278,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// Remote approves friend request through admin.
-		update_option( 'siteurl', $friend_url );
+		update_option( 'home', $friend_url );
 		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', array( $my_user_at_friend->ID ) );
 
 		// Refresh the users before querying them again.
@@ -301,7 +301,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 	public function test_friend_request_with_local_user_without_metadata() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
-		update_option( 'siteurl', $my_url );
+		update_option( 'home', $my_url );
 		$friends = Friends::get_instance();
 		$friend_username = Friend_User::get_user_login_for_url( $friend_url );
 
@@ -332,7 +332,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
 		// Remote approves friend request through admin.
-		update_option( 'siteurl', $friend_url );
+		update_option( 'home', $friend_url );
 		$friends->admin->handle_bulk_friend_request_approval( false, 'accept_friend_request', array( $my_user_at_friend->ID ) );
 
 		// Refresh the users before querying them again.
@@ -358,8 +358,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		add_filter(
 			'fake_http_response',
-			function( $response, $site_url, $url, $request ) use ( $my_url, $friend_url ) {
-				if ( $site_url === $my_url ) {
+			function( $response, $home_url, $url, $request ) use ( $my_url, $friend_url ) {
+				if ( $home_url === $my_url ) {
 					return $response;
 				}
 				if ( rtrim( $url, '/' ) === $friend_url ) {
@@ -396,7 +396,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 			4
 		);
 
-		update_option( 'siteurl', $my_url );
+		update_option( 'home', $my_url );
 		$friends = Friends::get_instance();
 		$friend_username = Friend_User::get_user_login_for_url( $friend_url );
 
@@ -429,8 +429,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 
 		add_filter(
 			'fake_http_response',
-			function( $response, $site_url, $url, $request ) use ( $my_url, $friend_url ) {
-				if ( $site_url === $my_url ) {
+			function( $response, $home_url, $url, $request ) use ( $my_url, $friend_url ) {
+				if ( $home_url === $my_url ) {
 					return $response;
 				}
 				return new WP_Error(
@@ -442,7 +442,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 			4
 		);
 
-		update_option( 'siteurl', $my_url );
+		update_option( 'home', $my_url );
 		$friends = Friends::get_instance();
 		$friend_username = Friend_User::get_user_login_for_url( $friend_url );
 

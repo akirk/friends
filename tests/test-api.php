@@ -72,7 +72,7 @@ class Friends_APITest extends WP_UnitTestCase {
 			)
 		);
 		$friends                = Friends::get_instance();
-		update_option( 'siteurl', 'http://me.local' );
+		update_option( 'home', 'http://me.local' );
 
 		$this->friends_in_token = wp_generate_password( 128, false );
 		if ( update_user_option( $this->friend_id, 'friends_in_token', $this->friends_in_token ) ) {

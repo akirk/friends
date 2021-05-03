@@ -75,7 +75,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		);
 		$friends = Friends::get_instance();
 		fetch_feed( null ); // load SimplePie.
-		update_option( 'siteurl', 'http://me.local' );
+		update_option( 'home', 'http://me.local' );
 
 		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 		$parser = new Friends_Feed_Parser_SimplePie;
@@ -114,7 +114,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		if ( ! class_exists( 'SimplePie', false ) ) {
 			require_once( ABSPATH . WPINC . '/class-simplepie.php' );
 		}
-		update_option( 'siteurl', 'http://me.local' );
+		update_option( 'home', 'http://me.local' );
 
 		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 		$parser = new Friends_Feed_Parser_SimplePie;
@@ -153,7 +153,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			10
 		);
 
-		update_option( 'siteurl', 'http://me.local' );
+		update_option( 'home', 'http://me.local' );
 
 		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_friend_request_notification', true );
@@ -195,7 +195,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			5
 		);
 
-		update_option( 'siteurl', 'http://me.local' );
+		update_option( 'home', 'http://me.local' );
 
 		$me_id = $this->factory->user->create(
 			array(
@@ -226,7 +226,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			5
 		);
 
-		update_option( 'siteurl', 'http://me.local' );
+		update_option( 'home', 'http://me.local' );
 
 		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_friend_request_notification', true );
