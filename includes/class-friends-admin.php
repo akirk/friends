@@ -1479,6 +1479,41 @@ class Friends_Admin {
 	 * Process the admin notification manager form submission.
 	 */
 	public function process_admin_notification_manager() {
+		$this->check_admin_settings();
+
+		if ( empty( $_POST ) || empty( $_POST['friend_listed'] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'notification-manager' ) ) {
+			return;
+		}
+		$friend_ids = $_POST['friend_listed'];
+		$current_user_id = get_current_user_id();
+		$hide_from_friends_page = array();
+
+		foreach ( $friend_ids as $friend_id ) {
+			if ( ! isset( $_POST['show_on_friends_page'][ $friend_id ] ) ) {
+				$hide_from_friends_page[] = $friend_id;
+			}
+
+			$no_new_post_notification = ! isset( $_POST['new_post_notification'][ $friend_id ] );
+			if ( get_user_option( 'friends_no_new_post_notification_' . $friend_id ) !== $no_new_post_notification ) {
+				update_user_option( $current_user_id, 'friends_no_new_post_notification_' . $friend_id, $no_new_post_notification );
+			}
+		}
+
+		update_user_option( $current_user_id, 'friends_hide_from_friends_page', $hide_from_friends_page );
+
+		do_action( 'friends_notification_manager_after_form_submit', $friend_ids );
+
+		if ( isset( $_GET['wp_http_referer'] ) ) {
+			wp_safe_redirect( $_GET['wp_http_referer'] );
+		} else {
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( 'wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+		}
+		exit;
+
 	}
 
 	/**
