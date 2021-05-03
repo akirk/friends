@@ -82,7 +82,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 == Changelog ==
 = 1.5.6 =
 - Add a Notification Manager
-- Fix usage of site_url
+- Fix usage of site_url, props @meszarosrob
 
 = 1.5.5 =
 - Allow collapsing of sidebar headers (accordion)
