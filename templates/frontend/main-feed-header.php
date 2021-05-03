@@ -7,7 +7,7 @@
 
 $data = $args['friends']->get_main_header_data();
 ?><div id="main-header">
-<h2 id="page-title"><a href="<?php echo esc_url( site_url( '/friends/' ) ); ?>">
+<h2 id="page-title"><a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 <?php
 switch ( $args['friends']->frontend->post_format ) {
 	case 'standard':
@@ -55,7 +55,7 @@ switch ( $args['friends']->frontend->post_format ) {
 <?php endif; ?>
 
 <?php foreach ( $data['post_count_by_post_format'] as $post_format => $count ) : ?>
-	<a class="chip" href="<?php echo esc_url( site_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
+	<a class="chip" href="<?php echo esc_url( home_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
 
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add New Friend', 'friends' ); ?></a>

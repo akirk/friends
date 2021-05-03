@@ -551,7 +551,7 @@ class Friend_User extends WP_User {
 		if ( $post_id ) {
 			$path = '/' . $post_id . '/';
 		}
-		return site_url( '/friends/' . self::get_user_login_for_url( $this->user_login ) . $path );
+		return home_url( '/friends/' . self::get_user_login_for_url( $this->user_login ) . $path );
 	}
 
 	/**
@@ -562,7 +562,7 @@ class Friend_User extends WP_User {
 	 * @return     string      The local friends page url.
 	 */
 	function get_local_friends_page_post_format_url( $post_format ) {
-		return site_url( '/friends/' . $this->user_login . '/type/' . $post_format . '/' );
+		return home_url( '/friends/' . $this->user_login . '/type/' . $post_format . '/' );
 	}
 
 	/**

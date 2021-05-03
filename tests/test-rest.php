@@ -41,11 +41,11 @@ class Friends_RestTest extends WP_UnitTestCase {
 			function( $preempt, $request, $url ) {
 				$p = wp_parse_url( $url );
 
-				$site_url = site_url();
+				$site_url = home_url();
 
 				// Pretend the url now is the requested one.
 				update_option( 'siteurl', $p['scheme'] . '://' . $p['host'] );
-				$rest_prefix = site_url() . '/wp-json';
+				$rest_prefix = home_url() . '/wp-json';
 				if ( substr( $url, -6 ) === '/feed/' ) {
 					// Restore the old site_url.
 					update_option( 'siteurl', $site_url );

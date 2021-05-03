@@ -127,7 +127,7 @@ class Friends_Admin {
 				echo wp_kses( sprintf( __( "First, you'll want to go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website or blog you'd like to subscribe to.", 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', __( 'Send Friend Request', 'friends' ) ), array( 'a' => array( 'href' => array() ) ) );
 				echo ' ';
 				// translators: %s is the URL of the user's friends page.
-				echo wp_kses( sprintf( __( "As soon as you have done this, you'll be able see all the compiled posts of your friends (and subscriptions) on your <a href=%s>Friends page</a>.", 'friends' ), site_url( '/friends/' ) ), array( 'a' => array( 'href' => array() ) ) );
+				echo wp_kses( sprintf( __( "As soon as you have done this, you'll be able see all the compiled posts of your friends (and subscriptions) on your <a href=%s>Friends page</a>.", 'friends' ), home_url( '/friends/' ) ), array( 'a' => array( 'href' => array() ) ) );
 				?>
 				</p>
 
@@ -352,7 +352,7 @@ class Friends_Admin {
 					'version'  => 2,
 					'codeword' => $codeword,
 					'name'     => $current_user->display_name,
-					'url'      => site_url(),
+					'url'      => home_url(),
 					'icon_url' => get_avatar_url( $current_user->ID ),
 					'message'  => mb_substr( trim( $message ), 0, 2000 ),
 					'key'      => $future_in_token,
@@ -420,7 +420,7 @@ class Friends_Admin {
 	 * Redirect to the Friends page
 	 */
 	public function redirect_to_friends_page() {
-		wp_safe_redirect( site_url( '/friends/' ) );
+		wp_safe_redirect( home_url( '/friends/' ) );
 		exit;
 	}
 
@@ -1131,7 +1131,7 @@ class Friends_Admin {
 				// translators: %s is a Site URL.
 				echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
 				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . home_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 				?>
 			</p></div>
 			<?php
@@ -1153,7 +1153,7 @@ class Friends_Admin {
 				}
 				esc_html_e( 'We subscribed you to their updates.', 'friends' );
 				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . site_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . home_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 				?>
 			</p></div>
 			<?php
@@ -1218,7 +1218,7 @@ class Friends_Admin {
 				$friend_url = 'https://' . $friend_url;
 			}
 
-			if ( 0 === strcasecmp( site_url(), $friend_url ) ) {
+			if ( 0 === strcasecmp( home_url(), $friend_url ) ) {
 				return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 			}
 
@@ -1719,7 +1719,7 @@ class Friends_Admin {
 	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
 	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
-		$friends_url = site_url( '/friends/' );
+		$friends_url = home_url( '/friends/' );
 
 		if ( current_user_can( 'friend' ) ) {
 			$current_user = wp_get_current_user();
@@ -1759,7 +1759,7 @@ class Friends_Admin {
 					'id'     => 'your-feed',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Latest Posts', 'friends' ),
-					'href'   => site_url( '/friends/' ),
+					'href'   => home_url( '/friends/' ),
 				)
 			);
 			$wp_menu->add_menu(
@@ -1767,7 +1767,7 @@ class Friends_Admin {
 					'id'     => 'your-profile',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Your Profile', 'friends' ),
-					'href'   => site_url( '/friends/?public' ),
+					'href'   => home_url( '/friends/?public' ),
 				)
 			);
 			$wp_menu->add_menu(
@@ -1810,7 +1810,7 @@ class Friends_Admin {
 					'id'     => 'profile',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Profile' ),
-					'href'   => site_url( '/friends/' ),
+					'href'   => home_url( '/friends/' ),
 				)
 			);
 		}
@@ -1946,7 +1946,7 @@ class Friends_Admin {
 
 		if ( $friend_post_count ) {
 			// translators: %s is the number of friend posts.
-			$items[] = '<a class="friend-posts" href="' . site_url( '/friends/' ) . '">' . sprintf( _n( '%s Post by Friends', '%s Posts by Friends', $friend_post_count, 'friends' ), $friend_post_count ) . '</a>';
+			$items[] = '<a class="friend-posts" href="' . home_url( '/friends/' ) . '">' . sprintf( _n( '%s Post by Friends', '%s Posts by Friends', $friend_post_count, 'friends' ), $friend_post_count ) . '</a>';
 		}
 		return $items;
 	}

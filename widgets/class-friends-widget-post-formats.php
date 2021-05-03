@@ -49,7 +49,7 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 				?>
 			</summary>
 			<ul class="friends-post-formats menu menu-nav accordion-body">
-				<li class="menu-item"><a href="<?php echo esc_attr( site_url( '/friends/' ) ); ?>"><?php _ex( 'All', 'all posts', 'friends' ); ?></a></li>
+				<li class="menu-item"><a href="<?php echo esc_attr( home_url( '/friends/' ) ); ?>"><?php _ex( 'All', 'all posts', 'friends' ); ?></a></li>
 				<?php
 				foreach ( get_post_format_strings() as $slug => $title ) :
 
@@ -60,7 +60,7 @@ class Friends_Widget_Post_Formats extends WP_Widget {
 						$instance[ 'post_format_title_' . $slug ] = $title;
 					}
 					?>
-					<li class="menu-item"><a href="<?php echo esc_attr( site_url( '/friends/type/' . $slug . '/' ) ); ?>"> <?php echo esc_attr( $instance[ 'post_format_title_' . $slug ] ); ?></a></li>
+					<li class="menu-item"><a href="<?php echo esc_attr( home_url( '/friends/type/' . $slug . '/' ) ); ?>"> <?php echo esc_attr( $instance[ 'post_format_title_' . $slug ] ); ?></a></li>
 				<?php endforeach; ?>
 			</ul>
 		</details>

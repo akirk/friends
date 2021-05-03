@@ -186,7 +186,7 @@ class Friends_REST {
 		}
 
 		$url = trim( $request->get_param( 'url' ) );
-		if ( ! is_string( $url ) || ! Friends::check_url( $url ) || 0 === strcasecmp( site_url(), $url ) ) {
+		if ( ! is_string( $url ) || ! Friends::check_url( $url ) || 0 === strcasecmp( home_url(), $url ) ) {
 			return new WP_Error(
 				'friends_invalid_site',
 				'An invalid site was provided.',
