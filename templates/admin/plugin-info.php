@@ -30,9 +30,9 @@ $more_info_url = $api->more_info;
 	<div class="plugin-card-bottom">
 		<a class="<?php echo esc_attr( $args['button_classes'] ); ?>" data-slug="<?php echo esc_attr( $api->slug ); ?>" data-name="<?php echo esc_attr( $api->name ); ?>" href="<?php echo esc_url( $args['install_url'] ); ?>" aria-label="<?php echo /* translators: %1$s is a plugin name, %2$s is a plugin version. */ esc_html( sprintf( __( 'Install %1$s %2$s now', 'framework' ), $api->name, $api->version ) ); ?>"><?php echo esc_html( $args['button_text'] ); ?></a>
 
-		<a class="button details thickbox" href="<?php echo esc_url( $more_info_url ); ?>" aria-label="<?php echo /* translators: %s is a plugin name. */ esc_html( sprintf( __( 'More information about %s' ), $api->name ) ); ?>" data-title="<?php echo esc_attr( $api->name ); ?>"><?php esc_html_e( 'More Details' ); ?></a>
+		<a class="button details" href="<?php echo esc_url( $more_info_url ); ?>" aria-label="<?php echo /* translators: %s is a plugin name. */ esc_html( sprintf( __( 'More information about %s' ), $api->name ) ); ?>" data-title="<?php echo esc_attr( $api->name ); ?>"><?php esc_html_e( 'More Details' ); ?></a>
 
-		<a class="button thickbox deactivate <?php echo esc_attr( $args['deactivate_button_class'] ); ?>"
+		<a class="button deactivate <?php echo esc_attr( $args['deactivate_button_class'] ); ?>"
 			data-slug="<?php echo esc_attr( $api->slug ); ?>"
 			data-name="<?php echo esc_attr( $api->name ); ?>"
 			href="<?php echo esc_url( $args['install_url'] ); ?>">
