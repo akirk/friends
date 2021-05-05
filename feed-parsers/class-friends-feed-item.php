@@ -279,6 +279,6 @@ class Friends_Feed_Item {
 	 * @return     bool  True if new, False otherwise.
 	 */
 	public function is_new() {
-		return $this->data['_is_new'];
+		return isset( $this->data['_is_new'] ) && $this->data['_is_new'];
 	}
 }
