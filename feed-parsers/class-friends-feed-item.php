@@ -270,7 +270,7 @@ class Friends_Feed_Item {
 			return new WP_Error( 'invalid-post-status', 'The status needs to be one of draft, publish, or private.' );
 
 		}
-		return $format;
+		return $status;
 	}
 
 	/**
