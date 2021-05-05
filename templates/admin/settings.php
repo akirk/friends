@@ -71,7 +71,7 @@ do_action( 'friends_settings_before_form' );
 				<td>
 					<fieldset>
 						<label for="friend_request_notification">
-							<input name="friend_request_notification" type="checkbox" id="friend_request_notification" value="1" <?php checked( '1', ! $args['friends_no_friend_request_notification'] ); ?>>
+							<input name="friend_request_notification" type="checkbox" id="friend_request_notification" value="1" <?php checked( '1', ! $args['no_friend_request_notification'] ); ?>>
 							<?php esc_html_e( 'Friend Requests', 'friends' ); ?>
 						</label>
 						<br />
