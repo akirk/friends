@@ -60,5 +60,5 @@ switch ( $args['friends']->frontend->post_format ) {
 
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add New Friend', 'friends' ); ?></a>
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=friends-settings' ) ); ?>"><?php esc_html_e( 'Settings' ); ?></a>
-<?php do_action( 'friends_main_feed_header', $args['friend_user'] ); ?>
+<?php do_action( 'friends_main_feed_header' ); ?>
 </div>
