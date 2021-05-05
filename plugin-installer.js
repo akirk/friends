@@ -123,7 +123,7 @@ jQuery(document).ready(function($) {
 	 *
 	 * @since 1.0
 	 */
-	$(document).on('click', '.friends-plugin-installer a.button', function(e) {
+	$(document).on('click', '.friends-plugin-installer a.button:not(.details)', function(e) {
 		var el = $(this),
 		plugin = el.data('slug');
 
