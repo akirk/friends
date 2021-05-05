@@ -599,9 +599,9 @@ class Friends_Frontend {
 
 				foreach ( $user_feeds as $feed ) {
 					$type = 'rss';
+					$title = $friend_user->display_name;
 					if ( $need_local_feed ) {
 						$xml_url = $feed->get_local_url() . '?auth=' . $_GET['auth'];
-						$title = $friend_user->display_name;
 					} else {
 						$xml_url = $feed->get_private_url( YEAR_IN_SECONDS );
 						if ( 'application/atom+xml' === $feed->get_mime_type() ) {
