@@ -97,7 +97,7 @@ class Friend_User_Query extends WP_User_Query {
 				'order'          => 'ASC',
 				'orderby'        => 'display_name',
 				'search'         => $query,
-				'search_columns' => 'display_name',
+				'search_columns' => array( 'display_name' ),
 			)
 		);
 	}

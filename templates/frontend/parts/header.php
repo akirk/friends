@@ -44,7 +44,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 			// translators: %1$s is a date or relative time, %2$s is a site name or domain.
 				__( '%1$s on %2$s', 'friends' ),
 				'<a href="' . esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ) . '" title="' . get_the_time( 'r' ) . '">' .
-				/* translators: %s is a time span */ sprintf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ), time() ) ) .
+				/* translators: %s is a time span */ sprintf( __( '%s ago' ), human_time_diff( get_the_time( 'U' ) ) ) .
 				'</a>',
 				'<a href="' . esc_url( get_the_permalink() ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( parse_url( get_the_permalink(), PHP_URL_HOST ) ) . '</a>'
 			),

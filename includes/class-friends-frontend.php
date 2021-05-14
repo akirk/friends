@@ -182,6 +182,7 @@ class Friends_Frontend {
 						'wp-block-library',
 						'wp-block-library-theme',
 						'wp-mediaelement',
+						'query-monitor',
 					)
 				)
 			);
