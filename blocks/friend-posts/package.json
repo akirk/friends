@@ -8,7 +8,7 @@
   "homepage": "https://wpfriends.at/",
   "repository": "git+https://github.com/akirk/friends.git",
   "devDependencies": {
-    "@wordpress/scripts": "^9.0.0"
+    "@wordpress/scripts": "^15.0.0"
   },
   "scripts": {
     "build": "wp-scripts build",

@@ -9,7 +9,7 @@
 	"license": "GPL-2.0-or-later",
 	"keywords": [],
 	"devDependencies": {
-		"@wordpress/scripts": "^14.0.0",
+		"@wordpress/scripts": "^15.0.1",
 		"lerna": "^3.20.2",
 		"spectre.css": "^0.5.9"
 	},
