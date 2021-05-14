@@ -9,7 +9,7 @@
 $friend_user = $args['friend_user'];
 $avatar = $args['avatar'];
 $author_name = get_the_author_meta( 'display_name' );
-$override_author_name = get_post_meta( get_the_id(), 'author', true );
+$override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, get_the_id() );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto">
 		<?php if ( Friends::CPT === get_post_type() ) : ?>

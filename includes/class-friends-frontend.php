@@ -73,6 +73,8 @@ class Friends_Frontend {
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 99999 );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
+
+		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
 	}
 
 	/**
@@ -551,6 +553,26 @@ class Friends_Frontend {
 			return get_the_guid( $post );
 		}
 		return $post_link;
+	}
+
+	/**
+	 * Potentially override the post author name with metadata.
+	 *
+	 * @param      string $overridden_author_name  The already overridden author name.
+	 * @param      string $author_name  The author name.
+	 * @param      int    $post_id      The post id.
+	 *
+	 * @return     string  The modified author name.
+	 */
+	public function override_author_name( $overridden_author_name, $author_name, $post_id ) {
+		if ( $overridden_author_name && $overridden_author_name !== $author_name ) {
+			return $overridden_author_name;
+		}
+		$override_author_name = get_post_meta( $post_id, 'author', true );
+		if ( $override_author_name ) {
+			return $override_author_name;
+		}
+		return $author_name;
 	}
 
 	/**
