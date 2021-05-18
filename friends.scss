@@ -190,6 +190,10 @@ div {
 				&.alignfull, &.alignwide {
 					margin: 0;
 				}
+				figcaption {
+					text-align: center;
+					font-size: .8rem;
+				}
 			}
 		}
 
@@ -363,7 +367,7 @@ div {
 			}
 		}
 	}
-	
+
 	ul.friend-posts img.avatar {
 		vertical-align: middle;
 		margin-right: .3em;

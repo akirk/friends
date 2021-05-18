@@ -38,6 +38,7 @@
 			font-size: 1.6rem;
 			font-weight: 500;
 			line-height: 1.1;
+			margin-bottom: 0;
 		}
 		blockquote {
 			border-left: .2rem solid #f6f6fa;
@@ -52,9 +53,17 @@
 			max-width: 100% !important;
 			height: auto !important;
 		}
+		figcaption {
+			text-align: center;
+			font-size: .9rem;
+		}
+
 		div.subscription-settings {
 			color: #999;
 			font-size: .9rem;
+		}
+		div.post-meta {
+			margin-bottom: 2em;
 		}
 		div.post-footer {
 			margin-top: 2em;

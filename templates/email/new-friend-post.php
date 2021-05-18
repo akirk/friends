@@ -16,15 +16,9 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $args
 		– <?php echo esc_html( $override_author_name ); ?>
 	<?php endif; ?>
 </a>
-<h2><a href="<?php the_permalink( $args['post'] ); ?>">
-	<?php
-	$post_title = $args['post']->post_title;
-	if ( '' === trim( $post_title ) ) {
-		$post_title = $args['post']->post_date;
-	}
-	echo esc_html( $post_title );
-	?>
-</a></h2>
+<?php if ( '' !== trim( $args['post']->post_title ) ) : ?>
+	<h2><a href="<?php the_permalink( $args['post'] ); ?>"><?php echo esc_html( $args['post']->post_title ); ?></a></h2>
+<?php endif; ?>
 </div>
 
 <div class="post-content">
