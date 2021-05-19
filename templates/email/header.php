@@ -22,6 +22,14 @@
 			background-color: #fff;
 			padding: 1em 2em;
 		}
+		@media only screen and ( max-width: 800px ) {
+			body {
+				margin: 0;
+			}
+			div.content {
+				padding: 1em;
+			}
+		}
 		a:hover {
 			color: #1341d4;
 			text-decoration: underline;
@@ -71,10 +79,14 @@
 		}
 		div.footer {
 			margin-top: 1em;
+			margin-bottom: 1em;
 			color: #999;
 			text-align: center;
 			clear: both;
 			font-size: .9rem;
+		}
+		p.permalink {
+			font-size: .8rem;
 		}
 		hr {
 			border: 0;

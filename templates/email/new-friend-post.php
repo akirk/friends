@@ -38,12 +38,15 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $args
 			esc_html_e( 'View on your friends page', 'friends' );
 		?>
 	</a>
-	<p>
+	<p class="permalink">
 	<?php
-	printf(
+	echo wp_kses(
+		sprintf(
 		// translators: %s is a URL.
-		__( 'Published at %s', 'friends' ),
-		'<strong><a href="' . esc_url( get_permalink( $args['post'] ) ) . '">' . esc_html( get_permalink( $args['post'] ) ) . '</a></strong>'
+			__( 'Published at %s', 'friends' ),
+			'<a href="' . esc_url( get_permalink( $args['post'] ) ) . '">' . esc_html( get_permalink( $args['post'] ) ) . '</a></strong>'
+		),
+		array( 'a' => array( 'href' => array() ) )
 	);
 	?>
 	</p>
@@ -62,4 +65,3 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $args
 	);
 	?>
 </div>
-
