@@ -74,3 +74,11 @@ tr.lastlog td {
 .friends-plugin-installer .plugin-card .desc, .friends-plugin-installer .plugin-card .name {
 	margin: auto;
 }
+
+span.disabled {
+	color: #999;
+}
+
+span#friends_enable_retention_days_line, span#friends_enable_retention_number_line {
+	cursor: pointer;
+}

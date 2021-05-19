@@ -307,7 +307,148 @@ class Friend_User extends WP_User {
 			$posts = $friends->feed->retrieve_feed( $feed );
 			$new_posts = array_merge( $new_posts, $posts );
 		}
+
+		$this->delete_outdated_posts();
 		return $new_posts;
+	}
+
+	/**
+	 * Delete posts the user decided to automatically delete.
+	 */
+	public function delete_outdated_posts() {
+		$count = 0;
+		if ( $this->is_retention_days_enabled() ) {
+			$date_before = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $this->get_retention_days() * 24 ) . 'hours' ) );
+			$args        = array(
+				'post_type'  => Friends::CPT,
+				'author'     => $this->ID,
+				'nopaging'   => true,
+				'date_query' => array(
+					'before' => $date_before,
+				),
+			);
+
+			$query = new WP_Query( $args );
+
+			while ( $query->have_posts() ) {
+				$count ++;
+				$query->the_post();
+				if ( apply_filters( 'friends_debug', false ) ) {
+					echo 'Deleting ', get_the_ID(), '<br/>';
+				}
+				wp_delete_post( get_the_ID(), true );
+			}
+		}
+
+		if ( $this->is_retention_number_enabled() ) {
+			$args = array(
+				'post_type' => Friends::CPT,
+				'author'    => $this->ID,
+				'offset'    => $this->get_retention_number(),
+			);
+
+			$query = new WP_Query( $args );
+
+			while ( $query->have_posts() ) {
+				$count ++;
+				$query->the_post();
+				if ( apply_filters( 'friends_debug', false ) ) {
+					echo 'Deleting ', get_the_ID(), '<br/>';
+				}
+				wp_delete_post( get_the_ID(), true );
+			}
+		}
+	}
+
+	/**
+	 * Check whether the retention by number of posts is enabled.
+	 *
+	 * @return boolean Whether the retention by number of posts is enabled.
+	 */
+	public function is_retention_number_enabled() {
+		return $this->get_user_option( 'friends_enable_retention_number' );
+	}
+
+	/**
+	 * Enable or disable the retention by number of posts.
+	 *
+	 * @param boolean $enabled Whether the retention by number of posts should be enabled.
+	 * @return boolean Whether the retention by number of posts is enabled.
+	 */
+	public function set_retention_number_enabled( $enabled ) {
+		$this->update_user_option( 'friends_enable_retention_number', boolval( $enabled ) );
+		return boolval( $enabled );
+	}
+
+	/**
+	 * Get the retention by number of posts.
+	 *
+	 * @return int The retention by number of posts.
+	 */
+	public function get_retention_number() {
+		$number = $this->get_user_option( 'friends_retention_number' );
+		if ( $number <= 0 ) {
+			return 200;
+		}
+
+		return $number;
+	}
+
+	/**
+	 * Set the retention by number of posts.
+	 *
+	 * @param  int $number   The retention by number of posts.
+	 * @return int The retention by number of posts.
+	 */
+	public function set_retention_number( $number ) {
+		$number = max( 1, $number );
+		$this->update_user_option( 'friends_retention_number', $number );
+		return $number;
+	}
+	/**
+	 * Check whether the retention by days of posts is enabled.
+	 *
+	 * @return boolean Whether the retention by days of posts is enabled.
+	 */
+	public function is_retention_days_enabled() {
+		return $this->get_user_option( 'friends_enable_retention_days' );
+	}
+
+	/**
+	 * Enable or disable the retention by days of posts.
+	 *
+	 * @param boolean $enabled Whether the retention by days of posts should be enabled.
+	 * @return boolean Whether the retention by days of posts is enabled.
+	 */
+	public function set_retention_days_enabled( $enabled ) {
+		$this->update_user_option( 'friends_enable_retention_days', boolval( $enabled ) );
+		return boolval( $enabled );
+	}
+
+	/**
+	 * Get the retention by days of posts.
+	 *
+	 * @return int The retention by days of posts.
+	 */
+	public function get_retention_days() {
+		$days = $this->get_user_option( 'friends_retention_days' );
+		if ( $days <= 0 ) {
+			return 14;
+		}
+
+		return $days;
+	}
+
+	/**
+	 * Set the retention by days of posts.
+	 *
+	 * @param  int $days   The retention by days of posts.
+	 * @return int The retention by days of posts.
+	 */
+	public function set_retention_days( $days ) {
+		$days = max( 1, intval( $days ) );
+		return $this->update_user_option( 'friends_retention_days', $days );
+		return $days;
 	}
 
 	/**
