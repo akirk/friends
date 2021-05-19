@@ -23,7 +23,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $args
 
 <div class="post-content">
 <?php
-	echo wp_kses_post( $args['post']->post_content );
+	echo wp_kses_post( apply_filters( 'friends_rewrite_mail_html', $args['post']->post_content ) );
 ?>
 </div>
 

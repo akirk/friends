@@ -37,6 +37,7 @@ class Friends_Notifications {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
+		add_action( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ) );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
@@ -219,6 +220,18 @@ class Friends_Notifications {
 
 			$this->send_mail( $user->user_email, $email_title, $message );
 		}
+	}
+
+	/**
+	 * Rewrite HTML for e-mail (by inlining some CSS styles)
+	 *
+	 * @param      string $html   The HTML.
+	 *
+	 * @return     string  The rewritten HTML.
+	 */
+	public function rewrite_mail_html( $html ) {
+		$html = preg_replace( '/<figure\b[^>]*>\s*<img\b/', '$0 style="max-width: 100% !important; height: auto !important;"', $html );
+		return $html;
 	}
 
 	/**
