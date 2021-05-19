@@ -207,12 +207,10 @@ $has_last_log = false;
 						echo esc_html(
 							sprintf(
 							// translators: %s is a size in bytes or kilo bytes (kB).
-								__( 'Currently the posts use %s of disk space.', 'friends' ),
+								__( 'Currently the posts use %s of disk space. If you need to limit the amount of space, choose one of the options above (they can be combined). The next auto-delete will kick in when refreshing the feeds of this friend.', 'friends' ),
 								size_format( $args['total_size'], 1 )
 							)
 						);
-						echo ' ';
-						esc_html_e( 'If you need to limit the amount of space, choose one of the options above.', 'friends' );
 						?>
 					</p>
 				</td>
