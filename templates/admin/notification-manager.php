@@ -16,7 +16,7 @@ if ( $args['no_new_post_notification'] ) : ?>
 		<thead>
 			<tr>
 				<th class="column-primary column-friend"><?php esc_html_e( 'Friend', 'friends' ); ?></th>
-				<th class="column-friends-page-feeds"><?php esc_html_e( 'Friends Page Feeds' ); ?></th>
+				<th class="column-friends-page-feeds"><?php esc_html_e( 'Show on friends page' ); ?></th>
 				<th class="column-email-notification"><?php esc_html_e( 'E-Mail Notification' ); ?></th>
 				<?php do_action( 'friends_notification_manager_header' ); ?>
 			</tr>
