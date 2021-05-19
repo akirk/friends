@@ -848,6 +848,13 @@ class Friends_Admin {
 			}
 			wp_update_user( $friend );
 
+			if ( $friend->set_retention_number_enabled( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] ) ) {
+				$friend->set_retention_number( $_POST['friends_retention_number'] );
+			}
+			if ( $friend->set_retention_days_enabled( isset( $_POST['friends_enable_retention_days'] ) && $_POST['friends_enable_retention_days'] ) ) {
+				$friend->set_retention_days( $_POST['friends_retention_days'] );
+			}
+
 			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 			if ( ! $hide_from_friends_page ) {
 				$hide_from_friends_page = array();

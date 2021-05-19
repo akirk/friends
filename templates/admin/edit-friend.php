@@ -123,7 +123,7 @@ $has_last_log = false;
 			</tr>
 			<?php if ( $args['friend']->can_refresh_feeds() ) : ?>
 			<tr>
-				<th><label for="url"><?php esc_html_e( 'Posts' ); ?></label></th>
+				<th><?php esc_html_e( 'Posts' ); ?></th>
 				<td>
 					<fieldset>
 						<label for="show_on_friends_page">
@@ -148,11 +148,70 @@ $has_last_log = false;
 				</td>
 			</tr>
 			<tr>
-				<th><label for="url"><?php esc_html_e( 'Disk space used', 'friends' ); ?></label></th>
+				<th><?php esc_html_e( 'Retention', 'friends' ); ?></th>
 				<td>
-					<?php echo esc_html( size_format( $args['total_size'], 1 ) ); ?>
+					<fieldset>
+						<div>
+							<input type="checkbox" name="friends_enable_retention_days" id="friends_enable_retention_days" value="1" <?php checked( '1', $args['friend']->is_retention_days_enabled() ); ?> />
+							<span id="friends_enable_retention_days_line" class="<?php echo esc_attr( $args['friend']->is_retention_days_enabled() ? '' : 'disabled' ); ?>">
+							<?php
+							echo wp_kses(
+								sprintf(
+									// translators: %s is an input field that allows specifying a number.
+									__( 'Only keep posts for %s days', 'friends' ),
+									'<input type="number" min="1" id="friends_retention_days" name="friends_retention_days" value="' . esc_attr( $args['friend']->get_retention_days() ) . '"' . ( $args['friend']->is_retention_days_enabled() ? '' : ' disabled="disabled"' ) . ' size="3">'
+								),
+								array(
+									'input' => array(
+										'type'     => array(),
+										'min'      => array(),
+										'id'       => array(),
+										'name'     => array(),
+										'value'    => array(),
+										'size'     => array(),
+										'disabled' => array(),
+									),
+								)
+							);
+							?>
+							</span>
+						</div>
+						<div>
+							<input type="checkbox" name="friends_enable_retention_number" id="friends_enable_retention_number" value="1" <?php checked( '1', $args['friend']->is_retention_number_enabled() ); ?> />
+							<span id="friends_enable_retention_number_line" class="<?php echo esc_attr( $args['friend']->is_retention_number_enabled() ? '' : 'disabled' ); ?>">
+							<?php
+							echo wp_kses(
+								sprintf(
+									// translators: %s is an input field that allows specifying a number.
+									__( 'Only keep the last %s posts', 'friends' ),
+									'<input type="number" min="1" id="friends_retention_number" name="friends_retention_number" value="' . esc_attr( $args['friend']->get_retention_number() ) . '"' . ( $args['friend']->is_retention_number_enabled() ? '' : ' disabled="disabled"' ) . ' size="3">'
+								),
+								array(
+									'input' => array(
+										'type'     => array(),
+										'min'      => array(),
+										'id'       => array(),
+										'name'     => array(),
+										'value'    => array(),
+										'size'     => array(),
+										'disabled' => array(),
+									),
+								)
+							);
+							?>
+							</span>
+						</div>
 					</fieldset>
 					<p class="description">
+						<?php
+						echo esc_html(
+							sprintf(
+							// translators: %s is a size in bytes or kilo bytes (kB).
+								__( 'Currently the posts use %s of disk space. If you need to limit the amount of space, choose one of the options above (they can be combined). The next auto-delete will kick in when refreshing the feeds of this friend.', 'friends' ),
+								size_format( $args['total_size'], 1 )
+							)
+						);
+						?>
 					</p>
 				</td>
 			</tr>
@@ -200,7 +259,7 @@ $has_last_log = false;
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>
 				<td>
 					<?php if ( get_user_option( 'friends_no_new_post_notification' ) ) : ?>
-						<span class="description"><?php esc_html_e( 'You have generally disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change setting', 'friends' ); ?></a></span>
+						<span class="description"><?php esc_html_e( 'You have generally disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change this setting', 'friends' ); ?></a></span>
 					<?php else : ?>
 					<fieldset>
 						<label for="friends_new_post_notification">

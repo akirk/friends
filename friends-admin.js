@@ -1,11 +1,11 @@
 jQuery( function( $ ) {
 
-	jQuery( document ).on( 'click', 'input#require_codeword', function() {
+	$( document ).on( 'click', 'input#require_codeword', function() {
 		if ( this.checked ) {
-			jQuery( '#codeword_options' ).removeClass( 'hidden' );
-			jQuery( '#codeword' ).focus();
+			$( '#codeword_options' ).removeClass( 'hidden' );
+			$( '#codeword' ).focus();
 		} else {
-			jQuery( '#codeword_options' ).addClass( 'hidden' );
+			$( '#codeword_options' ).addClass( 'hidden' );
 		}
 	} );
 
@@ -28,35 +28,61 @@ jQuery( function( $ ) {
 		updateWelcomePanel( 1 );
 	});
 
-	jQuery( document ).on( 'click', 'a#send-friends-advanced', function() {
-		jQuery( 'tr.friends-advanced' ).removeClass( 'hidden' ).first().find( 'input:visible:first' ).focus();
-		jQuery( this ).remove();
+	$( document ).on( 'click', 'a#send-friends-advanced', function() {
+		$( 'tr.friends-advanced' ).removeClass( 'hidden' ).first().find( 'input:visible:first' ).focus();
+		$( this ).remove();
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a#add-another-feed', function() {
-		jQuery( 'tr.another-feed' ).removeClass( 'hidden' ).find( 'input:visible:first' ).focus();
-		jQuery( this ).remove();
+	$( document ).on( 'click', 'a#add-another-feed', function() {
+		$( 'tr.another-feed' ).removeClass( 'hidden' ).find( 'input:visible:first' ).focus();
+		$( this ).remove();
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a#show-details', function() {
-		jQuery( '.details' ).toggleClass( 'hidden' ).focus();
+	$( document ).on( 'click', 'a#show-details', function() {
+		$( '.details' ).toggleClass( 'hidden' ).focus();
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a#show-alternate-feeds', function() {
-		jQuery( 'li.rel-alternate' ).toggleClass( 'hidden' );
+	$( document ).on( 'click', 'a#show-alternate-feeds', function() {
+		$( 'li.rel-alternate' ).toggleClass( 'hidden' );
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a#show-unsupported-feeds', function() {
-		jQuery( '#unsupported-feeds' ).toggleClass( 'hidden' );
+	$( document ).on( 'click', 'a#show-unsupported-feeds', function() {
+		$( '#unsupported-feeds' ).toggleClass( 'hidden' );
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a#toggle-raw-rules-data', function() {
-		jQuery( '#raw-rules-data' ).toggle();
+	$( document ).on( 'click', '#friends_retention_days', function( e ) {
+		e.stopPropagation();
+	} );
+
+	$( document ).on( 'click', '#friends_enable_retention_days, #friends_enable_retention_days_line', function() {
+		var el = document.getElementById( 'friends_enable_retention_days' );
+			if ( this.id !== el.id ) {
+			$( '#friends_enable_retention_days' ).attr( 'checked', ! el.checked );
+		}
+		$( '#friends_retention_days' ).attr( 'disabled', ! el.checked );
+		$( '#friends_enable_retention_days_line' ).attr( 'class', el.checked ? '' : 'disabled' );
+	} );
+
+	$( document ).on( 'click', '#friends_retention_number', function( e ) {
+		e.stopPropagation();
+	} );
+
+	$( document ).on( 'click', '#friends_enable_retention_number, #friends_enable_retention_number_line', function() {
+		var el = document.getElementById( 'friends_enable_retention_number' );
+		if ( this.id !== el.id ) {
+			$( '#friends_enable_retention_number' ).attr( 'checked', ! el.checked );
+		}
+		$( '#friends_retention_number' ).attr( 'disabled', ! el.checked );
+		$( '#friends_enable_retention_number_line' ).attr( 'class', el.checked ? '' : 'disabled' );
+	} );
+
+	$( document ).on( 'click', 'a#toggle-raw-rules-data', function() {
+		$( '#raw-rules-data' ).toggle();
 		return false;
 	} );
 
@@ -66,14 +92,14 @@ jQuery( function( $ ) {
 		if ( $this.data( 'post' ) ) {
 			url += '&post=' + $this.data( 'post' );
 		}
-		jQuery.post( url, $( 'form#edit-rules [name^=rules]' ).add( 'form#edit-rules [name=catch_all]' ).serialize() + '&_ajax_nonce=' + $this.data( 'nonce' ) + '&action=friends_preview_rules', function( response ) {
-			jQuery( '#preview-rules' ).html( response );
+		$.post( url, $( 'form#edit-rules [name^=rules]' ).add( 'form#edit-rules [name=catch_all]' ).serialize() + '&_ajax_nonce=' + $this.data( 'nonce' ) + '&action=friends_preview_rules', function( response ) {
+			$( '#preview-rules' ).html( response );
 		} );
 	}
 
-	jQuery( document ).on( 'change', 'select.rule-action', function() {
-		var td_replace = jQuery( this ).closest( 'tr' ).find( 'td.replace-with' );
-		if ( 'replace' === jQuery( this ).val() ) {
+	$( document ).on( 'change', 'select.rule-action', function() {
+		var td_replace = $( this ).closest( 'tr' ).find( 'td.replace-with' );
+		if ( 'replace' === $( this ).val() ) {
 			td_replace.show();
 		} else {
 			td_replace.hide();
@@ -81,34 +107,34 @@ jQuery( function( $ ) {
 		preview_rules();
 	} );
 
-	jQuery( document ).on( 'keyup click', '#edit-rules input, #edit-rules select', preview_rules );
+	$( document ).on( 'keyup click', '#edit-rules input, #edit-rules select', preview_rules );
 
-	jQuery( document ).on( 'click', 'button#refresh-preview-rules', function() {
+	$( document ).on( 'click', 'button#refresh-preview-rules', function() {
 		preview_rules();
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a.preview-parser', function() {
-		this.href = this.href.replace( /&parser(=[^&$]+)?([&$])/, '&parser=' + encodeURIComponent( jQuery( this ).closest( 'td' ).find( 'select' ).val() ) + '&' );
-		this.href = this.href.replace( /&preview(=[^&$]+)?([&$])/, '&preview=' + encodeURIComponent( jQuery( this ).closest( 'tr' ).find( 'input.url' ).val() ) + '&' );
+	$( document ).on( 'click', 'a.preview-parser', function() {
+		this.href = this.href.replace( /&parser(=[^&$]+)?([&$])/, '&parser=' + encodeURIComponent( $( this ).closest( 'td' ).find( 'select' ).val() ) + '&' );
+		this.href = this.href.replace( /&preview(=[^&$]+)?([&$])/, '&preview=' + encodeURIComponent( $( this ).closest( 'tr' ).find( 'input.url' ).val() ) + '&' );
 	} );
 
-	jQuery( document ).on( 'click', 'a.show-inactive-feeds', function() {
-		jQuery( 'table.feed-table' ).show().find( 'tr.inactive' ).toggleClass( 'hidden' );
+	$( document ).on( 'click', 'a.show-inactive-feeds', function() {
+		$( 'table.feed-table' ).show().find( 'tr.inactive' ).toggleClass( 'hidden' );
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a.show-log-lines', function() {
-		jQuery( 'table.feed-table' ).find( 'tr:visible + tr.lastlog' ).toggleClass( 'hidden' );
+	$( document ).on( 'click', 'a.show-log-lines', function() {
+		$( 'table.feed-table' ).find( 'tr:visible + tr.lastlog' ).toggleClass( 'hidden' );
 		return false;
 	} );
 
-	jQuery( document ).on( 'click', 'a.add-feed', function() {
-		jQuery( 'table.feed-table' ).find( 'tr.template' ).removeClass( 'hidden' ).find( 'input:first' ).focus();
-		jQuery( this ).remove();
+	$( document ).on( 'click', 'a.add-feed', function() {
+		$( 'table.feed-table' ).find( 'tr.template' ).removeClass( 'hidden' ).find( 'input:first' ).focus();
+		$( this ).remove();
 		return false;
 	} );
 
-	jQuery( '<a href="' + friends.add_friend_url + '" class="page-title-action">' + friends.add_friend_text + '</a>' ).insertAfter( 'a.page-title-action[href$="user-new.php"]' );
+	$( '<a href="' + friends.add_friend_url + '" class="page-title-action">' + friends.add_friend_text + '</a>' ).insertAfter( 'a.page-title-action[href$="user-new.php"]' );
 
 } );
