@@ -1185,9 +1185,9 @@ class Friends_Admin {
 	 * @return     boolean A WP_Error or void.
 	 */
 	public function process_admin_add_friend( $vars ) {
-		$friend_url = trim( $vars['friend_url'] );
-		$codeword = trim( $vars['codeword'] );
-		$message = trim( $vars['message'] );
+		$friend_url = isset( $vars['friend_url'] ) ? trim( $vars['friend_url'] ) : '';
+		$codeword = isset( $vars['codeword'] ) ? trim( $vars['codeword'] ) : '';
+		$message = isset( $vars['message'] ) ? trim( $vars['message'] ) : '';
 
 		$friends_plugin = false;
 		$friend_user_login = Friend_User::get_user_login_for_url( $friend_url );
