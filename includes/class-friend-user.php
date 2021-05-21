@@ -486,8 +486,8 @@ class Friend_User extends WP_User {
 					return $user_icon_url;
 				}
 			} elseif ( $this->has_cap( 'subscription' ) ) {
-				update_user_option( $this->ID, 'friends_user_icon_url', $gravatar );
-				return $gravatar;
+				update_user_option( $this->ID, 'friends_user_icon_url', $user_icon_url );
+				return $user_icon_url;
 			}
 		}
 

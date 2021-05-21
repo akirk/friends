@@ -115,6 +115,11 @@ div {
 .friends-page {
 	background-color: $body-bg;
 	color: $body-font-color;
+	overflow-wrap: break-word;
+
+	code, pre {
+		overflow: auto;
+	}
 
 	min-height: 100vh;
 	a:visited:not(.off-canvas-toggle) {

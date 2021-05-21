@@ -22,7 +22,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 			</a>
 		<?php endif; ?>
 	</div>
-	<div class="post-meta col-auto">
+	<div class="post-meta">
 		<div class="author">
 			<?php if ( Friends::CPT === get_post_type() ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
