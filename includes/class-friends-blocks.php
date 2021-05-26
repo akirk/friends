@@ -171,8 +171,14 @@ class Friends_Blocks {
 
 		$last_author = false;
 
-		$only_users    = array_flip( array_filter( preg_split( '/[, ]+/', $attributes['only_users'] ) ) );
-		$exclude_users = array_flip( array_filter( preg_split( '/[, ]+/', $attributes['exclude_users'] ) ) );
+		$only_users = array();
+		if ( isset( $attributes['only_users'] ) ) {
+			$only_users = array_flip( array_filter( preg_split( '/[, ]+/', $attributes['only_users'] ) ) );
+		}
+		$exclude_users = array();
+		if ( isset( $attributes['exclude_users'] ) ) {
+			$exclude_users = array_flip( array_filter( preg_split( '/[, ]+/', $attributes['exclude_users'] ) ) );
+		}
 
 		$count     = max( 1, min( 100, $attributes['count'] ) );
 		$remaining = $count;
