@@ -617,7 +617,11 @@ class Friends {
 	 */
 	public function limit_post_format_request( $qvs ) {
 		if ( isset( $qvs['post_type'] ) ) {
-			$qvs['post_type'] = array_filter( (array) $qvs['post_type'], 'is_post_type_viewable' );
+			if ( is_array( $qvs['post_type'] ) ) {
+				$qvs['post_type'] = array_filter( $qvs['post_type'], 'is_post_type_viewable' );
+			} elseif ( ! is_post_type_viewable( $qvs['post_type'] ) ) {
+				unset( $qvs['post_type'] );
+			}
 		}
 
 		return $qvs;
