@@ -47,7 +47,6 @@ class Friends_Admin {
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_new_content' ), 71 );
-		add_action( 'wp_untrash_post_status', array( $this, 'wp_untrash_post_status' ), 10, 2 );
 		add_action( 'current_screen', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
