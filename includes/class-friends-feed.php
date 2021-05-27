@@ -240,9 +240,9 @@ class Friends_Feed {
 			}
 		);
 
-		$new_posts = array();
 		foreach ( $feeds as $feed ) {
 			$this->retrieve_feed( $feed );
+			$feed->get_friend_user()->delete_outdated_posts();
 		}
 	}
 	/**
