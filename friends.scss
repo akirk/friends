@@ -178,10 +178,6 @@ div {
 		padding: 0;
 		border: 0;
 
-		.card-title {
-			padding-left: 1rem;
-		}
-
 		.card-body {
 			padding: 0;
 			ul, ol {
@@ -201,6 +197,9 @@ div {
 				}
 			}
 		}
+		border-bottom: 1px solid #eee;
+		padding: 0 0 1em 0;
+		margin: 0 0 1em 0;
 
 		@media (min-width: $off-canvas-breakpoint) {
 			& {
@@ -213,6 +212,11 @@ div {
 				.card-body {
 					padding: 1rem;
 				}
+
+				.card-title {
+					padding-left: 1rem;
+				}
+
 			}
 		}
 	}
@@ -330,13 +334,20 @@ div {
 				line-height: 1.4;
 				max-width: 100%;
 				margin: auto -0.4rem;
-				padding: 0.8rem;
+				padding: .5rem;
 				padding-bottom: 1.5em;
 
 				div.avatar {
 					margin-right: .5em;
 				}
+
+				@media (min-width: $off-canvas-breakpoint) {
+					padding: .8rem;
+					padding-bottom: 1.5em;
+				}
 			}
+
+
 
 			h4.entry-title {
 				font-size: 130%;

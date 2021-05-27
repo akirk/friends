@@ -47,6 +47,7 @@ class Friends_Admin {
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_new_content' ), 71 );
+		add_action( 'wp_head', array( $this, 'admin_bar_mobile' ) );
 		add_action( 'current_screen', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
@@ -1779,7 +1780,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'friends',
 					'parent' => '',
-					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( __( 'Friends', 'friends' ) ) . $this->get_unread_badge( $friend_requests->get_total() ),
+					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $this->get_unread_badge( $friend_requests->get_total() ) . '</span>',
 					'href'   => $friends_main_url,
 				)
 			);
@@ -1841,7 +1842,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'friends',
 					'parent' => '',
-					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> ' . esc_html( __( 'Friends', 'friends' ) ),
+					'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . '</span>',
 					'href'   => $friends_main_url,
 				)
 			);
@@ -1882,6 +1883,28 @@ class Friends_Admin {
 			);
 		}
 	}
+
+	/**
+	 * Show friends admin bar item on mobile.
+	 */
+	public function admin_bar_mobile() {
+		if ( ! is_user_logged_in() ) {
+			return;
+		}
+		?>
+<style type="text/css" media="screen">
+@media screen and (max-width: 782px) {
+	#wpadminbar #wp-admin-bar-friends, #wpadminbar #wp-admin-bar-friends .ab-icon {
+		display: block !important;
+	}
+	#wpadminbar #wp-admin-bar-friends .ab-label {
+		display: none !important;
+	}
+}
+</style>
+		<?php
+	}
+
 
 	/**
 	 * Fires at the end of the delete users form prior to the confirm button.
