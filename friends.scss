@@ -183,8 +183,8 @@ div {
 			ul, ol {
 				margin-left: 1rem;
 			}
-			img {
-				max-width:100%;
+			img, video {
+				max-width:100% !important;
 				height: auto;
 			}
 			.wp-block-image, .wp-block-gallery {
