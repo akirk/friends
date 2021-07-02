@@ -80,6 +80,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 == Changelog ==
+= 1.5.9 =
+- Fix handling of super admins in a multisite install
+
 = 1.5.8 =
 - Ensure auto-deleting of posts in the cron
 - Many small visual fixes on mobile
