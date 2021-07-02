@@ -1762,14 +1762,25 @@ class Friends_Admin {
 	 */
 	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
 		$friends_url = home_url( '/friends/' );
+		$super_admin = is_multisite() && is_super_admin( get_current_user_id() ) && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() );
 
-		if ( current_user_can( 'friend' ) ) {
+		if ( current_user_can( 'friend' ) || $super_admin ) {
 			$current_user = wp_get_current_user();
-			$friends_url  = $current_user->user_url . '/friends/';
+			if ( $current_user->user_url ) {
+				$friends_url = $current_user->user_url . '/friends/';
+			} else {
+				$blogs = get_blogs_of_user( get_current_user_id() );
+				foreach ( (array) $blogs as $details ) {
+					if ( 0 === strpos( $details->domain, $current_user->user_login . '.' ) ) {
+						$friends_url = $details->siteurl . '/friends/';
+						break;
+					}
+				}
+			}
 		}
 
 		$friends_main_url = $friends_url;
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( current_user_can( Friends::REQUIRED_ROLE ) && ! $super_admin ) {
 			$friend_requests = Friend_User_Query::all_friend_requests();
 			$friend_request_count = $friend_requests->get_total();
 			if ( $friend_request_count > 0 ) {

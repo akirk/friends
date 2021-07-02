@@ -470,8 +470,7 @@ class Friends {
 		if ( isset( $_GET['public'] ) ) {
 			return false;
 		}
-
-		if ( ! current_user_can( self::REQUIRED_ROLE ) || ( is_multisite() && is_super_admin( get_current_user_id() ) ) ) {
+		if ( ! current_user_can( self::REQUIRED_ROLE ) || ( is_multisite() && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) && is_super_admin( get_current_user_id() ) ) ) {
 			return false;
 		}
 
