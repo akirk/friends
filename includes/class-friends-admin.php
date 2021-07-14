@@ -94,7 +94,7 @@ class Friends_Admin {
 	public function admin_notice_no_friends() {
 		$screen = get_current_screen();
 
-		if ( 'dashboard' !== $screen->id ) {
+		if ( 'plugins' !== $screen->id && 'dashboard' !== $screen->id ) {
 			return;
 		}
 
