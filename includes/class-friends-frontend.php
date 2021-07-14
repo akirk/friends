@@ -172,23 +172,11 @@ class Friends_Frontend {
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
 
-			$non_theme_styles = array_flip(
-				apply_filters(
-					'friends_page_allowed_styles',
-					array(
-						'admin-bar',
-						'customize-preview',
-						'debug-bar',
-						'wp-block-library',
-						'wp-block-library-theme',
-						'wp-mediaelement',
-						'query-monitor',
-					)
-				)
-			);
-
-			foreach ( wp_styles()->queue as $style ) {
-				if ( ! isset( $non_theme_styles[ $style ] ) ) {
+			// Dequeue theme styles so taht they don't interact with the Friends frontend.
+			$wp_styles = wp_styles();
+			foreach ( $wp_styles->queue as $style ) {
+				$src = $wp_styles->registered[ $style ]->src;
+				if ( false !== strpos( $src, '/themes/' ) ) {
 					wp_dequeue_style( $style );
 				}
 			}
