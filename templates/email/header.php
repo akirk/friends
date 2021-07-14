@@ -88,6 +88,12 @@
 		p.permalink {
 			font-size: .8rem;
 		}
+
+		code, pre {
+			overflow: auto;
+			overflow-wrap: break-word;
+		}
+
 		hr {
 			border: 0;
 			margin-top: 1.5em;

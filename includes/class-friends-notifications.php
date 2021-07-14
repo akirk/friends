@@ -230,9 +230,10 @@ class Friends_Notifications {
 	 * @return     string  The rewritten HTML.
 	 */
 	public function rewrite_mail_html( $html ) {
-		$html = preg_replace( '/<figure\b[^>]*>\s*<img\b/i', '$0 style="max-width: 100% !important; height: auto !important;"', $html );
-		$html = preg_replace( '/(<figure\b[^>]*>\s*<img\b.*?)width=[\'"]\d+[\'"]/i', '$1', $html );
-		$html = preg_replace( '/(<figure\b[^>]*>\s*<img\b.*?)height=[\'"]\d+[\'"]/i', '$1', $html );
+		$img_regex = '<figure\b[^>]*>\s*(<a\b[^>]*>\s*)?<img\b';
+		$html = preg_replace( '/' . $img_regex . '/i', '$0 style="max-width: 100% !important; height: auto !important;"', $html );
+		$html = preg_replace( '/(' . $img_regex . '.*?)width=[\'"]\d+[\'"]/i', '$1', $html );
+		$html = preg_replace( '/(' . $img_regex . '.*?)height=[\'"]\d+[\'"]/i', '$1', $html );
 		return $html;
 	}
 
