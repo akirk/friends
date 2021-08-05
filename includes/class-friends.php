@@ -133,6 +133,8 @@ class Friends {
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
 		add_filter( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
+		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
+
 		add_filter( 'request', array( $this, 'limit_post_format_request' ), 20 );
 	}
 
@@ -254,6 +256,15 @@ class Friends {
 		// translators: %1$s and %2$s are URLs.
 		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, follow me and get your own <a href="%1$s">WordPress</a> now and install the <a href="%2$s">Friends plugin</a>!', 'friends' ), 'https://wordpress.org/', self::PLUGIN_URL );
 		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
+
+		$content .= '<!-- wp:friends/follow-me {"className":"not-friends"} -->' . PHP_EOL . '<div class="wp-block-friends-follow-me not-friends">';
+		$content .= '<form method="post"><!-- wp:paragraph -->' . PHP_EOL . '<p>';
+		$content .= __( 'Enter your blog URL to join my network. <a href="https://wpfriends.at/follow-me">Learn more</a>', 'friends' );
+		$content .= '</p>' . PHP_EOL;
+		$content .= '<!-- /wp:paragraph --><div><input type="text" name="friends_friend_request_url" placeholder="https://example.com/"/> <button>';
+		$content .= __( 'Follow this site', 'friends' );
+		$content .= '</button></div></form></div>' . PHP_EOL;
+		$content .= '</p>' . PHP_EOL . '<!-- /wp:friends/follow-me -->' . PHP_EOL;
 
 		$post_data = array(
 			'post_title'   => __( 'Welcome to my Friends Page', 'friends' ),
@@ -711,6 +722,20 @@ class Friends {
 		);
 
 		return sprintf( translate_nooped_plural( $plurals[ $format ], $count, 'friends' ), number_format_i18n( $count ) );
+	}
+
+	/**
+	 * Overwrite the must_log_in message.
+	 *
+	 * @param      array $defaults  The default strings.
+	 *
+	 * @return     array  The modified defaults.
+	 */
+	public function comment_form_defaults( $defaults ) {
+		$comment_registration_message = get_option( 'friends_comment_registration_message', __( 'Only people in my network can comment.', 'friends' ) );
+		$comment_registration_message = str_replace( __( 'my network', 'friends' ), '<a href="' . esc_attr( home_url() . '/friends/' ) . '">' . __( 'my network', 'friends' ) . '</a>', $comment_registration_message );
+		$defaults['must_log_in'] = $comment_registration_message;
+		return $defaults;
 	}
 
 

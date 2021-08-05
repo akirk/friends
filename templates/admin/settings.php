@@ -5,16 +5,60 @@
  * @package Friends
  */
 
-$codeword_class = '';
-if ( 'friends' === $args['codeword'] || ! $args['friends_require_codeword'] ) {
-	$codeword_class = 'hidden';
+$comment_registration_class = '';
+if ( ! $args['comment_registration'] ) {
+	$comment_registration_class = 'hidden';
 }
+
+$comment_registration_default = strip_tags(
+	/* translators: %s: Login URL. */
+	__( 'You must be <a href="%s">logged in</a> to post a comment.' )
+);
+
 do_action( 'friends_settings_before_form' );
 
 ?><form method="post">
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
 		<tbody>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Comments', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="comment_registration">
+							<input name="comment_registration" type="checkbox" id="comment_registration" value="1" <?php checked( '1', $args['comment_registration'] ); ?> />
+							<?php esc_html_e( 'Only people in your network can comment.', 'friends' ); ?>
+						</label>
+					</fieldset>
+					<div id="comment_registration_options" class="<?php echo esc_attr( $comment_registration_class ); ?>">
+						<fieldset>
+							<label for="comment_registration_message">
+								<p><?php esc_html_e( 'Display this message for logged-out users:', 'friends' ); ?></p>
+							</label>
+							<p>
+								<textarea name="comment_registration_message" id="comment_registration_message" class="regular-text" rows="3" cols="80" placeholder="<?php echo esc_attr( $comment_registration_default ); ?>"><?php echo esc_html( $args['comment_registration_message'] ); ?></textarea>
+							</p>
+							<p class="description">
+								<?php
+								echo wp_kses(
+									sprintf(
+										// translators: %1$s is the translation for "my network", %2$s is the URL for your public profile page.
+										__( 'We\'ll link "%1$s" to <a href=%2$s>your public profile page</a>.', 'friends' ),
+										$args['my_network'],
+										$args['public_profile_link']
+									),
+									array(
+										'a' => array(
+											'href' => array(),
+										),
+									)
+								);
+								?>
+							</p>
+						</fieldset>
+					</div>
+				</td>
+			</tr>
 			<?php
 			if ( $args['potential_main_users']->get_total() > 1 ) :
 				?>

@@ -473,6 +473,18 @@ class Friends_Admin {
 			update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
 		}
 
+		if ( isset( $_POST['comment_registration'] ) && $_POST['comment_registration'] ) {
+			update_option( 'comment_registration', true );
+		} else {
+			delete_option( 'comment_registration' );
+		}
+
+		if ( isset( $_POST['comment_registration_message'] ) && $_POST['comment_registration_message'] ) {
+			update_option( 'friends_comment_registration_message', $_POST['comment_registration_message'] );
+		} else {
+			delete_option( 'friends_comment_registration_message' );
+		}
+
 		if ( isset( $_POST['require_codeword'] ) && $_POST['require_codeword'] ) {
 			update_option( 'friends_require_codeword', true );
 		} else {
@@ -542,6 +554,10 @@ class Friends_Admin {
 				'limit_homepage_post_format'     => get_option( 'friends_limit_homepage_post_format', false ),
 				'expose_post_format_feeds'       => get_option( 'friends_expose_post_format_feeds' ),
 				'private_rss_key'                => get_option( 'friends_private_rss_key' ),
+				'comment_registration'           => get_option( 'comment_registration' ), // WordPress option.
+				'comment_registration_message'   => get_option( 'friends_comment_registration_message', __( 'Only people in my network can comment.', 'friends' ) ),
+				'my_network'                     => __( 'my network', 'friends' ),
+				'public_profile_link'            => home_url( '/friends/' ),
 				'codeword'                       => get_option( 'friends_codeword', 'friends' ),
 				'require_codeword'               => get_option( 'friends_require_codeword' ),
 				'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message' ),
@@ -1819,7 +1835,7 @@ class Friends_Admin {
 				array(
 					'id'     => 'your-profile',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Your Profile', 'friends' ),
+					'title'  => esc_html__( 'Your Public Friends Page', 'friends' ),
 					'href'   => home_url( '/friends/?public' ),
 				)
 			);

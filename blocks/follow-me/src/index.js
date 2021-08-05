@@ -16,7 +16,7 @@ function getHTML( is_saving ) {
 registerBlockType( 'friends/follow-me', {
 	apiVersion: 2,
 	edit: function() {
-		const content = __( 'Enter your blog URL to join my network <a href="https://wpfriends.at/follow-me">Learn more</a>', 'friends' );
+		const content = __( 'Enter your blog URL to join my network. <a href="https://wpfriends.at/follow-me">Learn more</a>', 'friends' );
 		return (
 			<div { ...useBlockProps() }>
 				<form method="post">
