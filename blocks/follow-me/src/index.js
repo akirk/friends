@@ -1,13 +1,13 @@
-import { Placeholder, TextControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps } from '@wordpress/block-editor';
-import { InnerBlocks, RichText } from "@wordpress/block-editor";
+import { InnerBlocks } from "@wordpress/block-editor";
 
 function getHTML( is_saving ) {
 	return (
 		<div>
 			<input type="text" name="friends_friend_request_url" placeholder="https://example.com/" />
+			&nbsp;
 			<button disabled={ is_saving ? null : "disabled" }>{ __( 'Follow this site', 'friends' ) }</button>
 		</div>
 	);
@@ -15,8 +15,8 @@ function getHTML( is_saving ) {
 
 registerBlockType( 'friends/follow-me', {
 	apiVersion: 2,
-	edit: function( { attributes, isSelected, setAttributes } ) {
-		const content = __( 'Do you have your own blog? Enter your URL to connect with me! <a href="https://wpfriends.at/follow-me">Learn more</a>', 'friends' );
+	edit: function() {
+		const content = __( 'Enter your blog URL to join my network <a href="https://wpfriends.at/follow-me">Learn more</a>', 'friends' );
 		return (
 			<div { ...useBlockProps() }>
 				<form method="post">
