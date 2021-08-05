@@ -600,9 +600,6 @@ class Friends_Feed {
 			return;
 		}
 
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to view this page.', 'friends' ) );
-		}
 		wp_safe_redirect( self_admin_url( 'admin.php?page=add-friend&url=' . urlencode( $_GET['add-friend'] ) ) );
 		exit;
 	}
