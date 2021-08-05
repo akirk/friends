@@ -65,7 +65,7 @@ class Friends_RestTest extends WP_UnitTestCase {
 						$request
 					);
 				} elseif ( false === strpos( $url, $rest_prefix ) ) {
-					$html = Friends::get_html_link_rel_friends_base_url();
+					$html = '<html><head><title>' . esc_html( ucwords( strtr( wp_parse_url( $home_url, PHP_URL_HOST ), '.', ' ' ) ) ) . '</title>' . implode( PHP_EOL, Friends::get_html_rel_links() ) . '</head></html>';
 
 					// Restore the old home_url.
 					update_option( 'home', $home_url );
