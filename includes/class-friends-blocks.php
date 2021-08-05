@@ -321,6 +321,15 @@ class Friends_Blocks {
 	 */
 	public function handle_follow_me() {
 		if ( isset( $_REQUEST['friends_friend_request_url'] ) ) {
+			$access_transient_key = 'friends_follow_me_' . crc32( $_SERVER['REMOTE_ADDR'] );
+			$access_count = get_transient( $access_transient_key );
+			if ( $access_count >= 3 ) {
+				header( 'HTTP/1.0 529 Too Many Requests' );
+				echo 'Too Many Requests';
+				exit;
+			}
+			set_transient( $access_transient_key, $access_count + 1, 3600 );
+
 			$url = $_REQUEST['friends_friend_request_url'];
 
 			$fqdn_regex = '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)';
