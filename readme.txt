@@ -2,7 +2,7 @@
 Contributors: akirk
 Tags: friends, rss, decentralized, social-network, oyd, own-your-data
 Requires at least: 5.0
-Tested up to: 5.7
+Tested up to: 5.8
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -80,6 +80,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 == Changelog ==
+= 1.6.0 =
+- Add a Follow Me block
+- Add the ability to modify the message when a user needs to be logged in to comment.
+
 = 1.5.9 =
 - Fix handling of super admins in a multisite install
 
