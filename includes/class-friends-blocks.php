@@ -47,6 +47,7 @@ class Friends_Blocks {
 		if ( function_exists( 'register_block_type' ) ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
 			add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
+			add_filter( 'render_block', array( $this, 'render_friends_follow_me' ), 10, 2 );
 			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_start' ), 9, 2 );
 			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
 			add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
@@ -321,12 +322,14 @@ class Friends_Blocks {
 	 */
 	public function handle_follow_me() {
 		if ( isset( $_REQUEST['friends_friend_request_url'] ) ) {
+			if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_follow_me' ) ) {
+				wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+			}
 			$access_transient_key = 'friends_follow_me_' . crc32( $_SERVER['REMOTE_ADDR'] );
 			$access_count = get_transient( $access_transient_key );
 			if ( $access_count >= 3 ) {
 				header( 'HTTP/1.0 529 Too Many Requests' );
-				echo 'Too Many Requests';
-				exit;
+				wp_die( 'Too Many Requests' );
 			}
 			set_transient( $access_transient_key, $access_count + 1, 3600 );
 
@@ -377,10 +380,27 @@ class Friends_Blocks {
 			exit;
 		}
 	}
+
+	/**
+	 * Add a CSRF to the Follow Me block.
+	 *
+	 * @param  string $content    The content provided by the user.
+	 * @param  object $block      Attributes for the block.
+	 * @return string             The rendered content.
+	 */
+	public function render_friends_follow_me( $content, $block ) {
+		if ( false === strpos( $content, 'friends_friend_request_url' ) ) {
+			return $content;
+		}
+		$input = '<input type="text" name="friends_friend_request_url"';
+		$nonce = wp_nonce_field( 'friends_follow_me', '_wpnonce', true, false );
+		return str_replace( $input, $nonce . $input, $content );
+	}
+
 	/**
 	 * Render the "Only visible for friends" Blocks block
 	 *
-	 * @param  object $content    The content provided by the user.
+	 * @param  string $content    The content provided by the user.
 	 * @param  object $block      Attributes for the block.
 	 * @return string             The rendered content.
 	 */
@@ -391,6 +411,10 @@ class Friends_Blocks {
 			$visibility = 'only-friends';
 		} elseif ( preg_match( '/\bnot-friends\b/', $css_class ) ) {
 			$visibility = 'not-friends';
+		}
+
+		if ( ! $visibility ) {
+			return $content;
 		}
 		$class_only_friends = ' class="only-friends" style="background-color: #efe; padding-left: .5em;"';
 		$class_not_friends = ' class="not-friends" style="background-color: #fee; padding-left: .5em;"';
