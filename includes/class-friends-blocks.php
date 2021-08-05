@@ -334,7 +334,37 @@ class Friends_Blocks {
 				exit;
 			}
 
-			header( 'Location: ' . $url . '?add-friend=' . home_url() );
+			$response = wp_safe_remote_head(
+				$url,
+				array(
+					'timeout'     => 5,
+					'redirection' => 5,
+					'headers'     => array(
+						'Accept: text/html',
+					),
+				)
+			);
+			if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+				echo 'non-200 header';
+				exit;
+			}
+
+			$links = (array) wp_remote_retrieve_header( $response, 'link' );
+			if ( ! empty( $links ) ) {
+				$friends_base_url_endpoints = array_filter(
+					$links,
+					function( $link ) {
+						return preg_match( '/rel="friends-base-url"/', $link );
+					}
+				);
+
+				if ( ! empty( $friends_base_url_endpoints ) ) {
+					header( 'Location: ' . $url . '?add-friend=' . home_url() );
+					exit;
+				}
+			}
+
+			header( 'Location: https://wpfriends.at/follow-me?url=' . urlencode( $_REQUEST['friends_friend_request_url'] ) );
 			exit;
 		}
 	}

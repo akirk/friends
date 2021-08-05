@@ -124,9 +124,11 @@ class Friends {
 		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
 		add_filter( 'init', array( Friend_User_Feed::class, 'register_taxonomy' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
-		add_filter( 'wp_head', array( $this, 'html_link_rel_friends_base_url' ) );
-		add_filter( 'wp_head', array( $this, 'html_link_rel_alternate_post_formats' ) );
-		add_filter( 'login_head', array( $this, 'html_link_rel_friends_base_url' ) );
+
+		add_action( 'template_redirect', array( $this, 'http_header' ), 5 );
+		add_filter( 'wp_head', array( $this, 'html_rel_links' ) );
+		add_filter( 'login_head', array( $this, 'html_rel_links' ) );
+
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
 		add_filter( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
@@ -711,22 +713,88 @@ class Friends {
 		return sprintf( translate_nooped_plural( $plurals[ $format ], $count, 'friends' ), number_format_i18n( $count ) );
 	}
 
+
 	/**
-	 * Output the alternate post formats as a link in the HTML head.
+	 * Get all of the rel links for the HTML head.
 	 */
-	public static function html_link_rel_alternate_post_formats() {
+	public static function get_link_rels() {
+		$rest_prefix = get_rest_url() . Friends_REST::PREFIX;
+		$links = array(
+			array(
+				'rel'  => 'friends-base-url',
+				'href' => $rest_prefix,
+			),
+		);
+
 		if ( get_option( 'friends_expose_post_format_feeds' ) && current_theme_supports( 'post-formats' ) ) {
-			echo wp_kses(
-				implode( PHP_EOL, self::get_html_link_rel_alternate_post_formats() ),
-				array(
-					'link' => array(
-						'rel'  => array(),
-						'type' => array(),
-						'href' => array(),
-					),
-				)
-			), PHP_EOL;
+			$links = array_merge( $links, self::get_html_link_rel_alternate_post_formats() );
 		}
+
+		return $links;
+	}
+
+	/**
+	 * Strip non-ascii bytes.
+	 *
+	 * @param      string $text   The text.
+	 *
+	 * @return     string  The text in ASCII only.
+	 */
+	private static function strip_non_ascii( $text ) {
+		$text = html_entity_decode( $text );
+		$text = str_replace( '»', '>', $text );
+		$text = strtr( $text, '"', '' );
+		return filter_var( $text, FILTER_SANITIZE_STRING, FILTER_FLAG_STRIP_HIGH | FILTER_FLAG_NO_ENCODE_QUOTES );
+	}
+
+	/**
+	 * Get all of the rel links for the HTTP header.
+	 */
+	public static function http_header() {
+		foreach ( self::get_link_rels() as $link ) {
+			$header = 'Link: <' . esc_url( $link['href'] ) . '>; rel="' . esc_attr( $link['rel'] ) . '"';
+			if ( isset( $link['type'] ) ) {
+				$header .= '; type="' . self::strip_non_ascii( $link['type'] ) . '"';
+			}
+			if ( isset( $link['title'] ) ) {
+				$header .= '; title="' . self::strip_non_ascii( $link['title'] ) . '"';
+			}
+			header( $header, false );
+		}
+	}
+
+	/**
+	 * Get all of the rel links for the HTML head.
+	 */
+	public static function get_html_rel_links() {
+		return array_map(
+			function ( $link ) {
+				return '<link' .
+					' rel="' . esc_attr( $link['rel'] ) . '"' .
+					' href="' . esc_url( $link['href'] ) . '"' .
+					( isset( $link['type'] ) ? ( ' type="' . esc_attr( $link['type'] ) . '"' ) : '' ) .
+					( isset( $link['title'] ) ? ( ' title="' . esc_attr( $link['title'] ) . '"' ) : '' ) .
+					' />';
+			},
+			self::get_link_rels()
+		);
+	}
+
+	/**
+	 * Output all of the rel links for the HTML head.
+	 */
+	public static function html_rel_links() {
+		echo wp_kses(
+			implode( PHP_EOL, self::get_html_rel_links() ),
+			array(
+				'link' => array(
+					'rel'   => array(),
+					'type'  => array(),
+					'href'  => array(),
+					'title' => array(),
+				),
+			)
+		), PHP_EOL;
 	}
 
 	/**
@@ -740,33 +808,15 @@ class Friends {
 		foreach ( get_post_format_strings() as $format => $title ) {
 			// translators: 1: Blog title, 2: Separator (raquo), 3: Post Format.
 			$title = sprintf( __( '%1$s %2$s %3$s Feed', 'friends' ), $blog_title, $separator, $title );
-			$links[] = '<link rel="alternate" type="application/rss+xml" href="' . esc_url( home_url( '/type/' . $format . '/feed/' ) ) . '" title="' . esc_attr( $title ) . '" />';
+			$links[] = array(
+				'rel'   => 'alternate',
+				'type'  => 'application/rss+xml',
+				'href'  => esc_url( home_url( '/type/' . $format . '/feed/' ) ),
+				'title' => $title,
+			);
 		}
 
 		return $links;
-	}
-
-	/**
-	 * Output the friends base URL as a link in the HTML head.
-	 */
-	public static function html_link_rel_friends_base_url() {
-		echo wp_kses(
-			self::get_html_link_rel_friends_base_url(),
-			array(
-				'link' => array(
-					'rel'  => array(),
-					'type' => array(),
-					'href' => array(),
-				),
-			)
-		), PHP_EOL;
-	}
-
-	/**
-	 * Generate a link tag with the friends base URL
-	 */
-	public static function get_html_link_rel_friends_base_url() {
-		return '<link rel="friends-base-url" type="application/wp-friends-plugin" href="' . esc_attr( get_rest_url() . Friends_REST::PREFIX ) . '" />';
 	}
 
 	/**
