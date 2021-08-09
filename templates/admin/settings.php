@@ -10,10 +10,10 @@ if ( ! $args['comment_registration'] ) {
 	$comment_registration_class = 'hidden';
 }
 
-$comment_registration_default = strip_tags(
-	/* translators: %s: Login URL. */
-	__( 'You must be <a href="%s">logged in</a> to post a comment.' )
-);
+$codeword_class = '';
+if ( 'friends' === $args['codeword'] || ! $args['friends_require_codeword'] ) {
+	$codeword_class = 'hidden';
+}
 
 do_action( 'friends_settings_before_form' );
 
@@ -36,7 +36,7 @@ do_action( 'friends_settings_before_form' );
 								<p><?php esc_html_e( 'Display this message for logged-out users:', 'friends' ); ?></p>
 							</label>
 							<p>
-								<textarea name="comment_registration_message" id="comment_registration_message" class="regular-text" rows="3" cols="80" placeholder="<?php echo esc_attr( $comment_registration_default ); ?>"><?php echo esc_html( $args['comment_registration_message'] ); ?></textarea>
+								<textarea name="comment_registration_message" id="comment_registration_message" class="regular-text" rows="3" cols="80" placeholder="<?php echo esc_attr( $args['comment_registration_default'] ); ?>"><?php echo esc_html( $args['comment_registration_message'] ); ?></textarea>
 							</p>
 							<p class="description">
 								<?php
@@ -217,6 +217,31 @@ do_action( 'friends_settings_before_form' );
 								echo wp_kses( sprintf( __( 'Expose Post Formats as alternate feeds on your homepage (as %s).', 'friends' ), '<code>&lt;link rel="alternate"/ &gt;</code>' ), array( 'code' => array() ) );
 								?>
 						<?php endif; ?>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><?php esc_html_e( 'Reactions', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<?php esc_html_e( 'Allow these emojis for reactions:', 'friends' ); ?>
+
+						<ol id="available-emojis">
+						<?php
+						foreach ( Friends_Reactions::get_available_emojis() as $id => $data ) {
+							Friends::template_loader()->get_template_part(
+								'admin/add-reaction-li',
+								null,
+								array(
+									'id'    => $id,
+									'emoji' => $data->char,
+								)
+							);
+						}
+						?>
+						</ol>
+						<a href="" id="admin-add-emoji"><?php esc_html_e( 'Add an emoji' ); ?></a>
+						<?php Friends::template_loader()->get_template_part( 'admin/reactions-picker' ); ?>
 					</fieldset>
 				</td>
 			</tr>

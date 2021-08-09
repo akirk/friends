@@ -252,7 +252,6 @@
 		} );
 
 		$document.on( 'click', 'button.friends-reaction', function() {
-			debugger;
 			wp.ajax.send( 'friends-toggle-react', {
 				data: {
 					_ajax_nonce: $( this ).data( 'nonce' ),

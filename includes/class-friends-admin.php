@@ -503,6 +503,19 @@ class Friends_Admin {
 			delete_option( 'friends_wrong_codeword_message' );
 		}
 
+		if ( isset( $_POST['available_emojis'] ) && $_POST['available_emojis'] ) {
+			$available_emojis = array();
+			foreach ( $_POST['available_emojis'] as $id ) {
+				$data = Friends_Reactions::get_emoji_data( $id );
+				if ( $data ) {
+					$available_emojis[ $id ] = $data;
+				}
+			}
+			update_option( 'friends_selected_emojis', $available_emojis );
+		} else {
+			delete_option( 'friends_selected_emojis' );
+		}
+
 		if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'acquaintance' ), true ) ) {
 			update_option( 'friends_default_friend_role', $_POST['default_role'] );
 		}
@@ -519,6 +532,16 @@ class Friends_Admin {
 			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( 'wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}
 		exit;
+	}
+
+	/**
+	 * Gets the frontend locale.
+	 *
+	 * @return     string  The frontend locale.
+	 */
+	public function get_frontend_locale() {
+		$locale = get_option( 'WPLANG' );
+		return empty( $locale ) ? 'en_US' : $locale;
 	}
 
 	/**
@@ -541,6 +564,26 @@ class Friends_Admin {
 			</p></div>
 			<?php
 		}
+
+		// In order to switch to the frontend locale, we need to first pretend that nothing was loaded yet.
+		global $l10n;
+		$l10n = array();
+
+		switch_to_locale( $this->get_frontend_locale() );
+		// Now while loading the next translations we need to ensure that determine_locale() doesn't return the admin language but the frontend language.
+		add_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
+
+		$wrong_codeword_message = __( 'An invalid codeword was provided.', 'friends' );
+		$comment_registration_message = __( 'Only people in my network can comment.', 'friends' );
+		$my_network = __( 'my network', 'friends' );
+		$comment_registration_default = strip_tags(
+			/* translators: %s: Login URL. */
+			__( 'You must be <a href="%s">logged in</a> to post a comment.' )
+		);
+		// Now let's switch back to the admin language.
+		remove_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
+		restore_previous_locale();
+
 		Friends::template_loader()->get_template_part(
 			'admin/settings',
 			null,
@@ -555,12 +598,13 @@ class Friends_Admin {
 				'expose_post_format_feeds'       => get_option( 'friends_expose_post_format_feeds' ),
 				'private_rss_key'                => get_option( 'friends_private_rss_key' ),
 				'comment_registration'           => get_option( 'comment_registration' ), // WordPress option.
-				'comment_registration_message'   => get_option( 'friends_comment_registration_message', __( 'Only people in my network can comment.', 'friends' ) ),
-				'my_network'                     => __( 'my network', 'friends' ),
+				'comment_registration_message'   => get_option( 'friends_comment_registration_message', $comment_registration_message ),
+				'comment_registration_default'   => $comment_registration_default,
+				'my_network'                     => $my_network,
 				'public_profile_link'            => home_url( '/friends/' ),
 				'codeword'                       => get_option( 'friends_codeword', 'friends' ),
 				'require_codeword'               => get_option( 'friends_require_codeword' ),
-				'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message' ),
+				'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message', $wrong_codeword_message ),
 				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
 				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
 			)

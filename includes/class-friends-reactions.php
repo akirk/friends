@@ -223,10 +223,11 @@ class Friends_Reactions {
 		$post_id = intval( $_POST['post_id'] );
 		$available_emojis = self::get_available_emojis();
 
-		if ( self::validate_emoji( $_POST['reaction'] ) ) {
+		if ( ! self::validate_emoji( $_POST['reaction'] ) ) {
 			// This emoji is not defined in emoji.json.
 			return new WP_Error( 'invalid-emoji', 'This emoji is unknown.' );
 		}
+
 		$taxonomy = 'friend-reaction-' . get_current_user_id();
 		$term = false;
 		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
@@ -259,9 +260,26 @@ class Friends_Reactions {
 	public static function get_all_emojis() {
 		static $emojis;
 		if ( ! $emojis ) {
-			$emojis = json_decode( file_get_contents( __DIR__ . '/emojis.json' ), true );
+			$emojis = json_decode( file_get_contents( __DIR__ . '/../emojis.json' ) );
 		}
 		return $emojis;
+	}
+
+	/**
+	 * Get the emoji data to be stored.
+	 *
+	 * @param  string $slug The emoji shortname to look up.
+	 * @return string|false The data or false if it doesn't exist.
+	 */
+	public static function get_emoji_data( $slug ) {
+		$emojis = self::get_all_emojis();
+
+		$slug = strtolower( $slug );
+		if ( ! isset( $emojis->$slug ) ) {
+			return false;
+		}
+
+		return $emojis->$slug;
 	}
 
 	/**
@@ -286,7 +304,7 @@ class Friends_Reactions {
 	}
 
 	/**
-	 * Get the HTML code for an emoji
+	 * Get the UTF8 for an emoji.
 	 *
 	 * @param  string $slug The emoji shortname to look up.
 	 * @return string|false The emoji or false if it doesn't exist.

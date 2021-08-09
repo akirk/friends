@@ -95,7 +95,7 @@ jQuery( function( $ ) {
 		$.post( url, $( 'form#edit-rules [name^=rules]' ).add( 'form#edit-rules [name=catch_all]' ).serialize() + '&_ajax_nonce=' + $this.data( 'nonce' ) + '&action=friends_preview_rules', function( response ) {
 			$( '#preview-rules' ).html( response );
 		} );
-	}
+	};
 
 	$( document ).on( 'change', 'select.rule-action', function() {
 		var td_replace = $( this ).closest( 'tr' ).find( 'td.replace-with' );
@@ -136,5 +136,24 @@ jQuery( function( $ ) {
 	} );
 
 	$( '<a href="' + friends.add_friend_url + '" class="page-title-action">' + friends.add_friend_text + '</a>' ).insertAfter( 'a.page-title-action[href$="user-new.php"]' );
+
+	$(document).on( 'click', '#admin-add-emoji', function() {
+		$( '#friends-reaction-picker' ).toggle();
+		return false;
+	} );
+
+	$(document).on( 'click', '.delete-emoji', function() {
+		$( this ).closest( 'li' ).remove();
+		return false;
+	} );
+
+	$( '#friends-reaction-picker' ).on( 'click', 'button', function() {
+		var id = $( this ).data( 'emoji' );
+		if ( $('#emoji-' + id ).length ) {
+			return;
+		}
+		$( '#available-emojis' ).append( $( '#available-emojis-template' ).html().replace( /%1\$s/g, id ).replace( /%2\$s/g, $( this ).html() ) );
+		return false;
+	} );
 
 } );
