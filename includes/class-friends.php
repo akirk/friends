@@ -121,8 +121,8 @@ class Friends {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_filter( 'init', array( $this, 'register_custom_post_type' ) );
-		add_filter( 'init', array( Friend_User_Feed::class, 'register_taxonomy' ) );
+		add_action( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'init', array( Friend_User_Feed::class, 'register_taxonomy' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 
 		add_action( 'template_redirect', array( $this, 'http_header' ), 5 );
@@ -161,7 +161,7 @@ class Friends {
 		$args = array(
 			'labels'              => $labels,
 			'description'         => "A cached friend's post",
-			'publicly_queryable'  => $this->access_control->private_rss_is_authenticated() || ( is_admin() && current_user_can( Friends::REQUIRED_ROLE ) && apply_filters( 'friends_show_cached_posts', false ) ),
+			'publicly_queryable'  => self::authenticated_for_posts(),
 			'show_ui'             => true,
 			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_nav_menus'   => false,
@@ -489,6 +489,24 @@ class Friends {
 
 		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
 		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
+	}
+
+	/**
+	 * Check whether the request has been authenticated to display (private) posts.
+	 *
+	 * @return     bool  Whether the posts can be accessed.
+	 */
+	public static function authenticated_for_posts() {
+		return Friends_Access_Control::private_rss_is_authenticated() || ( is_admin() && current_user_can( Friends::REQUIRED_ROLE ) && apply_filters( 'friends_show_cached_posts', false ) );
+	}
+
+	/**
+	 * Gets the post types to be displayed on the frontend, modifyable by filter.
+	 *
+	 * @return     array  The frontend post types.
+	 */
+	public static function get_frontend_post_types() {
+		return apply_filters( 'friends_frontend_post_types', array( Friends::CPT ) );
 	}
 
 	/**

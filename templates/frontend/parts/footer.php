@@ -7,7 +7,7 @@
  */
 
 ?><footer class="entry-meta card-footer">
-	<?php if ( Friends::CPT === get_post_type() ) : ?>
+	<?php if ( in_array( get_post_type(), Friends::get_frontend_post_types(), true ) ) : ?>
 		<?php
 		$args['friends']->frontend->link(
 			get_comments_link(),

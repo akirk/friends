@@ -1735,7 +1735,7 @@ class Friends_Admin {
 		if ( 'friends_posts' !== $column_name ) {
 			return $output;
 		}
-		$numposts = count_user_posts( $user_id, array( 'post', Friends::CPT ) );
+		$numposts = count_user_posts( $user_id, array_merge( array( 'post' ), Friends::get_frontend_post_types() ) );
 		$user = Friend_User::get_user_by_id( $user_id );
 		return sprintf(
 			'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',

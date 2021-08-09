@@ -195,7 +195,7 @@ class Friends_Blocks {
 				array(
 					'numberposts' => $count,
 					'offset'      => $offset,
-					'post_type'   => Friends::CPT,
+					'post_type'   => Friends::get_frontend_post_types(),
 				)
 			);
 			if ( count( $recent_posts ) === 0 ) {

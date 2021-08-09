@@ -382,7 +382,7 @@ class Friends_Frontend {
 	 * @param string $previous_status The status of the post at the point where it was trashed.
 	 */
 	public function untrash_post_status( $new_status, $post_id, $previous_status ) {
-		if ( Friends::CPT !== get_post_type( $post_id ) ) {
+		if ( in_array( get_post_type( $post_id ), Friends::get_frontend_post_types(), true ) ) {
 			return $new_status;
 		}
 		return 'publish';
@@ -519,7 +519,7 @@ class Friends_Frontend {
 	public function friend_post_edit_link( $link ) {
 		global $post;
 
-		if ( $post && Friends::CPT === $post->post_type ) {
+		if ( $post && in_array( $post->post_type, Friends::get_frontend_post_types(), true ) ) {
 			if ( Friends::on_frontend() ) {
 				$new_link = false;
 			} else {
@@ -538,7 +538,7 @@ class Friends_Frontend {
 	 * @reeturn string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, WP_Post $post ) {
-		if ( $post && Friends::CPT === $post->post_type ) {
+		if ( $post && in_array( $post->post_type, Friends::get_frontend_post_types(), true ) ) {
 			return get_the_guid( $post );
 		}
 		return $post_link;
@@ -691,7 +691,7 @@ class Friends_Frontend {
 
 		$page_id = get_query_var( 'page' );
 
-		$query->set( 'post_type', Friends::CPT );
+		$query->set( 'post_type', Friends::get_frontend_post_types() );
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$post_status = array( 'publish', 'private' );
 			if ( isset( $_GET['maybe-in-trash'] ) ) {
