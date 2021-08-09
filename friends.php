@@ -40,6 +40,7 @@ require_once __DIR__ . '/includes/class-friends-frontend.php';
 require_once __DIR__ . '/includes/class-friends-logging.php';
 require_once __DIR__ . '/includes/class-friends-notifications.php';
 require_once __DIR__ . '/includes/class-friends-plugin-installer.php';
+require_once __DIR__ . '/includes/class-friends-reactions.php';
 require_once __DIR__ . '/includes/class-friends-rest.php';
 require_once __DIR__ . '/includes/class-friends-shortcodes.php';
 require_once __DIR__ . '/includes/class-friends-template-loader.php';

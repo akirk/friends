@@ -1,102 +1,1002 @@
 {
-    "joy": "&#x1F602;",
-    "heart_eyes": "&#x1F60D;",
-    "sob": "&#x1F62D;",
-    "blush": "&#x1F60A;",
-    "unamused": "&#x1F612;",
-    "two_hearts": "&#x1F495;",
-    "kissing_heart": "&#x1F618;",
-    "weary": "&#x1F629;",
-    "ok_hand": "&#x1F44C;",
-    "pensive": "&#x1F614;",
-    "smirk": "&#x1F60F;",
-    "grin": "&#x1F601;",
-    "wink": "&#x1F609;",
-    "thumbsup": "&#x1F44D;",
-    "relieved": "&#x1F60C;",
-    "pray": "&#x1F64F;",
-    "cry": "&#x1F622;",
-    "sweat_smile": "&#x1F605;",
-    "notes": "&#x1F3B6;",
-    "eyes": "&#x1F440;",
-    "sunglasses": "&#x1F60E;",
-    "broken_heart": "&#x1F494;",
-    "raised_hands": "&#x1F64C;",
-    "flushed": "&#x1F633;",
-    "blue_heart": "&#x1F499;",
-    "see_no_evil": "&#x1F648;",
-    "sparkles": "&#x2728;",
-    "purple_heart": "&#x1F49C;",
-    "0": "&#x1F4AF;",
-    "sparkling_heart": "&#x1F496;",
-    "sleeping": "&#x1F634;",
-    "smile": "&#x1F604;",
-    "expressionless": "&#x1F611;",
-    "fire": "&#x1F525;",
-    "stuck_out_tongue_winking_eye": "&#x1F61C;",
-    "confused": "&#x1F615;",
-    "yum": "&#x1F60B;",
-    "disappointed": "&#x1F61E;",
-    "sleepy": "&#x1F62A;",
-    "neutral_face": "&#x1F610;",
-    "clap": "&#x1F44F;",
-    "heartpulse": "&#x1F497;",
-    "point_right": "&#x1F449;",
-    "revolving_hearts": "&#x1F49E;",
-    "cupid": "&#x1F498;",
-    "camera": "&#x1F4F7;",
-    "information_desk_person": "&#x1F481;",
-    "scream": "&#x1F631;",
-    "kiss": "&#x1F48B;",
-    "cherry_blossom": "&#x1F338;",
-    "speak_no_evil": "&#x1F64A;",
-    "rose": "&#x1F339;",
-    "rage": "&#x1F621;",
-    "smiling_imp": "&#x1F608;",
-    "raised_hand": "&#x270B;",
-    "hand": "&#x270B;",
-    "yellow_heart": "&#x1F49B;",
-    "skull": "&#x1F480;",
-    "tada": "&#x1F389;",
-    "smiley": "&#x1F603;",
-    "grinning": "&#x1F600;",
-    "muscle": "&#x1F4AA;",
-    "laughing": "&#x1F606;",
-    "satisfied": "&#x1F606;",
-    "tired_face": "&#x1F62B;",
-    "stuck_out_tongue_closed_eyes": "&#x1F61D;",
-    "new_moon_with_face": "&#x1F31A;",
-    "facepunch": "&#x1F44A;",
-    "punch": "&#x1F44A;",
-    "triumph": "&#x1F624;",
-    "heartbeat": "&#x1F493;",
-    "green_heart": "&#x1F49A;",
-    "sweat": "&#x1F613;",
-    "heart_eyes_cat": "&#x1F63B;",
-    "persevere": "&#x1F623;",
-    "innocent": "&#x1F607;",
-    "point_left": "&#x1F448;",
-    "mask": "&#x1F637;",
-    "disappointed_relieved": "&#x1F625;",
-    "stuck_out_tongue": "&#x1F61B;",
-    "kissing_closed_eyes": "&#x1F61A;",
-    "grimacing": "&#x1F62C;",
-    "white_check_mark": "&#x2705;",
-    "crown": "&#x1F451;",
-    "wave": "&#x1F44B;",
-    "headphones": "&#x1F3A7;",
-    "point_down": "&#x1F447;",
-    "confounded": "&#x1F616;",
-    "angry": "&#x1F620;",
-    "no_mouth": "&#x1F636;",
-    "star2": "&#x1F31F;",
-    "musical_note": "&#x1F3B5;",
-    "red_circle": "&#x1F534;",
-    "raising_hand": "&#x1F64B;",
-    "dancer": "&#x1F483;",
-    "thumbsdown": "&#x1F44E;",
-    "dizzy": "&#x1F4AB;",
-    "collision": "&#x1F4A5;",
-    "boom": "&#x1F4A5;",
-    "gun": "&#x1F52B;"
+    "1f44d": {
+        "char": "👍",
+        "name": "THUMBS UP SIGN"
+    },
+    "2764": {
+        "char": "❤️",
+        "name": "HEAVY BLACK HEART"
+    },
+    "1f602": {
+        "char": "😂",
+        "name": "FACE WITH TEARS OF JOY"
+    },
+    "1f60d": {
+        "char": "😍",
+        "name": "SMILING FACE WITH HEART-SHAPED EYES"
+    },
+    "1f62d": {
+        "char": "😭",
+        "name": "LOUDLY CRYING FACE"
+    },
+    "1f60a": {
+        "char": "😊",
+        "name": "SMILING FACE WITH SMILING EYES"
+    },
+    "1f629": {
+        "char": "😩",
+        "name": "WEARY FACE"
+    },
+    "1f601": {
+        "char": "😁",
+        "name": "GRINNING FACE WITH SMILING EYES"
+    },
+    "1f44e": {
+        "char": "👎",
+        "name": "THUMBS DOWN SIGN"
+    },
+    "267b": {
+        "char": "♻️",
+        "name": "BLACK UNIVERSAL RECYCLING SYMBOL"
+    },
+    "2665": {
+        "char": "♥️",
+        "name": "BLACK HEART SUIT"
+    },
+    "1f495": {
+        "char": "💕",
+        "name": "TWO HEARTS"
+    },
+    "1f618": {
+        "char": "😘",
+        "name": "FACE THROWING A KISS"
+    },
+    "1f612": {
+        "char": "😒",
+        "name": "UNAMUSED FACE"
+    },
+    "1f614": {
+        "char": "😔",
+        "name": "PENSIVE FACE"
+    },
+    "263a": {
+        "char": "☺️",
+        "name": "WHITE SMILING FACE"
+    },
+    "1f44c": {
+        "char": "👌",
+        "name": "OK HAND SIGN"
+    },
+    "1f609": {
+        "char": "😉",
+        "name": "WINKING FACE"
+    },
+    "1f60f": {
+        "char": "😏",
+        "name": "SMIRKING FACE"
+    },
+    "1f64f": {
+        "char": "🙏",
+        "name": "PERSON WITH FOLDED HANDS"
+    },
+    "1f605": {
+        "char": "😅",
+        "name": "SMILING FACE WITH OPEN MOUTH AND COLD SWEAT"
+    },
+    "1f440": {
+        "char": "👀",
+        "name": "EYES"
+    },
+    "1f525": {
+        "char": "🔥",
+        "name": "FIRE"
+    },
+    "1f60c": {
+        "char": "😌",
+        "name": "RELIEVED FACE"
+    },
+    "1f494": {
+        "char": "💔",
+        "name": "BROKEN HEART"
+    },
+    "1f60e": {
+        "char": "😎",
+        "name": "SMILING FACE WITH SUNGLASSES"
+    },
+    "1f49c": {
+        "char": "💜",
+        "name": "PURPLE HEART"
+    },
+    "1f499": {
+        "char": "💙",
+        "name": "BLUE HEART"
+    },
+    "2728": {
+        "char": "✨",
+        "name": "SPARKLES"
+    },
+    "1f622": {
+        "char": "😢",
+        "name": "CRYING FACE"
+    },
+    "1f633": {
+        "char": "😳",
+        "name": "FLUSHED FACE"
+    },
+    "1f3b6": {
+        "char": "🎶",
+        "name": "MULTIPLE MUSICAL NOTES"
+    },
+    "1f496": {
+        "char": "💖",
+        "name": "SPARKLING HEART"
+    },
+    "2b05": {
+        "char": "⬅️",
+        "name": "LEFTWARDS BLACK ARROW"
+    },
+    "1f4af": {
+        "char": "💯",
+        "name": "HUNDRED POINTS SYMBOL"
+    },
+    "1f64c": {
+        "char": "🙌",
+        "name": "PERSON RAISING BOTH HANDS IN CELEBRATION"
+    },
+    "1f648": {
+        "char": "🙈",
+        "name": "SEE-NO-EVIL MONKEY"
+    },
+    "1f60b": {
+        "char": "😋",
+        "name": "FACE SAVOURING DELICIOUS FOOD"
+    },
+    "1f604": {
+        "char": "😄",
+        "name": "SMILING FACE WITH OPEN MOUTH AND SMILING EYES"
+    },
+    "270c": {
+        "char": "✌️",
+        "name": "VICTORY HAND"
+    },
+    "1f611": {
+        "char": "😑",
+        "name": "EXPRESSIONLESS FACE"
+    },
+    "1f634": {
+        "char": "😴",
+        "name": "SLEEPING FACE"
+    },
+    "1f61c": {
+        "char": "😜",
+        "name": "FACE WITH STUCK-OUT TONGUE AND WINKING EYE"
+    },
+    "1f497": {
+        "char": "💗",
+        "name": "GROWING HEART"
+    },
+    "1f61e": {
+        "char": "😞",
+        "name": "DISAPPOINTED FACE"
+    },
+    "1f62a": {
+        "char": "😪",
+        "name": "SLEEPY FACE"
+    },
+    "1f610": {
+        "char": "😐",
+        "name": "NEUTRAL FACE"
+    },
+    "1f44f": {
+        "char": "👏",
+        "name": "CLAPPING HANDS SIGN"
+    },
+    "1f615": {
+        "char": "😕",
+        "name": "CONFUSED FACE"
+    },
+    "1f480": {
+        "char": "💀",
+        "name": "SKULL"
+    },
+    "1f449": {
+        "char": "👉",
+        "name": "WHITE RIGHT POINTING BACKHAND INDEX"
+    },
+    "1f49b": {
+        "char": "💛",
+        "name": "YELLOW HEART"
+    },
+    "1f339": {
+        "char": "🌹",
+        "name": "ROSE"
+    },
+    "1f606": {
+        "char": "😆",
+        "name": "SMILING FACE WITH OPEN MOUTH AND TIGHTLY-CLOSED EYES"
+    },
+    "1f4aa": {
+        "char": "💪",
+        "name": "FLEXED BICEPS"
+    },
+    "1f49e": {
+        "char": "💞",
+        "name": "REVOLVING HEARTS"
+    },
+    "1f621": {
+        "char": "😡",
+        "name": "POUTING FACE"
+    },
+    "1f631": {
+        "char": "😱",
+        "name": "FACE SCREAMING IN FEAR"
+    },
+    "1f600": {
+        "char": "😀",
+        "name": "GRINNING FACE"
+    },
+    "1f498": {
+        "char": "💘",
+        "name": "HEART WITH ARROW"
+    },
+    "1f49a": {
+        "char": "💚",
+        "name": "GREEN HEART"
+    },
+    "1f338": {
+        "char": "🌸",
+        "name": "CHERRY BLOSSOM"
+    },
+    "1f608": {
+        "char": "😈",
+        "name": "SMILING FACE WITH HORNS"
+    },
+    "1f4f7": {
+        "char": "📷",
+        "name": "CAMERA"
+    },
+    "1f603": {
+        "char": "😃",
+        "name": "SMILING FACE WITH OPEN MOUTH"
+    },
+    "1f48b": {
+        "char": "💋",
+        "name": "KISS MARK"
+    },
+    "2705": {
+        "char": "✅",
+        "name": "WHITE HEAVY CHECK MARK"
+    },
+    "1f389": {
+        "char": "🎉",
+        "name": "PARTY POPPER"
+    },
+    "1f62b": {
+        "char": "😫",
+        "name": "TIRED FACE"
+    },
+    "1f624": {
+        "char": "😤",
+        "name": "FACE WITH LOOK OF TRIUMPH"
+    },
+    "1f448": {
+        "char": "👈",
+        "name": "WHITE LEFT POINTING BACKHAND INDEX"
+    },
+    "1f62c": {
+        "char": "😬",
+        "name": "GRIMACING FACE"
+    },
+    "1f447": {
+        "char": "👇",
+        "name": "WHITE DOWN POINTING BACKHAND INDEX"
+    },
+    "1f64a": {
+        "char": "🙊",
+        "name": "SPEAK-NO-EVIL MONKEY"
+    },
+    "25b6": {
+        "char": "▶️",
+        "name": "BLACK RIGHT-POINTING TRIANGLE"
+    },
+    "1f481": {
+        "char": "💁",
+        "name": "INFORMATION DESK PERSON"
+    },
+    "1f493": {
+        "char": "💓",
+        "name": "BEATING HEART"
+    },
+    "1f31a": {
+        "char": "🌚",
+        "name": "NEW MOON WITH FACE"
+    },
+    "1f61d": {
+        "char": "😝",
+        "name": "FACE WITH STUCK-OUT TONGUE AND TIGHTLY-CLOSED EYES"
+    },
+    "270b": {
+        "char": "✋",
+        "name": "RAISED HAND"
+    },
+    "1f623": {
+        "char": "😣",
+        "name": "PERSEVERING FACE"
+    },
+    "1f607": {
+        "char": "😇",
+        "name": "SMILING FACE WITH HALO"
+    },
+    "27a1": {
+        "char": "➡️",
+        "name": "BLACK RIGHTWARDS ARROW"
+    },
+    "2600": {
+        "char": "☀️",
+        "name": "BLACK SUN WITH RAYS"
+    },
+    "1f451": {
+        "char": "👑",
+        "name": "CROWN"
+    },
+    "2714": {
+        "char": "✔️",
+        "name": "HEAVY CHECK MARK"
+    },
+    "1f534": {
+        "char": "🔴",
+        "name": "LARGE RED CIRCLE"
+    },
+    "1f613": {
+        "char": "😓",
+        "name": "FACE WITH COLD SWEAT"
+    },
+    "1f63b": {
+        "char": "😻",
+        "name": "SMILING CAT FACE WITH HEART-SHAPED EYES"
+    },
+    "1f44a": {
+        "char": "👊",
+        "name": "FISTED HAND SIGN"
+    },
+    "1f625": {
+        "char": "😥",
+        "name": "DISAPPOINTED BUT RELIEVED FACE"
+    },
+    "1f4a5": {
+        "char": "💥",
+        "name": "COLLISION SYMBOL"
+    },
+    "26a1": {
+        "char": "⚡️",
+        "name": "HIGH VOLTAGE SIGN"
+    },
+    "1f61a": {
+        "char": "😚",
+        "name": "KISSING FACE WITH CLOSED EYES"
+    },
+    "1f61b": {
+        "char": "😛",
+        "name": "FACE WITH STUCK-OUT TONGUE"
+    },
+    "1f44b": {
+        "char": "👋",
+        "name": "WAVING HAND SIGN"
+    },
+    "1f637": {
+        "char": "😷",
+        "name": "FACE WITH MEDICAL MASK"
+    },
+    "2b50": {
+        "char": "⭐️",
+        "name": "WHITE MEDIUM STAR"
+    },
+    "203c": {
+        "char": "‼️",
+        "name": "DOUBLE EXCLAMATION MARK"
+    },
+    "1f4b0": {
+        "char": "💰",
+        "name": "MONEY BAG"
+    },
+    "1f620": {
+        "char": "😠",
+        "name": "ANGRY FACE"
+    },
+    "1f636": {
+        "char": "😶",
+        "name": "FACE WITHOUT MOUTH"
+    },
+    "1f616": {
+        "char": "😖",
+        "name": "CONFOUNDED FACE"
+    },
+    "1f31f": {
+        "char": "🌟",
+        "name": "GLOWING STAR"
+    },
+    "1f4ab": {
+        "char": "💫",
+        "name": "DIZZY SYMBOL"
+    },
+    "1f3a7": {
+        "char": "🎧",
+        "name": "HEADPHONE"
+    },
+    "1f3b5": {
+        "char": "🎵",
+        "name": "MUSICAL NOTE"
+    },
+    "1f33a": {
+        "char": "🌺",
+        "name": "HIBISCUS"
+    },
+    "1f483": {
+        "char": "💃",
+        "name": "DANCER"
+    },
+    "1f639": {
+        "char": "😹",
+        "name": "CAT FACE WITH TEARS OF JOY"
+    },
+    "26bd": {
+        "char": "⚽️",
+        "name": "SOCCER BALL"
+    },
+    "1f64b": {
+        "char": "🙋",
+        "name": "HAPPY PERSON RAISING ONE HAND"
+    },
+    "1f4a6": {
+        "char": "💦",
+        "name": "SPLASHING SWEAT SYMBOL"
+    },
+    "270a": {
+        "char": "✊",
+        "name": "RAISED FIST"
+    },
+    "1f4a9": {
+        "char": "💩",
+        "name": "PILE OF POO"
+    },
+    "1f630": {
+        "char": "😰",
+        "name": "FACE WITH OPEN MOUTH AND COLD SWEAT"
+    },
+    "1f31e": {
+        "char": "🌞",
+        "name": "SUN WITH FACE"
+    },
+    "0031-20e3": {
+        "char": "1️⃣",
+        "name": "KEYCAP 1"
+    },
+    "2708": {
+        "char": "✈️",
+        "name": "AIRPLANE"
+    },
+    "1f445": {
+        "char": "👅",
+        "name": "TONGUE"
+    },
+    "274c": {
+        "char": "❌",
+        "name": "CROSS MARK"
+    },
+    "0032-20e3": {
+        "char": "2️⃣",
+        "name": "KEYCAP 2"
+    },
+    "1f343": {
+        "char": "🍃",
+        "name": "LEAF FLUTTERING IN WIND"
+    },
+    "1f48e": {
+        "char": "💎",
+        "name": "GEM STONE"
+    },
+    "00a9": {
+        "char": "©",
+        "name": "COPYRIGHT SIGN"
+    },
+    "1f340": {
+        "char": "🍀",
+        "name": "FOUR LEAF CLOVER"
+    },
+    "1f4ad": {
+        "char": "💭",
+        "name": "THOUGHT BALLOON"
+    },
+    "1f52b": {
+        "char": "🔫",
+        "name": "PISTOL"
+    },
+    "2757": {
+        "char": "❗️",
+        "name": "HEAVY EXCLAMATION MARK SYMBOL"
+    },
+    "1f61f": {
+        "char": "😟",
+        "name": "WORRIED FACE"
+    },
+    "1f337": {
+        "char": "🌷",
+        "name": "TULIP"
+    },
+    "1f490": {
+        "char": "💐",
+        "name": "BOUQUET"
+    },
+    "2615": {
+        "char": "☕️",
+        "name": "HOT BEVERAGE"
+    },
+    "1f388": {
+        "char": "🎈",
+        "name": "BALLOON"
+    },
+    "1f1fa-1f1f8": {
+        "char": "🇺🇸",
+        "name": "REGIONAL INDICATOR SYMBOL LETTERS US"
+    },
+    "1f308": {
+        "char": "🌈",
+        "name": "RAINBOW"
+    },
+    "1f47b": {
+        "char": "👻",
+        "name": "GHOST"
+    },
+    "21aa": {
+        "char": "↪️",
+        "name": "RIGHTWARDS ARROW WITH HOOK"
+    },
+    "1f3c6": {
+        "char": "🏆",
+        "name": "TROPHY"
+    },
+    "1f62e": {
+        "char": "😮",
+        "name": "FACE WITH OPEN MOUTH"
+    },
+    "1f381": {
+        "char": "🎁",
+        "name": "WRAPPED PRESENT"
+    },
+    "1f33b": {
+        "char": "🌻",
+        "name": "SUNFLOWER"
+    },
+    "260e": {
+        "char": "☎️",
+        "name": "BLACK TELEPHONE"
+    },
+    "1f38a": {
+        "char": "🎊",
+        "name": "CONFETTI BALL"
+    },
+    "1f4a4": {
+        "char": "💤",
+        "name": "SLEEPING SYMBOL"
+    },
+    "261d": {
+        "char": "☝️",
+        "name": "WHITE UP POINTING INDEX"
+    },
+    "25c0": {
+        "char": "◀️",
+        "name": "BLACK LEFT-POINTING TRIANGLE"
+    },
+    "1f319": {
+        "char": "🌙",
+        "name": "CRESCENT MOON"
+    },
+    "1f646": {
+        "char": "🙆",
+        "name": "FACE WITH OK GESTURE"
+    },
+    "1f619": {
+        "char": "😙",
+        "name": "KISSING FACE WITH SMILING EYES"
+    },
+    "1f628": {
+        "char": "😨",
+        "name": "FEARFUL FACE"
+    },
+    "1f3a5": {
+        "char": "🎥",
+        "name": "MOVIE CAMERA"
+    },
+    "1f3a4": {
+        "char": "🎤",
+        "name": "MICROPHONE"
+    },
+    "1f382": {
+        "char": "🎂",
+        "name": "BIRTHDAY CAKE"
+    },
+    "1f380": {
+        "char": "🎀",
+        "name": "RIBBON"
+    },
+    "21a9": {
+        "char": "↩️",
+        "name": "LEFTWARDS ARROW WITH HOOK"
+    },
+    "2601": {
+        "char": "☁️",
+        "name": "CLOUD"
+    },
+    "1f37b": {
+        "char": "🍻",
+        "name": "CLINKING BEER MUGS"
+    },
+    "2744": {
+        "char": "❄️",
+        "name": "SNOWFLAKE"
+    },
+    "2611": {
+        "char": "☑️",
+        "name": "BALLOT BOX WITH CHECK"
+    },
+    "1f51e": {
+        "char": "🔞",
+        "name": "NO ONE UNDER EIGHTEEN SYMBOL"
+    },
+    "1f645": {
+        "char": "🙅",
+        "name": "FACE WITH NO GOOD GESTURE"
+    },
+    "1f680": {
+        "char": "🚀",
+        "name": "ROCKET"
+    },
+    "1f384": {
+        "char": "🎄",
+        "name": "CHRISTMAS TREE"
+    },
+    "1f632": {
+        "char": "😲",
+        "name": "ASTONISHED FACE"
+    },
+    "1f355": {
+        "char": "🍕",
+        "name": "SLICE OF PIZZA"
+    },
+    "26a0": {
+        "char": "⚠️",
+        "name": "WARNING SIGN"
+    },
+    "1f436": {
+        "char": "🐶",
+        "name": "DOG FACE"
+    },
+    "1f49d": {
+        "char": "💝",
+        "name": "HEART WITH RIBBON"
+    },
+    "1f33f": {
+        "char": "🌿",
+        "name": "HERB"
+    },
+    "1f6a8": {
+        "char": "🚨",
+        "name": "POLICE CARS REVOLVING LIGHT"
+    },
+    "1f6b6": {
+        "char": "🚶",
+        "name": "PEDESTRIAN"
+    },
+    "1f485": {
+        "char": "💅",
+        "name": "NAIL POLISH"
+    },
+    "1f334": {
+        "char": "🌴",
+        "name": "PALM TREE"
+    },
+    "1f433": {
+        "char": "🐳",
+        "name": "SPOUTING WHALE"
+    },
+    "1f33c": {
+        "char": "🌼",
+        "name": "BLOSSOM"
+    },
+    "1f62f": {
+        "char": "😯",
+        "name": "HUSHED FACE"
+    },
+    "1f4b8": {
+        "char": "💸",
+        "name": "MONEY WITH WINGS"
+    },
+    "1f627": {
+        "char": "😧",
+        "name": "ANGUISHED FACE"
+    },
+    "1f49f": {
+        "char": "💟",
+        "name": "HEART DECORATION"
+    },
+    "1f450": {
+        "char": "👐",
+        "name": "OPEN HANDS SIGN"
+    },
+    "1f47d": {
+        "char": "👽",
+        "name": "EXTRATERRESTRIAL ALIEN"
+    },
+    "1f647": {
+        "char": "🙇",
+        "name": "PERSON BOWING DEEPLY"
+    },
+    "1f4cc": {
+        "char": "📌",
+        "name": "PUSHPIN"
+    },
+    "2b07": {
+        "char": "⬇️",
+        "name": "DOWNWARDS BLACK ARROW"
+    },
+    "1f635": {
+        "char": "😵",
+        "name": "DIZZY FACE"
+    },
+    "1f63f": {
+        "char": "😿",
+        "name": "CRYING CAT FACE"
+    },
+    "1f48c": {
+        "char": "💌",
+        "name": "LOVE LETTER"
+    },
+    "1f427": {
+        "char": "🐧",
+        "name": "PENGUIN"
+    },
+    "1f31d": {
+        "char": "🌝",
+        "name": "FULL MOON WITH FACE"
+    },
+    "1f30e": {
+        "char": "🌎",
+        "name": "EARTH GLOBE AMERICAS"
+    },
+    "1f342": {
+        "char": "🍂",
+        "name": "FALLEN LEAF"
+    },
+    "1f63c": {
+        "char": "😼",
+        "name": "CAT FACE WITH WRY SMILE"
+    },
+    "1f3c3": {
+        "char": "🏃",
+        "name": "RUNNER"
+    },
+    "1f341": {
+        "char": "🍁",
+        "name": "MAPLE LEAF"
+    },
+    "1f4e2": {
+        "char": "📢",
+        "name": "PUBLIC ADDRESS LOUDSPEAKER"
+    },
+    "1f30d": {
+        "char": "🌍",
+        "name": "EARTH GLOBE EUROPE-AFRICA"
+    },
+    "1f431": {
+        "char": "🐱",
+        "name": "CAT FACE"
+    },
+    "1f3c0": {
+        "char": "🏀",
+        "name": "BASKETBALL AND HOOP"
+    },
+    "1f617": {
+        "char": "😗",
+        "name": "KISSING FACE"
+    },
+    "2663": {
+        "char": "♣️",
+        "name": "BLACK CLUB SUIT"
+    },
+    "2668": {
+        "char": "♨️",
+        "name": "HOT SPRINGS"
+    },
+    "1f47c": {
+        "char": "👼",
+        "name": "BABY ANGEL"
+    },
+    "1f351": {
+        "char": "🍑",
+        "name": "PEACH"
+    },
+    "1f4f2": {
+        "char": "📲",
+        "name": "MOBILE PHONE WITH RIGHTWARDS ARROW AT LEFT"
+    },
+    "1f4cd": {
+        "char": "📍",
+        "name": "ROUND PUSHPIN"
+    },
+    "1f30a": {
+        "char": "🌊",
+        "name": "WATER WAVE"
+    },
+    "1f4fa": {
+        "char": "📺",
+        "name": "TELEVISION"
+    },
+    "1f4f9": {
+        "char": "📹",
+        "name": "VIDEO CAMERA"
+    },
+    "1f410": {
+        "char": "🐐",
+        "name": "GOAT"
+    },
+    "1f3af": {
+        "char": "🎯",
+        "name": "DIRECT HIT"
+    },
+    "1f446": {
+        "char": "👆",
+        "name": "WHITE UP POINTING BACKHAND INDEX"
+    },
+    "1f4a8": {
+        "char": "💨",
+        "name": "DASH SYMBOL"
+    },
+    "1f335": {
+        "char": "🌵",
+        "name": "CACTUS"
+    },
+    "1f46f": {
+        "char": "👯",
+        "name": "WOMAN WITH BUNNY EARS"
+    },
+    "1f4a3": {
+        "char": "💣",
+        "name": "BOMB"
+    },
+    "1f48d": {
+        "char": "💍",
+        "name": "RING"
+    },
+    "1f3bc": {
+        "char": "🎼",
+        "name": "MUSICAL SCORE"
+    },
+    "2716": {
+        "char": "✖️",
+        "name": "HEAVY MULTIPLICATION X"
+    },
+    "1f430": {
+        "char": "🐰",
+        "name": "RABBIT FACE"
+    },
+    "1f50a": {
+        "char": "🔊",
+        "name": "SPEAKER WITH THREE SOUND WAVES"
+    },
+    "23f0": {
+        "char": "⏰",
+        "name": "ALARM CLOCK"
+    },
+    "1f4de": {
+        "char": "📞",
+        "name": "TELEPHONE RECEIVER"
+    },
+    "1f4e3": {
+        "char": "📣",
+        "name": "CHEERING MEGAPHONE"
+    },
+    "1f4f1": {
+        "char": "📱",
+        "name": "MOBILE PHONE"
+    },
+    "1f444": {
+        "char": "👄",
+        "name": "MOUTH"
+    },
+    "1f535": {
+        "char": "🔵",
+        "name": "LARGE BLUE CIRCLE"
+    },
+    "1f3ac": {
+        "char": "🎬",
+        "name": "CLAPPER BOARD"
+    },
+    "1f63d": {
+        "char": "😽",
+        "name": "KISSING CAT FACE WITH CLOSED EYES"
+    },
+    "2660": {
+        "char": "♠️",
+        "name": "BLACK SPADE SUIT"
+    },
+    "1f626": {
+        "char": "😦",
+        "name": "FROWNING FACE WITH OPEN MOUTH"
+    },
+    "1f52a": {
+        "char": "🔪",
+        "name": "HOCHO"
+    },
+    "1f352": {
+        "char": "🍒",
+        "name": "CHERRIES"
+    },
+    "1f46b": {
+        "char": "👫",
+        "name": "MAN AND WOMAN HOLDING HANDS"
+    },
+    "2693": {
+        "char": "⚓️",
+        "name": "ANCHOR"
+    },
+    "1f437": {
+        "char": "🐷",
+        "name": "PIG FACE"
+    },
+    "1f353": {
+        "char": "🍓",
+        "name": "STRAWBERRY"
+    },
+    "1f51d": {
+        "char": "🔝",
+        "name": "TOP WITH UPWARDS ARROW ABOVE"
+    },
+    "2b55": {
+        "char": "⭕️",
+        "name": "HEAVY LARGE CIRCLE"
+    },
+    "23e9": {
+        "char": "⏩",
+        "name": "BLACK RIGHT-POINTING DOUBLE TRIANGLE"
+    },
+    "1f331": {
+        "char": "🌱",
+        "name": "SEEDLING"
+    },
+    "1f346": {
+        "char": "🍆",
+        "name": "AUBERGINE"
+    },
+    "1f48f": {
+        "char": "💏",
+        "name": "KISS"
+    },
+    "1f638": {
+        "char": "😸",
+        "name": "GRINNING CAT FACE WITH SMILING EYES"
+    },
+    "1f649": {
+        "char": "🙉",
+        "name": "HEAR-NO-EVIL MONKEY"
+    },
+    "1f41d": {
+        "char": "🐝",
+        "name": "HONEYBEE"
+    },
+    "1f47f": {
+        "char": "👿",
+        "name": "IMP"
+    },
+    "1f478": {
+        "char": "👸",
+        "name": "PRINCESS"
+    },
+    "2614": {
+        "char": "☔️",
+        "name": "UMBRELLA WITH RAIN DROPS"
+    },
+    "1f377": {
+        "char": "🍷",
+        "name": "WINE GLASS"
+    }
 }

@@ -9,14 +9,9 @@
 ?><footer class="entry-meta card-footer">
 	<?php if ( in_array( get_post_type(), Friends::get_frontend_post_types(), true ) ) : ?>
 		<?php
-		$args['friends']->frontend->link(
-			get_comments_link(),
-			get_comments_number( '', 1, '%' ),
-			array(
-				'class'          => 'comments btn',
-				'dashicon_front' => 'admin-comments',
-			)
-		);
+
+		Friends::template_loader()->get_template_part( 'frontend/parts/reactions', null, $args );
+		Friends::template_loader()->get_template_part( 'frontend/parts/comments', null, $args );
 		?>
 	<?php endif; ?>
 </footer>

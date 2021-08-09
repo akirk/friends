@@ -3,6 +3,7 @@ composer.lock
 html
 md
 package-lock.json
+emoji-rankings.json
 vendor
 .idea
 node_modules

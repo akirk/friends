@@ -36,6 +36,7 @@ div {
 @import "node_modules/spectre.css/src/autocomplete";
 @import "node_modules/spectre.css/src/utilities/loading";
 @import "node_modules/spectre.css/src/utilities/divider";
+@import "node_modules/spectre.css/src/utilities/position";
 
 .friends-dropdown {
   display: inline-block;
@@ -416,5 +417,38 @@ div {
 
 	.form-autocomplete .form-autocomplete-input .form-input {
 		width: auto;
+	}
+
+	button.new-reaction span,
+	a.button.new-reaction span {
+		font-family: dashicons;
+		vertical-align: middle;
+	}
+
+	#friends-reaction-picker {
+		display: none;
+		position: absolute;
+		border: 1px solid #999999;
+		box-shadow: 2px 2px 5px #cccccc;
+		border-radius: .25em;
+		background-color: #fff;
+		padding: 1em;
+		max-width: 50%;
+		max-height: 20%;
+		overflow: auto;
+	}
+
+	#friends-reaction-picker button {
+		padding: .2em;
+		margin: 0;
+		font-size: 18px;
+		background-color: #fff;
+		border: 0;
+		cursor: pointer;
+		z-index: 999999;
+	}
+
+	#friends-reaction-picker button:focus {
+		outline: none;
 	}
 }

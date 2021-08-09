@@ -5,47 +5,32 @@
  * @package Friends
  */
 
-$rankings_map = array();
-$out          = array();
-$popular      = array();
-$emojis       = file_get_contents( 'https://raw.githubusercontent.com/iamcal/emoji-data/master/emoji.json' );
-$rankings     = file_get_contents( 'http://www.emojitracker.com/api/rankings' );
-
-foreach ( json_decode( $rankings ) as $emoji ) {
-	$rankings_map[ '&#x' . strtoupper( $emoji->id ) . ';' ] = intval( $emoji->score );
-}
-
-foreach ( json_decode( $emojis ) as $emoji ) {
-	foreach ( $emoji->short_names as $short_name ) {
-		if ( in_array( $short_name, array( '+1', '-1' ), true ) ) {
-			continue;
-		}
-		$html = '&#x' . str_replace( '-', ';&#x', $emoji->unified ) . ';';
-		if ( isset( $rankings_map[ $html ] ) ) {
-			$popular[ $short_name ] = $html;
+$pre_selected = array( '👍', '❤️', '😂', '😍', '😭', '😊', '😩', '😁', '👎' );
+$out = array();
+$cache = __DIR__ . '/../emoji-rankings.json';
+$popular = json_decode( file_get_contents( file_exists( $cache ) ? $cache : 'https://api.emojitracker.com/v1/rankings' ) );
+foreach ( $pre_selected as $emoji ) {
+	foreach ( $popular as $data ) {
+		if ( $emoji === $data->char ) {
+			$data->id = strtolower( $data->id );
+			$out[ $data->id ] = array(
+				'char' => $data->char,
+				'name' => $data->name,
+			);
 		}
 	}
 }
-
-uasort(
-	$popular,
-	function ( $a, $b ) use ( $rankings_map ) {
-		if ( isset( $rankings_map[ $a ] ) ) {
-			$a = $rankings_map[ $a ];
-		} else {
-			$a = 0;
-		}
-		if ( isset( $rankings_map[ $b ] ) ) {
-			$b = $rankings_map[ $b ];
-		} else {
-			$b = 0;
-		}
-		if ( $a === $b ) {
-			return 0;
-		}
-		return ( $a > $b ) ? -1 : 1;
+foreach ( $popular as $data ) {
+	$data->id = strtolower( $data->id );
+	if ( ! isset( $out[ $data->id ] ) ) {
+		$out[ $data->id ] = array(
+			'char' => $data->char,
+			'name' => $data->name,
+		);
 	}
-);
-$popular = array_slice( $popular, 0, 100 );
+	if ( count( $out ) >= 250 ) {
+		break;
+	}
+}
 
-file_put_contents( __DIR__ . '/../emojis.json', json_encode( $popular, JSON_PRETTY_PRINT ) );
+file_put_contents( __DIR__ . '/../emojis.json', json_encode( $out, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
