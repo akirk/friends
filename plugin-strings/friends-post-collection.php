@@ -13,6 +13,17 @@
 __( 'Friends Post Collection', 'friends' );
 // Description of the Friends Post Collection plugin.
 __( 'Collect posts from around the web into your Friends UI.', 'friends' );
+__( 'Collected Posts', 'friends' );
+__( 'Collected Post', 'friends' );
+_x( 'Add New', 'collected post', 'friends' );
+__( 'Add New Collected Post', 'friends' );
+__( 'Edit Collected Post', 'friends' );
+__( 'New Collected Post', 'friends' );
+__( 'All Collected Posts', 'friends' );
+__( 'View Collected Post', 'friends' );
+__( 'Search Collected Posts', 'friends' );
+__( 'No Collected Posts found', 'friends' );
+__( 'No Collected Posts found in the Trash', 'friends' );
 __( 'Post Collection', 'friends' );
 __( 'Edit Post Collection', 'friends' );
 __( 'Show post in the feed', 'friends' );
