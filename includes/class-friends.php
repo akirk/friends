@@ -145,7 +145,7 @@ class Friends {
 		$labels = array(
 			'name'               => __( 'Friend Posts', 'friends' ),
 			'singular_name'      => __( 'Friend Post', 'friends' ),
-			'add_new'            => __( 'Add New', 'friends' ),
+			'add_new'            => _x( 'Add New', 'cached friend post', 'friends' ),
 			'add_new_item'       => __( 'Add New Friend Post', 'friends' ),
 			'edit_item'          => __( 'Edit Friend Post', 'friends' ),
 			'new_item'           => __( 'New Friend Post', 'friends' ),
