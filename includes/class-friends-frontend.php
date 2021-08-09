@@ -45,6 +45,13 @@ class Friends_Frontend {
 	public $post_format = false;
 
 	/**
+	 * Whether a reaciton is being displayed
+	 *
+	 * @var string|false
+	 */
+	public $reaction = false;
+
+	/**
 	 * Constructor
 	 *
 	 * @param Friends $friends A reference to the Friends object.
@@ -708,9 +715,24 @@ class Friends_Frontend {
 			if ( 'opml' === $pagename_parts[1] ) {
 				return $this->render_opml();
 			}
+
+			$tax_query = array();
 			$potential_post_format = false;
 			if ( 'type' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
 				$potential_post_format = $pagename_parts[2];
+			} elseif ( 'reaction' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
+				$tax_query = array(
+					'relation' => 'AND',
+					array(
+						'taxonomy' => 'friend-reaction-' . get_current_user_id(),
+						'field'    => 'slug',
+						'terms'    => array( $pagename_parts[2] ),
+					),
+				);
+				$this->reaction = Friends_Reactions::validate_emoji( $pagename_parts[2] );
+				if ( ! $page_id && isset( $pagename_parts[2] ) && 'reaction' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
+					$potential_post_format = $pagename_parts[3];
+				}
 			} else {
 				$author = get_user_by( 'login', $pagename_parts[1] );
 				if ( false !== $author ) {
@@ -721,7 +743,7 @@ class Friends_Frontend {
 				}
 			}
 
-			$tax_query = $this->friends->wp_query_get_post_format_tax_query( $potential_post_format );
+			$tax_query = $this->friends->wp_query_get_post_format_tax_query( $tax_query, $potential_post_format );
 			if ( $tax_query ) {
 				$this->post_format = $potential_post_format;
 				$query->set( 'tax_query', $tax_query );

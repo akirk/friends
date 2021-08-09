@@ -641,7 +641,7 @@ class Friends {
 			return;
 		}
 
-		$tax_query = $this->wp_query_get_post_format_tax_query( get_option( 'friends_limit_homepage_post_format', false ) );
+		$tax_query = $this->wp_query_get_post_format_tax_query( array(), get_option( 'friends_limit_homepage_post_format', false ) );
 		if ( $tax_query ) {
 			$query->set( 'tax_query', $tax_query );
 		}
@@ -667,17 +667,18 @@ class Friends {
 	/**
 	 * Add a post_format filter to a WP_Query.
 	 *
+	 * @param      array  $tax_query             The tax query.
 	 * @param      string $filter_by_post_format  The filter by post format.
 	 *
 	 * @return     array|null  The tax query, if any.
 	 */
-	public function wp_query_get_post_format_tax_query( $filter_by_post_format ) {
+	public function wp_query_get_post_format_tax_query( $tax_query, $filter_by_post_format ) {
 		if ( ! $filter_by_post_format ) {
-			return null;
+			return $tax_query;
 		}
 		$post_formats = get_post_format_slugs();
 		if ( ! isset( $post_formats[ $filter_by_post_format ] ) ) {
-			return null;
+			return $tax_query;
 		}
 
 		if ( 'standard' === $filter_by_post_format ) {
@@ -702,12 +703,15 @@ class Friends {
 			}
 		}
 
-		return array(
+		return array_merge(
+			$tax_query,
 			array(
-				'taxonomy' => 'post_format',
-				'field'    => 'slug',
-				'terms'    => array( 'post-format-' . $filter_by_post_format ),
-			),
+				array(
+					'taxonomy' => 'post_format',
+					'field'    => 'slug',
+					'terms'    => array( 'post-format-' . $filter_by_post_format ),
+				),
+			)
 		);
 	}
 
