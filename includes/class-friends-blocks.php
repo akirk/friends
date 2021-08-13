@@ -88,6 +88,14 @@ class Friends_Blocks {
 		register_block_type_from_metadata(
 			FRIENDS_PLUGIN_DIR . '/blocks/message'
 		);
+
+		register_block_type_from_metadata(
+			FRIENDS_PLUGIN_DIR . '/blocks/post-template',
+			array(
+				'render_callback'   => array( $this, 'render_friend_posts_block' ),
+				'skip_inner_blocks' => true,
+			)
+		);
 	}
 
 	/**

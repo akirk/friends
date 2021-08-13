@@ -37,7 +37,7 @@ class Friends_Reactions {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'init', array( $this, 'register_taxonomies' ) );
+		add_action( 'init', array( $this, 'register_taxonomies' ), 9 );
 		add_action( 'wp_ajax_friends-toggle-react', array( $this, 'toggle_react' ) );
 	}
 

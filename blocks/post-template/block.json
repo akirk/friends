@@ -1,0 +1,24 @@
+{
+	"apiVersion": 2,
+	"name": "friends/post-template",
+	"title": "Friends Post Template",
+	"category": "design",
+	"parent": [ "friends/friend-posts" ],
+	"description": "Contains the block elements used to render a post, like the title, date, featured image, content or excerpt, and more.",
+	"textdomain": "default",
+	"usesContext": [
+		"queryId",
+		"query",
+		"queryContext",
+		"displayLayout",
+		"templateSlug"
+	],
+	"supports": {
+		"reusable": false,
+		"html": false,
+		"align": true
+	},
+	"style": "wp-block-post-template",
+	"editorScript": "file:build/index.js",
+	"editorStyle": "wp-block-post-template-editor"
+}

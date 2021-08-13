@@ -15,6 +15,7 @@
 	},
 	"scripts": {
 		"build": "lerna run build",
+		"watch": "lerna run start",
 		"lint:js": "lerna run lint:js",
 		"lint:pkg-json": "wp-scripts lint-pkg-json ./package.json ./blocks/*/package.json",
 		"format:js": "wp-scripts format-js",
