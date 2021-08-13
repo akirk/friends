@@ -47,7 +47,6 @@ class Friends_Blocks {
 		if ( function_exists( 'register_block_type' ) ) {
 			add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
 			add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
-			add_filter( 'render_block', array( $this, 'render_friends_follow_me' ), 10, 2 );
 			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_start' ), 9, 2 );
 			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
 			add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
@@ -80,7 +79,10 @@ class Friends_Blocks {
 		);
 
 		register_block_type_from_metadata(
-			FRIENDS_PLUGIN_DIR . '/blocks/follow-me'
+			FRIENDS_PLUGIN_DIR . '/blocks/follow-me',
+			array(
+				'render_callback' => array( $this, 'render_follow_me_block' ),
+			)
 		);
 	}
 
@@ -384,14 +386,26 @@ class Friends_Blocks {
 	/**
 	 * Add a CSRF to the Follow Me block.
 	 *
-	 * @param  string $content    The content provided by the user.
-	 * @param  object $block      Attributes for the block.
+	 * @param array    $attributes Block attributes.
+	 * @param string   $content    Block default content.
+	 * @param WP_Block $block      Block instance.
 	 * @return string             The rendered content.
 	 */
-	public function render_friends_follow_me( $content, $block ) {
-		if ( false === strpos( $content, 'friends_friend_request_url' ) ) {
-			return $content;
-		}
+	public function render_follow_me_block( $attributes, $content, $block ) {
+		$input = '<input type="text" name="friends_friend_request_url"';
+		$nonce = wp_nonce_field( 'friends_follow_me', '_wpnonce', true, false );
+		return str_replace( $input, $nonce . $input, $content );
+	}
+
+	/**
+	 * Add a CSRF to the Follow Me block.
+	 *
+	 * @param array    $attributes Block attributes.
+	 * @param string   $content    Block default content.
+	 * @param WP_Block $block      Block instance.
+	 * @return string             The rendered content.
+	 */
+	public function render_reacted_on_posts_block( $attributes, $content, $block ) {
 		$input = '<input type="text" name="friends_friend_request_url"';
 		$nonce = wp_nonce_field( 'friends_follow_me', '_wpnonce', true, false );
 		return str_replace( $input, $nonce . $input, $content );

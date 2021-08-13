@@ -9,43 +9,53 @@ $data = $args['friends']->get_main_header_data();
 ?><div id="main-header">
 <h2 id="page-title"><a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 <?php
-if ( $args['friends']->frontend->reaction ) {
-	echo esc_html( $args['friends']->frontend->reaction ), ' ';
-}
+$title = __( 'Main Feed', 'friends' );
 switch ( $args['friends']->frontend->post_format ) {
 	case 'standard':
-		echo esc_html( _x( 'Post feed', 'Post format', 'friends' ) );
+		$title = _x( 'Post feed', 'Post format', 'friends' );
 		break;
 	case 'aside':
-		echo esc_html( _x( 'Aside feed', 'Post format', 'friends' ) );
+		$title = _x( 'Aside feed', 'Post format', 'friends' );
 		break;
 	case 'chat':
-		echo esc_html( _x( 'Chat feed', 'Post format', 'friends' ) );
+		$title = _x( 'Chat feed', 'Post format', 'friends' );
 		break;
 	case 'gallery':
-		echo esc_html( _x( 'Gallery feed', 'Post format', 'friends' ) );
+		$title = _x( 'Gallery feed', 'Post format', 'friends' );
 		break;
 	case 'link':
-		echo esc_html( _x( 'Link feed', 'Post format', 'friends' ) );
+		$title = _x( 'Link feed', 'Post format', 'friends' );
 		break;
 	case 'image':
-		echo esc_html( _x( 'Image feed', 'Post format', 'friends' ) );
+		$title = _x( 'Image feed', 'Post format', 'friends' );
 		break;
 	case 'quote':
-		echo esc_html( _x( 'Quote feed', 'Post format', 'friends' ) );
+		$title = _x( 'Quote feed', 'Post format', 'friends' );
 		break;
 	case 'status':
-		echo esc_html( _x( 'Status feed', 'Post format', 'friends' ) );
+		$title = _x( 'Status feed', 'Post format', 'friends' );
 		break;
 	case 'video':
-		echo esc_html( _x( 'Video feed', 'Post format', 'friends' ) );
+		$title = _x( 'Video feed', 'Post format', 'friends' );
 		break;
 	case 'audio':
-		echo esc_html( _x( 'Audio feed', 'Post format', 'friends' ) );
+		$title = _x( 'Audio feed', 'Post format', 'friends' );
 		break;
-	default:
-		esc_html_e( 'Main Feed' );
 }
+
+if ( $args['friends']->frontend->reaction ) {
+	echo esc_html(
+		sprintf(
+		// translators: %1$s is an emoji reaction, %2$s is a type of feed, e.g. "Main Feed".
+			__( 'My %1$s reactions on %2$s', 'friends' ),
+			$args['friends']->frontend->reaction,
+			$title
+		)
+	);
+} else {
+	echo esc_html( $title );
+}
+
 ?>
 </a></h2>
 

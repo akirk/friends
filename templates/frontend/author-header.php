@@ -11,7 +11,22 @@ $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 
 ?><div id="author-header">
-<h2 id="page-title"><a href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_url() ); ?>"><?php echo esc_html( get_the_author_meta( 'display_name' ) ); ?></a>
+<h2 id="page-title"><a href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_url() ); ?>">
+<?php
+if ( $args['friends']->frontend->reaction ) {
+	echo esc_html(
+		sprintf(
+		// translators: %1$s is an emoji reaction, %2$s is a type of feed, e.g. "Main Feed".
+			__( 'My %1$s reactions on %2$s', 'friends' ),
+			$args['friends']->frontend->reaction,
+			get_the_author_meta( 'display_name' )
+		)
+	);
+} else {
+	echo esc_html( get_the_author_meta( 'display_name' ) );
+}
+?>
+</a>
 <?php
 $args['friends']->frontend->link(
 	$args['friend_user']->user_url,

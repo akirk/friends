@@ -304,7 +304,20 @@ class Friends_Reactions {
 	}
 
 	/**
-	 * Get the UTF8 for an emoji.
+	 * Get the emojis selected to be available.
+	 *
+	 * @return array The emojis.
+	 */
+	public static function get_available_emojis_chars() {
+		$emojis = array();
+		foreach ( self::get_available_emojis() as $id => $data ) {
+			$emojis[ $data->char ] = $id;
+		}
+		return $emojis;
+	}
+
+	/**
+	 * Get the UTF-8 for an emoji.
 	 *
 	 * @param  string $slug The emoji shortname to look up.
 	 * @return string|false The emoji or false if it doesn't exist.
@@ -317,6 +330,21 @@ class Friends_Reactions {
 		}
 
 		return $emojis[ $slug ]->char;
+	}
+
+	/**
+	 * Get the id for an emoji UTF-8.
+	 *
+	 * @param  string $emoji The emoji char to look up.
+	 * @return string|false The emoji or false if it doesn't exist.
+	 */
+	public static function validate_emoji_char( $emoji ) {
+		$emojis = self::get_available_emojis_chars();
+		if ( ! isset( $emojis[ $emoji ] ) ) {
+			return false;
+		}
+
+		return $emojis[ $emoji ];
 	}
 
 	/**

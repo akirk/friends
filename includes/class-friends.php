@@ -181,7 +181,7 @@ class Friends {
 			'menu_position'       => 5,
 			'menu_icon'           => 'dashicons-groups',
 			'supports'            => array( 'title', 'editor', 'author', 'revisions', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
-			'taxonomies'          => array( 'post_tag', 'post_format' ),
+			'taxonomies'          => array( 'post_tag', 'post_format', 'friend-reaction-' . get_current_user_id() ),
 			'has_archive'         => true,
 		);
 
