@@ -323,64 +323,63 @@ class Friends_Blocks {
 	 * Handle the follow me button click.
 	 */
 	public function handle_follow_me() {
-		if ( isset( $_REQUEST['friends_friend_request_url'] ) ) {
-			if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_follow_me' ) ) {
-				wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
-			}
-			$access_transient_key = 'friends_follow_me_' . crc32( $_SERVER['REMOTE_ADDR'] );
-			$access_count = get_transient( $access_transient_key );
-			if ( $access_count >= 3 ) {
-				header( 'HTTP/1.0 529 Too Many Requests' );
-				wp_die( 'Too Many Requests' );
-			}
-			set_transient( $access_transient_key, $access_count + 1, 3600 );
-
-			$url = $_REQUEST['friends_friend_request_url'];
-
-			$fqdn_regex = '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)';
-			if ( false === strpos( $url, 'https://' ) ) {
-				$url = 'https://' . $url;
-			}
-			$parts = parse_url( $url );
-
-			if ( ! preg_match( '/' . $fqdn_regex . '/', $parts['host'] ) ) {
-				echo 'invalid url';
-				exit;
-			}
-
-			$response = wp_safe_remote_head(
-				$url,
-				array(
-					'timeout'     => 5,
-					'redirection' => 5,
-					'headers'     => array(
-						'Accept: text/html',
-					),
-				)
-			);
-			if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-				echo 'non-200 header';
-				exit;
-			}
-
-			$links = (array) wp_remote_retrieve_header( $response, 'link' );
-			if ( ! empty( $links ) ) {
-				$friends_base_url_endpoints = array_filter(
-					$links,
-					function( $link ) {
-						return preg_match( '/rel="friends-base-url"/', $link );
-					}
-				);
-
-				if ( ! empty( $friends_base_url_endpoints ) ) {
-					header( 'Location: ' . $url . '?add-friend=' . home_url() );
-					exit;
-				}
-			}
-
-			header( 'Location: https://wpfriends.at/follow-me?url=' . urlencode( $_REQUEST['friends_friend_request_url'] ) );
-			exit;
+		if ( ! isset( $_REQUEST['friends_friend_request_url'] ) ) {
+			return;
 		}
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_follow_me' ) ) {
+			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+		}
+		$access_transient_key = 'friends_follow_me_' . crc32( $_SERVER['REMOTE_ADDR'] );
+		$access_count = get_transient( $access_transient_key );
+		if ( $access_count >= 3 ) {
+			header( 'HTTP/1.0 529 Too Many Requests' );
+			wp_die( 'Too Many Requests' );
+		}
+		set_transient( $access_transient_key, $access_count + 1, 3600 );
+
+		$url = $_REQUEST['friends_friend_request_url'];
+
+		$fqdn_regex = '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)';
+		if ( false === strpos( $url, 'https://' ) ) {
+			$url = 'https://' . $url;
+		}
+		$parts = parse_url( $url );
+
+		if ( ! preg_match( '/' . $fqdn_regex . '/', $parts['host'] ) ) {
+			wp_die( 'Invalid URL' );
+		}
+
+		$response = wp_safe_remote_head(
+			$url,
+			array(
+				'timeout'     => 5,
+				'redirection' => 5,
+				'headers'     => array(
+					'Accept: text/html',
+				),
+			)
+		);
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			wp_die( 'Invalid HTTP Response' );
+		}
+
+		$links = (array) wp_remote_retrieve_header( $response, 'link' );
+		if ( ! empty( $links ) ) {
+			$friends_base_url_endpoints = array_filter(
+				$links,
+				function( $link ) {
+					return preg_match( '/rel="friends-base-url"/', $link );
+				}
+			);
+
+			if ( ! empty( $friends_base_url_endpoints ) ) {
+				header( 'Location: ' . $url . '?add-friend=' . home_url() );
+				exit;
+			}
+		}
+
+		header( 'Location: https://wpfriends.at/follow-me?url=' . urlencode( $_REQUEST['friends_friend_request_url'] ) );
+		exit;
 	}
 
 	/**
@@ -392,20 +391,6 @@ class Friends_Blocks {
 	 * @return string             The rendered content.
 	 */
 	public function render_follow_me_block( $attributes, $content, $block ) {
-		$input = '<input type="text" name="friends_friend_request_url"';
-		$nonce = wp_nonce_field( 'friends_follow_me', '_wpnonce', true, false );
-		return str_replace( $input, $nonce . $input, $content );
-	}
-
-	/**
-	 * Add a CSRF to the Follow Me block.
-	 *
-	 * @param array    $attributes Block attributes.
-	 * @param string   $content    Block default content.
-	 * @param WP_Block $block      Block instance.
-	 * @return string             The rendered content.
-	 */
-	public function render_reacted_on_posts_block( $attributes, $content, $block ) {
 		$input = '<input type="text" name="friends_friend_request_url"';
 		$nonce = wp_nonce_field( 'friends_follow_me', '_wpnonce', true, false );
 		return str_replace( $input, $nonce . $input, $content );

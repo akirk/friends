@@ -38,15 +38,11 @@ if ( isset( $_GET['s'] ) ) {
 			</a>
 			<?php
 			if ( get_the_author() && ( is_author() || is_singular() ) ) {
+				$args['friend_user'] = new Friend_User( get_the_author_meta( 'ID' ) );
 				Friends::template_loader()->get_template_part(
 					'frontend/author-header',
 					null,
-					array_merge(
-						$args,
-						array(
-							'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
-						)
-					)
+					$args
 				);
 			} else {
 				Friends::template_loader()->get_template_part(
@@ -72,4 +68,6 @@ if ( isset( $_GET['s'] ) ) {
 				</form>
 			</section>
 		</header>
-
+	<?php
+	do_action( 'friends_after_header', $args );
+	?>

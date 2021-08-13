@@ -285,4 +285,22 @@
 			return false;
 		} );
 	} );
+
+	$document.on( 'click', 'a.send-new-message', function() {
+		$('#friends-send-new-message').toggle();
+		return false;
+	} );
+
+	$document.on( 'click', 'a.display-message', function() {
+		var conversation = $( this ).closest( 'div' ).find( 'div.conversation');
+		if ( conversation.is(':visible') ) {
+			conversation.hide();
+		} else {
+			conversation.show();
+		}
+
+		return false;
+	} );
+
+
 })( jQuery, window.wp, window.friends );

@@ -38,6 +38,7 @@ require_once __DIR__ . '/includes/class-friends-blocks.php';
 require_once __DIR__ . '/includes/class-friends-feed.php';
 require_once __DIR__ . '/includes/class-friends-frontend.php';
 require_once __DIR__ . '/includes/class-friends-logging.php';
+require_once __DIR__ . '/includes/class-friends-messages.php';
 require_once __DIR__ . '/includes/class-friends-notifications.php';
 require_once __DIR__ . '/includes/class-friends-plugin-installer.php';
 require_once __DIR__ . '/includes/class-friends-reactions.php';
