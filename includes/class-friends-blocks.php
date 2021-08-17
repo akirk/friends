@@ -84,6 +84,10 @@ class Friends_Blocks {
 				'render_callback' => array( $this, 'render_follow_me_block' ),
 			)
 		);
+
+		register_block_type_from_metadata(
+			FRIENDS_PLUGIN_DIR . '/blocks/message'
+		);
 	}
 
 	/**

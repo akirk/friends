@@ -39,8 +39,10 @@ class Friends_Messages {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_filter( 'friends_unread_count', array( $this, 'friends_unread_messages_count' ) );
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
+		add_filter( 'friends_unread_count', array( $this, 'friends_unread_messages_count' ) );
+		add_action( 'friends_menu_top', array( $this, 'friends_add_menu_unread_messages' ) );
+		add_action( 'wp_ajax_friends-mark-read', array( $this, 'mark_message_read' ) );
 		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
 		add_action( 'friends_author_header', array( $this, 'friends_author_header' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_display_messages' ), 10, 2 );
@@ -89,6 +91,33 @@ class Friends_Messages {
 		);
 
 		register_post_type( self::CPT, $args );
+
+		register_post_status(
+			'friends_unread',
+			array(
+				'label'                     => _x( 'Unread', 'message', 'friends' ),
+				'public'                    => false,
+				'exclude_from_search'       => true,
+				'show_in_admin_all_list'    => false,
+				'show_in_admin_status_list' => false,
+				// translators: %s; number of unread messages.
+				'label_count'               => _n_noop( 'Unread (%s)', 'Unread (%s)', 'friends' ),
+			)
+		);
+
+		register_post_status(
+			'friends_read',
+			array(
+				'label'                     => _x( 'Read', 'message', 'friends' ),
+				'public'                    => false,
+				'exclude_from_search'       => true,
+				'show_in_admin_all_list'    => false,
+				'show_in_admin_status_list' => false,
+				// translators: %s; number of read messages.
+				'label_count'               => _n_noop( 'Read (%s)', 'Read (%s)', 'friends' ),
+			)
+		);
+
 	}
 
 	/**
@@ -118,16 +147,29 @@ class Friends_Messages {
 		if ( ! $user_id ) {
 			return new WP_Error(
 				'friends_request_failed',
-				'Could not respond to the request.',
+				__( 'Could not respond to the request.', 'friends' ),
 				array(
 					'status' => 403,
 				)
 			);
 		}
+
 		$friend_user = new Friend_User( $user_id );
+		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
+			return new WP_Error(
+				'friends_request_failed',
+				__( 'Could not respond to the request.', 'friends' ),
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
 		$subject = wp_unslash( $request->get_param( 'subject' ) );
 		$message = wp_unslash( $request->get_param( 'message' ) );
 		$this->add_message_to_post( $friend_user, $friend_user, $subject, $message, true );
+
+		do_action( 'notify_friend_message_received', $friend_user, $message, $subject );
 
 		return array(
 			'status' => 'message-received',
@@ -150,14 +192,14 @@ class Friends_Messages {
 				'post_type'   => self::CPT,
 				'author'      => $friend_user->ID,
 				'title'       => $subject,
-				'post_status' => array( 'read', 'unread' ),
+				'post_status' => array( 'friends_read', 'friends_unread' ),
 			)
 		);
 		$mark_unread = $sender->ID === $friend_user->ID;
 
 		$content = '';
 		$content .= '<!-- wp:friends/message {"sender":' . $sender->ID . ',"date":' . time() . '} -->' . PHP_EOL;
-		$content .= '<div class="wp-friends-message">';
+		$content .= '<div class="wp-block-friends-message">';
 		$content .= '<span class="date">' . esc_html( gmdate( 'H:i:s' ) ) . '</span> ';
 		$content .= '<strong>' . esc_html( $sender->display_name ) . '</strong>: ';
 		$content .= '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . esc_html( $message );
@@ -173,7 +215,7 @@ class Friends_Messages {
 				array(
 					'ID'           => $post->ID,
 					'post_content' => $post->post_content . PHP_EOL . $content,
-					'post_status'  => $mark_unread ? 'unread' : 'read',
+					'post_status'  => $mark_unread ? 'friends_unread' : 'friends_read',
 				)
 			);
 		} else {
@@ -183,7 +225,7 @@ class Friends_Messages {
 					'post_author'  => $friend_user->ID,
 					'post_title'   => $subject,
 					'post_content' => $content,
-					'post_status'  => $mark_unread ? 'unread' : 'read',
+					'post_status'  => $mark_unread ? 'friends_unread' : 'friends_read',
 				)
 			);
 		}
@@ -202,11 +244,83 @@ class Friends_Messages {
 		$unread_messages = new WP_Query(
 			array(
 				'post_type'   => self::CPT,
-				'post_status' => 'unread',
+				'post_status' => 'friends_unread',
+			)
+		);
+		return $unread + $unread_messages->post_count;
+	}
+
+	/**
+	 * Add entries to the menu for unread messages.
+	 *
+	 * @param      WP_Menu $wp_menu  The wp menu.
+	 */
+	public function friends_add_menu_unread_messages( $wp_menu ) {
+		global $post;
+		$unread_messages = new WP_Query(
+			array(
+				'post_type'   => self::CPT,
+				'post_status' => 'friends_unread',
 			)
 		);
 
-		return $unread + $unread_messages->get_total();
+		while ( $unread_messages->have_posts() ) {
+			$unread_messages->the_post();
+			$friend_user = new Friend_User( $post->post_author );
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'friend-message-' . $friend_user->ID,
+					'parent' => 'friends',
+					// translators: %s is the number of open friend requests.
+					'title'  => esc_html( sprintf( __( 'New message from %s', 'friends' ), $friend_user->display_name ) ),
+					'href'   => $friend_user->get_local_friends_page_url(),
+				)
+			);
+		}
+	}
+
+	/**
+	 * Ajax function to mark a message as read.
+	 *
+	 * @return     WP_Error  The wp error.
+	 */
+	public function mark_message_read() {
+		check_ajax_referer( 'friends-mark-read' );
+
+		if ( ! is_user_logged_in() ) {
+			return new WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
+		}
+
+		if ( ! isset( $_POST['post_id'] ) ) {
+			wp_send_json_error(
+				array(
+					'result' => false,
+				)
+			);
+		}
+		if ( ! is_numeric( $_POST['post_id'] ) || $_POST['post_id'] <= 0 ) {
+			wp_send_json_error(
+				array(
+					'result' => false,
+				)
+			);
+		}
+
+		$post_id = intval( $_POST['post_id'] );
+		wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_status' => 'friends_read',
+			)
+		);
+
+		do_action( 'friends_message_read', $post_id );
+
+		wp_send_json_success(
+			array(
+				'result' => true,
+			)
+		);
 	}
 
 	/**
@@ -253,9 +367,10 @@ class Friends_Messages {
 				array(
 					'post_type'   => self::CPT,
 					'author'      => $args['friend_user']->ID,
-					'post_status' => array( 'read', 'unread' ),
+					'post_status' => array( 'friends_read', 'friends_unread' ),
 				)
 			);
+
 			if ( ! $args['existing_messages']->have_posts() ) {
 				return;
 			}
@@ -299,23 +414,19 @@ class Friends_Messages {
 	}
 
 	/**
-	 * Handle the follow me button click.
+	 * Sends a message to a friend.
+	 *
+	 * @param      Friend_User $friend_user  The friend user.
+	 * @param      string      $message      The message.
+	 * @param      string      $subject      The subject.
+	 *
+	 * @return     WP_Error|int  An error or the message post id.
 	 */
-	public function handle_message_send() {
-		if ( ! isset( $_REQUEST['friends_message_recipient'] ) ) {
-			return;
-		}
-
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_send_message' ) ) {
-			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
-		}
-
-		$friend_user = new Friend_User( $_REQUEST['friends_message_recipient'] );
+	public function send_message( Friend_User $friend_user, $message, $subject = null ) {
 		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
-			wp_die( esc_html( __( 'You cannot send messages to this user.', 'friends' ) ) );
+			return new WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
 		}
 
-		$subject = wp_unslash( $_REQUEST['friends_message_subject'] );
 		if ( empty( $subject ) ) {
 			$subject = sprintf(
 				// translators: %1$s is a date, %2$s is a time.
@@ -324,9 +435,8 @@ class Friends_Messages {
 				gmdate( 'H:i:s' )
 			);
 		}
-		$message = wp_unslash( $_REQUEST['friends_message_message'] );
 
-		$this->add_message_to_post( wp_get_current_user(), $friend_user, $subject, $message );
+		$post_id = $this->add_message_to_post( wp_get_current_user(), $friend_user, $subject, $message );
 
 		$body = array(
 			'subject' => $subject,
@@ -345,10 +455,36 @@ class Friends_Messages {
 
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			// TODO find a way to message the user.
+			return new WP_Error( 'invalid-response', __( 'We received an unexpected response to our message.', 'friends' ) );
+		}
+
+		return $post_id;
+	}
+
+	/**
+	 * Handle the follow me button click.
+	 */
+	public function handle_message_send() {
+		if ( ! isset( $_REQUEST['friends_message_recipient'] ) ) {
 			return;
 		}
 
-		header( 'Location: .' );
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_send_message' ) ) {
+			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+		}
+
+		$friend_user = new Friend_User( $_REQUEST['friends_message_recipient'] );
+
+		$subject = wp_unslash( $_REQUEST['friends_message_subject'] );
+		$message = wp_unslash( $_REQUEST['friends_message_message'] );
+
+		$error = $this->send_message( $friend_user, $message, $subject );
+
+		if ( is_wp_error( $error ) ) {
+			wp_die( esc_html( $error->get_error_message() ) );
+		}
+
+		wp_safe_redirect( $friend_user->get_local_friends_page_url() );
 		exit;
 	}
 }

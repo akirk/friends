@@ -38,6 +38,7 @@ class Friends_Admin {
 	 */
 	private function register_hooks() {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
+		add_action( 'friends_menu_top', array( $this, 'friends_add_menu_open_friend_request' ) );
 		add_action( 'admin_head-users.php', array( $this, 'keep_friends_open_on_users_screen' ) );
 		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
@@ -1805,6 +1806,26 @@ class Friends_Admin {
 	}
 
 	/**
+	 * Add open friend requests to the menu.
+	 *
+	 * @param      WP_Menu $wp_menu  The wp menu.
+	 */
+	public function friends_add_menu_open_friend_request( $wp_menu ) {
+		$friend_request_count = $this->friends_unread_friend_request_count( 0 );
+		if ( $friend_request_count > 0 ) {
+			$wp_menu->add_menu(
+				array(
+					'id'     => 'open-friend-requests',
+					'parent' => 'friends',
+					// translators: %s is the number of open friend requests.
+					'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $friend_request_count, 'friends' ), $friend_request_count ) ),
+					'href'   => self_admin_url( 'users.php?role=friend_request' ),
+				)
+			);
+		}
+	}
+
+	/**
 	 * Get the unread badge HTML
 	 *
 	 * @return string The unread badge HTML.
@@ -1861,18 +1882,8 @@ class Friends_Admin {
 				)
 			);
 
-			$friend_request_count = $this->friends_unread_friend_request_count( 0 );
-			if ( $friend_request_count > 0 ) {
-				$wp_menu->add_menu(
-					array(
-						'id'     => 'open-friend-requests',
-						'parent' => 'friends',
-						// translators: %s is the number of open friend requests.
-						'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $friend_request_count, 'friends' ), $friend_request_count ) ),
-						'href'   => self_admin_url( 'users.php?role=friend_request' ),
-					)
-				);
-			}
+			do_action( 'friends_menu_top', $wp_menu );
+
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'your-feed',

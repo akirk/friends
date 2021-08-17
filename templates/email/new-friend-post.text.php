@@ -44,7 +44,3 @@ printf(
 	$args['author']->display_name,
 	self_admin_url( 'admin.php?page=edit-friend&user=' . $args['author']->ID )
 );
-echo PHP_EOL, PHP_EOL;
-
-// translators: %s is a site name.
-printf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), is_multisite() ? get_site_option( 'site_name' ) : get_option( 'blogname' ) );

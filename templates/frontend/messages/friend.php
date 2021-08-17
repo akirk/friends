@@ -12,11 +12,11 @@
 	while ( $args['existing_messages']->have_posts() ) {
 		$post = $args['existing_messages']->next_post();
 		$class = '';
-		if ( get_post_status( $post ) === 'unread' ) {
+		if ( get_post_status( $post ) === 'friends_unread' ) {
 			$class .= ' unread';
 		}
 		?>
-		<div class="message" id="message-<?php echo esc_attr( get_the_ID() ); ?>">
+		<div class="message" id="message-<?php echo esc_attr( get_the_ID() ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
 		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r' ) ); ?>">
 			<?php
 			// translators: %s is a time span.

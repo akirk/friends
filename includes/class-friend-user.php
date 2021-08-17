@@ -197,6 +197,19 @@ class Friend_User extends WP_User {
 	}
 
 	/**
+	 * Sends a message to the friend..
+	 *
+	 * @param      string $message  The message.
+	 * @param      string $subject  The subject.
+	 *
+	 * @return     WP_Error|bool  True if the message was sent successfully.
+	 */
+	public function send_message( $message, $subject = null ) {
+		$friends = Friends::get_instance();
+		return $friends->messages->send_message( $this, $message, $subject );
+	}
+
+	/**
 	 * Save multiple feeds for a user.
 	 *
 	 * @param      string $feeds  The feed URLs to subscribe to.

@@ -41,6 +41,7 @@ class Friends_Notifications {
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ) );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
+		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
 	}
 
 	/**
@@ -80,35 +81,26 @@ class Friends_Notifications {
 			$author      = new Friend_User( $post->post_author );
 			$email_title = $post->post_title;
 
-			$message = array();
-			ob_start();
+			$params = array(
+				'author' => $author,
+				'post'   => $post,
+			);
 
+			$email_message = array();
+			ob_start();
 			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part(
-				'email/new-friend-post',
-				null,
-				array(
-					'author' => $author,
-					'post'   => $post,
-				)
-			);
+			Friends::template_loader()->get_template_part( 'email/new-friend-post', null, $params );
 			Friends::template_loader()->get_template_part( 'email/footer' );
-			$message['html'] = ob_get_contents();
+			$email_message['html'] = ob_get_contents();
 			ob_end_clean();
 
 			ob_start();
-			Friends::template_loader()->get_template_part(
-				'email/new-friend-post.text',
-				null,
-				array(
-					'author' => $author,
-					'post'   => $post,
-				)
-			);
-			$message['text'] = ob_get_contents();
+			Friends::template_loader()->get_template_part( 'email/new-friend-post.text', null, $params );
+			Friends::template_loader()->get_template_part( 'email/footer.text' );
+			$email_message['text'] = ob_get_contents();
 			ob_end_clean();
 
-			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $message, array(), array(), $author->user_login );
+			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
 		}
 	}
 
@@ -138,34 +130,26 @@ class Friends_Notifications {
 			// translators: %s is a user display name.
 			$email_title = sprintf( __( '%s sent a Friend Request', 'friends' ), $friend_user->display_name );
 
-			$message = array();
+			$params = array(
+				'user'        => $user,
+				'friend_user' => $friend_user,
+			);
+
+			$email_message = array();
 			ob_start();
 			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part(
-				'email/new-friend-request',
-				null,
-				array(
-					'user'        => $user,
-					'friend_user' => $friend_user,
-				)
-			);
+			Friends::template_loader()->get_template_part( 'email/new-friend-request', null, $params );
 			Friends::template_loader()->get_template_part( 'email/footer' );
-			$message['html'] = ob_get_contents();
+			$email_message['html'] = ob_get_contents();
 			ob_end_clean();
 
 			ob_start();
-			Friends::template_loader()->get_template_part(
-				'email/new-friend-request.text',
-				null,
-				array(
-					'user'        => $user,
-					'friend_user' => $friend_user,
-				)
-			);
-			$message['text'] = ob_get_contents();
+			Friends::template_loader()->get_template_part( 'email/new-friend-request.text', null, $params );
+			Friends::template_loader()->get_template_part( 'email/footer.text' );
+			$email_message['text'] = ob_get_contents();
 			ob_end_clean();
 
-			$this->send_mail( $user->user_email, $email_title, $message );
+			$this->send_mail( $user->user_email, $email_title, $email_message );
 		}
 
 	}
@@ -191,34 +175,80 @@ class Friends_Notifications {
 			// translators: %s is a user display name.
 			$email_title = sprintf( __( '%s accepted your Friend Request', 'friends' ), $friend_user->display_name );
 
-			$message = array();
+			$params = array(
+				'user'        => $user,
+				'friend_user' => $friend_user,
+			);
+
+			$email_message = array();
 			ob_start();
 			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part(
-				'email/accepted-friend-request',
-				null,
-				array(
-					'user'        => $user,
-					'friend_user' => $friend_user,
-				)
-			);
+			Friends::template_loader()->get_template_part( 'email/accepted-friend-request', null, $params );
 			Friends::template_loader()->get_template_part( 'email/footer' );
-			$message['html'] = ob_get_contents();
+			$email_message['html'] = ob_get_contents();
 			ob_end_clean();
 
 			ob_start();
-			Friends::template_loader()->get_template_part(
-				'email/accepted-friend-request.text',
-				null,
-				array(
-					'user'        => $user,
-					'friend_user' => $friend_user,
-				)
-			);
-			$message['text'] = ob_get_contents();
+			Friends::template_loader()->get_template_part( 'email/accepted-friend-request.text', null, $params );
+			Friends::template_loader()->get_template_part( 'email/footer.text' );
+			$email_message['text'] = ob_get_contents();
 			ob_end_clean();
 
-			$this->send_mail( $user->user_email, $email_title, $message );
+			$this->send_mail( $user->user_email, $email_title, $email_message );
+		}
+	}
+
+	/**
+	 * Notify the users of this site about a received message
+	 *
+	 * @param  Friend_User $friend_user The user who sent the message.
+	 */
+
+	/**
+	 * Notify the users of this site about a received message
+	 *
+	 * @param  Friend_User $friend_user The user who sent the message.
+	 * @param       string      $message     The message.
+	 * @param       string      $subject     The subject.
+	 */
+	public function notify_friend_message_received( Friend_User $friend_user, $message, $subject ) {
+		$users = Friend_User_Query::all_admin_users();
+		$users = $users->get_results();
+
+		foreach ( $users as $user ) {
+			if ( ! $user->user_email ) {
+				continue;
+			}
+
+			if ( ! apply_filters( 'notify_user_about_friend_message', true, $user, $friend_user ) ) {
+				continue;
+			}
+
+			// translators: %s is a user display name.
+			$email_title = sprintf( __( '%s sent you a message', 'friends' ), $friend_user->display_name );
+
+			$params = array(
+				'user'        => $user,
+				'friend_user' => $friend_user,
+				'subject'     => $subject,
+				'message'     => $message,
+			);
+
+			$email_message = array();
+			ob_start();
+			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+			Friends::template_loader()->get_template_part( 'email/friend-message-received', null, $params );
+			Friends::template_loader()->get_template_part( 'email/footer' );
+			$email_message['html'] = ob_get_contents();
+			ob_end_clean();
+
+			ob_start();
+			Friends::template_loader()->get_template_part( 'email/friend-message-received.text', null, $params );
+			Friends::template_loader()->get_template_part( 'email/footer.text' );
+			$email_message['text'] = ob_get_contents();
+			ob_end_clean();
+
+			$this->send_mail( $user->user_email, $email_title, $email_message );
 		}
 	}
 

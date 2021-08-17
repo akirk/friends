@@ -1,7 +1,7 @@
 {
-  "name": "friends-follow-me",
+  "name": "friends-message",
   "version": "0.1.0",
-  "description": "Show a a widget to follow you.",
+  "description": "A wrapper block for a friend message.",
   "author": "Alex Kirk",
   "license": "GPL-2.0-or-later",
   "main": "build/index.js",

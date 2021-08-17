@@ -269,7 +269,7 @@ class Friends_REST {
 		if ( ! $user_id ) {
 			return new WP_Error(
 				'friends_request_failed',
-				'Could not respond to the request.',
+				__( 'Could not respond to the request.', 'friends' ),
 				array(
 					'status' => 403,
 				)

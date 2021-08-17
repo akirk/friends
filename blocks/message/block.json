@@ -1,0 +1,19 @@
+{
+	"apiVersion": 2,
+	"name": "friends/message",
+	"title": "Friend Message",
+	"category": "widgets",
+	"textdomain": "friends",
+	"icon": "groups",
+	"attributes": {
+		"sender": {
+			"type": "number"
+		},
+		"date": {
+			"type": "number"
+		}
+	},
+	"example": {
+	},
+	"editorScript": "file:build/index.js"
+}
