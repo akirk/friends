@@ -370,7 +370,6 @@ div {
 		}
 
 		footer.entry-meta {
-			font-size: 1.5em;
 			display: flex;
 			justify-content: flex-end;
 			a {
@@ -419,23 +418,7 @@ div {
 		width: auto;
 	}
 
-	button.new-reaction span,
-	a.button.new-reaction span {
-		font-family: dashicons;
-		vertical-align: middle;
-	}
-
-	#friends-reaction-picker {
-		display: none;
-		position: absolute;
-		box-shadow: .1rem .1rem .2rem $border-color-light;
-		border: .05rem solid $primary-color;
-		max-width: 50%;
-		max-height: 20%;
-		overflow: auto;
-	}
-
-	#friends-reaction-picker button {
+	.friends-reaction-picker button {
 		padding: .5rem;
 		margin: 0;
 		font-size: 18px;
@@ -445,7 +428,7 @@ div {
 		z-index: 999999;
 	}
 
-	#friends-reaction-picker button:focus {
+	.friends-reaction-picker button:focus {
 		outline: none;
 	}
 

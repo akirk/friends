@@ -235,20 +235,6 @@
 
 	/* Reactions */
 	jQuery( function( $ ) {
-		$document.on( 'click', 'button.new-reaction', function() {
-			var p = $(this).offset();
-			var picker = $( '#friends-reaction-picker' );
-			picker.data( 'id' , $( this ).data( 'id' ) ).css( {
-				top: ( p.top - picker.height() - 4 ) + 'px'
-			} );
-
-			picker.css( {
-				left: Math.max( 0, p.left ) + 'px',
-			} ).toggle();
-
-			return false;
-		} );
-
 		$document.on( 'click', 'button.friends-reaction', function() {
 			wp.ajax.send( 'friends-toggle-react', {
 				data: {
@@ -263,17 +249,11 @@
 			return false;
 		} );
 
-		$document.on( 'click', function( e ) {
-			if ( 0 === $( e.target ).closest( '#friends-reaction-picker' ).length ) {
-				$( '#friends-reaction-picker' ).hide();
-			}
-		} );
-
-		$( '#friends-reaction-picker' ).on( 'click', 'button', function() {
+		$( '.friends-reaction-picker' ).on( 'click', 'button', function() {
 			wp.ajax.send( 'friends-toggle-react', {
 				data: {
-					_ajax_nonce: $( '#friends-reaction-picker' ).data( 'nonce' ),
-					post_id: $( '#friends-reaction-picker' ).data( 'id' ),
+					_ajax_nonce: $( this ).closest( '.friends-reaction-picker' ).data( 'nonce' ),
+					post_id: $( this ).closest( '.friends-reaction-picker' ).data( 'id' ),
 					reaction: $( this ).data( 'emoji' )
 				},
 				success: function( response ) {

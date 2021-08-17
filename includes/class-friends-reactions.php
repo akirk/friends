@@ -39,7 +39,6 @@ class Friends_Reactions {
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
 		add_action( 'wp_ajax_friends-toggle-react', array( $this, 'toggle_react' ) );
-		add_action( 'wp_footer', array( $this, 'reactions_picker' ), 20 );
 	}
 
 	/**
@@ -184,15 +183,6 @@ class Friends_Reactions {
 		ksort( $reactions );
 
 		return $reactions;
-	}
-
-	/**
-	 * Output the reactions picker.
-	 */
-	public function reactions_picker() {
-		if ( is_user_logged_in() ) {
-			Friends::template_loader()->get_template_part( 'frontend/reactions-picker' );
-		}
 	}
 
 	/**
