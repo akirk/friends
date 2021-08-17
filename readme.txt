@@ -80,6 +80,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 == Changelog ==
+= 1.7.0 =
+- Add Emoji reactions
+- Add blog to blog messaging
+
 = 1.6.0 =
 - Add a Follow Me block
 - Add the ability to modify the message when a user needs to be logged in to comment.

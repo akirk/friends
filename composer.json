@@ -3,13 +3,11 @@
 	"require-dev": {
 		"squizlabs/php_codesniffer": "*",
 		"wp-phpunit/wp-phpunit": "*",
+		"yoast/phpunit-polyfills": "^1.0",
 		"phpunit/phpunit": "*",
 		"phpcompatibility/php-compatibility": "*",
 		"wp-coding-standards/wpcs": "*",
 		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
 	},
-	"prefer-stable" : true,
-	"require": {
-		"mf2/mf2": "^0.4.6"
-	}
+	"prefer-stable" : true
 }
