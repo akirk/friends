@@ -78,6 +78,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 6. Use rules to filter incoming content (sometimes you’re not interested in everything your friends do)
 7. Friends users are plain WordPress users with low privileges
 8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
+9. You can react to a post or share it using Post Collections.
 
 == Changelog ==
 = 1.7.0 =
