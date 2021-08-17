@@ -428,18 +428,15 @@ div {
 	#friends-reaction-picker {
 		display: none;
 		position: absolute;
-		border: 1px solid #999999;
-		box-shadow: 2px 2px 5px #cccccc;
-		border-radius: .25em;
-		background-color: #fff;
-		padding: 1em;
+		box-shadow: .1rem .1rem .2rem $border-color-light;
+		border: .05rem solid $primary-color;
 		max-width: 50%;
 		max-height: 20%;
 		overflow: auto;
 	}
 
 	#friends-reaction-picker button {
-		padding: .2em;
+		padding: .5rem;
 		margin: 0;
 		font-size: 18px;
 		background-color: #fff;

@@ -238,15 +238,13 @@
 		$document.on( 'click', 'button.new-reaction', function() {
 			var p = $(this).offset();
 			var picker = $( '#friends-reaction-picker' );
-
 			picker.data( 'id' , $( this ).data( 'id' ) ).css( {
-				left: p.left + 'px',
-				top: p.top + 'px'
+				top: ( p.top - picker.height() - 4 ) + 'px'
 			} );
 
 			picker.css( {
-				left: Math.max( 0, p.left - picker.width() / 2 ) + 'px',
-			} ).show();
+				left: Math.max( 0, p.left ) + 'px',
+			} ).toggle();
 
 			return false;
 		} );
