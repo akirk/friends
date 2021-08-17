@@ -62,3 +62,5 @@ __( 'disabled', 'friends' );
 __( 'Create another user', 'friends' );
 // translators: %s is a URL.
 __( 'To save posts from anywhere on the web, use the <a href=%s>bookmarklets</a>.', 'friends' );
+_x( 'Share', 'button', 'friends' );
+_x( '250', 'dropdown-menu-width', 'friends' );
