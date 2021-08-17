@@ -34,15 +34,15 @@ registerBlockType( 'friends/follow-me', {
 			);
 	},
 	save: () => {
-        const blockProps = useBlockProps.save();
+		const blockProps = useBlockProps.save();
 
-        return (
-            <div { ...blockProps }>
+		return (
+			<div { ...blockProps }>
 				<form method="post">
-	                <InnerBlocks.Content />
-	                { getHTML( true ) }
+					<InnerBlocks.Content />
+					{ getHTML( true ) }
 				</form>
-           </div>
-        );
-    },
+			</div>
+			);
+	},
 } );

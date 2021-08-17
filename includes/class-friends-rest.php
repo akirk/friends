@@ -248,7 +248,7 @@ class Friends_REST {
 				array(
 					'body'        => array(
 						'post_id' => $post_id,
-						'friend'  => $friend_user->get_user_option( 'friends_out_token' ),
+						'auth'    => $friend_user->get_friend_auth(),
 					),
 					'timeout'     => 20,
 					'redirection' => 5,
@@ -264,13 +264,12 @@ class Friends_REST {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_post_deleted( $request ) {
-		$token   = $request->get_param( 'friend' );
-		$auth    = $request->get_param( 'auth' );
-		$user_id = $this->friends->access_control->verify_token( $token, $auth );
+		$tokens = explode( '-', $request->get_param( 'auth' ) );
+		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
 		if ( ! $user_id ) {
 			return new WP_Error(
 				'friends_request_failed',
-				'Could not respond to the request.',
+				__( 'Could not respond to the request.', 'friends' ),
 				array(
 					'status' => 403,
 				)
@@ -278,7 +277,7 @@ class Friends_REST {
 		}
 		$friend_user     = new Friend_User( $user_id );
 		$remote_post_id  = $request->get_param( 'post_id' );
-		$remote_post_ids = $this->friends->feed->get_remote_post_ids( $friend_user );
+		$remote_post_ids = $friend_user->get_remote_post_ids();
 
 		if ( ! isset( $remote_post_ids[ $remote_post_id ] ) ) {
 			return array(
@@ -300,10 +299,10 @@ class Friends_REST {
 	/**
 	 * Discover the REST URL for a friend site
 	 *
-	 * @param  string $feeds The URL of the site.
+	 * @param  array $feeds The URL of the site.
 	 * @return string|WP_Error The REST URL or an error.
 	 */
-	public function get_rest_url( $feeds ) {
+	public function get_friends_rest_url( $feeds ) {
 		foreach ( $feeds as $feed_url => $feed ) {
 			if ( isset( $feed['parser'] ) && 'friends' === $feed['parser'] ) {
 				return $feed_url;
@@ -313,12 +312,12 @@ class Friends_REST {
 		return false;
 	}
 
-		/**
-		 * Discover the REST URL for a friend site
-		 *
-		 * @param  string $url The URL of the site.
-		 * @return string|WP_Error The REST URL or an error.
-		 */
+	/**
+	 * Discover the REST URL for a friend site
+	 *
+	 * @param  string $url The URL of the site.
+	 * @return string|WP_Error The REST URL or an error.
+	 */
 	public function discover_rest_url( $url ) {
 		if ( ! is_string( $url ) || ! Friends::check_url( $url ) ) {
 			return new WP_Error( 'invalid-url-given', 'An invalid URL was given.' );

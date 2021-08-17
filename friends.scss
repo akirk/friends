@@ -448,4 +448,8 @@ div {
 	#friends-reaction-picker button:focus {
 		outline: none;
 	}
+
+	a.display-message.unread {
+		font-weight: bold;
+	}
 }

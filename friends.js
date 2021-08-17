@@ -283,4 +283,33 @@
 			return false;
 		} );
 	} );
+
+	$document.on( 'click', 'a.send-new-message', function() {
+		$('#friends-send-new-message').toggle();
+		return false;
+	} );
+
+	$document.on( 'click', 'a.display-message', function() {
+		var $this = $( this ).closest( 'div' );
+		var conversation = $this.find( 'div.conversation' );
+		if ( conversation.is(':visible') ) {
+			conversation.hide();
+		} else {
+			conversation.show();
+			$this.find( 'a.display-message' ).removeClass( 'unread' );
+			wp.ajax.send( 'friends-mark-read', {
+				data: {
+					_ajax_nonce: $this.data( 'nonce' ),
+					post_id: $this.data( 'id' )
+				},
+				success: function( response ) {
+				}
+			} );
+
+		}
+
+		return false;
+	} );
+
+
 })( jQuery, window.wp, window.friends );

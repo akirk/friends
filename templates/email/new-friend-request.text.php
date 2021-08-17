@@ -1,6 +1,6 @@
 <?php
 /**
- * This template contains the HTML for the New Friend Post notification e-mail.
+ * This template contains the HTML for the New Friend Request notification e-mail.
  *
  * @version 1.0
  * @package Friends

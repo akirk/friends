@@ -49,6 +49,13 @@ class Friends {
 	public $feed;
 
 	/**
+	 * A reference to the Friends_Messages object.
+	 *
+	 * @var Friends_Messages
+	 */
+	public $messages;
+
+	/**
 	 * A reference to the Friends_Notifications object.
 	 *
 	 * @var Friends_Notifications
@@ -110,6 +117,7 @@ class Friends {
 		$this->access_control = new Friends_Access_Control( $this );
 		$this->admin          = new Friends_Admin( $this );
 		$this->feed           = new Friends_Feed( $this );
+		$this->messages       = new Friends_Messages( $this );
 		$this->notifications  = new Friends_Notifications( $this );
 		$this->frontend       = new Friends_Frontend( $this );
 		$this->reactions      = new Friends_Reactions( $this );

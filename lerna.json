@@ -3,7 +3,8 @@
     "blocks/block-visibility",
     "blocks/follow-me",
     "blocks/friend-posts",
-    "blocks/friends-list"
+    "blocks/friends-list",
+    "blocks/message"
   ],
   "version": "independent"
 }

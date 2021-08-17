@@ -1,6 +1,6 @@
 <?php
 /**
- * This template contains the HTML for the New Friend Post notification e-mail.
+ * This template contains the HTML for the Accepted Friend Post notification e-mail.
  *
  * @version 1.0
  * @package Friends
@@ -19,8 +19,3 @@ printf( strip_tags( __( 'Go to your <a href=%s>friends page</a> and look at thei
 echo PHP_EOL . PHP_EOL;
 
 echo home_url( $args['friend_user']->get_local_friends_page_url() . '/' );
-
-echo PHP_EOL . PHP_EOL;
-
-// translators: %s is a site name.
-printf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), is_multisite() ? get_site_option( 'site_name' ) : get_option( 'blogname' ) );
