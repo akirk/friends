@@ -628,7 +628,7 @@ class Friends {
 	public function disable_friends_author_page() {
 		global $wp_query;
 
-		if ( is_author() ) {
+		if ( is_author() && ! self::authenticated_for_posts() ) {
 			$author_obj = $wp_query->get_queried_object();
 			if ( $author_obj instanceof WP_User && Friend_User::is_friends_plugin_user( $author_obj ) && ! self::on_frontend() ) {
 				$wp_query->set_404();

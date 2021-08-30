@@ -102,12 +102,17 @@ class Friends_Access_Control {
 	public function verify_token( $token, $until, $auth ) {
 		$user_id = get_option( 'friends_in_token_' . $token );
 		if ( ! $user_id ) {
-			return false;
-		}
+			$me = Friend_User::get_user( Friend_User::get_user_login_for_url( $token ) );
+			if ( is_wp_error( $me ) ) {
+				return false;
+			}
+			$user_id = $me->ID;
+		} else {
+			settype( $user_id, 'int' );
 
-		settype( $user_id, 'int' );
-		if ( get_user_option( 'friends_in_token', $user_id ) !== $token ) {
-			return false;
+			if ( get_user_option( 'friends_in_token', $user_id ) !== $token ) {
+				return false;
+			}
 		}
 
 		// Allow for some grace period by skipping the auth check for older versions.
@@ -132,8 +137,14 @@ class Friends_Access_Control {
 			return;
 		}
 		$tokens = explode( '-', $_GET['friend_auth'] );
+		if ( 3 === count( $tokens ) ) {
+			$user_id = $this->verify_token( $tokens[0], $tokens[1], $tokens[2] );
+		} elseif ( 2 === count( $tokens ) && isset( $_GET['me'] ) ) {
+			$user_id = $this->verify_token( $_GET['me'], $tokens[0], $tokens[1] );
+		} else {
+			return;
+		}
 
-		$user_id = $this->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
 		if ( ! $user_id ) {
 			return;
 		}
@@ -143,7 +154,7 @@ class Friends_Access_Control {
 		}
 
 		wp_set_auth_cookie( $user_id );
-		wp_safe_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'] ), '', $_SERVER['REQUEST_URI'] ) );
+		wp_safe_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'], '?me=' . $_GET['me'], '&me=' . $_GET['me'] ), '', $_SERVER['REQUEST_URI'] ) );
 		exit;
 	}
 
@@ -159,7 +170,7 @@ class Friends_Access_Control {
 		}
 
 		if ( isset( $_GET['friend'] ) ) {
-			$user_id = $this->verify_token( $_GET['friend'], isset( $_GET['until'] ) ? $_GET['until'] : null, isset( $_GET['auth'] ) ? $_GET['auth'] : null );
+			$user_id = $this->verify_token( $_GET['friend'], $_GET['until'], $_GET['auth'] );
 			if ( $user_id ) {
 				$user = new Friend_User( $user_id );
 				if ( $user->has_cap( 'friend' ) ) {
@@ -193,9 +204,9 @@ class Friends_Access_Control {
 				$auth = password_hash( $until . $in_token, PASSWORD_DEFAULT );
 
 				$tokens[ $friend_user->ID ] = array(
-					'friend' => $out_token,
-					'until'  => $until,
-					'auth'   => $auth,
+					'me'    => Friend_User::get_user_login_for_url( home_url() ),
+					'until' => $until,
+					'auth'  => $auth,
 				);
 			}
 		}
@@ -220,7 +231,7 @@ class Friends_Access_Control {
 		if ( ! empty( $friend_auth ) ) {
 			$sep = false === strpos( $url, '?' ) ? '?' : '&';
 
-			$url .= $sep . 'friend=' . urlencode( $friend_auth['friend'] );
+			$url .= $sep . 'me=' . urlencode( $friend_auth['me'] );
 			$url .= '&until=' . urlencode( $friend_auth['until'] );
 			$url .= '&auth=' . urlencode( $friend_auth['auth'] );
 		}

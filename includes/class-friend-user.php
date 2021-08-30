@@ -732,7 +732,7 @@ class Friend_User extends WP_User {
 		if ( empty( $friend_auth ) ) {
 			return '';
 		}
-		return $friend_auth['friend'] . '-' . $friend_auth['until'] . '-' . $friend_auth['auth'];
+		return $friend_auth['me'] . '-' . $friend_auth['until'] . '-' . $friend_auth['auth'];
 	}
 
 	/**
