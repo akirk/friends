@@ -16,20 +16,20 @@ if ( ! isset( $args['subject'] ) ) {
 	<?php wp_nonce_field( 'friends_send_message' ); ?>
 	<div class="form-group">
 		<div class="col-3 col-sm-12">
-			<label class="form-label" for="subject">Subject</label>
+			<label class="form-label" for="subject"><?php esc_html_e( 'Subject', 'friends' ); ?></label>
 		</div>
 		<div class="col-9 col-sm-12">
 			<?php if ( isset( $args['subject'] ) && $args['subject'] ) : ?>
 				<input type="hidden" name="friends_message_subject" value="<?php echo esc_attr( $args['subject'] ); ?>" />
 			<?php else : ?>
-				<input class="form-input" type="text" name="friends_message_subject" value="" placeholder="Subject (optional)" />
+				<input class="form-input" type="text" name="friends_message_subject" value="" placeholder="<?php esc_attr_e( 'Subject (optional)', 'friends' ); ?>" />
 			<?php endif; ?>
 		</div>
 	</div>
 
 	<div class="form-group">
 		<div class="col-3 col-sm-12">
-			<label class="form-label" for="friends_message_message">Message</label>
+			<label class="form-label" for="friends_message_message"><?php esc_html_e( 'Message', 'friends' ); ?></label>
 		</div>
 		<div class="col-9 col-sm-12">
 			<textarea class="form-input" name="friends_message_message" id="friends_message_message" placeholder="" rows="3"></textarea>
@@ -39,7 +39,7 @@ if ( ! isset( $args['subject'] ) ) {
 		<div class="col-3 col-sm-12">
 		</div>
 		<div class="col-9 col-sm-12">
-			<button class="btn">Send</button>
+			<button class="btn"><?php esc_html_e( 'Send', 'friends' ); ?></button>
 		</div>
 	</div>
 </form>

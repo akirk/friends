@@ -200,7 +200,7 @@ class Friends_Messages {
 		$content = '';
 		$content .= '<!-- wp:friends/message {"sender":' . $sender->ID . ',"date":' . time() . '} -->' . PHP_EOL;
 		$content .= '<div class="wp-block-friends-message">';
-		$content .= '<span class="date">' . esc_html( gmdate( 'H:i:s' ) ) . '</span> ';
+		$content .= '<span class="date">' . esc_html( gmdate( 'Y-m-d H:i:s' ) ) . '</span> ';
 		$content .= '<strong>' . esc_html( $sender->display_name ) . '</strong>: ';
 		$content .= '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . esc_html( $message );
 		$content .= '</p>' . PHP_EOL;

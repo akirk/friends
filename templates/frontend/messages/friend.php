@@ -7,10 +7,11 @@
 
 ?>
 <div class="card mt-2 p-2">
-	<strong>Messages</strong>
+	<strong><?php esc_html_e( 'Messages', 'friends' ); ?></strong>
 	<?php
 	while ( $args['existing_messages']->have_posts() ) {
 		$post = $args['existing_messages']->next_post();
+		setup_postdata( $post );
 		$class = '';
 		if ( get_post_status( $post ) === 'friends_unread' ) {
 			$class .= ' unread';
@@ -27,7 +28,18 @@
 		</a>
 		<div style="display: none" class="conversation">
 			<?php
-			the_content();
+
+			$content = get_the_content();
+			preg_match_all( '/<span class="date">([^<]+)</', $content, $matches );
+			if ( $matches ) {
+				$replace = array();
+				foreach ( $matches[1] as $gmdate ) {
+					// translators: %s is a time span.
+					$replace[ $gmdate ] = esc_html( sprintf( __( '%s ago' ), human_time_diff( strtotime( $gmdate ) ) ) );
+				}
+				$content = str_replace( array_keys( $replace ), array_values( $replace ), $content );
+			}
+			echo wp_kses_post( $content );
 
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
