@@ -103,7 +103,7 @@ class Friends_Access_Control {
 		$user_id = get_option( 'friends_in_token_' . $token );
 		if ( ! $user_id ) {
 			$me = Friend_User::get_user( Friend_User::get_user_login_for_url( $token ) );
-			if ( is_wp_error( $me ) ) {
+			if ( ! $me || is_wp_error( $me ) ) {
 				return false;
 			}
 			$user_id = $me->ID;
@@ -169,14 +169,18 @@ class Friends_Access_Control {
 			return false;
 		}
 
-		if ( isset( $_GET['friend'] ) ) {
+		$user_id = false;
+		if ( isset( $_GET['friend'] ) && isset( $_GET['until'] ) && isset( $_GET['auth'] ) ) {
 			$user_id = $this->verify_token( $_GET['friend'], $_GET['until'], $_GET['auth'] );
-			if ( $user_id ) {
-				$user = new Friend_User( $user_id );
-				if ( $user->has_cap( 'friend' ) ) {
-					$this->feed_authenticated = $user_id;
-					return $this->feed_authenticated;
-				}
+		} elseif ( isset( $_GET['me'] ) && isset( $_GET['until'] ) && isset( $_GET['auth'] ) ) {
+			$user_id = $this->verify_token( $_GET['me'], $_GET['until'], $_GET['auth'] );
+		}
+
+		if ( $user_id ) {
+			$user = new Friend_User( $user_id );
+			if ( $user->has_cap( 'friend' ) ) {
+				$this->feed_authenticated = $user_id;
+				return $this->feed_authenticated;
 			}
 		}
 

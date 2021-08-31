@@ -47,18 +47,21 @@ class Friends_FeedTest extends WP_UnitTestCase {
 			)
 		);
 
-		$this->friend_id        = $this->factory->user->create(
+		$this->friend_id = $this->factory->user->create(
 			array(
 				'user_login' => 'friend.local',
 				'user_email' => 'friend@example.org',
 				'role'       => 'friend',
 			)
 		);
-		$friends                = Friends::get_instance();
+
+		update_option( 'home', 'http://friend.local' );
 		$this->friends_in_token = wp_generate_password( 128, false );
 		if ( update_user_option( $this->friend_id, 'friends_in_token', $this->friends_in_token ) ) {
 			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
 		}
+		// We're using the same in and out token here since we're faking this on a single install.
+		update_user_option( $this->friend_id, 'friends_out_token', $this->friends_in_token );
 
 		fetch_feed( null ); // load SimplePie.
 	}
@@ -148,7 +151,10 @@ class Friends_FeedTest extends WP_UnitTestCase {
 	 * Fetch our own feed with a friend authentication.
 	 */
 	public function test_parse_own_feed_with_correct_friend_auth() {
-		$feed = $this->get_rss2( 'https://me.local/?feed=rss2&friend=' . $this->friends_in_token );
+		$friends = Friends::get_instance();
+		$feed_url = $friends->access_control->append_auth( 'https://me.local/?feed=rss2', new Friend_User( $this->friend_id ) );
+		$this->assertContains( 'me=', $feed_url );
+		$feed = $this->get_rss2( $feed_url );
 		$xml  = xml_to_array( $feed );
 
 		// Get all the <item> child elements of the <channel> element.
