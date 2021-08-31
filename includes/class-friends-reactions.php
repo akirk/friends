@@ -212,8 +212,9 @@ class Friends_Reactions {
 
 		$post_id = intval( $_POST['post_id'] );
 		$available_emojis = self::get_available_emojis();
+		$emoji = self::validate_emoji( $_POST['reaction'] );
 
-		if ( ! self::validate_emoji( $_POST['reaction'] ) ) {
+		if ( ! $emoji ) {
 			// This emoji is not defined in emoji.json.
 			return new WP_Error( 'invalid-emoji', 'This emoji is unknown.' );
 		}
@@ -229,11 +230,11 @@ class Friends_Reactions {
 
 		if ( ! $term ) {
 			wp_set_object_terms( $post_id, $_POST['reaction'], $taxonomy, true );
+			do_action( 'friends_user_post_reaction', $post_id, $emoji );
 		} else {
 			wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
+			do_action( 'friends_user_post_undo_reaction', $post_id, $emoji );
 		}
-
-		do_action( 'friends_user_post_reaction', $post_id );
 
 		wp_send_json_success(
 			array(
