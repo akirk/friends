@@ -265,7 +265,7 @@
 	} );
 
 	$document.on( 'click', 'a.send-new-message', function() {
-		$('#friends-send-new-message').toggle();
+		$( '#friends-send-new-message' ).toggle();
 		return false;
 	} );
 
@@ -285,7 +285,7 @@
 				success: function( response ) {
 				}
 			} );
-
+			conversation.find( 'textarea' ).focus();
 		}
 
 		return false;

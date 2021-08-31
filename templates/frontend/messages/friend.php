@@ -39,7 +39,7 @@
 				}
 				$content = str_replace( array_keys( $replace ), array_values( $replace ), $content );
 			}
-			echo wp_kses_post( $content );
+			echo wp_kses_post( apply_filters( 'the_content', make_clickable( $content ) ) );
 
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
