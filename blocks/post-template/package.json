@@ -1,7 +1,7 @@
 {
-  "name": "friends-posts",
+  "name": "friends-post-template",
   "version": "0.1.0",
-  "description": "Show posts from your friends.",
+  "description": "A post template for the friends-posts parent block.",
   "author": "Alex Kirk",
   "license": "GPL-2.0-or-later",
   "main": "build/index.js",

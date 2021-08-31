@@ -4,7 +4,8 @@
     "blocks/follow-me",
     "blocks/friend-posts",
     "blocks/friends-list",
-    "blocks/message"
+    "blocks/message",
+    "blocks/post-template"
   ],
   "version": "independent"
 }
