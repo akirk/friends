@@ -269,6 +269,10 @@
 		return false;
 	} );
 
+	$document.on( 'click', 'button.delete-conversation', function() {
+		return confirm( friends.text_del_convers );
+	} );
+
 	$document.on( 'click', 'a.display-message', function() {
 		var $this = $( this ).closest( 'div' );
 		var conversation = $this.find( 'div.conversation' );

@@ -432,6 +432,10 @@ class Friends_Messages {
 			return new WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
 		}
 
+		if ( ! trim( $message ) ) {
+			return new WP_Error( 'empty-message', __( 'You cannot empty messages.', 'friends' ) );
+		}
+
 		if ( empty( $subject ) ) {
 			$subject = sprintf(
 				// translators: %1$s is a date, %2$s is a time.
@@ -467,11 +471,45 @@ class Friends_Messages {
 	}
 
 	/**
-	 * Handle the follow me button click.
+	 * Delete a conversation
+	 *
+	 * @param      Friend_User $friend_user  The friend user.
+	 * @param      string      $subject      The subject.
+	 *
+	 * @return     WP_Error|WP_Post|bool  The post or false.
+	 */
+	public function delete_conversation( Friend_User $friend_user, $subject ) {
+		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
+			return new WP_Error( 'not-a-friend', __( 'You cannot delete converations.', 'friends' ) );
+		}
+
+		$existing_message = new WP_Query(
+			array(
+				'post_type'   => self::CPT,
+				'author'      => $friend_user->ID,
+				'title'       => $subject,
+				'post_status' => array( 'friends_read', 'friends_unread' ),
+			)
+		);
+
+		if ( $existing_message->have_posts() ) {
+			$post = $existing_message->next_post();
+			return wp_trash_post( $post->ID );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Handle the message form.
 	 */
 	public function handle_message_send() {
 		if ( ! isset( $_REQUEST['friends_message_recipient'] ) ) {
 			return;
+		}
+
+		if ( isset( $_REQUEST['friends_message_delete_conversation'] ) ) {
+			return $this->handle_conversation_delete();
 		}
 
 		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_send_message' ) ) {
@@ -484,6 +522,31 @@ class Friends_Messages {
 		$message = wp_unslash( $_REQUEST['friends_message_message'] );
 
 		$error = $this->send_message( $friend_user, $message, $subject );
+
+		if ( is_wp_error( $error ) ) {
+			wp_die( esc_html( $error->get_error_message() ) );
+		}
+
+		wp_safe_redirect( $friend_user->get_local_friends_page_url() );
+		exit;
+	}
+
+	/**
+	 * Handle the deletion of the conversation.
+	 */
+	public function handle_conversation_delete() {
+		if ( ! isset( $_REQUEST['friends_message_delete_conversation'] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_send_message' ) ) {
+			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+		}
+
+		$friend_user = new Friend_User( $_REQUEST['friends_message_recipient'] );
+
+		$subject = wp_unslash( $_REQUEST['friends_message_subject'] );
+		$error = $this->delete_conversation( $friend_user, $subject );
 
 		if ( is_wp_error( $error ) ) {
 			wp_die( esc_html( $error->get_error_message() ) );

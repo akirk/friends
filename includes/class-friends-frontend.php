@@ -172,6 +172,7 @@ class Friends_Frontend {
 				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
 				'text_undo'         => __( 'Undo' ),
 				'text_trash_post'   => __( 'Trash this post', 'friends' ),
+				'text_del_convers'  => __( 'Do you really want to delete this conversation?', 'friends' ),
 				'query_vars'        => $query_vars,
 				'qv_sign'           => sha1( wp_salt( 'nonce' ) . $query_vars ),
 				'current_page'      => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
