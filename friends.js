@@ -276,6 +276,8 @@
 			conversation.hide();
 		} else {
 			conversation.show();
+			var messages = conversation.find( '.messages' ).get( 0 );
+			messages.scrollTop = messages.scrollHeight;
 			$this.find( 'a.display-message' ).removeClass( 'unread' );
 			wp.ajax.send( 'friends-mark-read', {
 				data: {

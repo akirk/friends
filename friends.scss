@@ -435,4 +435,9 @@ div {
 	a.display-message.unread {
 		font-weight: bold;
 	}
+
+	.friend-message .conversation .messages {
+		max-height: 40em;
+		overflow: auto;
+	}
 }

@@ -14,6 +14,9 @@ if ( ! isset( $args['subject'] ) ) {
 <form method="post" class="form-horizontal">
 	<input type="hidden" name="friends_message_recipient" value="<?php echo esc_attr( $args['friend_user']->ID ); ?>">
 	<?php wp_nonce_field( 'friends_send_message' ); ?>
+	<?php if ( isset( $args['subject'] ) ) : ?>
+		<input type="hidden" name="friends_message_subject" value="<?php echo esc_attr( $args['subject'] ); ?>">
+	<?php else : ?>
 	<div class="form-group">
 		<div class="col-3 col-sm-12">
 			<label class="form-label" for="subject"><?php esc_html_e( 'Subject', 'friends' ); ?></label>
@@ -26,13 +29,17 @@ if ( ! isset( $args['subject'] ) ) {
 			<?php endif; ?>
 		</div>
 	</div>
+	<?php endif; ?>
 
 	<div class="form-group">
 		<div class="col-3 col-sm-12">
 			<label class="form-label" for="friends_message_message"><?php esc_html_e( 'Message', 'friends' ); ?></label>
 		</div>
 		<div class="col-9 col-sm-12">
-			<textarea class="form-input" name="friends_message_message" id="friends_message_message" placeholder="" rows="3"></textarea>
+			<textarea class="form-input friends-message-message" name="friends_message_message" id="friends_message_message" placeholder="" rows="3" style="display: none"></textarea>
+		<?php
+		do_action( 'friends_message_form' );
+		?>
 		</div>
 	</div>
 	<div class="form-group">

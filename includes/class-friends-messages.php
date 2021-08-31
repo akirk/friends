@@ -33,6 +33,7 @@ class Friends_Messages {
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
 		$this->register_hooks();
+		new Gutenberg_Everywhere_Friends_Message();
 	}
 
 	/**
@@ -202,9 +203,13 @@ class Friends_Messages {
 		$content .= '<div class="wp-block-friends-message">';
 		$content .= '<span class="date">' . esc_html( gmdate( 'Y-m-d H:i:s' ) ) . '</span> ';
 		$content .= '<strong>' . esc_html( $sender->display_name ) . '</strong>: ';
-		$content .= '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . esc_html( $message );
-		$content .= '</p>' . PHP_EOL;
-		$content .= '<!-- /wp:paragraph -->';
+		if ( false === strpos( $message, '<!-- wp:' ) ) {
+			$content .= '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . wp_kses_post( $message );
+			$content .= '</p>' . PHP_EOL;
+			$content .= '<!-- /wp:paragraph -->';
+		} else {
+			$content .= wp_kses_post( $message );
+		}
 		$content .= '</div>';
 		$content .= '<!-- /wp:friends/message -->';
 

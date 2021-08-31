@@ -17,7 +17,7 @@
 			$class .= ' unread';
 		}
 		?>
-		<div class="message" id="message-<?php echo esc_attr( get_the_ID() ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
+		<div class="friend-message" id="message-<?php echo esc_attr( get_the_ID() ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
 		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r' ) ); ?>">
 			<?php
 			// translators: %s is a time span.
@@ -27,6 +27,7 @@
 			?>
 		</a>
 		<div style="display: none" class="conversation">
+			<div class="messages">
 			<?php
 
 			$content = get_the_content();
@@ -39,8 +40,12 @@
 				}
 				$content = str_replace( array_keys( $replace ), array_values( $replace ), $content );
 			}
-			echo wp_kses_post( apply_filters( 'the_content', make_clickable( $content ) ) );
 
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- This was handled upon post insert.
+			echo apply_filters( 'the_content', $content );
+			?>
+			</div>
+			<?php
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
 				null,
