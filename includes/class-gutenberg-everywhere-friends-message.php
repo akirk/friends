@@ -11,7 +11,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Gutenberg_Everywhere_Friends_Message extends Gutenberg_Handler {
+class Gutenberg_Everywhere_Friends_Message extends Friends_Gutenberg_Handler {
 	/**
 	 * Constructor
 	 */

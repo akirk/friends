@@ -23,7 +23,7 @@ define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
-require_once __DIR__ . '/libs/gutenberg-everywhere/gutenberg-everywhere.php';
+require_once __DIR__ . '/libs/gutenberg-everywhere/classes/gutenberg-handler.php';
 require_once __DIR__ . '/includes/class-gutenberg-everywhere-friends-message.php';
 
 require_once __DIR__ . '/includes/class-friend-user.php';
