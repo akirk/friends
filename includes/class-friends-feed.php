@@ -288,7 +288,7 @@ class Friends_Feed {
 				$field = $rule['field'];
 			}
 
-			if ( $item->$field && preg_match( '/' . $rule['regex'] . '/iu', $item->$field ) ) {
+			if ( $item->$field && preg_match( '/' . str_replace( '/', '\\/', $rule['regex'] ) . '/ius', $item->$field ) ) {
 				if ( 'replace' === $rule['action'] ) {
 					$item->_feed_rule_transform = array(
 						$this->get_feed_rule_field( $rule['field'], $item ) => preg_replace( '/' . $rule['regex'] . '/iu', $rule['replace'], $item->$field ),
