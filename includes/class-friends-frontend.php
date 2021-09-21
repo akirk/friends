@@ -661,7 +661,7 @@ class Friends_Frontend {
 	public function friend_posts_query( $query ) {
 		global $wp_query, $wp, $authordata;
 
-		if ( $wp_query !== $query || $query->is_admin ) {
+		if ( $wp_query !== $query || $query->is_admin() || $query->is_home() ) {
 			return $query;
 		}
 		// Not available for the general public or friends.
@@ -710,7 +710,11 @@ class Friends_Frontend {
 		$query->is_comment_feed = false;
 		$query->set( 'pagename', null );
 
-		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
+		$pagename = '';
+		if ( isset( $wp_query->query['pagename'] ) ) {
+			$pagename = $wp_query->query['pagename'];
+		}
+		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
 		if ( isset( $pagename_parts[1] ) ) {
 			if ( 'opml' === $pagename_parts[1] ) {
 				return $this->render_opml();
