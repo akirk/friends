@@ -38,8 +38,32 @@ class Friends_Automatic_Status {
 	 */
 	private function register_hooks() {
 		add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
+		add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 	}
 
+
+	public function admin_menu() {
+		$menu_title = __( 'Friends', 'friends' ) . $this->friends->admin->get_unread_badge();
+		$page_type = sanitize_title( $menu_title );
+
+		add_submenu_page(
+			'friends-settings',
+			__( 'Automatic Status', 'friends' ),
+			__( 'Automatic Status', 'friends' ),
+			'administrator',
+			'friends-auto-status',
+			array( $this, 'validate_drafts' )
+		);
+
+		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'friends-auto-status' ) ) {
+			// add_submenu_page( 'friends-settings', __( 'Edit Post Collection', 'friends' ), __( 'Edit Post Collection', 'friends' ), Friends::REQUIRED_ROLE, 'friends-auto-status' . ( 'friends-auto-status' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_edit_post_collection' ) );
+			// add_action( 'load-' . $page_type . '_page_friends-auto-status', array( $this, 'process_edit_post_collection' ) );
+		}
+	}
+
+	public function validate_drafts() {
+		echo 1;
+	}
 	/**
 	 * Adds a status post.
 	 *
