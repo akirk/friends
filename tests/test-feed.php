@@ -26,8 +26,8 @@ class Friends_FeedTest extends WP_UnitTestCase {
 	/**
 	 * Setup the unit tests.
 	 */
-	public function setUp() {
-		parent::setUp();
+	public function set_up() {
+		parent::set_up();
 
 		$this->factory->post->create(
 			array(

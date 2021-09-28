@@ -19,8 +19,8 @@ class Friends_RestTest extends WP_UnitTestCase {
 	/**
 	 * Setup the unit tests.
 	 */
-	public function setUp() {
-		parent::setUp();
+	public function set_up() {
+		parent::set_up();
 
 		// Manually activate the REST server.
 		global $wp_rest_server;

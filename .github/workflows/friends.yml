@@ -1,0 +1,122 @@
+name: Friends
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: [ '5.6', '7.0', '7.1', '7.2', '7.3', '7.4' ]
+        phpunit: [ '5.7.21' ]
+        wordpress: [ '5.8' ]
+
+        include:
+          - php: '7.2'
+            phpunit: '6.3.1'
+            wordpress: '5.8'
+          - php: '7.2'
+            phpunit: '6.3.1'
+            wordpress: '5.8'
+          - php: '7.2'
+            phpunit: '6.3.1'
+            wordpress: '5.8'
+          - php: '7.3'
+            phpunit: '7.2.7'
+            wordpress: '5.8'
+          - php: '7.4'
+            phpunit: '8.1.6'
+            wordpress: 'trunk'
+          - php: '8.0'
+            phpunit: '8.5.16'
+            wordpress: 'trunk'
+
+    services:
+      mariadb:
+        image: mariadb:latest
+        ports:
+          - 3306
+        env:
+          MYSQL_ROOT_PASSWORD: wordpress
+          MYSQL_DATABASE: wordpress_test
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    name: "Tests: PHP ${{ matrix.php }} - PHPUnit: ${{matrix.phpunit}} - WordPress: ${{matrix.wordpress}}"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup PHP with tools
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysql
+          tools: phpunit-polyfills
+          ini-values: error_reporting=E_ALL, display_errors=On
+          coverage: none
+
+      - name: Shutdown default MySQL service
+        run: sudo service mysql stop
+
+      - name: Verify MariaDB connection
+        run: |
+          while ! mysqladmin ping -h"127.0.0.1" -P"${{ job.services.mariadb.ports[3306] }}" --silent; do
+            sleep 1
+          done
+
+      - name: 'Composer: set PHPUnit version for tests'
+        if: ${{ matrix.phpunit != 'auto' }}
+        run: composer require --dev --no-update phpunit/phpunit:"${{ matrix.phpunit }}"
+
+      # Install dependencies and handle caching in one go.
+      # @link https://github.com/marketplace/actions/install-composer-dependencies
+      - name: Install Composer dependencies for PHP < 8.2
+        if: ${{ matrix.php < 8.2 }}
+        uses: "ramsey/composer-install@v1"
+
+      # For PHP 8.2 and above, we need to install with ignore platform reqs as not all dependencies allow it yet.
+      - name: Install Composer dependencies for PHP >= 8.2
+        if: ${{ matrix.php >= 8.2 }}
+        uses: "ramsey/composer-install@v1"
+        with:
+          composer-options: --ignore-platform-reqs
+
+      - name: "Lint PHP files against parse errors - PHP < 7.0"
+        if: ${{ matrix.phpunit == 'auto' && matrix.php < 7.0 }}
+        run: composer lint-lt70
+
+      - name: "Lint PHP files against parse errors - PHP 7.x"
+        if: ${{ matrix.phpunit == 'auto' && startsWith( matrix.php, '7' ) }}
+        run: composer lint7
+
+      - name: "Lint PHP files against parse errors - PHP >= 8.0"
+        if: ${{ matrix.phpunit == 'auto' && matrix.php >= 8.0 }}
+        run: composer lint-gte80
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+      - name: Configure Composer cache
+        uses: actions/cache@v1
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --optimize-autoloader  --no-suggest --no-progress --no-interaction
+
+      # Scan the logs for failing tests and surface that information by creating annotations and log file decorations.
+      - name: Setup problem matcher to provide annotations for PHPUnit test errors and failures
+        # The JSON file is provided by the `shivammathur/setup-php` action. See https://github.com/shivammathur/setup-php#problem-matchers.
+        run: echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Install the test environment
+        run: bash bin/install-wp-tests.sh wordpress_test root wordpress 127.0.0.1:${{ job.services.mariadb.ports[3306] }} ${{ matrix.wordpress }} true
+
+      - name: Run the unit tests
+        run: composer test
+
+      - name: Run the multisite unit tests
+        env:
+          WP_MULTISITE: 1
+        run: composer test

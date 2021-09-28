@@ -33,8 +33,8 @@ class Friends_MessagesTest extends WP_UnitTestCase {
 	/**
 	 * Setup the unit tests.
 	 */
-	public function setUp() {
-		parent::setUp();
+	public function set_up() {
+		parent::set_up();
 
 		$this->user_id = $this->factory->user->create(
 			array(
