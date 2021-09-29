@@ -440,5 +440,10 @@ div {
 	.friend-message .conversation .messages {
 		max-height: 40em;
 		overflow: auto;
+		.wp-block-friends-message {
+			max-width: 80%;
+			margin: 1em;
+			border-bottom: 1px solid $border-color-light;
+		}
 	}
 }
