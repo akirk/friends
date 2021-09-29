@@ -49,7 +49,7 @@ if ( ! isset( $args['subject'] ) ) {
 			<button class="btn"><?php esc_html_e( 'Send', 'friends' ); ?></button>
 		</div>
 		<?php
-		if ( ! isset( $args['subject'] ) ) {
+		if ( ! empty( $args['subject'] ) ) {
 			?>
 			<div class="col-2 col-sm-12" style="text-align: right">
 				<button class="btn btn-link btn-sm delete-conversation text-error" name="friends_message_delete_conversation"><?php esc_html_e( 'Delete conversation', 'friends' ); ?></button>
