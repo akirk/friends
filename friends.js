@@ -265,7 +265,7 @@
 	} );
 
 	$document.on( 'click', 'a.send-new-message', function() {
-		$( '#friends-send-new-message' ).toggle();
+		$( '#friends-send-new-message' ).toggle().find( 'textarea:visible, .block-editor-default-block-appender__content' ).focus();
 		return false;
 	} );
 
@@ -291,7 +291,7 @@
 				success: function( response ) {
 				}
 			} );
-			conversation.find( 'textarea' ).focus();
+			conversation.find( 'textarea:visible, .block-editor-default-block-appender__content' ).focus();
 		}
 
 		return false;
