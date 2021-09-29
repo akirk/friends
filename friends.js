@@ -265,8 +265,12 @@
 	} );
 
 	$document.on( 'click', 'a.send-new-message', function() {
-		$('#friends-send-new-message').toggle();
+		$( '#friends-send-new-message' ).toggle().find( 'textarea:visible, .block-editor-default-block-appender__content' ).focus();
 		return false;
+	} );
+
+	$document.on( 'click', 'button.delete-conversation', function() {
+		return confirm( friends.text_del_convers );
 	} );
 
 	$document.on( 'click', 'a.display-message', function() {
@@ -276,6 +280,8 @@
 			conversation.hide();
 		} else {
 			conversation.show();
+			var messages = conversation.find( '.messages' ).get( 0 );
+			messages.scrollTop = messages.scrollHeight;
 			$this.find( 'a.display-message' ).removeClass( 'unread' );
 			wp.ajax.send( 'friends-mark-read', {
 				data: {
@@ -285,7 +291,7 @@
 				success: function( response ) {
 				}
 			} );
-
+			conversation.find( 'textarea:visible, .block-editor-default-block-appender__content' ).focus();
 		}
 
 		return false;
