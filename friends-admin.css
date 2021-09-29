@@ -112,3 +112,7 @@ span#friends_enable_retention_days_line, span#friends_enable_retention_number_li
 #available-emojis-template {
 	display: none;
 }
+
+#wpadminbar li#wp-admin-bar-friends {
+	display: block;
+}
