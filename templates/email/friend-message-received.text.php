@@ -25,4 +25,4 @@ echo $quoted_text;
 printf( strip_tags( __( 'Go to your <a href=%s>friends page</a> to respond.', 'friends' ) ) );
 echo PHP_EOL . PHP_EOL;
 
-echo home_url( $args['friend_user']->get_local_friends_page_url() . '/' );
+echo $args['friend_user']->get_local_friends_page_url();

@@ -24,6 +24,6 @@
 <p>
 	<?php
 	// translators: %s is a URL.
-	printf( __( 'Go to your <a href=%s>friends page</a> and look at their posts.', 'friends' ), esc_url( home_url( $args['friend_user']->get_local_friends_page_url() . '/' ) ) );
+	printf( __( 'Go to your <a href=%s>friends page</a> and look at their posts.', 'friends' ), esc_url( $args['friend_user']->get_local_friends_page_url() ) );
 	?>
 </p>

@@ -18,4 +18,4 @@ echo PHP_EOL . PHP_EOL;
 printf( strip_tags( __( 'Go to your <a href=%s>friends page</a> and look at their posts.', 'friends' ) ) );
 echo PHP_EOL . PHP_EOL;
 
-echo home_url( $args['friend_user']->get_local_friends_page_url() . '/' );
+echo $args['friend_user']->get_local_friends_page_url();
