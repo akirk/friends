@@ -48,6 +48,6 @@ class Gutenberg_Everywhere_Friends_Message extends Friends_Gutenberg_Handler {
 	 * Get the HTML that the editor uses on the page
 	 */
 	public function add_to_form() {
-		$this->load_editor( '#friends_message_message', '.gutenberg-everywhere' );
+		$this->load_editor( '.friends-message-message', '.gutenberg-everywhere' );
 	}
 }
