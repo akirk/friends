@@ -160,6 +160,9 @@ jQuery( function( $ ) {
 		$( '#keyword-notifications' ).append( '<li>' + $( '#keyword-template' ).html().replace( /\[0\]/g, '[' + $( '#keyword-notifications li' ).length + ']' ) );
 		$( '#keyword-notifications input:last ' ).focus()
 		return false;
+
+	$( document ).on( 'click', '#friends-bulk-publish', function() {
+		$( this ).closest( 'div' ).find( 'select option[value=publish]' ).prop( 'selected', true );
 	} );
 
 } );
