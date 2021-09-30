@@ -568,7 +568,7 @@ class Friends_Feed {
 	 * Output an additional XMLNS for the feed.
 	 */
 	public function additional_feed_namespaces() {
-		echo 'xmlns:friends="' . esc_attr( self::XMLNS ) . '"';
+		echo ' xmlns:friends="' . esc_attr( self::XMLNS ) . '" ';
 	}
 
 	/**
