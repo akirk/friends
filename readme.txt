@@ -81,6 +81,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. You can react to a post or share it using Post Collections.
 
 == Changelog ==
+= 1.8.1 =
+- Fix whitespace missing in feed additions
+
 = 1.8.0 =
 - Small bugfixes (main query modification, menu conflict, show the friends menu in wp-admin, allow regex to match post length)
 - Use the Gutenberg editor for blog to blog messaging
