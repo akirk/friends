@@ -69,6 +69,8 @@ class Friends_Feed {
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90, 2 );
+
+		add_action( 'wp_insert_post', array( $this, 'invalidate_post_count_cache' ), 10, 2 );
 	}
 
 	/**
@@ -616,6 +618,21 @@ class Friends_Feed {
 			$feed->enable_cache( false );
 		} else {
 			$feed->set_cache_duration( 3590 );
+		}
+	}
+
+	/**
+	 * Invalidatee Post Count Cache
+	 *
+	 * @param      int     $post_ID  The post id.
+	 * @param      WP_Post $post     The post.
+	 */
+	public function invalidate_post_count_cache( $post_ID, WP_Post $post ) {
+		$cache_key = 'friends_post_count_by_post_format';
+		delete_transient( $cache_key );
+		if ( is_numeric( $post->post_author ) && $post->post_author > 0 ) {
+			$author_id = intval( $post->post_author );
+			delete_transient( $cache_key . '_author_' . $author_id );
 		}
 	}
 

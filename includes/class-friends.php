@@ -544,6 +544,7 @@ class Friends {
 		$counts = get_transient( $cache_key );
 		if ( false === $counts ) {
 			$counts = array();
+			$post_types = Friends::get_frontend_post_types();
 
 			global $wpdb;
 
@@ -551,26 +552,35 @@ class Friends {
 			if ( $author_id ) {
 				$post_format_counts = $wpdb->get_results(
 					$wpdb->prepare(
-						"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-						FROM {$wpdb->posts} AS posts
-						JOIN {$wpdb->term_relationships} AS relationships
-						JOIN {$wpdb->term_taxonomy} AS taxonomy
-						JOIN {$wpdb->terms} AS terms
+						sprintf(
+							"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+							FROM %s AS posts
+							JOIN %s AS relationships
+							JOIN %s AS taxonomy
+							JOIN %s AS terms
 
-						WHERE posts.post_author = %d
-						AND posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type = %s
-						AND relationships.object_id = posts.ID
-						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-						AND taxonomy.taxonomy = 'post_format'
+							WHERE posts.post_author = %d
+							AND posts.post_status IN ( 'publish', 'private' )
+							AND posts.post_type IN ( %s )
+							AND relationships.object_id = posts.ID
+							AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+							AND taxonomy.taxonomy = 'post_format'
 
-						AND terms.term_id = taxonomy.term_id
-						GROUP BY terms.slug",
-						$author_id,
-						self::CPT
+							AND terms.term_id = taxonomy.term_id
+							GROUP BY terms.slug",
+							$wpdb->posts,
+							$wpdb->term_relationships,
+							$wpdb->term_taxonomy,
+							$wpdb->terms,
+							implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
+						),
+						array_merge(
+							array( $author_id ),
+							$post_types
+						)
 					)
 				);
-				$counts['standard'] = count_user_posts( $author_id, self::CPT );
+				$counts['standard'] = count_user_posts( $author_id, $post_types );
 			} else {
 				$post_format_counts = $wpdb->get_results(
 					$wpdb->prepare(
@@ -581,17 +591,27 @@ class Friends {
 						JOIN {$wpdb->terms} AS terms
 
 						WHERE posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type = %s
+						AND posts.post_type IN ( " . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . " )
 						AND relationships.object_id = posts.ID
 						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
 						AND taxonomy.taxonomy = 'post_format'
 
 						AND terms.term_id = taxonomy.term_id
 						GROUP BY terms.slug",
-						self::CPT
+						$post_types
 					)
 				);
-				$post_count = wp_count_posts( self::CPT );
+				$post_count = null;
+				foreach ( $post_types as $post_type ) {
+					$count = wp_count_posts( $post_type );
+					if ( is_null( $post_count ) ) {
+						$post_count = $count;
+					} else {
+						foreach ( (array) $count as $post_status => $c ) {
+							$post_count->$post_status += $c;
+						}
+					}
+				}
 				$counts['standard'] = $post_count->publish + $post_count->private;
 			}
 
