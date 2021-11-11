@@ -9,3 +9,5 @@ vendor
 node_modules
 .sass-cache
 blocks/*/build
+readme.txt
+
