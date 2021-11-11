@@ -8,6 +8,7 @@ assets	export-ignore
 bin	export-ignore
 comments.json	export-ignore
 composer.lock	export-ignore
+img	export-ignore
 html	export-ignore
 md	export-ignore
 node_modules	export-ignore
