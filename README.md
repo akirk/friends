@@ -7,7 +7,7 @@ Your own WordPress at the center of your online activity. Follow friends and oth
 **Requires at least:** 5.0
 **Tested up to:** 5.8
 **Requires PHP:** 5.2.4
-**License:** [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
+**License:** GPLv2 or later
 **License URI:** http://www.gnu.org/licenses/gpl-2.0.html
 **Stable tag:** trunk
 
