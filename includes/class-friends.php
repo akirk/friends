@@ -559,7 +559,7 @@ class Friends {
 							JOIN %s AS taxonomy
 							JOIN %s AS terms
 
-							WHERE posts.post_author = %d
+							WHERE posts.post_author = %s
 							AND posts.post_status IN ( 'publish', 'private' )
 							AND posts.post_type IN ( %s )
 							AND relationships.object_id = posts.ID
@@ -572,6 +572,7 @@ class Friends {
 							$wpdb->term_relationships,
 							$wpdb->term_taxonomy,
 							$wpdb->terms,
+							'%d',
 							implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
 						),
 						array_merge(
