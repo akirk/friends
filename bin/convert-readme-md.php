@@ -122,10 +122,18 @@ $readme_txt = preg_replace_callback(
 	-1,
 	$replace_count
 );
+
 if ( 0 === $replace_count ) {
 	fwrite( STDERR, "Unable to transform headings.\n" );
 	exit( __LINE__ );
 }
+
+// Convert Youtube video links to just a URL since the WordPress plugin directory will display them.
+$readme_txt = preg_replace(
+	'#^\[!\[[^\]]+\]\([^\)]+\)\]\((https://www.youtube.com/[^\)]+|https://youtu.be/[^\)]+)\)#m',
+	'$1',
+	$readme_txt
+);
 
 if ( ! file_put_contents( __DIR__ . '/../readme.txt', $readme_txt ) ) {
 	fwrite( STDERR, "Failed to write readme.txt.\n" );
