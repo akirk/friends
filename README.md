@@ -7,8 +7,7 @@ Your own WordPress at the center of your online activity. Follow friends and oth
 **Requires at least:** 5.0
 **Tested up to:** 5.8
 **Requires PHP:** 5.2.4
-**License:** GPLv2 or later
-**License URI:** http://www.gnu.org/licenses/gpl-2.0.html
+**License:** [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
 **Stable tag:** trunk
 
 ## Description
@@ -37,6 +36,10 @@ The Friends Plugin was built to make use of what WordPress provides:
 In future, I could see mobile apps instead of talking to a third party, to talk to your own blog. It will have your friends' posts already fetched. Maybe the apps will be specialized, like Twitter or Instagram, where you'd only interact with and create posts in the specific post format.
 
 The logo was created by Ramon Dodd, @ramonopoly. Thank you!
+
+Documentation for the plugin can be found on the [GitHub project Wiki](https://github.com/akirk/friends/wiki).
+
+**Development of this plugin is done [on GitHub](https://github.com/akirk/friends). Pull requests welcome. Please see [issues](https://github.com/akirk/friends/issues) reported there before going to the [plugin forum](https://wordpress.org/support/plugin/friends).**
 
 ## Installation
 
