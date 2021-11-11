@@ -102,7 +102,7 @@ class Friends_Plugin_Installer {
 		$data = get_transient( $cache_key );
 		if ( false === $data || apply_filters( 'friends_deactivate_plugin_cache', false ) ) {
 			$remote = wp_remote_get(
-				'https://wpfriends.at/plugins.json',
+				'https://raw.githubusercontent.com/akirk/friends/main/plugins.json',
 				array(
 					'timeout' => 10,
 					'headers' => array(

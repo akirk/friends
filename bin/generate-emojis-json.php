@@ -5,6 +5,11 @@
  * @package Friends
  */
 
+if ( 'cli' !== php_sapi_name() ) {
+	fwrite( STDERR, "Must run from CLI.\n" );
+	exit( 1 );
+}
+
 $pre_selected = array( '👍', '❤️', '😂', '😍', '😭', '😊', '😩', '😁', '👎' );
 $out = array();
 $cache = __DIR__ . '/../emoji-rankings.json';

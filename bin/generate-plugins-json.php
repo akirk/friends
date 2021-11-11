@@ -5,6 +5,20 @@
  * @package Friends
  */
 
+// Use HEAD requests below.
+stream_context_set_default(
+	array(
+		'http' => array(
+			'method' => 'HEAD',
+		),
+	)
+);
+
+if ( 'cli' !== php_sapi_name() ) {
+	fwrite( STDERR, "Must run from CLI.\n" );
+	exit( 1 );
+}
+
 $json = array();
 foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 	$slug = basename( $dir );
@@ -35,8 +49,27 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 
 	$data['name'] = trim( strtok( $readme_md, PHP_EOL ), ' #' );
 
-	$data['trunk'] = "https://github.com/akirk/$slug/$slug.$version.zip";
+	$data['trunk'] = "https://github.com/akirk/$slug/archive/refs/tags/$version.zip";
 	$data['download_link'] = $data['trunk'];
+
+	$headers = get_headers( $data['download_link'] );
+	$exists = false;
+	foreach ( $headers as $header ) {
+		if ( preg_match( '#HTTP/[0-9.]+\s404#', $header ) ) {
+			$exists = false;
+			break;
+		}
+		if ( preg_match( '#HTTP/[0-9.]+\s200#', $header ) ) {
+			$exists = true;
+			break;
+		}
+	}
+	if ( ! $exists ) {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo $slug, ' version ', $version, ' does not exist at ', $data['download_link'];
+		exit( 1 );
+	}
+
 	$data['last_updated'] = gmdate( 'Y-m-d', exec( 'git --git-dir=' . $dir . '/.git/ log -1 --format=%ct ' ) );
 	$data['sections'] = array();
 
@@ -45,11 +78,11 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 			continue;
 		}
 		$title = strtok( $section, PHP_EOL );
-		$data['sections'][ $title ] = trim( substr( $section, strlen( $title ) ) );
+		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ) );
 	}
 	$json[ $slug ] = $data;
 }
-file_put_contents( __DIR__ . '/../plugins.json', json_encode( $json, JSON_PRETTY_PRINT ) );
+file_put_contents( __DIR__ . '/../plugins.json', json_encode( $json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 echo 'plugins.json was created.', PHP_EOL;
 
 /**
@@ -62,6 +95,8 @@ echo 'plugins.json was created.', PHP_EOL;
 function simple_convert_markdown( $md ) {
 	$html = $md;
 	$html = preg_replace( '/^# (.*)$/m', '<h2>$1</h2>', $html );
+	$html = preg_replace( '/^## (.*)$/m', '<h3>$1</h3>', $html );
+	$html = preg_replace( '/^### (.*)$/m', '<h4>$1</h4>', $html );
 	$html = preg_replace( '/\[([^\]]*)\]\(([^)]*)\)/', '<a href="$2">$1</a>', $html );
-	return preg_replace( '/\n+/', '<br/>\n', $html );
+	return trim( preg_replace( '/\n+/', '<br/>\n', trim( $html ) ) );
 }

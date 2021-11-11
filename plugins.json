@@ -2,25 +2,25 @@
     "friends-autoresolve-links": {
         "name": "Friends Autoresolve Links",
         "short_description": "Transform plaintext links of incoming content (especially t.co shortlinks) into rich(er) links.",
-        "more_info": "https:\/\/github.com\/akirk\/friends-autoresolve-links",
+        "more_info": "https://github.com/akirk/friends-autoresolve-links",
         "slug": "friends-autoresolve-links",
-        "version": "1.0.1",
-        "trunk": "https:\/\/github.com\/akirk\/friends-autoresolve-links\/friends-autoresolve-links.1.0.1.zip",
-        "download_link": "https:\/\/github.com\/akirk\/friends-autoresolve-links\/friends-autoresolve-links.1.0.1.zip",
-        "last_updated": "2021-07-07",
+        "version": "1.0.2",
+        "trunk": "https://github.com/akirk/friends-autoresolve-links/archive/refs/tags/1.0.2.zip",
+        "download_link": "https://github.com/akirk/friends-autoresolve-links/archive/refs/tags/1.0.2.zip",
+        "last_updated": "2021-11-11",
         "sections": {
-            "Description": "This plugin is meant to be used with the [Friends plugin](https:\/\/github.com\/akirk\/friends\/)."
+            "Description": "This plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>."
         }
     },
     "friends-debugger": {
         "name": "Friends Debugger",
         "short_description": "Tooling for debugging the Friends Plugin more easily.",
-        "more_info": "https:\/\/github.com\/akirk\/friends-debugger",
+        "more_info": "https://github.com/akirk/friends-debugger",
         "slug": "friends-debugger",
         "version": "0.1",
-        "trunk": "https:\/\/github.com\/akirk\/friends-debugger\/friends-debugger.0.1.zip",
-        "download_link": "https:\/\/github.com\/akirk\/friends-debugger\/friends-debugger.0.1.zip",
-        "last_updated": "2021-05-19",
+        "trunk": "https://github.com/akirk/friends-debugger/archive/refs/tags/0.1.zip",
+        "download_link": "https://github.com/akirk/friends-debugger/archive/refs/tags/0.1.zip",
+        "last_updated": "2021-11-11",
         "sections": {
             "Description": "This plugin outputs some more data and provides tools like a Feed Log."
         }
@@ -28,38 +28,38 @@
     "friends-parser-fraidyscrape": {
         "name": "Friends Parser Fraidyscrape",
         "short_description": "Use the Fraidyscrape extractor to view feeds for web sites that don't provide machine readable feeds.",
-        "more_info": "https:\/\/github.com\/akirk\/friends-parser-fraidyscrape",
+        "more_info": "https://github.com/akirk/friends-parser-fraidyscrape",
         "slug": "friends-parser-fraidyscrape",
-        "version": "1.0.1",
-        "trunk": "https:\/\/github.com\/akirk\/friends-parser-fraidyscrape\/friends-parser-fraidyscrape.1.0.1.zip",
-        "download_link": "https:\/\/github.com\/akirk\/friends-parser-fraidyscrape\/friends-parser-fraidyscrape.1.0.1.zip",
-        "last_updated": "2021-05-05",
+        "version": "1.0.2",
+        "trunk": "https://github.com/akirk/friends-parser-fraidyscrape/archive/refs/tags/1.0.2.zip",
+        "download_link": "https://github.com/akirk/friends-parser-fraidyscrape/archive/refs/tags/1.0.2.zip",
+        "last_updated": "2021-11-11",
         "sections": {
-            "Description": "This is a PHP port of the JavaScript extractor Fraidyscrape to be used as a plugin for the [Friends Plugin](https:\/\/wordpress.org\/plugins\/friends) which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.\n\n### Fraidyscrape\n\nFraidyscrape is the rule-based HTML, JSON and TXT scraper - used in the\nmicro-famous, macro-fearful Web research tool [Fraidycat](https:\/\/fraidyc.at\/).\n\n> It is presently quite a dark art to figure out. No one really knows what it does!\n\nThis plugin is meant to be used with the [Friends plugin](https:\/\/github.com\/akirk\/friends\/)."
+            "Description": "This is a PHP port of the JavaScript extractor Fraidyscrape to be used as a plugin for the <a href=\"https://wordpress.org/plugins/friends\">Friends Plugin</a> which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.<br/>\\n<h4>Fraidyscrape</h4><br/>\\nFraidyscrape is the rule-based HTML, JSON and TXT scraper - used in the<br/>\\nmicro-famous, macro-fearful Web research tool <a href=\"https://fraidyc.at/\">Fraidycat</a>.<br/>\\n> It is presently quite a dark art to figure out. No one really knows what it does!<br/>\\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>."
         }
     },
     "friends-parser-rss-bridge": {
         "name": "Friends Parser RSS Bridge",
         "short_description": "Use a local version of RSS-Bridge to view feeds for web sites that don't provide machine readable feeds.",
-        "more_info": "https:\/\/github.com\/akirk\/friends-parser-rss-bridge",
+        "more_info": "https://github.com/akirk/friends-parser-rss-bridge",
         "slug": "friends-parser-rss-bridge",
-        "version": "1.0.3",
-        "trunk": "https:\/\/github.com\/akirk\/friends-parser-rss-bridge\/friends-parser-rss-bridge.1.0.3.zip",
-        "download_link": "https:\/\/github.com\/akirk\/friends-parser-rss-bridge\/friends-parser-rss-bridge.1.0.3.zip",
-        "last_updated": "2021-03-16",
+        "version": "1.0.4",
+        "trunk": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.0.4.zip",
+        "download_link": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.0.4.zip",
+        "last_updated": "2021-11-11",
         "sections": {
-            "Description": "This parser is powered by the open source project [RSS Bridge](https:\/\/github.com\/RSS-Bridge\/rss-bridge) (resp. a very similar fork at [akirk\/rss-bridge](https:\/\/github.com\/akirk\/rss-bridge)) and allows to parse many external services that don't provide RSS feeds, such as Skimfeed, Twitter, Bandcamp, Wikipedia and more.\n\nThe RSS Bridge project provides a set of \"bridges\" that overcome the gap between web sites' content and a machine readable format, such as RSS. This plugin extends the bridge into the WordPress world, especially to the [Friends Plugin](https:\/\/wordpress.org\/plugins\/friends) which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.\n\nThis plugin is meant to be used with the [Friends plugin](https:\/\/github.com\/akirk\/friends\/)."
+            "Description": "This parser is powered by the open source project <a href=\"https://github.com/RSS-Bridge/rss-bridge\">RSS Bridge</a> (resp. a very similar fork at <a href=\"https://github.com/akirk/rss-bridge\">akirk/rss-bridge</a>) and allows to parse many external services that don't provide RSS feeds, such as Skimfeed, Twitter, Bandcamp, Wikipedia and more.<br/>\\nThe RSS Bridge project provides a set of \"bridges\" that overcome the gap between web sites' content and a machine readable format, such as RSS. This plugin extends the bridge into the WordPress world, especially to the <a href=\"https://wordpress.org/plugins/friends\">Friends Plugin</a> which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.<br/>\\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>."
         }
     },
     "friends-post-collection": {
         "name": "Friends Post Collection",
         "short_description": "Collect posts from around the web and create feeds.",
-        "more_info": "https:\/\/github.com\/akirk\/friends-post-collection",
+        "more_info": "https://github.com/akirk/friends-post-collection",
         "slug": "friends-post-collection",
-        "version": "0.6.1",
-        "trunk": "https:\/\/github.com\/akirk\/friends-post-collection\/friends-post-collection.0.6.1.zip",
-        "download_link": "https:\/\/github.com\/akirk\/friends-post-collection\/friends-post-collection.0.6.1.zip",
-        "last_updated": "2021-08-17",
+        "version": "0.6.2",
+        "trunk": "https://github.com/akirk/friends-post-collection/archive/refs/tags/0.6.2.zip",
+        "download_link": "https://github.com/akirk/friends-post-collection/archive/refs/tags/0.6.2.zip",
+        "last_updated": "2021-11-11",
         "sections": {
             "Description": "This plugin provides the facilities to store feed items in a separate post type. These can be used to create your own compliation of posts and re-publish them for friends."
         }
@@ -67,14 +67,15 @@
     "friends-send-to-e-reader": {
         "name": "Friends Post Collection",
         "short_description": "Send new articles directly to your e-reader via e-mail or download the ePub.",
-        "more_info": "https:\/\/github.com\/akirk\/friends-send-to-e-reader",
+        "more_info": "https://github.com/akirk/friends-send-to-e-reader",
         "slug": "friends-send-to-e-reader",
-        "version": "0.2.4",
-        "trunk": "https:\/\/github.com\/akirk\/friends-send-to-e-reader\/friends-send-to-e-reader.0.2.4.zip",
-        "download_link": "https:\/\/github.com\/akirk\/friends-send-to-e-reader\/friends-send-to-e-reader.0.2.4.zip",
-        "last_updated": "2021-11-05",
+        "version": "0.3",
+        "trunk": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.3.zip",
+        "download_link": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.3.zip",
+        "last_updated": "2021-11-11",
         "sections": {
-            "Description": "See the post [Subscribing to RSS Feeds on your E-Reader using your own WordPress blog](https:\/\/wpfriends.at\/2021\/09\/20\/subscribing-to-rss-feeds-on-your-e-reader\/) for more details on how it works.\n\nThis plugin is meant to be used with the [Friends plugin](https:\/\/github.com\/akirk\/friends\/)."
+            "Description": "See the post <a href=\"https://wpfriends.at/2021/09/20/subscribing-to-rss-feeds-on-your-e-reader/\">Subscribing to RSS Feeds on your E-Reader using your own WordPress blog</a> for more details on how it works.<br/>\\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>.",
+            "Changelog": "<h4>0.3</h4><br/>\\n- Allow downloading the ePub.<br/>\\n- Theoretically add support for Tolino. Not functional because Thalia doesn't want to provide OAuth2 credentials."
         }
     }
 }

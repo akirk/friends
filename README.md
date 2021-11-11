@@ -86,6 +86,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 1.8.2
+- Move plugin updater data to Github
+
 ### 1.8.1
 - Fix whitespace missing in feed additions
 
