@@ -38,7 +38,19 @@ class Friends_Friend_Feed_Discovery extends WP_UnitTestCase {
 				$p = wp_parse_url( $url );
 				$cache = __DIR__ . '/data/' . sanitize_title( $p['host'] . '-' . $p['path'] ) . '.response';
 				if ( ! file_exists( $cache ) ) {
-					file_put_contents( $cache, serialize( $response ) );
+					$headers = wp_remote_retrieve_headers( $response );
+					file_put_contents(
+						$cache,
+						serialize(
+							array(
+								'headers'  => $headers->getAll(),
+								'body'     => wp_remote_retrieve_body( $response ),
+								'response' => array(
+									'code' => wp_remote_retrieve_response_code( $response ),
+								),
+							)
+						)
+					);
 				}
 				return $response;
 			},
