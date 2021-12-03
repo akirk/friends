@@ -11,6 +11,7 @@ composer.lock	export-ignore
 img	export-ignore
 html	export-ignore
 md	export-ignore
+tests	export-ignore
 node_modules	export-ignore
 package-lock.json	export-ignore
 package.*	export-ignore

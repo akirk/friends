@@ -772,14 +772,21 @@ class Friends_Feed {
 			if ( $autoselected ) {
 				continue;
 			}
+
+			if ( ! $feed['parser_confidence'] ) {
+				continue;
+			}
+
 			if ( $has_friends_plugin ) {
 				// Prefer the main RSS feed.
 				if ( 'feed' === trim( $path, '/' ) ) {
 					$available_feeds[ $link_url ]['post-format'] = 'autodetect';
 					$autoselected = true;
 				}
-			} elseif ( isset( $feed['rel'] ) && 'self' === $feed['rel'] ) {
-				$autoselected = true;
+			} elseif ( isset( $feed['rel'] ) ) {
+				if ( 'alternate' === $feed['rel'] && 'application/rss+xml' === $feed['type'] && 'feed' === trim( $path, '/' ) ) {
+					$autoselected = true;
+				}
 			}
 
 			if ( $autoselected ) {
