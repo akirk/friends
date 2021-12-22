@@ -162,12 +162,14 @@ class Friends_Plugin_Installer {
 		}
 
 		foreach ( self::get_plugins() as $data ) {
-			if ( $data && isset( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ] ) && version_compare( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ], $data->version, '<' ) && version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) {
+			if ( $data && isset( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ] ) && version_compare( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ], $data->version, '<' ) && ( ! isset( $data->requires ) || version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) ) {
 				$res = new stdClass();
 				$res->slug = $data->slug;
 				$res->plugin = $data->slug . '/' . $data->slug . '.php';
 				$res->new_version = $data->version;
-				$res->tested = $data->tested;
+				if ( isset( $data->tested ) ) {
+					$res->tested = $data->tested;
+				}
 				$res->package = $data->download_link;
 				$transient->response[ $res->plugin ] = $res;
 			}
