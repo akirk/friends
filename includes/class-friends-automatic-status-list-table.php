@@ -192,7 +192,9 @@ class Friends_Automatic_Status_List_Table extends WP_Posts_List_Table {
 
 		// Subtract post types that are not included in the admin all list.
 		foreach ( get_post_stati( array( 'show_in_admin_all_list' => false ) ) as $state ) {
-			$total_posts -= $num_posts->$state;
+			if ( isset( $num_posts->$state ) ) {
+				$total_posts -= $num_posts->$state;
+			}
 		}
 
 		if ( empty( $class ) && ( $this->is_base_request() || isset( $_REQUEST['all_posts'] ) ) ) {

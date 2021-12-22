@@ -96,7 +96,7 @@ class Friends_Automatic_Status {
 						)
 					),
 					/* translators: %s: Post title. */
-					esc_attr( sprintf( __( 'Publish &#8220;%s&#8221;' ), $title ) ),
+					esc_attr( sprintf( __( 'Publish &#8220;%s&#8221;' ), $post->title ) ),
 					__( 'Publish' )
 				);
 				return $actions;
