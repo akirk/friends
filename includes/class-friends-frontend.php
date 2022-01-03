@@ -78,7 +78,9 @@ class Friends_Frontend {
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
-		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ), 99999 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
+		add_action( 'wp_footer', array( $this, 'dequeue_scripts' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
@@ -179,17 +181,20 @@ class Friends_Frontend {
 				'max_page'          => $wp_query->max_num_pages,
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
+			wp_enqueue_style( 'friends', plugins_url( 'friends.css', FRIENDS_PLUGIN_FILE ), array(), Friends::VERSION );
+		}
+	}
 
+	public function dequeue_scripts() {
+		if ( is_user_logged_in() && Friends::on_frontend() ) {
 			// Dequeue theme styles so taht they don't interact with the Friends frontend.
 			$wp_styles = wp_styles();
 			foreach ( $wp_styles->queue as $style ) {
 				$src = $wp_styles->registered[ $style ]->src;
-				if ( false !== strpos( $src, '/themes/' ) ) {
+				if ( 'global-styles' === $style || false !== strpos( $src, '/themes/' ) ) {
 					wp_dequeue_style( $style );
 				}
 			}
-
-			wp_enqueue_style( 'friends', plugins_url( 'friends.css', FRIENDS_PLUGIN_FILE ), array(), Friends::VERSION );
 		}
 	}
 
