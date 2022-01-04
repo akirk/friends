@@ -97,6 +97,7 @@ function simple_convert_markdown( $md ) {
 	$html = preg_replace( '/^# (.*)$/m', '<h2>$1</h2>', $html );
 	$html = preg_replace( '/^## (.*)$/m', '<h3>$1</h3>', $html );
 	$html = preg_replace( '/^### (.*)$/m', '<h4>$1</h4>', $html );
+	$html = preg_replace( '/^> (.*)$/m', '<blockquote>$1</blockquote>', $html );
 	$html = preg_replace( '/\[([^\]]*)\]\(([^)]*)\)/', '<a href="$2">$1</a>', $html );
 	return trim( preg_replace( '/\n+/', "<br/>\n", trim( $html ) ) );
 }

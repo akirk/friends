@@ -22,7 +22,7 @@
         "download_link": "https://github.com/akirk/friends-parser-fraidyscrape/archive/refs/tags/1.0.2.zip",
         "last_updated": "2021-11-11",
         "sections": {
-            "Description": "This is a PHP port of the JavaScript extractor Fraidyscrape to be used as a plugin for the <a href=\"https://wordpress.org/plugins/friends\">Friends Plugin</a> which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.<br/>\n<h4>Fraidyscrape</h4><br/>\nFraidyscrape is the rule-based HTML, JSON and TXT scraper - used in the<br/>\nmicro-famous, macro-fearful Web research tool <a href=\"https://fraidyc.at/\">Fraidycat</a>.<br/>\n> It is presently quite a dark art to figure out. No one really knows what it does!<br/>\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>."
+            "Description": "This is a PHP port of the JavaScript extractor Fraidyscrape to be used as a plugin for the <a href=\"https://wordpress.org/plugins/friends\">Friends Plugin</a> which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.<br/>\n<h4>Fraidyscrape</h4><br/>\nFraidyscrape is the rule-based HTML, JSON and TXT scraper - used in the<br/>\nmicro-famous, macro-fearful Web research tool <a href=\"https://fraidyc.at/\">Fraidycat</a>.<br/>\n<blockquote>It is presently quite a dark art to figure out. No one really knows what it does!</blockquote><br/>\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>."
         }
     },
     "friends-parser-rss-bridge": {
