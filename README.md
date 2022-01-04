@@ -5,7 +5,7 @@ Your own WordPress at the center of your online activity. Follow friends and oth
 **Contributors:** akirk
 **Tags:** friends, rss, decentralized, social-network, own-your-data
 **Requires at least:** 5.0
-**Tested up to:** 5.8
+**Tested up to:** 5.9
 **Requires PHP:** 5.2.4
 **License:** [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
 **Stable tag:** trunk
@@ -85,6 +85,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. You can react to a post or share it using Post Collections.
 
 ## Changelog
+
+### 1.8.3
+- Improve default feed selection when adding a friend
+- Fix improper plugin directory when a friends plugin installed from Github
 
 ### 1.8.2
 - Move plugin updater data to Github
