@@ -35,6 +35,7 @@ class Friends_Plugin_Installer {
 		add_action( 'wp_ajax_friends_plugin_deactivation', array( __CLASS__, 'ajax_plugin_deactivation' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'override_plugin_info' ), 20, 3 );
 		add_filter( 'site_transient_update_plugins', array( __CLASS__, 'override_plugin_push_update' ) );
+		add_filter( 'upgrader_post_install', array( __CLASS__, 'after_install' ), 10, 3 );
 	}
 
 	/**
@@ -44,7 +45,7 @@ class Friends_Plugin_Installer {
 	 */
 	public static function init() {
 
-		$plugins = self::get_plugins();
+		$plugins = self::get_friends_plugins();
 
 		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 
@@ -75,7 +76,6 @@ class Friends_Plugin_Installer {
 			);
 
 			if ( ! is_wp_error( $api ) ) {
-
 				$main_plugin_file = self::get_plugin_file( $plugin_slug );
 				if ( self::check_file_extension( $main_plugin_file ) ) {
 					if ( is_plugin_active( $main_plugin_file ) ) {
@@ -92,11 +92,11 @@ class Friends_Plugin_Installer {
 	}
 
 	/**
-	 * Gets the available plugins from wpfriends.at.
+	 * Gets the available plugins.
 	 *
 	 * @return    object  The plugin information.
 	 */
-	public static function get_plugins() {
+	public static function get_friends_plugins() {
 		$cache_key = 'friends_plugins_info_v1';
 
 		$data = get_transient( $cache_key );
@@ -114,6 +114,7 @@ class Friends_Plugin_Installer {
 			if ( ! is_wp_error( $remote ) && 200 === wp_remote_retrieve_response_code( $remote ) && ! empty( $remote['body'] ) ) {
 				$data = array();
 				foreach ( json_decode( $remote['body'] ) as $slug => $plugin_data ) {
+					$plugin_data->sections = (array) $plugin_data->sections;
 					$data[ $slug ] = $plugin_data;
 				}
 				set_transient( $cache_key, $data, 12 * HOUR_IN_SECONDS );
@@ -141,12 +142,12 @@ class Friends_Plugin_Installer {
 			return $res;
 		}
 
-		$plugins = self::get_plugins();
-		if ( ! isset( $plugins[ $args->slug ] ) ) {
+		$our_plugins = self::get_friends_plugins();
+		if ( ! isset( $our_plugins[ $args->slug ] ) ) {
 			return false;
 		}
 
-		return $plugins[ $args->slug ];
+		return $our_plugins[ $args->slug ];
 	}
 
 	/**
@@ -161,7 +162,7 @@ class Friends_Plugin_Installer {
 			return $transient;
 		}
 
-		foreach ( self::get_plugins() as $data ) {
+		foreach ( self::get_friends_plugins() as $data ) {
 			if ( $data && isset( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ] ) && version_compare( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ], $data->version, '<' ) && ( ! isset( $data->requires ) || version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) ) {
 				$res = new stdClass();
 				$res->slug = $data->slug;
@@ -334,7 +335,6 @@ class Friends_Plugin_Installer {
 		);
 
 		wp_send_json( $json );
-
 	}
 
 	/**
@@ -369,6 +369,49 @@ class Friends_Plugin_Installer {
 	}
 
 	/**
+	 * Fix wrong slug through Github-added version to ZIP.
+	 *
+	 * @param bool  $response   Installation response.
+	 * @param array $hook_extra Extra arguments passed to hooked filters.
+	 * @param array $result     Installation result data.
+	 *
+	 * @return     bool  $response   Installation response.
+	 */
+	public static function after_install( $response, $hook_extra, $result ) {
+		if ( empty( $result['destination_name'] ) ) {
+			return $response;
+		}
+
+		// Is it a versioned destination name?
+		if ( ! preg_match( '#-[0-9]+(?:\.[0-9]+)+$#', $result['destination_name'], $m ) ) {
+			return $response;
+		}
+
+		// This contains the leading slash.
+		$dashed_version = $m[0];
+
+		// Strip off the version to get the real slug.
+		$slug = substr( $result['destination_name'], 0, - strlen( $dashed_version ) );
+
+		$our_plugins = self::get_friends_plugins();
+		if ( ! isset( $our_plugins[ $slug ] ) ) {
+			return $response;
+		}
+
+		// Is this really the plugin ZIP?
+		if ( ! in_array( $slug . '.php', $result['source_files'] ) ) {
+			return $response;
+		}
+
+		$install_directory = str_replace( $result['destination_name'], $slug, $result['destination'] );
+
+		global $wp_filesystem;
+		$wp_filesystem->move( $result['destination'], $install_directory );
+		$result['destination'] = $install_directory;
+
+		return $result;
+	}
+	/**
 	 * A method to get the main plugin file.
 	 *
 	 * @param      string $plugin_slug  The plugin slug.
@@ -384,7 +427,6 @@ class Friends_Plugin_Installer {
 		foreach ( $plugins as $plugin_file => $plugin_info ) {
 
 			$slug = dirname( plugin_basename( $plugin_file ) );
-
 			if ( $slug ) {
 				if ( $slug === $plugin_slug ) {
 					return $plugin_file;
