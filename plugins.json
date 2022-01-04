@@ -30,10 +30,10 @@
         "short_description": "Use a local version of RSS-Bridge to view feeds for web sites that don't provide machine readable feeds.",
         "more_info": "https://github.com/akirk/friends-parser-rss-bridge",
         "slug": "friends-parser-rss-bridge",
-        "version": "1.0.4",
-        "trunk": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.0.4.zip",
-        "download_link": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.0.4.zip",
-        "last_updated": "2021-11-11",
+        "version": "1.0.5",
+        "trunk": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.0.5.zip",
+        "download_link": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.0.5.zip",
+        "last_updated": "2022-01-04",
         "sections": {
             "Description": "This parser is powered by the open source project <a href=\"https://github.com/RSS-Bridge/rss-bridge\">RSS Bridge</a> (resp. a very similar fork at <a href=\"https://github.com/akirk/rss-bridge\">akirk/rss-bridge</a>) and allows to parse many external services that don't provide RSS feeds, such as Skimfeed, Twitter, Bandcamp, Wikipedia and more.<br/>\nThe RSS Bridge project provides a set of \"bridges\" that overcome the gap between web sites' content and a machine readable format, such as RSS. This plugin extends the bridge into the WordPress world, especially to the <a href=\"https://wordpress.org/plugins/friends\">Friends Plugin</a> which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.<br/>\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>."
         }
