@@ -1254,6 +1254,7 @@ class Friends_Admin {
 		$friend_display_name = Friend_User::get_display_name_for_url( $friend_url );
 
 		$errors = new WP_Error();
+		$rest_url = false;
 
 		if ( ( isset( $vars['step2'] ) && isset( $vars['feeds'] ) && is_array( $vars['feeds'] ) ) || isset( $vars['step3'] ) ) {
 			$friend_user_login = sanitize_user( $vars['user_login'] );

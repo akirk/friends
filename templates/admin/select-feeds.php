@@ -14,9 +14,16 @@ if ( $args['friends_plugin'] ) {
 }
 
 foreach ( $args['feeds'] as $feed_url => $details ) {
-	if ( 'unsupported' === $details['parser'] ) {
+	if ( ! isset( $details['parser'] ) || 'unsupported' === $details['parser'] ) {
 		$unsupported_feeds[ $feed_url ] = $details;
 		unset( $args['feeds'][ $feed_url ] );
+		continue;
+	}
+	if ( ! isset( $details['url'] ) ) {
+		$args['feeds'][ $feed_url ]['url'] = $feed_url;
+	}
+	if ( ! isset( $details['autoselect'] ) ) {
+		$args['feeds'][ $feed_url ]['autoselect'] = false;
 	}
 }
 
@@ -60,7 +67,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 						<?php
 						foreach ( $args['friend_roles'] as $role => $title ) :
 							?>
-							<option value="<?php echo esc_attr( $role ); ?>"<?php selected( $default_role, $role ); ?>><?php echo esc_html( $title ); ?></option>
+							<option value="<?php echo esc_attr( $role ); ?>"<?php selected( $args['default_role'], $role ); ?>><?php echo esc_html( $title ); ?></option>
 						<?php endforeach; ?>
 					</select></label>
 					<p class="description details hidden"><small>
