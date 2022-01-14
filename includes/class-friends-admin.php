@@ -1090,6 +1090,45 @@ class Friends_Admin {
 	}
 
 	/**
+	 * Display error messages.
+	 *
+	 * @param      object $errors  The errors.
+	 */
+	private function display_errors( $errors ) {
+		if ( ! is_wp_error( $errors ) ) {
+			return;
+		}
+
+		?>
+		<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $errors->get_error_message() ); ?></p>
+			<?php
+			$error_data = $errors->get_error_data();
+			if ( isset( $error_data->error ) ) {
+				$error = unserialize( $error_data->error );
+				if ( is_wp_error( $error ) ) {
+					?>
+					<pre>
+						<?php
+						print_r( $error );
+						?>
+					</pre>
+					<?php
+				} elseif ( is_array( $error ) && isset( $error['body'] ) ) {
+					?>
+					<textarea>
+						<?php
+						echo esc_html( $error['body'] );
+						?>
+					</textarea>
+					<?php
+				}
+			}
+			?>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Previous process the Add Friend form. Todo: re-integrate.
 	 *
 	 * @param      Friend_User $friend_user  The Friend user.
@@ -1098,35 +1137,9 @@ class Friends_Admin {
 	 *
 	 * @return     boolean      true when there was no error.
 	 */
-	function process_admin_add_friend_response( $friend_user, $vars ) {
+	public function process_admin_add_friend_response( $friend_user, $vars ) {
 		if ( is_wp_error( $friend_user ) ) {
-			?>
-			<div id="message" class="updated error is-dismissible"><p><?php echo esc_html( $friend_user->get_error_message() ); ?></p>
-				<?php
-				$error_data = $friend_user->get_error_data();
-				if ( isset( $error_data->error ) ) {
-					$error = unserialize( $error_data->error );
-					if ( is_wp_error( $error ) ) {
-						?>
-						<pre>
-							<?php
-							print_r( $error );
-							?>
-						</pre>
-						<?php
-					} elseif ( is_array( $error ) && isset( $error['body'] ) ) {
-						?>
-						<textarea>
-							<?php
-							echo esc_html( $error['body'] );
-							?>
-						</textarea>
-						<?php
-					}
-				}
-				?>
-			</div>
-			<?php
+			$this->display_errors( $friend_user );
 			return false;
 		}
 
@@ -1173,6 +1186,10 @@ class Friends_Admin {
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 
 		$friend_user->retrieve_posts();
+
+		if ( isset( $vars['errors'] ) ) {
+			$this->display_errors( $vars['errors'] );
+		}
 
 		$friend_link = '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->display_name ) . '</a>';
 		if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
@@ -1272,6 +1289,9 @@ class Friends_Admin {
 				$friend_user = false;
 				if ( isset( $vars['friendship'] ) ) {
 					$friend_user = $this->send_friend_request( $vars['friendship'], $friend_user_login, $friend_url, $friend_display_name, $codeword, $message );
+					if ( $friend_user->has_errors() ) {
+						$vars['errors'] = $friend_user;
+					}
 				}
 
 				if ( ! $friend_user || is_wp_error( $friend_user ) ) {
@@ -1279,6 +1299,12 @@ class Friends_Admin {
 				}
 
 				return $this->process_admin_add_friend_response( $friend_user, $vars );
+			}
+
+			if ( isset( $vars['friendship'] ) ) {
+				$rest_url = $vars['friendship'];
+			} else {
+				$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
 			}
 		} else {
 			$protocol = wp_parse_url( $friend_url, PHP_URL_SCHEME );
@@ -1351,6 +1377,8 @@ class Friends_Admin {
 				'friend_display_name' => $friend_display_name,
 				'friend_roles'        => $this->get_friend_roles(),
 				'default_role'        => get_option( 'friends_default_friend_role', 'friend' ),
+				'codeword'            => $codeword,
+				'message'             => $message,
 				'post_formats'        => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
 				'registered_parsers'  => $this->friends->feed->get_registered_parsers(),
 				'feeds'               => $feeds,

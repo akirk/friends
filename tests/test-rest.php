@@ -35,6 +35,19 @@ class Friends_RestTest extends WP_UnitTestCase {
 			}
 		);
 
+		add_filter(
+			'friends_host_is_valid',
+			function( $return, $host ) {
+				if ( 'me.local' === $host || 'friend.local' === $host || 'example.org' === $host ) {
+					// Hosts used for test cases.
+					return $host;
+				}
+				return $return;
+			},
+			10,
+			2
+		);
+
 		// Emulate HTTP requests to the REST API.
 		add_filter(
 			'pre_http_request',

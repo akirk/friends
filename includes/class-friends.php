@@ -911,9 +911,10 @@ class Friends {
 	 */
 	public static function check_url( $url ) {
 		$host = parse_url( $url, PHP_URL_HOST );
-		if ( 'me.local' === $host || 'friend.local' === $host || 'example.org' === $host ) {
-			// Hosts used for test cases.
-			return $url;
+
+		$check_url = apply_filters( 'friends_host_is_valid', null, $host );
+		if ( ! is_null( $check_url ) ) {
+			return $check_url;
 		}
 
 		return wp_http_validate_url( $url );
