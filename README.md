@@ -86,6 +86,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 1.8.4
+- Fixes for a PHP fatal and some notices
+
 ### 1.8.3
 - Improve default feed selection when adding a friend
 - Fix improper plugin directory when a friends plugin installed from Github
