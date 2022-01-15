@@ -97,7 +97,7 @@ function fetch($url, $convertClassic = true, &$curlInfo=null) {
  * @return string
  */
 function unicodeToHtmlEntities($input) {
-	return mb_convert_encoding($input, 'HTML-ENTITIES', mb_detect_encoding($input));
+	return \mb_convert_encoding($input, 'HTML-ENTITIES', \mb_detect_encoding($input));
 }
 
 /**
@@ -116,7 +116,7 @@ function collapseWhitespace($str) {
 
 function unicodeTrim($str) {
 	// this is cheating. TODO: find a better way if this causes any problems
-	$str = str_replace(mb_convert_encoding('&nbsp;', 'UTF-8', 'HTML-ENTITIES'), ' ', $str);
+	$str = str_replace(\mb_convert_encoding('&nbsp;', 'UTF-8', 'HTML-ENTITIES'), ' ', $str);
 	$str = preg_replace('/^\s+/', '', $str);
 	return preg_replace('/\s+$/', '', $str);
 }
@@ -165,8 +165,8 @@ function nestedMfPropertyNamesFromClass($class) {
 	foreach (explode(' ', $class) as $classname) {
 		foreach ($prefixes as $prefix) {
 			// Check if $classname is a valid property classname for $prefix.
-			if (mb_substr($classname, 0, mb_strlen($prefix)) == $prefix && $classname != $prefix) {
-				$propertyName = mb_substr($classname, mb_strlen($prefix));
+			if (\mb_substr($classname, 0, \mb_strlen($prefix)) == $prefix && $classname != $prefix) {
+				$propertyName = \mb_substr($classname, \mb_strlen($prefix));
 				$propertyNames[$propertyName][] = $prefix;
 			}
 		}
