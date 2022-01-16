@@ -56,14 +56,18 @@ class Friend_User extends WP_User {
 			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
-		$friend_user = self::get_user( $user_login );
-		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
-			if ( is_multisite() ) {
-				$current_site = get_current_site();
-				if ( ! is_user_member_of_blog( $friend_user->ID, $current_site->ID ) ) {
-					add_user_to_blog( $current_site->ID, $friend_user->ID, $role );
+		if ( is_multisite() ) {
+			$user = get_user_by( 'login', $user_login );
+			if ( $user && ! self::is_friends_plugin_user( $user ) ) {
+				$current_blog_id = get_current_blog_id();
+				if ( ! is_user_member_of_blog( $user->ID, $current_blog_id ) ) {
+					add_user_to_blog( $current_blog_id, $user->ID, $role );
 				}
 			}
+		}
+
+		$friend_user = self::get_user( $user_login );
+		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 
 			foreach ( $role_rank as $_role => $rank ) {
 				if ( $rank > $role_rank[ $role ] ) {

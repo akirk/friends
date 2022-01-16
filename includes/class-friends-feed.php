@@ -655,10 +655,11 @@ class Friends_Feed {
 			)
 		);
 
+		if ( is_wp_error( $response ) ) {
+			return array();
+		}
+
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-			if ( is_wp_error( $response ) ) {
-				return array();
-			}
 			$content = wp_remote_retrieve_body( $response );
 			$headers = wp_remote_retrieve_headers( $response );
 

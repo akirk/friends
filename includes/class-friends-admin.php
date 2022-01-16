@@ -374,7 +374,7 @@ class Friends_Admin {
 		}
 
 		if ( ! $json || ! is_object( $json ) ) {
-			return new WP_Error( 'unexpected-rest-response', 'Unexpected remote response.', $response );
+			return new WP_Error( 'unexpected-rest-response', 'Unexpected remote response: ' . substr( wp_remote_retrieve_body( $response ), 0, 30 ), $response );
 		}
 
 		$friend_user = Friend_User::create( $user_login, 'pending_friend_request', $user_url, $display_name );
@@ -1278,7 +1278,7 @@ class Friends_Admin {
 			$friend_display_name = sanitize_text_field( $vars['display_name'] );
 			if ( ! $friend_user_login ) {
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is invalid because it uses illegal characters. Please enter a valid username.' ) );
-			} elseif ( username_exists( $friend_user_login ) ) {
+			} elseif ( ! is_multisite() && username_exists( $friend_user_login ) ) {
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is already registered. Please choose another one.' ) );
 			} elseif ( empty( $vars['subscribe'] ) && empty( $vars['friendship'] ) ) {
 				$errors->add( 'no_action', __( '<strong>Error</strong>: Nothing to subscribe selected.' ) );
