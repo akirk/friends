@@ -86,6 +86,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 1.8.5
+- Multisite: fix adding user to site instead of requiring a new username
+
 ### 1.8.4
 - Fixes for a PHP fatal and some notices
 
