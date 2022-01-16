@@ -13,15 +13,26 @@
 __( 'Friends Send to E-Reader', 'friends' );
 // Description of the Friends Send to E-Reader plugin.
 __( 'Send friend posts to your e-reader.', 'friends' );
+__( 'E-Reader E-Mail address', 'friends' );
+__( 'Connect account (broken)', 'friends' );
+// translators: %s is a the name of a Tolino vendor.
+__( 'Connected to %s', 'friends' );
+__( 'Select your Tolino seller', 'friends' );
+__( 'Send to E-Reader', 'friends' );
+__( 'Friends', 'friends' );
+__( 'About', 'friends' );
+__( 'E-Reader', 'friends' );
+// translators: %s is an E-Reader name.
+_x( 'Send to %s', 'e-reader', 'friends' );
 __( 'Save Changes', 'friends' );
 __( 'Your E-Readers', 'friends' );
+__( 'E-Reader Type', 'friends' );
 __( 'Name', 'friends' );
 __( 'E-Mail address', 'friends' );
 __( 'E-Reader Name', 'friends' );
-__( 'E-Reader E-Mail address', 'friends' );
 // translators: %1$s is the button named "delete", %2$s is the user given name of an e-reader.
 __( 'Click %1$s to really delete the reader %2$s.', 'friends' );
-__( 'E-Reader', 'friends' );
+__( 'Select your E-Reader', 'friends' );
 __( 'Add another E-Reader', 'friends' );
 __( 'Some E-Readers offer wireless delivery via an e-mail address which you\'ll first need to create.', 'friends' );
 // translators: %1$s and %2$s are URLs.
@@ -38,8 +49,3 @@ __( 'Send to new posts to E-Reader', 'friends' );
 __( 'Don\'t send a notification', 'friends' );
 // translators: %s is an URL.
 __( 'You have not yet entered any e-readers. Go to the <a href=%s>Send to E-Reader settings</a> to add one.', 'friends' );
-// translators: %s is an E-Reader name.
-_x( 'Send to %s', 'e-reader', 'friends' );
-__( 'Send to E-Reader', 'friends' );
-__( 'Friends', 'friends' );
-__( 'About', 'friends' );
