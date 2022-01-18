@@ -271,6 +271,25 @@ $has_last_log = false;
 				</td>
 			</tr>
 			<tr>
+				<th scope="row"><?php esc_html_e( 'Keyword Notification', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="friends_keyword_notification">
+							<input name="friends_keyword_notification" type="checkbox" id="friends_keyword_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_keyword_notification_' . $args['friend']->ID ) ); ?> />
+							<?php
+							echo wp_kses_post(
+								sprintf(
+									// translators: %s is a URL.
+									__( 'Send me an e-mail for posts of this friend if matches one of <a href="%s">my keywords</a>', 'friends' ),
+									esc_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) )
+								)
+							);
+							?>
+						</label>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row"><?php esc_html_e( 'Rules', 'friends' ); ?></th>
 				<td><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend']->ID ) ); ?>">
 					<?php

@@ -39,6 +39,7 @@ class Friends_Notifications {
 	private function register_hooks() {
 		add_action( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ) );
+		add_filter( 'notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
@@ -55,9 +56,9 @@ class Friends_Notifications {
 	}
 
 	/**
-	 * Notify the users of this site about a new friend request
+	 * Notify the users of this site about a new friend post
 	 *
-	 * @param  WP_Post $post The new post by a friend.
+	 * @param  WP_Post $post The new post by a friend or subscription.
 	 */
 	public function notify_new_friend_post( WP_Post $post ) {
 		if ( 'trash' === $post->post_status ) {
@@ -102,6 +103,63 @@ class Friends_Notifications {
 
 			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
 		}
+	}
+
+	/**
+	 * Notifies about a post that matched the keyword.
+	 *
+	 * @param      bool    $notified  Whether a notification was sent.
+	 * @param      WP_Post $post      The new post by a friend or subscription.
+	 * @param      string  $keyword   The matched keyword.
+	 */
+	public function notify_keyword_match_post( $notified, WP_Post $post, $keyword ) {
+		if ( 'trash' === $post->post_status ) {
+			return $notified;
+		}
+
+		$users = Friend_User_Query::all_admin_users();
+		$users = $users->get_results();
+
+		foreach ( $users as $user ) {
+			if ( ! $user->user_email ) {
+				continue;
+			}
+			$notify_user = ! get_user_option( 'friends_no_keyword_notification_' . $post->post_author, $user->ID );
+
+			if ( ! apply_filters( 'notify_user_about_keyword_post', $notify_user, $user, $post, $keyword ) ) {
+				continue;
+			}
+
+			$notified = true;
+
+			$author = new Friend_User( $post->post_author );
+			// translators: %s is a keyword string specified by the user.
+			$email_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
+
+			$params = array(
+				'author'  => $author,
+				'post'    => $post,
+				'keyword' => $keyword,
+			);
+
+			$email_message = array();
+			ob_start();
+			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+			Friends::template_loader()->get_template_part( 'email/keyword-match-post', null, $params );
+			Friends::template_loader()->get_template_part( 'email/footer' );
+			$email_message['html'] = ob_get_contents();
+			ob_end_clean();
+
+			ob_start();
+			Friends::template_loader()->get_template_part( 'email/keyword-match-post.text', null, $params );
+			Friends::template_loader()->get_template_part( 'email/footer.text' );
+			$email_message['text'] = ob_get_contents();
+			ob_end_clean();
+
+			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
+		}
+
+		return $notified;
 	}
 
 	/**

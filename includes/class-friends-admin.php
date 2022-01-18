@@ -516,6 +516,19 @@ class Friends_Admin {
 			delete_option( 'friends_selected_emojis' );
 		}
 
+		if ( isset( $_POST['notification_keywords'] ) && $_POST['notification_keywords'] ) {
+			$keywords = array();
+			foreach ( $_POST['notification_keywords'] as $i => $keyword ) {
+				if ( trim( $keyword ) ) {
+					$keywords[] = array(
+						'enabled' => isset( $_POST['notification_keywords_enabled'][ $i ] ) && $_POST['notification_keywords_enabled'][ $i ],
+						'keyword' => $keyword,
+					);
+				}
+			}
+			update_option( 'friends_notification_keywords', $keywords );
+		}
+
 		if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'acquaintance' ), true ) ) {
 			update_option( 'friends_default_friend_role', $_POST['default_role'] );
 		}
@@ -584,6 +597,8 @@ class Friends_Admin {
 		remove_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
 		restore_previous_locale();
 
+		$keywords = get_option( 'friends_notification_keywords', false );
+
 		Friends::template_loader()->get_template_part(
 			'admin/settings',
 			null,
@@ -607,6 +622,7 @@ class Friends_Admin {
 				'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message', $wrong_codeword_message ),
 				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
 				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
+				'notification_keywords'          => Friends_Feed::get_all_notification_keywords(),
 			)
 		);
 	}
@@ -936,6 +952,14 @@ class Friends_Admin {
 					delete_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID );
 				} else {
 					update_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID, 1 );
+				}
+			}
+
+			if ( ! get_user_option( 'friends_no_keyword_notification' ) ) {
+				if ( isset( $_POST['friends_keyword_notification'] ) && $_POST['friends_keyword_notification'] ) {
+					delete_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID );
+				} else {
+					update_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID, 1 );
 				}
 			}
 
@@ -1597,6 +1621,11 @@ class Friends_Admin {
 			if ( get_user_option( 'friends_no_new_post_notification_' . $friend_id ) !== $no_new_post_notification ) {
 				update_user_option( $current_user_id, 'friends_no_new_post_notification_' . $friend_id, $no_new_post_notification );
 			}
+
+			$no_keyword_notification = ! isset( $_POST['keyword_notification'][ $friend_id ] );
+			if ( get_user_option( 'friends_no_keyword_notification_' . $friend_id ) !== $no_keyword_notification ) {
+				update_user_option( $current_user_id, 'friends_no_keyword_notification_' . $friend_id, $no_keyword_notification );
+			}
 		}
 
 		update_user_option( $current_user_id, 'friends_hide_from_friends_page', $hide_from_friends_page );
@@ -1645,6 +1674,7 @@ class Friends_Admin {
 				'friends_settings_url'     => add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 				'hide_from_friends_page'   => $hide_from_friends_page,
 				'no_new_post_notification' => get_user_option( 'friends_no_new_post_notification' ),
+				'active_keywords'          => Friends_Feed::get_active_notification_keywords(),
 			)
 		);
 	}

@@ -188,7 +188,7 @@ class Friends_Feed {
 		}
 
 		$new_posts = $this->process_incoming_feed_items( $items, $user_feed );
-		$this->notify_about_new_friend_posts( $friend_user, $new_posts );
+		$this->notify_about_new_posts( $friend_user, $new_posts );
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
 		return $new_posts;
@@ -200,11 +200,40 @@ class Friends_Feed {
 	 * @param      Friend_User $friend_user  The friend.
 	 * @param      array       $new_posts    The new posts of this friend.
 	 */
-	public function notify_about_new_friend_posts( Friend_User $friend_user, $new_posts ) {
+	public function notify_about_new_posts( Friend_User $friend_user, $new_posts ) {
+		$keywords = self::get_active_notification_keywords();
 		foreach ( $new_posts as $post_id ) {
+			$post = false;
+
+			$keyword_match = false;
+			if ( $keywords ) {
+				$post = get_post( intval( $post_id ) );
+				$fulltext = '';
+				foreach ( apply_filters( 'friends_keyword_search_fields', array( 'post_title', 'post_content' ) ) as $field ) {
+					$fulltext .= PHP_EOL . $post->$field;
+				}
+				$fulltext = strip_tags( $fulltext );
+				foreach ( $keywords as $keyword ) {
+					if ( preg_match( '/' . str_replace( '/', '\\/', $keyword ) . '/ius', $fulltext ) ) {
+						$keyword_match = $keyword;
+						break;
+					}
+				}
+
+				if ( $keyword_match ) {
+					$notified = apply_filters( 'notify_keyword_match_post', false, $post, $keyword_match );
+					if ( $notified ) {
+						continue;
+					}
+				}
+			}
+
 			$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
 			if ( $notify_users ) {
-				do_action( 'notify_new_friend_post', get_post( intval( $post_id ) ) );
+				if ( ! $post ) {
+					$post = get_post( intval( $post_id ) );
+				}
+				do_action( 'notify_new_friend_post', $post );
 			}
 		}
 	}
@@ -409,6 +438,42 @@ class Friends_Feed {
 		}
 
 		return $catch_all;
+	}
+
+	/**
+	 * Gets the notification keywords.
+	 *
+	 * @return     array  The notification keywords.
+	 */
+	public static function get_active_notification_keywords() {
+		static $active_keywords;
+		if ( ! isset( $active_keywords ) ) {
+			$active_keywords = array();
+			foreach ( self::get_all_notification_keywords() as $entry ) {
+				if ( $entry['enabled'] ) {
+					$active_keywords[] = $entry['keyword'];
+				}
+			}
+		}
+		return $active_keywords;
+	}
+
+	/**
+	 * Gets all notification keywords.
+	 *
+	 * @return     array  All notification keywords.
+	 */
+	public static function get_all_notification_keywords() {
+		$keywords = get_option( 'friends_notification_keywords', false );
+		if ( false === $keywords ) {
+			// Default keywords.
+			$keywords = array();
+			$keywords[] = array(
+				'enabled' => false,
+				'keyword' => trim( preg_replace( '#^https?:#', '', home_url() ), '/' ),
+			);
+		}
+		return $keywords;
 	}
 
 	/**
