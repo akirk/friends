@@ -1868,8 +1868,7 @@ class Friends_Admin {
 		if ( get_user_option( 'friends_unobtrusive_badge' ) ) {
 			return ' (' . $unread_count . ')';
 		}
-
-		$unread_badge = ' <div class="wp-core-ui wp-ui-notification friends-open-requests" style="display: inline; font-size: 90%; padding: .1em .5em .1em .4em; border-radius: 50%;background-color: #d54e21; color: #fff;"><span aria-hidden="true">' . $unread_count . '</span><span class="screen-reader-text">';
+		$unread_badge = ' <div class="wp-core-ui wp-ui-notification friends-open-requests" style="display: inline; font-size: 11px; padding: .1em .5em .1em .4em; border-radius: 9px; background-color: #d63638; color: #fff; text-align: center; height: 18px"><span aria-hidden="true">' . $unread_count . '</span><span class="screen-reader-text">';
 		// translators: %s is the number of unread items.
 		$unread_badge .= sprintf( _n( '%s unread item', '%s unread items', $unread_count, 'friends' ), $unread_count );
 		$unread_badge .= '</span></div>';
