@@ -446,15 +446,13 @@ class Friends_Feed {
 	 * @return     array  The notification keywords.
 	 */
 	public static function get_active_notification_keywords() {
-		static $active_keywords;
-		if ( ! isset( $active_keywords ) ) {
-			$active_keywords = array();
-			foreach ( self::get_all_notification_keywords() as $entry ) {
-				if ( $entry['enabled'] ) {
-					$active_keywords[] = $entry['keyword'];
-				}
+		$active_keywords = array();
+		foreach ( self::get_all_notification_keywords() as $entry ) {
+			if ( $entry['enabled'] ) {
+				$active_keywords[] = $entry['keyword'];
 			}
 		}
+
 		return $active_keywords;
 	}
 
