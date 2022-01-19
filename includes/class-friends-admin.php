@@ -45,6 +45,7 @@ class Friends_Admin {
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'manage_users_columns', array( $this, 'user_list_columns' ) );
 		add_filter( 'manage_users_custom_column', array( $this, 'user_list_custom_column' ), 10, 3 );
+		add_filter( 'the_title', array( $this, 'override_post_format_title' ), 10, 2 );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_new_content' ), 71 );
@@ -1850,6 +1851,26 @@ class Friends_Admin {
 				number_format_i18n( $numposts )
 			)
 		);
+	}
+
+	/**
+	 * Override the post title for specific post formats.
+	 *
+	 * @param      string $title    The title.
+	 * @param      int    $post_id  The post id.
+	 *
+	 * @return     string  The potentially overriden title.
+	 */
+	public function override_post_format_title( $title, $post_id = null ) {
+		if ( empty( $title ) && is_admin() ) {
+			$screen = get_current_screen();
+			if ( $screen && 'edit-post' === $screen->id ) {
+				if ( 'status' === get_post_format() ) {
+					return get_the_excerpt();
+				}
+			}
+		}
+		return $title;
 	}
 
 	/**
