@@ -36,6 +36,7 @@ require_once __DIR__ . '/feed-parsers/class-friends-feed-item.php';
 
 require_once __DIR__ . '/includes/class-friends-access-control.php';
 require_once __DIR__ . '/includes/class-friends-admin.php';
+require_once __DIR__ . '/includes/class-friends-automatic-status.php';
 require_once __DIR__ . '/includes/class-friends-blocks.php';
 require_once __DIR__ . '/includes/class-friends-feed.php';
 require_once __DIR__ . '/includes/class-friends-frontend.php';
