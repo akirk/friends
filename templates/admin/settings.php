@@ -124,7 +124,33 @@ do_action( 'friends_settings_before_form' );
 							<?php esc_html_e( 'New Posts', 'friends' ); ?>
 						</label>
 					</fieldset>
-				<p class="description"><?php esc_html_e( 'You can also change this setting for each friend separately.', 'friends' ); ?></p>
+					<p class="description"><?php esc_html_e( 'You can also change this setting for each friend separately.', 'friends' ); ?></p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row">
+				<?php
+				esc_html_e( 'Keyword Notifications', 'friends' );
+				?>
+				</th>
+				<td>
+					<fieldset>
+
+						<ol id="keyword-notifications">
+							<li id="keyword-template" style="display: none">
+								<input type="checkbox" name="notification_keywords_enabled[0]" value="1" checked />
+								<input type="text" name="notification_keywords[0]" value="" placeholder="<?php esc_html_e( 'Keyword (regex allowed)', 'friends' ); ?>">
+							</li>
+						<?php foreach ( $args['notification_keywords'] as $i => $entry ) : ?>
+							<li>
+								<input type="checkbox" name="notification_keywords_enabled[<?php echo esc_attr( $i + 1 ); ?>]" value="1" <?php checked( $entry['enabled'] ); ?> />
+								<input type="text" name="notification_keywords[<?php echo esc_attr( $i + 1 ); ?>]" value="<?php echo esc_attr( $entry['keyword'] ); ?>" placeholder="<?php esc_html_e( 'Keyword (regex allowed)', 'friends' ); ?>">
+							</li>
+						<?php endforeach; ?>
+						</ol>
+						<a href="" id="admin-add-keyword"><?php esc_html_e( 'Add a notification keyword', 'friends' ); ?></a>
+					</fieldset>
+					<p class="description"><?php esc_html_e( 'Empty keywords will be deleted after saving. You can temporarily disable them with the checkbox.', 'friends' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -240,7 +266,7 @@ do_action( 'friends_settings_before_form' );
 						}
 						?>
 						</ol>
-						<a href="" id="admin-add-emoji"><?php esc_html_e( 'Add an emoji' ); ?></a>
+						<a href="" id="admin-add-emoji"><?php esc_html_e( 'Add an emoji', 'friends' ); ?></a>
 						<?php Friends::template_loader()->get_template_part( 'admin/reactions-picker' ); ?>
 					</fieldset>
 				</td>

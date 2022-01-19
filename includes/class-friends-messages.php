@@ -431,7 +431,6 @@ class Friends_Messages {
 		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
 			return new WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
 		}
-		var_dump( $message );
 		if ( ! trim( $message ) ) {
 			return new WP_Error( 'empty-message', __( 'You cannot send empty messages.', 'friends' ) );
 		}
