@@ -354,15 +354,16 @@ class Friends_REST {
 
 		return null;
 	}
-		/**
-		 * Notify the friend's site via REST about the accepted friend request.
-		 *
-		 * Accepting a friend request is simply setting the role to "friend".
-		 *
-		 * @param  int    $user_id   The user id.
-		 * @param  string $new_role  The new role.
-		 * @param  string $old_roles The old roles.
-		 */
+
+	/**
+	 * Notify the friend's site via REST about the accepted friend request.
+	 *
+	 * Accepting a friend request is simply setting the role to "friend".
+	 *
+	 * @param  int    $user_id   The user id.
+	 * @param  string $new_role  The new role.
+	 * @param  string $old_roles The old roles.
+	 */
 	public function notify_remote_friend_request_accepted( $user_id, $new_role, $old_roles ) {
 		if ( 'friend' !== $new_role && 'acquaintance' !== $new_role ) {
 			return;

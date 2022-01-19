@@ -38,6 +38,8 @@ class Friends_Automatic_Status {
 	 */
 	private function register_hooks() {
 		add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
+		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 3 );
+		add_action( 'set', array( $this, 'new_friend_user' ), 10, 2 );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		add_filter( 'handle_bulk_actions-edit-post', array( $this, 'bulk_publish' ), 10, 3 );
 	}
@@ -178,14 +180,24 @@ class Friends_Automatic_Status {
 	 * @return     int|WP_Error  The post ID or a WP_Error.
 	 */
 	private function add_status( $text ) {
-		return wp_insert_post(
+		$user_id = get_current_user_id();
+		if ( ! $user_id ) {
+			$user_id = Friends::get_main_friend_user_id();
+		}
+
+		$new_post_id = wp_insert_post(
 			array(
 				'post_type'    => 'post',
 				'post_status'  => 'draft',
+				'post_author'  => $user_id,
 				'tax_input'    => array( 'post_format' => 'post-format-status' ),
 				'post_content' => '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . $text . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->',
 			)
 		);
+		if ( ! is_wp_error( $new_post_id ) ) {
+			wp_set_post_terms( $new_post_id, 'post-format-status', 'post_format' );
+		}
+		return $new_post_id;
 	}
 
 	/**
@@ -203,10 +215,44 @@ class Friends_Automatic_Status {
 		$this->add_status(
 			sprintf(
 				// translators: %1$s is an emoji, %2$s is a linked post title.
-				__( 'I just reacted with %1$s on %2$s' ),
+				__( 'I just reacted with %1$s on %2$s.' ),
 				$emoji,
 				'<a href="' . esc_url( get_permalink( $post ) ) . '">' . esc_html( $title ) . '</a>'
 			)
 		);
+	}
+
+	/**
+	 * Create a status based on a friend user status change.
+	 *
+	 * @param  int    $user_id   The user id.
+	 * @param  string $new_role  The new role.
+	 * @param  string $old_roles The old roles.
+	 */
+	public function new_friend_user( $user_id, $new_role, $old_roles ) {
+		$friend_user = new Friend_User( $user_id );
+		$link = '<a href="' . esc_url( $friend_user->user_url ) . '">' . esc_html( $friend_user->display_name ) . '</a>';
+
+		if ( 'friend' === $new_role || 'acquaintance' === $new_role ) {
+			$this->add_status(
+				sprintf(
+					// translators: %s is a new friend.
+					__( "I'm now friends with %s." ),
+					$link
+				)
+			);
+			return;
+		}
+
+		if ( 'subscription' === $new_role ) {
+			$this->add_status(
+				sprintf(
+					// translators: %s is a new friend.
+					__( "I've just subscribed %s." ),
+					$link
+				)
+			);
+			return;
+		}
 	}
 }
