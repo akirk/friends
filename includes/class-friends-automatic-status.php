@@ -110,7 +110,7 @@ class Friends_Automatic_Status {
 		$post_type = 'post';
 		$post_type_object = get_post_type_object( $post_type );
 
-		$wp_list_table = new Friends_Automatic_Status_List_Table;
+		$wp_list_table = new Friends_Automatic_Status_List_Table();
 		$wp_list_table->prepare_items();
 
 		wp_enqueue_script( 'inline-edit-post' );
@@ -183,7 +183,7 @@ class Friends_Automatic_Status {
 				'post_type'    => 'post',
 				'post_status'  => 'draft',
 				'tax_input'    => array( 'post_format' => 'post-format-status' ),
-				'post_content' => $text,
+				'post_content' => '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . $text . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->',
 			)
 		);
 	}
