@@ -33,7 +33,6 @@ class Friends_Messages {
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
 		$this->register_hooks();
-		new Gutenberg_Everywhere_Friends_Message();
 	}
 
 	/**
