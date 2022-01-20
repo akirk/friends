@@ -89,6 +89,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ### 1.9.0
 - New feature: Keyword Matcher (get a notification if an incoming post contains keywords you can specify)
 - New feature: Automatic status posts (automatically create draft status posts for certain events, they need to be published manually)
+- Disable Gutenberg in messages until Gutenberg-Everywhere has been fixed
 
 ### 1.8.5
 - Multisite: fix adding user to site instead of requiring a new username
