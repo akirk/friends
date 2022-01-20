@@ -192,6 +192,7 @@ class Friends {
 			'supports'            => array( 'title', 'editor', 'author', 'revisions', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
 			'taxonomies'          => array( 'post_tag', 'post_format', 'friend-reaction-' . get_current_user_id() ),
 			'has_archive'         => true,
+			'rewrite'             => false,
 		);
 
 		register_post_type( self::CPT, $args );
@@ -376,6 +377,7 @@ class Friends {
 		}
 
 		self::add_default_sidebars_widgets();
+		flush_rewrite_rules();
 	}
 
 	/**

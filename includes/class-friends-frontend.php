@@ -70,6 +70,7 @@ class Friends_Frontend {
 		add_filter( 'friends_header_widget_title', array( $this, 'header_widget_title' ) );
 		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ) );
 		add_filter( 'template_include', array( $this, 'template_override' ) );
+		add_filter( 'wp_loaded', array( $this, 'add_rewrite_rule' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
 		add_action( 'init', array( $this, 'add_theme_support_title_tag' ) );
 		add_action( 'wp', array( $this, 'add_theme_support_admin_bar' ) );
@@ -86,6 +87,16 @@ class Friends_Frontend {
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
 	}
 
+	/**
+	 * We're asking WordPress to handle the title for us.
+	 */
+	public function add_rewrite_rule() {
+		add_rewrite_rule(
+			'friends/(.*)',
+			'index.php?pagename=friends/$matches[1]',
+			'top'
+		);
+	}
 	/**
 	 * We're asking WordPress to handle the title for us.
 	 */

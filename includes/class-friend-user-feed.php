@@ -268,6 +268,7 @@ class Friend_User_Feed {
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
+			'rewrite'           => false,
 		);
 		register_taxonomy( self::TAXONOMY, 'user', $args );
 		register_taxonomy_for_object_type( self::TAXONOMY, 'user' );

@@ -89,6 +89,7 @@ class Friends_Messages {
 			'supports'            => array( 'title', 'editor', 'author', 'revisions' ),
 			'taxonomies'          => array( 'friend-reaction-' . get_current_user_id() ),
 			'has_archive'         => true,
+			'rewrite'             => false,
 		);
 
 		register_post_type( self::CPT, $args );
