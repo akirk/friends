@@ -1862,7 +1862,7 @@ class Friends_Admin {
 	 * @return     string  The potentially overriden title.
 	 */
 	public function override_post_format_title( $title, $post_id = null ) {
-		if ( empty( $title ) && is_admin() ) {
+		if ( empty( $title ) && is_admin() && function_exists( 'get_current_screen' ) ) {
 			$screen = get_current_screen();
 			if ( $screen && 'edit-post' === $screen->id ) {
 				if ( 'status' === get_post_format() ) {

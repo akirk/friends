@@ -86,6 +86,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 1.9.1
+- Fix a fatal error
+
 ### 1.9.0
 - New feature: Keyword Matcher (get a notification if an incoming post contains keywords you can specify)
 - New feature: Automatic status posts (automatically create draft status posts for certain events, they need to be published manually)
