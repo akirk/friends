@@ -559,7 +559,16 @@ class Friends_Feed {
 
 			if ( ! is_null( $post_id ) ) {
 				$post_data['ID'] = $post_id;
-				wp_update_post( $post_data );
+				$was_modified_by_user = false;
+				foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
+					if ( intval( $revision->post_author ) ) {
+						$was_modified_by_user = true;
+						break;
+					}
+				}
+				if ( ! $was_modified_by_user ) {
+					wp_update_post( $post_data );
+				}
 			} else {
 				$post_data['post_author']   = $friend_user->ID;
 				$post_data['post_type']     = Friends::CPT;
