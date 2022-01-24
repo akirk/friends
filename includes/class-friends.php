@@ -353,7 +353,7 @@ class Friends {
 	 *
 	 * @param      bool $network_wide  Whether the plugin has been activated network-wide.
 	 */
-	public static function activate_plugin( $network_wide ) {
+	public static function activate_plugin( $network_wide = null ) {
 		if ( function_exists( 'is_multisite' ) && is_multisite() ) {
 			if ( $network_wide ) {
 				if ( ! is_super_admin() ) {
