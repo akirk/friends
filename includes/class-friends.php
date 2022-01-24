@@ -350,8 +350,35 @@ class Friends {
 
 	/**
 	 * Actions to take upon plugin activation.
+	 *
+	 * @param      bool $network_wide  Whether the plugin has been activated network-wide.
 	 */
-	public static function activate_plugin() {
+	public static function activate_plugin( $network_wide ) {
+		if ( function_exists( 'is_multisite' ) && is_multisite() ) {
+			if ( $network_wide ) {
+				if ( ! is_super_admin() ) {
+					return;
+				}
+				foreach ( get_sites() as $blog ) {
+					switch_to_blog( $blog->blog_id );
+					self::activate_for_blog();
+					restore_current_blog();
+				}
+			} else {
+				if ( ! current_user_can( 'activate_plugins' ) ) {
+					return;
+				}
+				self::activate_for_blog();
+			}
+		} else {
+			self::activate_for_blog();
+		}
+	}
+
+	/**
+	 * Actions to take upon plugin activation.
+	 */
+	public static function activate_for_blog() {
 		self::setup_roles();
 		self::create_friends_page();
 
