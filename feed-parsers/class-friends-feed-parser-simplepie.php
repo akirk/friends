@@ -157,11 +157,10 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 
 		$feed->set_raw_data( $content );
 
-		$feed->init();
-
 		$feed->set_output_encoding( get_option( 'blog_charset' ) );
 
 		$feed->init();
+
 		if ( $feed->error() ) {
 			return array();
 		}

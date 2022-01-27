@@ -60,6 +60,9 @@ class Friends_Admin {
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
+		add_filter( 'site_status_tests', array( $this, 'site_status_tests' ) );
+		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
+		add_filter( 'debug_information', array( $this, 'site_health_debug' ) );
 
 		if ( ! get_option( 'permalink_structure' ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
@@ -82,10 +85,10 @@ class Friends_Admin {
 		<div class="friends-notice notice notice-error">
 			<p style="max-width:800px;"><b><?php esc_html_e( 'Friends', 'friends' ); ?></b><?php esc_html_e( '&#151; You are running an unsupported permalink structure.', 'friends' ); ?></p>
 			<p style="max-width:800px;">
-			<?php
-			// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
-			echo wp_kses_post( sprintf( __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' ), admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) ) );
-			?>
+				<?php
+				// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
+				echo wp_kses_post( sprintf( __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' ), admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) ) );
+				?>
 			</p>
 		</div>
 		<?php
@@ -115,7 +118,7 @@ class Friends_Admin {
 		}
 
 		?>
-			<div id="friends-welcome-panel" class="welcome-panel notice">
+		<div id="friends-welcome-panel" class="welcome-panel notice">
 			<?php wp_nonce_field( 'friends-welcome-panel-nonce', 'friendswelcomepanelnonce', false ); ?>
 			<a class="welcome-panel-close" href="<?php echo esc_url( admin_url( '?friends-welcome=0' ) ); ?>" aria-label="<?php esc_attr_e( 'Dismiss the welcome panel' ); ?>"><?php esc_html_e( 'Dismiss' ); ?></a>
 			<div class="welcome-panel-content">
@@ -123,23 +126,23 @@ class Friends_Admin {
 				<p><?php esc_html_e( "You're seeing this message because you haven't connected with friends or made any subscriptions yet. Here is how to get started:", 'friends' ); ?></p>
 
 				<p>
-				<?php
-				esc_html_e( 'The Friends plugin is all about connecting with friends and news.', 'friends' );
-				echo ' ';
-				// translators: 1: URL to add-friend, 2: the name of the Send Friend Request page.
-				echo wp_kses( sprintf( __( "First, you'll want to go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website or blog you'd like to subscribe to.", 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', __( 'Send Friend Request', 'friends' ) ), array( 'a' => array( 'href' => array() ) ) );
-				echo ' ';
-				// translators: %s is the URL of the user's friends page.
-				echo wp_kses( sprintf( __( "As soon as you have done this, you'll be able see all the compiled posts of your friends (and subscriptions) on your <a href=%s>Friends page</a>.", 'friends' ), home_url( '/friends/' ) ), array( 'a' => array( 'href' => array() ) ) );
-				?>
+					<?php
+					esc_html_e( 'The Friends plugin is all about connecting with friends and news.', 'friends' );
+					echo ' ';
+					// translators: 1: URL to add-friend, 2: the name of the Send Friend Request page.
+					echo wp_kses( sprintf( __( "First, you'll want to go to <a href=%1\$s>%2\$s</a> and add a new friend or enter the URL of a website or blog you'd like to subscribe to.", 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', __( 'Send Friend Request', 'friends' ) ), array( 'a' => array( 'href' => array() ) ) );
+					echo ' ';
+					// translators: %s is the URL of the user's friends page.
+					echo wp_kses( sprintf( __( "As soon as you have done this, you'll be able see all the compiled posts of your friends (and subscriptions) on your <a href=%s>Friends page</a>.", 'friends' ), home_url( '/friends/' ) ), array( 'a' => array( 'href' => array() ) ) );
+					?>
 				</p>
 
 				<p>
-				<?php
-				esc_html_e( 'Furthermore, your friends will be able to see your private posts. This means you can submit posts on your own blog that only they will be able to see and vica versa.', 'friends' );
-				echo ' ';
-				esc_html_e( 'This allows building your own decentralized social network, no third party involved.', 'friends' );
-				?>
+					<?php
+					esc_html_e( 'Furthermore, your friends will be able to see your private posts. This means you can submit posts on your own blog that only they will be able to see and vica versa.', 'friends' );
+					echo ' ';
+					esc_html_e( 'This allows building your own decentralized social network, no third party involved.', 'friends' );
+					?>
 				</p>
 			</div>
 		</div>
@@ -213,9 +216,18 @@ class Friends_Admin {
 					array(
 						'id'      => 'overview',
 						'title'   => __( 'Overview' ),
-						'content' => '<p>' . __( 'Welcome to the Friends Settings! You can configure the Friends plugin here to your liking.', 'friends' ) . '</p>' .
+						'content' =>
+							'<p>' .
+							__( 'Welcome to the Friends Settings! You can configure the Friends plugin here to your liking.', 'friends' ) .
+							'</p>' .
+							'<p>' .
+							sprintf(
 								// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
-						'<p>' . sprintf( __( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ), '"' . esc_attr( self_admin_url( 'users.php' ) ) . '"', __( 'Friends &amp; Requests', 'friends' ) ) . '</p>',
+								__( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ),
+								'"' . esc_attr( self_admin_url( 'users.php' ) ) . '"',
+								__( 'Friends &amp; Requests', 'friends' )
+							) .
+							'</p>',
 					)
 				);
 				break;
@@ -228,16 +240,6 @@ class Friends_Admin {
 					)
 				);
 				break;
-			default:
-				if ( strpos( $screen->id, 'friends' ) && apply_filters( 'friends_debug', false ) ) {
-					$screen->add_help_tab(
-						array(
-							'id'      => 'friends_' . $screen->id,
-							'title'   => $screen->id,
-							'content' => '<p>' . $screen->id . '</p>',
-						)
-					);
-				}
 		}
 	}
 
@@ -1424,10 +1426,10 @@ class Friends_Admin {
 
 			?>
 			<h1>
-			<?php
-			// translators: %s is a URL.
-			echo esc_html( sprintf( __( 'Preview for %s', 'friends' ), $url ) );
-			?>
+				<?php
+				// translators: %s is a URL.
+				echo esc_html( sprintf( __( 'Preview for %s', 'friends' ), $url ) );
+				?>
 			</h1>
 			<?php
 
@@ -1481,36 +1483,36 @@ class Friends_Admin {
 			?>
 
 			<ul>
-			<?php
-			foreach ( $items as $item ) {
-				$title = $item->title;
-				if ( 'status' === $item->post_format ) {
-					$title = $item->content;
+				<?php
+				foreach ( $items as $item ) {
+					$title = $item->title;
+					if ( 'status' === $item->post_format ) {
+						$title = $item->content;
+					}
+					?>
+					<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):
+						<?php if ( $title ) : ?>
+							<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a>
+							<?php else : ?>
+								<p>
+									<?php
+									echo wp_kses(
+										wp_trim_excerpt( $item->content ),
+										array(
+											'a'   => array( 'href' => array() ),
+											'img' => array( 'src' => array() ),
+										)
+									);
+									?>
+								</p>
+							<?php endif; ?>
+						</li>
+						<?php
 				}
 				?>
-				<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):
-					<?php if ( $title ) : ?>
-						<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a>
-					<?php else : ?>
-						<p>
-						<?php
-						echo wp_kses(
-							wp_trim_excerpt( $item->content ),
-							array(
-								'a'   => array( 'href' => array() ),
-								'img' => array( 'src' => array() ),
-							)
-						);
-						?>
-						</p>
-					<?php endif; ?>
-				</li>
+				</ul>
 				<?php
-			}
-			?>
-			</ul>
-			<?php
-			exit;
+				exit;
 		}
 
 		if ( apply_filters( 'friends_debug', false ) && isset( $_GET['next'] ) ) {
@@ -1528,64 +1530,64 @@ class Friends_Admin {
 		}
 
 		?>
-		<h1><?php esc_html_e( 'Add New Friend', 'friends' ); ?></h1>
-		<?php
-		$response = null;
-		if ( ! empty( $_POST ) ) {
-			if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'add-friend' ) ) {
-				$response = new WP_Error( 'invalid-nonce', __( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' ) );
-			} else {
-				$response = $this->process_admin_add_friend( $_POST );
-			}
-			if ( is_wp_error( $response ) ) {
-				?>
-				<div id="message" class="updated notice is-dismissible"><p>
-				<?php
-				echo wp_kses(
-					$response->get_error_message(),
-					array(
-						'strong' => array(),
-						'a'      => array(
-							'href'   => array(),
-							'rel'    => array(),
-							'target' => array(),
-						),
-					)
-				);
-				?>
+			<h1><?php esc_html_e( 'Add New Friend', 'friends' ); ?></h1>
+			<?php
+			$response = null;
+			if ( ! empty( $_POST ) ) {
+				if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'add-friend' ) ) {
+					$response = new WP_Error( 'invalid-nonce', __( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' ) );
+				} else {
+					$response = $this->process_admin_add_friend( $_POST );
+				}
+				if ( is_wp_error( $response ) ) {
+					?>
+					<div id="message" class="updated notice is-dismissible"><p>
+						<?php
+						echo wp_kses(
+							$response->get_error_message(),
+							array(
+								'strong' => array(),
+								'a'      => array(
+									'href'   => array(),
+									'rel'    => array(),
+									'target' => array(),
+								),
+							)
+						);
+						?>
 					</p>
 				</div>
-				<?php
-			}
-			if ( is_null( $response ) ) {
-				return;
-			}
-		}
-
-		$args = array(
-			'friend_url' => '',
-		);
-		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {
-			$friend_url = isset( $_GET['url'] ) ? $_GET['url'] : $_POST['url'];
-			$parsed_url = parse_url( $friend_url );
-			if ( isset( $parsed_url['host'] ) ) {
-				if ( ! isset( $parsed_url['scheme'] ) ) {
-					$args['friend_url'] = 'https://' . ltrim( $friend_url, '/' );
-				} else {
-					$args['friend_url'] = $friend_url;
+					<?php
+				}
+				if ( is_null( $response ) ) {
+					return;
 				}
 			}
-		}
 
-		Friends::template_loader()->get_template_part( 'admin/add-friend', null, $args );
+			$args = array(
+				'friend_url' => '',
+			);
+			if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {
+				$friend_url = isset( $_GET['url'] ) ? $_GET['url'] : $_POST['url'];
+				$parsed_url = parse_url( $friend_url );
+				if ( isset( $parsed_url['host'] ) ) {
+					if ( ! isset( $parsed_url['scheme'] ) ) {
+						$args['friend_url'] = 'https://' . ltrim( $friend_url, '/' );
+					} else {
+						$args['friend_url'] = $friend_url;
+					}
+				}
+			}
 
-		$friend_requests = new Friend_User_Query(
-			array(
-				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
-				'orderby'  => 'registered',
-				'order'    => 'DESC',
-			)
-		);
+			Friends::template_loader()->get_template_part( 'admin/add-friend', null, $args );
+
+			$friend_requests = new Friend_User_Query(
+				array(
+					'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
+					'orderby'  => 'registered',
+					'order'    => 'DESC',
+				)
+			);
 
 		Friends::template_loader()->get_template_part(
 			'admin/latest-friends',
@@ -2059,16 +2061,16 @@ class Friends_Admin {
 			return;
 		}
 		?>
-<style type="text/css" media="screen">
-@media screen and (max-width: 782px) {
-	#wpadminbar #wp-admin-bar-friends, #wpadminbar #wp-admin-bar-friends .ab-icon {
-		display: block !important;
-	}
-	#wpadminbar #wp-admin-bar-friends .ab-label {
-		display: none !important;
-	}
-}
-</style>
+		<style type="text/css" media="screen">
+			@media screen and (max-width: 782px) {
+				#wpadminbar #wp-admin-bar-friends, #wpadminbar #wp-admin-bar-friends .ab-icon {
+					display: block !important;
+				}
+				#wpadminbar #wp-admin-bar-friends .ab-label {
+					display: none !important;
+				}
+			}
+		</style>
 		<?php
 	}
 
@@ -2181,4 +2183,107 @@ class Friends_Admin {
 		}
 		return $items;
 	}
+
+	public function site_status_tests( $tests ) {
+		$tests['direct']['friends-roles'] = array(
+			'label' => __( 'Friend roles were created', 'friends' ),
+			'test'  => array( $this, 'friend_roles_test' ),
+		);
+		return $tests;
+	}
+
+	public function check_friend_roles() {
+		foreach ( array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) as $role ) {
+			if ( ! get_role( $role ) ) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public function friend_roles_test() {
+		$result = array(
+			'label'       => __( 'The friend roles have been installed', 'friends' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'Friends', 'friends' ),
+				'color' => 'green',
+			),
+			'description' =>
+				'<p>' .
+				__( 'The Friends Plugin uses users and user roles to determine friendship status between sites.', 'friends' ) .
+				'</p>',
+		);
+
+		if ( ! $this->check_friend_roles() ) {
+			$result['label'] = __( 'Not all friend roles have been installed', 'friends' );
+			$result['badge']['color'] = 'red';
+			$result['status'] = 'critical';
+			$result['description'] .= '<p>';
+			$result['description'] .= wp_kses_post(
+				sprintf(
+					// translators: %s is a URL.
+					__( '<strong>To fix this:</strong> Please <a href="%s">deactivate and re-activate the Friends plugin</a>.', 'friends' ),
+					self_admin_url( 'plugins.php?s=friends&plugin_status=all' )
+				)
+			);
+			$result['description'] .= '</p>';
+		}
+
+		return $result;
+	}
+
+	public function site_status_test_php_modules( $modules ) {
+		$modules['mbstring']['required'] = true;
+		return $modules;
+	}
+
+	public function site_health_debug( $debug_info ) {
+		$debug_info['friends'] = array(
+			'label'  => __( 'Friends', 'friends' ),
+			'fields' => array(
+				'version'   => array(
+					'label' => __( 'Friends Version', 'friends' ),
+					'value' => Friends::VERSION,
+				),
+				'mbstring'  => array(
+					'label' => __( 'mbstring is available', 'friends' ),
+					'value' => function_exists( 'mb_check_encoding' ) ? __( 'Yes' ) : __( 'No' ),
+				),
+				'roles'     => array(
+					'label' => __( 'Friend roles exist', 'friends' ),
+					'value' => $this->check_friend_roles() ? __( 'Yes' ) : __( 'No' ),
+				),
+				'main_user' => array(
+					'label' => __( 'Main Friend User', 'friends' ),
+					'value' => self::human_readable_main_user(),
+				),
+			),
+		);
+
+		return $debug_info;
+	}
+
+	/**
+	 * Returns a human readable string for which user is the main user.
+	 *
+	 * @return string
+	 */
+	private static function human_readable_main_user() {
+		$main_user = Friends::get_main_friend_user_id();
+
+		if ( ! $main_user ) {
+			// translators: %d is the number of users.
+			return esc_html( sprintf( __( 'No main user set. Admin users: %d', 'friends' ), Friend_User_Query::all_admin_users()->get_total() ) );
+		}
+
+		$user = new WP_User( $main_user );
+
+		if ( ! $user ) {
+			return sprintf( '#%1$d %2$s', $main_user, '???' );
+		}
+
+		return sprintf( '#%1$d %2$s', $user->ID, $user->user_login );
+	}
+
 }

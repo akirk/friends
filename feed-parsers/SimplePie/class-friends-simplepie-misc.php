@@ -60,4 +60,10 @@ END;
 		}
 		return parent::change_encoding( $data, $input, $output );
 	}
+
+	public static function error( $message, $level, $file, $line ) {
+		if ( apply_filters( 'friends_debug', false ) ) {
+			return parent::error( $message, $level, $file, $line );
+		}
+	}
 }
