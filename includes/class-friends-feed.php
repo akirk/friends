@@ -180,7 +180,11 @@ class Friends_Feed {
 			do_action( 'friends_retrieve_friends_error', $user_feed, $error, $friend_user );
 			return $error;
 		}
-		$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
+		try {
+			$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
+		} catch ( Exception $e ) {
+			$items = new WP_Error( $parser . '-failed', $e->getMessage() );
+		}
 
 		if ( is_wp_error( $items ) ) {
 			do_action( 'friends_retrieve_friends_error', $user_feed, $items, $friend_user );
@@ -574,7 +578,8 @@ class Friends_Feed {
 				$post_data['post_type']     = Friends::CPT;
 				$post_data['post_date_gmt'] = $item->date;
 				$post_data['comment_count'] = $item->comment_count;
-				$post_id                    = wp_insert_post( $post_data, true );
+
+				$post_id = wp_insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
