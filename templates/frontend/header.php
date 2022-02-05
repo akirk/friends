@@ -31,13 +31,20 @@ if ( isset( $_GET['s'] ) ) {
 	<a class="off-canvas-overlay" href="#close"></a>
 
 	<div class="off-canvas-content">
-		<header class="navbar">
+		<header class="<?php echo is_single() ? '' : 'navbar'; ?>">
 			<section class="navbar-section author">
 			<a class="off-canvas-toggle btn btn-primary bt-action" href="#friends-sidebar">
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
 			</a>
 			<?php
-			if ( get_the_author() && ( is_author() || is_singular() ) ) {
+			if ( get_the_author() && is_singular() ) {
+				$args['friend_user'] = new Friend_User( get_the_author_meta( 'ID' ) );
+				Friends::template_loader()->get_template_part(
+					'frontend/single-header',
+					null,
+					$args
+				);
+			} elseif ( get_the_author() && is_author() ) {
 				$args['friend_user'] = new Friend_User( get_the_author_meta( 'ID' ) );
 				Friends::template_loader()->get_template_part(
 					'frontend/author-header',
@@ -54,6 +61,7 @@ if ( isset( $_GET['s'] ) ) {
 			?>
 
 			</section>
+			<?php if ( ! is_singular() ) : ?>
 			<section class="navbar-section">
 				<form class="input-group input-inline form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 					<div class="form-autocomplete-input form-input">
@@ -67,6 +75,7 @@ if ( isset( $_GET['s'] ) ) {
 					<button class="btn btn-primary input-group-btn"><?php esc_html_e( 'Search' ); ?></button>
 				</form>
 			</section>
+			<?php endif; ?>
 		</header>
 	<?php
 	do_action( 'friends_after_header', $args );

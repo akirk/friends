@@ -92,6 +92,16 @@ class Friends_Frontend {
 	 */
 	public function add_rewrite_rule() {
 		add_rewrite_rule(
+			'friends/(.*)/(?:feed/)?(feed|rdf|rss|rss2|atom)/?$',
+			'index.php?pagename=friends/$matches[1]&feed=$matches[2]',
+			'top'
+		);
+		add_rewrite_rule(
+			'friends/(.*)/(\d+)/?$',
+			'index.php?pagename=friends/$matches[1]&page=$matches[2]',
+			'top'
+		);
+		add_rewrite_rule(
 			'friends/(.*)',
 			'index.php?pagename=friends/$matches[1]',
 			'top'
@@ -707,9 +717,17 @@ class Friends_Frontend {
 		}
 
 		if ( ! $viewable ) {
-			if ( ! Friends::on_frontend() && ! $query->is_feed() ) {
-				return $query;
+			if ( $query->is_feed() ) {
+				status_header( 404 );
+				$query->set_404();
+			} elseif ( ! Friends::on_frontend() ) {
+				if ( count( $pagename_parts ) > 1 ) {
+					wp_safe_redirect( home_url( '/friends/' ) );
+					exit;
+				}
 			}
+
+			return $query;
 		}
 
 		// Super Admins cannot view other's friend pages.
@@ -718,27 +736,7 @@ class Friends_Frontend {
 		}
 
 		switch_to_locale( get_user_locale() );
-
-		$this->is_friends_page = true;
-		$query->is_friends_page = true;
-		$query->is_singular = false;
-		$query->is_single = false;
-		$query->queried_object = null;
-		$query->queried_object_id = null;
-
 		$page_id = get_query_var( 'page' );
-
-		$query->set( 'post_type', Friends::get_frontend_post_types() );
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
-			$post_status = array( 'publish', 'private' );
-			if ( isset( $_GET['maybe-in-trash'] ) ) {
-				$post_status[] = 'trash';
-			}
-			$query->set( 'post_status', $post_status );
-		}
-		$query->is_page = false;
-		$query->is_comment_feed = false;
-		$query->set( 'pagename', null );
 
 		if ( isset( $pagename_parts[1] ) ) {
 			if ( 'opml' === $pagename_parts[1] ) {
@@ -764,11 +762,19 @@ class Friends_Frontend {
 				}
 			} else {
 				$author = get_user_by( 'login', $pagename_parts[1] );
-				if ( false !== $author ) {
-					$this->author = new Friend_User( $author );
-					if ( ! $page_id && isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
-						$potential_post_format = $pagename_parts[3];
+				if ( false === $author ) {
+					if ( $query->is_feed() ) {
+						status_header( 404 );
+						$query->set_404();
+						return $query;
 					}
+					wp_safe_redirect( home_url( '/friends/' ) );
+					exit;
+				}
+
+				$this->author = new Friend_User( $author );
+				if ( ! $page_id && isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
+					$potential_post_format = $pagename_parts[3];
 				}
 			}
 
@@ -778,6 +784,25 @@ class Friends_Frontend {
 				$query->set( 'tax_query', $tax_query );
 			}
 		}
+
+		$this->is_friends_page = true;
+		$query->is_friends_page = true;
+		$query->is_singular = false;
+		$query->is_single = false;
+		$query->queried_object = null;
+		$query->queried_object_id = null;
+
+		$query->set( 'post_type', Friends::get_frontend_post_types() );
+		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			$post_status = array( 'publish', 'private' );
+			if ( isset( $_GET['maybe-in-trash'] ) ) {
+				$post_status[] = 'trash';
+			}
+			$query->set( 'post_status', $post_status );
+		}
+		$query->is_page = false;
+		$query->is_comment_feed = false;
+		$query->set( 'pagename', null );
 
 		if ( $page_id ) {
 			$query->set( 'page_id', $page_id );
