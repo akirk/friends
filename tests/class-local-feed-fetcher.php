@@ -5,6 +5,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Allow local fetching of a feed by attaching a filter
  */

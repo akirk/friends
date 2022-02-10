@@ -7,7 +7,7 @@
  */
 
 ?><h4 class="card-title">
-	<?php if ( Friends::CPT === get_post_type() ) : ?>
+	<?php if ( Friends\Friends::CPT === get_post_type() ) : ?>
 		<?php
 		$args['friends']->frontend->link(
 			get_the_permalink(),

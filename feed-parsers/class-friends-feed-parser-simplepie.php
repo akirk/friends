@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the feed part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
+class Feed_Parser_SimplePie extends Feed_Parser {
 	const NAME = 'SimplePie';
 	const URL = 'http://simplepie.org';
 	/**
@@ -117,28 +119,28 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	 */
 	private function get_simplepie() {
 		if ( ! class_exists( 'SimplePie', false ) ) {
-			require_once ABSPATH . WPINC . '/class-simplepie.php';
+			require_once \ABSPATH . WPINC . '/class-simplepie.php';
 		}
 
-		require_once ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
-		require_once ABSPATH . WPINC . '/class-wp-simplepie-file.php';
+		require_once \ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
+		require_once \ABSPATH . WPINC . '/class-wp-simplepie-file.php';
 		require_once __DIR__ . '/SimplePie/class-friends-simplepie-file-accept-only-rss.php';
 		require_once __DIR__ . '/SimplePie/class-friends-simplepie-misc.php';
-		require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
+		require_once \ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 
-		$feed->set_sanitize_class( 'WP_SimplePie_Sanitize_KSES' );
+		$feed->set_sanitize_class( '\WP_SimplePie_Sanitize_KSES' );
 		// We must manually overwrite $feed->sanitize because SimplePie's
 		// constructor sets it before we have a chance to set the sanitization class.
-		$feed->sanitize = new WP_SimplePie_Sanitize_KSES();
+		$feed->sanitize = new \WP_SimplePie_Sanitize_KSES();
 
-		SimplePie_Cache::register( 'wp_transient', 'WP_Feed_Cache_Transient' );
+		\SimplePie_Cache::register( 'wp_transient', '\WP_Feed_Cache_Transient' );
 		$feed->set_cache_location( 'wp_transient' );
 
-		$feed->set_file_class( 'Friends_SimplePie_File_Accept_Only_RSS' );
+		$feed->set_file_class( 'Friends\SimplePie_File_Accept_Only_RSS' );
 		$registry = $feed->get_registry();
-		$registry->register( 'Misc', 'Friends_SimplePie_Misc' );
+		$registry->register( 'Misc', 'Friends\SimplePie_Misc' );
 
 		return $feed;
 	}
@@ -224,7 +226,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 		$feed->set_output_encoding( get_option( 'blog_charset' ) );
 
 		if ( $feed->error() ) {
-			return new WP_Error( 'simplepie-error', $feed->error() );
+			return new \WP_Error( 'simplepie-error', $feed->error() );
 		}
 
 		return $this->process_items( $feed->get_items(), $url );
@@ -241,7 +243,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 	public function process_items( $items, $url ) {
 		$feed_items = array();
 		foreach ( $items as $c => $item ) {
-			$feed_item = new Friends_Feed_Item(
+			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item->get_permalink(),
 					'title'     => $item->get_title(),
@@ -256,7 +258,7 @@ class Friends_Feed_Parser_SimplePie extends Friends_Feed_Parser {
 				'format'        => 'post-format',
 				'id'            => 'post-id',
 			) as $key => $lookup_key ) {
-				foreach ( array( Friends_Feed::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
+				foreach ( array( Feed::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {
 					if ( ! isset( $item->data['child'][ $xmlns ][ $lookup_key ][0]['data'] ) ) {
 						continue;
 					}

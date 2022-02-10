@@ -7,7 +7,7 @@
  */
 
 if ( $args['no_new_post_notification'] ) : ?>
-	<p class="description"><?php esc_html_e( 'You have generally disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( $args['friends_settings_url'] ); ?>"><?php esc_html_e( '(Edit)' ); ?></a></p>
+	<p class="description"><?php esc_html_e( 'You have generally disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( $args['friends_settings_url'] ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( '(Edit)' ); ?></a></p>
 <?php endif; ?>
 
 <p class="description">
@@ -25,7 +25,7 @@ if ( $args['no_new_post_notification'] ) : ?>
 		esc_html_e( 'No notification keywords have been specified.', 'friends' );
 	}
 	?>
-	<a href="<?php echo esc_url( $args['friends_settings_url'] ); ?>"><?php esc_html_e( '(Edit)' ); ?></a>
+	<a href="<?php echo esc_url( $args['friends_settings_url'] ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( '(Edit)' ); ?></a>
 </p>
 
 <form method="post">
@@ -64,6 +64,6 @@ if ( $args['no_new_post_notification'] ) : ?>
 		</tbody>
 	</table>
 	<p class="submit">
-		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
+		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 	</p>
 </form>

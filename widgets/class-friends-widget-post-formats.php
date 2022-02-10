@@ -8,13 +8,15 @@
  * @since 1.0
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Post Formats Widget.
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Widget_Post_Formats extends WP_Widget {
+class Widget_Post_Formats extends \WP_Widget {
 	/**
 	 * Constructor
 	 */

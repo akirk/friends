@@ -8,13 +8,15 @@
  * @since 0.3
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friend List Widget.
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Widget_Friend_List extends WP_Widget {
+class Widget_Friend_List extends \WP_Widget {
 	/**
 	 * Constructor
 	 */
@@ -40,9 +42,9 @@ class Friends_Widget_Friend_List extends WP_Widget {
 
 		echo $args['before_widget'];
 
-		$all_friends     = Friend_User_Query::all_friends();
-		$friend_requests = Friend_User_Query::all_friend_requests();
-		$subscriptions   = Friend_User_Query::all_subscriptions();
+		$all_friends     = User_Query::all_friends();
+		$friend_requests = User_Query::all_friend_requests();
+		$subscriptions   = User_Query::all_subscriptions();
 
 		$list_not_empty = $all_friends->get_total() + $subscriptions->get_total() > 0;
 
@@ -124,7 +126,7 @@ class Friends_Widget_Friend_List extends WP_Widget {
 	 */
 	public function get_list_items( $users ) {
 		foreach ( $users as $friend_user ) {
-			$friend_user = new Friend_User( $friend_user );
+			$friend_user = new User( $friend_user );
 			if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 				if ( $this->friends->frontend->post_format ) {
 					$url = $friend_user->get_local_friends_page_post_format_url( $this->friends->frontend->post_format );

@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Notifications part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Notifications {
+class Notifications {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -58,14 +60,14 @@ class Friends_Notifications {
 	/**
 	 * Notify the users of this site about a new friend post
 	 *
-	 * @param  WP_Post $post The new post by a friend or subscription.
+	 * @param  \WP_Post $post The new post by a friend or subscription.
 	 */
-	public function notify_new_friend_post( WP_Post $post ) {
+	public function notify_new_friend_post( \WP_Post $post ) {
 		if ( 'trash' === $post->post_status ) {
 			return;
 		}
 
-		$users = Friend_User_Query::all_admin_users();
+		$users = User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -79,7 +81,7 @@ class Friends_Notifications {
 				continue;
 			}
 
-			$author      = new Friend_User( $post->post_author );
+			$author      = new User( $post->post_author );
 			$email_title = $post->post_title;
 
 			$params = array(
@@ -109,15 +111,15 @@ class Friends_Notifications {
 	 * Notifies about a post that matched the keyword.
 	 *
 	 * @param      bool    $notified  Whether a notification was sent.
-	 * @param      WP_Post $post      The new post by a friend or subscription.
+	 * @param      \WP_Post $post      The new post by a friend or subscription.
 	 * @param      string  $keyword   The matched keyword.
 	 */
-	public function notify_keyword_match_post( $notified, WP_Post $post, $keyword ) {
+	public function notify_keyword_match_post( $notified, \WP_Post $post, $keyword ) {
 		if ( 'trash' === $post->post_status ) {
 			return $notified;
 		}
 
-		$users = Friend_User_Query::all_admin_users();
+		$users = User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -132,7 +134,7 @@ class Friends_Notifications {
 
 			$notified = true;
 
-			$author = new Friend_User( $post->post_author );
+			$author = new User( $post->post_author );
 			// translators: %s is a keyword string specified by the user.
 			$email_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
 
@@ -165,14 +167,14 @@ class Friends_Notifications {
 	/**
 	 * Notify the users of this site about a new friend request
 	 *
-	 * @param  Friend_User $friend_user The user requesting friendship.
+	 * @param  User $friend_user The user requesting friendship.
 	 */
-	public function notify_new_friend_request( Friend_User $friend_user ) {
+	public function notify_new_friend_request( User $friend_user ) {
 		if ( ! $friend_user->has_cap( 'friend_request' ) ) {
 			return;
 		}
 
-		$users = Friend_User_Query::all_admin_users();
+		$users = User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -215,10 +217,10 @@ class Friends_Notifications {
 	/**
 	 * Notify the users of this site about an accepted friend request
 	 *
-	 * @param  Friend_User $friend_user The user who accepted friendship.
+	 * @param  User $friend_user The user who accepted friendship.
 	 */
-	public function notify_accepted_friend_request( Friend_User $friend_user ) {
-		$users = Friend_User_Query::all_admin_users();
+	public function notify_accepted_friend_request( User $friend_user ) {
+		$users = User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {
@@ -259,18 +261,18 @@ class Friends_Notifications {
 	/**
 	 * Notify the users of this site about a received message
 	 *
-	 * @param  Friend_User $friend_user The user who sent the message.
+	 * @param  User $friend_user The user who sent the message.
 	 */
 
 	/**
 	 * Notify the users of this site about a received message
 	 *
-	 * @param  Friend_User $friend_user The user who sent the message.
-	 * @param       string      $message     The message.
-	 * @param       string      $subject     The subject.
+	 * @param  User   $friend_user The user who sent the message.
+	 * @param       string $message     The message.
+	 * @param       string $subject     The subject.
 	 */
-	public function notify_friend_message_received( Friend_User $friend_user, $message, $subject ) {
-		$users = Friend_User_Query::all_admin_users();
+	public function notify_friend_message_received( User $friend_user, $message, $subject ) {
+		$users = User_Query::all_admin_users();
 		$users = $users->get_results();
 
 		foreach ( $users as $user ) {

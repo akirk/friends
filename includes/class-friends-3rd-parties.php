@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Plugin 3rd Party handling.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_3rd_Parties {
+class Third_Parties {
 	/**
 	 * Contains a reference to the Friends class.
 	 *

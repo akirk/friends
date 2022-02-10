@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Plugin shortcodes.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Shortcodes {
+class Shortcodes {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -95,7 +97,7 @@ class Friends_Shortcodes {
 			$atts
 		);
 
-		$friends = Friend_User_Query::all_friends();
+		$friends = User_Query::all_friends();
 		$ret     = '<ul class="friend-list">';
 
 		foreach ( $friends->get_results() as $friend_user ) {
@@ -128,7 +130,7 @@ class Friends_Shortcodes {
 	 */
 	public function friends_count_shortcode( $atts ) {
 		exit;
-		$friends = Friend_User_Query::all_friends();
+		$friends = User_Query::all_friends();
 		return $friends->get_total();
 	}
 

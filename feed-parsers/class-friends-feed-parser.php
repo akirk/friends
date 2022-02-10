@@ -7,11 +7,13 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
 /**
  * This class describes a friends feed parser.
  */
-abstract class Friends_Feed_Parser {
+abstract class Feed_Parser {
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
@@ -80,7 +82,7 @@ abstract class Friends_Feed_Parser {
 	 * Return an array of objects:
 	 *
 	 *  return array(
-	 *      new Friends_Feed_Item array(
+	 *      new Feed_Item array(
 	 *          'permalink' => 'https://url.of/the/feed/item',
 	 *          'title'     => 'Title for the feed item',
 	 *          'content'   => 'Content for the feed item',
@@ -115,7 +117,7 @@ abstract class Friends_Feed_Parser {
 		return preg_replace_callback(
 			'~(src|href)=(?:"([^"]+)|\'([^\']+))~i',
 			function ( $m ) use ( $url ) {
-				return str_replace( $m[2], Friends_Mf2\resolveUrl( $url, $m[2] ), $m[0] );
+				return str_replace( $m[2], Mf2\resolveUrl( $url, $m[2] ), $m[0] );
 			},
 			$html
 		);

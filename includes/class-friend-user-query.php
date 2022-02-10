@@ -2,10 +2,12 @@
 /**
  * Friend User Query
  *
- * This wraps WP_User_Query and so that it generates instances of Friend_User.
+ * This wraps \WP_User_Query and so that it generates instances of User.
  *
  * @package Friends
  */
+
+namespace Friends;
 
 /**
  * This is the class for the User part of the Friends Plugin.
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friend_User_Query extends WP_User_Query {
+class User_Query extends \WP_User_Query {
 	/**
 	 * Whether to cache the retrieved users
 	 *
@@ -24,19 +26,19 @@ class Friend_User_Query extends WP_User_Query {
 	public static $cache = true;
 
 	/**
-	 * List of found Friend_User objects.
+	 * List of found User objects.
 	 *
 	 * @var array
 	 */
 	private $results = array();
 
 	/**
-	 * Execute the query and ensure that we populate Friend_User objects
+	 * Execute the query and ensure that we populate User objects
 	 */
 	public function query() {
 		parent::query();
 		foreach ( parent::get_results() as $k => $user ) {
-			$this->results[ $k ] = new Friend_User( $user );
+			$this->results[ $k ] = new User( $user );
 		}
 	}
 

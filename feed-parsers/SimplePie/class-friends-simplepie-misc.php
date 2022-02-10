@@ -6,12 +6,14 @@
  * @since 1.0
  */
 
+namespace Friends;
+
 /**
  * Overrides SimplePie_Misc functions as necessary.
  *
  * @see SimplePie_Misc
  */
-class Friends_SimplePie_Misc extends SimplePie_Misc {
+class SimplePie_Misc extends \SimplePie_Misc {
 	/**
 	 * Change a string from one encoding to another
 	 *

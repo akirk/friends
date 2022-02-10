@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the feed part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Feed {
+class Feed extends \Friends_Feed {
 	const XMLNS = 'wordpress-plugin-friends:feed-additions:1';
 
 	/**
@@ -77,16 +79,16 @@ class Friends_Feed {
 	 * Allow registering a parser
 	 *
 	 * @param      string              $slug    The slug.
-	 * @param      Friends_Feed_Parser $parser  The parser that extends the Friends_Feed_Parser class.
+	 * @param      Feed_Parser $parser  The parser that extends the Feed_Parser class.
 	 */
-	public function register_parser( $slug, Friends_Feed_Parser $parser ) {
+	public function register_parser( $slug, $parser ) {
 		if ( in_array( $slug, $this->reservered_parser_slugs, true ) ) {
 			// translators: %s is the slug of a parser.
-			return new WP_Error( 'resevered-slug', sprintf( __( 'The slug "%s" cannot be used.', 'friends' ), $slug ) );
+			return new \WP_Error( 'resevered-slug', sprintf( __( 'The slug "%s" cannot be used.', 'friends' ), $slug ) );
 		}
 		if ( isset( $this->parsers[ $slug ] ) ) {
 			// translators: %s is the slug of a parser.
-			return new WP_Error( 'parser-already-registered', sprintf( __( 'There is already a parser registered with the slug "%s".', 'friends' ), $slug ) );
+			return new \WP_Error( 'parser-already-registered', sprintf( __( 'There is already a parser registered with the slug "%s".', 'friends' ), $slug ) );
 		}
 		$this->parsers[ $slug ] = $parser;
 
@@ -118,17 +120,17 @@ class Friends_Feed {
 	 * @param      string $url      The url.
 	 * @param      int    $feed_id  The feed id.
 	 *
-	 * @return     array|WP_error  The feed items.
+	 * @return     array|\WP_error  The feed items.
 	 */
 	public function preview( $parser, $url, $feed_id = null ) {
 		if ( ! isset( $this->parsers[ $parser ] ) ) {
-			return new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
+			return new \WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
 		}
 
 		$user_feed = null;
 		$friend_user = null;
 		if ( ! is_null( $feed_id ) ) {
-			$user_feed = Friend_User_Feed::get_by_id( $feed_id );
+			$user_feed = User_Feed::get_by_id( $feed_id );
 			if ( ! is_wp_error( $user_feed ) ) {
 				$friend_user = $user_feed->get_friend_user();
 			}
@@ -138,7 +140,7 @@ class Friends_Feed {
 
 		if ( ! is_wp_error( $items ) ) {
 			if ( empty( $items ) ) {
-				$items = new WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
+				$items = new \WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
 			} else {
 				foreach ( $items as $key => $item ) {
 					$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
@@ -162,28 +164,28 @@ class Friends_Feed {
 	/**
 	 * Retrieve posts from a remote WordPress for a friend.
 	 *
-	 * @param  Friend_User $friend_user A single user to fetch.
+	 * @param  User $friend_user A single user to fetch.
 	 */
 
 	/**
 	 * Retrieves a user feed.
 	 *
-	 * @param      Friend_User_Feed $user_feed  The user feed.
+	 * @param      User_Feed $user_feed  The user feed.
 	 *
-	 * @return     array|WP_Error             The retrieved items.
+	 * @return     array|\WP_Error             The retrieved items.
 	 */
-	public function retrieve_feed( Friend_User_Feed $user_feed ) {
+	public function retrieve_feed( User_Feed $user_feed ) {
 		$friend_user = $user_feed->get_friend_user();
 		$parser = $user_feed->get_parser();
 		if ( ! isset( $this->parsers[ $parser ] ) ) {
-			$error = new WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
+			$error = new \WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
 			do_action( 'friends_retrieve_friends_error', $user_feed, $error, $friend_user );
 			return $error;
 		}
 		try {
 			$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
-		} catch ( Exception $e ) {
-			$items = new WP_Error( $parser . '-failed', $e->getMessage() );
+		} catch ( \Exception $e ) {
+			$items = new \WP_Error( $parser . '-failed', $e->getMessage() );
 		}
 
 		if ( is_wp_error( $items ) ) {
@@ -201,10 +203,10 @@ class Friends_Feed {
 	/**
 	 * Notify users about new posts of this friend
 	 *
-	 * @param      Friend_User $friend_user  The friend.
-	 * @param      array       $new_posts    The new posts of this friend.
+	 * @param      User  $friend_user  The friend.
+	 * @param      array $new_posts    The new posts of this friend.
 	 */
-	public function notify_about_new_posts( Friend_User $friend_user, $new_posts ) {
+	public function notify_about_new_posts( User $friend_user, $new_posts ) {
 		$keywords = self::get_active_notification_keywords();
 		foreach ( $new_posts as $post_id ) {
 			$post = false;
@@ -248,7 +250,7 @@ class Friends_Feed {
 	 * @param      int $max_age     The maximum age of the last retrieval. Default: a bit less than an hour to not block cron jobs.
 	 */
 	public function retrieve_friend_posts( $max_age = 3000 ) {
-		$friends = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
+		$friends = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
 		$friends = $friends->get_results();
 
 		if ( empty( $friends ) ) {
@@ -283,12 +285,12 @@ class Friends_Feed {
 	/**
 	 * Apply the feed rules that need to be applied early.
 	 *
-	 * @param  Friends_Feed_Item $item         The feed item.
-	 * @param      Friend_User_Feed  $feed         The feed.
-	 * @param      Friend_User       $friend_user  The friend user.
-	 * @return Friends_Feed_Item The modified feed item.
+	 * @param  Feed_Item $item         The feed item.
+	 * @param      User_Feed         $feed         The feed.
+	 * @param      User              $friend_user  The friend user.
+	 * @return Feed_Item The modified feed item.
 	 */
-	public function apply_early_feed_rules( $item, Friend_User_Feed $feed = null, Friend_User $friend_user = null ) {
+	public function apply_early_feed_rules( $item, User_Feed $feed = null, User $friend_user = null ) {
 		$updated_item = $this->apply_feed_rules( $item, $feed, $friend_user );
 		if ( $updated_item->_feed_rule_delete ) {
 			return $updated_item;
@@ -299,12 +301,12 @@ class Friends_Feed {
 	/**
 	 * Apply the feed rules
 	 *
-	 * @param  Friends_Feed_Item $item         The feed item.
-	 * @param  Friend_User_Feed  $feed         The feed object.
-	 * @param  Friend_User       $friend_user The friend user.
-	 * @return Friends_Feed_Item The modified feed item.
+	 * @param  Feed_Item $item         The feed item.
+	 * @param  User_Feed         $feed         The feed object.
+	 * @param  User              $friend_user The friend user.
+	 * @return Feed_Item The modified feed item.
 	 */
-	public function apply_feed_rules( $item, Friend_User_Feed $feed = null, Friend_User $friend_user = null ) {
+	public function apply_feed_rules( $item, User_Feed $feed = null, User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
 			return $item;
 		}
@@ -313,7 +315,7 @@ class Friends_Feed {
 		$action = $friend_user->get_feed_catch_all();
 
 		foreach ( $rules as $rule ) {
-			if ( $item instanceof WP_Post ) {
+			if ( $item instanceof \WP_Post ) {
 				$field = $this->get_feed_rule_field( $rule['field'] );
 
 				if ( 'author' === $rule['field'] ) {
@@ -493,11 +495,11 @@ class Friends_Feed {
 	/**
 	 * Process incoming feed items
 	 *
-	 * @param  array            $items           The incoming items.
-	 * @param  Friend_User_Feed $user_feed       The feed to which these items belong.
+	 * @param  array     $items           The incoming items.
+	 * @param  User_Feed $user_feed       The feed to which these items belong.
 	 * @return array                             The post ids of the new posts.
 	 */
-	public function process_incoming_feed_items( array $items, Friend_User_Feed $user_feed ) {
+	public function process_incoming_feed_items( array $items, User_Feed $user_feed ) {
 		$friend_user     = $user_feed->get_friend_user();
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 		$rules           = $friend_user->get_feed_rules();
@@ -702,9 +704,9 @@ class Friends_Feed {
 	 * Invalidatee Post Count Cache
 	 *
 	 * @param      int     $post_ID  The post id.
-	 * @param      WP_Post $post     The post.
+	 * @param      \WP_Post $post     The post.
 	 */
-	public function invalidate_post_count_cache( $post_ID, WP_Post $post ) {
+	public function invalidate_post_count_cache( $post_ID, \WP_Post $post ) {
 		$cache_key = 'friends_post_count_by_post_format';
 		delete_transient( $cache_key );
 		if ( is_numeric( $post->post_author ) && $post->post_author > 0 ) {
@@ -919,7 +921,7 @@ class Friends_Feed {
 	private function discover_link_rel_feeds( $content, $url, $headers ) {
 		$discovered_feeds = array();
 		$has_self = false;
-		$mf = Friends_Mf2\parse( $content, $url );
+		$mf = Friends\Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
 				foreach ( array( 'friends-base-url', 'me', 'alternate', 'self' ) as $rel ) {
@@ -972,10 +974,10 @@ class Friends_Feed {
 	/**
 	 * Modify the main query for the friends feed
 	 *
-	 * @param  WP_Query $query The main query.
-	 * @return WP_Query The modified main query.
+	 * @param  \WP_Query $query The main query.
+	 * @return \WP_Query The modified main query.
 	 */
-	public function private_feed_query( WP_Query $query ) {
+	public function private_feed_query( \WP_Query $query ) {
 		if ( ! $this->friends->access_control->feed_is_authenticated() ) {
 			return $query;
 		}
@@ -998,7 +1000,7 @@ class Friends_Feed {
 	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
 		if ( ( 'friend' === $new_role || 'acquaintance' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
 			update_user_option( $user_id, 'friends_new_friend', true );
-			$friend = new Friend_User( $user_id );
+			$friend = new User( $user_id );
 			$friend->retrieve_posts();
 		}
 	}

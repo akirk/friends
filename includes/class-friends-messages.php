@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Messages part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Messages {
+class Messages {
 	const CPT = 'friend_message';
 
 	/**
@@ -126,7 +128,7 @@ class Friends_Messages {
 	 */
 	public function add_rest_routes() {
 		register_rest_route(
-			Friends_REST::PREFIX,
+			REST::PREFIX,
 			'message',
 			array(
 				'methods'             => 'POST',
@@ -139,14 +141,14 @@ class Friends_Messages {
 	/**
 	 * Receive a message via REST
 	 *
-	 * @param  WP_REST_Request $request The incoming request.
+	 * @param  \WP_REST_Request $request The incoming request.
 	 * @return array The array to be returned via the REST API.
 	 */
-	public function rest_receive_message( WP_REST_Request $request ) {
+	public function rest_receive_message( \WP_REST_Request $request ) {
 		$tokens = explode( '-', $request->get_param( 'auth' ) );
 		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
 		if ( ! $user_id ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_request_failed',
 				__( 'Could not respond to the request.', 'friends' ),
 				array(
@@ -155,9 +157,9 @@ class Friends_Messages {
 			);
 		}
 
-		$friend_user = new Friend_User( $user_id );
+		$friend_user = new User( $user_id );
 		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_request_failed',
 				__( 'Could not respond to the request.', 'friends' ),
 				array(
@@ -180,15 +182,15 @@ class Friends_Messages {
 	/**
 	 * Adds a message to friends_message post.
 	 *
-	 * @param      WP_User     $sender       The sender.
-	 * @param      Friend_User $friend_user  The friend user to which this should be associated.
-	 * @param      string      $subject      The subject.
-	 * @param      string      $message      The message.
+	 * @param      \WP_User $sender       The sender.
+	 * @param      User    $friend_user  The friend user to which this should be associated.
+	 * @param      string  $subject      The subject.
+	 * @param      string  $message      The message.
 	 *
 	 * @return     int     The post ID.
 	 */
-	private function add_message_to_post( WP_User $sender, Friend_User $friend_user, $subject, $message ) {
-		$existing_message = new WP_Query(
+	private function add_message_to_post( \WP_User $sender, User $friend_user, $subject, $message ) {
+		$existing_message = new \WP_Query(
 			array(
 				'post_type'   => self::CPT,
 				'author'      => $friend_user->ID,
@@ -246,7 +248,7 @@ class Friends_Messages {
 	 * @return     int   Unread count + unread messages.
 	 */
 	public function friends_unread_messages_count( $unread ) {
-		$unread_messages = new WP_Query(
+		$unread_messages = new \WP_Query(
 			array(
 				'post_type'   => self::CPT,
 				'post_status' => 'friends_unread',
@@ -258,11 +260,11 @@ class Friends_Messages {
 	/**
 	 * Add entries to the menu for unread messages.
 	 *
-	 * @param      WP_Menu $wp_menu  The wp menu.
+	 * @param      \WP_Menu $wp_menu  The wp menu.
 	 */
 	public function friends_add_menu_unread_messages( $wp_menu ) {
 		global $post;
-		$unread_messages = new WP_Query(
+		$unread_messages = new \WP_Query(
 			array(
 				'post_type'   => self::CPT,
 				'post_status' => 'friends_unread',
@@ -271,7 +273,7 @@ class Friends_Messages {
 
 		while ( $unread_messages->have_posts() ) {
 			$unread_messages->the_post();
-			$friend_user = new Friend_User( $post->post_author );
+			$friend_user = new User( $post->post_author );
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'friend-message-' . $friend_user->ID,
@@ -287,13 +289,13 @@ class Friends_Messages {
 	/**
 	 * Ajax function to mark a message as read.
 	 *
-	 * @return     WP_Error  The wp error.
+	 * @return     \WP_Error  The wp error.
 	 */
 	public function mark_message_read() {
 		check_ajax_referer( 'friends-mark-read' );
 
 		if ( ! is_user_logged_in() ) {
-			return new WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
+			return new \WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
 		}
 
 		if ( ! isset( $_POST['post_id'] ) ) {
@@ -336,17 +338,17 @@ class Friends_Messages {
 	 * @return     int   Unread count + friend requests.
 	 */
 	public function friends_unread_friend_request_count( $unread ) {
-		$friend_requests = Friend_User_Query::all_friend_requests();
+		$friend_requests = User_Query::all_friend_requests();
 		return $unread + $friend_requests->get_total();
 	}
 
 	/**
 	 * Extend the author header.
 	 *
-	 * @param      Friend_User $friend_user  The friend user.
-	 * @param      array       $args         The arguments.
+	 * @param      User  $friend_user  The friend user.
+	 * @param      array $args         The arguments.
 	 */
-	public function friends_author_header( Friend_User $friend_user, $args ) {
+	public function friends_author_header( User $friend_user, $args ) {
 		if ( $friend_user->has_cap( self::get_minimum_cap() ) ) {
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/author-header',
@@ -368,7 +370,7 @@ class Friends_Messages {
 		}
 
 		if ( $args['friend_user']->has_cap( self::get_minimum_cap() ) ) {
-			$args['existing_messages'] = new WP_Query(
+			$args['existing_messages'] = new \WP_Query(
 				array(
 					'post_type'   => self::CPT,
 					'author'      => $args['friend_user']->ID,
@@ -421,18 +423,18 @@ class Friends_Messages {
 	/**
 	 * Sends a message to a friend.
 	 *
-	 * @param      Friend_User $friend_user  The friend user.
-	 * @param      string      $message      The message.
-	 * @param      string      $subject      The subject.
+	 * @param      User   $friend_user  The friend user.
+	 * @param      string $message      The message.
+	 * @param      string $subject      The subject.
 	 *
-	 * @return     WP_Error|int  An error or the message post id.
+	 * @return     \WP_Error|int  An error or the message post id.
 	 */
-	public function send_message( Friend_User $friend_user, $message, $subject = null ) {
+	public function send_message( User $friend_user, $message, $subject = null ) {
 		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
-			return new WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
+			return new \WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
 		}
 		if ( ! trim( $message ) ) {
-			return new WP_Error( 'empty-message', __( 'You cannot send empty messages.', 'friends' ) );
+			return new \WP_Error( 'empty-message', __( 'You cannot send empty messages.', 'friends' ) );
 		}
 
 		if ( empty( $subject ) ) {
@@ -463,7 +465,7 @@ class Friends_Messages {
 
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			// TODO find a way to message the user.
-			return new WP_Error( 'invalid-response', __( 'We received an unexpected response to our message.', 'friends' ) );
+			return new \WP_Error( 'invalid-response', __( 'We received an unexpected response to our message.', 'friends' ) );
 		}
 
 		return $post_id;
@@ -472,17 +474,17 @@ class Friends_Messages {
 	/**
 	 * Delete a conversation
 	 *
-	 * @param      Friend_User $friend_user  The friend user.
-	 * @param      string      $subject      The subject.
+	 * @param      User   $friend_user  The friend user.
+	 * @param      string $subject      The subject.
 	 *
-	 * @return     WP_Error|WP_Post|bool  The post or false.
+	 * @return     \WP_Error|\WP_Post|bool  The post or false.
 	 */
-	public function delete_conversation( Friend_User $friend_user, $subject ) {
+	public function delete_conversation( User $friend_user, $subject ) {
 		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
-			return new WP_Error( 'not-a-friend', __( 'You cannot delete converations.', 'friends' ) );
+			return new \WP_Error( 'not-a-friend', __( 'You cannot delete converations.', 'friends' ) );
 		}
 
-		$existing_message = new WP_Query(
+		$existing_message = new \WP_Query(
 			array(
 				'post_type'   => self::CPT,
 				'author'      => $friend_user->ID,
@@ -515,7 +517,7 @@ class Friends_Messages {
 			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
-		$friend_user = new Friend_User( $_REQUEST['friends_message_recipient'] );
+		$friend_user = new User( $_REQUEST['friends_message_recipient'] );
 
 		$subject = wp_unslash( $_REQUEST['friends_message_subject'] );
 		$message = wp_unslash( $_REQUEST['friends_message_message'] );
@@ -542,7 +544,7 @@ class Friends_Messages {
 			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
-		$friend_user = new Friend_User( $_REQUEST['friends_message_recipient'] );
+		$friend_user = new User( $_REQUEST['friends_message_recipient'] );
 
 		$subject = wp_unslash( $_REQUEST['friends_message_subject'] );
 		$error = $this->delete_conversation( $friend_user, $subject );

@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Plugin Access Control.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Access_Control {
+class Access_Control {
 	/**
 	 * States whether this is an authenticated feed call.
 	 *
@@ -63,7 +65,7 @@ class Friends_Access_Control {
 	/**
 	 * Get authenticated feed user
 	 *
-	 * @return Friend_User|null The authentication status of the feed.
+	 * @return User|null The authentication status of the feed.
 	 */
 	public function get_authenticated_feed_user() {
 		if ( is_null( $this->feed_authenticated ) ) {
@@ -74,7 +76,7 @@ class Friends_Access_Control {
 			return null;
 		}
 
-		return new Friend_User( $this->feed_authenticated );
+		return new User( $this->feed_authenticated );
 	}
 
 	/**
@@ -102,7 +104,7 @@ class Friends_Access_Control {
 	public function verify_token( $token, $until, $auth ) {
 		$user_id = get_option( 'friends_in_token_' . $token );
 		if ( ! $user_id ) {
-			$me = Friend_User::get_user( Friend_User::get_user_login_for_url( $token ) );
+			$me = User::get_user( User::get_user_login_for_url( $token ) );
 			if ( ! $me || is_wp_error( $me ) ) {
 				return false;
 			}
@@ -148,7 +150,7 @@ class Friends_Access_Control {
 		if ( ! $user_id ) {
 			return;
 		}
-		$user = new Friend_User( $user_id );
+		$user = new User( $user_id );
 		if ( ! $user->has_cap( 'friend' ) ) {
 			return;
 		}
@@ -177,7 +179,7 @@ class Friends_Access_Control {
 		}
 
 		if ( $user_id ) {
-			$user = new Friend_User( $user_id );
+			$user = new User( $user_id );
 			if ( $user->has_cap( 'friend' ) ) {
 				$this->feed_authenticated = $user_id;
 				return $this->feed_authenticated;
@@ -190,12 +192,12 @@ class Friends_Access_Control {
 	/**
 	 * Gets the friend auth.
 	 *
-	 * @param      Friend_User $friend_user  The friend user.
-	 * @param      integer     $validity     The validity.
+	 * @param      User    $friend_user  The friend user.
+	 * @param      integer $validity     The validity.
 	 *
 	 * @return     string       The friend auth.
 	 */
-	public function get_friend_auth( Friend_User $friend_user, $validity = 3600 ) {
+	public function get_friend_auth( User $friend_user, $validity = 3600 ) {
 		static $tokens = array();
 
 		if ( ! isset( $tokens[ $friend_user->ID ] ) ) {
@@ -208,7 +210,7 @@ class Friends_Access_Control {
 				$auth = password_hash( $until . $in_token, PASSWORD_DEFAULT );
 
 				$tokens[ $friend_user->ID ] = array(
-					'me'    => Friend_User::get_user_login_for_url( home_url() ),
+					'me'    => User::get_user_login_for_url( home_url() ),
 					'until' => $until,
 					'auth'  => $auth,
 				);
@@ -221,13 +223,13 @@ class Friends_Access_Control {
 	/**
 	 * Appends an auth to an URL.
 	 *
-	 * @param      string      $url          The url.
-	 * @param      Friend_User $friend_user  The friend user.
-	 * @param      integer     $validity     The validity in seconds.
+	 * @param      string  $url          The url.
+	 * @param      User    $friend_user  The friend user.
+	 * @param      integer $validity     The validity in seconds.
 	 *
 	 * @return     string       The url with an appended auth.
 	 */
-	public function append_auth( $url, Friend_User $friend_user, $validity = 3600 ) {
+	public function append_auth( $url, User $friend_user, $validity = 3600 ) {
 		if ( $validity < 0 ) {
 			return $url;
 		}
@@ -256,7 +258,7 @@ class Friends_Access_Control {
 			delete_option( 'friends_in_token_' . $current_secret );
 		}
 
-		$user = new Friend_User( $user_id );
+		$user = new User( $user_id );
 
 		// No need to delete user options as the user will be deleted.
 		return $current_secret;
@@ -276,7 +278,7 @@ class Friends_Access_Control {
 			return;
 		}
 
-		do_action( 'notify_new_friend_request', new Friend_User( $user_id ) );
+		do_action( 'notify_new_friend_request', new User( $user_id ) );
 	}
 
 	/**

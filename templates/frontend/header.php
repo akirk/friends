@@ -38,21 +38,21 @@ if ( isset( $_GET['s'] ) ) {
 			</a>
 			<?php
 			if ( get_the_author() && is_singular() ) {
-				$args['friend_user'] = new Friend_User( get_the_author_meta( 'ID' ) );
-				Friends::template_loader()->get_template_part(
+				$args['friend_user'] = new Friends\User( get_the_author_meta( 'ID' ) );
+				Friends\Friends::template_loader()->get_template_part(
 					'frontend/single-header',
 					null,
 					$args
 				);
 			} elseif ( get_the_author() && is_author() ) {
-				$args['friend_user'] = new Friend_User( get_the_author_meta( 'ID' ) );
-				Friends::template_loader()->get_template_part(
+				$args['friend_user'] = new Friends\User( get_the_author_meta( 'ID' ) );
+				Friends\Friends::template_loader()->get_template_part(
 					'frontend/author-header',
 					null,
 					$args
 				);
 			} else {
-				Friends::template_loader()->get_template_part(
+				Friends\Friends::template_loader()->get_template_part(
 					'frontend/main-feed-header',
 					null,
 					$args

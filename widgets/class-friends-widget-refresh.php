@@ -8,13 +8,15 @@
  * @since 0.3
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friend Posts Refresh Widget.
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Widget_Refresh extends WP_Widget {
+class Widget_Refresh extends \WP_Widget {
 	/**
 	 * Constructor
 	 */

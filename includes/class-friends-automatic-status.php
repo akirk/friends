@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Plugin Automatic Status.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Automatic_Status {
+class Automatic_Status {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -98,8 +100,8 @@ class Friends_Automatic_Status {
 						)
 					),
 					/* translators: %s: Post title. */
-					esc_attr( sprintf( __( 'Publish &#8220;%s&#8221;' ), $post->title ) ),
-					__( 'Publish' )
+					esc_attr( sprintf( __( 'Publish &#8220;%s&#8221;' ), $post->title ) ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					__( 'Publish' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				);
 				return $actions;
 			},
@@ -112,7 +114,7 @@ class Friends_Automatic_Status {
 		$post_type = 'post';
 		$post_type_object = get_post_type_object( $post_type );
 
-		$wp_list_table = new Friends_Automatic_Status_List_Table();
+		$wp_list_table = new Automatic_Status_List_Table();
 		$wp_list_table->prepare_items();
 
 		wp_enqueue_script( 'inline-edit-post' );
@@ -177,7 +179,7 @@ class Friends_Automatic_Status {
 	 *
 	 * @param      string $text   The text.
 	 *
-	 * @return     int|WP_Error  The post ID or a WP_Error.
+	 * @return     int|\WP_Error  The post ID or a \WP_Error.
 	 */
 	private function add_status( $text ) {
 		$user_id = get_current_user_id();
@@ -230,7 +232,7 @@ class Friends_Automatic_Status {
 	 * @param  string $old_roles The old roles.
 	 */
 	public function new_friend_user( $user_id, $new_role, $old_roles ) {
-		$friend_user = new Friend_User( $user_id );
+		$friend_user = new User( $user_id );
 		$link = '<a href="' . esc_url( $friend_user->user_url ) . '">' . esc_html( $friend_user->display_name ) . '</a>';
 
 		if ( 'friend' === $new_role || 'acquaintance' === $new_role ) {

@@ -8,13 +8,15 @@
  * @since 0.8
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Header Widget.
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Widget_Header extends WP_Widget {
+class Widget_Header extends \WP_Widget {
 	/**
 	 * Constructor
 	 */

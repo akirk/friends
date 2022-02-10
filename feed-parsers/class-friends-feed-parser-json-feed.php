@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the feed part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Feed_Parser_JSON_Feed extends Friends_Feed_Parser {
+class Feed_Parser_JSON_Feed extends Feed_Parser {
 	const NAME = 'JSON Feed';
 	const URL = 'https://www.jsonfeed.org/';
 
@@ -140,7 +142,7 @@ class Friends_Feed_Parser_JSON_Feed extends Friends_Feed_Parser {
 
 		$feed_items = array();
 		foreach ( $json->items as $item ) {
-			$feed_item = new Friends_Feed_Item(
+			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item->url,
 				)

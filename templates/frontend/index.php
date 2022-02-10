@@ -6,8 +6,8 @@
  * @package Friends
  */
 
-$friends = Friends::get_instance();
-Friends::template_loader()->get_template_part(
+$friends = Friends\Friends::get_instance();
+Friends\Friends::template_loader()->get_template_part(
 	'frontend/header',
 	null,
 	array(
@@ -36,7 +36,7 @@ Friends::template_loader()->get_template_part(
 						)
 					);
 
-					$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
+					$friend_user = new Friends\User( get_the_author_meta( 'ID' ) );
 					?>
 					<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url() ); ?>"><?php esc_html_e( 'Remove post format filter', 'friends' ); ?></a>
 					<?php
@@ -53,11 +53,11 @@ Friends::template_loader()->get_template_part(
 					<?php
 				}
 			} else {
-				$any_friends = Friend_User_Query::all_friends_subscriptions();
+				$any_friends = Friends\User_Query::all_friends_subscriptions();
 				if ( $any_friends->get_total() > 0 ) {
-					Friends::template_loader()->get_template_part( 'frontend/no-posts' );
+					Friends\Friends::template_loader()->get_template_part( 'frontend/no-posts' );
 				} else {
-					Friends::template_loader()->get_template_part( 'frontend/no-friends' );
+					Friends\Friends::template_loader()->get_template_part( 'frontend/no-friends' );
 				}
 			}
 			?>
@@ -65,13 +65,13 @@ Friends::template_loader()->get_template_part(
 		</div>
 		<?php
 	} else {
-		Friends_Frontend::have_posts();
+		Friends\Frontend::have_posts();
 		the_posts_navigation();
 	}
 	?>
 </section>
 <?php
-Friends::template_loader()->get_template_part(
+Friends\Friends::template_loader()->get_template_part(
 	'frontend/footer',
 	null,
 	array(

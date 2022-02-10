@@ -1,8 +1,9 @@
 <?php
+namespace Friends;
 
 require_once __DIR__ . '/iso-gutenberg.php';
 
-abstract class Friends_Gutenberg_Handler {
+abstract class Gutenberg_Handler {
 	private $doing_hook = null;
 
 	/**

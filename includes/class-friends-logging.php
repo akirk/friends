@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Logging part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Logging {
+class Logging {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -44,11 +46,11 @@ class Friends_Logging {
 	/**
 	 * Log that a feed was sucessfully fetched.
 	 *
-	 * @param      Friend_User_Feed $user_feed  The user feed.
-	 * @param      array            $new_posts  The new posts that were fetched
-	 *                                          (potentially empty array).
+	 * @param      User_Feed $user_feed  The user feed.
+	 * @param      array     $new_posts  The new posts that were fetched
+	 *                                   (potentially empty array).
 	 */
-	public function log_feed_successfully_fetched( Friend_User_Feed $user_feed, $new_posts ) {
+	public function log_feed_successfully_fetched( User_Feed $user_feed, $new_posts ) {
 		// translators: %s is the number of new posts found.
 		$user_feed->update_last_log( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ), count( $new_posts ) ) );
 	}
@@ -56,11 +58,11 @@ class Friends_Logging {
 	/**
 	 * Log that an error occurred when fetching a feed.
 	 *
-	 * @param      Friend_User_Feed $user_feed  The user feed.
-	 * @param      WP_Error         $error      The error that occurred when
-	 *                                          fetching the feed.
+	 * @param      User_Feed $user_feed  The user feed.
+	 * @param      \WP_Error $error      The error that occurred when
+	 *                                  fetching the feed.
 	 */
-	public function log_feed_error( Friend_User_Feed $user_feed, $error ) {
+	public function log_feed_error( User_Feed $user_feed, $error ) {
 		$user_feed->update_last_log( $error->get_error_message() );
 	}
 }

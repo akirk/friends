@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the feed part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
+class Feed_Parser_Microformats extends Feed_Parser {
 	const NAME = 'Microformats';
 	const URL = 'https://www.microformats.org/';
 
@@ -71,7 +73,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 	 */
 	public function discover_available_feeds( $content, $url ) {
 		$discovered_feeds = array();
-		$mf = Friends_Mf2\parse( $content, $url );
+		$mf = Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
 				foreach ( array( 'me', 'alternate' ) as $rel ) {
@@ -202,7 +204,7 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 			if ( isset( $entry['properties']['deleted'][0] ) || ! isset( $entry['properties']['published'][0] ) ) {
 				continue;
 			}
-			$item = new Friends_Feed_Item();
+			$item = new Feed_Item();
 			$item->date = $entry['properties']['published'][0];
 			$item->author = $feed_author;
 
@@ -334,10 +336,10 @@ class Friends_Feed_Parser_Microformats extends Friends_Feed_Parser {
 	 * @return     array            An array of feed items.
 	 */
 	public function fetch_feed( $url ) {
-		$mf = Friends_Mf2\fetch( $url );
+		$mf = Mf2\fetch( $url );
 		if ( ! $mf ) {
 			// translators: %s is a URL.
-			return new Wp_Error( 'microformats Parser', sprintf( __( 'Could not parse %s.', 'friends' ), $url ) );
+			return new \WP_Error( 'microformats Parser', sprintf( __( 'Could not parse %s.', 'friends' ), $url ) );
 		}
 
 		return $this->parse_hfeed( $mf );

@@ -5,10 +5,12 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Test the Notifications
  */
-class Friends_MessagesTest extends WP_UnitTestCase {
+class MessagesTest extends \WP_UnitTestCase {
 	/**
 	 * Current User ID
 	 *
@@ -83,7 +85,7 @@ class Friends_MessagesTest extends WP_UnitTestCase {
 		add_filter(
 			'get_user_option_friends_rest_url',
 			function() {
-				return get_option( 'home' ) . '/wp-json/' . Friends_REST::PREFIX;
+				return get_option( 'home' ) . '/wp-json/' . REST::PREFIX;
 			}
 		);
 
@@ -113,7 +115,7 @@ class Friends_MessagesTest extends WP_UnitTestCase {
 				$rest_prefix = home_url() . '/wp-json';
 
 				$url = substr( $url, strlen( $rest_prefix ) );
-				$r   = new WP_REST_Request( $request['method'], $url );
+				$r   = new \WP_REST_Request( $request['method'], $url );
 				if ( ! empty( $request['body'] ) ) {
 					foreach ( $request['body'] as $key => $value ) {
 						$r->set_param( $key, $value );
@@ -152,9 +154,9 @@ class Friends_MessagesTest extends WP_UnitTestCase {
 	 */
 	public function test_send_messages() {
 		wp_set_current_user( $this->user_id );
-		$friend_user = new Friend_User( $this->friend_id );
+		$friend_user = new User( $this->friend_id );
 		$message_id = $friend_user->send_message( 'test' );
-		$this->assertNotInstanceOf( 'WP_Error', $message_id );
+		$this->assertNotInstanceOf( '\WP_Error', $message_id );
 		$post = get_post( $message_id );
 		$this->assertContains( '"sender":' . $this->user_id, $post->post_content );
 		$this->assertContains( '<p>test</p>', $post->post_content );

@@ -8,13 +8,15 @@
  * @since 0.3
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friend Request Widget.
  *
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Widget_Friend_Request extends WP_Widget {
+class Widget_Friend_Request extends \WP_Widget {
 	/**
 	 * Constructor
 	 */

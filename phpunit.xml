@@ -4,9 +4,9 @@
 	backupGlobals="false"
 	colors="true"
 	stderr="true"
-	convertErrorsToExceptions="true"
-	convertNoticesToExceptions="true"
-	convertWarningsToExceptions="true"
+	convertErrorsTo\Exceptions="true"
+	convertNoticesTo\Exceptions="true"
+	convertWarningsTo\Exceptions="true"
 	>
 	<testsuites>
 		<testsuite name="default">

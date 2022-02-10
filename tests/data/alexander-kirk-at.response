@@ -1302,7 +1302,7 @@ foreach ($this->getKeys($minutes) as $key) {
 
 $this->memcache->increment($key, 1);
 
-if ($requests > $allowedRequests) throw new RateExceededException;
+if ($requests > $allowedRequests) throw new RateExceeded\Exception;
 </code></pre>
 <p>For your convenience I have open sourced my code at github: <a href="https://github.com/akirk/php-ratelimiter/">php-ratelimiter</a>.</p>
             </div><!-- .entry-content -->

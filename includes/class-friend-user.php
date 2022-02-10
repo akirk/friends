@@ -2,10 +2,12 @@
 /**
  * Friend User
  *
- * This wraps WP_User and adds friend specific functions.
+ * This wraps \WP_User and adds friend specific functions.
  *
  * @package Friends
  */
+
+namespace Friends;
 
 /**
  * This is the class for the User part of the Friends Plugin.
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friend_User extends WP_User {
+class User extends \Friend_User {
 	/**
 	 * Caches the feed rules.
 	 *
@@ -31,7 +33,7 @@ class Friend_User extends WP_User {
 	public static $feed_catch_all = array();
 
 	/**
-	 * Create a Friend_User with a specific Friends-related role
+	 * Create a User with a specific Friends-related role
 	 *
 	 * @param      string $user_login    The user login.
 	 * @param      string $role          The role: subscription,
@@ -42,7 +44,7 @@ class Friend_User extends WP_User {
 	 * @param      string $display_name  The user's display name.
 	 * @param      string $icon_url      The user_icon_url URL.
 	 *
-	 * @return     Friend_User|WP_Error  The created user or an error.
+	 * @return     User|\WP_Error  The created user or an error.
 	 */
 	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null ) {
 		$role_rank = array_flip(
@@ -53,7 +55,7 @@ class Friend_User extends WP_User {
 			)
 		);
 		if ( ! isset( $role_rank[ $role ] ) ) {
-			return new WP_Error( 'invalid_role', 'Invalid role for creation specified' );
+			return new \WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
 		if ( is_multisite() ) {
@@ -94,7 +96,7 @@ class Friend_User extends WP_User {
 		$friend_id = wp_insert_user( $userdata );
 		update_user_option( $friend_id, 'friends_new_friend', true );
 
-		$friend_user = new Friend_User( $friend_id );
+		$friend_user = new User( $friend_id );
 		$friend_user->update_user_icon_url( $icon_url );
 		return $friend_user;
 	}
@@ -156,11 +158,11 @@ class Friend_User extends WP_User {
 	/**
 	 * Determines whether the specified user is a friends plugin user.
 	 *
-	 * @param      WP_User $user   The user.
+	 * @param      \WP_User $user   The user.
 	 *
 	 * @return     bool     True if the specified user is a friends plugin user, False otherwise.
 	 */
-	public static function is_friends_plugin_user( WP_User $user ) {
+	public static function is_friends_plugin_user( \WP_User $user ) {
 		return $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' );
 	}
 
@@ -168,7 +170,7 @@ class Friend_User extends WP_User {
 	 * Get a friend user for a user_login.
 	 *
 	 * @param  string $user_login The user login.
-	 * @return Friend_User|false The friend user or false.
+	 * @return User|false The friend user or false.
 	 */
 	public static function get_user( $user_login ) {
 		$user = get_user_by( 'login', $user_login );
@@ -186,7 +188,7 @@ class Friend_User extends WP_User {
 	 * Get a friend user for a user_id.
 	 *
 	 * @param  string $user_id The user ID.
-	 * @return Friend_User|false The friend user or false.
+	 * @return User|false The friend user or false.
 	 */
 	public static function get_user_by_id( $user_id ) {
 		$user = get_user_by( 'ID', $user_id );
@@ -206,7 +208,7 @@ class Friend_User extends WP_User {
 	 * @param      string $message  The message.
 	 * @param      string $subject  The subject.
 	 *
-	 * @return     WP_Error|bool  True if the message was sent successfully.
+	 * @return     \WP_Error|bool  True if the message was sent successfully.
 	 */
 	public function send_message( $message, $subject = null ) {
 		$friends = Friends::get_instance();
@@ -218,10 +220,10 @@ class Friend_User extends WP_User {
 	 *
 	 * @param      string $feeds  The feed URLs to subscribe to.
 	 *
-	 * @return     WP_User|WP_error  $user The new associated user or an error object.
+	 * @return     \WP_User|\WP_error  $user The new associated user or an error object.
 	 */
 	public function save_feeds( $feeds = array() ) {
-		$errors = new WP_Error();
+		$errors = new \WP_Error();
 		foreach ( $feeds as $feed_url => $options ) {
 			if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
 				$errors->add( 'invalid-url', 'An invalid URL was provided' );
@@ -248,7 +250,7 @@ class Friend_User extends WP_User {
 			$feeds[ $feed_url ] = $feed_options;
 		}
 
-		$user_feeds = Friend_User_Feed::save_multiple(
+		$user_feeds = User_Feed::save_multiple(
 			$this,
 			$feeds
 		);
@@ -266,11 +268,11 @@ class Friend_User extends WP_User {
 	 * @param      string $feed_url  The feed URL to subscribe to.
 	 * @param      array  $options   The options.
 	 *
-	 * @return     WP_User|WP_error  $user The new associated user or an error object.
+	 * @return     \WP_User|\WP_error  $user The new associated user or an error object.
 	 */
 	public function save_feed( $feed_url, $options = array() ) {
 		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
-			return new WP_Error( 'invalid-url', 'An invalid URL was provided' );
+			return new \WP_Error( 'invalid-url', 'An invalid URL was provided' );
 		}
 
 		$default_options = array(
@@ -290,7 +292,7 @@ class Friend_User extends WP_User {
 			}
 		}
 
-		$user_feed = Friend_User_Feed::save(
+		$user_feed = User_Feed::save(
 			$this,
 			$feed_url,
 			$feed_options
@@ -305,7 +307,7 @@ class Friend_User extends WP_User {
 	 * @param      string $feed_url  The feed URL to subscribe to.
 	 * @param      array  $options   The options.
 	 *
-	 * @return     WP_User|WP_error  $user The new associated user or an error object.
+	 * @return     \WP_User|\WP_error  $user The new associated user or an error object.
 	 */
 	public function subscribe( $feed_url, $options = array() ) {
 		$options['active'] = true;
@@ -345,7 +347,7 @@ class Friend_User extends WP_User {
 				),
 			);
 
-			$query = new WP_Query( $args );
+			$query = new \WP_Query( $args );
 
 			while ( $query->have_posts() ) {
 				$count ++;
@@ -364,7 +366,7 @@ class Friend_User extends WP_User {
 				'offset'    => $this->get_retention_number(),
 			);
 
-			$query = new WP_Query( $args );
+			$query = new \WP_Query( $args );
 
 			while ( $query->have_posts() ) {
 				$count ++;
@@ -486,7 +488,7 @@ class Friend_User extends WP_User {
 	 */
 	public function update_user_icon_url( $user_icon_url ) {
 		if ( ! $user_icon_url ) {
-			$user_icon_url = Friends_Mf2\resolveUrl( $this->user_url, '/favicon.ico' );
+			$user_icon_url = Friends\Mf2\resolveUrl( $this->user_url, '/favicon.ico' );
 		}
 
 		if ( $user_icon_url && Friends::check_url( $user_icon_url ) ) {
@@ -546,7 +548,7 @@ class Friend_User extends WP_User {
 	public function get_remote_post_ids() {
 		$friends = Friends::get_instance();
 		$remote_post_ids = array();
-		$existing_posts  = new WP_Query(
+		$existing_posts  = new \WP_Query(
 			array(
 				'post_type'   => Friends::CPT,
 				'post_status' => array( 'publish', 'private', 'trash' ),
@@ -576,12 +578,12 @@ class Friend_User extends WP_User {
 	/**
 	 * Get the user's feeds (and potentially convert old-style feed URL).
 	 *
-	 * @return array An array of Friend_User_Feed items.
+	 * @return array An array of User_Feed items.
 	 */
 	public function get_feeds() {
-		$feeds = Friend_User_Feed::get_for_user( $this );
+		$feeds = User_Feed::get_for_user( $this );
 		if ( empty( $feeds ) ) {
-			$feeds = Friend_User_Feed::convert_user( $this );
+			$feeds = User_Feed::convert_user( $this );
 		}
 
 		return $feeds;
@@ -590,7 +592,7 @@ class Friend_User extends WP_User {
 	/**
 	 * Get just the user's active feeds.
 	 *
-	 * @return array An array of active Friend_User_Feed items.
+	 * @return array An array of active User_Feed items.
 	 */
 	public function get_active_feeds() {
 		$active_feeds = array();
@@ -663,7 +665,7 @@ class Friend_User extends WP_User {
 	 */
 	public function get_role_name( $group_subscriptions = false, $count = 1 ) {
 		if ( is_multisite() && is_super_admin( $this->ID ) ) {
-			return _x( 'Super Admin', 'User role' );
+			return _x( 'Super Admin', 'User role' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		$name = false;
@@ -764,7 +766,7 @@ class Friend_User extends WP_User {
 	public function get_rest_url() {
 		$friends = Friends::get_instance();
 		$rest_url = $this->get_user_option( 'friends_rest_url' );
-		if ( ! $rest_url || false === strpos( $rest_url, Friends_REST::PREFIX ) ) {
+		if ( ! $rest_url || false === strpos( $rest_url, REST::PREFIX ) ) {
 			$rest_url = $friends->rest->discover_rest_url( $this->user_url );
 			if ( $rest_url ) {
 				$this->update_user_option( 'friends_rest_url', $rest_url );

@@ -6,12 +6,14 @@
  * @since 1.0
  */
 
+namespace Friends;
+
 /**
  * Send an accept header that only allows for Atom or RSS.
  *
- * @see WP_SimplePie_File
+ * @see \WP_SimplePie_File
  */
-class Friends_SimplePie_File_Accept_Only_RSS extends WP_SimplePie_File {
+class SimplePie_File_Accept_Only_RSS extends \WP_SimplePie_File {
 
 	/**
 	 * Constructor.

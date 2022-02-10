@@ -5,10 +5,12 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Render a preview row.
  *
- * @param      WP_Post $post   The post.
+ * @param      \WP_Post $post   The post.
  * @param      array   $args   The arguments.
  */
 function preview_row( $post, $args ) {

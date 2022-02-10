@@ -7,11 +7,13 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
 /**
  * This class describes a friends feed item.
  */
-class Friends_Feed_Item {
+class Feed_Item {
 	/**
 	 * Holds the feed item data.
 	 *
@@ -84,7 +86,7 @@ class Friends_Feed_Item {
 	 * @param      string $key    The key.
 	 * @param      mixed  $value  The value.
 	 *
-	 * @return     mixed|WP_Error  The value or a wp error.
+	 * @return     mixed|\WP_Error  The value or a wp error.
 	 */
 	public function __set( $key, $value ) {
 		switch ( $key ) {
@@ -142,7 +144,7 @@ class Friends_Feed_Item {
 				break;
 			case '_feed_rule_transform':
 				if ( ! is_array( $value ) ) {
-					$value = new WP_Error( 'invalid-key', 'This value cannot be stored in a _feed_rule_transform.' );
+					$value = new \WP_Error( 'invalid-key', 'This value cannot be stored in a _feed_rule_transform.' );
 				}
 				break;
 			case '_is_new':
@@ -150,7 +152,7 @@ class Friends_Feed_Item {
 				break;
 
 			default:
-				return new WP_Error( 'invalid-key', 'This value cannot be stored in a feed item.' );
+				return new \WP_Error( 'invalid-key', 'This value cannot be stored in a feed item.' );
 		}
 
 		if ( ! is_wp_error( $value ) ) {
@@ -167,11 +169,11 @@ class Friends_Feed_Item {
 	 * @param      int    $max_length  The maximum length of the string.
 	 * @param      string $error_code  The error code.
 	 *
-	 * @return     string|WP_Error  The validated string.
+	 * @return     string|\WP_Error  The validated string.
 	 */
 	public function validate_string( $string, $max_length, $error_code ) {
 		if ( ! is_string( $string ) ) {
-			return new WP_Error( $error_code, 'No string was supplied.' );
+			return new \WP_Error( $error_code, 'No string was supplied.' );
 		}
 
 		return rtrim( substr( trim( $string ), 0, $max_length ) );
@@ -185,18 +187,18 @@ class Friends_Feed_Item {
 	 * @param      int        $max      The maximum acceptable value.
 	 * @param      string     $error_code  The error code.
 	 *
-	 * @return     int|WP_Error  The validated integer.
+	 * @return     int|\WP_Error  The validated integer.
 	 */
 	public function validate_integer( $integer, $min, $max, $error_code ) {
 		if ( ! is_numeric( $integer ) ) {
-			return new WP_Error( $error_code, 'No number was supplied.' );
+			return new \WP_Error( $error_code, 'No number was supplied.' );
 		}
 		$int = intval( $integer );
 		if ( $int > $max ) {
-			return new WP_Error( $error_code, 'Number exceeds the maximum value.' );
+			return new \WP_Error( $error_code, 'Number exceeds the maximum value.' );
 		}
 		if ( $int < $min ) {
-			return new WP_Error( $error_code, 'Number is below the minimum value.' );
+			return new \WP_Error( $error_code, 'Number is below the minimum value.' );
 		}
 		return $int;
 	}
@@ -207,12 +209,12 @@ class Friends_Feed_Item {
 	 * @param      string $url  The url.
 	 * @param      string $error_code  The error code.
 	 *
-	 * @return     string|WP_Error  The validated url.
+	 * @return     string|\WP_Error  The validated url.
 	 */
 	public function validate_url( $url, $error_code ) {
 		$url = filter_var( $url, FILTER_VALIDATE_URL );
 		if ( false === $url ) {
-			return new WP_Error( $error_code, 'An invalid URL was supplied.' );
+			return new \WP_Error( $error_code, 'An invalid URL was supplied.' );
 		}
 
 		return $url;
@@ -224,7 +226,7 @@ class Friends_Feed_Item {
 	 * @param      string|int $date  The date.
 	 * @param      string     $error_code  The error code.
 	 *
-	 * @return     string|WP_Error  The validated date.
+	 * @return     string|\WP_Error  The validated date.
 	 */
 	public function validate_date( $date, $error_code ) {
 		if ( ! is_numeric( $date ) ) {
@@ -232,11 +234,11 @@ class Friends_Feed_Item {
 		}
 
 		if ( 0 > $date ) {
-			return new WP_Error( $error_code, 'An invalid timestamp was supplied.' );
+			return new \WP_Error( $error_code, 'An invalid timestamp was supplied.' );
 		}
 
 		if ( false === $date ) {
-			return new WP_Error( $error_code, 'The date could not be convered to a timestamp.' );
+			return new \WP_Error( $error_code, 'The date could not be convered to a timestamp.' );
 		}
 		return $date;
 	}
@@ -246,12 +248,12 @@ class Friends_Feed_Item {
 	 *
 	 * @param      string $format  The post format.
 	 *
-	 * @return     string|WP_Error  The validated format.
+	 * @return     string|\WP_Error  The validated format.
 	 */
 	public function validate_post_format( $format ) {
 		$post_formats = get_post_format_strings();
 		if ( ! isset( $post_formats[ $format ] ) ) {
-			return new WP_Error( 'invalid-post-format', 'The format needs to be one of get_post_format_strings().' );
+			return new \WP_Error( 'invalid-post-format', 'The format needs to be one of get_post_format_strings().' );
 
 		}
 		return $format;
@@ -262,12 +264,12 @@ class Friends_Feed_Item {
 	 *
 	 * @param      string $status  The post status.
 	 *
-	 * @return     string|WP_Error  The validated status.
+	 * @return     string|\WP_Error  The validated status.
 	 */
 	public function validate_post_status( $status ) {
 		$valid_post_statuses = array( 'draft', 'publish', 'private' );
 		if ( in_array( $status, $valid_post_statuses ) ) {
-			return new WP_Error( 'invalid-post-status', 'The status needs to be one of draft, publish, or private.' );
+			return new \WP_Error( 'invalid-post-status', 'The status needs to be one of draft, publish, or private.' );
 
 		}
 		return $status;

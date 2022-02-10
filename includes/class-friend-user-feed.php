@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the feed URLs part of the Friends Plugin.
  *
@@ -15,30 +17,30 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friend_User_Feed {
+class User_Feed {
 	const TAXONOMY = 'friend-user-feed';
 
 	/**
-	 * Contains a reference to the WP_Term for the feed.
+	 * Contains a reference to the \WP_Term for the feed.
 	 *
-	 * @var WP_Term
+	 * @var \WP_Term
 	 */
 	private $term;
 
 	/**
-	 * Contains a reference to the associated Friend_User.
+	 * Contains a reference to the associated User.
 	 *
-	 * @var Friend_User
+	 * @var User
 	 */
 	private $friend_user;
 
 	/**
 	 * Constructor
 	 *
-	 * @param WP_Term          $term        The WordPress term of the feed taxonomy.
-	 * @param Friend_User|null $friend_user Optionally the associated Friend_User, if available.
+	 * @param \WP_Term   $term        The WordPress term of the feed taxonomy.
+	 * @param User|null $friend_user Optionally the associated User, if available.
 	 */
-	public function __construct( WP_Term $term, Friend_User $friend_user = null ) {
+	public function __construct( \WP_Term $term, User $friend_user = null ) {
 		$this->term = $term;
 		$this->friend_user = $friend_user;
 	}
@@ -104,7 +106,7 @@ class Friend_User_Feed {
 	/**
 	 * Gets the friend user associated wit the term.
 	 *
-	 * @return Friend_User|null The associated user.
+	 * @return User|null The associated user.
 	 */
 	public function get_friend_user() {
 		if ( empty( $this->friend_user ) ) {
@@ -113,7 +115,7 @@ class Friend_User_Feed {
 				return null;
 			}
 			$user_id = reset( $user_ids );
-			$this->friend_user = new Friend_User( $user_id );
+			$this->friend_user = new User( $user_id );
 		}
 
 		return $this->friend_user;
@@ -260,9 +262,9 @@ class Friend_User_Feed {
 	public static function register_taxonomy() {
 		$args = array(
 			'labels'            => array(
-				'name'          => _x( 'Feed URL', 'taxonomy general name' ),
-				'singular_name' => _x( 'Feed URL', 'taxonomy singular name' ),
-				'menu_name'     => __( 'Feed URL' ),
+				'name'          => _x( 'Feed URL', 'taxonomy general name', 'friends' ),
+				'singular_name' => _x( 'Feed URL', 'taxonomy singular name', 'friends' ),
+				'menu_name'     => __( 'Feed URL', 'friends' ),
 			),
 			'hierarchical'      => false,
 			'show_ui'           => true,
@@ -354,10 +356,10 @@ class Friend_User_Feed {
 	/**
 	 * Convert the previous storage of a feed URL as a user option to use terms.
 	 *
-	 * @param  Friend_User $friend_user The user to be converted.
-	 * @return array                    An array of newly created Friend_User_Feed items.
+	 * @param  User $friend_user The user to be converted.
+	 * @return array                    An array of newly created User_Feed items.
 	 */
-	public static function convert_user( Friend_User $friend_user ) {
+	public static function convert_user( User $friend_user ) {
 		$feed_url = $friend_user->get_user_option( 'friends_feed_url' );
 		if ( ! $feed_url ) {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
@@ -389,12 +391,12 @@ class Friend_User_Feed {
 	 *
 	 * See save() for possible options.
 	 *
-	 * @param      Friend_User $friend_user  The associated user.
-	 * @param      array       $feeds        The feeds in the format array( url => options ).
+	 * @param      User  $friend_user  The associated user.
+	 * @param      array $feeds        The feeds in the format array( url => options ).
 	 *
 	 * @return     array      Array of the newly created terms.
 	 */
-	public static function save_multiple( Friend_User $friend_user, array $feeds ) {
+	public static function save_multiple( User $friend_user, array $feeds ) {
 		$all_urls = array();
 		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
 			$all_urls[ $term->name ] = $term->term_id;
@@ -430,12 +432,12 @@ class Friend_User_Feed {
 	/**
 	 * Saves a new feed as a term for the user.
 	 *
-	 * @param  Friend_User $friend_user The user to be associated.
-	 * @param  string      $url         The feed URL.
-	 * @param  array       $args        Further parameters. Possibly array keys: active, parser, post_format, mime_type, title.
-	 * @return WP_Term                  A newly created term.
+	 * @param  User   $friend_user The user to be associated.
+	 * @param  string $url         The feed URL.
+	 * @param  array  $args        Further parameters. Possibly array keys: active, parser, post_format, mime_type, title.
+	 * @return \WP_Term                  A newly created term.
 	 */
-	public static function save( Friend_User $friend_user, $url, $args = array() ) {
+	public static function save( User $friend_user, $url, $args = array() ) {
 		$all_urls = array();
 		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
 			$all_urls[ $term->name ] = $term->term_id;
@@ -496,13 +498,13 @@ class Friend_User_Feed {
 	}
 
 	/**
-	 * Fetch the feeds associated with the Friend_User.
+	 * Fetch the feeds associated with the User.
 	 *
-	 * @param  Friend_User $friend_user The user we're looking for.
-	 * @return array                    An array of Friend_User_Feed objects.
+	 * @param  User $friend_user The user we're looking for.
+	 * @return array                    An array of User_Feed objects.
 	 */
-	public static function get_for_user( Friend_User $friend_user ) {
-		$term_query = new WP_Term_Query(
+	public static function get_for_user( User $friend_user ) {
+		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,
 				'object_ids' => $friend_user->ID,
@@ -521,10 +523,10 @@ class Friend_User_Feed {
 	 *
 	 * @param      int $id     The feed id.
 	 *
-	 * @return     object|WP_Error   A Friend_User_Feed object.
+	 * @return     object|\WP_Error   A User_Feed object.
 	 */
 	public static function get_by_id( $id ) {
-		$term_query = new WP_Term_Query(
+		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy' => self::TAXONOMY,
 				'include'  => $id,
@@ -534,7 +536,7 @@ class Friend_User_Feed {
 			return new self( $term );
 		}
 
-		return new WP_Error( 'term_not_found' );
+		return new \WP_Error( 'term_not_found' );
 	}
 
 	/**

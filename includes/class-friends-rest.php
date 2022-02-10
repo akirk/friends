@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the REST part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_REST {
+class REST {
 	const PREFIX = 'friends/v1';
 	/**
 	 * Contains a reference to the Friends class.
@@ -80,19 +82,19 @@ class Friends_REST {
 	/**
 	 * Receive a notification via REST that a friend request was accepted
 	 *
-	 * @param  WP_REST_Request $request The incoming request.
+	 * @param  \WP_REST_Request $request The incoming request.
 	 * @return array The array to be returned via the REST API.
 	 */
-	public function rest_accept_friend_request( WP_REST_Request $request ) {
+	public function rest_accept_friend_request( \WP_REST_Request $request ) {
 		$request_id     = $request->get_param( 'request' );
 		$friend_user_id = get_option( 'friends_request_' . sha1( $request_id ) );
 		$friend_user    = false;
 		if ( $friend_user_id ) {
-			$friend_user = new Friend_User( $friend_user_id );
+			$friend_user = new User( $friend_user_id );
 		}
 
 		if ( ! $request_id || ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->user_url ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_invalid_parameters',
 				'Not all necessary parameters were provided.',
 				array(
@@ -104,7 +106,7 @@ class Friends_REST {
 		$future_in_token = get_user_option( 'friends_future_in_token_' . sha1( $request_id ), $friend_user_id );
 		$proof            = $request->get_param( 'proof' );
 		if ( ! $proof || sha1( $future_in_token . $request_id ) !== $proof ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_invalid_proof',
 				'An invalid proof was provided.',
 				array(
@@ -113,9 +115,9 @@ class Friends_REST {
 			);
 		}
 
-		$friend_user_login = Friend_User::get_user_login_for_url( $friend_user->user_url );
+		$friend_user_login = User::get_user_login_for_url( $friend_user->user_url );
 		if ( ! $friend_user->has_cap( 'pending_friend_request' ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_offer_no_longer_valid',
 				'The friendship offer is no longer valid.',
 				array(
@@ -126,7 +128,7 @@ class Friends_REST {
 
 		$future_out_token = $request->get_param( 'key' );
 		if ( ! is_string( $future_out_token ) || empty( $future_out_token ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_invalid_key',
 				'The key must be a non-empty string.',
 				array(
@@ -159,13 +161,13 @@ class Friends_REST {
 	/**
 	 * Receive a friend request via REST
 	 *
-	 * @param  WP_REST_Request $request The incoming request.
+	 * @param  \WP_REST_Request $request The incoming request.
 	 * @return array The array to be returned via the REST API.
 	 */
-	public function rest_friend_request( WP_REST_Request $request ) {
+	public function rest_friend_request( \WP_REST_Request $request ) {
 		$version = $request->get_param( 'version' );
 		if ( 2 !== intval( $version ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_unsupported_protocol_version',
 				'Incompatible Friends protocol version.',
 				array(
@@ -176,7 +178,7 @@ class Friends_REST {
 
 		$codeword = $request->get_param( 'codeword' );
 		if ( get_option( 'friends_require_codeword' ) && get_option( 'friends_codeword', 'friends' ) !== $codeword ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_invalid_codeword',
 				get_option( 'friends_wrong_codeword_message', 'An invalid codeword was provided.' ),
 				array(
@@ -187,7 +189,7 @@ class Friends_REST {
 
 		$url = trim( $request->get_param( 'url' ) );
 		if ( ! is_string( $url ) || ! Friends::check_url( $url ) || 0 === strcasecmp( home_url(), $url ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_invalid_site',
 				'An invalid site was provided.',
 				array(
@@ -198,7 +200,7 @@ class Friends_REST {
 
 		$future_out_token = $request->get_param( 'key' );
 		if ( ! is_string( $future_out_token ) || empty( $future_out_token ) ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_invalid_key',
 				'The key must be a non-empty string.',
 				array(
@@ -206,8 +208,8 @@ class Friends_REST {
 				)
 			);
 		}
-		$user_login = Friend_User::get_user_login_for_url( $url );
-		$friend_user = Friend_User::create( $user_login, 'friend_request', $url, $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
+		$user_login = User::get_user_login_for_url( $url );
+		$friend_user = User::create( $user_login, 'friend_request', $url, $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
 		if ( $friend_user->has_cap( 'friend' ) ) {
 			if ( get_user_option( 'friends_out_token', $friend_user->ID ) && ! get_user_option( 'friends_out_token', $friend_user->ID ) ) {
 				// TODO: trigger an accept friend request right away?
@@ -232,12 +234,12 @@ class Friends_REST {
 	 * @param  int $post_id The post id of the post that is deleted.
 	 */
 	public function notify_remote_friend_post_deleted( $post_id ) {
-		$post = WP_Post::get_instance( $post_id );
+		$post = \WP_Post::get_instance( $post_id );
 		if ( 'post' !== $post->post_type ) {
 			return;
 		}
 
-		$friends = Friend_User_Query::all_friends();
+		$friends = User_Query::all_friends();
 		$friends = $friends->get_results();
 
 		foreach ( $friends as $friend_user ) {
@@ -260,14 +262,14 @@ class Friends_REST {
 	/**
 	 * Receive a REST message that a post was deleted.
 	 *
-	 * @param  WP_REST_Request $request The incoming request.
+	 * @param  \WP_REST_Request $request The incoming request.
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_friend_post_deleted( $request ) {
 		$tokens = explode( '-', $request->get_param( 'auth' ) );
 		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
 		if ( ! $user_id ) {
-			return new WP_Error(
+			return new \WP_Error(
 				'friends_request_failed',
 				__( 'Could not respond to the request.', 'friends' ),
 				array(
@@ -275,7 +277,7 @@ class Friends_REST {
 				)
 			);
 		}
-		$friend_user     = new Friend_User( $user_id );
+		$friend_user     = new User( $user_id );
 		$remote_post_id  = $request->get_param( 'post_id' );
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 
@@ -286,7 +288,7 @@ class Friends_REST {
 		}
 
 		$post_id = $remote_post_ids[ $remote_post_id ];
-		$post    = WP_Post::get_instance( $post_id );
+		$post    = \WP_Post::get_instance( $post_id );
 		if ( Friends::CPT === $post->post_type ) {
 			wp_delete_post( $post_id );
 		}
@@ -300,7 +302,7 @@ class Friends_REST {
 	 * Discover the REST URL for a friend site
 	 *
 	 * @param  array $feeds The URL of the site.
-	 * @return string|WP_Error The REST URL or an error.
+	 * @return string|\WP_Error The REST URL or an error.
 	 */
 	public function get_friends_rest_url( $feeds ) {
 		foreach ( $feeds as $feed_url => $feed ) {
@@ -316,11 +318,11 @@ class Friends_REST {
 	 * Discover the REST URL for a friend site
 	 *
 	 * @param  string $url The URL of the site.
-	 * @return string|WP_Error The REST URL or an error.
+	 * @return string|\WP_Error The REST URL or an error.
 	 */
 	public function discover_rest_url( $url ) {
 		if ( ! is_string( $url ) || ! Friends::check_url( $url ) ) {
-			return new WP_Error( 'invalid-url-given', 'An invalid URL was given.' );
+			return new \WP_Error( 'invalid-url-given', 'An invalid URL was given.' );
 		}
 
 		$response = wp_safe_remote_get(
@@ -375,7 +377,7 @@ class Friends_REST {
 			return;
 		}
 
-		$friend_user = new Friend_User( $user_id );
+		$friend_user = new User( $user_id );
 
 		$friend_rest_url  = $friend_user->get_rest_url();
 		$request_id       = $friend_user->get_user_option( 'friends_request_id' );

@@ -10,7 +10,9 @@
  * @version   1.3.1
  */
 
-if ( ! class_exists( 'Gamajo_Template_Loader' ) ) {
+namespace Friends;
+
+if ( ! class_exists( '\Gamajo_Template_Loader' ) ) {
 	require __DIR__ . '/class-gamajo-template-loader-1-4-0.php';
 }
 /**
@@ -21,7 +23,7 @@ if ( ! class_exists( 'Gamajo_Template_Loader' ) ) {
  * @package Friends
  * @author  Alex Kirk
  */
-class Friends_Template_Loader extends Gamajo_Template_Loader_1_4_0 {
+class Template_Loader extends \Gamajo_Template_Loader_1_4_0 {
 	/**
 	 * Prefix for filter names.
 	 *

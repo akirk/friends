@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class to install plugins for the Friends Plugin. Adapted from the github link below.
  *
@@ -17,7 +19,7 @@
  * @author Darren Cooney
  * @link  https://github.com/dcooney/wordpress-plugin-installer
  */
-class Friends_Plugin_Installer {
+class Plugin_Installer {
 	/**
 	 * Our plugins.
 	 *
@@ -47,7 +49,7 @@ class Friends_Plugin_Installer {
 
 		$plugins = self::get_friends_plugins();
 
-		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once \ABSPATH . 'wp-admin/includes/plugin-install.php';
 
 		foreach ( array_keys( (array) $plugins ) as $plugin_slug ) {
 
@@ -80,10 +82,10 @@ class Friends_Plugin_Installer {
 				if ( self::check_file_extension( $main_plugin_file ) ) {
 					if ( is_plugin_active( $main_plugin_file ) ) {
 						$button_classes = 'installed button disabled';
-						$button_text    = __( 'Active' );
+						$button_text    = __( 'Active' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					} else {
 						$button_classes = 'activate button button-primary';
-						$button_text    = __( 'Activate' );
+						$button_text    = __( 'Activate' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					}
 				}
 				self::render_template( $api, $button_text, $button_classes );
@@ -164,7 +166,7 @@ class Friends_Plugin_Installer {
 
 		foreach ( self::get_friends_plugins() as $data ) {
 			if ( $data && isset( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ] ) && version_compare( $transient->checked[ $data->slug . '/' . $data->slug . '.php' ], $data->version, '<' ) && ( ! isset( $data->requires ) || version_compare( $data->requires, get_bloginfo( 'version' ), '<' ) ) ) {
-				$res = new stdClass();
+				$res = new \stdClass();
 				$res->slug = $data->slug;
 				$res->plugin = $data->slug . '/' . $data->slug . '.php';
 				$res->new_version = $data->version;
@@ -230,10 +232,10 @@ class Friends_Plugin_Installer {
 		}
 
 		// Include required libs for installation.
-		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
-		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-		require_once ABSPATH . 'wp-admin/includes/class-wp-ajax-upgrader-skin.php';
-		require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
+		require_once \ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-wp-ajax-upgrader-skin.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
 
 		$api = plugins_api(
 			'plugin_information',
@@ -256,8 +258,8 @@ class Friends_Plugin_Installer {
 			)
 		);
 
-		$skin     = new WP_Ajax_Upgrader_Skin();
-		$upgrader = new Plugin_Upgrader( $skin );
+		$skin     = new \WP_Ajax_Upgrader_Skin();
+		$upgrader = new \Plugin_Upgrader( $skin );
 		$upgrader->install( $api->download_link );
 
 		if ( $api->name ) {
@@ -292,9 +294,9 @@ class Friends_Plugin_Installer {
 			die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
-		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-		require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
+		require_once \ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
 
 		$api = plugins_api(
 			'plugin_information',
@@ -353,7 +355,7 @@ class Friends_Plugin_Installer {
 			die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
-		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		require_once \ABSPATH . 'wp-admin/includes/plugin.php';
 
 		deactivate_plugins( $plugin . '/' . $plugin . '.php' );
 
@@ -421,7 +423,7 @@ class Friends_Plugin_Installer {
 	 * @since      1.0
 	 */
 	public static function get_plugin_file( $plugin_slug ) {
-		require_once ABSPATH . '/wp-admin/includes/plugin.php';
+		require_once \ABSPATH . '/wp-admin/includes/plugin.php';
 		$plugins = get_plugins();
 
 		foreach ( $plugins as $plugin_file => $plugin_info ) {
@@ -469,9 +471,9 @@ class Friends_Plugin_Installer {
 				'admin_nonce'    => wp_create_nonce( 'friends_installer_nonce' ),
 				'install_now'    => __( 'Are you sure you want to install this plugin?', 'friends' ),
 				'install_btn'    => __( 'Install Now', 'friends' ),
-				'activate_btn'   => __( 'Activate' ),
-				'deactivate_btn' => __( 'Dectivate' ),
-				'installed_btn'  => __( 'Active' ),
+				'activate_btn'   => __( 'Activate' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'deactivate_btn' => __( 'Dectivate' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'installed_btn'  => __( 'Active' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			)
 		);
 	}

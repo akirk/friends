@@ -1,13 +1,13 @@
 <?php
 
-namespace Friends_Mf2;
+namespace Friends\Mf2;
 
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
 use DOMNode;
 use DOMNodeList;
-use Exception;
+use \Exception;
 use SplObjectStorage;
 use stdClass;
 

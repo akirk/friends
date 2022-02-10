@@ -5,12 +5,14 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Class used to implement displaying automatic status posts in a list table.
  *
- * @see WP_Posts_List_Table
+ * @see \WP_Posts_List_Table
  */
-class Friends_Automatic_Status_List_Table extends WP_Posts_List_Table {
+class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	/**
 	 * Constructor
 	 *
@@ -20,7 +22,7 @@ class Friends_Automatic_Status_List_Table extends WP_Posts_List_Table {
 		parent::__construct(
 			array(
 				'plural' => 'posts',
-				'screen' => WP_Screen::get( 'edit' ),
+				'screen' => \WP_Screen::get( 'edit' ),
 			)
 		);
 	}
@@ -145,7 +147,7 @@ class Friends_Automatic_Status_List_Table extends WP_Posts_List_Table {
 	 *
 	 * @global string $mode List table view mode.
 	 *
-	 * @param WP_Post $post The current WP_Post object.
+	 * @param \WP_Post $post The current \WP_Post object.
 	 */
 	public function column_title( $post ) {
 		global $mode;

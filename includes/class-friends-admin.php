@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Plugin Admin section.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Admin {
+class Admin {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -112,7 +114,7 @@ class Friends_Admin {
 			return;
 		}
 
-		$friends_subscriptions = Friend_User_Query::all_friends_subscriptions();
+		$friends_subscriptions = User_Query::all_friends_subscriptions();
 		if ( $friends_subscriptions->get_total() && ! ( isset( $_GET['friends-welcome'] ) && $_GET['friends-welcome'] ) ) {
 			return;
 		}
@@ -120,7 +122,7 @@ class Friends_Admin {
 		?>
 		<div id="friends-welcome-panel" class="welcome-panel notice">
 			<?php wp_nonce_field( 'friends-welcome-panel-nonce', 'friendswelcomepanelnonce', false ); ?>
-			<a class="welcome-panel-close" href="<?php echo esc_url( admin_url( '?friends-welcome=0' ) ); ?>" aria-label="<?php esc_attr_e( 'Dismiss the welcome panel' ); ?>"><?php esc_html_e( 'Dismiss' ); ?></a>
+			<a class="welcome-panel-close" href="<?php echo esc_url( admin_url( '?friends-welcome=0' ) ); ?>" aria-label="<?php esc_attr_e( 'Dismiss the welcome panel', 'friends' ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Dismiss' ); ?></a>
 			<div class="welcome-panel-content">
 				<h2><?php esc_html_e( 'Welcome to the Friends Plugin!', 'friends' ); ?></h2>
 				<p><?php esc_html_e( "You're seeing this message because you haven't connected with friends or made any subscriptions yet. Here is how to get started:", 'friends' ); ?></p>
@@ -203,10 +205,10 @@ class Friends_Admin {
 	/**
 	 * Add our help information
 	 *
-	 * @param  WP_Screen $screen The current wp-admin screen.
+	 * @param  \WP_Screen $screen The current wp-admin screen.
 	 */
 	public function register_help( $screen ) {
-		if ( ! ( $screen instanceof WP_Screen ) ) {
+		if ( ! ( $screen instanceof \WP_Screen ) ) {
 			return;
 		}
 
@@ -308,7 +310,7 @@ class Friends_Admin {
 		);
 
 		if ( isset( $_GET['user'] ) ) {
-			$friend_user = new Friend_User( intval( $_GET['user'] ) );
+			$friend_user = new User( intval( $_GET['user'] ) );
 			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
 				wp_die( esc_html__( 'Invalid user ID.' ) );
 			}
@@ -323,7 +325,7 @@ class Friends_Admin {
 	 */
 	public function admin_plugin_installer() {
 		Friends::template_loader()->get_template_part( 'admin/plugin-installer-header' );
-		Friends_Plugin_Installer::init();
+		Plugin_Installer::init();
 		Friends::template_loader()->get_template_part( 'admin/plugin-installer-footer' );
 	}
 
@@ -338,11 +340,11 @@ class Friends_Admin {
 	 * @param      string $codeword    A codeword to send along.
 	 * @param      string $message     A message to send along.
 	 *
-	 * @return     WP_User|WP_error  $user The new associated user or an error object.
+	 * @return     \WP_User|\WP_error  $user The new associated user or an error object.
 	 */
 	public function send_friend_request( $rest_url, $user_login, $user_url, $display_name, $codeword = 'friends', $message = '' ) {
 		if ( ! is_string( $rest_url ) || ! Friends::check_url( $rest_url ) ) {
-			return new WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
+			return new \WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 		}
 
 		$future_in_token = wp_generate_password( 128, false );
@@ -372,15 +374,15 @@ class Friends_Admin {
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 				// translators: %s is the message from the other server.
-				return new WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), $json->message ), $json->data );
+				return new \WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), $json->message ), $json->data );
 			}
 		}
 
 		if ( ! $json || ! is_object( $json ) ) {
-			return new WP_Error( 'unexpected-rest-response', 'Unexpected remote response: ' . substr( wp_remote_retrieve_body( $response ), 0, 30 ), $response );
+			return new \WP_Error( 'unexpected-rest-response', 'Unexpected remote response: ' . substr( wp_remote_retrieve_body( $response ), 0, 30 ), $response );
 		}
 
-		$friend_user = Friend_User::create( $user_login, 'pending_friend_request', $user_url, $display_name );
+		$friend_user = User::create( $user_login, 'pending_friend_request', $user_url, $display_name );
 		if ( is_wp_error( $friend_user ) ) {
 			return $friend_user;
 		}
@@ -403,7 +405,7 @@ class Friends_Admin {
 	 * @return string|bool The edit link or false.
 	 */
 	public function admin_edit_user_link( $link, $user_id ) {
-		$user = new WP_User( $user_id );
+		$user = new \WP_User( $user_id );
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return $link;
 		}
@@ -606,7 +608,7 @@ class Friends_Admin {
 			'admin/settings',
 			null,
 			array(
-				'potential_main_users'           => Friend_User_Query::all_admin_users(),
+				'potential_main_users'           => User_Query::all_admin_users(),
 				'main_user_id'                   => $this->friends->get_main_friend_user_id(),
 				'friend_roles'                   => $this->get_friend_roles(),
 				'default_role'                   => get_option( 'friends_default_friend_role', 'friend' ),
@@ -625,7 +627,7 @@ class Friends_Admin {
 				'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message', $wrong_codeword_message ),
 				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
 				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
-				'notification_keywords'          => Friends_Feed::get_all_notification_keywords(),
+				'notification_keywords'          => Feed::get_all_notification_keywords(),
 			)
 		);
 	}
@@ -642,7 +644,7 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
-		$friend = new Friend_User( intval( $_GET['user'] ) );
+		$friend = new User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
@@ -790,7 +792,7 @@ class Friends_Admin {
 			wp_die( -1 );
 		}
 
-		$friend_user = Friend_User::get_user( $_POST['friend'] );
+		$friend_user = User::get_user( $_POST['friend'] );
 		if ( ! $friend_user ) {
 			wp_die( -1 );
 		}
@@ -811,14 +813,14 @@ class Friends_Admin {
 	 *
 	 * @param  array   $rules     The rules to apply.
 	 * @param  string  $catch_all The catch all behavior.
-	 * @param  WP_Post $post       The post.
+	 * @param  \WP_Post $post       The post.
 	 */
-	public function render_preview_friend_rules( $rules, $catch_all, WP_Post $post = null ) {
+	public function render_preview_friend_rules( $rules, $catch_all, \WP_Post $post = null ) {
 		$friend = $this->check_admin_edit_friend_rules();
 
 		$args = array(
 			'friend'       => $friend,
-			'friend_posts' => new WP_Query(
+			'friend_posts' => new \WP_Query(
 				array(
 					'post_type'      => Friends::CPT,
 					'post_status'    => array( 'publish', 'private', 'trash' ),
@@ -830,8 +832,8 @@ class Friends_Admin {
 			'post'         => $post,
 		);
 
-		Friend_User::$feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );
-		Friend_User::$feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $catch_all );
+		User::$feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );
+		User::$feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $catch_all );
 
 		Friends::template_loader()->get_template_part( 'admin/preview-rules', null, $args );
 	}
@@ -848,7 +850,7 @@ class Friends_Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
 
-		$friend = new Friend_User( intval( $_GET['user'] ) );
+		$friend = new User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid user ID.' ) );
 		}
@@ -893,7 +895,7 @@ class Friends_Admin {
 
 				if ( is_wp_error( $response ) ) {
 					$arg = 'error';
-				} elseif ( $response instanceof Friend_User ) {
+				} elseif ( $response instanceof User ) {
 					if ( $response->has_cap( 'pending_friend_request' ) ) {
 						$arg = 'sent-request';
 						// translators: %s is a Site URL.
@@ -988,7 +990,7 @@ class Friends_Admin {
 						}
 
 						$feed['active'] = true;
-						Friend_User_Feed::save(
+						User_Feed::save(
 							$friend,
 							$feed['url'],
 							$feed
@@ -1056,7 +1058,7 @@ class Friends_Admin {
 	 */
 	public function render_admin_edit_friend() {
 		$friend = $this->check_admin_edit_friend();
-		$friend_posts = new WP_Query(
+		$friend_posts = new \WP_Query(
 			array(
 				'post_type'   => Friends::CPT,
 				'post_status' => array( 'publish', 'private' ),
@@ -1158,9 +1160,9 @@ class Friends_Admin {
 	/**
 	 * Previous process the Add Friend form. Todo: re-integrate.
 	 *
-	 * @param      Friend_User $friend_user  The Friend user.
-	 * @param      array       $vars         The variables from the admin
-	 *                                       submission.
+	 * @param      User  $friend_user  The Friend user.
+	 * @param      array $vars         The variables from the admin
+	 *                                 submission.
 	 *
 	 * @return     boolean      true when there was no error.
 	 */
@@ -1170,7 +1172,7 @@ class Friends_Admin {
 			return false;
 		}
 
-		if ( ! $friend_user instanceof Friend_User ) {
+		if ( ! $friend_user instanceof User ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
 				<?php
@@ -1286,7 +1288,7 @@ class Friends_Admin {
 	 *
 	 * @param      array $vars   The POST or GET variables.
 	 *
-	 * @return     boolean A WP_Error or void.
+	 * @return     boolean A \WP_Error or void.
 	 */
 	public function process_admin_add_friend( $vars ) {
 		$friend_url = isset( $vars['friend_url'] ) ? trim( $vars['friend_url'] ) : '';
@@ -1294,10 +1296,10 @@ class Friends_Admin {
 		$message = isset( $vars['message'] ) ? trim( $vars['message'] ) : '';
 
 		$friends_plugin = false;
-		$friend_user_login = Friend_User::get_user_login_for_url( $friend_url );
-		$friend_display_name = Friend_User::get_display_name_for_url( $friend_url );
+		$friend_user_login = User::get_user_login_for_url( $friend_url );
+		$friend_display_name = User::get_display_name_for_url( $friend_url );
 
-		$errors = new WP_Error();
+		$errors = new \WP_Error();
 		$rest_url = false;
 
 		if ( ( isset( $vars['step2'] ) && isset( $vars['feeds'] ) && is_array( $vars['feeds'] ) ) || isset( $vars['step3'] ) ) {
@@ -1322,7 +1324,7 @@ class Friends_Admin {
 				}
 
 				if ( ! $friend_user || is_wp_error( $friend_user ) ) {
-					$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
+					$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
 				}
 
 				return $this->process_admin_add_friend_response( $friend_user, $vars );
@@ -1340,27 +1342,27 @@ class Friends_Admin {
 			}
 
 			if ( 0 === strcasecmp( home_url(), $friend_url ) ) {
-				return new WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
+				return new \WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 			}
 
-			$friend_user = Friend_User::get_user( $friend_user_login );
+			$friend_user = User::get_user( $friend_user_login );
 			if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 				if ( $friend_user->is_valid_friend() ) {
-					return new WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
+					return new \WP_Error( 'already-friend', __( 'You are already friends with this site.', 'friends' ) );
 				}
 
 				// translators: %s is the name of a friend / site.
-				return new WP_Error( 'already-subscribed', sprintf( __( 'You are already subscribed to this site: %s', 'friends' ), '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '">' . esc_html( $friend_user->display_name ) . '</a>' ) );
+				return new \WP_Error( 'already-subscribed', sprintf( __( 'You are already subscribed to this site: %s', 'friends' ), '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '">' . esc_html( $friend_user->display_name ) . '</a>' ) );
 			}
 
 			$feeds = $this->friends->feed->discover_available_feeds( $friend_url );
 			if ( ! $feeds ) {
-				return new WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
+				return new \WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
 			}
-			$better_display_name = Friend_User::get_display_name_from_feeds( $feeds );
+			$better_display_name = User::get_display_name_from_feeds( $feeds );
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
-				$friend_user_login = Friend_User::sanitize_username( $better_display_name );
+				$friend_user_login = User::sanitize_username( $better_display_name );
 			}
 
 			$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
@@ -1381,7 +1383,7 @@ class Friends_Admin {
 			}
 
 			if ( ! $friend_user || is_wp_error( $friend_user ) ) {
-				$friend_user = Friend_User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
+				$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
 			}
 
 			return $this->process_admin_add_friend_response( $friend_user, $vars );
@@ -1535,7 +1537,7 @@ class Friends_Admin {
 			$response = null;
 			if ( ! empty( $_POST ) ) {
 				if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'add-friend' ) ) {
-					$response = new WP_Error( 'invalid-nonce', __( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' ) );
+					$response = new \WP_Error( 'invalid-nonce', __( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' ) );
 				} else {
 					$response = $this->process_admin_add_friend( $_POST );
 				}
@@ -1581,7 +1583,7 @@ class Friends_Admin {
 
 			Friends::template_loader()->get_template_part( 'admin/add-friend', null, $args );
 
-			$friend_requests = new Friend_User_Query(
+			$friend_requests = new User_Query(
 				array(
 					'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
 					'orderby'  => 'registered',
@@ -1656,7 +1658,7 @@ class Friends_Admin {
 		<h1><?php esc_html_e( 'Notification Manager', 'friends' ); ?></h1>
 		<?php
 
-		$friend_users = new Friend_User_Query(
+		$friend_users = new User_Query(
 			array(
 				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
 				'orderby'  => 'display_name',
@@ -1677,7 +1679,8 @@ class Friends_Admin {
 				'friends_settings_url'     => add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 				'hide_from_friends_page'   => $hide_from_friends_page,
 				'no_new_post_notification' => get_user_option( 'friends_no_new_post_notification' ),
-				'active_keywords'          => Friends_Feed::get_active_notification_keywords(),
+				'no_keyword_notification'  => get_user_option( 'friends_no_keyword_notification' ),
+				'active_keywords'          => Feed::get_active_notification_keywords(),
 			)
 		);
 	}
@@ -1698,10 +1701,10 @@ class Friends_Admin {
 	 * Add actions to the user rows
 	 *
 	 * @param  array   $actions The existing actions.
-	 * @param  WP_User $user    The user in question.
+	 * @param  \WP_User $user    The user in question.
 	 * @return array The extended actions.
 	 */
-	public function user_row_actions( array $actions, WP_User $user ) {
+	public function user_row_actions( array $actions, \WP_User $user ) {
 		if (
 			! current_user_can( Friends::REQUIRED_ROLE ) ||
 			(
@@ -1722,7 +1725,7 @@ class Friends_Admin {
 			$actions = array_merge( array( 'edit' => '<a href="' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ) . '">' . __( 'Edit' ) . '</a>' ), $actions );
 		}
 
-		$actions['view'] = $this->friends->frontend->get_link( $user->user_url, __( 'Visit' ), array(), new Friend_User( $user ) );
+		$actions['view'] = $this->friends->frontend->get_link( $user->user_url, __( 'Visit' ), array(), new User( $user ) );
 		unset( $actions['resetpassword'] );
 
 		if ( $user->has_cap( 'friend_request' ) ) {
@@ -1764,7 +1767,7 @@ class Friends_Admin {
 
 		$accepted = 0;
 		foreach ( $users as $user_id ) {
-			$user = new Friend_User( $user_id );
+			$user = new User( $user_id );
 			if ( ! $user || is_wp_error( $user ) ) {
 				continue;
 			}
@@ -1799,14 +1802,14 @@ class Friends_Admin {
 	 * @return array The extended bulk options.
 	 */
 	public function add_user_bulk_options( $actions ) {
-		$friends = Friend_User_Query::all_friend_requests();
+		$friends = User_Query::all_friend_requests();
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
 			$actions['accept_friend_request'] = __( 'Accept Friend Request', 'friends' );
 		}
 
-		$friends = Friend_User_Query::all_subscriptions();
+		$friends = User_Query::all_subscriptions();
 		$friends->get_results();
 
 		if ( ! empty( $friends ) ) {
@@ -1842,7 +1845,7 @@ class Friends_Admin {
 			return $output;
 		}
 		$numposts = count_user_posts( $user_id, array_merge( array( 'post' ), Friends::get_frontend_post_types() ) );
-		$user = Friend_User::get_user_by_id( $user_id );
+		$user = User::get_user_by_id( $user_id );
 		return sprintf(
 			'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
 			$user ? $user->get_local_friends_page_url() : "edit.php?author={$user_id}",
@@ -1883,14 +1886,14 @@ class Friends_Admin {
 	 * @return     int   Unread count + friend requests.
 	 */
 	public function friends_unread_friend_request_count( $unread ) {
-		$friend_requests = Friend_User_Query::all_friend_requests();
+		$friend_requests = User_Query::all_friend_requests();
 		return $unread + $friend_requests->get_total();
 	}
 
 	/**
 	 * Add open friend requests to the menu.
 	 *
-	 * @param      WP_Menu $wp_menu  The wp menu.
+	 * @param      \WP_Menu $wp_menu  The wp menu.
 	 */
 	public function friends_add_menu_open_friend_request( $wp_menu ) {
 		$friend_request_count = $this->friends_unread_friend_request_count( 0 );
@@ -1931,9 +1934,9 @@ class Friends_Admin {
 	/**
 	 * Add a Friends menu to the admin bar
 	 *
-	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
+	 * @param  \WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
-	public function admin_bar_friends_menu( WP_Admin_Bar $wp_menu ) {
+	public function admin_bar_friends_menu( \WP_Admin_Bar $wp_menu ) {
 		$friends_url = home_url( '/friends/' );
 		$super_admin = is_multisite() && is_super_admin( get_current_user_id() ) && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() );
 
@@ -2030,9 +2033,9 @@ class Friends_Admin {
 	/**
 	 * Add a Friends menu to the New Content admin section
 	 *
-	 * @param  WP_Admin_Bar $wp_menu The admin bar to modify.
+	 * @param  \WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
-	public function admin_bar_friends_new_content( WP_Admin_Bar $wp_menu ) {
+	public function admin_bar_friends_new_content( \WP_Admin_Bar $wp_menu ) {
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$wp_menu->add_menu(
 				array(
@@ -2078,13 +2081,13 @@ class Friends_Admin {
 	/**
 	 * Fires at the end of the delete users form prior to the confirm button.
 	 *
-	 * @param WP_User $current_user WP_User object for the current user.
+	 * @param \WP_User $current_user \WP_User object for the current user.
 	 * @param array   $userids      Array of IDs for users being deleted.
 	 */
 	public function delete_user_form( $current_user, $userids ) {
 		$only_friends_affiliated = true;
 		foreach ( $userids as $user_id ) {
-			$user = new WP_User( $user_id );
+			$user = new \WP_User( $user_id );
 			if (
 				! $user->has_cap( 'friend_request' ) &&
 				! $user->has_cap( 'pending_friend_request' ) &&
@@ -2113,7 +2116,7 @@ class Friends_Admin {
 	 * @param      integer $user_id  The user identifier.
 	 */
 	public function delete_user( $user_id ) {
-		Friend_User_Feed::delete_user_terms( $user_id );
+		User_Feed::delete_user_terms( $user_id );
 	}
 
 	/**
@@ -2274,10 +2277,10 @@ class Friends_Admin {
 
 		if ( ! $main_user ) {
 			// translators: %d is the number of users.
-			return esc_html( sprintf( __( 'No main user set. Admin users: %d', 'friends' ), Friend_User_Query::all_admin_users()->get_total() ) );
+			return esc_html( sprintf( __( 'No main user set. Admin users: %d', 'friends' ), User_Query::all_admin_users()->get_total() ) );
 		}
 
-		$user = new WP_User( $main_user );
+		$user = new \WP_User( $main_user );
 
 		if ( ! $user ) {
 			return sprintf( '#%1$d %2$s', $main_user, '???' );

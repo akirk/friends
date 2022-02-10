@@ -5,10 +5,12 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Test the Notifications
  */
-class Friends_Friend_Feed_Discovery extends WP_UnitTestCase {
+class Feed_Discovery extends \WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 

@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Reactions part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Reactions {
+class Reactions {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -91,7 +93,7 @@ class Friends_Reactions {
 	/**
 	 * Get the reactions for a post.
 	 *
-	 * @param  int|WP_Post $post The post.
+	 * @param  int|\WP_Post $post The post.
 	 * @param  int|false   $exclude_user_id Whether to exclude a certain user_id.
 	 * @return array The users' reactions.
 	 */
@@ -103,14 +105,14 @@ class Friends_Reactions {
 		}
 
 		$reactions  = array();
-		$term_query = new WP_Term_Query(
+		$term_query = new \WP_Term_Query(
 			array(
 				'object_ids' => $post->ID,
 			)
 		);
 
 		if ( false !== $exclude_user_id ) {
-			$excluded_user = new WP_User( $exclude_user_id );
+			$excluded_user = new \WP_User( $exclude_user_id );
 		} else {
 			$excluded_user = wp_get_current_user();
 		}
@@ -129,7 +131,7 @@ class Friends_Reactions {
 				continue;
 			}
 
-			$user = new WP_User( $user_id );
+			$user = new \WP_User( $user_id );
 			if ( ! $user || is_wp_error( $user ) ) {
 				continue;
 			}
@@ -193,7 +195,7 @@ class Friends_Reactions {
 		check_ajax_referer( 'friends-reaction' );
 
 		if ( ! is_user_logged_in() ) {
-			return new WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
+			return new \WP_Error( 'unauthorized', 'You are not authorized to send a reaction.' );
 		}
 
 		if ( ! isset( $_POST['post_id'] ) || ! isset( $_POST['reaction'] ) ) {
@@ -217,7 +219,7 @@ class Friends_Reactions {
 
 		if ( ! $emoji ) {
 			// This emoji is not defined in emoji.json.
-			return new WP_Error( 'invalid-emoji', 'This emoji is unknown.' );
+			return new \WP_Error( 'invalid-emoji', 'This emoji is unknown.' );
 		}
 
 		$taxonomy = 'friend-reaction-' . get_current_user_id();
@@ -350,7 +352,7 @@ class Friends_Reactions {
 		$reactions = array();
 
 		foreach ( $feed_data as $feed_reaction ) {
-			$attribs = $feed_reaction['attribs'][ Friends_Feed::XMLNS ];
+			$attribs = $feed_reaction['attribs'][ Feed::XMLNS ];
 			$slug    = $attribs['slug'];
 			if ( ! preg_match( '/^[a-z0-9_-]+$/', $slug ) ) {
 				continue;

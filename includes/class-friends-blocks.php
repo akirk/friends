@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the Friends Plugin blocks.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Blocks {
+class Blocks {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -102,23 +104,23 @@ class Friends_Blocks {
 		}
 		switch ( $attributes['user_types'] ) {
 			case 'friend_requests':
-				$friends  = Friend_User_Query::all_friend_requests();
+				$friends  = User_Query::all_friend_requests();
 				$no_users = __( "You currently don't have any friend requests.", 'friends' );
 				break;
 
 			case 'friends_subscriptions':
-				$friends  = Friend_User_Query::all_friends_subscriptions();
+				$friends  = User_Query::all_friends_subscriptions();
 				$no_users = __( "You don't have any friends or subscriptions yet.", 'friends' );
 				break;
 
 			case 'subscriptions':
-				$friends  = Friend_User_Query::all_subscriptions();
+				$friends  = User_Query::all_subscriptions();
 				$no_users = __( "You don't have any subscriptions yet.", 'friends' );
 				break;
 
 			case 'friends':
 			default:
-				$friends  = Friend_User_Query::all_friends();
+				$friends  = User_Query::all_friends();
 				$no_users = __( "You don't have any friends yet.", 'friends' );
 		}
 
@@ -210,7 +212,7 @@ class Friends_Blocks {
 			$offset += $count;
 
 			foreach ( $recent_posts as $post ) {
-				$friend_user = new Friend_User( $post['post_author'] );
+				$friend_user = new User( $post['post_author'] );
 
 				if ( ! empty( $only_users ) && ! isset( $only_users[ $friend_user->user_login ] ) && ! isset( $only_users[ $friend_user->ID ] ) && ! isset( $only_users[ $friend_user->display_name ] ) ) {
 					continue;
@@ -313,7 +315,7 @@ class Friends_Blocks {
 	 * Adds a block visibility attribute.
 	 */
 	public function add_block_visibility_attribute() {
-		$registered_blocks = WP_Block_Type_Registry::get_instance()->get_all_registered();
+		$registered_blocks = \WP_Block_Type_Registry::get_instance()->get_all_registered();
 
 		foreach ( $registered_blocks as $block ) {
 			$block->attributes['friendsVisibility'] = array(
@@ -391,7 +393,7 @@ class Friends_Blocks {
 	 *
 	 * @param array    $attributes Block attributes.
 	 * @param string   $content    Block default content.
-	 * @param WP_Block $block      Block instance.
+	 * @param \WP_Block $block      Block instance.
 	 * @return string             The rendered content.
 	 */
 	public function render_follow_me_block( $attributes, $content, $block ) {
@@ -458,7 +460,7 @@ class Friends_Blocks {
 	 * Remember the current post being excerpted. With this we can change the visibility rendering.
 	 *
 	 * @param      string  $text   The text.
-	 * @param      WP_Post $post   The post.
+	 * @param      \WP_Post $post   The post.
 	 *
 	 * @return     string  The text.
 	 */
@@ -473,7 +475,7 @@ class Friends_Blocks {
 	 * Stop remembering the current post being excerpted.
 	 *
 	 * @param      string  $text   The text.
-	 * @param      WP_Post $post   The post.
+	 * @param      \WP_Post $post   The post.
 	 *
 	 * @return     string  The text.
 	 */

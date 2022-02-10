@@ -7,6 +7,8 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * This is the class for the /friends/ part of the Friends Plugin.
  *
@@ -15,7 +17,7 @@
  * @package Friends
  * @author Alex Kirk
  */
-class Friends_Frontend {
+class Frontend {
 	/**
 	 * Contains a reference to the Friends class.
 	 *
@@ -340,7 +342,7 @@ class Friends_Frontend {
 			the_post();
 			$args = array(
 				'friends'     => $friends,
-				'friend_user' => new Friend_User( get_the_author_meta( 'ID' ) ),
+				'friend_user' => new User( get_the_author_meta( 'ID' ) ),
 				'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
 			);
 
@@ -392,7 +394,7 @@ class Friends_Frontend {
 	 */
 	function ajax_autocomplete() {
 		$q = stripslashes( $_POST['q'] );
-		$users = Friend_User_Query::search( '*' . $q . '*' );
+		$users = User_Query::search( '*' . $q . '*' );
 		$results = array();
 		foreach ( $users->get_results() as $friend ) {
 			$result = '<li class="menu-item">';
@@ -469,12 +471,12 @@ class Friends_Frontend {
 	/**
 	 * Output a link, potentially augmented with authication information.
 	 *
-	 * @param      string      $url          The url.
-	 * @param      string      $text             The link text.
-	 * @param      array       $html_attributes    HTML attributes.
-	 * @param      Friend_User $friend_user  The friend user.
+	 * @param      string $url          The url.
+	 * @param      string $text             The link text.
+	 * @param      array  $html_attributes    HTML attributes.
+	 * @param      User   $friend_user  The friend user.
 	 */
-	function link( $url, $text, array $html_attributes = array(), Friend_User $friend_user = null ) {
+	function link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
 		echo wp_kses(
 			$this->get_link( $url, $text, $html_attributes, $friend_user ),
 			array(
@@ -497,16 +499,16 @@ class Friends_Frontend {
 	/**
 	 * Get a link, potentially augmented with authication information.
 	 *
-	 * @param      string      $url              The url.
-	 * @param      string      $text             The link text.
-	 * @param      array       $html_attributes  HTML attributes.
-	 * @param      Friend_User $friend_user      The friend user.
+	 * @param      string $url              The url.
+	 * @param      string $text             The link text.
+	 * @param      array  $html_attributes  HTML attributes.
+	 * @param      User   $friend_user      The friend user.
 	 *
 	 * @return     string       The link.
 	 */
-	function get_link( $url, $text, array $html_attributes = array(), Friend_User $friend_user = null ) {
+	function get_link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
-			$friend_user = new Friend_User( get_the_author_meta( 'ID' ) );
+			$friend_user = new User( get_the_author_meta( 'ID' ) );
 		}
 
 		if ( $friend_user->is_friend_url( $url ) && $friend_user->is_valid_friend() ) {
@@ -568,10 +570,10 @@ class Friends_Frontend {
 	 * Link friend posts to the remote site.
 	 *
 	 * @param string  $post_link The post's permalink.
-	 * @param WP_Post $post      The post in question.
+	 * @param \WP_Post $post      The post in question.
 	 * @reeturn string The overriden post link.
 	 */
-	public function friend_post_link( $post_link, WP_Post $post ) {
+	public function friend_post_link( $post_link, \WP_Post $post ) {
 		if ( $post && in_array( $post->post_type, Friends::get_frontend_post_types(), true ) ) {
 			return get_the_guid( $post );
 		}
@@ -605,7 +607,7 @@ class Friends_Frontend {
 		$feeds = array();
 		$users = array();
 
-		$friend_users = new Friend_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
+		$friend_users = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
 		foreach ( $friend_users->get_results() as $friend_user ) {
 			$role = $friend_user->get_role_name( true, 9 );
 			if ( ! isset( $users[ $role ] ) ) {
@@ -682,8 +684,8 @@ class Friends_Frontend {
 	/**
 	 * Modify the main query for the /friends page
 	 *
-	 * @param  WP_Query $query The main query.
-	 * @return WP_Query The modified main query.
+	 * @param  \WP_Query $query The main query.
+	 * @return \WP_Query The modified main query.
 	 */
 	public function friend_posts_query( $query ) {
 		global $wp_query, $wp, $authordata;
@@ -772,7 +774,7 @@ class Friends_Frontend {
 					exit;
 				}
 
-				$this->author = new Friend_User( $author );
+				$this->author = new User( $author );
 				if ( ! $page_id && isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
 					$potential_post_format = $pagename_parts[3];
 				}
@@ -810,7 +812,7 @@ class Friends_Frontend {
 				$post = get_post( $page_id );
 				$author = get_user_by( 'ID', $post->post_author );
 				if ( false !== $author ) {
-					$this->author = new Friend_User( $author );
+					$this->author = new User( $author );
 				}
 			}
 			$query->is_single = true;
