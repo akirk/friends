@@ -203,12 +203,17 @@ class Admin {
 	 * @return     array  The modified array.
 	 */
 	public function allow_role_multi_select( $args ) {
-		if ( isset( $args['role'] ) && ! isset( $args['role__in'] ) && false !== strpos( $args['role'], ',' ) ) {
-			$args['role__in'] = explode( ',', $args['role'] );
-			unset( $args['role'] );
+		if ( isset( $args['role'] ) && ! isset( $args['role__in'] ) ) {
+			if ( false !== strpos( $args['role'], ',' ) ) {
+				$args['role__in'] = explode( ',', $args['role'] );
+				unset( $args['role'] );
+			}
 
 			$roles = $this->get_associated_roles();
-			if ( array_intersect( $args['role__in'], array_keys( $roles ) ) ) {
+			if (
+				( isset( $args['role__in'] ) && array_intersect( $args['role__in'], array_keys( $roles ) ) )
+				|| ( isset( $args['role'] ) && isset( $roles[ $args['role'] ] ) )
+			) {
 				add_action( 'admin_head-users.php', array( $this, 'keep_friends_open_on_users_screen' ) );
 			}
 		}
