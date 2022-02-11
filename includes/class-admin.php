@@ -227,8 +227,9 @@ class Admin {
 		?>
 		<script type="text/javascript">
 			jQuery( document ).ready( function ( $ ) {
-				$("#toplevel_page_friends-settings, #toplevel_page_friends-settings > a").addClass('wp-has-current-submenu wp-menu-open').removeClass('wp-not-current-submenu');
-				$("#toplevel_page_friends-settings ul li a[href='<?php echo esc_html( $this->get_users_url() ); ?>']").closest('li').addClass('current');
+				$( '#toplevel_page_friends-settings, #toplevel_page_friends-settings > a' ).addClass( 'wp-has-current-submenu wp-menu-open' ).removeClass( 'wp-not-current-submenu' );
+				$( '#menu-users > a' ).removeClass( 'wp-has-current-submenu wp-menu-open' );
+				$( "#toplevel_page_friends-settings ul li a[href='<?php echo esc_html( $this->get_users_url() ); ?>']" ).closest( 'li' ).addClass( 'current' );
 			} );
 		</script>
 		<?php
