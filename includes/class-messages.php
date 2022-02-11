@@ -183,9 +183,9 @@ class Messages {
 	 * Adds a message to friends_message post.
 	 *
 	 * @param      \WP_User $sender       The sender.
-	 * @param      User    $friend_user  The friend user to which this should be associated.
-	 * @param      string  $subject      The subject.
-	 * @param      string  $message      The message.
+	 * @param      User     $friend_user  The friend user to which this should be associated.
+	 * @param      string   $subject      The subject.
+	 * @param      string   $message      The message.
 	 *
 	 * @return     int     The post ID.
 	 */

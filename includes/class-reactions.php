@@ -94,7 +94,7 @@ class Reactions {
 	 * Get the reactions for a post.
 	 *
 	 * @param  int|\WP_Post $post The post.
-	 * @param  int|false   $exclude_user_id Whether to exclude a certain user_id.
+	 * @param  int|false    $exclude_user_id Whether to exclude a certain user_id.
 	 * @return array The users' reactions.
 	 */
 	public static function get_post_reactions( $post = null, $exclude_user_id = false ) {

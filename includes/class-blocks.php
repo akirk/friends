@@ -391,8 +391,8 @@ class Blocks {
 	/**
 	 * Add a CSRF to the Follow Me block.
 	 *
-	 * @param array    $attributes Block attributes.
-	 * @param string   $content    Block default content.
+	 * @param array     $attributes Block attributes.
+	 * @param string    $content    Block default content.
 	 * @param \WP_Block $block      Block instance.
 	 * @return string             The rendered content.
 	 */
@@ -459,7 +459,7 @@ class Blocks {
 	/**
 	 * Remember the current post being excerpted. With this we can change the visibility rendering.
 	 *
-	 * @param      string  $text   The text.
+	 * @param      string   $text   The text.
 	 * @param      \WP_Post $post   The post.
 	 *
 	 * @return     string  The text.
@@ -474,7 +474,7 @@ class Blocks {
 	/**
 	 * Stop remembering the current post being excerpted.
 	 *
-	 * @param      string  $text   The text.
+	 * @param      string   $text   The text.
 	 * @param      \WP_Post $post   The post.
 	 *
 	 * @return     string  The text.

@@ -569,7 +569,7 @@ class Frontend {
 	/**
 	 * Link friend posts to the remote site.
 	 *
-	 * @param string  $post_link The post's permalink.
+	 * @param string   $post_link The post's permalink.
 	 * @param \WP_Post $post      The post in question.
 	 * @reeturn string The overriden post link.
 	 */

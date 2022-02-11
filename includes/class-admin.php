@@ -88,8 +88,14 @@ class Admin {
 			<p style="max-width:800px;"><b><?php esc_html_e( 'Friends', 'friends' ); ?></b><?php esc_html_e( '&#151; You are running an unsupported permalink structure.', 'friends' ); ?></p>
 			<p style="max-width:800px;">
 				<?php
-				// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
-				echo wp_kses_post( sprintf( __( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' ), admin_url( 'options-permalink.php' ), __( 'Permalink Settings' ) ) );
+				echo wp_kses_post(
+					sprintf(
+						// translators: 1: URL to permalink settings, 2: the name of the Permalink Settings page.
+						__( 'In order to be able to view the Friends page, you need to enable a custom permalink structure. Please go to <a href="%1$s">%2$s</a> and enable an option other than Plain.', 'friends' ),
+						admin_url( 'options-permalink.php' ),
+						__( 'Permalink Settings' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					)
+				);
 				?>
 			</p>
 		</div>
@@ -160,6 +166,7 @@ class Admin {
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
 		$page_type = sanitize_title( $menu_title );
 		add_menu_page( 'friends', $menu_title, Friends::REQUIRED_ROLE, 'friends-settings', null, 'dashicons-groups', 3 );
+		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends-settings', __( 'Settings' ), __( 'Settings' ), Friends::REQUIRED_ROLE, 'friends-settings', array( $this, 'render_admin_settings' ) );
 		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
 		add_submenu_page( 'friends-settings', __( 'Notification Manager', 'friends' ), __( 'Notification Manager', 'friends' ), Friends::REQUIRED_ROLE, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
@@ -177,6 +184,7 @@ class Admin {
 			add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), Friends::REQUIRED_ROLE, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 		}
 
+		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends-settings', __( 'Plugins' ), __( 'Plugins' ), Friends::REQUIRED_ROLE, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
 
 		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
@@ -217,7 +225,7 @@ class Admin {
 				$screen->add_help_tab(
 					array(
 						'id'      => 'overview',
-						'title'   => __( 'Overview' ),
+						'title'   => __( 'Overview', 'friends' ),
 						'content' =>
 							'<p>' .
 							__( 'Welcome to the Friends Settings! You can configure the Friends plugin here to your liking.', 'friends' ) .
@@ -312,7 +320,7 @@ class Admin {
 		if ( isset( $_GET['user'] ) ) {
 			$friend_user = new User( intval( $_GET['user'] ) );
 			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
-				wp_die( esc_html__( 'Invalid user ID.' ) );
+				wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
 			$friend_user->retrieve_posts();
 		} else {
@@ -596,7 +604,7 @@ class Admin {
 		$my_network = __( 'my network', 'friends' );
 		$comment_registration_default = strip_tags(
 			/* translators: %s: Login URL. */
-			__( 'You must be <a href="%s">logged in</a> to post a comment.' )
+			__( 'You must be <a href="%s">logged in</a> to post a comment.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		);
 		// Now let's switch back to the admin language.
 		remove_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
@@ -637,16 +645,16 @@ class Admin {
 	 */
 	private function check_admin_edit_friend_rules() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to edit the rules.' ) );
+			wp_die( esc_html__( 'Sorry, you are not allowed to edit the rules.', 'friends' ) );
 		}
 
 		if ( ! isset( $_GET['user'] ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) );
+			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		$friend = new User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) );
+			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		if (
@@ -811,8 +819,8 @@ class Admin {
 	/**
 	 * Render the Friend rules preview
 	 *
-	 * @param  array   $rules     The rules to apply.
-	 * @param  string  $catch_all The catch all behavior.
+	 * @param  array    $rules     The rules to apply.
+	 * @param  string   $catch_all The catch all behavior.
 	 * @param  \WP_Post $post       The post.
 	 */
 	public function render_preview_friend_rules( $rules, $catch_all, \WP_Post $post = null ) {
@@ -843,20 +851,20 @@ class Admin {
 	 */
 	private function check_admin_edit_friend() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to edit this user.' ) );
+			wp_die( esc_html__( 'Sorry, you are not allowed to edit this user.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		if ( ! isset( $_GET['user'] ) || ! is_numeric( $_GET['user'] ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) );
+			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		$friend = new User( intval( $_GET['user'] ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) );
+			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		if ( is_multisite() && is_super_admin( $_GET['user'] ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) );
+			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		if (
@@ -1306,11 +1314,14 @@ class Admin {
 			$friend_user_login = sanitize_user( $vars['user_login'] );
 			$friend_display_name = sanitize_text_field( $vars['display_name'] );
 			if ( ! $friend_user_login ) {
+				// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is invalid because it uses illegal characters. Please enter a valid username.' ) );
 			} elseif ( ! is_multisite() && username_exists( $friend_user_login ) ) {
+				// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is already registered. Please choose another one.' ) );
 			} elseif ( empty( $vars['subscribe'] ) && empty( $vars['friendship'] ) ) {
-				$errors->add( 'no_action', __( '<strong>Error</strong>: Nothing to subscribe selected.' ) );
+				// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				$errors->add( 'no_action', __( '<strong>Error</strong>: Nothing to subscribe selected.', 'friends' ) );
 			}
 
 			$feeds = $vars['feeds'];
@@ -1700,7 +1711,7 @@ class Admin {
 	/**
 	 * Add actions to the user rows
 	 *
-	 * @param  array   $actions The existing actions.
+	 * @param  array    $actions The existing actions.
 	 * @param  \WP_User $user    The user in question.
 	 * @return array The extended actions.
 	 */
@@ -1722,10 +1733,20 @@ class Admin {
 				return $actions;
 			}
 
+			// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			$actions = array_merge( array( 'edit' => '<a href="' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ) . '">' . __( 'Edit' ) . '</a>' ), $actions );
 		}
 
-		$actions['view'] = $this->friends->frontend->get_link( $user->user_url, __( 'Visit' ), array(), new User( $user ) );
+		$actions['view'] = $this->friends->frontend->get_link(
+			$user->user_url,
+			sprintf(
+			// translators: %s: Author’s display name.
+				__( 'Visit %s&#8217;s website' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				$user->display_name
+			),
+			array(),
+			new User( $user )
+		);
 		unset( $actions['resetpassword'] );
 
 		if ( $user->has_cap( 'friend_request' ) ) {
@@ -1733,8 +1754,13 @@ class Admin {
 
 			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
 			$message = get_user_option( 'friends_request_message', $user->ID );
-			// translators: %s is a date.
-			$actions['friends friends_request_date'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Requested on %s', 'friends' ), date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) ) ) . '</span>';
+			$actions['friends friends_request_date'] = '<br/><span class="nonessential">' . esc_html(
+				sprintf(
+				// translators: %s is a date.
+					__( 'Requested on %s', 'friends' ),
+					date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				)
+			) . '</span>';
 			if ( $message ) {
 				// translators: %s is a message text.
 				$actions['friends friend_request_message'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Message: %s', 'friends' ), $message ) ) . '</span>';
@@ -1852,7 +1878,7 @@ class Admin {
 			$numposts,
 			sprintf(
 				/* translators: %s: Number of posts. */
-				_n( '%s post by this author', '%s posts by this author', $numposts ),
+				_n( '%s post by this author', '%s posts by this author', $numposts, 'friends' ),
 				number_format_i18n( $numposts )
 			)
 		);
@@ -2004,7 +2030,7 @@ class Admin {
 				array(
 					'id'     => 'friends-settings',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Settings' ),
+					'title'  => esc_html__( 'Settings' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					'href'   => self_admin_url( 'admin.php?page=friends-settings' ),
 				)
 			);
@@ -2023,7 +2049,7 @@ class Admin {
 				array(
 					'id'     => 'profile',
 					'parent' => 'friends',
-					'title'  => esc_html__( 'Profile' ),
+					'title'  => esc_html__( 'Profile' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					'href'   => home_url( '/friends/' ),
 				)
 			);
@@ -2082,7 +2108,7 @@ class Admin {
 	 * Fires at the end of the delete users form prior to the confirm button.
 	 *
 	 * @param \WP_User $current_user \WP_User object for the current user.
-	 * @param array   $userids      Array of IDs for users being deleted.
+	 * @param array    $userids      Array of IDs for users being deleted.
 	 */
 	public function delete_user_form( $current_user, $userids ) {
 		$only_friends_affiliated = true;
@@ -2251,11 +2277,11 @@ class Admin {
 				),
 				'mbstring'  => array(
 					'label' => __( 'mbstring is available', 'friends' ),
-					'value' => function_exists( 'mb_check_encoding' ) ? __( 'Yes' ) : __( 'No' ),
+					'value' => function_exists( 'mb_check_encoding' ) ? __( 'Yes' ) : __( 'No' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				),
 				'roles'     => array(
 					'label' => __( 'Friend roles exist', 'friends' ),
-					'value' => $this->check_friend_roles() ? __( 'Yes' ) : __( 'No' ),
+					'value' => $this->check_friend_roles() ? __( 'Yes' ) : __( 'No' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				),
 				'main_user' => array(
 					'label' => __( 'Main Friend User', 'friends' ),

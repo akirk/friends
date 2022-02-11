@@ -110,9 +110,9 @@ class Notifications {
 	/**
 	 * Notifies about a post that matched the keyword.
 	 *
-	 * @param      bool    $notified  Whether a notification was sent.
+	 * @param      bool     $notified  Whether a notification was sent.
 	 * @param      \WP_Post $post      The new post by a friend or subscription.
-	 * @param      string  $keyword   The matched keyword.
+	 * @param      string   $keyword   The matched keyword.
 	 */
 	public function notify_keyword_match_post( $notified, \WP_Post $post, $keyword ) {
 		if ( 'trash' === $post->post_status ) {

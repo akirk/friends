@@ -78,7 +78,7 @@ class Feed extends \Friends_Feed {
 	/**
 	 * Allow registering a parser
 	 *
-	 * @param      string              $slug    The slug.
+	 * @param      string      $slug    The slug.
 	 * @param      Feed_Parser $parser  The parser that extends the Feed_Parser class.
 	 */
 	public function register_parser( $slug, $parser ) {
@@ -286,8 +286,8 @@ class Feed extends \Friends_Feed {
 	 * Apply the feed rules that need to be applied early.
 	 *
 	 * @param  Feed_Item $item         The feed item.
-	 * @param      User_Feed         $feed         The feed.
-	 * @param      User              $friend_user  The friend user.
+	 * @param      User_Feed $feed         The feed.
+	 * @param      User      $friend_user  The friend user.
 	 * @return Feed_Item The modified feed item.
 	 */
 	public function apply_early_feed_rules( $item, User_Feed $feed = null, User $friend_user = null ) {
@@ -302,8 +302,8 @@ class Feed extends \Friends_Feed {
 	 * Apply the feed rules
 	 *
 	 * @param  Feed_Item $item         The feed item.
-	 * @param  User_Feed         $feed         The feed object.
-	 * @param  User              $friend_user The friend user.
+	 * @param  User_Feed $feed         The feed object.
+	 * @param  User      $friend_user The friend user.
 	 * @return Feed_Item The modified feed item.
 	 */
 	public function apply_feed_rules( $item, User_Feed $feed = null, User $friend_user = null ) {
@@ -703,7 +703,7 @@ class Feed extends \Friends_Feed {
 	/**
 	 * Invalidatee Post Count Cache
 	 *
-	 * @param      int     $post_ID  The post id.
+	 * @param      int      $post_ID  The post id.
 	 * @param      \WP_Post $post     The post.
 	 */
 	public function invalidate_post_count_cache( $post_ID, \WP_Post $post ) {

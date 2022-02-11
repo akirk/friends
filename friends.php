@@ -30,29 +30,29 @@ require_once __DIR__ . '/libs/Mf2/Parser.php';
 require_once __DIR__ . '/libs/gutenberg-everywhere/classes/gutenberg-handler.php';
 require_once __DIR__ . '/includes/class-gutenberg-everywhere-friends-message.php';
 
-require_once __DIR__ . '/includes/class-friend-user.php';
-require_once __DIR__ . '/includes/class-friend-user-feed.php';
-require_once __DIR__ . '/includes/class-friend-user-query.php';
+require_once __DIR__ . '/includes/class-user.php';
+require_once __DIR__ . '/includes/class-user-feed.php';
+require_once __DIR__ . '/includes/class-user-query.php';
 
 // Classes to be implemented or used by parser plugins.
-require_once __DIR__ . '/feed-parsers/class-friends-feed-parser.php';
-require_once __DIR__ . '/feed-parsers/class-friends-feed-item.php';
+require_once __DIR__ . '/feed-parsers/class-feed-parser.php';
+require_once __DIR__ . '/feed-parsers/class-feed-item.php';
 
-require_once __DIR__ . '/includes/class-friends-access-control.php';
-require_once __DIR__ . '/includes/class-friends-admin.php';
-require_once __DIR__ . '/includes/class-friends-automatic-status.php';
-require_once __DIR__ . '/includes/class-friends-blocks.php';
-require_once __DIR__ . '/includes/class-friends-feed.php';
-require_once __DIR__ . '/includes/class-friends-frontend.php';
-require_once __DIR__ . '/includes/class-friends-logging.php';
-require_once __DIR__ . '/includes/class-friends-messages.php';
-require_once __DIR__ . '/includes/class-friends-notifications.php';
-require_once __DIR__ . '/includes/class-friends-plugin-installer.php';
-require_once __DIR__ . '/includes/class-friends-reactions.php';
-require_once __DIR__ . '/includes/class-friends-rest.php';
-require_once __DIR__ . '/includes/class-friends-shortcodes.php';
-require_once __DIR__ . '/includes/class-friends-template-loader.php';
-require_once __DIR__ . '/includes/class-friends-3rd-parties.php';
+require_once __DIR__ . '/includes/class-access-control.php';
+require_once __DIR__ . '/includes/class-admin.php';
+require_once __DIR__ . '/includes/class-automatic-status.php';
+require_once __DIR__ . '/includes/class-blocks.php';
+require_once __DIR__ . '/includes/class-feed.php';
+require_once __DIR__ . '/includes/class-frontend.php';
+require_once __DIR__ . '/includes/class-logging.php';
+require_once __DIR__ . '/includes/class-messages.php';
+require_once __DIR__ . '/includes/class-notifications.php';
+require_once __DIR__ . '/includes/class-plugin-installer.php';
+require_once __DIR__ . '/includes/class-reactions.php';
+require_once __DIR__ . '/includes/class-rest.php';
+require_once __DIR__ . '/includes/class-shortcodes.php';
+require_once __DIR__ . '/includes/class-template-loader.php';
+require_once __DIR__ . '/includes/class-3rd-parties.php';
 require_once __DIR__ . '/includes/class-friends.php';
 
 require_once __DIR__ . '/namespace-migration-post-loading.php';
@@ -64,29 +64,29 @@ register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( 'Friends', 'uninstall_plugin' ) );
 
 // Register widgets.
-require_once __DIR__ . '/widgets/class-friends-widget-refresh.php';
+require_once __DIR__ . '/widgets/class-widget-refresh.php';
 add_action( 'widgets_init', array( 'Friends\Widget_Refresh', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-friends-widget-friend-list.php';
+require_once __DIR__ . '/widgets/class-widget-friend-list.php';
 add_action( 'widgets_init', array( 'Friends\Widget_Friend_List', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-friends-widget-friend-request.php';
+require_once __DIR__ . '/widgets/class-widget-friend-request.php';
 add_action( 'widgets_init', array( 'Friends\Widget_Friend_Request', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-friends-widget-new-private-post.php';
+require_once __DIR__ . '/widgets/class-widget-new-private-post.php';
 add_action( 'widgets_init', array( 'Friends\Widget_New_Private_Post', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-friends-widget-post-formats.php';
+require_once __DIR__ . '/widgets/class-widget-post-formats.php';
 add_action( 'widgets_init', array( 'Friends\Widget_Post_Formats', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-friends-widget-header.php';
+require_once __DIR__ . '/widgets/class-widget-header.php';
 add_action( 'widgets_init', array( 'Friends\Widget_Header', 'register' ) );
 
 // Register bundled parsers.
 add_action(
 	'friends_register_parser',
 	function( Feed $friends_feed ) {
-		require_once __DIR__ . '/feed-parsers/class-friends-feed-parser-simplepie.php';
+		require_once __DIR__ . '/feed-parsers/class-feed-parser-simplepie.php';
 		$friends_feed->register_parser( 'simplepie', new Feed_Parser_SimplePie );
 	}
 );
@@ -94,7 +94,7 @@ add_action(
 add_action(
 	'friends_register_parser',
 	function( Feed $friends_feed ) {
-		require_once __DIR__ . '/feed-parsers/class-friends-feed-parser-microformats.php';
+		require_once __DIR__ . '/feed-parsers/class-feed-parser-microformats.php';
 		$friends_feed->register_parser( 'microformats', new Feed_Parser_Microformats );
 	}
 );
@@ -102,7 +102,7 @@ add_action(
 add_action(
 	'friends_register_parser',
 	function( Feed $friends_feed ) {
-		require_once __DIR__ . '/feed-parsers/class-friends-feed-parser-json-feed.php';
+		require_once __DIR__ . '/feed-parsers/class-feed-parser-json-feed.php';
 		$friends_feed->register_parser( 'jsonfeed', new Feed_Parser_JSON_Feed );
 	}
 );

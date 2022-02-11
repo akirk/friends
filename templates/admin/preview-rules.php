@@ -11,7 +11,7 @@ namespace Friends;
  * Render a preview row.
  *
  * @param      \WP_Post $post   The post.
- * @param      array   $args   The arguments.
+ * @param      array    $args   The arguments.
  */
 function preview_row( $post, $args ) {
 	$modified_post = $args['feed']->apply_feed_rules( $post, null, $args['friend'] );
