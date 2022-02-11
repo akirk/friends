@@ -9,8 +9,6 @@
 
 namespace Friends;
 
-// phpcs:disable WordPress.WP.I18n.MissingArgDomain
-
 /**
  * This is the class for the Friends Plugin Automatic Status.
  *
@@ -133,16 +131,16 @@ class Automatic_Status {
 		$bulk_messages             = array();
 		$bulk_messages['post']     = array(
 			/* translators: %s: Number of posts. */
-			'updated'   => _n( '%s post updated.', '%s posts updated.', $bulk_counts['updated'] ),
-			'locked'    => ( 1 === $bulk_counts['locked'] ) ? __( '1 post not updated, somebody is editing it.' ) :
+			'updated'   => _n( '%s post updated.', '%s posts updated.', $bulk_counts['updated'] ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			'locked'    => ( 1 === $bulk_counts['locked'] ) ? __( '1 post not updated, somebody is editing it.' ) : // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 							/* translators: %s: Number of posts. */
-							_n( '%s post not updated, somebody is editing it.', '%s posts not updated, somebody is editing them.', $bulk_counts['locked'] ),
+							_n( '%s post not updated, somebody is editing it.', '%s posts not updated, somebody is editing them.', $bulk_counts['locked'] ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			/* translators: %s: Number of posts. */
-			'deleted'   => _n( '%s post permanently deleted.', '%s posts permanently deleted.', $bulk_counts['deleted'] ),
+			'deleted'   => _n( '%s post permanently deleted.', '%s posts permanently deleted.', $bulk_counts['deleted'] ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			/* translators: %s: Number of posts. */
-			'trashed'   => _n( '%s post moved to the Trash.', '%s posts moved to the Trash.', $bulk_counts['trashed'] ),
+			'trashed'   => _n( '%s post moved to the Trash.', '%s posts moved to the Trash.', $bulk_counts['trashed'] ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			/* translators: %s: Number of posts. */
-			'untrashed' => _n( '%s post restored from the Trash.', '%s posts restored from the Trash.', $bulk_counts['untrashed'] ),
+			'untrashed' => _n( '%s post restored from the Trash.', '%s posts restored from the Trash.', $bulk_counts['untrashed'] ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		);
 		$bulk_messages = apply_filters( 'bulk_post_updated_messages', $bulk_messages, $bulk_counts );
 		$bulk_counts   = array_filter( $bulk_counts );
@@ -219,7 +217,7 @@ class Automatic_Status {
 		$this->add_status(
 			sprintf(
 				// translators: %1$s is an emoji, %2$s is a linked post title.
-				__( 'I just reacted with %1$s on %2$s.' ),
+				__( 'I just reacted with %1$s on %2$s.', 'friends' ),
 				$emoji,
 				'<a href="' . esc_url( get_permalink( $post ) ) . '">' . esc_html( $title ) . '</a>'
 			)
@@ -241,7 +239,7 @@ class Automatic_Status {
 			$this->add_status(
 				sprintf(
 					// translators: %s is a new friend.
-					__( "I'm now friends with %s." ),
+					__( "I'm now friends with %s.", 'friends' ),
 					$link
 				)
 			);
@@ -252,7 +250,7 @@ class Automatic_Status {
 			$this->add_status(
 				sprintf(
 					// translators: %s is a new friend.
-					__( "I've just subscribed %s." ),
+					__( "I've just subscribed %s.", 'friends' ),
 					$link
 				)
 			);

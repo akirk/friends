@@ -50,7 +50,7 @@ require_once __DIR__ . '/includes/class-reactions.php';
 require_once __DIR__ . '/includes/class-rest.php';
 require_once __DIR__ . '/includes/class-shortcodes.php';
 require_once __DIR__ . '/includes/class-template-loader.php';
-require_once __DIR__ . '/includes/class-3rd-parties.php';
+require_once __DIR__ . '/includes/class-third-parties.php';
 require_once __DIR__ . '/includes/class-friends.php';
 
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );

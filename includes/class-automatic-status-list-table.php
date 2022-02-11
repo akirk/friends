@@ -97,7 +97,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	 * The no items text.
 	 */
 	public function no_items() {
-		esc_html_e( 'No unpublished automatically generated statuses found.' );
+		esc_html_e( 'No unpublished automatically generated statuses found.', 'friends' );
 	}
 
 	/**
@@ -205,7 +205,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 
 		$all_inner_html = sprintf(
 			/* translators: %s: Number of posts. */
-			_nx(
+			_nx( // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'All <span class="count">(%s)</span>',
 				'All <span class="count">(%s)</span>',
 				$total_posts,
@@ -256,7 +256,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 
 			$sticky_inner_html = sprintf(
 				/* translators: %s: Number of posts. */
-				_nx(
+				_nx( // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					'Sticky <span class="count">(%s)</span>',
 					'Sticky <span class="count">(%s)</span>',
 					$this->sticky_posts_count,
@@ -297,22 +297,22 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		$post_type_obj = get_post_type_object( $this->screen->post_type );
 
 		if ( current_user_can( $post_type_obj->cap->publish_posts ) ) {
-			$actions['publish'] = __( 'Publish' );
+			$actions['publish'] = __( 'Publish' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
 		if ( current_user_can( $post_type_obj->cap->edit_posts ) ) {
 			if ( $this->is_trash ) {
-				$actions['untrash'] = __( 'Restore' );
+				$actions['untrash'] = __( 'Restore' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			} else {
-				$actions['edit'] = __( 'Edit' );
+				$actions['edit'] = __( 'Edit' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
 		}
 
 		if ( current_user_can( $post_type_obj->cap->delete_posts ) ) {
 			if ( $this->is_trash || ! EMPTY_TRASH_DAYS ) {
-				$actions['delete'] = __( 'Delete permanently' );
+				$actions['delete'] = __( 'Delete permanently' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			} else {
-				$actions['trash'] = __( 'Move to Trash' );
+				$actions['trash'] = __( 'Move to Trash' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
 		}
 

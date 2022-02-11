@@ -1,6 +1,6 @@
 <?php
 /**
- * Friends: Friends_SimplePie_File_Accept_Only_RSS class
+ * Friends: SimplePie_File_Accept_Only_RSS class
  *
  * @package Friends
  * @since 1.0

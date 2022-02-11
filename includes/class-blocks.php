@@ -274,7 +274,7 @@ class Blocks {
 					$out .= ' <span class="date" data-date="' . esc_attr( $post['post_date'] ) . '">';
 					if ( 'human' === $date_format ) {
 						/* translators: %s is a time span */
-						$out .= sprintf( __( '%s ago' ), human_time_diff( $post_date ) );
+						$out .= sprintf( __( '%s ago' ), human_time_diff( $post_date ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					} else {
 						$out .= date_i18n( $date_format, strtotime( $post['post_date'] ) );
 					}

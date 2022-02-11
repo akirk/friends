@@ -43,7 +43,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 			// translators: %1$s is a date or relative time, %2$s is a site name or domain.
 				__( '%1$s on %2$s', 'friends' ),
 				'<a href="' . esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ) . '" title="' . get_the_time( 'r' ) . '">' .
-				/* translators: %s is a time span */ sprintf( __( '%s ago' ), human_time_diff( get_post_time( 'U', true ) ) ) .
+				/* translators: %s is a time span */ sprintf( __( '%s ago' ), human_time_diff( get_post_time( 'U', true ) ) ) . // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'</a>',
 				'<a href="' . esc_url( get_the_permalink() ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( parse_url( get_the_permalink(), PHP_URL_HOST ) ) . '</a>'
 			),
@@ -60,7 +60,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 		if ( isset( $args['read_time'] ) ) {
 			echo ' | <span title="', esc_html__( 'Estimated reading time', 'friends' ), '">', esc_html(
 				sprintf(
-				// translators: %s is a timeframe, e.g. < 1 min or 2min.
+					// translators: %s is a timeframe, e.g. < 1 min or 2min.
 					__( '%s read', 'friends' ),
 					$args['read_time']
 				)
@@ -101,12 +101,12 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 					</a></li>
 					<li class="menu-item">
 						<?php if ( 'trash' === get_post_status() ) : ?>
-							<a href="#" title="<?php esc_attr_e( 'Restore from Trash' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-untrash-post">
-							<?php esc_html_e( 'Restore from Trash' ); ?>
+							<a href="#" title="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Restore from Trash' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-untrash-post">
+							<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Restore from Trash' ); ?>
 							</a>
 						<?php else : ?>
-							<a href="#" title="<?php esc_attr_e( 'Move to Trash' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
-							<?php esc_html_e( 'Move to Trash' ); ?>
+							<a href="#" title="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Move to Trash' ); ?>" data-trash-nonce="<?php echo esc_attr( wp_create_nonce( 'trash-post_' . get_the_ID() ) ); ?>" data-untrash-nonce="<?php echo esc_attr( wp_create_nonce( 'untrash-post_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" class="friends-trash-post">
+							<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Move to Trash' ); ?>
 							</a>
 						<?php endif; ?>
 					</li>

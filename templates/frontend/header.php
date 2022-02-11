@@ -66,13 +66,13 @@ if ( isset( $_GET['s'] ) ) {
 				<form class="input-group input-inline form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 					<div class="form-autocomplete-input form-input">
 						<div class="has-icon-right">
-							<input class="form-input" type="text" tabindex="2" name="s" placeholder="<?php esc_attr_e( 'Search' ); ?>" value="<?php echo esc_attr( $search ); ?>" id="master-search" autocomplete="off"/>
+							<input class="form-input" type="text" tabindex="2" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search' ); ?>" value="<?php echo esc_attr( $search ); ?>" id="master-search" autocomplete="off"/>
 							<i class="form-icon"></i>
 						</div>
 					</div>
 					<ul class="menu" style="display: none">
 					</ul>
-					<button class="btn btn-primary input-group-btn"><?php esc_html_e( 'Search' ); ?></button>
+					<button class="btn btn-primary input-group-btn"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Search' ); ?></button>
 				</form>
 			</section>
 			<?php endif; ?>

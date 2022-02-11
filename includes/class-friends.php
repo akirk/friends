@@ -30,9 +30,9 @@ class Friends {
 	}
 
 	/**
-	 * A reference to the Friends_Admin object.
+	 * A reference to the Admin object.
 	 *
-	 * @var Friends_Admin
+	 * @var Admin
 	 */
 	public $admin;
 
@@ -51,23 +51,23 @@ class Friends {
 	public $feed;
 
 	/**
-	 * A reference to the Friends_Messages object.
+	 * A reference to the Messages object.
 	 *
-	 * @var Friends_Messages
+	 * @var Messages
 	 */
 	public $messages;
 
 	/**
-	 * A reference to the Friends_Notifications object.
+	 * A reference to the Notifications object.
 	 *
-	 * @var Friends_Notifications
+	 * @var Notifications
 	 */
 	public $notifications;
 
 	/**
-	 * A reference to the Friends_Frontend object.
+	 * A reference to the Frontend object.
 	 *
-	 * @var Friends_Frontend
+	 * @var Frontend
 	 */
 	public $frontend;
 
@@ -79,9 +79,9 @@ class Friends {
 	public $rest;
 
 	/**
-	 * A reference to the Friends_Reactions object.
+	 * A reference to the Reactions object.
 	 *
-	 * @var Friends_Reactions
+	 * @var Reactions
 	 */
 	public $reactions;
 
@@ -100,9 +100,9 @@ class Friends {
 	}
 
 	/**
-	 * Get the Friends_Template_Loader singleton
+	 * Get the Template_Loader singleton
 	 *
-	 * @return Friends_Template_Loader A class instance.
+	 * @return Template_Loader A class instance.
 	 */
 	public static function template_loader() {
 		static $template_loader;

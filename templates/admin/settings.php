@@ -235,7 +235,7 @@ do_action( 'friends_settings_before_form' );
 
 						<label for="expose_post_format_feeds">
 							<?php if ( current_theme_supports( 'post-format-feeds' ) ) : ?>
-								<?php esc_html_e( 'Your theme already supports exposing Post Formats as alternate feeds on your homepage.' ); ?>
+								<?php esc_html_e( 'Your theme already supports exposing Post Formats as alternate feeds on your homepage.', 'friends' ); ?>
 							<?php else : ?>
 							<input name="expose_post_format_feeds" type="checkbox" id="expose_post_format_feeds" value="1" <?php checked( '1', $args['expose_post_format_feeds'] ); ?>>
 								<?php
@@ -303,7 +303,7 @@ do_action( 'friends_settings_before_form' );
 	</table>
 	<?php do_action( 'friends_settings_form_bottom' ); ?>
 	<p class="submit">
-		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
+		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 	</p>
 </form>
 <?php

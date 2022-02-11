@@ -21,7 +21,7 @@
 		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r' ) ); ?>">
 			<?php
 			// translators: %s is a time span.
-			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( get_post_modified_time( 'U', true ) ) ) );
+			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( get_post_modified_time( 'U', true ) ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			echo ': ';
 			the_title();
 			?>

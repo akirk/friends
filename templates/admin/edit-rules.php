@@ -51,8 +51,8 @@
 		</tbody>
 	</table>
 	<p class="submit">
-		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
-		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ); ?>" style="margin-left: 1em"><?php esc_html_e( 'Back' ); ?></a>
+		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
+		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ); ?>" style="margin-left: 1em"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Back' ); ?></a>
 	</p>
 </form>
 

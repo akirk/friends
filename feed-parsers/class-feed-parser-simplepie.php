@@ -212,7 +212,7 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 
 		switch ( $host ) {
 			case 'github.com':
-				$feed->set_file_class( 'Friends_SimplePie_Accept_Only_RSS' );
+				$feed->set_file_class( __NAMESPACE__ . '\SimplePie_File_Accept_Only_RSS' );
 				break;
 		}
 

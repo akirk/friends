@@ -36,7 +36,7 @@ echo wp_kses(
 			</tbody>
 		</table>
 		<p class="submit">
-			<input type="submit" name="friend-rules-raw" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
+			<input type="submit" name="friend-rules-raw" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 		</p>
 	</form>
 </div>

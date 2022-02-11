@@ -519,7 +519,7 @@ class Admin {
 		if ( isset( $_POST['available_emojis'] ) && $_POST['available_emojis'] ) {
 			$available_emojis = array();
 			foreach ( $_POST['available_emojis'] as $id ) {
-				$data = Friends_Reactions::get_emoji_data( $id );
+				$data = Reactions::get_emoji_data( $id );
 				if ( $data ) {
 					$available_emojis[ $id ] = $data;
 				}

@@ -58,9 +58,9 @@ class Reactions {
 	public function register_user_taxonomy( $user_id ) {
 		$args = array(
 			'labels'            => array(
-				'name'          => _x( 'Reactions', 'taxonomy general name' ),
-				'singular_name' => _x( 'Reaction', 'taxonomy singular name' ),
-				'menu_name'     => __( 'Reaction' ),
+				'name'          => _x( 'Reactions', 'taxonomy general name', 'friends' ),
+				'singular_name' => _x( 'Reaction', 'taxonomy singular name', 'friends' ),
+				'menu_name'     => __( 'Reaction', 'friends' ),
 			),
 			'hierarchical'      => false,
 			'show_ui'           => true,

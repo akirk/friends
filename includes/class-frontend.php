@@ -195,7 +195,7 @@ class Frontend {
 				'emojis_json'       => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
 				'ajax_url'          => admin_url( 'admin-ajax.php' ),
 				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
-				'text_undo'         => __( 'Undo' ),
+				'text_undo'         => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'text_trash_post'   => __( 'Trash this post', 'friends' ),
 				'text_del_convers'  => __( 'Do you really want to delete this conversation?', 'friends' ),
 				'query_vars'        => $query_vars,
@@ -310,7 +310,7 @@ class Frontend {
 		 * enter 'characters_excluding_spaces' or 'characters_including_spaces'. Otherwise, enter 'words'.
 		 * Do not translate into your own language.
 		 */
-		if ( strpos( _x( 'words', 'Word count type. Do not translate!' ), 'characters' ) === 0 && preg_match( '/^utf\-?8$/i', get_option( 'blog_charset' ) ) ) {
+		if ( strpos( _x( 'words', 'Word count type. Do not translate!' ), 'characters' ) === 0 && preg_match( '/^utf\-?8$/i', get_option( 'blog_charset' ) ) ) { // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			$text = trim( preg_replace( "/[\n\r\t ]+/", ' ', $text ), ' ' );
 			preg_match_all( '/./u', $text, $words_array );
 			$words_array = array_shift( $words_array );
@@ -350,7 +350,7 @@ class Frontend {
 			if ( $read_time >= 60 ) {
 				$mins = ceil( $read_time / MINUTE_IN_SECONDS );
 				/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
-				$args['read_time'] = sprintf( _n( '%s min', '%s mins', $mins ), $mins );
+				$args['read_time'] = sprintf( _n( '%s min', '%s mins', $mins ), $mins ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			} elseif ( $read_time > 20 ) {
 				/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
 				$args['read_time'] = _x( '< 1 min', 'reading time', 'friends' );
@@ -758,7 +758,7 @@ class Frontend {
 						'terms'    => array( $pagename_parts[2] ),
 					),
 				);
-				$this->reaction = Friends_Reactions::validate_emoji( $pagename_parts[2] );
+				$this->reaction = Reactions::validate_emoji( $pagename_parts[2] );
 				if ( ! $page_id && isset( $pagename_parts[2] ) && 'reaction' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
 					$potential_post_format = $pagename_parts[3];
 				}

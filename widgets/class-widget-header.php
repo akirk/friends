@@ -86,7 +86,7 @@ class Widget_Header extends \WP_Widget {
 		$instance = array_merge( $this->defaults(), $instance );
 		?>
 		<p>
-		<label><?php _e( 'Title' ); ?><br/>
+		<label><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Title' ); ?><br/>
 		<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo esc_attr( $instance['title'] ); ?>" />
 		</label>
 		</p>

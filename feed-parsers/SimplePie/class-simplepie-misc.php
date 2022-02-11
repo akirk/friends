@@ -1,6 +1,6 @@
 <?php
 /**
- * Friends: Friends_SimplePie_Misc class
+ * Friends: SimplePie_Misc class
  *
  * @package Friends
  * @since 1.0

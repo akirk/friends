@@ -18,7 +18,7 @@ if ( isset( $args['template'] ) && $args['template'] ) {
 <li id="emoji-<?php echo esc_attr( $id ); ?>">
 	<input type="hidden" name="available_emojis[]" value="<?php echo esc_attr( $id ); ?>">
 	<?php echo esc_html( $emoji ); ?>
-	<small><a href="" class="delete-emoji"><?php esc_html_e( 'delete' ); ?></a></small>
+	<small><a href="" class="delete-emoji"><?php esc_html_e( 'delete', 'friends' ); ?></a></small>
 </li>
 <?php
 

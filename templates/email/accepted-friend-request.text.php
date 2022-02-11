@@ -7,7 +7,7 @@
  */
 
 // translators: %s is a user display name.
-printf( __( 'Howdy, %s!' ), $args['user']->display_name );
+printf( __( 'Howdy, %s!', 'friends' ), $args['user']->display_name );
 echo PHP_EOL;
 
 // translators: %s is a username.

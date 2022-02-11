@@ -100,25 +100,54 @@ class Plugin_Installer {
 	 */
 	public static function get_friends_plugins() {
 		$cache_key = 'friends_plugins_info_v1';
+		$offline = apply_filters( 'friends_offline_mode', false );
 
 		$data = get_transient( $cache_key );
-		if ( false === $data || apply_filters( 'friends_deactivate_plugin_cache', false ) ) {
-			$remote = wp_remote_get(
-				'https://raw.githubusercontent.com/akirk/friends/main/plugins.json',
-				array(
-					'timeout' => 10,
-					'headers' => array(
-						'Accept' => 'application/json',
-					),
-				)
-			);
+		if ( $offline ) {
+			// We'll want to use the shipped file.
+			$data = false;
+		}
 
-			if ( ! is_wp_error( $remote ) && 200 === wp_remote_retrieve_response_code( $remote ) && ! empty( $remote['body'] ) ) {
-				$data = array();
-				foreach ( json_decode( $remote['body'] ) as $slug => $plugin_data ) {
-					$plugin_data->sections = (array) $plugin_data->sections;
-					$data[ $slug ] = $plugin_data;
+		if ( false === $data || apply_filters( 'friends_deactivate_plugin_cache', false ) ) {
+			$remote = false;
+			if ( ! $offline ) {
+				$remote = wp_remote_get(
+					'https://raw.githubusercontent.com/akirk/friends/main/plugins.json',
+					array(
+						'timeout' => 10,
+						'headers' => array(
+							'Accept' => 'application/json',
+						),
+					)
+				);
+
+				if (
+					is_wp_error( $remote )
+					|| 200 === wp_remote_retrieve_response_code( $remote )
+					|| ! wp_is_json_media_type( wp_remote_retrieve_header( $remote, 'content-type' ) )
+					|| empty( $remote['body'] )
+				) {
+					$remote = false;
 				}
+			}
+
+			if ( false === $remote ) {
+				$remote = array(
+					'status_code' => 200,
+					'headers'     => array(
+						'content-type' => 'application/json',
+					),
+					'body'        => file_get_contents( FRIENDS_PLUGIN_DIR . '/plugins.json' ),
+				);
+			}
+
+			$data = array();
+			foreach ( json_decode( wp_remote_retrieve_body( $remote ) ) as $slug => $plugin_data ) {
+				$plugin_data->sections = (array) $plugin_data->sections;
+				$data[ $slug ] = $plugin_data;
+			}
+
+			if ( ! $offline ) {
 				set_transient( $cache_key, $data, 12 * HOUR_IN_SECONDS );
 			}
 		}
