@@ -57,7 +57,7 @@
         }
     },
     "friends-send-to-e-reader": {
-        "name": "Friends Post Collection",
+        "name": "Friends Send to E-Reader",
         "short_description": "Send new articles directly to your e-reader via e-mail or download the ePub.",
         "more_info": "https://github.com/akirk/friends-send-to-e-reader",
         "author": "<a href=\"https://github.com/akirk/\">Alex Kirk</a>",
