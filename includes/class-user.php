@@ -488,7 +488,7 @@ class User extends \Friend_User {
 	 */
 	public function update_user_icon_url( $user_icon_url ) {
 		if ( ! $user_icon_url ) {
-			$user_icon_url = Friends\Mf2\resolveUrl( $this->user_url, '/favicon.ico' );
+			$user_icon_url = Mf2\resolveUrl( $this->user_url, '/favicon.ico' );
 		}
 
 		if ( $user_icon_url && Friends::check_url( $user_icon_url ) ) {

@@ -183,7 +183,7 @@ class RestTest extends \WP_UnitTestCase {
 		$my_username_at_friend = User::get_user_login_for_url( $my_url );
 		$my_user_at_friend = User::get_user( $my_username_at_friend );
 
-		$this->assertInstanceOf( 'User', $my_user_at_friend );
+		$this->assertInstanceOf( 'Friends\User', $my_user_at_friend );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
@@ -191,9 +191,9 @@ class RestTest extends \WP_UnitTestCase {
 
 		// We're just testing the REST api, so we need to create the user ourselves.
 		$friend_username = User::get_user_login_for_url( $friend_url );
-		$friend_user = Friend_user::create( $friend_username, 'pending_friend_request', $friend_url );
-		$this->assertInstanceOf( 'User', $friend_user );
-		$friend_user = Friend_user::create( $friend_username, 'pending_friend_request', $friend_url );
+		$friend_user = User::create( $friend_username, 'pending_friend_request', $friend_url );
+		$this->assertInstanceOf( 'Friends\User', $friend_user );
+		$friend_user = User::create( $friend_username, 'pending_friend_request', $friend_url );
 
 		update_option( 'friends_request_' . sha1( $friend_request_response->data['request'] ), $friend_user->ID );
 		$friend_user->update_user_option( 'friends_future_in_token_' . sha1( $friend_request_response->data['request'] ), $future_in_token );
@@ -231,7 +231,7 @@ class RestTest extends \WP_UnitTestCase {
 		$friend_username = User::get_user_login_for_url( $friend_url );
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
-		$this->assertInstanceOf( 'User', $friend_user );
+		$this->assertInstanceOf( 'Friends\User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -241,7 +241,7 @@ class RestTest extends \WP_UnitTestCase {
 		$my_username_at_friend = User::get_user_login_for_url( $my_url );
 		$my_user_at_friend = User::get_user( $my_username_at_friend );
 
-		$this->assertInstanceOf( 'User', $my_user_at_friend );
+		$this->assertInstanceOf( 'Friends\User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -276,7 +276,7 @@ class RestTest extends \WP_UnitTestCase {
 		$friend_username = User::get_user_login_for_url( $friend_url );
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
-		$this->assertInstanceOf( 'User', $friend_user );
+		$this->assertInstanceOf( 'Friends\User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -286,7 +286,7 @@ class RestTest extends \WP_UnitTestCase {
 		$my_username_at_friend = User::get_user_login_for_url( $my_url );
 		$my_user_at_friend = User::get_user( $my_username_at_friend );
 
-		$this->assertInstanceOf( 'User', $my_user_at_friend );
+		$this->assertInstanceOf( 'Friends\User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -331,7 +331,7 @@ class RestTest extends \WP_UnitTestCase {
 		);
 
 		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
-		$this->assertInstanceOf( 'User', $friend_user );
+		$this->assertInstanceOf( 'Friends\User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
@@ -340,7 +340,7 @@ class RestTest extends \WP_UnitTestCase {
 		// Verify that the user was created at remote.
 		$my_username_at_friend = User::get_user_login_for_url( $my_url );
 		$my_user_at_friend = User::get_user( $my_username_at_friend );
-		$this->assertInstanceOf( 'User', $my_user_at_friend );
+		$this->assertInstanceOf( 'Friends\User', $my_user_at_friend );
 		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
@@ -421,7 +421,7 @@ class RestTest extends \WP_UnitTestCase {
 		$friend_user = User::create( $friend_username, 'subscription', $friend_url, $friend_username );
 		$friend_user->subscribe( $friend_url );
 
-		$this->assertInstanceOf( 'User', $friend_user );
+		$this->assertInstanceOf( 'Friends\User', $friend_user );
 		$this->assertEquals( rtrim( $friend_user->user_url, '/' ), $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'subscription' ) );
 

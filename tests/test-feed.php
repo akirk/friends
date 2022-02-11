@@ -94,11 +94,11 @@ class FeedTest extends \WP_UnitTestCase {
 	/**
 	 * Common code for testing parsing a feed.
 	 *
-	 * @param      SimplePie_File $file        The SimplePie_File.
-	 * @param      int            $new_items1  Number of new items to be found in the first attempt.
-	 * @param      int            $new_items2  Number of new items to be found in the second attempt.
+	 * @param      \SimplePie_File $file        The SimplePie_File.
+	 * @param      int             $new_items1  Number of new items to be found in the first attempt.
+	 * @param      int             $new_items2  Number of new items to be found in the second attempt.
 	 */
-	private function feed_parsing_test( SimplePie_File $file, $new_items1 = 1, $new_items2 = 0 ) {
+	private function feed_parsing_test( \SimplePie_File $file, $new_items1 = 1, $new_items2 = 0 ) {
 		$parser = new Feed_Parser_SimplePie;
 
 		$user = new User( $this->friend_id );
@@ -109,7 +109,7 @@ class FeedTest extends \WP_UnitTestCase {
 		);
 		$user_feed = new User_Feed( $term, $user );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
@@ -125,28 +125,28 @@ class FeedTest extends \WP_UnitTestCase {
 	 * Test parsing a feed.
 	 */
 	public function test_parse_feed() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' ) );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with ampersand URLs.
 	 */
 	public function test_parse_feed_with_url_ampersand() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' ) );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts.
 	 */
 	public function test_parse_feed_with_identical_posts() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' ) );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts after the fold.
 	 */
 	public function test_parse_feed_with_identical_posts_after_fold() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' ), 11 );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' ), 11 );
 	}
 
 	/**

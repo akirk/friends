@@ -10,7 +10,7 @@ namespace Friends;
 /**
  * Allow local fetching of a feed by attaching a filter
  */
-class Local_Feed_Fetcher extends SimplePie_File {
+class Local_Feed_Fetcher extends \SimplePie_File {
 	/**
 	 * The URL that was retrieved.
 	 *

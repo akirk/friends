@@ -79,7 +79,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		fetch_feed( null ); // load SimplePie.
 		update_option( 'home', 'http://me.local' );
 
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 		$parser = new Feed_Parser_SimplePie;
 
 		$user = new User( $this->friend_id );
@@ -90,7 +90,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 		$user_feed = new User_Feed( $term, $user );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
@@ -118,7 +118,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		}
 		update_option( 'home', 'http://me.local' );
 
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 		$parser = new Feed_Parser_SimplePie;
 
 		$user = new User( $this->friend_id );
@@ -132,7 +132,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
@@ -296,7 +296,7 @@ class NotificationTest extends \WP_UnitTestCase {
 			)
 		);
 
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 		$parser = new Feed_Parser_SimplePie;
 
 		$user = new User( $this->friend_id );
@@ -307,7 +307,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 		$user_feed = new User_Feed( $term, $user );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 

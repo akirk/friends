@@ -921,7 +921,7 @@ class Feed extends \Friends_Feed {
 	private function discover_link_rel_feeds( $content, $url, $headers ) {
 		$discovered_feeds = array();
 		$has_self = false;
-		$mf = Friends\Mf2\parse( $content, $url );
+		$mf = Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
 				foreach ( array( 'friends-base-url', 'me', 'alternate', 'self' ) as $rel ) {

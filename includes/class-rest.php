@@ -338,12 +338,12 @@ class REST {
 		}
 
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
-			$dom = new DOMDocument();
+			$dom = new \DOMDocument();
 			set_error_handler( '__return_null' );
 			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
 			restore_error_handler();
 
-			$xpath = new DOMXpath( $dom );
+			$xpath = new \DOMXpath( $dom );
 			foreach ( $xpath->query( '//link[@rel and @href]' ) as $link ) {
 				if ( 'friends-base-url' === $link->getAttribute( 'rel' ) ) {
 					$rest_url = $link->getAttribute( 'href' );
