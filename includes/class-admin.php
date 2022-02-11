@@ -2287,6 +2287,10 @@ class Admin {
 					'label' => __( 'Main Friend User', 'friends' ),
 					'value' => self::human_readable_main_user(),
 				),
+				'parsers_registered' => array(
+					'label' => __( 'Registered Parsers', 'friends' ),
+					'value' => strip_tags( implode( ', ', $this->friends->feed->get_registered_parsers() ) ),
+				),
 			),
 		);
 
