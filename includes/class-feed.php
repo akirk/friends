@@ -79,9 +79,9 @@ class Feed {
 	 * Allow registering a parser
 	 *
 	 * @param      string      $slug    The slug.
-	 * @param      Feed_Parser $parser  The parser that extends the Feed_Parser class. TODO: add it back to the function signature after namespace migration was finished.
+	 * @param      Feed_Parser $parser  The parser that extends the Feed_Parser class.
 	 */
-	public function register_parser( $slug, $parser ) {
+	public function register_parser( $slug, Feed_Parser $parser ) {
 		if ( in_array( $slug, $this->reservered_parser_slugs, true ) ) {
 			// translators: %s is the slug of a parser.
 			return new \WP_Error( 'resevered-slug', sprintf( __( 'The slug "%s" cannot be used.', 'friends' ), $slug ) );
