@@ -41,7 +41,7 @@ class Admin {
 	private function register_hooks() {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'friends_menu_top', array( $this, 'friends_add_menu_open_friend_request' ) );
-		add_action( 'admin_head-users.php', array( $this, 'keep_friends_open_on_users_screen' ) );
+		add_filter( 'users_list_table_query_args', array( $this, 'allow_role_multi_select' ) );
 		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
@@ -178,7 +178,7 @@ class Admin {
 			add_submenu_page( 'friends-settings', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, Friends::REQUIRED_ROLE, 'users.php?role=friend_request' );
 		}
 
-		add_submenu_page( 'friends-settings', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, 'users.php' );
+		add_submenu_page( 'friends-settings', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, $this->get_users_url() );
 
 		if ( isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page'] ) {
 			add_submenu_page( 'friends-settings', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), Friends::REQUIRED_ROLE, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
@@ -196,18 +196,38 @@ class Admin {
 	}
 
 	/**
+	 * Allow making use of the role__in query.
+	 *
+	 * @param      array $args   The arguments.
+	 *
+	 * @return     array  The modified array.
+	 */
+	public function allow_role_multi_select( $args ) {
+		if ( isset( $args['role'] ) && ! isset( $args['role__in'] ) && false !== strpos( $args['role'], ',' ) ) {
+			$args['role__in'] = explode( ',', $args['role'] );
+			unset( $args['role'] );
+
+			$roles = $this->get_associated_roles();
+			if ( array_intersect( $args['role__in'], array_keys( $roles ) ) ) {
+				add_action( 'admin_head-users.php', array( $this, 'keep_friends_open_on_users_screen' ) );
+			}
+		}
+		return $args;
+	}
+
+	/**
 	 * Use JavaScript to keep the Friends menu open when responding to a Friend Request.
 	 */
 	public function keep_friends_open_on_users_screen() {
-		if ( isset( $_GET['role'] ) && 'friend_request' === $_GET['role'] ) {
-			?>
-			<script type="text/javascript">
-				jQuery( document ).ready( function ( $ ) {
-					$("#toplevel_page_friends-settings, #toplevel_page_friends-settings > a").addClass('wp-has-current-submenu');
-				} );
-			</script>
-			<?php
-		}
+		?>
+		<script type="text/javascript">
+			jQuery( document ).ready( function ( $ ) {
+				$("#toplevel_page_friends-settings, #toplevel_page_friends-settings > a").addClass('wp-has-current-submenu wp-menu-open').removeClass('wp-not-current-submenu');
+				$("#toplevel_page_friends-settings ul li a[href='<?php echo esc_html( $this->get_users_url() ); ?>']").closest('li').addClass('current');
+			} );
+		</script>
+		<?php
+
 	}
 
 	/**
@@ -234,7 +254,7 @@ class Admin {
 							sprintf(
 								// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
 								__( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ),
-								'"' . esc_attr( self_admin_url( 'users.php' ) ) . '"',
+								'"' . esc_attr( self_admin_url( $this->get_users_url() ) ) . '"',
 								__( 'Friends &amp; Requests', 'friends' )
 							) .
 							'</p>',
@@ -1709,6 +1729,29 @@ class Admin {
 	}
 
 	/**
+	 * Gets the roles associated with the Friends plugin.
+	 *
+	 * @return     array  The associated roles.
+	 */
+	public function get_associated_roles() {
+		return apply_filters(
+			'friends_associated_roles',
+			array_merge(
+				$this->get_friend_roles(),
+				array(
+					'friend_request'         => _x( 'Friend Request', 'User role', 'friends' ),
+					'pending_friend_request' => _x( 'Pending Friend Request', 'User role', 'friends' ),
+					'subscription'           => _x( 'Subscription', 'User role', 'friends' ),
+				)
+			)
+		);
+	}
+
+	public function get_users_url() {
+		return 'users.php?role=' . implode( ',', array_keys( $this->get_associated_roles() ) );
+	}
+
+	/**
 	 * Add actions to the user rows
 	 *
 	 * @param  array    $actions The existing actions.
@@ -2023,7 +2066,7 @@ class Admin {
 					'id'     => 'friends-requests',
 					'parent' => 'friends',
 					'title'  => esc_html__( 'Your Friends & Requests', 'friends' ),
-					'href'   => self_admin_url( 'users.php' ),
+					'href'   => self_admin_url( $this->get_users_url() ),
 				)
 			);
 			$wp_menu->add_menu(
