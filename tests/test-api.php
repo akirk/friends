@@ -118,7 +118,7 @@ class APITest extends \WP_UnitTestCase {
 	 */
 	public function wp_feed_options( $feed, $url ) {
 		$feed->enable_cache( false );
-		$feed->set_file_class( 'Friends\Local_Feed_Fetcher' );
+		$feed->set_file_class( __NAMESPACE__ . '\Local_Feed_Fetcher' );
 	}
 
 	/**

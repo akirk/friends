@@ -53,30 +53,30 @@ require_once __DIR__ . '/includes/class-template-loader.php';
 require_once __DIR__ . '/includes/class-3rd-parties.php';
 require_once __DIR__ . '/includes/class-friends.php';
 
-add_action( 'plugins_loaded', array( 'Friends\Friends', 'init' ) );
-add_action( 'admin_init', array( 'Friends\Plugin_Installer', 'register_hooks' ) );
+add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );
+add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_hooks' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( 'Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( 'Friends', 'uninstall_plugin' ) );
 
 // Register widgets.
 require_once __DIR__ . '/widgets/class-widget-refresh.php';
-add_action( 'widgets_init', array( 'Friends\Widget_Refresh', 'register' ) );
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Refresh', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-friend-list.php';
-add_action( 'widgets_init', array( 'Friends\Widget_Friend_List', 'register' ) );
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_List', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-friend-request.php';
-add_action( 'widgets_init', array( 'Friends\Widget_Friend_Request', 'register' ) );
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Request', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-new-private-post.php';
-add_action( 'widgets_init', array( 'Friends\Widget_New_Private_Post', 'register' ) );
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_New_Private_Post', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-post-formats.php';
-add_action( 'widgets_init', array( 'Friends\Widget_Post_Formats', 'register' ) );
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Post_Formats', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-header.php';
-add_action( 'widgets_init', array( 'Friends\Widget_Header', 'register' ) );
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Header', 'register' ) );
 
 // Register bundled parsers.
 add_action(
