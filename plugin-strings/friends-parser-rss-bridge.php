@@ -13,6 +13,11 @@
 __( 'Friends Parser RSS Bridge', 'friends' );
 // Description of the Friends Parser RSS Bridge plugin.
 __( 'Provides the parsing capabilities of RSS Bridge.', 'friends' );
+__( 'Unknown Parser', 'friends' );
+// translators: %s is a URL.
+__( 'No suitable parser available for %s.', 'friends' );
+// translators: 1: is a URL, 2: a Parser name.
+__( 'Error analyzing %1$s with %2$s.', 'friends' );
 __( 'Default Confidence', 'friends' );
 __( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.', 'friends' );
 __( 'Save Changes', 'friends' );

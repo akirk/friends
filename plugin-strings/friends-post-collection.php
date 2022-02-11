@@ -24,6 +24,7 @@ __( 'View Collected Post', 'friends' );
 __( 'Search Collected Posts', 'friends' );
 __( 'No Collected Posts found', 'friends' );
 __( 'No Collected Posts found in the Trash', 'friends' );
+__( 'A collected post', 'friends' );
 __( 'Post Collection', 'friends' );
 __( 'Edit Post Collection', 'friends' );
 __( 'Show post in the feed', 'friends' );
@@ -44,6 +45,11 @@ __( 'The Friends plugin is all about connecting with friends and news. Learn mor
 __( 'This plugin is uses information of the open source project <a href=%s>FTR Site Config</a>.', 'friends' );
 __( 'Sending the article to your blog...', 'friends' );
 __( 'Do you want to send the article on this page to your blog?', 'friends' );
+__( 'You entered an invalid URL.', 'friends' );
+__( 'No content was extracted.', 'friends' );
+__( 'Could not download the URL.', 'friends' );
+// translators: $s is an error message.
+__( 'Error processing HTML: %s', 'friends' );
 _x( 'Post Collection', 'User role', 'friends' );
 _x( 'Post Collections', 'widget-header', 'friends' );
 __( 'Make post public', 'friends' );
@@ -53,14 +59,22 @@ __( 'Username', 'friends' );
 __( 'Description', 'friends' );
 // translators: %d is the number of posts.
 _n( 'View %d post', 'View %d posts', 1, 'friends' );
+__( 'Syndicate Posts', 'friends' );
 // translators: %s is a URL.
 __( 'Publish this Post Collection at %s', 'friends' );
 __( 'Post Collection Name', 'friends' );
 __( 'External feed', 'friends' );
 __( 'Bookmarklet', 'friends' );
 __( 'disabled', 'friends' );
+// translators: %s is the name of a Post Collection user.
+__( 'Save to %s', 'friends' );
 __( 'Create another user', 'friends' );
 // translators: %s is a URL.
 __( 'To save posts from anywhere on the web, use the <a href=%s>bookmarklets</a>.', 'friends' );
+__( 'Bookmarklets', 'friends' );
+__( 'Drag one of these bookmarklets to your bookmarks bar and click it when you\'re on an article you want to save from the web.', 'friends' );
+__( 'Browser Extension', 'friends' );
+__( 'The Friends browser extension also allows to save the currently viewed article.', 'friends' );
+__( 'Firefox Extension', 'friends' );
 _x( 'Share', 'button', 'friends' );
 _x( '250', 'dropdown-menu-width', 'friends' );
