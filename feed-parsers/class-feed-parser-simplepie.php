@@ -124,8 +124,8 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 
 		require_once \ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
 		require_once \ABSPATH . WPINC . '/class-wp-simplepie-file.php';
-		require_once __DIR__ . '/SimplePie/class-friends-simplepie-file-accept-only-rss.php';
-		require_once __DIR__ . '/SimplePie/class-friends-simplepie-misc.php';
+		require_once __DIR__ . '/SimplePie/class-simplepie-file-accept-only-rss.php';
+		require_once __DIR__ . '/SimplePie/class-simplepie-misc.php';
 		require_once \ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
 		$feed = new \SimplePie();

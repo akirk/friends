@@ -9,6 +9,8 @@
 
 namespace Friends;
 
+// phpcs:disable WordPress.WP.I18n.MissingArgDomain
+
 /**
  * This is the class for the Friends Plugin Automatic Status.
  *
@@ -109,7 +111,7 @@ class Automatic_Status {
 			2
 		);
 		_get_list_table( 'WP_Posts_List_Table' );
-		require_once __DIR__ . '/class-friends-automatic-status-list-table.php';
+		require_once __DIR__ . '/class-automatic-status-list-table.php';
 
 		$post_type = 'post';
 		$post_type_object = get_post_type_object( $post_type );
