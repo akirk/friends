@@ -15,7 +15,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Friends extends \Friends {
+class Friends {
 	const VERSION       = '1.9.1';
 	const CPT           = 'friend_post_cache';
 	const FEED_URL      = 'friends-feed-url';
@@ -132,8 +132,8 @@ class Friends extends \Friends {
 		new Automatic_Status( $this );
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
-		do_action( 'friends_init', $this );
-		do_action( 'friends_register_parser', $this->feed );
+		do_action( 'friends_loaded', $this );
+		do_action( 'friends_load_parsers', $this->feed );
 	}
 
 	/**

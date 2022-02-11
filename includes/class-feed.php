@@ -17,7 +17,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Feed extends \Friends_Feed {
+class Feed {
 	const XMLNS = 'wordpress-plugin-friends:feed-additions:1';
 
 	/**

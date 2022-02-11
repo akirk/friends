@@ -17,7 +17,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class User extends \Friend_User {
+class User extends \WP_User {
 	/**
 	 * Caches the feed rules.
 	 *

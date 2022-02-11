@@ -20,11 +20,9 @@ namespace Friends;
  * This file loads all the dependencies the Friends plugin.
  */
 
-defined( '\ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
-
-require_once __DIR__ . '/namespace-migration.php';
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 require_once __DIR__ . '/libs/gutenberg-everywhere/classes/gutenberg-handler.php';
@@ -55,8 +53,6 @@ require_once __DIR__ . '/includes/class-template-loader.php';
 require_once __DIR__ . '/includes/class-3rd-parties.php';
 require_once __DIR__ . '/includes/class-friends.php';
 
-require_once __DIR__ . '/namespace-migration-post-loading.php';
-
 add_action( 'plugins_loaded', array( 'Friends\Friends', 'init' ) );
 add_action( 'admin_init', array( 'Friends\Plugin_Installer', 'register_hooks' ) );
 register_activation_hook( __FILE__, array( 'Friends', 'activate_plugin' ) );
@@ -84,7 +80,7 @@ add_action( 'widgets_init', array( 'Friends\Widget_Header', 'register' ) );
 
 // Register bundled parsers.
 add_action(
-	'friends_register_parser',
+	'friends_load_parsers',
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-simplepie.php';
 		$friends_feed->register_parser( 'simplepie', new Feed_Parser_SimplePie );
@@ -92,7 +88,7 @@ add_action(
 );
 
 add_action(
-	'friends_register_parser',
+	'friends_load_parsers',
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-microformats.php';
 		$friends_feed->register_parser( 'microformats', new Feed_Parser_Microformats );
@@ -100,7 +96,7 @@ add_action(
 );
 
 add_action(
-	'friends_register_parser',
+	'friends_load_parsers',
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-json-feed.php';
 		$friends_feed->register_parser( 'jsonfeed', new Feed_Parser_JSON_Feed );
