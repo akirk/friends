@@ -12,7 +12,7 @@ $normalized_whitespace = preg_replace( '/(' . PHP_EOL . '\s*' . PHP_EOL . ')+/m'
 $quoted_text           = '> ' . str_replace( PHP_EOL, PHP_EOL . '> ', trim( $normalized_whitespace ) );
 
 // translators: %s is a user display name.
-printf( __( 'Howdy, %s!' ), $args['user']->display_name );
+printf( __( 'Howdy, %s!', 'friends' ), $args['user']->display_name );
 echo PHP_EOL;
 
 // translators: %s is a username.

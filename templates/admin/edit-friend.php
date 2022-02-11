@@ -12,7 +12,7 @@ $has_last_log = false;
 	<table class="form-table">
 		<tbody>
 			<tr>
-				<th><label for="friends_avatar"><?php esc_html_e( 'Avatar' ); ?></label></th>
+				<th><label for="friends_avatar"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Avatar' ); ?></label></th>
 				<td>
 				<?php echo get_avatar( $args['friend']->ID ); ?>
 			</td>
@@ -26,7 +26,7 @@ $has_last_log = false;
 				<td><textarea name="friends_description" id="friends_description" rows="5" cols="30"><?php echo esc_html( $args['friend']->description ); ?></textarea><p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>
 			</tr>
 			<tr>
-				<th><label for="url"><?php esc_html_e( 'URL' ); ?></label></th>
+				<th><label for="url"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'URL' ); ?></label></th>
 				<td><input type="text" name="user_url" value="<?php echo esc_attr( $args['friend']->user_url ); ?>" class="regular-text" /></td>
 			</tr>
 			<tr>
@@ -41,7 +41,7 @@ $has_last_log = false;
 								<th class="checkbox"><?php esc_html_e( 'Active', 'friends' ); ?></th>
 								<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
 								<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
-								<th><?php esc_html_e( 'Post Format' ); ?></th>
+								<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
 								<th><?php esc_html_e( 'Remarks', 'friends' ); ?></th>
 								<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
 								<th><?php esc_html_e( 'MIME Type', 'friends' ); ?></th>
@@ -79,7 +79,7 @@ $has_last_log = false;
 										</option>
 									<?php endif; ?>
 								</select> <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $feed->get_parser() ) . '&feed=' . urlencode( $term_id ) . '&preview=' . urlencode( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a></td>
-								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][post-format]" aria-label="<?php esc_attr_e( 'Post Format' ); ?>">
+								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][post-format]" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Post Format' ); ?>">
 									<?php foreach ( $args['post_formats'] as $format => $title ) : ?>
 										<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $format, $feed->get_post_format() ); ?>><?php echo esc_html( $title ); ?></option>
 									<?php endforeach; ?>
@@ -103,7 +103,7 @@ $has_last_log = false;
 									<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
 								<?php endforeach; ?>
 							</select> <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=&preview=' ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a></td>
-							<td><select name="feeds[new][post-format]" aria-label="<?php esc_attr_e( 'Post Format' ); ?>">
+							<td><select name="feeds[new][post-format]" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Post Format' ); ?>">
 								<?php foreach ( $args['post_formats'] as $format => $title ) : ?>
 									<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( $title ); ?></option>
 								<?php endforeach; ?>
@@ -123,7 +123,7 @@ $has_last_log = false;
 			</tr>
 			<?php if ( $args['friend']->can_refresh_feeds() ) : ?>
 			<tr>
-				<th><?php esc_html_e( 'Posts' ); ?></th>
+				<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Posts' ); ?></th>
 				<td>
 					<fieldset>
 						<label for="show_on_friends_page">
@@ -218,7 +218,7 @@ $has_last_log = false;
 			<?php endif; ?>
 			<tr>
 				<th><?php esc_html_e( 'Created', 'friends' ); ?></th>
-				<td><?php echo esc_html( date_i18n( __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ) ); ?></td>
+				<td><?php echo esc_html( date_i18n( /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ) ); ?></td>
 			</tr>
 			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
@@ -303,7 +303,7 @@ $has_last_log = false;
 	</table>
 	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>
 	<p class="submit">
-		<input type="submit" id="submit" class="button button-primary" value="<?php esc_html_e( 'Save Changes' ); ?>">
+		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 	</p>
 	<p class="description" id="friend_url-description">
 		<?php

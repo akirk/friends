@@ -6,7 +6,7 @@
  * @package Friends
  */
 
-$template_loader = Friends::template_loader();
+$template_loader = Friends\Friends::template_loader();
 ?>
 <article id="post-<?php the_ID(); ?>" <?php post_class( 'card' ); ?>>
 	<?php

@@ -40,7 +40,7 @@ ob_start();
 
 // Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
-Friends::activate_plugin();
+Friends\Friends::activate_plugin();
 ob_end_clean();
 
 // Make sure to be able to query these hosts.
@@ -55,6 +55,19 @@ add_filter(
 	10,
 	2
 );
+
+add_filter(
+	'http_request_args',
+	function( $args, $url ) {
+		if ( in_array( parse_url( $url, PHP_URL_HOST ), array( 'me.local', 'friend.local' ) ) ) {
+			$args['reject_unsafe_urls'] = false;
+		}
+		return $args;
+	},
+	10,
+	2
+);
+
 
 // Disable the feed fetching after a friendship was established.
 add_filter( 'friends_immediately_fetch_feed', '__return_false' );
@@ -91,4 +104,4 @@ if ( defined( 'TESTS_VERBOSE' ) && TESTS_VERBOSE ) {
 	);
 }
 
-Friend_User_query::$cache = false;
+Friends\User_Query::$cache = false;

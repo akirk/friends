@@ -43,6 +43,7 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 		'name'              => $name,
 		'short_description' => substr( $readme_md, $short_description_start, strpos( $readme_md, PHP_EOL, $short_description_start ) - $short_description_start ),
 		'more_info'         => 'https://github.com/akirk/' . $slug,
+		'author'            => '<a href="https://github.com/akirk/">Alex Kirk</a>',
 		'slug'              => $slug,
 		'version'           => $version,
 	);

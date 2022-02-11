@@ -5,10 +5,12 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Test the Notifications
  */
-class Friends_APITest extends WP_UnitTestCase {
+class APITest extends \WP_UnitTestCase {
 	/**
 	 * Current User ID
 	 *
@@ -90,7 +92,7 @@ class Friends_APITest extends WP_UnitTestCase {
 	 * @param  Local_Feed_Fetcher $file The class that SimplePie asked to retrieve the content.
 	 * @return Local_Feed_Fetcher The class that has the content set to its properties.
 	 *
-	 * @throws Exception  This might be triggered by feed-rss2.
+	 * @throws \Exception  This might be triggered by feed-rss2.
 	 */
 	public function local_fetch_feed( $file ) {
 		ob_start();
@@ -98,9 +100,9 @@ class Friends_APITest extends WP_UnitTestCase {
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
-			require( ABSPATH . 'wp-includes/feed-rss2.php' );
+			require( \ABSPATH . 'wp-includes/feed-rss2.php' );
 			$out = ob_get_clean();
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$out = ob_get_clean();
 			throw($e);
 		}
@@ -116,14 +118,14 @@ class Friends_APITest extends WP_UnitTestCase {
 	 */
 	public function wp_feed_options( $feed, $url ) {
 		$feed->enable_cache( false );
-		$feed->set_file_class( 'Local_Feed_Fetcher' );
+		$feed->set_file_class( __NAMESPACE__ . '\Local_Feed_Fetcher' );
 	}
 
 	/**
 	 * Test getting your friends posts via RSS.
 	 */
 	public function test_get_non_friend_posts() {
-		$friend_user = new Friend_User( $this->friend_id );
+		$friend_user = new User( $this->friend_id );
 		$posts = $friend_user->retrieve_posts();
 		$this->assertCount( 1, $posts );
 	}
@@ -133,7 +135,7 @@ class Friends_APITest extends WP_UnitTestCase {
 	 */
 	public function test_get_friend_posts() {
 		wp_set_current_user( $this->user_id );
-		$friend_user = new Friend_User( $this->friend_id );
+		$friend_user = new User( $this->friend_id );
 		$posts = $friend_user->retrieve_posts();
 		$this->assertCount( 2, $posts );
 	}

@@ -5,10 +5,12 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Test the Notifications
  */
-class Friends_NotificationTest extends WP_UnitTestCase {
+class NotificationTest extends \WP_UnitTestCase {
 	/**
 	 * Current User ID
 	 *
@@ -66,7 +68,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			function( $do_send, $to, $subject, $message, $headers ) use ( $that ) {
 				// translators: %1$s is the site name, %2$s is the subject.
 				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), 'friend.local', 'First Friend Post' ) );
-				$that->assertEquals( $to, WP_TESTS_EMAIL );
+				$that->assertEquals( $to, \WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
 			},
@@ -77,18 +79,18 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		fetch_feed( null ); // load SimplePie.
 		update_option( 'home', 'http://me.local' );
 
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Friends_Feed_Parser_SimplePie;
+		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$parser = new Feed_Parser_SimplePie;
 
-		$user = new Friend_User( $this->friend_id );
-		$term = new WP_Term(
+		$user = new User( $this->friend_id );
+		$term = new \WP_Term(
 			(object) array(
 				'url' => $user->user_url . '/feed/',
 			)
 		);
-		$user_feed = new Friend_User_Feed( $term, $user );
+		$user_feed = new User_Feed( $term, $user );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
@@ -112,25 +114,25 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 		);
 
 		if ( ! class_exists( 'SimplePie', false ) ) {
-			require_once( ABSPATH . WPINC . '/class-simplepie.php' );
+			require_once( \ABSPATH . WPINC . '/class-simplepie.php' );
 		}
 		update_option( 'home', 'http://me.local' );
 
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Friends_Feed_Parser_SimplePie;
+		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$parser = new Feed_Parser_SimplePie;
 
-		$user = new Friend_User( $this->friend_id );
-		$term = new WP_Term(
+		$user = new User( $this->friend_id );
+		$term = new \WP_Term(
 			(object) array(
 				'url' => $user->user_url . '/feed/',
 			)
 		);
-		$user_feed = new Friend_User_Feed( $term, $user );
+		$user_feed = new User_Feed( $term, $user );
 
-		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
+		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
@@ -155,7 +157,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 
 		update_option( 'home', 'http://me.local' );
 
-		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
+		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_friend_request_notification', true );
 
 		$me_id = $this->factory->user->create(
@@ -186,8 +188,8 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s sent a Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
-				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), defined( 'MULTISITE' ) && MULTISITE ? WP_TESTS_TITLE . ' Network' : WP_TESTS_TITLE, $partial_subject ) );
-				$that->assertEquals( $to, WP_TESTS_EMAIL );
+				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), defined( 'MULTISITE' ) && MULTISITE ? \WP_TESTS_TITLE . ' Network' : \WP_TESTS_TITLE, $partial_subject ) );
+				$that->assertEquals( $to, \WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
 			},
@@ -217,8 +219,8 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s accepted your Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
-				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), defined( 'MULTISITE' ) && MULTISITE ? WP_TESTS_TITLE . ' Network' : WP_TESTS_TITLE, $partial_subject ) );
-				$that->assertEquals( $to, WP_TESTS_EMAIL );
+				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), defined( 'MULTISITE' ) && MULTISITE ? \WP_TESTS_TITLE . ' Network' : \WP_TESTS_TITLE, $partial_subject ) );
+				$that->assertEquals( $to, \WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
 			},
@@ -228,7 +230,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 
 		update_option( 'home', 'http://me.local' );
 
-		$test_user = get_user_by( 'email', WP_TESTS_EMAIL );
+		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
 		update_user_option( $test_user->ID, 'friends_no_friend_request_notification', true );
 
 		$me_id = $this->factory->user->create(
@@ -239,7 +241,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			)
 		);
 
-		$me = new Friend_User( $me_id );
+		$me = new User( $me_id );
 		$me->set_role( 'friend' );
 		do_action( 'notify_accepted_friend_request', $me );
 	}
@@ -274,7 +276,7 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 				$keyword_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
 				// translators: %1$s is the site name, %2$s is the subject.
 				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), 'friend.local', $keyword_title ) );
-				$that->assertEquals( $to, WP_TESTS_EMAIL );
+				$that->assertEquals( $to, \WP_TESTS_EMAIL );
 				$that->assertTrue( $do_send );
 				return false;
 			},
@@ -294,18 +296,18 @@ class Friends_NotificationTest extends WP_UnitTestCase {
 			)
 		);
 
-		$file = new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Friends_Feed_Parser_SimplePie;
+		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$parser = new Feed_Parser_SimplePie;
 
-		$user = new Friend_User( $this->friend_id );
-		$term = new WP_Term(
+		$user = new User( $this->friend_id );
+		$term = new \WP_Term(
 			(object) array(
 				'url' => $user->user_url . '/feed/',
 			)
 		);
-		$user_feed = new Friend_User_Feed( $term, $user );
+		$user_feed = new User_Feed( $term, $user );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 

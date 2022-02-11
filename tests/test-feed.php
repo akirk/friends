@@ -1,14 +1,16 @@
 <?php
 /**
- * Class Friends_FeedTest
+ * Class FeedTest
  *
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Test the Feed
  */
-class Friends_FeedTest extends WP_UnitTestCase {
+class FeedTest extends \WP_UnitTestCase {
 	/**
 	 * User ID of a friend at friend.local
 	 *
@@ -72,7 +74,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 	 * @param  string $url The URL that would appear to WordPress to have been called.
 	 * @return string      The returned feed.
 	 *
-	 * @throws Exception Relaying any exception.
+	 * @throws \Exception Relaying any exception.
 	 */
 	function get_rss2( $url ) {
 		ob_start();
@@ -80,9 +82,9 @@ class Friends_FeedTest extends WP_UnitTestCase {
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
-			require( ABSPATH . 'wp-includes/feed-rss2.php' );
+			require( \ABSPATH . 'wp-includes/feed-rss2.php' );
 			$out = ob_get_clean();
-		} catch ( Exception $e ) {
+		} catch ( \Exception $e ) {
 			$out = ob_get_clean();
 			throw($e);
 		}
@@ -92,22 +94,22 @@ class Friends_FeedTest extends WP_UnitTestCase {
 	/**
 	 * Common code for testing parsing a feed.
 	 *
-	 * @param      SimplePie_File $file        The SimplePie_File.
-	 * @param      int            $new_items1  Number of new items to be found in the first attempt.
-	 * @param      int            $new_items2  Number of new items to be found in the second attempt.
+	 * @param      \SimplePie_File $file        The SimplePie_File.
+	 * @param      int             $new_items1  Number of new items to be found in the first attempt.
+	 * @param      int             $new_items2  Number of new items to be found in the second attempt.
 	 */
-	private function feed_parsing_test( SimplePie_File $file, $new_items1 = 1, $new_items2 = 0 ) {
-		$parser = new Friends_Feed_Parser_SimplePie;
+	private function feed_parsing_test( \SimplePie_File $file, $new_items1 = 1, $new_items2 = 0 ) {
+		$parser = new Feed_Parser_SimplePie;
 
-		$user = new Friend_User( $this->friend_id );
-		$term = new WP_Term(
+		$user = new User( $this->friend_id );
+		$term = new \WP_Term(
 			(object) array(
 				'url' => $user->user_url . '/feed/',
 			)
 		);
-		$user_feed = new Friend_User_Feed( $term, $user );
+		$user_feed = new User_Feed( $term, $user );
 
-		$feed = new SimplePie();
+		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
@@ -123,28 +125,28 @@ class Friends_FeedTest extends WP_UnitTestCase {
 	 * Test parsing a feed.
 	 */
 	public function test_parse_feed() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' ) );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with ampersand URLs.
 	 */
 	public function test_parse_feed_with_url_ampersand() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' ) );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts.
 	 */
 	public function test_parse_feed_with_identical_posts() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' ) );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' ) );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts after the fold.
 	 */
 	public function test_parse_feed_with_identical_posts_after_fold() {
-		$this->feed_parsing_test( new SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' ), 11 );
+		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' ), 11 );
 	}
 
 	/**
@@ -152,7 +154,7 @@ class Friends_FeedTest extends WP_UnitTestCase {
 	 */
 	public function test_parse_own_feed_with_correct_friend_auth() {
 		$friends = Friends::get_instance();
-		$feed_url = $friends->access_control->append_auth( 'https://me.local/?feed=rss2', new Friend_User( $this->friend_id ) );
+		$feed_url = $friends->access_control->append_auth( 'https://me.local/?feed=rss2', new User( $this->friend_id ) );
 		$this->assertContains( 'me=', $feed_url );
 		$feed = $this->get_rss2( $feed_url );
 		$xml  = xml_to_array( $feed );

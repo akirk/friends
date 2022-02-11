@@ -5,35 +5,38 @@
  * @package Friends
  */
 
+namespace Friends;
+
 /**
  * Render a preview row.
  *
- * @param      WP_Post $post   The post.
- * @param      array   $args   The arguments.
+ * @param      \WP_Post $post   The post.
+ * @param      array    $args   The arguments.
  */
 function preview_row( $post, $args ) {
 	$modified_post = $args['feed']->apply_feed_rules( $post, null, $args['friend'] );
 	?>
 	<tr>
-		<td class="title column-title column-primary" data-colname="<?php esc_attr_e( 'Title', 'friends' ); ?>"><a href="<?php the_permalink( $modified_post ? $modified_post : $post ); ?>" rel="noopener noreferrer"><?php echo esc_html( $modified_post ? $modified_post->post_title : $post->post_title ); ?></a></td>
-		<td class="author column-author" data-colname="<?php esc_attr_e( 'Author' ); ?>"><?php echo esc_html( get_post_meta( $post->ID, 'author', true ) ); ?></td>
-		<td class="date column-date" data-colname="<?php esc_attr_e( 'Date' ); ?>"><?php echo esc_html( date_i18n( __( 'F j, Y g:i a' ), strtotime( $post->post_date ) ) ); ?></td>
+
+		<td class="title column-title column-primary" data-colname="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Title' ); ?>"><a href="<?php the_permalink( $modified_post ? $modified_post : $post ); ?>" rel="noopener noreferrer"><?php echo esc_html( $modified_post ? $modified_post->post_title : $post->post_title ); ?></a></td>
+		<td class="author column-author" data-colname="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Author' ); ?>"><?php echo esc_html( get_post_meta( $post->ID, 'author', true ) ); ?></td>
+		<td class="date column-date" data-colname="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Date' ); ?>"><?php echo esc_html( date_i18n( __( 'F j, Y g:i a' ), strtotime( $post->post_date ) ) ); ?></td>
 		<td class="action column-action" data-colname="<?php esc_attr_e( 'Action', 'friends' ); ?>">
 			<?php
 			if ( ! $modified_post || $modified_post->_feed_rule_delete ) {
 				echo esc_html( _x( 'Delete', 'verb', 'friends' ) );
 				?>
-				</td><td class="view column-view" data-colname="<?php esc_attr_e( 'View', 'friends' ); ?>">
+				</td><td class="view column-view" data-colname="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'View' ); ?>">
 				<?php
 			} else {
 				if ( isset( $modified_post->_feed_rule_transform['post_status'] ) && 'trash' === $modified_post->_feed_rule_transform['post_status'] ) {
-					echo esc_html( _x( 'Trash', 'verb' ) );
+					echo esc_html( _x( 'Trash', 'verb' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				} else {
 					echo esc_html( _x( 'Accept', 'verb', 'friends' ) );
 				}
 				?>
 				</td>
-				<td class="view column-view" data-colname="<?php esc_attr_e( 'View', 'friends' ); ?>">
+				<td class="view column-view" data-colname="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'View' ); ?>">
 				<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url( $post->ID ) ); ?>?maybe-in-trash"><?php esc_html_e( 'View post', 'friends' ); ?></a>
 				<?php
 			}
@@ -46,7 +49,7 @@ function preview_row( $post, $args ) {
 
 if ( $args['post'] ) :
 	?>
-	<h2><?php esc_html_e( 'Selected post' ); ?></h2>
+	<h2><?php esc_html_e( 'Selected post', 'friends' ); ?></h2>
 
 	<p>
 		<?php
@@ -56,9 +59,9 @@ if ( $args['post'] ) :
 	<table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-bottom: 2em; margin-right: 1em">
 		<thead>
 			<tr>
-				<th class="column-primary column-title"><?php esc_html_e( 'Title', 'friends' ); ?></th>
-				<th class="column-author"><?php esc_html_e( 'Author' ); ?></th>
-				<th class="column-date"><?php esc_html_e( 'Date' ); ?></th>
+				<th class="column-primary column-title"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Title' ); ?></th>
+				<th class="column-author"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Author' ); ?></th>
+				<th class="column-date"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Date' ); ?></th>
 				<th class="column-action"><?php esc_html_e( 'Action', 'friends' ); ?></th>
 				<th class="column-view"><?php esc_html_e( 'Friends Page', 'friends' ); ?></th>
 			</tr>
@@ -72,14 +75,14 @@ if ( $args['post'] ) :
 	</table>
 <?php endif; ?>
 
-<h2><?php esc_html_e( 'Last feed items' ); ?></h2>
+<h2><?php esc_html_e( 'Last feed items', 'friends' ); ?></h2>
 
 <table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-bottom: 2em; margin-right: 1em">
 	<tbody>
 		<tr>
-			<th class="column-primary column-title"><?php esc_html_e( 'Title', 'friends' ); ?></th>
-			<th class="column-author"><?php esc_html_e( 'Author' ); ?></th>
-			<th class="column-date"><?php esc_html_e( 'Date' ); ?></th>
+			<th class="column-primary column-title"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Title', 'friends' ); ?></th>
+			<th class="column-author"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Author' ); ?></th>
+			<th class="column-date"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Date' ); ?></th>
 			<th class="column-action"><?php esc_html_e( 'Action', 'friends' ); ?></th>
 			<th class="column-view"><?php esc_html_e( 'Friends Page', 'friends' ); ?></th>
 		</tr>

@@ -95,7 +95,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 			<tr class="friends-advanced hidden">
 				<th scope="row"><label for="codeword"><?php esc_html_e( 'Code word (Optional)', 'friends' ); ?></label></th>
 				<td>
-					<input type="text" autofocus id="codeword" name="codeword" value="<?php echo esc_attr( $args['codeword'] ); ?>" placeholder="<?php esc_attr_e( 'None' ); ?>" class="regular-text" />
+					<input type="text" autofocus id="codeword" name="codeword" value="<?php echo esc_attr( $args['codeword'] ); ?>" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'None' ); ?>" class="regular-text" />
 					<p class="description" id="codeword-description">
 						<?php esc_html_e( 'Your friend might have told you to provide something here.', 'friends' ); ?>
 					</p>

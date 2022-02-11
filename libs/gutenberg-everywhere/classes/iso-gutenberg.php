@@ -1,9 +1,9 @@
 <?php
-
+namespace Friends;
 /**
  * Provides functions to load Gutenberg assets
  */
-class Friends_GutenbergEverywhere_Editor {
+class GutenbergEverywhere_Editor {
 	/**
 	 * Constructor
 	 */
@@ -72,7 +72,7 @@ class Friends_GutenbergEverywhere_Editor {
 
 		do_action( 'enqueue_block_editor_assets' );
 
-		add_action( 'wp_print_footer_scripts', array( '_WP_Editors', 'print_default_editor_scripts' ), 45 );
+		add_action( 'wp_print_footer_scripts', array( '_\WP_Editors', 'print_default_editor_scripts' ), 45 );
 
 		$this->setup_rest_api();
 	}
@@ -83,8 +83,8 @@ class Friends_GutenbergEverywhere_Editor {
 	 * @return String|Bool Version number, or false
 	 */
 	public function get_gutenberg_version() {
-		if ( defined( 'GUTENBERG_PLUGIN_VERSION' ) ) {
-			return GUTENBERG_PLUGIN_VERSION;
+		if ( defined( '\GUTENBERG_PLUGIN_VERSION' ) ) {
+			return \GUTENBERG_PLUGIN_VERSION;
 		}
 
 		// Check for locally installed plugin
@@ -92,12 +92,12 @@ class Friends_GutenbergEverywhere_Editor {
 			/**
 			 * @psalm-suppress MissingFile
 			 */
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			require_once \ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
 		if ( is_plugin_active( 'gutenberg/gutenberg.php' ) ) {
 			// Assumes Gutenberg plugin is in this directory
-			$data = get_plugin_data( WP_PLUGIN_DIR . '/gutenberg/gutenberg.php' );
+			$data = get_plugin_data( \WP_PLUGIN_DIR . '/gutenberg/gutenberg.php' );
 
 			if ( isset( $data['Version'] ) && $data['Version'] !== 'Version' ) {
 				return $data['Version'];
@@ -121,17 +121,17 @@ class Friends_GutenbergEverywhere_Editor {
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
+		require_once \ABSPATH . 'wp-admin/includes/class-wp-screen.php';
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once ABSPATH . 'wp-admin/includes/screen.php';
+		require_once \ABSPATH . 'wp-admin/includes/screen.php';
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once ABSPATH . 'wp-admin/includes/post.php';
+		require_once \ABSPATH . 'wp-admin/includes/post.php';
 
-		// Fake a WP_Screen object so we can pretend we're in the block editor, and therefore other block libraries load
+		// Fake a \WP_Screen object so we can pretend we're in the block editor, and therefore other block libraries load
 		set_current_screen();
 
 		$current_screen = get_current_screen();
@@ -175,7 +175,7 @@ class Friends_GutenbergEverywhere_Editor {
 			$max_upload_size = 0;
 		}
 
-		if ( ! WP_Theme_JSON_Resolver::theme_has_support() ) {
+		if ( ! \WP_Theme_JSON_Resolver::theme_has_support() ) {
 			$styles = array(
 				array(
 					'css'            => 'body { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif }',
@@ -323,7 +323,7 @@ class Friends_GutenbergEverywhere_Editor {
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once ABSPATH . 'wp-admin/includes/media.php';
+		require_once \ABSPATH . 'wp-admin/includes/media.php';
 
 		wp_enqueue_media();
 	}

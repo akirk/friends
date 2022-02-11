@@ -21,7 +21,7 @@
 		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r' ) ); ?>">
 			<?php
 			// translators: %s is a time span.
-			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( get_post_modified_time( 'U', true ) ) ) );
+			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( get_post_modified_time( 'U', true ) ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			echo ': ';
 			the_title();
 			?>
@@ -35,8 +35,14 @@
 			if ( $matches ) {
 				$replace = array();
 				foreach ( $matches[1] as $gmdate ) {
-					// translators: %s is a time span.
-					$replace[ $gmdate ] = esc_html( sprintf( __( '%s ago' ), human_time_diff( strtotime( $gmdate ) ) ) );
+
+					$replace[ $gmdate ] = esc_html(
+						sprintf(
+							// translators: %s is a time span.
+							__( '%s ago' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+							human_time_diff( strtotime( $gmdate ) )
+						)
+					);
 				}
 				$content = str_replace( array_keys( $replace ), array_values( $replace ), $content );
 			}
@@ -46,7 +52,7 @@
 			?>
 			</div>
 			<?php
-			Friends::template_loader()->get_template_part(
+			Friends\Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
 				null,
 				array_merge(
