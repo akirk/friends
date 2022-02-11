@@ -79,7 +79,7 @@ class Feed extends \Friends_Feed {
 	 * Allow registering a parser
 	 *
 	 * @param      string      $slug    The slug.
-	 * @param      Feed_Parser $parser  The parser that extends the Feed_Parser class.
+	 * @param      Feed_Parser $parser  The parser that extends the Feed_Parser class. TODO: add it back to the function signature after namespace migration was finished.
 	 */
 	public function register_parser( $slug, $parser ) {
 		if ( in_array( $slug, $this->reservered_parser_slugs, true ) ) {
