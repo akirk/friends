@@ -52,6 +52,7 @@ class Access_Control {
 		add_action( 'map_meta_cap', array( $this, 'strict_friend_checking_for_super_admin' ), 10, 4 );
 		add_action( 'delete_user', array( $this, 'delete_friend_token' ) );
 		add_action( 'init', array( $this, 'remote_login' ) );
+		add_action( 'init', array( $this, 'rest_login' ), 5 );
 	}
 
 	/**
@@ -159,6 +160,32 @@ class Access_Control {
 		wp_set_auth_cookie( $user_id );
 		wp_safe_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'], '?me=' . $_GET['me'], '&me=' . $_GET['me'] ), '', $_SERVER['REQUEST_URI'] ) );
 		exit;
+	}
+
+	/**
+	 * Log in a friend via URL parameter
+	 */
+	public function rest_login() {
+		if ( ! isset( $_GET['friend_rest_auth'] ) ) {
+			return;
+		}
+		$tokens = explode( '-', $_GET['friend_rest_auth'] );
+		if ( 3 === count( $tokens ) ) {
+			$user_id = $this->verify_token( $tokens[0], $tokens[1], $tokens[2] );
+		} elseif ( 2 === count( $tokens ) && isset( $_GET['me'] ) ) {
+			$user_id = $this->verify_token( $_GET['me'], $tokens[0], $tokens[1] );
+		} else {
+			return;
+		}
+
+		if ( ! $user_id ) {
+			return;
+		}
+		$user = new User( $user_id );
+		if ( ! $user->has_cap( 'friend' ) ) {
+			return;
+		}
+		wp_set_current_user( $user_id );
 	}
 
 	/**

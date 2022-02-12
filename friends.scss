@@ -323,6 +323,10 @@ div {
 		letter-spacing: 2px;
 	}
 
+	section {
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+	}
 	section.posts {
 		article.card:before {
 			display: none;
@@ -348,8 +352,6 @@ div {
 					padding-bottom: 1.5em;
 				}
 			}
-
-
 
 			h4.entry-title {
 				font-size: 130%;
