@@ -1902,7 +1902,7 @@ class Admin {
 	 * @return     array  The columns extended by the friends_posts.
 	 */
 	public function user_list_columns( $columns ) {
-		$columns['friends_posts'] = 'Posts';
+		$columns['friends_posts'] = __( 'Friend Posts', 'friends' );
 		return $columns;
 	}
 
