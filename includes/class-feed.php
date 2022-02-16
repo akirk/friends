@@ -492,6 +492,10 @@ class Feed {
 		return 'standard';
 	}
 
+	public function revisions_to_keep( $num ) {
+		return 10;
+	}
+
 	/**
 	 * Process incoming feed items
 	 *
@@ -506,6 +510,7 @@ class Feed {
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
 
+		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
 		foreach ( $items as $item ) {
 			if ( ! $item->permalink ) {
@@ -552,9 +557,10 @@ class Feed {
 
 			$post_data = array(
 				'post_title'        => $title,
-				'post_content'      => $content,
+				'post_content'      => force_balance_tags( $content ),
 				'post_modified_gmt' => $updated_date,
 				'post_status'       => $item->post_status,
+				'post_author'       => $friend_user->ID,
 				'guid'              => $permalink,
 			);
 
@@ -564,22 +570,34 @@ class Feed {
 			}
 
 			if ( ! is_null( $post_id ) ) {
-				$post_data['ID'] = $post_id;
-				$was_modified_by_user = false;
-				foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
-					if ( intval( $revision->post_author ) ) {
-						$was_modified_by_user = true;
+				$old_post = get_post( $post_id );
+				$was_modified = false;
+				foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
+					if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
+						$was_modified = true;
 						break;
 					}
 				}
-				if ( ! $was_modified_by_user ) {
-					wp_update_post( $post_data );
+
+				if ( $was_modified ) {
+					$post_data['ID'] = $post_id;
+					$was_modified_by_user = false;
+					foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
+						if ( intval( $revision->post_author ) !== intval( $post_data['post_author'] ) ) {
+							$was_modified_by_user = true;
+							break;
+						}
+					}
+					if ( ! $was_modified_by_user ) {
+						$post_data['post_content'] = str_replace( '\\', '\\\\', $content );
+						wp_update_post( $post_data );
+					}
 				}
 			} else {
-				$post_data['post_author']   = $friend_user->ID;
 				$post_data['post_type']     = Friends::CPT;
 				$post_data['post_date_gmt'] = $item->date;
 				$post_data['comment_count'] = $item->comment_count;
+				$post_data['post_content'] = str_replace( '\\', '\\\\', $content );
 
 				$post_id = wp_insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
@@ -614,6 +632,7 @@ class Feed {
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 		}
+		remove_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 
 		return $new_posts;
 	}
