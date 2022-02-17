@@ -86,6 +86,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.0.0
+- Improved handling of updated feed items and how they are stored as revisions
+- PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
+
 ### 1.9.1
 - Fix a fatal error
 

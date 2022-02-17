@@ -39,7 +39,7 @@ class Feed {
 	 *
 	 * @var        array
 	 */
-	private $reservered_parser_slugs = array( 'friends', 'unsupported' );
+	private $reserved_parser_slugs = array( 'friends', 'unsupported' );
 
 	/**
 	 * Constructor
@@ -82,7 +82,7 @@ class Feed {
 	 * @param      Feed_Parser $parser  The parser that extends the Feed_Parser class.
 	 */
 	public function register_parser( $slug, Feed_Parser $parser ) {
-		if ( in_array( $slug, $this->reservered_parser_slugs, true ) ) {
+		if ( in_array( $slug, $this->reserved_parser_slugs, true ) ) {
 			// translators: %s is the slug of a parser.
 			return new \WP_Error( 'resevered-slug', sprintf( __( 'The slug "%s" cannot be used.', 'friends' ), $slug ) );
 		}
@@ -101,7 +101,7 @@ class Feed {
 	 * @param      string $slug    The slug.
 	 */
 	public function unregister_parser( $slug ) {
-		if ( ! in_array( $slug, $this->reservered_parser_slugs, true ) ) {
+		if ( ! in_array( $slug, $this->reserved_parser_slugs, true ) ) {
 			unset( $this->parsers[ $slug ] );
 		}
 	}
