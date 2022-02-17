@@ -134,7 +134,7 @@ class FeedTest extends \WP_UnitTestCase {
 			$feed->init();
 
 			$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
-			$file = yield $new_items;
+			$file = ( yield $new_items );
 		} while ( $file );
 	}
 
