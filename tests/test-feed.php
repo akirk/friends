@@ -126,12 +126,13 @@ class FeedTest extends \WP_UnitTestCase {
 		);
 		$user_feed = new User_Feed( $term, $user );
 
+		$friends = Friends::get_instance();
+
 		$feed = new \SimplePie();
 		do {
 			$feed->set_file( $file );
 			$feed->init();
 
-			$friends   = Friends::get_instance();
 			$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
 			$file = yield $new_items;
 		} while ( $file );

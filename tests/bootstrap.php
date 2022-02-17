@@ -79,14 +79,14 @@ add_filter( 'friends_send_mail', '__return_false' );
 if ( defined( 'TESTS_VERBOSE' ) && TESTS_VERBOSE ) {
 	add_filter(
 		'pre_update_option',
-		function( $value, $option, $old_value ) {
+		function( $value, $option ) {
 			if ( ! in_array( $option, array( 'rewrite_rules' ) ) ) {
 				echo PHP_EOL, $option, ' => ', $value, PHP_EOL;
 			}
 			return $value;
 		},
 		10,
-		3
+		2
 	);
 
 	add_action(

@@ -341,10 +341,8 @@ class Notifications {
 	public function send_mail( $to, $subject, $message, array $headers = array(), array $attachments = array(), $override_sitename = false ) {
 		if ( is_multisite() ) {
 			$sitename = get_site_option( 'site_name' );
-			$charset  = get_site_option( 'blog_charset' );
 		} else {
 			$sitename = get_option( 'blogname' );
-			$charset  = get_option( 'blog_charset' );
 		}
 
 		if ( $override_sitename ) {

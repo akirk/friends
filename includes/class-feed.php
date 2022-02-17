@@ -67,10 +67,10 @@ class Feed {
 		add_action( 'rss2_ns', array( $this, 'additional_feed_namespaces' ) );
 
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
-		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 3 );
+		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 2 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
-		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90, 2 );
+		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
 
 		add_action( 'wp_insert_post', array( $this, 'invalidate_post_count_cache' ), 10, 2 );
 	}
@@ -387,7 +387,7 @@ class Feed {
 		if ( isset( $rules['field'] ) && is_array( $rules['field'] ) ) {
 			// Transform POST values.
 			$transformed_rules = array();
-			foreach ( $rules['field'] as $key => $field ) {
+			foreach ( array_keys( $rules['field'] ) as $key ) {
 				$rule = array();
 				foreach ( $rules as $part => $keys ) {
 					if ( isset( $keys[ $key ] ) ) {
@@ -492,7 +492,12 @@ class Feed {
 		return 'standard';
 	}
 
-	public function revisions_to_keep( $num ) {
+	/**
+	 * Return the number of revisions to keep.
+	 *
+	 * @return     int   The number of revisions to keep.
+	 */
+	public function revisions_to_keep() {
 		return 10;
 	}
 
@@ -506,7 +511,6 @@ class Feed {
 	public function process_incoming_feed_items( array $items, User_Feed $user_feed ) {
 		$friend_user     = $user_feed->get_friend_user();
 		$remote_post_ids = $friend_user->get_remote_post_ids();
-		$rules           = $friend_user->get_feed_rules();
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
 
@@ -514,6 +518,7 @@ class Feed {
 		// Posts and revisions should be associated with this user.
 		wp_set_current_user( $friend_user->ID );
 
+		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
 		foreach ( $items as $item ) {
@@ -715,9 +720,8 @@ class Feed {
 	 * Configure feed downloading options
 	 *
 	 * @param  SimplePie $feed The SimplePie object.
-	 * @param  string    $url  The URL to fetch.
 	 */
-	public function wp_feed_options( $feed, $url ) {
+	public function wp_feed_options( $feed ) {
 		$feed->useragent .= ' Friends/' . Friends::VERSION;
 		if ( isset( $_GET['page'] ) && 'page=friends-refresh' === $_GET['page'] ) {
 			$feed->enable_cache( false );
@@ -1021,9 +1025,8 @@ class Feed {
 	 *
 	 * @param  int    $user_id   The user id.
 	 * @param  string $new_role  The new role.
-	 * @param  string $old_roles The old roles.
 	 */
-	public function retrieve_new_friends_posts( $user_id, $new_role, $old_roles ) {
+	public function retrieve_new_friends_posts( $user_id, $new_role ) {
 		if ( ( 'friend' === $new_role || 'acquaintance' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
 			update_user_option( $user_id, 'friends_new_friend', true );
 			$friend = new User( $user_id );
