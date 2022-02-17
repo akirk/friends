@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+	<channel>
+		<title>friend.local</title>
+		<link>http://friend.local</link>
+		<description>My friend's site</description>
+		<item>
+			<title>First Friend Post</title>
+			<link>http://friend.local/2018/05/02/normal-post</link>
+			<description>This is a <b>public</b> post that has been modified.</description>
+		</item>
+	</channel>
+</rss>

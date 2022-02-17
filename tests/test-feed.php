@@ -19,6 +19,13 @@ class FeedTest extends \WP_UnitTestCase {
 	private $friend_id;
 
 	/**
+	 * User ID of a alex at alexander.kirk.at
+	 *
+	 * @var int
+	 */
+	private $alex;
+
+	/**
 	 * Token for the friend at friend.local
 	 *
 	 * @var int
@@ -57,8 +64,17 @@ class FeedTest extends \WP_UnitTestCase {
 			)
 		);
 
+		$this->alex = $this->factory->user->create(
+			array(
+				'user_login' => 'alexander.kirk.at',
+				'user_email' => 'alex@example.org',
+				'role'       => 'subscription',
+			)
+		);
+
 		update_option( 'home', 'http://friend.local' );
 		$this->friends_in_token = wp_generate_password( 128, false );
+
 		if ( update_user_option( $this->friend_id, 'friends_in_token', $this->friends_in_token ) ) {
 			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
 		}
@@ -94,14 +110,15 @@ class FeedTest extends \WP_UnitTestCase {
 	/**
 	 * Common code for testing parsing a feed.
 	 *
-	 * @param      \SimplePie_File $file        The SimplePie_File.
-	 * @param      int             $new_items1  Number of new items to be found in the first attempt.
-	 * @param      int             $new_items2  Number of new items to be found in the second attempt.
+	 * @param      \SimplePie_File $file  A SimplePie File.
+	 * @param      User            $user   The optional user, otherwise the friend_id will be used.
 	 */
-	private function feed_parsing_test( \SimplePie_File $file, $new_items1 = 1, $new_items2 = 0 ) {
+	private function feed_parsing_test( \SimplePie_File $file, User $user = null ) {
 		$parser = new Feed_Parser_SimplePie;
 
-		$user = new User( $this->friend_id );
+		if ( is_null( $user ) ) {
+			$user = new User( $this->friend_id );
+		}
 		$term = new \WP_Term(
 			(object) array(
 				'url' => $user->user_url . '/feed/',
@@ -110,43 +127,58 @@ class FeedTest extends \WP_UnitTestCase {
 		$user_feed = new User_Feed( $term, $user );
 
 		$feed = new \SimplePie();
-		$feed->set_file( $file );
-		$feed->init();
+		do {
+			$feed->set_file( $file );
+			$feed->init();
 
-		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
-		$this->assertCount( $new_items1, $new_items );
-
-		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
-		$this->assertCount( $new_items2, $new_items );
+			$friends   = Friends::get_instance();
+			$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
+			$file = yield $new_items;
+		} while ( $file );
 	}
 
 	/**
 	 * Test parsing a feed.
 	 */
 	public function test_parse_feed() {
-		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' ) );
+		$feed_1_private_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_1_private_post );
+		$this->assertCount( 1, $feed_parsing_test->current() );
+		$feed_parsing_test->send( $feed_1_private_post );
+		$this->assertCount( 0, $feed_parsing_test->current() );
 	}
 
 	/**
 	 * Test parsing a feed with ampersand URLs.
 	 */
 	public function test_parse_feed_with_url_ampersand() {
-		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' ) );
+		$feed_url_ampersand = new \SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_url_ampersand );
+		$this->assertCount( 1, $feed_parsing_test->current() );
+		$feed_parsing_test->send( $feed_url_ampersand );
+		$this->assertCount( 0, $feed_parsing_test->current() );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts.
 	 */
 	public function test_parse_feed_with_identical_posts() {
-		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' ) );
+		$identical_posts = new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $identical_posts );
+		$this->assertCount( 1, $feed_parsing_test->current() );
+		$feed_parsing_test->send( $identical_posts );
+		$this->assertCount( 0, $feed_parsing_test->current() );
 	}
 
 	/**
 	 * Test parsing a feed with identical posts after the fold.
 	 */
 	public function test_parse_feed_with_identical_posts_after_fold() {
-		$this->feed_parsing_test( new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' ), 11 );
+		$identical_posts_after_fold = new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $identical_posts_after_fold );
+		$this->assertCount( 11, $feed_parsing_test->current() );
+		$feed_parsing_test->send( $identical_posts_after_fold );
+		$this->assertCount( 0, $feed_parsing_test->current() );
 	}
 
 	/**
@@ -193,4 +225,63 @@ class FeedTest extends \WP_UnitTestCase {
 		// This should not include private posts.
 		$this->assertCount( 1, $items );
 	}
+
+	public function test_feed_item_revisions_modified_content() {
+		$feed_1_public_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+		$post_id = $new_items[0];
+		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
+
+		$feed_parsing_test->send( $feed_1_public_post );
+		$this->assertCount( 0, $feed_parsing_test->current() );
+		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
+
+		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-content.rss' ) );
+		$this->assertCount( 0, $feed_parsing_test->current() );
+		$this->assertCount( 1, wp_get_post_revisions( $post_id ) );
+	}
+
+	public function test_feed_item_revisions_modified_title() {
+		$feed_1_public_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+		$post_id = $new_items[0];
+		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
+
+		$feed_parsing_test->send( $feed_1_public_post );
+		$this->assertCount( 0, $feed_parsing_test->current() );
+		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
+
+		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-title.rss' ) );
+		$this->assertCount( 0, $feed_parsing_test->current() );
+		$this->assertCount( 1, wp_get_post_revisions( $post_id ) );
+	}
+
+	public function test_feed_item_revisions_modified_title_content() {
+		$feed_1_public_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+		$post_id = $new_items[0];
+		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
+
+		$feed_parsing_test->send( $feed_1_public_post );
+		$this->assertCount( 0, $feed_parsing_test->current() );
+		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
+
+		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-title.rss' ) );
+		$this->assertCount( 0, $feed_parsing_test->current() );
+		$this->assertCount( 1, wp_get_post_revisions( $post_id ) );
+
+		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-content.rss' ) );
+		$this->assertCount( 0, $feed_parsing_test->current() );
+		$this->assertCount( 2, wp_get_post_revisions( $post_id ) );
+	}
+
 }

@@ -510,6 +510,10 @@ class Feed {
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
 
+		$current_user = wp_get_current_user();
+		// Posts and revisions should be associated with this user.
+		wp_set_current_user( $friend_user->ID );
+
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
 		foreach ( $items as $item ) {
@@ -560,7 +564,6 @@ class Feed {
 				'post_content'      => force_balance_tags( $content ),
 				'post_modified_gmt' => $updated_date,
 				'post_status'       => $item->post_status,
-				'post_author'       => $friend_user->ID,
 				'guid'              => $permalink,
 			);
 
@@ -583,13 +586,13 @@ class Feed {
 					$post_data['ID'] = $post_id;
 					$was_modified_by_user = false;
 					foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
-						if ( intval( $revision->post_author ) !== intval( $post_data['post_author'] ) ) {
+						if ( intval( $revision->post_author ) !== $friend_user->ID ) {
 							$was_modified_by_user = true;
 							break;
 						}
 					}
 					if ( ! $was_modified_by_user ) {
-						$post_data['post_content'] = str_replace( '\\', '\\\\', $content );
+						$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 						wp_update_post( $post_data );
 					}
 				}
@@ -597,7 +600,7 @@ class Feed {
 				$post_data['post_type']     = Friends::CPT;
 				$post_data['post_date_gmt'] = $item->date;
 				$post_data['comment_count'] = $item->comment_count;
-				$post_data['post_content'] = str_replace( '\\', '\\\\', $content );
+				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 
 				$post_id = wp_insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
@@ -633,6 +636,10 @@ class Feed {
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 		}
 		remove_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
+
+		if ( $current_user ) {
+			wp_set_current_user( $current_user->ID );
+		}
 
 		return $new_posts;
 	}

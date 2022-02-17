@@ -95,7 +95,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$feed->init();
 
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
+		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
 		$friends->feed->notify_about_new_posts( $user, $new_items );
 	}
 
@@ -130,6 +130,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$user_feed = new User_Feed( $term, $user );
 
 		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
+		$this->assertInstanceOf( 'WP_User', $test_user );
 		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
 
 		$feed = new \SimplePie();
@@ -137,7 +138,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$feed->init();
 
 		$friends   = Friends::get_instance();
-		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
+		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
 		$friends->feed->notify_about_new_posts( $user, $new_items );
 	}
 
@@ -158,6 +159,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		update_option( 'home', 'http://me.local' );
 
 		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
+		$this->assertInstanceOf( 'WP_User', $test_user );
 		update_user_option( $test_user->ID, 'friends_no_friend_request_notification', true );
 
 		$me_id = $this->factory->user->create(

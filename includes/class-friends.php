@@ -415,6 +415,9 @@ class Friends {
 	public static function add_default_sidebars_widgets() {
 		$sidebars_widgets = get_option( 'sidebars_widgets' );
 
+		if ( ! is_array( $sidebars_widgets ) ) {
+			$sidebars_widgets = array();
+		}
 		$id = count( $sidebars_widgets );
 
 		foreach ( array(
