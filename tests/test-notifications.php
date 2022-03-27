@@ -108,7 +108,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 
 		if ( ! class_exists( 'SimplePie', false ) ) {
-			require_once( \ABSPATH . WPINC . '/class-simplepie.php' );
+			require_once( ABSPATH . WPINC . '/class-simplepie.php' );
 		}
 		update_option( 'home', 'http://me.local' );
 

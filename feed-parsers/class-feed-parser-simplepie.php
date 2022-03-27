@@ -119,14 +119,14 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 	 */
 	private function get_simplepie() {
 		if ( ! class_exists( 'SimplePie', false ) ) {
-			require_once \ABSPATH . WPINC . '/class-simplepie.php';
+			require_once ABSPATH . WPINC . '/class-simplepie.php';
 		}
 
-		require_once \ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
-		require_once \ABSPATH . WPINC . '/class-wp-simplepie-file.php';
+		require_once ABSPATH . WPINC . '/class-wp-feed-cache-transient.php';
+		require_once ABSPATH . WPINC . '/class-wp-simplepie-file.php';
 		require_once __DIR__ . '/SimplePie/class-simplepie-file-accept-only-rss.php';
 		require_once __DIR__ . '/SimplePie/class-simplepie-misc.php';
-		require_once \ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
+		require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
 		$feed = new \SimplePie();
 

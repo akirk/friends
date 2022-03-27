@@ -98,7 +98,7 @@ class FeedTest extends \WP_UnitTestCase {
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
-			require( \ABSPATH . 'wp-includes/feed-rss2.php' );
+			require( ABSPATH . 'wp-includes/feed-rss2.php' );
 			$out = ob_get_clean();
 		} catch ( \Exception $e ) {
 			$out = ob_get_clean();

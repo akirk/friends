@@ -49,7 +49,7 @@ class Plugin_Installer {
 
 		$plugins = self::get_friends_plugins();
 
-		require_once \ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
 
 		foreach ( array_keys( (array) $plugins ) as $plugin_slug ) {
 
@@ -261,10 +261,10 @@ class Plugin_Installer {
 		}
 
 		// Include required libs for installation.
-		require_once \ABSPATH . 'wp-admin/includes/plugin-install.php';
-		require_once \ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-		require_once \ABSPATH . 'wp-admin/includes/class-wp-ajax-upgrader-skin.php';
-		require_once \ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-ajax-upgrader-skin.php';
+		require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
 
 		$api = plugins_api(
 			'plugin_information',
@@ -323,9 +323,9 @@ class Plugin_Installer {
 			die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
-		require_once \ABSPATH . 'wp-admin/includes/plugin-install.php';
-		require_once \ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-		require_once \ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+		require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader.php';
 
 		$api = plugins_api(
 			'plugin_information',
@@ -384,7 +384,7 @@ class Plugin_Installer {
 			die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
 		}
 
-		require_once \ABSPATH . 'wp-admin/includes/plugin.php';
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
 		deactivate_plugins( $plugin . '/' . $plugin . '.php' );
 
@@ -452,7 +452,7 @@ class Plugin_Installer {
 	 * @since      1.0
 	 */
 	public static function get_plugin_file( $plugin_slug ) {
-		require_once \ABSPATH . '/wp-admin/includes/plugin.php';
+		require_once ABSPATH . '/wp-admin/includes/plugin.php';
 		$plugins = get_plugins();
 
 		foreach ( $plugins as $plugin_file => $plugin_info ) {

@@ -92,7 +92,7 @@ class GutenbergEverywhere_Editor {
 			/**
 			 * @psalm-suppress MissingFile
 			 */
-			require_once \ABSPATH . 'wp-admin/includes/plugin.php';
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
 		if ( is_plugin_active( 'gutenberg/gutenberg.php' ) ) {
@@ -121,15 +121,15 @@ class GutenbergEverywhere_Editor {
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once \ABSPATH . 'wp-admin/includes/class-wp-screen.php';
+		require_once ABSPATH . 'wp-admin/includes/class-wp-screen.php';
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once \ABSPATH . 'wp-admin/includes/screen.php';
+		require_once ABSPATH . 'wp-admin/includes/screen.php';
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once \ABSPATH . 'wp-admin/includes/post.php';
+		require_once ABSPATH . 'wp-admin/includes/post.php';
 
 		// Fake a \WP_Screen object so we can pretend we're in the block editor, and therefore other block libraries load
 		set_current_screen();
@@ -323,7 +323,7 @@ class GutenbergEverywhere_Editor {
 		/**
 		 * @psalm-suppress MissingFile
 		 */
-		require_once \ABSPATH . 'wp-admin/includes/media.php';
+		require_once ABSPATH . 'wp-admin/includes/media.php';
 
 		wp_enqueue_media();
 	}
