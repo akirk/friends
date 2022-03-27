@@ -138,7 +138,6 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 		\SimplePie_Cache::register( 'wp_transient', '\WP_Feed_Cache_Transient' );
 		$feed->set_cache_location( 'wp_transient' );
 
-		$feed->set_file_class( __NAMESPACE__ . '\SimplePie_File_Accept_Only_RSS' );
 		$registry = $feed->get_registry();
 		$registry->register( 'Misc', __NAMESPACE__ . '\SimplePie_Misc' );
 
