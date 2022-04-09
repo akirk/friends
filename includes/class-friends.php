@@ -16,7 +16,7 @@ namespace Friends;
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION       = '1.9.1';
+	const VERSION       = '2.0.0';
 	const CPT           = 'friend_post_cache';
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
