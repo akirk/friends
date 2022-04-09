@@ -123,8 +123,8 @@ class Plugin_Installer {
 
 				if (
 					is_wp_error( $remote )
-					|| 200 === wp_remote_retrieve_response_code( $remote )
-					|| ! wp_is_json_media_type( wp_remote_retrieve_header( $remote, 'content-type' ) )
+					|| 200 !== wp_remote_retrieve_response_code( $remote )
+					// || ! wp_is_json_media_type( wp_remote_retrieve_header( $remote, 'content-type' ) )
 					|| empty( $remote['body'] )
 				) {
 					$remote = false;
