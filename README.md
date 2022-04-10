@@ -86,6 +86,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.0.2
+- Fix namespace on activation, deactivation and uninstall hooks
+
 ### 2.0.1
 - Fix a problem with retrieving and up to date plugins.json file from Github
 
