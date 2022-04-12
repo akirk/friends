@@ -40,6 +40,7 @@ class Notifications {
 	 */
 	private function register_hooks() {
 		add_action( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
+		add_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ) );
 		add_filter( 'notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
@@ -50,11 +51,20 @@ class Notifications {
 	/**
 	 * Gets the friends plugin from email address.
 	 *
+	 * If you're having issues with the receiver using the envelope From: address in favor of the mail header,
+	 * you can use a filter like this:
+	 * add_filter( 'wp_mail_from', function( $from ) {
+	 * ini_set( 'sendmail_from', $from );
+	 * return $from;
+	 * }, 100 );
+	 *
+	 * @param      string $from   The from that's supposed to be used.
+	 *
 	 * @return     string  The friends plugin from email address.
 	 */
-	public function get_friends_plugin_from_email_address() {
-		$domain = parse_url( get_option( 'home' ), PHP_URL_HOST );
-		return apply_filters( 'wp_mail_from', 'friends-plugin@' . $domain );
+	public function use_friends_plugin_from_email_address( $from ) {
+		$from = preg_replace( '/^wordpress@/', 'friends-plugin@', $from );
+		return $from;
 	}
 
 	/**
@@ -380,7 +390,6 @@ class Notifications {
 				$message = $message['text'];
 			}
 		}
-		$headers[] = 'From: ' . $this->get_friends_plugin_from_email_address();
 
 		$mail = wp_mail( $to, $subject, $message, $headers, $attachments );
 		if ( $alt_function ) {
