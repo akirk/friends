@@ -240,6 +240,10 @@ class User extends \WP_User {
 	public function __get( $key ) {
 		if ( 'user_url' === $key && empty( $this->data->user_url ) && is_multisite() ) {
 			$site = get_active_blog_for_user( $this->ID );
+			if ( ! $site ) {
+				var_dump( $this->ID );
+				exit;
+			}
 			// Ensure we're using the same URL protocol.
 			$this->data->user_url = set_url_scheme( $site->siteurl );
 			return $this->data->user_url;
@@ -369,7 +373,7 @@ class User extends \WP_User {
 		$new_posts = array();
 		foreach ( $this->get_active_feeds() as $feed ) {
 			$posts = $friends->feed->retrieve_feed( $feed );
-			if ( $posts ) {
+			if ( ! is_wp_error( $posts ) ) {
 				$new_posts = array_merge( $new_posts, $posts );
 			}
 		}
@@ -710,29 +714,25 @@ class User extends \WP_User {
 	 * @return     string  The role name.
 	 */
 	public function get_role_name( $group_subscriptions = false, $count = 1 ) {
-		if ( is_multisite() && is_super_admin( $this->ID ) ) {
-			return _x( 'Super Admin', 'User role' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		}
-
 		$name = false;
 
-		if ( ! $name && $this->has_cap( 'acquaintance' ) ) {
+		if ( ! $name && in_array( 'acquaintance', $this->roles ) ) {
 			return _nx( 'Acquaintance', 'Acquaintances', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && $this->has_cap( 'friend' ) && $this->is_valid_friend() ) {
+		if ( ! $name && in_array( 'friend', $this->roles ) && $this->is_valid_friend() ) {
 			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && $this->has_cap( 'subscription' ) || ( $group_subscriptions && ( $this->has_cap( 'friend_request' ) || $this->has_cap( 'pending_friend_request' ) ) ) ) {
+		if ( ! $name && in_array( 'subscription', $this->roles ) || ( $group_subscriptions && ( in_array( 'friend_request', $this->roles ) || in_array( 'pending_friend_request', $this->roles ) ) ) ) {
 			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && $this->has_cap( 'friend_request' ) ) {
+		if ( ! $name && in_array( 'friend_request', $this->roles ) ) {
 			return _nx( 'Friend Request', 'Friend Requests', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && $this->has_cap( 'pending_friend_request' ) ) {
+		if ( ! $name && in_array( 'pending_friend_request', $this->roles ) ) {
 			return _nx( 'Pending Friend Request', 'Pending Friend Requests', $count, 'User role', 'friends' );
 		}
 

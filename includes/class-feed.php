@@ -759,12 +759,13 @@ class Feed {
 		$response = wp_safe_remote_get(
 			$url,
 			array(
-				'timeout'     => 20,
+				'timeout'     => apply_filters( 'friends_http_timeout', 20 ),
 				'redirection' => 1,
 			)
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$response->add_data( $url );
 			return $response;
 		}
 

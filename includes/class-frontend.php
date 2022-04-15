@@ -732,11 +732,6 @@ class Frontend {
 			return $query;
 		}
 
-		// Super Admins cannot view other's friend pages.
-		if ( is_multisite() && is_super_admin( get_current_user_id() ) && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) ) {
-			return $query;
-		}
-
 		switch_to_locale( get_user_locale() );
 		$page_id = get_query_var( 'page' );
 

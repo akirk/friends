@@ -904,10 +904,6 @@ class Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
-		if ( is_multisite() && is_super_admin( $_GET['user'] ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		}
-
 		if (
 			! $friend->has_cap( 'friend_request' ) &&
 			! $friend->has_cap( 'pending_friend_request' ) &&
@@ -1367,7 +1363,6 @@ class Admin {
 				$friend_url = 'https://' . $friend_url;
 			}
 		}
-
 		$friend_user_login = User::get_user_login_for_url( $friend_url );
 		$friend_display_name = User::get_display_name_for_url( $friend_url );
 
@@ -1629,8 +1624,12 @@ class Admin {
 					?>
 					<div id="message" class="updated notice is-dismissible"><p>
 						<?php
+						$message = $response->get_error_message();
+						if ( $response->get_error_data() ) {
+							$message .= ' (' . $response->get_error_data() . ')';
+						}
 						echo wp_kses(
-							$response->get_error_message(),
+							$message,
 							array(
 								'strong' => array(),
 								'a'      => array(
@@ -1825,10 +1824,6 @@ class Admin {
 		}
 
 		if ( is_multisite() ) {
-			if ( is_super_admin( $user->ID ) ) {
-				return $actions;
-			}
-
 			// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			$actions = array_merge( array( 'edit' => '<a href="' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ) . '">' . __( 'Edit' ) . '</a>' ), $actions );
 		}

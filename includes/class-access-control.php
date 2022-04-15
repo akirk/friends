@@ -49,6 +49,7 @@ class Access_Control {
 		add_filter( 'determine_current_user', array( $this, 'authenticate' ), 1 );
 		add_filter( 'option_comment_whitelist', array( $this, 'option_comment_whitelist' ) );
 		add_action( 'set_user_role', array( $this, 'notify_new_friend_request' ), 10, 3 );
+		add_action( 'map_meta_cap', array( $this, 'strict_friend_checking_for_super_admin' ), 10, 4 );
 		add_action( 'delete_user', array( $this, 'delete_friend_token' ) );
 		add_action( 'init', array( $this, 'remote_login' ) );
 	}
@@ -279,6 +280,38 @@ class Access_Control {
 		}
 
 		do_action( 'notify_new_friend_request', new User( $user_id ) );
+	}
+
+	/**
+	 * Demotes the super admin for the friend roles so that they can interact in the Friends system like a normal user.
+	 *
+	 * @param string[] $caps    Primitive capabilities required of the user.
+	 * @param string   $cap     Capability being checked.
+	 * @param int      $user_id The user ID.
+	 * @param array    $args    Adds context to the capability check, typically
+	 *                          starting with an object ID.
+	 *
+	 * @return     array
+	 */
+	public function strict_friend_checking_for_super_admin( $caps, $cap, $user_id, $args ) {
+		if ( ! in_array( $cap, array( Friends::REQUIRED_ROLE, 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) ) ) {
+			return $caps;
+		}
+		if ( ! is_super_admin( $user_id ) ) {
+			return $caps;
+		}
+
+		$user = get_user_by( 'id', $user_id );
+		foreach ( $user->roles as $role ) {
+			// If they have the role we are checking for, we'll respond with unmapped caps.
+			if ( $cap === $role ) {
+				return $caps;
+			}
+		}
+
+		// If the super admin doesn't have the role, respond with do_not_allow so that they don't qualify
+		// for the capapbility, despite being a super admin (which automatically has any capability).
+		return array( 'do_not_allow' );
 	}
 
 	/**
