@@ -170,7 +170,7 @@ class User extends \WP_User {
 			return false;
 		}
 
-		// If the friend was added via URL.
+		// Let's find the user that is associated with that blog.
 		switch_to_blog( $site_id );
 		$friend_user_id = Friends::get_main_friend_user_id();
 		restore_current_blog();

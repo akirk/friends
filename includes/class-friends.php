@@ -467,7 +467,10 @@ class Friends {
 	public static function get_main_friend_user_id() {
 		$main_user_id = get_option( 'friends_main_user_id' );
 
-		if ( false === $main_user_id || ( is_multisite() && ! is_user_member_of_blog( $main_user_id, get_current_blog_id() ) ) ) {
+		if (
+			false === $main_user_id
+			|| ( is_multisite() && ! is_user_member_of_blog( $main_user_id, get_current_blog_id() ) )
+		) {
 			$users = User_Query::all_admin_users();
 			foreach ( $users->get_results() as $user ) {
 				$main_user_id = $user->ID;
