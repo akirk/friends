@@ -42,7 +42,7 @@ class MessagesTest extends \WP_UnitTestCase {
 			array(
 				'user_login' => 'me.local',
 				'user_email' => 'me@example.org',
-				'role'       => 'administrator',
+				'role'       => 'friend',
 				'user_url'   => 'https://me.local',
 			)
 		);

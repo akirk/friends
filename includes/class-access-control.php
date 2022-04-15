@@ -297,11 +297,15 @@ class Access_Control {
 		if ( ! in_array( $cap, array( Friends::REQUIRED_ROLE, 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) ) ) {
 			return $caps;
 		}
-		if ( ! is_super_admin( $user_id ) ) {
+		if ( is_multisite() && ! is_super_admin( $user_id ) ) {
 			return $caps;
 		}
 
 		$user = get_user_by( 'id', $user_id );
+		if ( ! $user ) {
+			return $caps;
+		}
+
 		foreach ( $user->roles as $role ) {
 			// If they have the role we are checking for, we'll respond with unmapped caps.
 			if ( $cap === $role ) {
