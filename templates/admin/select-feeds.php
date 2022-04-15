@@ -49,13 +49,23 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 			<tr>
 				<th scope="row"><label for="user_login"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
 				<td>
+				<?php if ( ! empty( $args['friends_multisite_display_name'] ) ) : ?>
+					<?php echo esc_html( $args['friends_multisite_display_name'] ); ?>
+					<input type="hidden" id="user_login" name="display_name" value="<?php echo esc_attr( $args['friend_display_name'] ); ?>" />
+				<?php else : ?>
 					<input type="text" id="user_login" name="display_name" value="<?php echo esc_attr( $args['friend_display_name'] ); ?>" required placeholder="" class="regular-text" />
+				<?php endif; ?>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row"><label for="user_login"><?php esc_html_e( 'Username', 'friends' ); ?></label></th>
 				<td>
-					<input type="text" id="user_login" name="user_login" value="<?php echo esc_attr( $args['friend_user_login'] ); ?>" required placeholder="" class="regular-text" />
+					<?php if ( ! empty( $args['friends_multisite_user_login'] ) ) : ?>
+						<?php echo esc_html( $args['friends_multisite_user_login'] ); ?>
+						<input type="hidden" id="user_login" name="user_login" value="<?php echo esc_attr( $args['friends_multisite_user_login'] ); ?>" />
+					<?php else : ?>
+						<input type="text" id="user_login" name="user_login" value="<?php echo esc_attr( $args['friend_user_login'] ); ?>" required placeholder="" class="regular-text" />
+					<?php endif; ?>
 				</td>
 			</tr>
 			<?php if ( $args['friends_plugin'] ) : ?>

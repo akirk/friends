@@ -43,7 +43,7 @@ class Messages {
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
 		add_filter( 'friends_unread_count', array( $this, 'friends_unread_messages_count' ) );
-		add_action( 'friends_menu_top', array( $this, 'friends_add_menu_unread_messages' ) );
+		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_unread_messages' ) );
 		add_action( 'wp_ajax_friends-mark-read', array( $this, 'mark_message_read' ) );
 		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
 		add_action( 'friends_author_header', array( $this, 'friends_author_header' ), 10, 2 );

@@ -765,7 +765,7 @@ class Feed {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return array();
+			return $response;
 		}
 
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
@@ -889,7 +889,7 @@ class Feed {
 
 			if ( $has_friends_plugin ) {
 				// Prefer the main RSS feed.
-				if ( 'feed' === trim( $path, '/' ) ) {
+				if ( '/feed' === substr( '/' . trim( $path, '/' ), -5 ) ) {
 					$available_feeds[ $link_url ]['post-format'] = 'autodetect';
 					$autoselected = true;
 				}

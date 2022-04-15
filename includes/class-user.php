@@ -61,9 +61,8 @@ class User extends \WP_User {
 		if ( is_multisite() ) {
 			$user = get_user_by( 'login', $user_login );
 			if ( $user && ! self::is_friends_plugin_user( $user ) ) {
-				$current_blog_id = get_current_blog_id();
-				if ( ! is_user_member_of_blog( $user->ID, $current_blog_id ) ) {
-					add_user_to_blog( $current_blog_id, $user->ID, $role );
+				if ( ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
+					add_user_to_blog( get_current_blog_id(), $user->ID, $role );
 				}
 			}
 		}
@@ -108,6 +107,11 @@ class User extends \WP_User {
 	 * @return string The corresponding username.
 	 */
 	public static function get_user_login_for_url( $url ) {
+		$multisite_user = self::get_multisite_user( $url );
+		if ( $multisite_user ) {
+			return $multisite_user->user_login;
+		}
+
 		$user_login = self::sanitize_username( self::get_display_name_for_url( $url ) );
 		return $user_login;
 	}
@@ -119,6 +123,11 @@ class User extends \WP_User {
 	 * @return string The corresponding display name.
 	 */
 	public static function get_display_name_for_url( $url ) {
+		$multisite_user = self::get_multisite_user( $url );
+		if ( $multisite_user ) {
+			return $multisite_user->display_name;
+		}
+
 		$host = wp_parse_url( $url, PHP_URL_HOST );
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
@@ -140,6 +149,33 @@ class User extends \WP_User {
 		}
 
 		return false;
+	}
+
+	/**
+	 * If the URL is on the same multisite, get the main user.
+	 *
+	 * @param  string $url The site URL in question.
+	 * @return bool|WP_User false or the user.
+	 */
+	public static function get_multisite_user( $url ) {
+		if ( ! is_multisite() ) {
+			return false;
+		}
+
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+
+		$site_id = get_blog_id_from_url( $host, trailingslashit( $path ) );
+		if ( ! $site_id ) {
+			return false;
+		}
+
+		// If the friend was added via URL.
+		switch_to_blog( $site_id );
+		$friend_user_id = Friends::get_main_friend_user_id();
+		restore_current_blog();
+
+		return get_user_by( 'id', $friend_user_id );
 	}
 
 	/**
@@ -201,7 +237,16 @@ class User extends \WP_User {
 		}
 		return $user;
 	}
+	public function __get( $key ) {
+		if ( 'user_url' === $key && empty( $this->data->user_url ) && is_multisite() ) {
+			$site = get_active_blog_for_user( $this->ID );
+			// Ensure we're using the same URL protocol.
+			$this->data->user_url = set_url_scheme( $site->siteurl );
+			return $this->data->user_url;
+		}
 
+		return parent::__get( $key );
+	}
 	/**
 	 * Sends a message to the friend..
 	 *
@@ -324,7 +369,9 @@ class User extends \WP_User {
 		$new_posts = array();
 		foreach ( $this->get_active_feeds() as $feed ) {
 			$posts = $friends->feed->retrieve_feed( $feed );
-			$new_posts = array_merge( $new_posts, $posts );
+			if ( $posts ) {
+				$new_posts = array_merge( $new_posts, $posts );
+			}
 		}
 
 		$this->delete_outdated_posts();
@@ -546,7 +593,6 @@ class User extends \WP_User {
 	 * @return array A mapping of the remote post ids.
 	 */
 	public function get_remote_post_ids() {
-		$friends = Friends::get_instance();
 		$remote_post_ids = array();
 		$existing_posts  = new \WP_Query(
 			array(

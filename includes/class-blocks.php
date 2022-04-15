@@ -379,7 +379,7 @@ class Blocks {
 			);
 
 			if ( ! empty( $friends_base_url_endpoints ) ) {
-				header( 'Location: ' . $url . '?add-friend=' . home_url() );
+				header( 'Location: ' . $url . '?add-friend=' . urlencode( home_url() ) );
 				exit;
 			}
 		}

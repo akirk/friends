@@ -55,9 +55,9 @@ class User_Query extends \WP_User_Query {
 	 * Gets all friends.
 	 */
 	public static function all_friends() {
-		static $all_friends;
-		if ( ! self::$cache || ! isset( $all_friends ) ) {
-			$all_friends = new self(
+		static $all_friends = array();
+		if ( ! self::$cache || ! isset( $all_friends[ get_current_blog_id() ] ) ) {
+			$all_friends[ get_current_blog_id() ] = new self(
 				array(
 					'role__in' => array( 'friend', 'acquaintance' ),
 					'order'    => 'ASC',
@@ -65,16 +65,16 @@ class User_Query extends \WP_User_Query {
 				)
 			);
 		}
-		return $all_friends;
+		return $all_friends[ get_current_blog_id() ];
 	}
 
 	/**
 	 * Gets all friends.
 	 */
 	public static function all_friends_subscriptions() {
-		static $all_friends;
-		if ( ! self::$cache || ! isset( $all_friends ) ) {
-			$all_friends = new self(
+		static $all_friends_subscriptions = array();
+		if ( ! self::$cache || ! isset( $all_friends_subscriptions[ get_current_blog_id() ] ) ) {
+			$all_friends_subscriptions[ get_current_blog_id() ] = new self(
 				array(
 					'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
 					'order'    => 'ASC',
@@ -82,7 +82,7 @@ class User_Query extends \WP_User_Query {
 				)
 			);
 		}
-		return $all_friends;
+		return $all_friends_subscriptions[ get_current_blog_id() ];
 	}
 
 	/**
@@ -108,9 +108,9 @@ class User_Query extends \WP_User_Query {
 	 * Gets all friend requests.
 	 */
 	public static function all_friend_requests() {
-		static $all_friend_requests;
-		if ( ! self::$cache || ! isset( $all_friend_requests ) ) {
-			$all_friend_requests = new self(
+		static $all_friend_requests = array();
+		if ( ! self::$cache || ! isset( $all_friend_requests[ get_current_blog_id() ] ) ) {
+			$all_friend_requests[ get_current_blog_id() ] = new self(
 				array(
 					'role'    => 'friend_request',
 					'order'   => 'ASC',
@@ -118,16 +118,16 @@ class User_Query extends \WP_User_Query {
 				)
 			);
 		}
-		return $all_friend_requests;
+		return $all_friend_requests[ get_current_blog_id() ];
 	}
 
 	/**
 	 * Gets all subscriptions.
 	 */
 	public static function all_subscriptions() {
-		static $all_subscriptions;
-		if ( ! self::$cache || ! isset( $all_subscriptions ) ) {
-			$all_subscriptions = new self(
+		static $all_subscriptions = array();
+		if ( ! self::$cache || ! isset( $all_subscriptions[ get_current_blog_id() ] ) ) {
+			$all_subscriptions[ get_current_blog_id() ] = new self(
 				array(
 					'role__in' => array( 'pending_friend_request', 'subscription' ),
 					'order'    => 'ASC',
@@ -135,7 +135,7 @@ class User_Query extends \WP_User_Query {
 				)
 			);
 		}
-		return $all_subscriptions;
+		return $all_subscriptions[ get_current_blog_id() ];
 	}
 
 	/**
