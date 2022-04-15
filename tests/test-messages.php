@@ -156,7 +156,7 @@ class MessagesTest extends \WP_UnitTestCase {
 		wp_set_current_user( $this->user_id );
 		$friend_user = new User( $this->friend_id );
 		$message_id = $friend_user->send_message( 'test' );
-		$this->assertNotInstanceOf( '\WP_Error', $message_id );
+		$this->assertNotInstanceOf( 'WP_Error', $message_id );
 		$post = get_post( $message_id );
 		$this->assertContains( '"sender":' . $this->user_id, $post->post_content );
 		$this->assertContains( '<p>test</p>', $post->post_content );
