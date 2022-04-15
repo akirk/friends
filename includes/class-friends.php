@@ -369,15 +369,12 @@ class Friends {
 					self::activate_for_blog();
 					restore_current_blog();
 				}
-				return;
+			} elseif ( current_user_can( 'activate_plugins' ) ) {
+				self::activate_for_blog();
 			}
-
-			// Proceed to activate just for this site.
-		}
-
-		if ( ! current_user_can( 'activate_plugins' ) ) {
 			return;
 		}
+
 		self::activate_for_blog();
 	}
 

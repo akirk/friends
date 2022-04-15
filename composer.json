@@ -9,6 +9,9 @@
 		"wp-coding-standards/wpcs": "*",
 		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
 	},
+	"config": {
+		"allow-plugins": {}
+	},
 	"prefer-stable" : true,
 	"scripts": {
 		"lint7": [

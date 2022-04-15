@@ -294,10 +294,10 @@ class Access_Control {
 	 * @return     array
 	 */
 	public function strict_friend_checking_for_super_admin( $caps, $cap, $user_id, $args ) {
-		if ( ! in_array( $cap, array( Friends::REQUIRED_ROLE, 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) ) ) {
+		if ( ! in_array( $cap, array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) ) ) {
 			return $caps;
 		}
-		if ( is_multisite() && ! is_super_admin( $user_id ) ) {
+		if ( ! is_multisite() || ! is_super_admin( $user_id ) ) {
 			return $caps;
 		}
 
