@@ -49,7 +49,7 @@ class Notifications {
 	}
 
 	/**
-	 * Gets the friends plugin from email address.
+	 * Sets the friends plugin from email address when sending mail.
 	 *
 	 * If you're having issues with the receiver using the envelope From: address in favor of the mail header,
 	 * you can use a filter like this:
@@ -65,6 +65,16 @@ class Notifications {
 	public function use_friends_plugin_from_email_address( $from ) {
 		$from = preg_replace( '/^wordpress@/', 'friends-plugin@', $from );
 		return $from;
+	}
+
+
+	/**
+	 * Gets the friends plugin from email address.
+	 *
+	 * @return     string  The friends plugin from email address.
+	 */
+	public function get_friends_plugin_from_email_address() {
+		return apply_filters( 'wp_mail_from', 'wordpress@' . preg_replace( '#^www\.#', '', wp_parse_url( network_home_url(), PHP_URL_HOST ) ) );
 	}
 
 	/**
