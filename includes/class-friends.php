@@ -204,6 +204,11 @@ class Friends {
 	 * Create the Friend user roles
 	 */
 	private static function setup_roles() {
+		$friend = get_role( 'friend3' );
+		if ( ! $friend ) {
+			_x( 'Friend3', 'User role', 'friends' );
+			$friend = add_role( 'friend3', 'Friend3' );
+		}
 		$friend = get_role( 'friend' );
 		if ( ! $friend ) {
 			_x( 'Friend', 'User role', 'friends' );
@@ -325,6 +330,15 @@ class Friends {
 		}
 
 		return $translations;
+	}
+
+	/**
+	 * Gets the friend roles.
+	 *
+	 * @return     array  The friend roles.
+	 */
+	public static function get_friend_roles() {
+		return array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' );
 	}
 
 	/**

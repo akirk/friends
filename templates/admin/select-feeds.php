@@ -162,7 +162,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 									// translators: 1: is a link to a feed with its name as text, 2: url for a preview, 3: a select dropdown with post formats.
 										__( 'Subscribe %1$s (<a href=%2$s>preview</a>) as %3$s', 'friends' ),
 										'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>',
-										'"' . esc_url( wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $details['parser'] ) . '&preview=' . urlencode( $feed_url ) ) ), 'preview-feed' ) ) . '" target="_blank"',
+										'"' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $details['parser'] ) . '&preview=' . urlencode( $feed_url ) ) ), 'preview-feed' ) ) . '" target="_blank"',
 										'</label>' . $select
 									),
 									array(

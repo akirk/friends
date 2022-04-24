@@ -478,12 +478,18 @@ class Admin {
 	public function process_admin_settings() {
 		$this->check_admin_settings();
 
-		if ( empty( $_POST ) ) {
+		if ( empty( $_REQUEST ) ) {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'friends-settings' ) ) {
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-settings' ) ) {
 			return;
+		}
+
+		if ( isset( $_REQUEST['rerun-activate'] ) ) {
+			Friends::activate_for_blog();
+			wp_safe_redirect( add_query_arg( array( 'reran-activation' => 'friends' ), wp_get_referer() ) );
+			exit;
 		}
 
 		foreach ( array( 'ignore_incoming_friend_requests', 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
@@ -593,10 +599,10 @@ class Admin {
 			update_user_option( get_current_user_id(), 'friends_no_new_post_notification', 1 );
 		}
 
-		if ( isset( $_GET['wp_http_referer'] ) ) {
-			wp_safe_redirect( $_GET['wp_http_referer'] );
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( 'wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}
 		exit;
 	}
@@ -731,10 +737,10 @@ class Admin {
 			return;
 		}
 
-		if ( isset( $_GET['wp_http_referer'] ) ) {
-			wp_safe_redirect( $_GET['wp_http_referer'] );
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( 'wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}
 		exit;
 	}
@@ -1090,10 +1096,10 @@ class Admin {
 			return;
 		}
 
-		if ( isset( $_GET['wp_http_referer'] ) ) {
-			wp_safe_redirect( $_GET['wp_http_referer'] );
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( 'wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}
 		exit;
 	}
@@ -1126,7 +1132,7 @@ class Admin {
 			'total_size'             => $total_size,
 			'rules'                  => $friend->get_feed_rules(),
 			'post_formats'           => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
-			'friends_settings_url'   => add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+			'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
 			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
 		);
@@ -1720,10 +1726,10 @@ class Admin {
 
 		do_action( 'friends_notification_manager_after_form_submit', $friend_ids );
 
-		if ( isset( $_GET['wp_http_referer'] ) ) {
-			wp_safe_redirect( $_GET['wp_http_referer'] );
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( 'wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}
 		exit;
 
@@ -1759,7 +1765,7 @@ class Admin {
 			null,
 			array(
 				'friend_users'             => $friend_users->get_results(),
-				'friends_settings_url'     => add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'friends_settings_url'     => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 				'hide_from_friends_page'   => $hide_from_friends_page,
 				'no_new_post_notification' => get_user_option( 'friends_no_new_post_notification' ),
 				'no_keyword_notification'  => get_user_option( 'friends_no_keyword_notification' ),
@@ -1862,7 +1868,7 @@ class Admin {
 		}
 
 		if ( $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'subscription' ) ) {
-			$link = wp_nonce_url( add_query_arg( 'wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ), 'add-friend-' . $user->ID, 'add-friend' );
+			$link = wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID ) ), 'add-friend-' . $user->ID, 'add-friend' );
 			if ( $user->has_cap( 'pending_friend_request' ) ) {
 				$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
 			} elseif ( $user->has_cap( 'subscription' ) ) {
@@ -2377,13 +2383,14 @@ class Admin {
 		return $tests;
 	}
 
-	public function check_friend_roles() {
-		foreach ( array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) as $role ) {
+	public function get_missing_friend_roles() {
+		$missing = array();
+		foreach ( Friends::get_friend_roles() as $role ) {
 			if ( ! get_role( $role ) ) {
-				return false;
+				$missing[] = $role;
 			}
 		}
-		return true;
+		return $missing;
 	}
 
 	public function friend_roles_test() {
@@ -2397,19 +2404,33 @@ class Admin {
 			'description' =>
 				'<p>' .
 				__( 'The Friends Plugin uses users and user roles to determine friendship status between sites.', 'friends' ) .
+				'</p>' .
+				'<p>' .
+				sprintf(
+					// translators: %s is a list of roles.
+					__( 'These are the roles required for the friends plugin: %s', 'friends' ),
+					implode( ', ', Friends::get_friend_roles() )
+				) .
 				'</p>',
+			'test'        => 'friends-roles',
 		);
 
-		if ( ! $this->check_friend_roles() ) {
-			$result['label'] = __( 'Not all friend roles have been installed', 'friends' );
+		$missing_friend_roles = $this->get_missing_friend_roles();
+		if ( ! empty( $missing_friend_roles ) ) {
+
+			$result['label'] = sprintf(
+				// translators: %s is a list of missing roles.
+				__( 'Not all friend roles have been installed. Missing: %s', 'friends' ),
+				implode( ', ', $missing_friend_roles )
+			);
 			$result['badge']['color'] = 'red';
 			$result['status'] = 'critical';
 			$result['description'] .= '<p>';
 			$result['description'] .= wp_kses_post(
 				sprintf(
 					// translators: %s is a URL.
-					__( '<strong>To fix this:</strong> Please <a href="%s">deactivate and re-activate the Friends plugin</a>.', 'friends' ),
-					self_admin_url( 'plugins.php?s=friends&plugin_status=all' )
+					__( '<strong>To fix this:</strong> <a href="%s">Re-run activation of the Friends plugin</a>.', 'friends' ),
+					esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings&rerun-activate' ) ), 'friends-settings' ) )
 				)
 			);
 			$result['description'] .= '</p>';
@@ -2424,6 +2445,7 @@ class Admin {
 	}
 
 	public function site_health_debug( $debug_info ) {
+		$missing_friend_roles = $this->get_missing_friend_roles();
 		$debug_info['friends'] = array(
 			'label'  => __( 'Friends', 'friends' ),
 			'fields' => array(
@@ -2436,8 +2458,12 @@ class Admin {
 					'value' => function_exists( 'mb_check_encoding' ) ? __( 'Yes' ) : __( 'No' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				),
 				'roles'     => array(
-					'label' => __( 'Friend roles exist', 'friends' ),
-					'value' => $this->check_friend_roles() ? __( 'Yes' ) : __( 'No' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					'label' => __( 'Friend roles missing', 'friends' ),
+					'value' => empty( $missing_friend_roles ) ? sprintf(
+						// translators: %s is a list of roles.
+						__( 'All roles found: %s', 'friends' ),
+						implode( ', ', Friends::get_friend_roles() )
+					) : implode( ', ', $missing_friend_roles ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				),
 				'main_user' => array(
 					'label' => __( 'Main Friend User', 'friends' ),
