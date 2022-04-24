@@ -333,11 +333,11 @@ class Friends {
 	}
 
 	/**
-	 * Gets the friend roles.
+	 * Gets the roles that the plugin uses.
 	 *
-	 * @return     array  The friend roles.
+	 * @return     array  The roles.
 	 */
-	public static function get_friend_roles() {
+	public static function get_friends_plugin_roles() {
 		return array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' );
 	}
 

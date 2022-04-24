@@ -2383,9 +2383,9 @@ class Admin {
 		return $tests;
 	}
 
-	public function get_missing_friend_roles() {
+	public function get_missing_friends_plugin_roles() {
 		$missing = array();
-		foreach ( Friends::get_friend_roles() as $role ) {
+		foreach ( Friends::get_friends_plugin_roles() as $role ) {
 			if ( ! get_role( $role ) ) {
 				$missing[] = $role;
 			}
@@ -2409,13 +2409,13 @@ class Admin {
 				sprintf(
 					// translators: %s is a list of roles.
 					__( 'These are the roles required for the friends plugin: %s', 'friends' ),
-					implode( ', ', Friends::get_friend_roles() )
+					implode( ', ', Friends::get_friends_plugin_roles() )
 				) .
 				'</p>',
 			'test'        => 'friends-roles',
 		);
 
-		$missing_friend_roles = $this->get_missing_friend_roles();
+		$missing_friend_roles = $this->get_missing_friends_plugin_roles();
 		if ( ! empty( $missing_friend_roles ) ) {
 
 			$result['label'] = sprintf(
@@ -2445,7 +2445,7 @@ class Admin {
 	}
 
 	public function site_health_debug( $debug_info ) {
-		$missing_friend_roles = $this->get_missing_friend_roles();
+		$missing_friend_roles = $this->get_missing_friends_plugin_roles();
 		$debug_info['friends'] = array(
 			'label'  => __( 'Friends', 'friends' ),
 			'fields' => array(
@@ -2462,7 +2462,7 @@ class Admin {
 					'value' => empty( $missing_friend_roles ) ? sprintf(
 						// translators: %s is a list of roles.
 						__( 'All roles found: %s', 'friends' ),
-						implode( ', ', Friends::get_friend_roles() )
+						implode( ', ', Friends::get_friends_plugin_roles() )
 					) : implode( ', ', $missing_friend_roles ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				),
 				'main_user' => array(
