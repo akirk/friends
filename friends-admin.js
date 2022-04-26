@@ -166,4 +166,51 @@ jQuery( function( $ ) {
 		$( this ).closest( 'div' ).find( 'select option[value=publish]' ).prop( 'selected', true );
 	} );
 
+	$( document ).on( 'click', 'a.friends-auth-link, button.comments.friends-auth-link', function() {
+		var $this = jQuery( this ), href = $this.attr( 'href' ), token = $this.data( 'token' );
+		if ( ! token ) {
+			return;
+		}
+
+		var parts = token.split( /-/ );
+		var now = new Date;
+		if ( now / 1000 > parts[1] ) {
+			wp.ajax.post( 'friends_refresh_link_token', {
+				_ajax_nonce: $this.data( 'nonce' ),
+				friend: $this.data( 'friend' ),
+				url: href
+			} ).done( function( response ) {
+				if ( response.data ) {
+					$this.data( 'token', response.data.token );
+				}
+			} );
+
+			alert( friends.text_link_expired );
+			return false;
+		}
+
+		if ( href && href.indexOf( 'friend_auth=' ) < 0 ) {
+			var hash = href.indexOf( '#' );
+			if ( hash >= 0 ) {
+				hash = href.substr( hash );
+				href = href.substr( 0, href.length - hash.length );
+			} else {
+				hash = '';
+			}
+
+			if ( href.indexOf( '?' ) >= 0 ) {
+				href += '&';
+			} else {
+				href += '?';
+			}
+			href += 'friend_auth=' + token + hash;
+			$this.attr( 'href', href );
+		}
+
+		if ( $this.is( 'button' ) ) {
+			location.href = href;
+			return false;
+		}
+	} );
+
 } );

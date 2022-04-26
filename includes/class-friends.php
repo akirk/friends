@@ -204,6 +204,11 @@ class Friends {
 	 * Create the Friend user roles
 	 */
 	private static function setup_roles() {
+		$friend = get_role( 'friend3' );
+		if ( ! $friend ) {
+			_x( 'Friend3', 'User role', 'friends' );
+			$friend = add_role( 'friend3', 'Friend3' );
+		}
 		$friend = get_role( 'friend' );
 		if ( ! $friend ) {
 			_x( 'Friend', 'User role', 'friends' );
@@ -328,6 +333,15 @@ class Friends {
 	}
 
 	/**
+	 * Gets the roles that the plugin uses.
+	 *
+	 * @return     array  The roles.
+	 */
+	public static function get_friends_plugin_roles() {
+		return array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' );
+	}
+
+	/**
 	 * If a plugin version upgrade requires changes, they can be done here
 	 *
 	 * @param  string $previous_version The previous plugin version number.
@@ -353,28 +367,29 @@ class Friends {
 	/**
 	 * Actions to take upon plugin activation.
 	 *
-	 * @param      bool $network_wide  Whether the plugin has been activated network-wide.
+	 * @param      bool $network_activate  Whether the plugin has been activated network-wide.
 	 */
-	public static function activate_plugin( $network_wide = null ) {
+	public static function activate_plugin( $network_activate = null ) {
 		if ( function_exists( 'is_multisite' ) && is_multisite() ) {
-			if ( $network_wide ) {
+			if ( $network_activate ) {
+				// Only Super Admins can use Network Activate.
 				if ( ! is_super_admin() ) {
 					return;
 				}
+
+				// Activate for each site.
 				foreach ( get_sites() as $blog ) {
 					switch_to_blog( $blog->blog_id );
 					self::activate_for_blog();
 					restore_current_blog();
 				}
-			} else {
-				if ( ! current_user_can( 'activate_plugins' ) ) {
-					return;
-				}
+			} elseif ( current_user_can( 'activate_plugins' ) ) {
 				self::activate_for_blog();
 			}
-		} else {
-			self::activate_for_blog();
+			return;
 		}
+
+		self::activate_for_blog();
 	}
 
 	/**
@@ -466,18 +481,18 @@ class Friends {
 	public static function get_main_friend_user_id() {
 		$main_user_id = get_option( 'friends_main_user_id' );
 
-		if ( false === $main_user_id ) {
-			// Backfill the main user id.
-			if ( get_current_user_id() ) {
-				$main_user_id = get_current_user_id();
-			} else {
-				$users = User_Query::all_admin_users();
-				foreach ( $users->get_results() as $user ) {
-					$main_user_id = $user->ID;
-					break;
-				}
+		if (
+			false === $main_user_id
+			|| ( is_multisite() && ! is_user_member_of_blog( $main_user_id, get_current_blog_id() ) )
+		) {
+			$users = User_Query::all_admin_users();
+			foreach ( $users->get_results() as $user ) {
+				$main_user_id = $user->ID;
+				break;
 			}
-			update_option( 'friends_main_user_id', $main_user_id );
+			if ( $main_user_id ) {
+				update_option( 'friends_main_user_id', $main_user_id );
+			}
 		}
 		return $main_user_id;
 	}

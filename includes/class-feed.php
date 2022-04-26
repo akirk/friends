@@ -759,13 +759,14 @@ class Feed {
 		$response = wp_safe_remote_get(
 			$url,
 			array(
-				'timeout'     => 20,
+				'timeout'     => apply_filters( 'friends_http_timeout', 20 ),
 				'redirection' => 1,
 			)
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return array();
+			$response->add_data( $url );
+			return $response;
 		}
 
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
@@ -889,7 +890,7 @@ class Feed {
 
 			if ( $has_friends_plugin ) {
 				// Prefer the main RSS feed.
-				if ( 'feed' === trim( $path, '/' ) ) {
+				if ( '/feed' === substr( '/' . trim( $path, '/' ), -5 ) ) {
 					$available_feeds[ $link_url ]['post-format'] = 'autodetect';
 					$autoselected = true;
 				}
