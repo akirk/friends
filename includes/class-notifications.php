@@ -83,7 +83,12 @@ class Notifications {
 	 * @param  \WP_Post $post The new post by a friend or subscription.
 	 */
 	public function notify_new_friend_post( \WP_Post $post ) {
-		if ( 'trash' === $post->post_status ) {
+		if (
+			// Post might be trashed through rules.
+			'trash' === $post->post_status
+			// Don't notify about posts older than a week.
+			|| strtotime( $post->post_date_gmt ) + WEEK_IN_SECONDS < time()
+		) {
 			return;
 		}
 
