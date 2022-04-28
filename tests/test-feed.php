@@ -303,11 +303,10 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertCount( 2, wp_get_post_revisions( $post_id ) );
 	}
 
-	private function get_user_feed( $user, $interval, $modifier ) {
-		static $c = 0;
+	private function get_user_feed( $user, $url, $interval, $modifier ) {
 		$term = User_Feed::save(
 			$user,
-			'http://example.org/' . ++$c,
+			$url,
 			array(
 				'active'   => true,
 				'interval' => $interval,
@@ -325,7 +324,7 @@ class FeedTest extends \WP_UnitTestCase {
 		time();
 
 		// Linear.
-		$user_feed = $this->get_user_feed( $user, 3600, 100 );
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/1', 3600, 100 );
 		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
 		$user_feed->was_polled();
 
@@ -337,7 +336,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
 
 		// Linear, migrated.
-		$user_feed = $this->get_user_feed( $user, 0, 0 );
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/2', 0, 0 );
 		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
 		$user_feed->was_polled();
 
@@ -349,7 +348,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
 
 		// +50% upon every call.
-		$user_feed = $this->get_user_feed( $user, 3600, 150 );
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/3', 3600, 150 );
 		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
 		$user_feed->was_polled();
 
@@ -365,7 +364,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
 
 		// Double upon every call.
-		$user_feed = $this->get_user_feed( $user, 3600, 200 );
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/4', 3600, 200 );
 		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
 		$user_feed->was_polled();
 
@@ -405,11 +404,11 @@ class FeedTest extends \WP_UnitTestCase {
 		time();
 
 		// 1. Linear.
-		$this->get_user_feed( $user, 3600, 100 );
+		$this->get_user_feed( $user, 'http://example.org/1', 3600, 100 );
 		// 2. Every two hours.
-		$this->get_user_feed( $user, 7200, 100 );
+		$this->get_user_feed( $user, 'http://example.org/2', 7200, 100 );
 		// 3. Almost upon every call (this is to change and verify the order).
-		$this->get_user_feed( $user, 3600, 199 );
+		$this->get_user_feed( $user, 'http://example.org/3', 3600, 199 );
 
 		$due_feeds = $user->get_due_feeds();
 		$this->assertEquals( array( 1, 2, 3 ), $this->get_sorted_feeds( $due_feeds ) );
