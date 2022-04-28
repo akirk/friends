@@ -19,6 +19,7 @@ namespace Friends;
  */
 class User_Feed {
 	const TAXONOMY = 'friend-user-feed';
+	const INTERVAL_BACKTRACK = 600;
 
 	/**
 	 * Contains a reference to the \WP_Term for the feed.
@@ -194,6 +195,51 @@ class User_Feed {
 	}
 
 	/**
+	 * The interval for calculating the next poll date.
+	 *
+	 * @return int The interval.
+	 */
+	public function get_interval() {
+		return self::validate_interval( get_metadata( 'term', $this->term->term_id, 'interval', true ) );
+	}
+
+	/**
+	 * The modifiert for the next interval.
+	 *
+	 * Examples:
+	 * - interval 3600, modifier: 100. intervals: 3600, 3600, 3600, 3600
+	 * - interval 3600, modifier: 110. intervals: 3600, 3960, 4356, 4792
+	 * - interval 3600, modifier: 200. intervals: 3600, 7200, 14400, 28800
+	 *
+	 * @return int The modifier.
+	 */
+	public function get_modifier() {
+		return self::validate_modifier( get_metadata( 'term', $this->term->term_id, 'modifier', true ) );
+	}
+
+	/**
+	 * The datetime when the feed should be polled next.
+	 *
+	 * @return string The next poll date.
+	 */
+	public function get_next_poll() {
+		return self::validate_next_poll( get_metadata( 'term', $this->term->term_id, 'next-poll', true ) );
+	}
+
+	public function was_polled() {
+		$interval = $this->get_interval();
+		$percent = $this->get_modifier();
+
+		$updated_interval = $interval * $percent / 100;
+		if ( $interval !== $updated_interval ) {
+			$this->update_metadata( 'interval', $updated_interval );
+		}
+		// Set a time 5 minutes earlier so that an hourly job that takes longer gets a chance to refresh it.
+		return $this->update_metadata( 'next-poll', gmdate( 'Y-m-d H:i:s', time() + $interval - self::INTERVAL_BACKTRACK ) );
+	}
+
+
+	/**
 	 * Validates the post format against defined post formats.
 	 *
 	 * @param  string $post_format The post format to be validated.
@@ -253,6 +299,52 @@ class User_Feed {
 	 */
 	public static function validate_last_log( $last_log ) {
 		return substr( $last_log, 0, 1000 );
+	}
+
+	/**
+	 * Validates the polling interval.
+	 *
+	 * @param  string $interval The interval to be validated.
+	 * @return int           A validated interval.
+	 */
+	public static function validate_interval( $interval ) {
+		if ( $interval > WEEK_IN_SECONDS ) {
+			return WEEK_IN_SECONDS;
+		}
+		if ( $interval < HOUR_IN_SECONDS ) {
+			return HOUR_IN_SECONDS;
+		}
+		return intval( $interval );
+	}
+
+	/**
+	 * Validates the interval percentage modifier.
+	 *
+	 * @param  string $percentage The percentage modifier.
+	 * @return int           A validated percentage modifier.
+	 */
+	public static function validate_modifier( $percentage ) {
+		if ( $percentage > 500 ) {
+			return 500;
+		}
+		if ( $percentage < 100 ) {
+			return 100;
+		}
+		return intval( $percentage );
+	}
+
+	/**
+	 * Validates the next poll date.
+	 *
+	 * @param  string $next_poll The poll date to be validated.
+	 * @return string           A validated poll date.
+	 */
+	public static function validate_next_poll( $next_poll ) {
+		if ( ! preg_match( '/^2\d{3}-[01]\d-[0123]\d [012]\d:[0-5]\d:[0-5]\d$/', $next_poll ) ) {
+			// Explicitly use time() to allow mocking it inside the namespace.
+			return gmdate( 'Y-m-d H:i:s', time() );
+		}
+		return $next_poll;
 	}
 
 	/**
@@ -344,6 +436,36 @@ class User_Feed {
 			)
 		);
 
+		register_term_meta(
+			self::TAXONOMY,
+			'interval',
+			array(
+				'type'              => 'integer',
+				'single'            => true,
+				'sanitize_callback' => array( __CLASS__, 'validate_interval' ),
+			)
+		);
+
+		register_term_meta(
+			self::TAXONOMY,
+			'modifier',
+			array(
+				'type'              => 'integer',
+				'single'            => true,
+				'sanitize_callback' => array( __CLASS__, 'validate_modifier' ),
+			)
+		);
+
+		register_term_meta(
+			self::TAXONOMY,
+			'next-poll',
+			array(
+				'type'              => 'string',
+				'single'            => true,
+				'sanitize_callback' => array( __CLASS__, 'validate_next_poll' ),
+			)
+		);
+		
 		do_action( 'friends_after_register_feed_taxonomy' );
 	}
 
@@ -472,7 +594,7 @@ class User_Feed {
 
 		$term_id = $all_urls[ $url ];
 		foreach ( $args as $key => $value ) {
-			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title' ) ) ) {
+			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title', 'interval', 'modifier' ) ) ) {
 				if ( metadata_exists( 'term', $term_id, $key ) ) {
 					update_metadata( 'term', $term_id, $key, $value );
 				} else {
@@ -528,7 +650,8 @@ class User_Feed {
 	 * @return     int|false The inserted term id.
 	 */
 	public function update_last_log( $value ) {
-		return $this->update_metadata( 'last-log', gmdate( 'Y-m-d H:i:s' ) . ': ' . $value );
+		// Explicitly use time() to allow mocking it inside the namespace.
+		return $this->update_metadata( 'last-log', gmdate( 'Y-m-d H:i:s', time() ) . ': ' . $value );
 	}
 
 	/**
