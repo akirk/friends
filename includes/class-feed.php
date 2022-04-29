@@ -888,12 +888,16 @@ class Feed {
 				continue;
 			}
 
-			if ( $has_friends_plugin ) {
-				// Prefer the main RSS feed.
-				if ( '/feed' === substr( '/' . trim( $path, '/' ), -5 ) ) {
+			// Prefer the main RSS feed.
+			if (
+				'/feed' === substr( '/' . trim( $path, '/' ), -5 )
+				|| '.xml' === substr( $path, -4 )
+				|| 'rss' === substr( $path, -3 )
+			) {
+				if ( $has_friends_plugin ) {
 					$available_feeds[ $link_url ]['post-format'] = 'autodetect';
-					$autoselected = true;
 				}
+				$autoselected = true;
 			} elseif ( isset( $feed['rel'] ) ) {
 				if ( 'alternate' === $feed['rel'] && 'application/rss+xml' === $feed['type'] && 'feed' === trim( $path, '/' ) ) {
 					$autoselected = true;
