@@ -231,14 +231,13 @@ jQuery( function( $ ) {
 
 		searchTimeout = setTimeout( function() {
 			wp.ajax.post( 'friends_search_links', {
-				_ajax_nonce: $( 'ul.friend-suggestions' ).data( 'nonce' ),
+				_ajax_nonce: $( 'tr.friend-suggestions' ).data( 'nonce' ),
 				search: search
 			} ).done( function( response ) {
 				if ( response.data ) {
-					$( 'ul.friend-suggestions' ).html( response.data.content );
-					$( 'ul.friend-suggestions' ).closest( 'tr' ).show();
+					$( 'tr.friend-suggestions' ).show().find( 'td' ).html( response.data.content ).show();
 				} else {
-					$( 'ul.friend-suggestions' ).closest( 'tr' ).hide();
+					$( 'tr.friend-suggestions' ).hide();
 				}
 			} );
 		}, 50 );

@@ -7,6 +7,12 @@
  */
 
 $quick_subscribe = _x( 'Quick Subscribe', 'button', 'friends' );
+$links = get_bookmarks(
+	array(
+		'orderby' => 'updated',
+		'limit'   => 15,
+	)
+);
 
 ?><div class="wrap"><form method="post">
 	<?php wp_nonce_field( 'add-friend' ); ?>
@@ -30,23 +36,13 @@ $quick_subscribe = _x( 'Quick Subscribe', 'button', 'friends' );
 					</p>
 				</td>
 			</tr>
+			<tr class="friend-suggestions" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-links' ) ); ?>" style="display: <?php echo empty( $links ) ? 'none' : 'table-row'; ?>">
 				<th scope="row"><?php esc_html_e( 'Suggestions', 'friends' ); ?></label></th>
 				<td>
 					<?php
-
-					Friends\Friends::template_loader()->get_template_part(
-						'admin/links',
-						null,
-						array(
-							'links' => get_bookmarks(
-								array(
-									'orderby' => 'updated',
-									'limit'   => 15,
-								)
-							),
-						)
-					);
-
+					if ( ! empty( $links ) ) {
+						Friends\Friends::template_loader()->get_template_part( 'admin/links', null, array( 'links' => $links ) );
+					}
 					?>
 					<p class="description" id="friend-suggestions">
 

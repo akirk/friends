@@ -6,10 +6,9 @@
  * @package Friends
  */
 
-if ( ! isset( $args['skip_ul'] ) ) {
-	?><ul class="friend-suggestions" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-links' ) ); ?>">
-	<?php
-}
+?>
+<ul class="friend-suggestions"">
+<?php
 
 if ( empty( $args['links'] ) ) {
 	?>
@@ -29,8 +28,6 @@ foreach ( $args['links'] as $link ) {
 	</li>
 	<?php
 }
-if ( ! isset( $args['skip_ul'] ) ) {
-	?>
+
+?>
 </ul>
-	<?php
-}

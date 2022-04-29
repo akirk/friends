@@ -863,8 +863,7 @@ class Admin {
 			'admin/links',
 			null,
 			array(
-				'skip_ul' => true,
-				'links'   => $links,
+				'links' => $links,
 			)
 		);
 		$content = ob_get_contents();
