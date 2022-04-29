@@ -58,6 +58,7 @@ class Admin {
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'wp_ajax_friends_update_welcome_panel', array( $this, 'ajax_update_welcome_panel' ) );
 		add_action( 'wp_ajax_friends_refresh_link_token', array( $this, 'ajax_refresh_link_token' ) );
+		add_action( 'wp_ajax_friends_search_links', array( $this, 'ajax_search_links' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
@@ -283,7 +284,7 @@ class Admin {
 	 * Reference our script for the /friends page
 	 */
 	public function admin_enqueue_scripts() {
-		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), Friends::VERSION );
+		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'wp-util' ), Friends::VERSION );
 		$variables = array(
 			'ajax_url'        => admin_url( 'admin-ajax.php' ),
 			'add_friend_url'  => self_admin_url( 'admin.php?page=add-friend' ),
@@ -837,8 +838,52 @@ class Admin {
 
 		wp_die( 1 );
 	}
+
+
 	/**
-	 * Respond to the Ajax request to the Friend Welcome Panel
+	 * Respond to the Ajax request to search links.
+	 */
+	public function ajax_search_links() {
+		check_ajax_referer( 'friends-links' );
+
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_die( -1 );
+		}
+
+		$search = $_POST['search'];
+
+		$links = get_bookmarks(
+			array(
+				'search' => $search,
+				'limit'  => 15,
+			)
+		);
+		ob_start();
+		Friends::template_loader()->get_template_part(
+			'admin/links',
+			null,
+			array(
+				'skip_ul' => true,
+				'links'   => $links,
+			)
+		);
+		$content = ob_get_contents();
+		ob_end_clean();
+
+		wp_send_json_success(
+			array(
+				'success' => true,
+				'data'    => array(
+					'content' => $content,
+					'search'  => $_POST['search'],
+				),
+			)
+		);
+
+	}
+
+	/**
+	 * Respond to the Ajax request to refresh the link token.
 	 */
 	public function ajax_refresh_link_token() {
 		if ( ! isset( $_POST['url'] ) || ! isset( $_POST['friend'] ) ) {

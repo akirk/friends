@@ -24,9 +24,32 @@ $quick_subscribe = _x( 'Quick Subscribe', 'button', 'friends' );
 			<tr>
 				<th scope="row"><label for="friend_url"><?php esc_html_e( 'Site', 'friends' ); ?></label></th>
 				<td>
-					<input type="text" autofocus id="friend_url" name="friend_url" value="<?php echo esc_attr( $args['friend_url'] ); ?>" required placeholder="<?php esc_attr_e( 'Enter URL', 'friends' ); ?>" class="regular-text" />
+					<input type="text" autofocus id="friend_url" name="friend_url" value="<?php echo esc_attr( $args['friend_url'] ); ?>" required placeholder="<?php esc_attr_e( 'Enter URL or search suggestions', 'friends' ); ?>" class="regular-text" />
 					<p class="description" id="friend_url-description">
 						<?php esc_html_e( "In the next step we'll give you a selection of available feeds.", 'friends' ); ?>
+					</p>
+				</td>
+			</tr>
+				<th scope="row"><?php esc_html_e( 'Suggestions', 'friends' ); ?></label></th>
+				<td>
+					<?php
+
+					Friends\Friends::template_loader()->get_template_part(
+						'admin/links',
+						null,
+						array(
+							'links' => get_bookmarks(
+								array(
+									'orderby' => 'updated',
+									'limit'   => 15,
+								)
+							),
+						)
+					);
+
+					?>
+					<p class="description" id="friend-suggestions">
+
 					</p>
 				</td>
 			</tr>
@@ -48,5 +71,4 @@ $quick_subscribe = _x( 'Quick Subscribe', 'button', 'friends' );
 			</tr>
 		</tbody>
 	</table>
-
 </form>

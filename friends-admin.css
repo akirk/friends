@@ -121,3 +121,8 @@ span#friends_enable_retention_days_line, span#friends_enable_retention_number_li
 #wpadminbar li#wp-admin-bar-friends {
 	display: block;
 }
+
+ul.friend-suggestions li {
+	display: inline-block;
+	margin-right: 1em;
+}

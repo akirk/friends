@@ -213,4 +213,35 @@ jQuery( function( $ ) {
 		}
 	} );
 
+	$( document ).on( 'click', 'ul.friend-suggestions li a', function() {
+		event.preventDefault();
+		$( '#friend_url' ).val( this.href );
+	} );
+
+	var searchTimeout = null;
+	$( document ).on( 'keydown', '#friend_url', function() {
+		var search = this.value;
+		if ( ! search ) {
+			return;
+		}
+
+		if ( searchTimeout ) {
+			clearTimeout( searchTimeout );
+		}
+
+		searchTimeout = setTimeout( function() {
+			wp.ajax.post( 'friends_search_links', {
+				_ajax_nonce: $( 'ul.friend-suggestions' ).data( 'nonce' ),
+				search: search
+			} ).done( function( response ) {
+				if ( response.data ) {
+					$( 'ul.friend-suggestions' ).html( response.data.content );
+					$( 'ul.friend-suggestions' ).closest( 'tr' ).show();
+				} else {
+					$( 'ul.friend-suggestions' ).closest( 'tr' ).hide();
+				}
+			} );
+		}, 50 );
+	} );
+
 } );
