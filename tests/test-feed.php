@@ -384,7 +384,12 @@ class FeedTest extends \WP_UnitTestCase {
 		usort(
 			$feeds,
 			function( $a, $b ) {
-				return strcmp( $a->get_next_poll(), $b->get_next_poll() );
+				$c = strcmp( $a->get_next_poll(), $b->get_next_poll() );
+				if ( 0 !== $c ) {
+					return $c;
+				}
+
+				return strcmp( $a->get_url(), $b->get_url() );
 			}
 		);
 
