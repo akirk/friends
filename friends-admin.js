@@ -235,7 +235,7 @@ jQuery( function( $ ) {
 				search: search
 			} ).done( function( response ) {
 				if ( response.data ) {
-					$( 'tr.friend-suggestions' ).show().find( 'td' ).html( response.data.content ).show();
+					$( 'tr.friend-suggestions' ).show().find( 'div' ).html( response.data.content ).show();
 				} else {
 					$( 'tr.friend-suggestions' ).hide();
 				}

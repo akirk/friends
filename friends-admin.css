@@ -122,6 +122,9 @@ span#friends_enable_retention_days_line, span#friends_enable_retention_number_li
 	display: block;
 }
 
+ul.friend-suggestions {
+	margin: 0;
+}
 ul.friend-suggestions li {
 	display: inline-block;
 	margin-right: 1em;
