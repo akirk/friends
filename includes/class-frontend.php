@@ -602,17 +602,34 @@ class Frontend {
 
 	/**
 	 * Render the Friends OPML
+	 *
+	 * @param      bool $only_public  Only public feed URLs.
 	 */
-	protected function render_opml() {
+	protected function render_opml( $only_public = false ) {
+		$user = wp_get_current_user();
+
+		// translators: %s is a name.
+		$title = sprintf( __( "%s' Subscriptions", 'friends' ), $user->display_name );
+		$filename = 'friends-';
+		if ( ! $only_public ) {
+			$title = __( 'My Friends', 'friends' );
+			$filename .= 'private-';
+		}
+		$filename .= $user->user_login . '.opml';
+
 		$feeds = array();
 		$users = array();
 
 		$friend_users = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
 		foreach ( $friend_users->get_results() as $friend_user ) {
 			$role = $friend_user->get_role_name( true, 9 );
+			if ( $only_public ) {
+				$role = 'Feeds';
+			}
 			if ( ! isset( $users[ $role ] ) ) {
 				$users[ $role ] = array();
 			}
+
 			$users[ $role ][] = $friend_user;
 		}
 		ksort( $users );
@@ -635,7 +652,7 @@ class Frontend {
 					}
 				}
 
-				if ( $need_local_feed ) {
+				if ( $need_local_feed && ! $only_public ) {
 					$user_feeds = array_slice( $user_feeds, 0, 1 );
 				}
 
@@ -643,22 +660,36 @@ class Frontend {
 					'friend_user' => $friend_user,
 					'feeds'       => array(),
 				);
+				$html_url = $friend_user->user_url;
 
 				foreach ( $user_feeds as $feed ) {
 					$type = 'rss';
-					$title = $friend_user->display_name;
+					$feed_title = $friend_user->display_name;
+
+					if ( ! $only_public ) {
+						$html_url = $feed->get_local_html_url();
+					}
+
 					if ( $need_local_feed ) {
+						if ( $only_public ) {
+							// Cannot create a public URL.
+							continue;
+						}
 						$xml_url = $feed->get_local_url() . '?auth=' . $_GET['auth'];
 					} else {
-						$xml_url = $feed->get_private_url( YEAR_IN_SECONDS );
+						if ( $only_public ) {
+							$xml_url = $feed->get_url();
+						} else {
+							$xml_url = $feed->get_private_url( YEAR_IN_SECONDS );
+						}
 						if ( 'application/atom+xml' === $feed->get_mime_type() ) {
 							$type = 'atom';
 						}
 					}
 					$user['feeds'][] = array(
 						'xml_url'  => $xml_url,
-						'html_url' => $feed->get_local_html_url(),
-						'title'    => $title,
+						'html_url' => $html_url,
+						'title'    => $feed_title,
 						'type'     => $type,
 					);
 				}
@@ -675,7 +706,9 @@ class Frontend {
 			'admin/opml',
 			null,
 			array(
-				'feeds' => $feeds,
+				'title'    => $title,
+				'feeds'    => $feeds,
+				'filename' => $filename,
 			)
 		);
 		exit;
@@ -737,7 +770,7 @@ class Frontend {
 
 		if ( isset( $pagename_parts[1] ) ) {
 			if ( 'opml' === $pagename_parts[1] ) {
-				return $this->render_opml();
+				return $this->render_opml( isset( $_REQUEST['public'] ) );
 			}
 
 			$tax_query = array();

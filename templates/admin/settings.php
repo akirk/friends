@@ -276,7 +276,10 @@ do_action( 'friends_settings_before_form' );
 				<td>
 					<?php
 					// translators: %s is a URL.
-					echo wp_kses( sprintf( __( 'Download <a href=%s>this OPML file</a> and import it to your feed reader.', 'friends' ), esc_url( home_url( '/friends/opml/?auth=' . $args['private_rss_key'] ) ) ), array( 'a' => array( 'href' => array() ) ) );
+					echo wp_kses( sprintf( __( 'Download the <a href=%s>Private OPML file (contains private urls!)</a> and import it to your feed reader.', 'friends' ), esc_url( home_url( '/friends/opml/?auth=' . $args['private_rss_key'] ) ) ), array( 'a' => array( 'href' => array() ) ) );
+					echo ' ';
+					// translators: %s is a URL.
+					echo wp_kses( sprintf( __( 'Alternative: <a href=%s>Public OPML file (only public urls)</a>.', 'friends' ), esc_url( home_url( '/friends/opml/?public' ) ) ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 					<p class="description">
 					<?php

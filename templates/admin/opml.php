@@ -6,7 +6,7 @@
  * @package Friends
  */
 
-header( 'Content-Disposition: attachment; filename=friends-' . wp_get_current_user()->user_login . '.opml' );
+header( 'Content-Disposition: attachment; filename=' . $args['filename'] );
 header( 'Content-Type: text/opml+xml' );
 
 echo '<' . '?xml version="1.0" encoding="utf-8"?' . '>';
@@ -14,7 +14,7 @@ echo '<' . '?xml version="1.0" encoding="utf-8"?' . '>';
 ?>
 <opml version="2.0">
 	<head>
-		<title><?php esc_html_e( 'My Friends', 'friends' ); ?></title>
+		<title><?php echo esc_html( $args['title'] ); ?></title>
 		<dateCreated><?php echo esc_html( gmdate( 'r' ) ); ?></dateCreated>
 		<ownerName><?php echo esc_html( wp_get_current_user()->display_name ); ?></ownerName>
 	</head>
