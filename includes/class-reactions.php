@@ -287,9 +287,13 @@ class Reactions {
 			$available_emojis = get_option( 'friends_selected_emojis' );
 			if ( ! is_array( $available_emojis ) ) {
 				$available_emojis = array(
-					'1f44d' => (object) array(
-						'char' => '👍',
-						'name' => 'THUMBS UP SIGN',
+					'2b50' => (object) array(
+						'char' => '⭐️',
+						'name' => 'WHITE MEDIUM STAR',
+					),
+					'2764' => (object) array(
+						'char' => '❤️',
+						'name' => 'RED HEART',
 					),
 				);
 			}
