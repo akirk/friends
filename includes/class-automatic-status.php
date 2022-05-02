@@ -83,26 +83,54 @@ class Automatic_Status {
 			'post_row_actions',
 			function( $actions, $post ) {
 				unset( $actions['view'], $actions['inline hide-if-no-js'] );
-				$actions['publish'] = sprintf(
-					'<a href="%s" aria-label="%s">%s</a>',
-					esc_url(
-						add_query_arg(
-							array(
-								'post_status'      => 'draft',
-								'post_format'      => 'status',
-								'post_type'        => 'post',
-								'_wpnonce'         => wp_create_nonce( 'bulk-posts' ),
-								'_wp_http_referer' => self_admin_url( 'admin.php?page=friends-auto-status' ),
-								'action'           => 'publish',
-								'post[]'           => $post->ID,
-							),
-							self_admin_url( 'edit.php' )
-						)
-					),
-					/* translators: %s: Post title. */
-					esc_attr( sprintf( __( 'Publish &#8220;%s&#8221;' ), $post->title ) ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-					__( 'Publish' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				);
+				if ( 'publish' === $post->post_status ) {
+					$actions['publish'] = '<em>' . __( 'Published' ) . '</em>'; // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				} else {
+					$actions['publish'] = sprintf(
+						'<a href="%s" aria-label="%s">%s</a>',
+						esc_url(
+							add_query_arg(
+								array(
+									'post_status'      => 'draft',
+									'post_format'      => 'status',
+									'post_type'        => 'post',
+									'_wpnonce'         => wp_create_nonce( 'bulk-posts' ),
+									'_wp_http_referer' => self_admin_url( 'admin.php?page=friends-auto-status' ),
+									'action'           => 'publish',
+									'post[]'           => $post->ID,
+								),
+								self_admin_url( 'edit.php' )
+							)
+						),
+						/* translators: %s: Post title. */
+						esc_attr( sprintf( __( 'Publish &#8220;%s&#8221;' ), $post->title ) ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						__( 'Publish' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					);
+				}
+				if ( 'private' === $post->post_status ) {
+					$actions['publish-private'] = '<em>' . __( 'Privately Published' ) . '</em>'; // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				} else {
+					$actions['publish-private'] = sprintf(
+						'<a href="%s" aria-label="%s">%s</a>',
+						esc_url(
+							add_query_arg(
+								array(
+									'post_status'      => 'draft',
+									'post_format'      => 'status',
+									'post_type'        => 'post',
+									'_wpnonce'         => wp_create_nonce( 'bulk-posts' ),
+									'_wp_http_referer' => self_admin_url( 'admin.php?page=friends-auto-status' ),
+									'action'           => 'publish-private',
+									'post[]'           => $post->ID,
+								),
+								self_admin_url( 'edit.php' )
+							)
+						),
+						/* translators: %s: Post title. */
+						esc_attr( sprintf( __( 'Privately Publish &#8220;%s&#8221;' ), $post->title ) ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						__( 'Privately Publish' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					);
+				}
 				return $actions;
 			},
 			10,
@@ -158,19 +186,32 @@ class Automatic_Status {
 	 * @return     string  A potentially modified redirect URL.
 	 */
 	public function bulk_publish( $sendback, $doaction, $post_ids ) {
-		if ( 'publish' !== $doaction ) {
-			return $sendback;
-		}
+		if ( 'publish' === $doaction ) {
+			$done = array(
+				'published' => 0,
+			);
+			foreach ( $post_ids as $post_id ) {
+				wp_publish_post( $post_id );
+				$done['published']++;
+			}
 
-		$done = array(
-			'published' => 0,
-		);
-		foreach ( $post_ids as $post_id ) {
-			wp_publish_post( $post_id );
-			$done['published']++;
-		}
+			$sendback = add_query_arg( $done, $sendback );
+		} elseif ( 'publish-private' === $doaction ) {
+			$done = array(
+				'privately-published' => 0,
+			);
+			foreach ( $post_ids as $post_id ) {
+				wp_update_post(
+					array(
+						'ID'          => $post_id,
+						'post_status' => 'private',
+					)
+				);
+				$done['privately-published']++;
+			}
 
-		$sendback = add_query_arg( $done, $sendback );
+			$sendback = add_query_arg( $done, $sendback );
+		}
 		return $sendback;
 	}
 
