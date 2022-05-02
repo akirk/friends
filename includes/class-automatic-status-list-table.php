@@ -34,16 +34,21 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		global $mode, $avail_post_stati, $wp_query, $per_page;
 		$mode = 'excerpt';
 
-		$post_type = 'post';
-		$avail_post_stati = get_available_post_statuses( $post_type );
-		wp(
-			array(
-				'post_type'   => $post_type,
-				'post_status' => 'draft',
-				'post_format' => 'status',
-				'post_author' => get_current_user_id(),
-			)
+		$post_data = array(
+			'post_type'   => 'post',
+			'post_format' => 'status',
+			'post_status' => 'private',
+			'post_author' => get_current_user_id(),
 		);
+
+		$avail_post_stati = get_available_post_statuses( $post_data['post_type'] );
+		if ( ! empty( $_REQUEST['post_status'] ) && in_array( $_REQUEST['post_status'], $avail_post_stati ) ) {
+			$post_data['post_status'] = $_REQUEST['post_status'];
+		} elseif ( isset( $_REQUEST['all_posts'] ) ) {
+			unset( $post_data['post_status'] );
+		}
+
+		wp( $post_data );
 
 		$post_type = $this->screen->post_type;
 		$per_page  = $this->get_items_per_page( 'edit_' . $post_type . '_per_page' );
@@ -51,7 +56,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		/** This filter is documented in wp-admin/includes/post.php */
 		$per_page = apply_filters( 'edit_posts_per_page', $per_page, $post_type );
 
-		$this->is_trash = isset( $_REQUEST['post_status'] ) && 'trash' === $_REQUEST['post_status'];
+		$this->is_trash = 'trash' === $post_data['post_status'];
 	}
 
 	/**
@@ -97,7 +102,14 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	 * The no items text.
 	 */
 	public function no_items() {
-		esc_html_e( 'No unpublished automatically generated statuses found.', 'friends' );
+		if (
+			( ! isset( $_REQUEST['post_status'] ) && ! isset( $_REQUEST['all_posts'] ) )
+			|| ( isset( $_REQUEST['post_status'] ) && 'draft' === $_REQUEST['post_status'] )
+		) {
+			esc_html_e( 'No unpublished automatically generated statuses found.', 'friends' );
+		} else {
+			esc_html_e( 'No automatically generated statuses found.', 'friends' );
+		}
 	}
 
 	/**
@@ -117,7 +129,8 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			),
 			$args
 		);
-		$url = add_query_arg( $args, 'edit.php' );
+		$url = add_query_arg( $args, self_admin_url( 'admin.php?page=friends-auto-status' ) );
+		$url = remove_query_arg( 'post_type', $url );
 
 		$class_html   = '';
 		$aria_current = '';
@@ -189,7 +202,10 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		$class        = '';
 
 		$current_user_id = get_current_user_id();
-		$all_args        = array( 'post_type' => $post_type );
+		$all_args        = array(
+			'post_type' => $post_type,
+			'all_posts' => 1,
+		);
 		$mine            = '';
 
 		// Subtract post types that are not included in the admin all list.
@@ -230,6 +246,8 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			}
 
 			if ( isset( $_REQUEST['post_status'] ) && $status_name === $_REQUEST['post_status'] ) {
+				$class = 'current';
+			} elseif ( ! isset( $_REQUEST['post_status'] ) && ! isset( $_REQUEST['all_posts'] ) && 'draft' === $status_name ) {
 				$class = 'current';
 			}
 
@@ -277,17 +295,6 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	}
 
 	/**
-	 * Displays the bulk actions dropdown.
-	 *
-	 * @param string $which The location of the bulk actions: 'top' or 'bottom'.
-	 */
-	protected function bulk_actions( $which = '' ) {
-		parent::bulk_actions( $which );
-		echo "\n";
-		submit_button( __( 'Bulk Publish', 'friends' ), 'primary', '', false, array( 'id' => 'friends-bulk-publish' ) );
-	}
-
-	/**
 	 * Retrieves the list of bulk actions available for this table.
 	 *
 	 * @return array
@@ -304,7 +311,10 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			if ( $this->is_trash ) {
 				$actions['untrash'] = __( 'Restore' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			} else {
-				$actions['edit'] = __( 'Edit' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				if ( apply_filters( 'friends_debug', false ) ) {
+					$actions['edit'] = __( 'Edit' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				}
+				$actions['publish-private'] = __( 'Publish Privately' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
 		}
 
@@ -320,10 +330,10 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	}
 
 	/**
-	 * Generates the table navigation above or below the table
+	 * Generates the extra table navigation above or below the table
 	 *
 	 * @param string $which The location of the bulk actions: 'top' or 'bottom'.
 	 */
-	protected function display_tablenav( $which ) {
+	protected function extra_tablenav( $which ) {
 	}
 }
