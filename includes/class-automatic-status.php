@@ -127,8 +127,8 @@ class Automatic_Status {
 							)
 						),
 						/* translators: %s: Post title. */
-						esc_attr( sprintf( __( 'Privately Publish &#8220;%s&#8221;' ), $post->title ) ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-						__( 'Privately Publish' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						esc_attr( sprintf( __( 'Privately Publish &#8220;%s&#8221;', 'friends' ), $post->title ) ),
+						__( 'Publish Privately', 'friends' )
 					);
 				}
 				return $actions;

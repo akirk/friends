@@ -37,7 +37,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		$post_data = array(
 			'post_type'   => 'post',
 			'post_format' => 'status',
-			'post_status' => 'draft',
+			'post_status' => 'private',
 			'post_author' => get_current_user_id(),
 		);
 
@@ -56,7 +56,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		/** This filter is documented in wp-admin/includes/post.php */
 		$per_page = apply_filters( 'edit_posts_per_page', $per_page, $post_type );
 
-		$this->is_trash = isset( $_REQUEST['post_status'] ) && 'trash' === $_REQUEST['post_status'];
+		$this->is_trash = 'trash' === $post_data['post_status'];
 	}
 
 	/**
@@ -102,7 +102,14 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	 * The no items text.
 	 */
 	public function no_items() {
-		esc_html_e( 'No unpublished automatically generated statuses found.', 'friends' );
+		if (
+			( ! isset( $_REQUEST['post_status'] ) && ! isset( $_REQUEST['all_posts'] ) )
+			|| ( isset( $_REQUEST['post_status'] ) && 'draft' === $_REQUEST['post_status'] )
+		) {
+			esc_html_e( 'No unpublished automatically generated statuses found.', 'friends' );
+		} else {
+			esc_html_e( 'No automatically generated statuses found.', 'friends' );
+		}
 	}
 
 	/**
@@ -239,6 +246,8 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			}
 
 			if ( isset( $_REQUEST['post_status'] ) && $status_name === $_REQUEST['post_status'] ) {
+				$class = 'current';
+			} elseif ( ! isset( $_REQUEST['post_status'] ) && ! isset( $_REQUEST['all_posts'] ) && 'draft' === $status_name ) {
 				$class = 'current';
 			}
 
