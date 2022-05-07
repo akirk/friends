@@ -334,6 +334,8 @@ class User_Feed {
 				'sanitize_callback' => array( __CLASS__, 'validate_parser' ),
 			)
 		);
+
+		do_action( 'friends_after_register_feed_taxonomy' );
 	}
 
 	/**
@@ -474,6 +476,18 @@ class User_Feed {
 	}
 
 	/**
+	 * Generic function for getting User_Feed metadata.
+	 *
+	 * @param      string $key    The key.
+	 */
+	public function get_metadata( $key ) {
+		if ( metadata_exists( 'term', $this->term->term_id, $key ) ) {
+			return get_metadata( 'term', $this->term->term_id, $key, true );
+		}
+		return null;
+	}
+
+	/**
 	 * Generic function for updating User_Feed metadata.
 	 *
 	 * @param      string $key    The key.
@@ -484,6 +498,17 @@ class User_Feed {
 			return update_metadata( 'term', $this->term->term_id, $key, $value );
 		}
 		return add_metadata( 'term', $this->term->term_id, $key, $value, true );
+	}
+
+	/**
+	 * Generic function for deleting User_Feed metadata.
+	 *
+	 * @param      string $key    The key.
+	 */
+	public function delete_metadata( $key ) {
+		if ( metadata_exists( 'term', $this->term->term_id, $key ) ) {
+			return delete_metadata( 'term', $this->term->term_id, $key );
+		}
 	}
 
 	/**

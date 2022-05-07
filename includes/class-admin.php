@@ -1088,6 +1088,8 @@ class Admin {
 					if ( isset( $feed['mime-type'] ) && $user_feed->get_mime_type() !== $feed['mime-type'] ) {
 						$user_feed->update_metadata( 'mime-type', $feed['mime-type'] );
 					}
+
+					do_action( 'friends_process_feed_item_submit', $user_feed, $feed, $term_id );
 				}
 
 				do_action( 'friends_edit_friend_after_form_submit', $friend );

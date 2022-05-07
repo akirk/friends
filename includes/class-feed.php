@@ -525,10 +525,9 @@ class Feed {
 			if ( ! $item->permalink ) {
 				continue;
 			}
-			$permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
+			$item->permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
 
-			$title = $item->title;
-			$content = wp_kses_post( trim( $item->post_content ) );
+			$item->post_content = wp_kses_post( trim( $item->post_content ) );
 
 			$item = apply_filters( 'friends_early_modify_feed_item', $item, $user_feed, $friend_user );
 			if ( ! $item || $item->_feed_rule_delete ) {
@@ -536,12 +535,12 @@ class Feed {
 			}
 
 			// Fallback, when no friends plugin is installed.
-			$item->post_id     = $permalink;
+			$item->post_id     = $item->permalink;
 			$item->post_status = 'publish';
 			if ( ! isset( $item->comment_count ) ) {
 				$item->comment_count = 0;
 			}
-			if ( ( ! $content && ! $title ) || ! $permalink ) {
+			if ( ( ! $item->post_content && ! $item->title ) || ! $item->permalink ) {
 				continue;
 			}
 
@@ -549,15 +548,15 @@ class Feed {
 			if ( isset( $remote_post_ids[ $item->post_id ] ) ) {
 				$post_id = $remote_post_ids[ $item->post_id ];
 			}
-			if ( is_null( $post_id ) && isset( $remote_post_ids[ $permalink ] ) ) {
-				$post_id = $remote_post_ids[ $permalink ];
+			if ( is_null( $post_id ) && isset( $remote_post_ids[ $item->permalink ] ) ) {
+				$post_id = $remote_post_ids[ $item->permalink ];
 			}
 
 			if ( is_null( $post_id ) ) {
-				$post_id = $this->url_to_postid( $permalink, $friend_user->ID );
+				$post_id = $this->url_to_postid( $item->permalink, $friend_user->ID );
 			}
 			$item->_is_new = is_null( $post_id );
-			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
+			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user, $post_id );
 
 			$updated_date = $item->date;
 			if ( ! empty( $item->updated_date ) ) {
@@ -565,11 +564,11 @@ class Feed {
 			}
 
 			$post_data = array(
-				'post_title'        => $title,
-				'post_content'      => force_balance_tags( $content ),
+				'post_title'        => $item->title,
+				'post_content'      => force_balance_tags( $item->post_content ),
 				'post_modified_gmt' => $updated_date,
 				'post_status'       => $item->post_status,
-				'guid'              => $permalink,
+				'guid'              => $item->permalink,
 			);
 
 			// Modified via feed rules.
@@ -612,8 +611,9 @@ class Feed {
 					continue;
 				}
 
-				$new_posts[]                   = $post_id;
-				$remote_post_ids[ $permalink ] = $post_id;
+				$new_posts[] = $post_id;
+
+				$remote_post_ids[ $item->permalink ] = $post_id;
 			}
 
 			$post_format = $feed_post_format;

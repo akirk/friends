@@ -43,9 +43,7 @@ $has_last_log = false;
 								<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
 								<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
 								<th><?php esc_html_e( 'Remarks', 'friends' ); ?></th>
-								<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
-								<th><?php esc_html_e( 'MIME Type', 'friends' ); ?></th>
-								<?php endif; ?>
+								<?php do_action( 'friends_feed_table_header' ); ?>
 							</tr>
 						</thead>
 						<tbody>
@@ -85,13 +83,11 @@ $has_last_log = false;
 									<?php endforeach; ?>
 								</select></td>
 								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][title]" value="<?php echo esc_attr( $feed->get_title() ); ?>" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
-								<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
-									<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][mime-type]" value="<?php echo esc_attr( $feed->get_mime_type() ); ?>" size="20" aria-label="<?php esc_attr_e( 'Feed Type', 'friends' ); ?>" /></td>
-								<?php endif; ?>
+								<?php do_action( 'friends_feed_table_row', $feed, $term_id ); ?>
 							</tr>
 							<?php if ( $feed->get_last_log() ) : ?>
 							<tr class="<?php echo $feed->get_active() ? 'active' : 'inactive hidden'; ?> lastlog hidden">
-								<td colspan="5" class="notice"><?php echo esc_html( $feed->get_last_log() ); ?></td>
+								<td colspan="50" class="notice"><?php echo esc_html( $feed->get_last_log() ); ?></td>
 							</tr>
 							<?php endif; ?>
 						<?php endforeach; ?>
