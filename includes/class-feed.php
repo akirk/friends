@@ -578,26 +578,28 @@ class Feed {
 
 			if ( ! is_null( $post_id ) ) {
 				$old_post = get_post( $post_id );
-				$was_modified = false;
-				foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
-					if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
-						$was_modified = true;
-						break;
-					}
-				}
-
-				if ( $was_modified ) {
-					$post_data['ID'] = $post_id;
-					$was_modified_by_user = false;
-					foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
-						if ( intval( $revision->post_author ) !== $friend_user->ID ) {
-							$was_modified_by_user = true;
+				if ( apply_filters( 'friends_can_update_modified_feed_posts', true, $item, $user_feed, $friend_user, $post_id ) ) {
+					$was_modified = false;
+					foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
+						if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
+							$was_modified = true;
 							break;
 						}
 					}
-					if ( ! $was_modified_by_user ) {
-						$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
-						wp_update_post( $post_data );
+
+					if ( $was_modified ) {
+						$post_data['ID'] = $post_id;
+						$was_modified_by_user = false;
+						foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
+							if ( intval( $revision->post_author ) !== $friend_user->ID ) {
+								$was_modified_by_user = true;
+								break;
+							}
+						}
+						if ( ! $was_modified_by_user ) {
+							$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
+							wp_update_post( $post_data );
+						}
 					}
 				}
 			} else {
