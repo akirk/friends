@@ -55,6 +55,15 @@ class User_Feed {
 	}
 
 	/**
+	 * The string representation of the term = The URL.
+	 *
+	 * @return string Term name = URL.
+	 */
+	public function get_term_id() {
+		return $this->term->term_id;
+	}
+
+	/**
 	 * Gets the URL (= the term name).
 	 *
 	 * @return string The URL (= the term name).

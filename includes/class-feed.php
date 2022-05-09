@@ -194,9 +194,7 @@ class Feed {
 		}
 
 		$new_posts = $this->process_incoming_feed_items( $items, $user_feed );
-		$this->notify_about_new_posts( $friend_user, $new_posts );
 
-		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $friend_user );
 		return $new_posts;
 	}
 
@@ -521,6 +519,7 @@ class Feed {
 		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
+		$modified_posts = array();
 		foreach ( $items as $item ) {
 			if ( ! $item->permalink ) {
 				continue;
@@ -577,8 +576,8 @@ class Feed {
 			}
 
 			if ( ! is_null( $post_id ) ) {
-				$old_post = get_post( $post_id );
 				if ( apply_filters( 'friends_can_update_modified_feed_posts', true, $item, $user_feed, $friend_user, $post_id ) ) {
+					$old_post = get_post( $post_id );
 					$was_modified = false;
 					foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
 						if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
@@ -586,7 +585,6 @@ class Feed {
 							break;
 						}
 					}
-
 					if ( $was_modified ) {
 						$post_data['ID'] = $post_id;
 						$was_modified_by_user = false;
@@ -599,6 +597,7 @@ class Feed {
 						if ( ! $was_modified_by_user ) {
 							$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 							wp_update_post( $post_data );
+							$modified_posts[] = $post_id;
 						}
 					}
 				}
@@ -647,6 +646,10 @@ class Feed {
 		if ( $current_user ) {
 			wp_set_current_user( $current_user->ID );
 		}
+
+		$this->notify_about_new_posts( $friend_user, $new_posts );
+
+		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $modified_posts, $friend_user );
 
 		return $new_posts;
 	}

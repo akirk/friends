@@ -90,7 +90,6 @@ class NotificationTest extends \WP_UnitTestCase {
 
 		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
-		$friends->feed->notify_about_new_posts( $user, $new_items );
 	}
 
 	/**
@@ -133,7 +132,6 @@ class NotificationTest extends \WP_UnitTestCase {
 
 		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
-		$friends->feed->notify_about_new_posts( $user, $new_items );
 	}
 
 	/**
@@ -309,6 +307,5 @@ class NotificationTest extends \WP_UnitTestCase {
 
 		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
-		$friends->feed->notify_about_new_posts( $user, $new_items );
 	}
 }

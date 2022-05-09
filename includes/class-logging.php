@@ -39,7 +39,7 @@ class Logging {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'friends_retrieved_new_posts', array( $this, 'log_feed_successfully_fetched' ), 10, 2 );
+		add_action( 'friends_retrieved_new_posts', array( $this, 'log_feed_successfully_fetched' ), 10, 3 );
 		add_action( 'friends_retrieve_friends_error', array( $this, 'log_feed_error' ), 10, 2 );
 	}
 
@@ -49,10 +49,17 @@ class Logging {
 	 * @param      User_Feed $user_feed  The user feed.
 	 * @param      array     $new_posts  The new posts that were fetched
 	 *                                   (potentially empty array).
+	 * @param      array     $modified_posts  Posts in the feed that weere modified
+	 *                                   (potentially empty array).
 	 */
-	public function log_feed_successfully_fetched( User_Feed $user_feed, $new_posts ) {
+	public function log_feed_successfully_fetched( User_Feed $user_feed, $new_posts, $modified_posts ) {
 		// translators: %s is the number of new posts found.
-		$user_feed->update_last_log( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ), count( $new_posts ) ) );
+		$last_log = sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ), count( $new_posts ) );
+		if ( $modified_posts ) {
+			// translators: %s is the number of new posts found.
+			$last_log .= ' ' . sprintf( _n( '%d post was modified.', '%d posts were modified.', count( $modified_posts ), 'friends' ), count( $modified_posts ) );
+		}
+		$user_feed->update_last_log( $last_log );
 	}
 
 	/**

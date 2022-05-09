@@ -317,12 +317,20 @@ class Admin {
 
 		add_action(
 			'friends_retrieved_new_posts',
-			function ( $user_feed, $new_posts ) {
+			function ( $user_feed, $new_posts, $modified_posts ) {
 				// translators: %s is the number of new posts found.
-				echo esc_html( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ) . '<br/>', count( $new_posts ) ) );
+				echo esc_html( sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ), count( $new_posts ) ) );
+				?>
+				<br />
+				<?php
+				// translators: %s is the number of modified posts.
+				echo esc_html( sprintf( _n( '%d post was modified.', '%d posts were modified.', count( $modified_posts ), 'friends' ), count( $modified_posts ) ) );
+				?>
+				<br />
+				<?php
 			},
 			10,
-			2
+			3
 		);
 
 		add_action(
