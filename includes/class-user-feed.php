@@ -55,11 +55,11 @@ class User_Feed {
 	}
 
 	/**
-	 * The string representation of the term = The URL.
+	 * Gets the identifier.
 	 *
-	 * @return string Term name = URL.
+	 * @return     int  The identifier.
 	 */
-	public function get_term_id() {
+	public function get_id() {
 		return $this->term->term_id;
 	}
 
@@ -571,14 +571,5 @@ class User_Feed {
 		}
 
 		return new \WP_Error( 'term_not_found' );
-	}
-
-	/**
-	 * Gets the identifier.
-	 *
-	 * @return     int  The identifier.
-	 */
-	public function get_id() {
-		return $this->term->term_id;
 	}
 }
