@@ -47,12 +47,17 @@ tr:hover .row-actions span.friends {
 	display: inline;
 }
 
-table.feed-table th.checkbox {
-	width: 30px;
+table.feed-table.widefat td, table.feed-table.widefat th {
+	padding: .5em;
 }
 
-table.feed-table td {
-	padding: 0;
+table.feed-table.widefat .check-column {
+	min-width: 5em;
+	font-weight: bold;
+}
+
+table.feed-table.widefat th.checkbox {
+	padding-top: 1em;
 }
 
 #available-widgets [class*="friends-widget"] .widget-title:before { content: "\f307"; }
