@@ -192,7 +192,7 @@
 		} else {
 			wp.ajax.send( 'friends-load-comments', {
 				data: {
-					_ajax_nonce: $this.data( 'nonce' ),
+					_ajax_nonce: $this.data( 'cnonce' ),
 					post_id: $this.data( 'id' ),
 				},
 				success: function( comments ) {

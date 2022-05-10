@@ -427,7 +427,16 @@ class Frontend {
 		$post_id = intval( $_POST['post_id'] );
 		check_ajax_referer( "comments-$post_id" );
 
+		$author_id = get_post_field( 'post_author', $post_id );
+		$friend_user = new User( $author_id );
+
 		$comments_url = trailingslashit( get_permalink( $post_id ) ) . 'feed/';
+
+		if ( $friend_user->is_friend_url( $comments_url ) && current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) {
+			$comments_url = apply_filters( 'friends_friend_private_feed_url', $comments_url, $friend_user );
+			$comments_url = $this->friends->access_control->append_auth( $comments_url, $friend_user, 300 );
+		}
+
 		$comments = $this->friends->feed->preview( 'simplepie', $comments_url );
 		if ( is_wp_error( $comments ) || ! is_array( $comments ) ) {
 			wp_send_json_error( '<small>' . __( 'Unforunately, comments were not available via RSS.', 'friends' ) . '</small>' );
@@ -460,7 +469,7 @@ class Frontend {
 		$content = ob_get_contents();
 		ob_end_clean();
 
-		wp_send_json_success( $content );// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		wp_send_json_success( $content );
 
 	}
 
@@ -542,6 +551,7 @@ class Frontend {
 					'class'       => array(),
 					'style'       => array(),
 					'data-nonce'  => array(),
+					'data-cnonce' => array(),
 					'data-token'  => array(),
 					'data-friend' => array(),
 					'data-id'     => array(),
@@ -583,7 +593,7 @@ class Frontend {
 
 		$link = '<a href="' . esc_url( $url ) . '"';
 		foreach ( $html_attributes as $name => $value ) {
-			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'style', 'data-nonce', 'data-token', 'data-friend', 'data-id' ) ) ) {
+			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'style', 'data-nonce', 'data-cnonce', 'data-token', 'data-friend', 'data-id' ) ) ) {
 				continue;
 			}
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';
