@@ -143,7 +143,7 @@ class Feed {
 				$items = new \WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
 			} else {
 				foreach ( $items as $key => $item ) {
-					$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user );
+					$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user, null );
 
 					if ( ! $item || $item->_feed_rule_delete ) {
 						unset( $items[ $key ] );
@@ -568,6 +568,7 @@ class Feed {
 				'post_modified_gmt' => $updated_date,
 				'post_status'       => $item->post_status,
 				'guid'              => $item->permalink,
+				'comment_count'     => $item->comment_count,
 			);
 
 			// Modified via feed rules.
@@ -576,35 +577,49 @@ class Feed {
 			}
 
 			if ( ! is_null( $post_id ) ) {
-				if ( apply_filters( 'friends_can_update_modified_feed_posts', true, $item, $user_feed, $friend_user, $post_id ) ) {
-					$old_post = get_post( $post_id );
-					$was_modified = false;
-					foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
-						if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
-							$was_modified = true;
+				$old_post = get_post( $post_id );
+				$modified_post_data = array();
+				foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
+					if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
+						$modified_post_data[ $field ] = $post_data[ $field ];
+						break;
+					}
+				}
+
+				if ( ! empty( $modified_post_data ) && apply_filters( 'friends_can_update_modified_feed_posts', true, $item, $user_feed, $friend_user, $post_id ) ) {
+					$was_modified_by_user = false;
+					foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
+						if ( intval( $revision->post_author ) !== $friend_user->ID ) {
+							$was_modified_by_user = true;
 							break;
 						}
 					}
-					if ( $was_modified ) {
-						$post_data['ID'] = $post_id;
-						$was_modified_by_user = false;
-						foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
-							if ( intval( $revision->post_author ) !== $friend_user->ID ) {
-								$was_modified_by_user = true;
-								break;
-							}
+
+					if ( ! $was_modified_by_user ) {
+						$modified_post_data['ID'] = $post_id;
+						if ( isset( $modified_post_data['post_content'] ) ) {
+							$modified_post_data['post_content'] = str_replace( '\\', '\\\\', $modified_post_data['post_content'] );
 						}
-						if ( ! $was_modified_by_user ) {
-							$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
-							wp_update_post( $post_data );
-							$modified_posts[] = $post_id;
+						if ( intval( $old_post->comment_count ) !== intval( $item->comment_count ) ) {
+							$modified_post_data['comment_count'] = $item->comment_count;
 						}
+						wp_update_post( $modified_post_data );
+						$modified_posts[] = $post_id;
 					}
+				}
+
+				if ( intval( $old_post->comment_count ) !== intval( $item->comment_count ) && ! in_array( $post_id, $modified_posts ) ) {
+					// Always update the comment count.
+					wp_update_post(
+						array(
+							'ID'            => $post_id,
+							'comment_count' => $item->comment_count,
+						)
+					);
 				}
 			} else {
 				$post_data['post_type']     = Friends::CPT;
 				$post_data['post_date_gmt'] = $item->date;
-				$post_data['comment_count'] = $item->comment_count;
 				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 				$post_data['meta_input'] = $item->meta;
 
