@@ -12,5 +12,8 @@ $args['friends']->frontend->link(
 	array(
 		'class'          => 'comments btn ml-1',
 		'dashicon_front' => 'admin-comments',
+		'data-id'        => get_the_ID(),
+		'data-nonce'     => wp_create_nonce( 'comments-' . get_the_ID() ),
 	)
 );
+

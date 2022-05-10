@@ -16,3 +16,6 @@
 		?>
 	<?php endif; ?>
 </footer>
+<?php
+
+Friends\Friends::template_loader()->get_template_part( 'frontend/parts/comments-content', null, $args );
