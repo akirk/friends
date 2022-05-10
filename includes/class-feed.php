@@ -606,9 +606,7 @@ class Feed {
 				$post_data['post_date_gmt'] = $item->date;
 				$post_data['comment_count'] = $item->comment_count;
 				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
-				if ( isset( $item->meta ) ) {
-					$post_data['meta_input'] = $item->meta;
-				}
+				$post_data['meta_input'] = $item->meta;
 
 				$post_id = wp_insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {

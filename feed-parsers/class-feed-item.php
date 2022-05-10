@@ -23,6 +23,7 @@ class Feed_Item {
 		'post_format' => 'standard',
 		'post_status' => 'publish',
 		'is_new'      => false,
+		'meta'        => array(),
 	);
 
 	/**
@@ -150,6 +151,10 @@ class Feed_Item {
 			case '_is_new':
 				$value = boolval( $value );
 				break;
+			case '_full_content_fetched':
+				$value = boolval( $value );
+				$this->data['meta']['full-content-fetched'] = $value;
+				return $value;
 
 			default:
 				return new \WP_Error( 'invalid-key', 'This value cannot be stored in a feed item.' );

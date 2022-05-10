@@ -57,7 +57,7 @@ class Logging {
 		$last_log = sprintf( _n( 'Found %d new post.', 'Found %d new posts.', count( $new_posts ), 'friends' ), count( $new_posts ) );
 		if ( $modified_posts ) {
 			// translators: %s is the number of new posts found.
-			$last_log .= ' ' . sprintf( _n( '%d post was modified.', '%d posts were modified.', count( $modified_posts ), 'friends' ), count( $modified_posts ) );
+			$last_log .= ' ' . sprintf( _n( '%d post was modified.', '%d posts were modified.', count( $modified_posts ), 'friends' ), count( $modified_posts ) ) . ' (' . implode( ', ', array_slice( $modified_posts, 0, 5 ) ) . ')';
 		}
 		$user_feed->update_last_log( $last_log );
 	}
