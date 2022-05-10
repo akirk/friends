@@ -184,19 +184,25 @@
 		if ( e.metaKey || e.altKey || e.shiftKey ) {
 			return;
 		}
+
 		var $this = $( this );
-		wp.ajax.send( 'friends-load-comments', {
-			data: {
-				_ajax_nonce: $this.data( 'nonce' ),
-				post_id: $this.data( 'id' ),
-			},
-			success: function( comments ) {
-				$this.closest( 'article' ).find( '.comments-content' ).html( comments );
-			},
-			error: function( message ) {
-				$this.closest( 'article' ).find( '.comments-content' ).html( message );
-			}
-		} );
+		var content = $this.closest( 'article' ).find( '.comments-content' );
+		if ( content.data( 'loaded' ) ) {
+			content.toggle();
+		} else {
+			wp.ajax.send( 'friends-load-comments', {
+				data: {
+					_ajax_nonce: $this.data( 'nonce' ),
+					post_id: $this.data( 'id' ),
+				},
+				success: function( comments ) {
+					content.html( comments ).data( 'loaded', true );
+				},
+				error: function( message ) {
+					content.html( message );
+				}
+			} );
+		}
 		return false;
 	} );
 
