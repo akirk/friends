@@ -8,7 +8,7 @@
 
 $search = '';
 if ( isset( $_GET['s'] ) ) {
-	$search = $_GET['s'];
+	$search = wp_unslash( $_GET['s'] );
 }
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?> class="no-js no-svg">

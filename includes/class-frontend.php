@@ -393,7 +393,7 @@ class Frontend {
 	 * The Ajax function to autocomplete search.
 	 */
 	function ajax_autocomplete() {
-		$q = stripslashes( $_POST['q'] );
+		$q = wp_unslash( $_POST['q'] );
 		$users = User_Query::search( '*' . $q . '*' );
 		$results = array();
 		foreach ( $users->get_results() as $friend ) {
