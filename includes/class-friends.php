@@ -760,6 +760,10 @@ class Friends {
 			return $tax_query;
 		}
 
+		if ( ! empty( $tax_query ) ) {
+			$tax_query['relation'] = 'AND';
+		}
+
 		if ( 'standard' === $filter_by_post_format ) {
 			$formats = array();
 
@@ -770,28 +774,22 @@ class Friends {
 			}
 
 			if ( ! empty( $formats ) ) {
-				return array(
-					'relation' => 'AND',
-					array(
-						'operator' => 'NOT IN',
-						'taxonomy' => 'post_format',
-						'field'    => 'slug',
-						'terms'    => $formats,
-					),
+				$tax_query[] = array(
+					'operator' => 'NOT IN',
+					'taxonomy' => 'post_format',
+					'field'    => 'slug',
+					'terms'    => $formats,
 				);
 			}
-		}
-
-		return array_merge(
-			$tax_query,
-			array(
-				array(
+		} else {
+				$tax_query[] = array(
 					'taxonomy' => 'post_format',
 					'field'    => 'slug',
 					'terms'    => array( 'post-format-' . $filter_by_post_format ),
-				),
-			)
-		);
+				);
+		}
+
+		return $tax_query;
 	}
 
 	/**

@@ -768,6 +768,17 @@ class User extends \WP_User {
 	}
 
 	/**
+	 * Gets the local friends page url for a reaction.
+	 *
+	 * @param      string $slug  The reaction slug.
+	 *
+	 * @return     string      The local friends page url.
+	 */
+	function get_local_friends_page_reaction_url( $slug ) {
+		return home_url( '/friends/' . $this->user_login . '/reaction' . $slug . '/' );
+	}
+
+	/**
 	 * Gets the friend auth to be used as a GET parameter.
 	 *
 	 * @param      integer $validity  The validity in seconds.

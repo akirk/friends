@@ -733,7 +733,8 @@ class Frontend {
 		}
 
 		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
-		if ( count( $pagename_parts ) > 0 && 'friends' !== $pagename_parts[0] ) {
+		$is_friends = array_shift( $pagename_parts );
+		if ( 'friends' !== $is_friends ) {
 			return $query;
 		}
 
@@ -756,7 +757,7 @@ class Frontend {
 				status_header( 404 );
 				$query->set_404();
 			} elseif ( ! Friends::on_frontend() ) {
-				if ( count( $pagename_parts ) > 1 ) {
+				if ( count( $pagename_parts ) > 0 ) {
 					wp_safe_redirect( home_url( '/friends/' ) );
 					exit;
 				}
@@ -768,50 +769,61 @@ class Frontend {
 		switch_to_locale( get_user_locale() );
 		$page_id = get_query_var( 'page' );
 
-		if ( isset( $pagename_parts[1] ) ) {
-			if ( 'opml' === $pagename_parts[1] ) {
-				return $this->render_opml( isset( $_REQUEST['public'] ) );
-			}
+		$tax_query = array();
+		$post_formats = get_post_format_slugs();
 
-			$tax_query = array();
-			$potential_post_format = false;
-			if ( 'type' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
-				$potential_post_format = $pagename_parts[2];
-			} elseif ( 'reaction' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
-				$tax_query = array(
-					'relation' => 'AND',
-					array(
-						'taxonomy' => 'friend-reaction-' . get_current_user_id(),
-						'field'    => 'slug',
-						'terms'    => array( $pagename_parts[2] ),
-					),
+		while ( $pagename_parts ) {
+			$pagename_part = $pagename_parts[0];
+			$current_part = array_shift( $pagename_parts );
+			if ( 'reaction' === substr( $current_part, 0, 8 ) && strlen( $current_part ) > 8 ) {
+				$reaction = Reactions::validate_emoji( substr( $current_part, 8 ) );
+				if ( ! $reaction ) {
+					continue;
+				}
+				$this->reaction = $reaction;
+				if ( ! empty( $tax_query ) ) {
+					$tax_query['relation'] = 'AND';
+				}
+
+				$tax_query[] = array(
+					'taxonomy' => 'friend-reaction-' . get_current_user_id(),
+					'field'    => 'slug',
+					'terms'    => array( substr( $current_part, 8 ) ),
 				);
-				$this->reaction = Reactions::validate_emoji( $pagename_parts[2] );
-				if ( ! $page_id && isset( $pagename_parts[2] ) && 'reaction' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
-					$potential_post_format = $pagename_parts[3];
-				}
-			} else {
-				$author = get_user_by( 'login', $pagename_parts[1] );
-				if ( false === $author ) {
-					if ( $query->is_feed() ) {
-						status_header( 404 );
-						$query->set_404();
-						return $query;
-					}
-					wp_safe_redirect( home_url( '/friends/' ) );
-					exit;
-				}
-
-				$this->author = new User( $author );
-				if ( ! $page_id && isset( $pagename_parts[2] ) && 'type' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
-					$potential_post_format = $pagename_parts[3];
-				}
+				continue;
 			}
 
-			$tax_query = $this->friends->wp_query_get_post_format_tax_query( $tax_query, $potential_post_format );
-			if ( $tax_query ) {
-				$this->post_format = $potential_post_format;
-				$query->set( 'tax_query', $tax_query );
+			switch ( $current_part ) {
+				case 'opml':
+					return $this->render_opml( isset( $_REQUEST['public'] ) );
+
+				case 'type':
+					if ( ! isset( $pagename_parts[0], $post_formats[ $pagename_parts[0] ] ) ) {
+						break;
+					}
+
+					$post_format = array_shift( $pagename_parts );
+					$tax_query = $this->friends->wp_query_get_post_format_tax_query( $tax_query, $post_format );
+
+					if ( $tax_query ) {
+						$this->post_format = $post_format;
+					}
+					break;
+
+				default: // Maybe an author.
+					$author = get_user_by( 'login', $current_part );
+					if ( false === $author ) {
+						if ( $query->is_feed() ) {
+							status_header( 404 );
+							$query->set_404();
+							return $query;
+						}
+						wp_safe_redirect( home_url( '/friends/' ) );
+						exit;
+					}
+
+					$this->author = new User( $author );
+					break;
 			}
 		}
 
@@ -823,6 +835,8 @@ class Frontend {
 		$query->queried_object_id = null;
 
 		$query->set( 'post_type', Friends::get_frontend_post_types() );
+		$query->set( 'tax_query', $tax_query );
+
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$post_status = array( 'publish', 'private' );
 			if ( isset( $_GET['maybe-in-trash'] ) ) {
