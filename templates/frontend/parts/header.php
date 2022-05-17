@@ -40,8 +40,8 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 		<?php
 		echo wp_kses(
 			sprintf(
-			// translators: %1$s is a date or relative time, %2$s is a site name or domain.
-				__( '%1$s on %2$s', 'friends' ),
+				// translators: %1$s is a date or relative time, %2$s is a site name or domain.
+				_x( '%1$s on %2$s', 'at-date-on-post', 'friends' ),
 				'<a href="' . esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ) . '" title="' . get_the_time( 'r' ) . '">' .
 				/* translators: %s is a time span */ sprintf( __( '%s ago' ), human_time_diff( get_post_time( 'U', true ) ) ) . // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'</a>',

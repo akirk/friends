@@ -163,7 +163,7 @@
 
 	$document.on( 'click', 'a.collapse-post', function() {
 		var contents = $( this ).closest( 'article' ).find( 'div.card-body' );
-		if ( contents.is(':visible') ) {
+		if ( contents.is( ':visible' ) ) {
 			contents.hide();
 			$( this ).find( 'i' ).removeClass( 'dashicons-fullscreen-exit-alt' ).addClass( 'dashicons-fullscreen-alt' );
 		} else {
@@ -175,7 +175,34 @@
 	} );
 
 	$document.on( 'dblclick', 'a.collapse-post', function() {
-		$('a.collapse-post').trigger('click');
+		// Collapse-toggle all visible.
+		$( 'a.collapse-post' ).trigger( 'click' );
+		return false;
+	} );
+
+	$document.on( 'click', 'article a.comments', function( e ) {
+		if ( e.metaKey || e.altKey || e.shiftKey ) {
+			return;
+		}
+
+		var $this = $( this );
+		var content = $this.closest( 'article' ).find( '.comments-content' );
+		if ( content.data( 'loaded' ) ) {
+			content.toggle();
+		} else {
+			wp.ajax.send( 'friends-load-comments', {
+				data: {
+					_ajax_nonce: $this.data( 'cnonce' ),
+					post_id: $this.data( 'id' ),
+				},
+				success: function( comments ) {
+					content.html( comments ).data( 'loaded', true );
+				},
+				error: function( message ) {
+					content.html( message );
+				}
+			} );
+		}
 		return false;
 	} );
 

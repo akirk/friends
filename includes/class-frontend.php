@@ -80,6 +80,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
+		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -280,15 +281,18 @@ class Frontend {
 
 		if ( ! current_user_can( Friends::REQUIRED_ROLE, $post_id ) ) {
 			wp_send_json_error();
+			exit;
 		}
 
 		$post_formats = get_post_format_strings();
 		if ( ! isset( $post_formats[ $post_format ] ) ) {
 			wp_send_json_error();
+			exit;
 		}
 
 		if ( ! set_post_format( $post_id, $post_format ) ) {
 			wp_send_json_error();
+			exit;
 		}
 
 		wp_send_json_success();
@@ -371,6 +375,7 @@ class Frontend {
 		$query_vars = stripslashes( $_POST['query_vars'] );
 		if ( sha1( wp_salt( 'nonce' ) . $query_vars ) !== $_POST['qv_sign'] ) {
 			wp_send_json_error();
+			exit;
 		}
 		$query_vars = unserialize( $query_vars );
 		$query_vars['paged'] = intval( $_POST['page'] ) + 1;
@@ -407,6 +412,64 @@ class Frontend {
 		}
 
 		wp_send_json_success( implode( PHP_EOL, $results ) );
+
+	}
+
+	/**
+	 * The Ajax function to load comments.
+	 */
+	function ajax_load_comments() {
+		if ( ! isset( $_POST['post_id'] ) || ! intval( $_POST['post_id'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$post_id = intval( $_POST['post_id'] );
+		check_ajax_referer( "comments-$post_id" );
+
+		$author_id = get_post_field( 'post_author', $post_id );
+		$friend_user = new User( $author_id );
+
+		$comments_url = trailingslashit( get_permalink( $post_id ) ) . 'feed/';
+
+		if ( $friend_user->is_friend_url( $comments_url ) && current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) {
+			$comments_url = apply_filters( 'friends_friend_private_feed_url', $comments_url, $friend_user );
+			$comments_url = $this->friends->access_control->append_auth( $comments_url, $friend_user, 300 );
+		}
+
+		$comments = $this->friends->feed->preview( 'simplepie', $comments_url );
+		if ( is_wp_error( $comments ) || ! is_array( $comments ) ) {
+			wp_send_json_error( '<small>' . __( 'Unforunately, comments were not available via RSS.', 'friends' ) . '</small>' );
+			exit;
+		}
+
+		$template_loader = Friends::template_loader();
+		ob_start();
+		?>
+		<h5><?php esc_html_e( 'Comments' ); /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></h5>
+		<?php
+		foreach ( $comments as $comment ) {
+			$template_loader->get_template_part(
+				'frontend/parts/comment',
+				null,
+				array(
+					'author'       => $comment->author,
+					'date'         => $comment->date,
+					'permalink'    => $comment->permalink,
+					'post_content' => $comment->post_content,
+				)
+			);
+
+		}
+		?>
+		<p>
+		<a href="<?php echo esc_url( get_comments_link( $post_id ) ); ?>"><?php esc_html_e( 'Leave a Comment' );  /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></a>
+		</p>
+		<?php
+		$content = ob_get_contents();
+		ob_end_clean();
+
+		wp_send_json_success( $content );
 
 	}
 
@@ -488,8 +551,10 @@ class Frontend {
 					'class'       => array(),
 					'style'       => array(),
 					'data-nonce'  => array(),
+					'data-cnonce' => array(),
 					'data-token'  => array(),
 					'data-friend' => array(),
+					'data-id'     => array(),
 				),
 				'span' => array( 'class' => array() ),
 			)
@@ -528,7 +593,7 @@ class Frontend {
 
 		$link = '<a href="' . esc_url( $url ) . '"';
 		foreach ( $html_attributes as $name => $value ) {
-			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'style', 'data-nonce', 'data-token', 'data-friend' ) ) ) {
+			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'style', 'data-nonce', 'data-cnonce', 'data-token', 'data-friend', 'data-id' ) ) ) {
 				continue;
 			}
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';
