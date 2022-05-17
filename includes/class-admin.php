@@ -631,8 +631,6 @@ class Admin {
 	public function render_admin_settings() {
 		$this->check_admin_settings();
 
-		$current_user = wp_get_current_user();
-
 		?>
 		<h1><?php esc_html_e( 'Friends Settings', 'friends' ); ?></h1>
 		<?php
@@ -664,8 +662,6 @@ class Admin {
 		// Now let's switch back to the admin language.
 		remove_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
 		restore_previous_locale();
-
-		$keywords = get_option( 'friends_notification_keywords', false );
 
 		Friends::template_loader()->get_template_part(
 			'admin/settings',

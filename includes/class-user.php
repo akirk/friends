@@ -265,7 +265,7 @@ class User extends \WP_User {
 	 *
 	 * @param      string $feeds  The feed URLs to subscribe to.
 	 *
-	 * @return     \WP_User|\WP_error  $user The new associated user or an error object.
+	 * @return     array(\WP_Term)|\WP_error  $user The new associated user or an error object.
 	 */
 	public function save_feeds( $feeds = array() ) {
 		$errors = new \WP_Error();
@@ -313,7 +313,7 @@ class User extends \WP_User {
 	 * @param      string $feed_url  The feed URL to subscribe to.
 	 * @param      array  $options   The options.
 	 *
-	 * @return     \WP_User|\WP_error  $user The new associated user or an error object.
+	 * @return     \WP_Term|\WP_error  $user The new feed or an error object.
 	 */
 	public function save_feed( $feed_url, $options = array() ) {
 		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
@@ -648,6 +648,22 @@ class User extends \WP_User {
 			}
 		}
 		return $active_feeds;
+	}
+
+	/**
+	 * Get just the user's active feeds.
+	 *
+	 * @return array An array of active User_Feed items.
+	 */
+	public function get_due_feeds() {
+		$due_feeds = array();
+		foreach ( $this->get_active_feeds() as $feed ) {
+			// Explicitly use time() to allow mocking it inside the namespace.
+			if ( gmdate( 'Y-m-d H:i:s', time() ) >= $feed->get_next_poll() ) {
+				$due_feeds[] = $feed;
+			}
+		}
+		return $due_feeds;
 	}
 
 	/**

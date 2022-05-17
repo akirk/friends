@@ -245,9 +245,9 @@ class Feed {
 	/**
 	 * Retrieve posts from all friends.
 	 *
-	 * @param      int $max_age     The maximum age of the last retrieval. Default: a bit less than an hour to not block cron jobs.
+	 * @param      bool $force  Whether to force retrieval.
 	 */
-	public function retrieve_friend_posts( $max_age = 3000 ) {
+	public function retrieve_friend_posts( $force = false ) {
 		$friends = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
 		$friends = $friends->get_results();
 
@@ -257,26 +257,26 @@ class Feed {
 
 		$feeds = array();
 		foreach ( $friends as $friend_user ) {
-			$feeds = array_merge( $feeds, $friend_user->get_active_feeds() );
+			if ( $force ) {
+				$due_feeds = $friend_user->get_active_feeds();
+			} else {
+				// Respect the next poll date.
+				$due_feeds = $friend_user->get_due_feeds();
+			}
+			$feeds = array_merge( $feeds, $due_feeds );
 		}
 
-		$max_age = gmdate( 'Y-m-d H:i:s', time() - $max_age );
-		$feeds = array_filter(
-			$feeds,
-			function( $feed ) use ( $max_age ) {
-				return strcmp( $feed->get_last_log(), $max_age ) < 0;
-			}
-		);
-
+		// Let's poll the oldest feeds first.
 		usort(
 			$feeds,
 			function( $a, $b ) {
-				return strcmp( $a->get_last_log(), $b->get_last_log() );
+				return strcmp( $a->get_next_poll(), $b->get_next_poll() );
 			}
 		);
 
 		foreach ( $feeds as $feed ) {
 			$this->retrieve_feed( $feed );
+			$feed->was_polled();
 			$feed->get_friend_user()->delete_outdated_posts();
 		}
 	}

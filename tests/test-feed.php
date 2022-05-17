@@ -8,6 +8,24 @@
 namespace Friends;
 
 /**
+ * Mock the time() function.
+ *
+ * @param      bool $set_time  set the time.
+ *
+ * @return     bool  The (non-moving) time.
+ */
+function time( $set_time = false ) {
+	static $time;
+	if ( ! isset( $time ) ) {
+		$time = \time();
+	}
+	if ( $set_time ) {
+		$time = strtotime( $set_time, $time );
+	}
+	return $time;
+}
+
+/**
  * Test the Feed
  */
 class FeedTest extends \WP_UnitTestCase {
@@ -283,6 +301,190 @@ class FeedTest extends \WP_UnitTestCase {
 		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-content.rss' ) );
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 2, wp_get_post_revisions( $post_id ) );
+	}
+
+	private function get_user_feed( $user, $url, $interval, $modifier ) {
+		$term = User_Feed::save(
+			$user,
+			$url,
+			array(
+				'active'   => true,
+				'interval' => $interval,
+				'modifier' => $modifier,
+			)
+		);
+
+		return new User_Feed( $term, $user );
+	}
+
+	public function test_poll_interval() {
+		$user = new User( $this->alex );
+
+		// Stop the clock by using our mock function for the first time.
+		time();
+
+		// Linear.
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/1', 3600, 100 );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+1 hour' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+1 hour' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+
+		// Linear, migrated.
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/2', 0, 0 );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+1 hour' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+1 hour' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+
+		// +50% upon every call.
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/3', 3600, 150 );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+60 minutes' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+90 minutes' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+135 minutes' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+
+		// Double upon every call.
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/4', 3600, 200 );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+1 hour' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+2 hour' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+
+		time( '+4 hour' );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() - User_Feed::INTERVAL_BACKTRACK ), $user_feed->get_next_poll() );
+	}
+
+	public function get_sorted_feeds( $feeds ) {
+		usort(
+			$feeds,
+			function( $a, $b ) {
+				$c = strcmp( $a->get_next_poll(), $b->get_next_poll() );
+				if ( 0 !== $c ) {
+					return $c;
+				}
+
+				return strcmp( $a->get_url(), $b->get_url() );
+			}
+		);
+
+		return array_map(
+			function ( $feed ) {
+				// Remove http://example.org/.
+				return intval( substr( $feed->get_url(), 19 ) );
+			},
+			$feeds
+		);
+	}
+
+	public function test_due_feeds() {
+		$user = new User( $this->alex );
+
+		// Stop the clock by using our mock function for the first time.
+		time();
+
+		// 1. Linear.
+		$this->get_user_feed( $user, 'http://example.org/1', 3600, 100 );
+		// 2. Every two hours.
+		$this->get_user_feed( $user, 'http://example.org/2', 7200, 100 );
+		// 3. Almost upon every call (this is to change and verify the order).
+		$this->get_user_feed( $user, 'http://example.org/3', 3600, 199 );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 1, 2, 3 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 1, 3 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 1, 2 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 3, 1 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 1, 2 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 1 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 1, 2 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 3, 1 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
+		time( '+1 hour' );
+
+		$due_feeds = $user->get_due_feeds();
+		$this->assertEquals( array( 1, 2 ), $this->get_sorted_feeds( $due_feeds ) );
+		foreach ( $due_feeds as $user_feed ) {
+			$user_feed->was_polled();
+		}
+
 	}
 
 }

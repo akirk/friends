@@ -506,7 +506,7 @@ class Frontend {
 					$feed->enable_cache( false );
 				}
 			);
-			$this->friends->feed->retrieve_friend_posts( null, true );
+			$this->friends->feed->retrieve_friend_posts( true );
 		}
 
 		return Friends::template_loader()->get_template_part( 'frontend/index', null, array(), false );
