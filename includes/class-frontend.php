@@ -99,6 +99,16 @@ class Frontend {
 			'top'
 		);
 		add_rewrite_rule(
+			'friends/reaction/([0-9a-f]+)/?$',
+			'index.php?pagename=friends/reaction/$matches[1]',
+			'top'
+		);
+		add_rewrite_rule(
+			'friends/type/(' . implode( '|', get_post_format_slugs() ) . ')/?$',
+			'index.php?pagename=friends/type/$matches[1]',
+			'top'
+		);
+		add_rewrite_rule(
 			'friends/(.*)/(\d+)/?$',
 			'index.php?pagename=friends/$matches[1]&page=$matches[2]',
 			'top'
@@ -778,17 +788,19 @@ class Frontend {
 			if ( 'type' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
 				$potential_post_format = $pagename_parts[2];
 			} elseif ( 'reaction' === $pagename_parts[1] && isset( $pagename_parts[2] ) ) {
-				$tax_query = array(
-					'relation' => 'AND',
-					array(
-						'taxonomy' => 'friend-reaction-' . get_current_user_id(),
-						'field'    => 'slug',
-						'terms'    => array( $pagename_parts[2] ),
-					),
-				);
-				$this->reaction = Reactions::validate_emoji( $pagename_parts[2] );
-				if ( ! $page_id && isset( $pagename_parts[2] ) && 'reaction' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
-					$potential_post_format = $pagename_parts[3];
+				$this->reaction = Reactions::validate_emoji( urldecode( $pagename_parts[2] ) );
+				if ( $this->reaction ) {
+					$tax_query = array(
+						'relation' => 'AND',
+						array(
+							'taxonomy' => 'friend-reaction-' . get_current_user_id(),
+							'field'    => 'slug',
+							'terms'    => array( $pagename_parts[2] ),
+						),
+					);
+					if ( ! $page_id && isset( $pagename_parts[2] ) && 'reaction' === $pagename_parts[2] && isset( $pagename_parts[3] ) ) {
+						$potential_post_format = $pagename_parts[3];
+					}
 				}
 			} else {
 				$author = get_user_by( 'login', $pagename_parts[1] );

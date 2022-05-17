@@ -57,6 +57,10 @@ $args['friends']->frontend->link(
 	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_post_format_url( $post_format ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
 
+<?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
+	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_reaction_url( $slug ) ); ?>"><?php echo esc_html( $reaction->char ); ?></a>
+<?php endforeach; ?>
+
 <?php if ( $edit_user_link ) : ?>
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>">
 	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), $active_feeds ) ); ?>

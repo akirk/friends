@@ -50,7 +50,7 @@ class Admin {
 		add_filter( 'the_title', array( $this, 'override_post_format_title' ), 10, 2 );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
-		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_new_content' ), 71 );
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_new_content' ), 71 );
 		add_action( 'wp_head', array( $this, 'admin_bar_mobile' ) );
 		add_action( 'current_screen', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
@@ -2229,11 +2229,11 @@ class Admin {
 	}
 
 	/**
-	 * Add a Friends menu to the New Content admin section
+	 * Add Friend entries to the New Content admin section
 	 *
 	 * @param  \WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
-	public function admin_bar_friends_new_content( \WP_Admin_Bar $wp_menu ) {
+	public function admin_bar_new_content( \WP_Admin_Bar $wp_menu ) {
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$wp_menu->add_menu(
 				array(

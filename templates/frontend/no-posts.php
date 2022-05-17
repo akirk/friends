@@ -17,5 +17,5 @@ if ( isset( $_GET['p'] ) && $_GET['p'] > 1 ) {
 		)
 	);
 } else {
-	esc_html_e( "Your friends haven't posted anything yet!", 'friends' );
+	esc_html_e( 'Unfortunately, we could not find a post.', 'friends' );
 }
