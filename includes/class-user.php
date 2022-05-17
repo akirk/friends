@@ -775,7 +775,7 @@ class User extends \WP_User {
 	 * @return     string      The local friends page url.
 	 */
 	function get_local_friends_page_reaction_url( $slug ) {
-		return home_url( '/friends/' . $this->user_login . '/type/' . $slug . '/' );
+		return home_url( '/friends/' . $this->user_login . '/reaction' . $slug . '/' );
 	}
 
 	/**

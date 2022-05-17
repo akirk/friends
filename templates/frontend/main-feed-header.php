@@ -72,7 +72,7 @@ if ( $args['friends']->frontend->reaction ) {
 <?php endforeach; ?>
 
 <?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
-	<a class="chip" href="<?php echo esc_url( home_url( '/friends/reaction/' . $slug . '/' ) ); ?>"><?php echo esc_html( $reaction->char ); ?></a>
+	<a class="chip" href="<?php echo esc_url( home_url( '/friends/reaction' . $slug . '/' ) ); ?>"><?php echo esc_html( $reaction->char ); ?></a>
 <?php endforeach; ?>
 
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add New Friend', 'friends' ); ?></a>
