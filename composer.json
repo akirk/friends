@@ -31,12 +31,6 @@
 		],
 		"test": [
 			"@php ./vendor/phpunit/phpunit/phpunit --no-coverage"
-		],
-		"install-codestandards": [
-		    "Dealerdirect\\Composer\\Plugin\\Installers\\PHPCodeSniffer\\Plugin::run"
-        ],
-        "post-install-cmd": [
-            "@install-codestandards"
 		]
 	}
 }
