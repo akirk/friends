@@ -1,13 +1,11 @@
 {
 	"name": "akirk/friends",
 	"require-dev": {
-		"squizlabs/php_codesniffer": "*",
-		"wp-phpunit/wp-phpunit": "*",
-		"yoast/phpunit-polyfills": "^1.0",
-		"phpunit/phpunit": "^5.7.21 || ^6.5 || ^7.5",
+		"dealerdirect/phpcodesniffer-composer-installer": "*",
+		"object-calisthenics/phpcs-calisthenics-rules": "*",
 		"phpcompatibility/php-compatibility": "*",
 		"wp-coding-standards/wpcs": "*",
-		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
+		"yoast/phpunit-polyfills": "*"
 	},
 	"config": {
 		"allow-plugins": {
