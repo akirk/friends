@@ -4,7 +4,8 @@
 		"dealerdirect/phpcodesniffer-composer-installer": "*",
 		"object-calisthenics/phpcs-calisthenics-rules": "*",
 		"phpcompatibility/php-compatibility": "*",
-		"wp-coding-standards/wpcs": "*"
+		"wp-coding-standards/wpcs": "*",
+		"yoast/phpunit-polyfills": "*"
 	},
 	"config": {
 		"allow-plugins": {
