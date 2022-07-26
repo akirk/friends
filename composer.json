@@ -10,7 +10,9 @@
 		"dealerdirect/phpcodesniffer-composer-installer": "^0.7.0"
 	},
 	"config": {
-		"allow-plugins": {}
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		}
 	},
 	"prefer-stable" : true,
 	"scripts": {
