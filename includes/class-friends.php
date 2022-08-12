@@ -204,11 +204,6 @@ class Friends {
 	 * Create the Friend user roles
 	 */
 	private static function setup_roles() {
-		$friend = get_role( 'friend3' );
-		if ( ! $friend ) {
-			_x( 'Friend3', 'User role', 'friends' );
-			$friend = add_role( 'friend3', 'Friend3' );
-		}
 		$friend = get_role( 'friend' );
 		if ( ! $friend ) {
 			_x( 'Friend', 'User role', 'friends' );
@@ -380,22 +375,43 @@ class Friends {
 				// Activate for each site.
 				foreach ( get_sites() as $blog ) {
 					switch_to_blog( $blog->blog_id );
-					self::activate_for_blog();
+					self::setup();
 					restore_current_blog();
 				}
 			} elseif ( current_user_can( 'activate_plugins' ) ) {
-				self::activate_for_blog();
+				self::setup();
 			}
 			return;
 		}
 
-		self::activate_for_blog();
+		self::setup();
+	}
+
+	/**
+	 * Actions to take upon plugin activation.
+	 *
+	 * @param      int|WP_Site $blog_id  Blog ID.
+	 */
+	public static function activate_for_blog( $blog_id ) {
+		if ( ! function_exists( 'is_plugin_active_for_network' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/plugin.php';
+		}
+
+		if ( $blog_id instanceof \WP_Site ) {
+			$blog_id = (int) $blog_id->blog_id;
+		}
+
+		if ( is_plugin_active_for_network( FRIENDS_PLUGIN_BASENAME ) ) {
+			switch_to_blog( $blog_id );
+			self::setup();
+			restore_current_blog();
+		}
 	}
 
 	/**
 	 * Actions to take upon plugin activation.
 	 */
-	public static function activate_for_blog() {
+	private static function setup() {
 		self::setup_roles();
 		self::create_friends_page();
 

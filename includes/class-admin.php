@@ -495,7 +495,7 @@ class Admin {
 		}
 
 		if ( isset( $_REQUEST['rerun-activate'] ) ) {
-			Friends::activate_for_blog();
+			Friends::activate_for_blog( get_current_site() );
 			wp_safe_redirect( add_query_arg( array( 'reran-activation' => 'friends' ), wp_get_referer() ) );
 			exit;
 		}
