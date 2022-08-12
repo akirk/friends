@@ -486,7 +486,7 @@ class Admin {
 	public function process_admin_settings() {
 		$this->check_admin_settings();
 
-		if ( empty( $_REQUEST ) ) {
+		if ( empty( $_REQUEST ) || ! isset( $_REQUEST['_wpnonce'] ) ) {
 			return;
 		}
 
