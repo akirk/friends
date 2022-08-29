@@ -81,6 +81,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
+		add_action( 'wp_ajax_friends-search-friend', array( $this, 'ajax_search_friend' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -372,7 +373,7 @@ class Frontend {
 	 * The Ajax function to load more posts for infinite scrolling.
 	 */
 	public function ajax_load_next_page() {
-		$query_vars = stripslashes( $_POST['query_vars'] );
+		$query_vars = wp_unslash( $_POST['query_vars'] );
 		if ( sha1( wp_salt( 'nonce' ) . $query_vars ) !== $_POST['qv_sign'] ) {
 			wp_send_json_error();
 			exit;
@@ -412,6 +413,41 @@ class Frontend {
 		}
 
 		wp_send_json_success( implode( PHP_EOL, $results ) );
+
+	}
+
+	function ajax_search_friend() {
+		check_ajax_referer( 'friends-search-friend-' . $_POST['friend_id'] );
+
+		$s = wp_unslash( $_POST['s'] );
+		$friend_user = new User( $_POST['friend_id'] );
+		$url = str_replace( REST::PREFIX, 'wp/v2', $friend_user->get_rest_url() ) . '/search?subtype=' . Friends::CPT . '&search=' . urlencode( $s ) . '&friend_rest_auth=' . urlencode( $friend_user->get_friend_auth() ) . '&per_page=3&page=1';
+
+		$response = wp_safe_remote_get(
+			$url,
+			array(
+				'timeout'     => 20,
+				'redirection' => 5,
+			)
+		);
+
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			wp_send_json_error( 'Search error.' );
+			exit;
+		}
+
+		$results = json_decode( $response['body'] );
+		if ( empty( $results ) ) {
+			wp_send_json_error( 'Nothing found' );
+			exit;
+		}
+
+		$html = '';
+		foreach ( $results as $item ) {
+			$html .= '' . esc_html( parse_url( $item->url, PHP_URL_HOST ) ) . ' <a href="' . esc_attr( $item->url ) . '">' . esc_html( $item->title ) . '</a><br/>';
+		}
+
+		wp_send_json_success( $html );
 
 	}
 
@@ -942,6 +978,10 @@ class Frontend {
 			if ( $hide_from_friends_page ) {
 				$query->set( 'author__not_in', $hide_from_friends_page );
 			}
+		}
+
+		if ( get_query_var( 's' ) ) {
+			$query->is_search = true;
 		}
 
 		return $query;

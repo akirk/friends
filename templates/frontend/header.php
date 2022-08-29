@@ -31,7 +31,21 @@ if ( isset( $_GET['s'] ) ) {
 	<a class="off-canvas-overlay" href="#close"></a>
 
 	<div class="off-canvas-content">
-		<header class="<?php echo is_single() ? '' : 'navbar'; ?>">
+		<?php if ( is_search() ) : ?>
+			<?php
+			Friends\Friends::template_loader()->get_template_part(
+				'frontend/search-header',
+				null,
+				array_merge(
+					$args,
+					array(
+						's' => get_query_var( 's' ),
+					)
+				)
+			);
+			?>
+		<?php else : ?>
+		<header class="<?php echo ( is_single() || is_search() ) ? '' : 'navbar'; ?>">
 			<section class="navbar-section author">
 			<a class="off-canvas-toggle btn btn-primary bt-action" href="#friends-sidebar">
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
@@ -77,6 +91,7 @@ if ( isset( $_GET['s'] ) ) {
 			</section>
 			<?php endif; ?>
 		</header>
+		<?php endif; ?>
 	<?php
 	do_action( 'friends_after_header', $args );
 	?>

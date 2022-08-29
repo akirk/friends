@@ -197,6 +197,11 @@ class Friends {
 			'rewrite'             => false,
 		);
 
+		if ( isset( $_GET['search'] ) && is_user_logged_in() ) {
+			$args['public'] = true;
+			unset( $args['publicly_queryable'] );
+		}
+
 		register_post_type( self::CPT, $args );
 	}
 
