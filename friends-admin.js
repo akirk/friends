@@ -213,4 +213,34 @@ jQuery( function( $ ) {
 		}
 	} );
 
+	$( document ).on( 'click', 'ul.friend-suggestions li a', function() {
+		event.preventDefault();
+		$( '#friend_url' ).val( this.href );
+	} );
+
+	var searchTimeout = null;
+	$( document ).on( 'keydown', '#friend_url', function() {
+		var search = this.value;
+		if ( ! search ) {
+			return;
+		}
+
+		if ( searchTimeout ) {
+			clearTimeout( searchTimeout );
+		}
+
+		searchTimeout = setTimeout( function() {
+			wp.ajax.post( 'friends_search_links', {
+				_ajax_nonce: $( 'tr.friend-suggestions' ).data( 'nonce' ),
+				search: search
+			} ).done( function( response ) {
+				if ( response.data ) {
+					$( 'tr.friend-suggestions' ).show().find( 'div' ).html( response.data.content ).show();
+				} else {
+					$( 'tr.friend-suggestions' ).hide();
+				}
+			} );
+		}, 50 );
+	} );
+
 } );
