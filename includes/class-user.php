@@ -424,6 +424,25 @@ class User extends \WP_User {
 				wp_delete_post( get_the_ID(), true );
 			}
 		}
+
+		// In any case, don't overflow the trash.
+		$args = array(
+			'post_type'   => Friends::CPT,
+			'author'      => $this->ID,
+			'post_status' => 'trash',
+			'offset'      => 30,
+		);
+
+		$query = new \WP_Query( $args );
+
+		while ( $query->have_posts() ) {
+			$count ++;
+			$query->the_post();
+			if ( apply_filters( 'friends_debug', false ) ) {
+				echo 'Deleting ', get_the_ID(), '<br/>';
+			}
+			wp_delete_post( get_the_ID(), true );
+		}
 	}
 
 	/**
