@@ -1115,22 +1115,42 @@ class Admin {
 	 */
 	public function render_admin_edit_friend() {
 		$friend = $this->check_admin_edit_friend();
-		$friend_posts = new \WP_Query(
-			array(
-				'post_type'   => Friends::CPT,
-				'post_status' => array( 'publish', 'private' ),
-				'author'      => $friend->ID,
-				'nopaging'    => true,
+		global $wpdb;
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT SUM(
+					LENGTH( ID ) +
+					LENGTH( post_author ) +
+					LENGTH( post_date ) +
+					LENGTH( post_date_gmt ) +
+					LENGTH( post_content ) +
+					LENGTH( post_title ) +
+					LENGTH( post_excerpt ) +
+					LENGTH( post_status ) +
+					LENGTH( comment_status ) +
+					LENGTH( ping_status ) +
+					LENGTH( post_password ) +
+					LENGTH( post_name ) +
+					LENGTH( to_ping ) +
+					LENGTH( pinged ) +
+					LENGTH( post_modified ) +
+					LENGTH( post_modified_gmt ) +
+					LENGTH( post_content_filtered ) +
+					LENGTH( post_parent ) +
+					LENGTH( guid ) +
+					LENGTH( menu_order ) +
+					LENGTH( post_type ) +
+					LENGTH( post_mime_type ) +
+					LENGTH( comment_count )
+					) AS total_size,
+					COUNT(*) as c
+				FROM ' . $wpdb->posts . ' WHERE post_author = %d',
+				$friend->ID
 			)
 		);
-		$total_size = 0;
-		if ( $friend_posts->have_posts() ) {
-			while ( $friend_posts->have_posts() ) {
-				$friend_posts->the_post();
-				$total_size += strlen( serialize( array_values( (array) $friend_posts->post ) ) );
-			}
-		}
-		wp_reset_postdata();
+
+		$total_size = $row->total_size;
+		$friend_posts = $row->c;
 
 		$args = array(
 			'friend'                 => $friend,

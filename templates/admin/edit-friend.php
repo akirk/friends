@@ -132,7 +132,7 @@ $has_last_log = false;
 					<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url() ); ?>">
 						<?php
 						// translators: %d is the number of posts.
-						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['friend_posts']->found_posts, 'friends' ), $args['friend_posts']->found_posts ) );
+						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
 						?>
 					</a>
 					</fieldset>
