@@ -200,53 +200,74 @@ class Friends {
 		register_post_type( self::CPT, $args );
 	}
 
+	public static function get_role_capabilities( $role ) {
+		$capabilities = array();
+
+		$capabilities['friend_request'] = array(
+			'friend_request' => true,
+		);
+
+		$capabilities['pending_friend_request'] = array(
+			'pending_friend_request' => true,
+		);
+
+		$capabilities['subscription'] = array(
+			'subscription' => true,
+		);
+
+		$capabilities['acquaintance'] = array(
+			'read'   => true,
+			'friend' => true,
+		);
+
+		// Friend is an Acquaintance who can read private posts.
+		$capabilities['friend'] = $capabilities['acquaintance'];
+		$capabilities['friend']['read_private_posts'] = true;
+
+		// All roles belonging to this plugin have the friends_plugin capability.
+		foreach ( array_keys( $capabilities ) as $type ) {
+			$capabilities[ $type ]['friends_plugin'] = true;
+		}
+
+		if ( ! isset( $capabilities[ $role ] ) ) {
+			return array();
+		}
+
+		return $capabilities[ $role ];
+	}
+
 	/**
 	 * Create the Friend user roles
 	 */
 	private static function setup_roles() {
-		$friend = get_role( 'friend' );
-		if ( ! $friend ) {
-			_x( 'Friend', 'User role', 'friends' );
-			$friend = add_role( 'friend', 'Friend' );
-		}
-		$friend->add_cap( 'read_private_posts' );
-		$friend->add_cap( 'read' );
-		$friend->add_cap( 'friend' );
-		$friend->add_cap( 'level_0' );
+		$default_roles = array(
+			'friend'                 => _x( 'Friend', 'User role', 'friends' ),
+			'acquaintance'           => _x( 'Acquaintance', 'User role', 'friends' ),
+			'friend_request'         => _x( 'Friend Request', 'User role', 'friends' ),
+			'pending_friend_request' => _x( 'Pending Friend Request', 'User role', 'friends' ),
+			'subscription'           => _x( 'Subscription', 'User role', 'friends' ),
+		);
 
-		$acquaintance = get_role( 'acquaintance' );
-		if ( ! $acquaintance ) {
-			_x( 'Acquaintance', 'User role', 'friends' );
-			$acquaintance = add_role( 'acquaintance', 'Acquaintance' );
-		}
-		$acquaintance->add_cap( 'read' );
-		$acquaintance->add_cap( 'friend' );
-		$acquaintance->add_cap( 'acquaintance' );
-		$acquaintance->add_cap( 'level_0' );
+		$roles = new \WP_Roles;
 
-		$friend_request = get_role( 'friend_request' );
-		if ( ! $friend_request ) {
-			_x( 'Friend Request', 'User role', 'friends' );
-			$friend_request = add_role( 'friend_request', 'Friend Request' );
-		}
-		$friend_request->add_cap( 'friend_request' );
-		$friend_request->add_cap( 'level_0' );
+		foreach ( $default_roles as $type => $name ) {
+			$role = false;
+			foreach ( $roles->roles as $slug => $data ) {
+				if ( isset( $data['capabilities'][ $type ] ) ) {
+					$role = get_role( $slug );
+					break;
+				}
+			}
+			if ( ! $role ) {
+				$role = add_role( $type, $name, self::get_role_capabilities( $type ) );
+				continue;
+			}
 
-		$pending_friend_request = get_role( 'pending_friend_request' );
-		if ( ! $pending_friend_request ) {
-			_x( 'Pending Friend Request', 'User role', 'friends' );
-			$pending_friend_request = add_role( 'pending_friend_request', 'Pending Friend Request' );
+			// This might update missing capabilities.
+			foreach ( array_keys( self::get_role_capabilities( $type ) ) as $cap ) {
+				$role->add_cap( $cap );
+			}
 		}
-		$pending_friend_request->add_cap( 'pending_friend_request' );
-		$pending_friend_request->add_cap( 'level_0' );
-
-		$subscription = get_role( 'subscription' );
-		if ( ! $subscription ) {
-			_x( 'Subscription', 'User role', 'friends' );
-			$subscription = add_role( 'subscription', 'Subscription' );
-		}
-		$subscription->add_cap( 'subscription' );
-		$subscription->add_cap( 'level_0' );
 	}
 
 	/**
@@ -333,7 +354,7 @@ class Friends {
 	 * @return     array  The roles.
 	 */
 	public static function get_friends_plugin_roles() {
-		return array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' );
+		return array( 'friend', 'pending_friend_request', 'friend_request', 'subscription' );
 	}
 
 	/**

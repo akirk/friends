@@ -105,6 +105,12 @@ class Admin {
 	 * Registers the admin menus
 	 */
 	public function register_admin_menu() {
+		if ( isset( $_REQUEST['rerun-activate'] ) && isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-settings' ) ) {
+			Friends::activate_plugin();
+			wp_safe_redirect( add_query_arg( array( 'reran-activation' => 'friends' ), wp_get_referer() ) );
+			exit;
+		}
+
 		$unread_badge = $this->get_unread_badge();
 
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
@@ -450,12 +456,6 @@ class Admin {
 			return;
 		}
 
-		if ( isset( $_REQUEST['rerun-activate'] ) ) {
-			Friends::activate_for_blog( get_current_site() );
-			wp_safe_redirect( add_query_arg( array( 'reran-activation' => 'friends' ), wp_get_referer() ) );
-			exit;
-		}
-
 		foreach ( array( 'ignore_incoming_friend_requests', 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
 				update_option( 'friends_' . $checkbox, true );
@@ -600,27 +600,6 @@ class Admin {
 			Friends::template_loader()->get_template_part( 'admin/welcome' );
 		}
 
-		$friend_roles = array();
-
-		$roles = new \WP_Roles;
-		foreach ( $roles->roles as $role => $data ) {
-			if (
-				isset( $data['capabilities']['friend'] )
-				|| isset( $data['capabilities']['friend_request'] )
-				|| isset( $data['capabilities']['pending_friend_request'] )
-				|| isset( $data['capabilities']['subscription'] )
-			) {
-				$friend_roles[ $role ] = $data;
-			}
-		}
-
-		Friends::template_loader()->get_template_part(
-			'admin/role-mode',
-			null,
-			array(
-				'roles' => $friend_roles,
-			)
-		);
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
 
@@ -1835,10 +1814,14 @@ class Admin {
 	 * @return     array  The friend roles.
 	 */
 	public function get_friend_roles() {
-		return array(
-			'friend'       => _x( 'Friend', 'User role', 'friends' ),
-			'acquaintance' => _x( 'Acquaintance', 'User role', 'friends' ),
-		);
+		$roles = new \WP_Roles;
+		$friend_roles = array();
+		foreach ( $roles->roles as $role => $data ) {
+			if ( isset( $data['capabilities']['friend'] ) ) {
+				$friend_roles[ $role ] = $data['name'];
+			}
+		}
+		return $friend_roles;
 	}
 
 	/**
@@ -1847,17 +1830,14 @@ class Admin {
 	 * @return     array  The associated roles.
 	 */
 	public function get_associated_roles() {
-		return apply_filters(
-			'friends_associated_roles',
-			array_merge(
-				$this->get_friend_roles(),
-				array(
-					'friend_request'         => _x( 'Friend Request', 'User role', 'friends' ),
-					'pending_friend_request' => _x( 'Pending Friend Request', 'User role', 'friends' ),
-					'subscription'           => _x( 'Subscription', 'User role', 'friends' ),
-				)
-			)
-		);
+		$roles = new \WP_Roles;
+		$friend_roles = array();
+		foreach ( $roles->roles as $role => $data ) {
+			if ( isset( $data['capabilities']['friends_plugin'] ) ) {
+				$friend_roles[ $role ] = $data['name'];
+			}
+		}
+		return $friend_roles;
 	}
 
 	public function get_users_url() {
@@ -2439,13 +2419,20 @@ class Admin {
 	}
 
 	public function get_missing_friends_plugin_roles() {
-		$missing = array();
-		foreach ( Friends::get_friends_plugin_roles() as $role ) {
-			if ( ! get_role( $role ) ) {
-				$missing[] = $role;
+		$missing = Friends::get_friends_plugin_roles();
+		$roles = new \WP_Roles;
+		foreach ( $roles->roles as $role => $data ) {
+			if ( isset( $data['capabilities']['friends_plugin'] ) ) {
+				foreach ( $missing as $k => $cap ) {
+					if ( isset( $data['capabilities'][ $cap ] ) ) {
+						unset( $missing[ $k ] );
+						break;
+					}
+				}
 			}
 		}
-		return $missing;
+
+		return array_values( $missing );
 	}
 
 	public function friend_roles_test() {
