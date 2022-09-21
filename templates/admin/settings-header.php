@@ -64,4 +64,5 @@ if ( empty( $args['active'] ) ) {
 		}
 		?>
 	</div>
+	<div class="wp-header-end"></div>
 	<div class="friends-body <?php echo esc_attr( $args['active'] ); ?>">
