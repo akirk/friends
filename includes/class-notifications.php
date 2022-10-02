@@ -364,11 +364,7 @@ class Notifications {
 	 * @return bool Whether the email contents were sent successfully.
 	 */
 	public function send_mail( $to, $subject, $message, array $headers = array(), array $attachments = array(), $override_sitename = false ) {
-		if ( is_multisite() ) {
-			$sitename = get_site_option( 'site_name' );
-		} else {
-			$sitename = get_option( 'blogname' );
-		}
+		$sitename = get_option( 'blogname' );
 
 		if ( $override_sitename ) {
 			$sitename = $override_sitename;
