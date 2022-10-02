@@ -349,8 +349,6 @@ div {
 				}
 			}
 
-
-
 			h4.entry-title {
 				font-size: 130%;
 				line-height: 1.4;
@@ -368,6 +366,10 @@ div {
 					display: none;
 				}
 			}
+		}
+
+		&.all-collapsed article.card div.card-body {
+			display: none;
 		}
 
 		footer.entry-meta {
