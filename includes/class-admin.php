@@ -56,7 +56,6 @@ class Admin {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
-		add_action( 'wp_ajax_friends_update_welcome_panel', array( $this, 'ajax_update_welcome_panel' ) );
 		add_action( 'wp_ajax_friends_refresh_link_token', array( $this, 'ajax_refresh_link_token' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
@@ -596,9 +595,8 @@ class Admin {
 				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
-		if ( $friends_subscriptions->get_total() <= 0 ) {
-			Friends::template_loader()->get_template_part( 'admin/welcome' );
-		}
+
+		Friends::template_loader()->get_template_part( 'admin/welcome' );
 
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
@@ -742,14 +740,19 @@ class Admin {
 		$friend    = $this->check_admin_edit_friend_rules();
 		$catch_all = $friend->get_feed_catch_all();
 		$rules     = $friend->get_feed_rules();
-		?>
-		<h1>
-			<?php
-			// translators: %s is the name of a friend.
-			printf( __( 'Rules for %s', 'friends' ), esc_html( $friend->display_name ) );
-			?>
-		</h1>
-		<?php
+
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'edit-friend-rules&user=' . $friend->ID,
+				'title'  => $friend->user_login,
+				'menu'   => array(
+					'Edit Friend Settings' => 'edit-friend&user=' . $friend->ID,
+					'Edit Rules'           => 'edit-friend-rules&user=' . $friend->ID,
+				),
+			)
+		);
 
 		if ( isset( $_GET['updated'] ) ) {
 			?>
@@ -810,21 +813,7 @@ class Admin {
 	}
 
 	/**
-	 * Respond to the Ajax request to the Friend Welcome Panel
-	 */
-	public function ajax_update_welcome_panel() {
-		check_ajax_referer( 'friends-welcome-panel-nonce', 'friendswelcomepanelnonce' );
-
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( -1 );
-		}
-
-		update_user_meta( get_current_user_id(), 'friends_hide_welcome_panel', empty( $_POST['hide'] ) ? 0 : 1 );
-
-		wp_die( 1 );
-	}
-	/**
-	 * Respond to the Ajax request to the Friend Welcome Panel
+	 * Respond to the Ajax request to refresh the link token
 	 */
 	public function ajax_refresh_link_token() {
 		if ( ! isset( $_POST['url'] ) || ! isset( $_POST['friend'] ) ) {
@@ -1152,9 +1141,18 @@ class Admin {
 			$args['hide_from_friends_page'] = array();
 		}
 
-		?>
-		<h1><?php echo esc_html( $friend->user_login ); ?></h1>
-		<?php
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'edit-friend&user=' . $friend->ID,
+				'title'  => $friend->user_login,
+				'menu'   => array(
+					'Edit Friend Settings' => 'edit-friend&user=' . $friend->ID,
+					'Edit Rules'           => 'edit-friend-rules&user=' . $friend->ID,
+				),
+			)
+		);
 
 		if ( isset( $_GET['updated'] ) ) {
 			?>
