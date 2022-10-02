@@ -1482,6 +1482,19 @@ class Admin {
 			return $this->process_admin_add_friend_response( $friend_user, $vars );
 		}
 
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-add-friend-confirm',
+				'title'  => __( 'Add New Friend', 'friends' ),
+				'menu'   => array(
+					'1. ' . __( 'Enter Details', 'friends' ) => 'friends-add-friend',
+					'2. ' . __( 'Confirm', 'friends' ) => 'friends-add-friend-confirm',
+				),
+			)
+		);
+
 		if ( $errors->has_errors() ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p><?php echo wp_kses( $errors->get_error_message(), array( 'strong' => array() ) ); ?></p>
@@ -1687,7 +1700,7 @@ class Admin {
 				'title'  => __( 'Add New Friend', 'friends' ),
 				'menu'   => array(
 					'1. ' . __( 'Enter Details', 'friends' ) => 'friends-add-friend',
-					'2. ' . __( 'Choose Feeds', 'friends' ) => false,
+					'2. ' . __( 'Confirm', 'friends' ) => false,
 				),
 			)
 		);
@@ -2064,7 +2077,7 @@ class Admin {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'open-friend-requests',
-					'parent' => 'friends',
+					'parent' => 'friends-menu',
 					// translators: %s is the number of open friend requests.
 					'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $friend_request_count, 'friends' ), $friend_request_count ) ),
 					'href'   => $my_url . '/wp-admin/users.php?role=friend_request',
@@ -2141,7 +2154,7 @@ class Admin {
 
 		$wp_menu->add_node(
 			array(
-				'id'     => 'friends',
+				'id'     => 'friends-menu',
 				'parent' => '',
 				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $this->get_unread_badge() . '</span>',
 				'href'   => $my_url . '/friends/',
@@ -2159,7 +2172,7 @@ class Admin {
 		$wp_menu->add_menu(
 			array(
 				'id'     => 'your-feed',
-				'parent' => 'friends',
+				'parent' => 'friends-menu',
 				'title'  => esc_html__( 'My Friends Feed', 'friends' ),
 				'href'   => $my_url . '/friends/',
 			)
@@ -2169,13 +2182,13 @@ class Admin {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'add-friend',
-					'parent' => 'friends',
-					'title'  => esc_html(
+					'parent' => 'friends-menu',
+					'title'  => '<span style="border-left: 2px solid #d63638; padding-left: .5em">' . esc_html(
 						sprintf(
 							// translators: %s is a site title.
 							__( "Respond to %s's friend request", 'friends' ),
 							get_bloginfo( 'name' )
-						)
+						) . '</span>'
 					),
 					'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
 				)
@@ -2186,7 +2199,7 @@ class Admin {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'your-profile',
-					'parent' => 'friends',
+					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'My Public Friends Profile', 'friends' ),
 					'href'   => $my_url . '/friends/?public',
 				)
@@ -2194,7 +2207,7 @@ class Admin {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'friends-requests',
-					'parent' => 'friends',
+					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'My Friends & Requests', 'friends' ),
 					'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
 				)
@@ -2202,7 +2215,7 @@ class Admin {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'friends',
-					'parent' => 'friends',
+					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'Settings' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					'href'   => $my_url . '/wp-admin/admin.php?page=friends-settings',
 				)
@@ -2213,7 +2226,7 @@ class Admin {
 					$wp_menu->add_menu(
 						array(
 							'id'     => 'add-friend',
-							'parent' => 'friends',
+							'parent' => 'friends-menu',
 							'title'  => esc_html__( 'Friendship Already Requested', 'friends' ),
 							'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
 						)
@@ -2222,7 +2235,7 @@ class Admin {
 					$wp_menu->add_menu(
 						array(
 							'id'     => 'add-friend',
-							'parent' => 'friends',
+							'parent' => 'friends-menu',
 							'title'  => esc_html(
 								sprintf(
 									// translators: %s is a site title.
@@ -2239,7 +2252,7 @@ class Admin {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'profile',
-					'parent' => 'friends',
+					'parent' => 'friends-menu',
 					'title'  => esc_html(
 						sprintf(
 						// translators: %s is a site title.

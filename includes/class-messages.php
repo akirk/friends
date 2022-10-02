@@ -277,9 +277,9 @@ class Messages {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'friend-message-' . $friend_user->ID,
-					'parent' => 'friends',
+					'parent' => 'friends-menu',
 					// translators: %s is the number of open friend requests.
-					'title'  => esc_html( sprintf( __( 'New message from %s', 'friends' ), $friend_user->display_name ) ),
+					'title'  => '<span style="border-left: 2px solid #d63638; padding-left: .5em">' . esc_html( sprintf( __( 'New message from %s', 'friends' ), $friend_user->display_name ) ) . '</span>',
 					'href'   => $friend_user->get_local_friends_page_url(),
 				)
 			);
