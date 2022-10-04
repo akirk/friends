@@ -42,6 +42,11 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 				return 10;
 		}
 
+		switch ( $mime_type ) {
+			case 'application/xml':
+				return 5;
+		}
+
 		return 0;
 	}
 
@@ -187,6 +192,7 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 				$discovered_feeds[ $feed_url ] = array(
 					'type'       => $mime_type,
 					'title'      => $feed->get_title(),
+					'parser'     => 'simplepie',
 					'rel'        => 'self',
 					'autoselect' => true,
 				);
