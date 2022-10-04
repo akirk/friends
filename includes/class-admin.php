@@ -241,6 +241,7 @@ class Admin {
 			'ajax_url'                        => admin_url( 'admin-ajax.php' ),
 			'add_friend_url'                  => self_admin_url( 'admin.php?page=add-friend' ),
 			'add_friend_text'                 => __( 'Add a Friend', 'friends' ),
+			'delete_feed_question'            => __( 'Delete the feed? You need to click "Save Changes" to really delete it.', 'friends' ),
 			'role_friend'                     => __( 'Friend', 'friends' ),
 			'role_acquaintance'               => __( 'Acquaintance', 'friends' ),
 			'role_friend_request'             => __( 'Friend Request', 'friends' ),
@@ -1086,8 +1087,8 @@ class Admin {
 				if ( '' === trim( $_POST['feeds']['new']['url'] ) ) {
 					unset( $_POST['feeds']['new'] );
 				} else {
-					foreach ( $existing_feeds as $term_id => $feed ) {
-						if ( $feed->get_url() === trim( $_POST['feeds']['new']['url'] ) ) {
+					foreach ( $existing_feeds as $term_id => $user_feed ) {
+						if ( $user_feed->get_url() === trim( $_POST['feeds']['new']['url'] ) ) {
 							// Let a newly entered feed overrule an existing one.
 							$_POST['feeds'][ $term_id ] = array_merge( $_POST['feeds'][ $term_id ], $_POST['feeds']['new'] );
 							$_POST['feeds'][ $term_id ]['active'] = 1;
@@ -1116,6 +1117,7 @@ class Admin {
 						continue;
 					}
 					$user_feed = $existing_feeds[ $term_id ];
+					unset( $existing_feeds[ $term_id ] );
 
 					if ( $user_feed->get_url() !== $feed['url'] ) {
 						if ( ! isset( $feed['mime-type'] ) ) {
@@ -1152,6 +1154,11 @@ class Admin {
 					}
 
 					do_action( 'friends_process_feed_item_submit', $user_feed, $feed, $term_id );
+				}
+
+				// Delete remaining existing feeds since they were not submitted.
+				foreach ( $existing_feeds as $term_id => $user_feed ) {
+					$user_feed->delete();
 				}
 
 				do_action( 'friends_edit_friend_after_form_submit', $friend );
@@ -1226,23 +1233,11 @@ class Admin {
 
 		if ( isset( $_GET['updated'] ) ) {
 			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'User was updated.', 'friends' ); ?></p></div>
-			<?php
-		} elseif ( isset( $_GET['friend'] ) ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'You are now friends.', 'friends' ); ?></p></div>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Feeds were updated.', 'friends' ); ?></p></div>
 			<?php
 		} elseif ( isset( $_GET['error'] ) ) {
 			?>
 			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
-			<?php
-		} elseif ( isset( $_GET['sent-request'] ) ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Your request was sent.', 'friends' ); ?></p></div>
-			<?php
-		} elseif ( isset( $_GET['subscribed'] ) ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Subscription activated.', 'friends' ); ?></p></div>
 			<?php
 		}
 

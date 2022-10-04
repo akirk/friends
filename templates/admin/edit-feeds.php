@@ -26,6 +26,7 @@ $has_last_log = false;
 								<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
 								<th><?php esc_html_e( 'Remarks', 'friends' ); ?></th>
 								<?php do_action( 'friends_feed_table_header' ); ?>
+								<th><?php esc_html_e( 'Actions', 'friends' ); ?></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -67,6 +68,7 @@ $has_last_log = false;
 								</select></td>
 								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][title]" value="<?php echo esc_attr( $feed->get_title() ); ?>" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
 								<?php do_action( 'friends_feed_table_row', $feed, $term_id ); ?>
+								<td><a href="#" class="delete-feed">Delete</a></td>
 							</tr>
 							<?php if ( $feed->get_last_log() ) : ?>
 							<tr class="<?php echo esc_attr( ( $alternate % 2 ? 'alternate ' : ' ' ) . ( $feed->get_active() ? 'active' : 'inactive' ) ); ?> lastlog hidden">
@@ -88,6 +90,8 @@ $has_last_log = false;
 								<?php endforeach; ?>
 							</select></td>
 							<td><input type="text" name="feeds[new][title]" value="" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
+							<?php do_action( 'friends_feed_table_row', $feed, 'new' ); ?>
+							<td></td>
 						</tr>
 						</tbody>
 					</table>
@@ -117,6 +121,15 @@ $has_last_log = false;
 						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
 						?>
 					</a>
+					<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
+						| <a href="<?php echo esc_url( self_admin_url( 'edit.php?post_type=' . Friends\Friends::CPT . '&author=' . $args['friend']->ID ) ); ?>">
+							<?php
+							// translators: %d is the number of posts.
+							echo esc_html( sprintf( _n( 'View %d cached post', 'View %d cached posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
+							?>
+						</a>
+
+					<?php endif; ?>
 					</fieldset>
 					<p class="description">
 					<?php

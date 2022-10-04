@@ -145,6 +145,13 @@ jQuery( function( $ ) {
 		return false;
 	} );
 
+	$(document).on( 'click', '.delete-feed', function() {
+		if ( confirm( friends.delete_feed_question ) ) {
+			$( this ).closest( 'tr' ).remove();
+		}
+		return false;
+	} );
+
 	$( '#friends-reaction-picker' ).on( 'click', 'button', function() {
 		var id = $( this ).data( 'emoji' );
 		if ( $('#emoji-' + id ).length ) {
