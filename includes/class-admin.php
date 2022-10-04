@@ -140,8 +140,10 @@ class Admin {
 
 		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
 			add_submenu_page( 'friends', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
+			add_submenu_page( 'friends', __( 'Edit Feeds', 'friends' ), __( 'Edit Feeds', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-feeds' . ( 'edit-friend-feeds' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_feeds' ) );
 			add_submenu_page( 'friends', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
+			add_action( 'load-' . $page_type . '_page_edit-friend-feeds', array( $this, 'process_admin_edit_friend_feeds' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
 		}
 	}
@@ -741,18 +743,7 @@ class Admin {
 		$catch_all = $friend->get_feed_catch_all();
 		$rules     = $friend->get_feed_rules();
 
-		Friends::template_loader()->get_template_part(
-			'admin/settings-header',
-			null,
-			array(
-				'active' => 'edit-friend-rules&user=' . $friend->ID,
-				'title'  => $friend->user_login,
-				'menu'   => array(
-					'Edit Friend Settings' => 'edit-friend&user=' . $friend->ID,
-					'Edit Rules'           => 'edit-friend-rules&user=' . $friend->ID,
-				),
-			)
-		);
+		$this->header_edit_friend( $friend, 'edit-friend-rules' );
 
 		if ( isset( $_GET['updated'] ) ) {
 			?>
@@ -959,13 +950,6 @@ class Admin {
 			}
 			wp_update_user( $friend );
 
-			if ( $friend->set_retention_number_enabled( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] ) ) {
-				$friend->set_retention_number( $_POST['friends_retention_number'] );
-			}
-			if ( $friend->set_retention_days_enabled( isset( $_POST['friends_enable_retention_days'] ) && $_POST['friends_enable_retention_days'] ) ) {
-				$friend->set_retention_days( $_POST['friends_retention_days'] );
-			}
-
 			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 			if ( ! $hide_from_friends_page ) {
 				$hide_from_friends_page = array();
@@ -996,6 +980,105 @@ class Admin {
 				} else {
 					update_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID, 1 );
 				}
+			}
+		} else {
+			return;
+		}
+
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
+		} else {
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+		}
+		exit;
+	}
+
+	/**
+	 * The Friends Edit User header
+	 *
+	 * @param      Friend $friend  The friend.
+	 * @param      string $active  The active menu entry.
+	 */
+	public function header_edit_friend( $friend, $active ) {
+		$append = '&user=' . $friend->ID;
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => $active . $append,
+				'title'  => $friend->user_login,
+				'menu'   => array(
+					'Friend Settings' => 'edit-friend' . $append,
+					'Feeds'           => 'edit-friend-feeds' . $append,
+					'Rules'           => 'edit-friend-rules' . $append,
+				),
+			)
+		);
+
+	}
+
+	/**
+	 * Render the Friends Edit User page
+	 */
+	public function render_admin_edit_friend() {
+		$friend = $this->check_admin_edit_friend();
+
+		$args = array(
+			'friend'                 => $friend,
+			'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
+			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
+		);
+		if ( ! $args['hide_from_friends_page'] ) {
+			$args['hide_from_friends_page'] = array();
+		}
+
+		$this->header_edit_friend( $friend, 'edit-friend' );
+
+		if ( isset( $_GET['updated'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'User was updated.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['friend'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'You are now friends.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['error'] ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['sent-request'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Your request was sent.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['subscribed'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Subscription activated.', 'friends' ); ?></p></div>
+			<?php
+		}
+
+		Friends::template_loader()->get_template_part( 'admin/edit-friend', null, $args );
+	}
+
+	/**
+	 * Process the Friends Edit User page
+	 */
+	public function process_admin_edit_friend_feeds() {
+		$friend    = $this->check_admin_edit_friend();
+		$arg       = 'updated';
+		$arg_value = 1;
+
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-feeds-' . $friend->ID ) ) {
+			if ( $friend->set_retention_number_enabled( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] ) ) {
+				$friend->set_retention_number( $_POST['friends_retention_number'] );
+			}
+			if ( $friend->set_retention_days_enabled( isset( $_POST['friends_enable_retention_days'] ) && $_POST['friends_enable_retention_days'] ) ) {
+				$friend->set_retention_days( $_POST['friends_retention_days'] );
+			}
+
+			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
+			if ( ! $hide_from_friends_page ) {
+				$hide_from_friends_page = array();
 			}
 
 			if ( isset( $_POST['feeds'] ) ) {
@@ -1086,9 +1169,9 @@ class Admin {
 	}
 
 	/**
-	 * Render the Friends Edit User page
+	 * Render the Friends Edit Feeds page
 	 */
-	public function render_admin_edit_friend() {
+	public function render_admin_edit_friend_feeds() {
 		$friend = $this->check_admin_edit_friend();
 		global $wpdb;
 		$row = $wpdb->get_row(
@@ -1128,31 +1211,18 @@ class Admin {
 		$friend_posts = $row->c;
 
 		$args = array(
-			'friend'                 => $friend,
-			'friend_posts'           => $friend_posts,
-			'total_size'             => $total_size,
-			'rules'                  => $friend->get_feed_rules(),
-			'post_formats'           => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
-			'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
-			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
+			'friend'               => $friend,
+			'friend_posts'         => $friend_posts,
+			'total_size'           => $total_size,
+			'rules'                => $friend->get_feed_rules(),
+			'post_formats'         => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
+			'friends_settings_url' => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+			'registered_parsers'   => $this->friends->feed->get_registered_parsers(),
 		);
 		if ( ! $args['hide_from_friends_page'] ) {
 			$args['hide_from_friends_page'] = array();
 		}
-
-		Friends::template_loader()->get_template_part(
-			'admin/settings-header',
-			null,
-			array(
-				'active' => 'edit-friend&user=' . $friend->ID,
-				'title'  => $friend->user_login,
-				'menu'   => array(
-					'Edit Friend Settings' => 'edit-friend&user=' . $friend->ID,
-					'Edit Rules'           => 'edit-friend-rules&user=' . $friend->ID,
-				),
-			)
-		);
+		$this->header_edit_friend( $friend, 'edit-friend-feeds' );
 
 		if ( isset( $_GET['updated'] ) ) {
 			?>
@@ -1176,7 +1246,7 @@ class Admin {
 			<?php
 		}
 
-		Friends::template_loader()->get_template_part( 'admin/edit-friend', null, $args );
+		Friends::template_loader()->get_template_part( 'admin/edit-feeds', null, $args );
 	}
 
 	/**
