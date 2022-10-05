@@ -67,6 +67,41 @@
 					<?php endif; ?>
 				</td>
 			</tr>
+			<?php if ( $args['friend']->can_refresh_feeds() ) : ?>
+			<tr>
+				<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Posts' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="show_on_friends_page">
+							<input name="show_on_friends_page" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $args['friend']->ID, $args['hide_from_friends_page'] ) ); ?>>
+							<?php esc_html_e( 'Show posts on your friends page', 'friends' ); ?>
+						</label>
+					</fieldset>
+					<fieldset>
+					<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url() ); ?>">
+						<?php
+						// translators: %d is the number of posts.
+						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
+						?>
+					</a>
+					<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
+						| <a href="<?php echo esc_url( self_admin_url( 'edit.php?post_type=' . Friends\Friends::CPT . '&author=' . $args['friend']->ID ) ); ?>">
+							<?php
+							// translators: %d is the number of posts.
+							echo esc_html( sprintf( _n( 'View %d cached post', 'View %d cached posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
+							?>
+						</a>
+
+					<?php endif; ?>
+					</fieldset>
+					<p class="description">
+					<?php
+					// translators: %s is a URL.
+					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->ID ) ) );
+					?>
+					</p>
+				</td>
+			</tr>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>
 				<td>
@@ -101,15 +136,7 @@
 					</fieldset>
 				</td>
 			</tr>
-			<tr>
-				<th scope="row"><?php esc_html_e( 'Rules', 'friends' ); ?></th>
-				<td><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend']->ID ) ); ?>">
-					<?php
-					// translators: %d is the number of rules.
-					echo esc_html( sprintf( _n( '%d rule', '%d rules', count( $args['rules'] ), 'friends' ), count( $args['rules'] ) ) );
-					?>
-				</td>
-			</tr>
+			<?php endif; ?>
 			<?php do_action( 'friends_edit_friend_table_end', $args['friend'] ); ?>
 		</tbody>
 	</table>

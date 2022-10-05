@@ -997,10 +997,10 @@ class Admin {
 	/**
 	 * The Friends Edit User header
 	 *
-	 * @param      Friend $friend  The friend.
+	 * @param      User   $friend  The friend.
 	 * @param      string $active  The active menu entry.
 	 */
-	public function header_edit_friend( $friend, $active ) {
+	public function header_edit_friend( User $friend, $active ) {
 		$append = '&user=' . $friend->ID;
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
@@ -1015,7 +1015,6 @@ class Admin {
 				),
 			)
 		);
-
 	}
 
 	/**
@@ -1024,8 +1023,12 @@ class Admin {
 	public function render_admin_edit_friend() {
 		$friend = $this->check_admin_edit_friend();
 
+		$post_stats = $friend->get_post_stats();
+
 		$args = array(
 			'friend'                 => $friend,
+			'friend_posts'           => $post_stats->post_count,
+			'total_size'             => $post_stats->total_size,
 			'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
 			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
@@ -1070,6 +1073,22 @@ class Admin {
 		$arg_value = 1;
 
 		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-feeds-' . $friend->ID ) ) {
+			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
+			if ( ! $hide_from_friends_page ) {
+				$hide_from_friends_page = array();
+			}
+			if ( ! isset( $_POST['show_on_friends_page'] ) || ! $_POST['show_on_friends_page'] ) {
+				if ( ! in_array( $friend->ID, $hide_from_friends_page ) ) {
+					$hide_from_friends_page[] = $friend->ID;
+					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
+				}
+			} else {
+				if ( in_array( $friend->ID, $hide_from_friends_page ) ) {
+					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->ID ) ) );
+					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
+				}
+			}
+
 			if ( $friend->set_retention_number_enabled( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] ) ) {
 				$friend->set_retention_number( $_POST['friends_retention_number'] );
 			}
@@ -1180,47 +1199,12 @@ class Admin {
 	 */
 	public function render_admin_edit_friend_feeds() {
 		$friend = $this->check_admin_edit_friend();
-		global $wpdb;
-		$row = $wpdb->get_row(
-			$wpdb->prepare(
-				'SELECT SUM(
-					LENGTH( ID ) +
-					LENGTH( post_author ) +
-					LENGTH( post_date ) +
-					LENGTH( post_date_gmt ) +
-					LENGTH( post_content ) +
-					LENGTH( post_title ) +
-					LENGTH( post_excerpt ) +
-					LENGTH( post_status ) +
-					LENGTH( comment_status ) +
-					LENGTH( ping_status ) +
-					LENGTH( post_password ) +
-					LENGTH( post_name ) +
-					LENGTH( to_ping ) +
-					LENGTH( pinged ) +
-					LENGTH( post_modified ) +
-					LENGTH( post_modified_gmt ) +
-					LENGTH( post_content_filtered ) +
-					LENGTH( post_parent ) +
-					LENGTH( guid ) +
-					LENGTH( menu_order ) +
-					LENGTH( post_type ) +
-					LENGTH( post_mime_type ) +
-					LENGTH( comment_count )
-					) AS total_size,
-					COUNT(*) as c
-				FROM ' . $wpdb->posts . ' WHERE post_author = %d',
-				$friend->ID
-			)
-		);
-
-		$total_size = $row->total_size;
-		$friend_posts = $row->c;
+		$post_stats = $friend->get_post_stats();
 
 		$args = array(
 			'friend'               => $friend,
-			'friend_posts'         => $friend_posts,
-			'total_size'           => $total_size,
+			'friend_posts'         => $post_stats->post_count,
+			'total_size'           => $post_stats->total_size,
 			'rules'                => $friend->get_feed_rules(),
 			'post_formats'         => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
 			'friends_settings_url' => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
