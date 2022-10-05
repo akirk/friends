@@ -80,6 +80,20 @@ class Automatic_Status {
 	 * This displays the Automatically Generated Statuses admin page.
 	 */
 	public function validate_drafts() {
+		if ( empty( $_GET['post_format'] ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'post_format' => 'status',
+						'post_status' => 'draft',
+						'post_author' => get_current_user_id(),
+					),
+					self_admin_url( 'admin.php?page=friends-auto-status' )
+				)
+			);
+			wp_die();
+		}
+
 		add_filter(
 			'manage_edit-post_columns',
 			function( $columns ) {
@@ -190,7 +204,7 @@ class Automatic_Status {
 			'admin/settings-header',
 			null,
 			array(
-				'active' => 'friends-automatic-status',
+				'active' => 'friends-auto-status',
 				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
