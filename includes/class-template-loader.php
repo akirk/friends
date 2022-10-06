@@ -12,7 +12,7 @@
 
 namespace Friends;
 
-if ( ! class_exists( '\Gamajo_Template_Loader' ) ) {
+if ( ! class_exists( '\Gamajo_Template_Loader_1_4_0' ) ) {
 	require __DIR__ . '/class-gamajo-template-loader-1-4-0.php';
 }
 /**
