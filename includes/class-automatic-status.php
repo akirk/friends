@@ -43,6 +43,7 @@ class Automatic_Status {
 		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 3 );
 		add_action( 'set', array( $this, 'new_friend_user' ), 10, 2 );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
+		add_action( 'friends_admin_tabs', array( $this, 'admin_tabs' ), 20 );
 		add_filter( 'handle_bulk_actions-edit-post', array( $this, 'bulk_publish' ), 10, 3 );
 	}
 
@@ -54,7 +55,7 @@ class Automatic_Status {
 		$page_type = sanitize_title( $menu_title );
 
 		add_submenu_page(
-			'friends-settings',
+			'friends',
 			__( 'Automatic Status', 'friends' ),
 			__( 'Automatic Status', 'friends' ),
 			'administrator',
@@ -64,9 +65,35 @@ class Automatic_Status {
 	}
 
 	/**
+	 * Add the admin menu to the tabs.
+	 *
+	 * @param      array $menu   The menu.
+	 *
+	 * @return     array  The modified menu.
+	 */
+	public function admin_tabs( array $menu ) {
+		$menu[ __( 'Automatic Status', 'friends' ) ] = 'friends-auto-status';
+		return $menu;
+	}
+
+	/**
 	 * This displays the Automatically Generated Statuses admin page.
 	 */
 	public function validate_drafts() {
+		if ( empty( $_GET['post_format'] ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'post_format' => 'status',
+						'post_status' => 'draft',
+						'post_author' => get_current_user_id(),
+					),
+					self_admin_url( 'admin.php?page=friends-auto-status' )
+				)
+			);
+			wp_die();
+		}
+
 		add_filter(
 			'manage_edit-post_columns',
 			function( $columns ) {
@@ -173,7 +200,16 @@ class Automatic_Status {
 		$bulk_messages = apply_filters( 'bulk_post_updated_messages', $bulk_messages, $bulk_counts );
 		$bulk_counts   = array_filter( $bulk_counts );
 
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-auto-status',
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
 		Friends::template_loader()->get_template_part( 'admin/automatic-status-list-table', false, compact( 'wp_list_table', 'post_type' ) );
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
 
 	/**

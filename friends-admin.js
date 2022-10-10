@@ -1,5 +1,22 @@
 jQuery( function( $ ) {
 
+	$( document ).on( 'click', 'input[name=role-preset]', function( el ) {
+		if ( 'private' === el.target.value ) {
+			$( 'input[name=role\\[friend\\]\\[name\\]]' ).val( friends.role_friend );
+			$( 'input[name=role\\[acquaintance\\]\\[name\\]]' ).val( friends.role_acquaintance );
+			$( 'input[name=role\\[friend_request\\]\\[name\\]]' ).val( friends.role_friend_request );
+			$( 'input[name=role\\[pending_friend_request\\]\\[name\\]]' ).val( friends.role_pending_friend_request );
+			$( 'input[name=role\\[subscription\\]\\[name\\]]' ).val( friends.role_subscription );
+		} else {
+			$( 'input[name=role\\[friend\\]\\[name\\]]' ).val( friends.role_connection );
+			$( 'input[name=role\\[acquaintance\\]\\[name\\]]' ).val( friends.role_contact );
+			$( 'input[name=role\\[friend_request\\]\\[name\\]]' ).val( friends.role_connection_request );
+			$( 'input[name=role\\[pending_friend_request\\]\\[name\\]]' ).val( friends.role_pending_connection_request );
+			$( 'input[name=role\\[subscription\\]\\[name\\]]' ).val( friends.role_following );
+		}
+	} );
+
+
 	$( document ).on( 'click', 'input#require_codeword', function() {
 		if ( this.checked ) {
 			$( '#codeword_options' ).removeClass( 'hidden' );
@@ -8,25 +25,6 @@ jQuery( function( $ ) {
 			$( '#codeword_options' ).addClass( 'hidden' );
 		}
 	} );
-
-	var welcomePanel = $( '#friends-welcome-panel' ),
-		updateWelcomePanel;
-
-	updateWelcomePanel = function( hide ) {
-		$.post( ajaxurl, {
-			action: 'friends_update_welcome_panel',
-			hide: hide,
-			friendswelcomepanelnonce: $( '#friendswelcomepanelnonce' ).val()
-		});
-	};
-
-
-	// Hide the welcome panel when the dismiss button or close button is clicked.
-	$('.welcome-panel-close, .welcome-panel-dismiss a', welcomePanel).click( function(e) {
-		e.preventDefault();
-		welcomePanel.addClass('hidden');
-		updateWelcomePanel( 1 );
-	});
 
 	$( document ).on( 'click', 'a#send-friends-advanced', function() {
 		$( 'tr.friends-advanced' ).removeClass( 'hidden' ).first().find( 'input:visible:first' ).focus();
@@ -144,6 +142,13 @@ jQuery( function( $ ) {
 
 	$(document).on( 'click', '.delete-emoji', function() {
 		$( this ).closest( 'li' ).remove();
+		return false;
+	} );
+
+	$(document).on( 'click', '.delete-feed', function() {
+		if ( confirm( friends.delete_feed_question ) ) {
+			$( this ).closest( 'tr' ).remove();
+		}
 		return false;
 	} );
 

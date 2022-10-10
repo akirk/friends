@@ -733,7 +733,7 @@ class Feed {
 			return;
 		}
 
-		wp_safe_redirect( self_admin_url( 'admin.php?page=add-friend&url=' . urlencode( $_GET['add-friend'] ) ) );
+		wp_safe_redirect( add_query_arg( 'url', $_GET['add-friend'], self_admin_url( 'admin.php?page=add-friend' ) ) );
 		exit;
 	}
 

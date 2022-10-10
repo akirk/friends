@@ -189,7 +189,7 @@ class Frontend {
 		global $wp_query;
 
 		if ( is_user_logged_in() && Friends::on_frontend() ) {
-			wp_enqueue_script( 'friends', plugins_url( 'friends.js', FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), Friends::VERSION );
+			wp_enqueue_script( 'friends', plugins_url( 'friends.js', FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), '1.' . Friends::VERSION );
 			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) );
 
 			$variables = array(
@@ -205,7 +205,7 @@ class Frontend {
 				'max_page'          => $wp_query->max_num_pages,
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
-			wp_enqueue_style( 'friends', plugins_url( 'friends.css', FRIENDS_PLUGIN_FILE ), array(), Friends::VERSION );
+			wp_enqueue_style( 'friends', plugins_url( 'friends.css', FRIENDS_PLUGIN_FILE ), array(), '1.' . Friends::VERSION );
 		}
 	}
 

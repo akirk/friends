@@ -177,6 +177,8 @@
 	$document.on( 'dblclick', 'a.collapse-post', function() {
 		// Collapse-toggle all visible.
 		$( 'a.collapse-post' ).trigger( 'click' );
+		$( this ).closest( 'section' ).toggleClass( 'all-collapsed' );
+		$( this )[0].scrollIntoView();
 		return false;
 	} );
 

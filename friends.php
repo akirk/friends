@@ -22,6 +22,7 @@ namespace Friends;
 
 defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'FRIENDS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
@@ -58,6 +59,9 @@ add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_
 register_activation_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'uninstall_plugin' ) );
+
+add_action( 'activate_blog', array( __NAMESPACE__ . '\Friends', 'activate_plugin' ) );
+add_action( 'wp_initialize_site', array( __NAMESPACE__ . '\Friends', 'activate_for_blog' ) );
 
 // Register widgets.
 require_once __DIR__ . '/widgets/class-widget-refresh.php';

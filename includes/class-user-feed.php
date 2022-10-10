@@ -465,7 +465,7 @@ class User_Feed {
 				'sanitize_callback' => array( __CLASS__, 'validate_next_poll' ),
 			)
 		);
-		
+
 		do_action( 'friends_after_register_feed_taxonomy' );
 	}
 
