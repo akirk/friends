@@ -24,6 +24,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
+define( 'FRIENDS_VERSION', '2.0.2' );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 require_once __DIR__ . '/libs/gutenberg-everywhere/classes/gutenberg-handler.php';

@@ -6,7 +6,7 @@
  */
 
 $data = $args['friends']->get_main_header_data();
-?><div id="main-header">
+?><div id="main-header" class="mb-2">
 <h2 id="page-title"><a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 <?php
 $title = __( 'Main Feed', 'friends' );
@@ -72,7 +72,17 @@ if ( $args['friends']->frontend->reaction ) {
 <?php endforeach; ?>
 
 <?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
-	<a class="chip" href="<?php echo esc_url( home_url( '/friends/reaction' . $slug . '/' ) ); ?>"><?php echo esc_html( $reaction->char ); ?></a>
+	<a class="chip" href="<?php echo esc_url( home_url( '/friends/reaction' . $slug . '/' ) ); ?>">
+	<?php
+	echo esc_html(
+		sprintf(
+		// translators: %s is an emoji.
+			__( 'Reacted with %s', 'friends' ),
+			$reaction->char
+		)
+	);
+	?>
+</a>
 <?php endforeach; ?>
 
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add New Friend', 'friends' ); ?></a>

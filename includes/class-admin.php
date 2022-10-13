@@ -236,7 +236,11 @@ class Admin {
 	 * Reference our script for the /friends page
 	 */
 	public function admin_enqueue_scripts() {
-		wp_enqueue_script( 'friends-admin', plugins_url( 'friends-admin.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), Friends::VERSION );
+		$handle = 'friends-admin';
+		$file = 'friends-admin.js';
+		$version = FRIENDS_VERSION;
+		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+
 		$variables = array(
 			'ajax_url'                        => admin_url( 'admin-ajax.php' ),
 			'add_friend_url'                  => self_admin_url( 'admin.php?page=add-friend' ),
@@ -254,8 +258,11 @@ class Admin {
 			'role_following'                  => __( 'Following', 'friends' ),
 		);
 		wp_localize_script( 'friends-admin', 'friends', $variables );
-		wp_enqueue_style( 'friends-admin', plugins_url( 'friends-admin.css', FRIENDS_PLUGIN_FILE ), array(), Friends::VERSION );
 
+		$handle = 'friends-admin';
+		$file = 'friends-admin.css';
+		$version = FRIENDS_VERSION;
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 	}
 
 	/**
@@ -2553,7 +2560,7 @@ class Admin {
 			'fields' => array(
 				'version'   => array(
 					'label' => __( 'Friends Version', 'friends' ),
-					'value' => Friends::VERSION,
+					'value' => FRIENDS_VERSION,
 				),
 				'mbstring'  => array(
 					'label' => __( 'mbstring is available', 'friends' ),

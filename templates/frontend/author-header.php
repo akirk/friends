@@ -10,7 +10,7 @@ $feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 
-?><div id="author-header">
+?><div id="author-header" class="mb-2">
 <h2 id="page-title"><a href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_url() ); ?>">
 <?php
 if ( $args['friends']->frontend->reaction ) {

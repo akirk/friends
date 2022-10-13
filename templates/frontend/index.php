@@ -16,7 +16,7 @@ Friends\Friends::template_loader()->get_template_part(
 );
 
 ?>
-<section class="posts">
+<section class="posts columns">
 	<?php
 	if ( ! have_posts() ) {
 		?>

@@ -11,7 +11,7 @@ $avatar = $args['avatar'];
 $author_name = get_the_author_meta( 'display_name' );
 $override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, get_the_id() );
 ?><header class="entry-header card-header columns">
-	<div class="avatar col-auto">
+	<div class="avatar col-auto mr-2">
 		<?php if ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) ) : ?>
 			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
 				<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />

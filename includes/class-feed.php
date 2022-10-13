@@ -743,7 +743,7 @@ class Feed {
 	 * @param  SimplePie $feed The SimplePie object.
 	 */
 	public function wp_feed_options( $feed ) {
-		$feed->useragent .= ' Friends/' . Friends::VERSION;
+		$feed->useragent .= ' Friends/' . FRIENDS_VERSION;
 		if ( isset( $_GET['page'] ) && 'page=friends-refresh' === $_GET['page'] ) {
 			$feed->enable_cache( false );
 		} else {

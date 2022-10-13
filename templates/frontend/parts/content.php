@@ -8,7 +8,7 @@
 
 $template_loader = Friends\Friends::template_loader();
 ?>
-<article id="post-<?php the_ID(); ?>" <?php post_class( 'card' ); ?>>
+<article id="post-<?php the_ID(); ?>" <?php post_class( 'card column col-12' ); ?>>
 	<?php
 	$template_loader->get_template_part( 'frontend/parts/header', get_post_format(), $args );
 	$template_loader->get_template_part( 'frontend/parts/title', get_post_format(), $args );

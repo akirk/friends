@@ -490,7 +490,7 @@ class Plugin_Installer {
 	 * @since 1.0
 	 */
 	public static function enqueue_scripts() {
-		wp_enqueue_script( 'friends-plugin-installer', plugins_url( 'plugin-installer.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), Friends::VERSION, true );
+		wp_enqueue_script( 'friends-plugin-installer', plugins_url( 'plugin-installer.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), FRIENDS_VERSION, true );
 		wp_localize_script(
 			'friends-plugin-installer',
 			'friends_plugin_installer_localize',

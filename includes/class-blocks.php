@@ -300,14 +300,14 @@ class Blocks {
 			'friends-block-visibility',
 			plugins_url( 'blocks/block-visibility/build/index.js', FRIENDS_PLUGIN_FILE ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' ),
-			Friends::VERSION
+			FRIENDS_VERSION
 		);
 
 		wp_enqueue_style(
 			'friends-blocks',
 			plugins_url( 'friends-blocks.css', FRIENDS_PLUGIN_FILE ),
 			array(),
-			Friends::VERSION
+			FRIENDS_VERSION
 		);
 	}
 
