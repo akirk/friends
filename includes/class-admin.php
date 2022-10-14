@@ -238,7 +238,7 @@ class Admin {
 	public function admin_enqueue_scripts() {
 		$handle = 'friends-admin';
 		$file = 'friends-admin.js';
-		$version = FRIENDS_VERSION;
+		$version = Friends::VERSION;
 		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
 		$variables = array(
@@ -261,7 +261,7 @@ class Admin {
 
 		$handle = 'friends-admin';
 		$file = 'friends-admin.css';
-		$version = FRIENDS_VERSION;
+		$version = Friends::VERSION;
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 	}
 
@@ -2560,7 +2560,7 @@ class Admin {
 			'fields' => array(
 				'version'   => array(
 					'label' => __( 'Friends Version', 'friends' ),
-					'value' => FRIENDS_VERSION,
+					'value' => Friends::VERSION,
 				),
 				'mbstring'  => array(
 					'label' => __( 'mbstring is available', 'friends' ),

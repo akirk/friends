@@ -191,7 +191,7 @@ class Frontend {
 		if ( is_user_logged_in() && Friends::on_frontend() ) {
 			$handle = 'friends';
 			$file = 'friends.js';
-			$version = FRIENDS_VERSION;
+			$version = Friends::VERSION;
 			wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
 			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) );
@@ -212,7 +212,7 @@ class Frontend {
 
 			$handle = 'friends';
 			$file = 'friends.css';
-			$version = FRIENDS_VERSION;
+			$version = Friends::VERSION;
 			wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 		}
 	}

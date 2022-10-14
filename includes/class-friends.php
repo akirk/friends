@@ -16,7 +16,7 @@ namespace Friends;
  * @author Alex Kirk
  */
 class Friends {
-	const VERSION       = FRIENDS_VERSION;
+	const VERSION       = Friends::VERSION;
 	const CPT           = 'friend_post_cache';
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
@@ -377,7 +377,7 @@ class Friends {
 			}
 		}
 
-		update_option( 'friends_plugin_version', FRIENDS_VERSION );
+		update_option( 'friends_plugin_version', Friends::VERSION );
 	}
 
 	/**
@@ -437,7 +437,7 @@ class Friends {
 		self::create_friends_page();
 
 		$previous_version = get_option( 'friends_plugin_version' );
-		if ( FRIENDS_VERSION !== $previous_version ) {
+		if ( Friends::VERSION !== $previous_version ) {
 			self::upgrade_plugin( $previous_version );
 		}
 
