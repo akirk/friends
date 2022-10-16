@@ -127,6 +127,9 @@ div {
 	a:visited:not(.off-canvas-toggle) {
 		color: $link-color-dark;
 	}
+	a, a:visited, a:hover, a:focus, a:active {
+		color: $link-color;
+	}
 
 	summary.accordion-header {
 		color: $link-color;
