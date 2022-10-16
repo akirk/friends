@@ -110,6 +110,12 @@ table.feed-table.widefat .check-column {
 	font-weight: bold;
 }
 
+table.reader-table .check-column {
+	width: 5em;
+	vertical-align: top;
+	text-align: center;
+}
+
 table.feed-table.widefat th.checkbox {
 	padding-top: 1em;
 }

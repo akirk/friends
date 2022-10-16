@@ -208,6 +208,7 @@ $has_last_log = false;
 				</td>
 			</tr>
 			<?php endif; ?>
+			<?php do_action( 'friends_edit_friend_table_end', $args['friend'] ); ?>
 	</table>
 	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>
 	<p class="submit">

@@ -141,9 +141,11 @@ class Admin {
 		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
 			add_submenu_page( 'friends', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
 			add_submenu_page( 'friends', __( 'Edit Feeds', 'friends' ), __( 'Edit Feeds', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-feeds' . ( 'edit-friend-feeds' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_feeds' ) );
+			add_submenu_page( 'friends', __( 'Edit Notifications', 'friends' ), __( 'Edit Notifications', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-notifications' . ( 'edit-friend-notifications' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_notifications' ) );
 			add_submenu_page( 'friends', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-feeds', array( $this, 'process_admin_edit_friend_feeds' ) );
+			add_action( 'load-' . $page_type . '_page_edit-friend-notifications', array( $this, 'process_admin_edit_friend_notifications' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
 		}
 	}
@@ -973,22 +975,6 @@ class Admin {
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 				}
 			}
-
-			if ( ! get_user_option( 'friends_no_new_post_notification' ) ) {
-				if ( isset( $_POST['friends_new_post_notification'] ) && $_POST['friends_new_post_notification'] ) {
-					delete_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID );
-				} else {
-					update_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID, 1 );
-				}
-			}
-
-			if ( ! get_user_option( 'friends_no_keyword_notification' ) ) {
-				if ( isset( $_POST['friends_keyword_notification'] ) && $_POST['friends_keyword_notification'] ) {
-					delete_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID );
-				} else {
-					update_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID, 1 );
-				}
-			}
 		} else {
 			return;
 		}
@@ -1018,6 +1004,7 @@ class Admin {
 				'menu'   => array(
 					'Friend Settings' => 'edit-friend' . $append,
 					'Feeds'           => 'edit-friend-feeds' . $append,
+					'Notifications'   => 'edit-friend-notifications' . $append,
 					'Rules'           => 'edit-friend-rules' . $append,
 				),
 			)
@@ -1072,7 +1059,73 @@ class Admin {
 	}
 
 	/**
-	 * Process the Friends Edit User page
+	 * Process the Friends Edit Notifications page
+	 */
+	public function process_admin_edit_friend_notifications() {
+		$friend    = $this->check_admin_edit_friend();
+		$arg       = 'updated';
+		$arg_value = 1;
+
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-notifications-' . $friend->ID ) ) {
+			if ( ! get_user_option( 'friends_no_new_post_notification' ) ) {
+				if ( isset( $_POST['friends_new_post_notification'] ) && $_POST['friends_new_post_notification'] ) {
+					delete_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID );
+				} else {
+					update_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID, 1 );
+				}
+			}
+
+			if ( ! get_user_option( 'friends_no_keyword_notification' ) ) {
+				if ( isset( $_POST['friends_keyword_notification'] ) && $_POST['friends_keyword_notification'] ) {
+					delete_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID );
+				} else {
+					update_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID, 1 );
+				}
+			}
+
+			do_action( 'friends_edit_friend_notifications_after_form_submit', $friend );
+		} else {
+			return;
+		}
+
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
+		} else {
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+		}
+		exit;
+	}
+
+	/**
+	 * Render the Friends Edit Notifications page
+	 */
+	public function render_admin_edit_friend_notifications() {
+		$friend = $this->check_admin_edit_friend();
+		$post_stats = $friend->get_post_stats();
+
+		$this->header_edit_friend( $friend, 'edit-friend-notifications' );
+
+		if ( isset( $_GET['updated'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Notification Settings were updated.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['error'] ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
+			<?php
+		}
+
+		Friends::template_loader()->get_template_part(
+			'admin/edit-notifications',
+			null,
+			array(
+				'friend' => $friend,
+			)
+		);
+	}
+
+	/**
+	 * Process the Friends Edit Notifications page
 	 */
 	public function process_admin_edit_friend_feeds() {
 		$friend    = $this->check_admin_edit_friend();

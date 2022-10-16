@@ -62,7 +62,7 @@ $args['friends']->frontend->link(
 <?php endforeach; ?>
 
 <?php if ( $edit_user_link ) : ?>
-<a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>">
+<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend_user']->ID ) ); ?>">
 	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), $active_feeds ) ); ?>
 
 	<?php if ( $feeds - $active_feeds > 1 ) : ?>
