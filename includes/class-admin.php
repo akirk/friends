@@ -1710,7 +1710,7 @@ class Admin {
 					?>
 					<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):
 						<?php if ( $title ) : ?>
-							<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a>
+							<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a> <?php echo esc_html( str_word_count( wp_strip_all_tags( $item->content ) ) ); ?> words
 							<?php else : ?>
 								<p>
 									<?php
@@ -1730,7 +1730,7 @@ class Admin {
 				?>
 				</ul>
 				<?php
-				exit;
+				return;
 		}
 
 		if ( apply_filters( 'friends_debug', false ) && isset( $_GET['next'] ) ) {
