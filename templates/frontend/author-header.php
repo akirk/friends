@@ -58,7 +58,17 @@ $args['friends']->frontend->link(
 <?php endforeach; ?>
 
 <?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
-	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_reaction_url( $slug ) ); ?>"><?php echo esc_html( $reaction->char ); ?></a>
+	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_reaction_url( $slug ) ); ?>">
+	<?php
+	echo esc_html(
+		sprintf(
+			// translators: %s is an emoji.
+			__( 'Reacted with %s', 'friends' ),
+			$reaction->char
+		)
+	);
+	?>
+</a>
 <?php endforeach; ?>
 
 <?php if ( $edit_user_link ) : ?>

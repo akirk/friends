@@ -241,8 +241,7 @@
 			data: {
 				query_vars: friends.query_vars,
 				page: friends.current_page,
-				qv_sign: friends.qv_sign,
-				qv_sign_test: friends.qv_sign_test
+				qv_sign: friends.qv_sign
 			},
 			beforeSend: function() {
 				$('section.posts .posts-navigation .nav-previous').addClass( 'loading' );

@@ -76,7 +76,7 @@ if ( $args['friends']->frontend->reaction ) {
 	<?php
 	echo esc_html(
 		sprintf(
-		// translators: %s is an emoji.
+			// translators: %s is an emoji.
 			__( 'Reacted with %s', 'friends' ),
 			$reaction->char
 		)

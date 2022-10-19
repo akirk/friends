@@ -380,7 +380,7 @@ class Frontend {
 	 * The Ajax function to load more posts for infinite scrolling.
 	 */
 	public function ajax_load_next_page() {
-		$query_vars = stripslashes( $_POST['query_vars'] );
+		$query_vars = wp_unslash( $_POST['query_vars'] );
 		if ( sha1( wp_salt( 'nonce' ) . $query_vars ) !== $_POST['qv_sign'] ) {
 			wp_send_json_error();
 			exit;
