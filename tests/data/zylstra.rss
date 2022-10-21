@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Interdependent Thoughts</title>
+	<atom:link href="https://www.zylstra.org/blog/feed/" rel="self" type="application/rss+xml" />
+	<link>https://www.zylstra.org/blog</link>
+	<description>by Ton Zĳlstra</description>
+	<lastBuildDate>Thu, 20 Oct 2022 19:01:41 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.0.3</generator>
+<atom:link rel="hub" href="https://pubsubhubbub.appspot.com"/><atom:link rel="hub" href="https://pubsubhubbub.superfeedr.com"/><atom:link rel="hub" href="https://websubhub.com/hub"/>	<item>
+							<title>Habet Machina Translatio Lingua Latina?</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/#comments</comments>
+				<pubDate>Thu, 20 Oct 2022 21:01:41 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Day to Day]]></category>
+		<category><![CDATA[latin]]></category>
+		<category><![CDATA[machinetranslation]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22393</guid>
+				<description><![CDATA[DeepL does not translate Latin, Google and Yandex do it extremely badly. I'm surprised given the fixed and limited corpus, all public domain, that would need translation into modern languages.]]></description>
+								<content:encoded><![CDATA[<p>I just realised, the DeepL machine translation tool I have been using since early this year is missing a feature that would be useful: translating from classic Latin to modern languages. </p>
+<p>This should be doable I would expect: there&#8217;s enough but also a limited corpus of text, meaning what needs translation is clear and bounded. There&#8217;s existing translations of most if not all those classical texts, and the language structure has been fixed for ages because it&#8217;s no longer in use. All of it is in the public domain. So much so that you might even be better off without algorithmic translation and go with straightforward database searches. Google, Baidu and Yandex machine translation all seem to incorporate Latin, but both Google and Yandex mangle even the simplest of things into unrecognisable output, if not leaving most words simply untranslated.</p>
+<p>Some online searching suggest it may be less straightforward than that. This <a href="https://mehtaplustutoring-mlbootcamp20.github.io/Latin-Translation-/">page</a> by Susan Shin, Summer Zhou, and Zoe Zitzewitz from two years ago shares a neural translation model for Latin.  They say that there is a lack of accurate translations and accessible resources which I find surprising, making it difficult to build a model for Latin. It also says that Google Translate only uses a statistical method, and has no model for grammar, syntax, idiom, or meaning. The latter is readily apparent from using Google Translate for a few Latin phrases, but it&#8217;s again surprising. After all there are <a href="https://www.translator.eu/english/klingon/translation/">machine translators for Klingon</a>. <img src="https://s.w.org/images/core/emoji/14.0.0/72x72/1f609.png" alt="😉" class="wp-smiley" style="height: 1em; max-height: 1em;" /> </p>
+<p>I mean all this w.r.t. translating from classic Latin to modern languages, for translations from modern languages to Latin all the above doesn&#8217;t apply. </p>
+<p>The title of this posting is incorrect Latin, but hey, I blame (the absence of) machine translation.</p>
+<p>Moving on from Latin, how about older versions of current modern languages?</p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/feed/</wfw:commentRss>
+		<slash:comments>6</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/10/22377/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/22377/#respond</comments>
+				<pubDate>Wed, 19 Oct 2022 12:02:20 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Flashes]]></category>
+		<category><![CDATA[amersfoort]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22377</guid>
+				<description><![CDATA[Yesterday started with fog. When I arrived at the client&#8217;s office in Amersfoort it just started lifting and the sun burned through. This was the view onto the Argonaut building, the sun reflected in the windows.]]></description>
+								<content:encoded><![CDATA[<p>Yesterday started with fog. When I arrived at the client&#8217;s office in Amersfoort it just started lifting and the sun burned through. This was the view onto the Argonaut building, the sun reflected in the windows.</p>
+<p><a href="https://www.flickr.com/photos/tonz/52436632234/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/fogliftsTonZijlstraccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22378" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/fogliftsTonZijlstraccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/fogliftsTonZijlstraccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/fogliftsTonZijlstraccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/fogliftsTonZijlstraccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/fogliftsTonZijlstraccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a></p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/22377/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/10/22374/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/22374/#respond</comments>
+				<pubDate>Mon, 17 Oct 2022 20:54:17 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Plazes I visited]]></category>
+		<category><![CDATA[RSS Only]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/2022/10/22374/</guid>
+				<description><![CDATA[Checked into Seats2Meet (Utrecht) just now First meet-up of the Digitale Fitheid and KNVI group on PKM]]></description>
+								<content:encoded><![CDATA[<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="20" height="19"><path fill="currentColor" d="M288 0c-69.59 0-126 56.41-126 126 0 56.26 82.35 158.8 113.9 196.02 6.39 7.54 17.82 7.54 24.2 0C331.65 284.8 414 182.26 414 126 414 56.41 357.59 0 288 0zm0 168c-23.2 0-42-18.8-42-42s18.8-42 42-42 42 18.8 42 42-18.8 42-42 42zM20.12 215.95A32.006 32.006 0 0 0 0 245.66v250.32c0 11.32 11.43 19.06 21.94 14.86L160 448V214.92c-8.84-15.98-16.07-31.54-21.25-46.42L20.12 215.95zM288 359.67c-14.07 0-27.38-6.18-36.51-16.96-19.66-23.2-40.57-49.62-59.49-76.72v182l192 64V266c-18.92 27.09-39.82 53.52-59.49 76.72-9.13 10.77-22.44 16.95-36.51 16.95zm266.06-198.51L416 224v288l139.88-55.95A31.996 31.996 0 0 0 576 426.34V176.02c0-11.32-11.43-19.06-21.94-14.86z"/></svg> <em><span class="p-location h-card">Checked into<span class="p-name"> <a class="u-checkin" href="https://www.seats2meet.com/nl/locaties/85/seats2meet-utrecht-cs">Seats2Meet</a> </span>(<span class="p-locality">Utrecht</span>) just now</span></em></p>
+<p>First meet-up of the <a href="https://digitalefitheid.nl">Digitale Fitheid</a> and <a href="https://nl.wikipedia.org/wiki/Koninklijke_Nederlandse_Vereniging_van_Informatieprofessionals">KNVI</a> group on PKM</p>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/22374/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>Week Notes 22-41</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/week-notes-22-41/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/week-notes-22-41/#respond</comments>
+				<pubDate>Sun, 16 Oct 2022 19:45:11 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[RSS Only]]></category>
+		<category><![CDATA[weeknotes]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22355</guid>
+				<description><![CDATA[Again a busy week. September and October usually are filled with events, and this often means many sessions and presentations. This year is no different. Also I have too many client projects on my plate, so I this week I discussed handing off some of my work to colleagues. This week I Had a half [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>Again a busy week. September and October usually are filled with events, and this often means many sessions and presentations. This year is no different. Also I have too many client projects on my plate, so I this week I discussed handing off some of my work to colleagues.</p>
+<p>This week I </p>
+<ul>
+<li>Had a half day meeting with my business partners discussing and working on internal things.</li>
+<li>Did some invoicing</li>
+<li>Discussed the tasks colleagues can take on within the scope of my work for my main client, for which the work is to start next week</li>
+<li>Enjoyed being read to by Y. She&#8217;s getting better at reading fast, and likes to read to us before we read to her in the evening.</li>
+<li>Prepared multiple sessions to present at and facilitate</li>
+<li>Presented at and facilitated a half day session with the national statistics office on the incoming EU regulations</li>
+<li>Had dinner at the <a href="https://www.restaurantgroenland.nl/">&#8216;Greenland&#8217; restaurant</a> in Driebergen with our team (or rather 7 of the 9), to celebrate our 11th company anniversary. We had planned to go there a year ago, but a lockdown prevented it. My company, <a href="https://thegreenland.eu">The Green Land</a>, is named after this restaurant, because it is the place where in 2011 my business partners and I decided to start working togehter.</li>
+<li>Created a presentation and presented to representatives of all <a href="https://en.wikipedia.org/wiki/Water_board_(Netherlands)">Dutch regional water authorities</a> about the impact of EU data regulations.</li>
+<li>Had the weekly client meetings</li>
+<li>Had a conversation with the World Bank colleagues I worked with in Central Asia and non-EU eastern Europe. Since the start of the pandemic my WB work stalled, but I&#8217;m still on their roster of consultants. The Russian war on Ukraine makes work in the region I used to be active in difficult, but there is still lots going on. I intend to contribute my work on EU data regulations and the EU data space as well as data and AI ethics to WB programmes. Not this year though, as I&#8217;m too busy with client work as it is.</li>
+<li>Discussed the next steps for the interprovincial ethics committee with the representatives of all provinces in their ethics working group, and with the steering committee. We&#8217;re now at the point we can approach members for the ethics committee. Official launch will be in January by a deputy minister, for which the data was confirmed this week.</li>
+<li>Took it slow on Friday morning, reading feeds, making some notes.</li>
+<li>Took Y to her swimming lesson. She&#8217;s making good progress, keeping herself afloat without aids now and learning to swim longer distances under water. She&#8217;s slowly getting to the point where we can be sure she can get herself out should she accidentally get into the water somewhere in our surface water rich neighbourhood.</li>
+<li>E&#8217;s eldest brother dropped by for coffee and lunch, it was nice to catch up.</li>
+<li><a href="https://www.zylstra.org/blog/2022/10/adding-check-in-and-dopplr-style-postings/">Created the ability to quickly post a check-in or Dopplr style posting</a>, as part of bringing <a href="https://www.zylstra.org/blog/site-alterations/individualised-plazes/">that type of functionality</a> within the scope of my own site.</li>
+</ul>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/week-notes-22-41/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>Adding Check-In and Dopplr Style Postings</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/adding-check-in-and-dopplr-style-postings/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/adding-check-in-and-dopplr-style-postings/#comments</comments>
+				<pubDate>Sun, 16 Oct 2022 17:30:47 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Day to Day]]></category>
+		<category><![CDATA[Dopplr]]></category>
+		<category><![CDATA[Plazes I visited]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22345</guid>
+				<description><![CDATA[I have been thinking about how to share check-ins or announcements of upcoming travel, and wrote that down in the wiki section: Individualised Plazes. Previously I imported my Swarm check-ins into this site, but I do not want to use such apps anymore. The purpose for me of sharing location information usually was to enable [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>I have been thinking about how to share check-ins or announcements of upcoming travel, and wrote that down in the wiki section: <a href="https://www.zylstra.org/blog/site-alterations/individualised-plazes/">Individualised Plazes</a>. Previously I imported my Swarm check-ins into this site, but I do not want to use such apps anymore.</p>
+<p>The purpose for me of sharing location information usually was to enable serendipitous meetings. When I&#8217;m at or just left some place, or will be in some city. Crossing paths between me and people in my network have led and can lead to serendipitous meetings. Such meetings are valuable. </p>
+<p>Another purpose can be sharing a little review of a place where I&#8217;ve been that day.</p>
+<p>I&#8217;ve named check-ins Plazes (after the first social location sharing service I used), and travel plans Dopplr (the service that used to do this so well in the past). The forms are really simple at the moment, and I&#8217;ll gradually make them more useful to me. At the linked page I&#8217;ve added some considerations on how to make such posting more useful outside this blog as well, by determining location and location related information beforehand, and by enabling discovery after posting. For now just posting is a start.</p>
+<p>I&#8217;ve posted an <a href="https://www.zylstra.org/blog/2022/10/22336/">example of a check-in</a>, and an <a href="https://www.zylstra.org/blog/2022/10/22341/">example of a future location</a>. I draft postings through a simple form on my device that uses micropub to post it directly to this site. The forms can be extremely simple because I only need to cater to me and my habits. My personal preferences are predictable to me, and thus easy to code into a function with a handful of variable parameters. Depending on the input of the form it adds the various microformats to make the posting semantically interpretable by machines.</p>
+<p>I think there&#8217;s no risk for RSS readers of over-sharing (nor for site visitors as the postings won&#8217;t show on the site for now). Only when I think there might be an opportunity for meeting someone I&#8217;d otherwise not meet, will I share my location. Or when I want to post a review of a place. Unlike in Swarm/Foursquare there&#8217;s no gamification going on, nor a leaderboard each week, to nudge me to check-in as often as I can to score more points. No locations to be &#8216;mayor&#8217; of. Just me going about my days.</p>
+<p><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/plazeform-300x246.png" alt="" width="300" height="246" class="size-medium wp-image-22352" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/plazeform-300x246.png 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/plazeform.png 452w" sizes="(max-width: 300px) 100vw, 300px" /><br />
+<img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/dopplrtform-300x266.png" alt="" width="300" height="266" class="size-medium wp-image-22389" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/dopplrtform-300x266.png 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/dopplrtform.png 451w" sizes="(max-width: 300px) 100vw, 300px" /><br />
+<br /><em>A screenshot of my check-in form, and of my &#8216;dopplr&#8217; form for future locations. Both extremely simple.</em></p>
+<p>Also on <a class="u-syndication" href="https://news.indieweb.org/en">IndieWeb News</a></p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/adding-check-in-and-dopplr-style-postings/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/10/22341/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/22341/#comments</comments>
+				<pubDate>Sun, 16 Oct 2022 17:00:27 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Dopplr]]></category>
+		<category><![CDATA[RSS Only]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/2022/10/22341/</guid>
+				<description><![CDATA[I will be in Amsterdam in the near future. Monday afternoon 17 October, at the Open State Foundation&#8217;s offices. This is my first experimental micropub based Dopplr style posting.]]></description>
+								<content:encoded><![CDATA[<p><img src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/dopplrblocks.png" style="float:left; margin-right: 5px; padding-top:4px;"> <span style="display: inline-block;"><em> I will be in Amsterdam in the near future.</em></span></p>
+<p>Monday afternoon 17 October, at the Open State Foundation&#8217;s offices.</p>
+<p>This is my first experimental micropub based Dopplr style posting.</p>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/22341/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/10/22336/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/22336/#comments</comments>
+				<pubDate>Sun, 16 Oct 2022 16:37:00 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Plazes I visited]]></category>
+		<category><![CDATA[RSS Only]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22336</guid>
+				<description><![CDATA[Checked into Home (Amersfoort) just now This is my first micropub based check-in]]></description>
+								<content:encoded><![CDATA[<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="20" height="19"><path fill="currentColor" d="M288 0c-69.59 0-126 56.41-126 126 0 56.26 82.35 158.8 113.9 196.02 6.39 7.54 17.82 7.54 24.2 0C331.65 284.8 414 182.26 414 126 414 56.41 357.59 0 288 0zm0 168c-23.2 0-42-18.8-42-42s18.8-42 42-42 42 18.8 42 42-18.8 42-42 42zM20.12 215.95A32.006 32.006 0 0 0 0 245.66v250.32c0 11.32 11.43 19.06 21.94 14.86L160 448V214.92c-8.84-15.98-16.07-31.54-21.25-46.42L20.12 215.95zM288 359.67c-14.07 0-27.38-6.18-36.51-16.96-19.66-23.2-40.57-49.62-59.49-76.72v182l192 64V266c-18.92 27.09-39.82 53.52-59.49 76.72-9.13 10.77-22.44 16.95-36.51 16.95zm266.06-198.51L416 224v288l139.88-55.95A31.996 31.996 0 0 0 576 426.34V176.02c0-11.32-11.43-19.06-21.94-14.86z"/></svg> <em>Checked into Home (Amersfoort) just now</em></p>
+<p>This is my first micropub based check-in</p>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/22336/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+							<title>IndieWeb Plugin for WordPress Blocks</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/indieweb-plugin-for-wordpress-blocks/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/indieweb-plugin-for-wordpress-blocks/#comments</comments>
+				<pubDate>Fri, 14 Oct 2022 13:02:12 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[metablogging]]></category>
+		<category><![CDATA[IndieWeb]]></category>
+		<category><![CDATA[wordpress]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22324</guid>
+				<description><![CDATA[An IndieWeb plugin for WordPress block based themes! Nice one @jan@geekcompass.com]]></description>
+								<content:encoded><![CDATA[<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" width="15" height="12"><path d="M259.3 17.8L194 150.2 47.9 171.5c-26.2 3.8-36.7 36.1-17.7 54.6l105.7 103-25 145.5c-4.5 26.3 23.2 46 46.4 33.7L288 439.6l130.7 68.7c23.2 12.2 50.9-7.4 46.4-33.7l-25-145.5 105.7-103c19-18.5 8.5-50.8-17.7-54.6L382 150.2 316.7 17.8c-11.7-23.6-45.6-23.9-57.4 0z"/></svg> <em>Favorited <a  class="u-favorite-of p-name" href="https://jan.boddez.net/notes/44a551f7f3">Yes! My IndieBlocks plugin is now up on WP.org</a> by Jan Boddez</em> </p>
+<p>Oh, nice! Jan has been working on his own WordPress plugins w.r.t. IndieWeb for some time and now released some of that work as a <a href="https://wordpress.org/plugins/indieblocks/">public plugin</a>. Current IndieWeb set-ups do not support the Gutenberg editor in WordPress as blocks are not supported. <a href="https://wordpress.org/plugins/indieblocks/">Jan&#8217;s plugin is created for blocks</a>. Will need to try this out (also because my recent <a href="https://www.zylstra.org/blog/2022/09/wordpressindieweb-as-the-os-of-the-open-social-web/">presentation at WordCamp on making WP IndieWeb compatible</a> by default played a <a href="https://geekcompass.com/@jan/109122973074656317">small role</a>). Nice timing Jan, releasing it just so it can dominate my weekend <img src="https://s.w.org/images/core/emoji/14.0.0/72x72/1f600.png" alt="😀" class="wp-smiley" style="height: 1em; max-height: 1em;" /></p>
+<blockquote><p>Current version offers a single “Context” block, and, optionally, (1) some custom post types, and (2) the ability to add microformats2 to block-based (!) themes. More is on the way.</p>
+<p>Jan Boddez</p></blockquote>
+<p>Also on <a class="u-syndication" href="https://news.indieweb.org/en">IndieWeb News</a></p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/indieweb-plugin-for-wordpress-blocks/feed/</wfw:commentRss>
+		<slash:comments>8</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/10/22316/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/22316/#comments</comments>
+				<pubDate>Mon, 10 Oct 2022 14:08:23 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Flashes]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22316</guid>
+				<description><![CDATA[We made a walk in the woods south of Amersfoort Sunday. There were a lot of fungi to see. Like this strict-branch coral fungus.]]></description>
+								<content:encoded><![CDATA[<p>We made a walk in the woods south of Amersfoort Sunday. There were a lot of fungi to see. Like this <a href="https://en.wikipedia.org/wiki/Ramaria_stricta">strict-branch coral fungus</a>.</p>
+<p><a href="https://www.flickr.com/photos/tonz/52414394477/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/koraalzwamTonZijlstraccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22317" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/koraalzwamTonZijlstraccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/koraalzwamTonZijlstraccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/koraalzwamTonZijlstraccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/koraalzwamTonZijlstraccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/koraalzwamTonZijlstraccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a></p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/22316/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+							<title>How Do I Open Completed Adobe Interactive PDF As Plain PDF Outside Adobe?</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/how-do-i-open-completed-adobe-interactive-pdf-as-plain-pdf-outside-adobe/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/how-do-i-open-completed-adobe-interactive-pdf-as-plain-pdf-outside-adobe/#comments</comments>
+				<pubDate>Mon, 10 Oct 2022 12:33:27 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Day to Day]]></category>
+		<category><![CDATA[misc]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22314</guid>
+				<description><![CDATA[Do you know a way out? I'm stuck in Adobe Acrobat PDF prison. Need to print a single page and re-add it to a document, but it's an interactive PDF which only opens in Adobe, and cannot be printed to preview from Adobe.]]></description>
+								<content:encoded><![CDATA[<p>It used to be that software was crappy because of technological limitations. These days software is crap because the vendor chooses to disempower you, or wants to milk you for more cash.</p>
+<p>Case in point: Adobe pdfs.</p>
+<p>My particular case:<br />
+For a client I need to register in their procurement platform. Part of the registration is a standard EU Tender document I have to fill out. It is provided as an interactive PDF that can <em>only</em> be opened with Adobe Acrobat, not with my regular PDF reader on Mac. Adobe Acrobat Reader is not a free tool, far from it at 25 Euro/month, but it has a 7 day free trial period to access all of its functionality.</p>
+<p>The client requires me to print the signature page and hand sign it. Normally I would print that single page, sign it, scan it, and replace it in the PDF with the unsigned page. Adobe Acrobat does not allow that. I can only print the entire thing of 14 pages if I want, and can then scan it as a regular PDF to work with it outside Adobe.</p>
+<p>What I also cannot do, is print the entire thing to a non-interactive PDF that can then be opened outside Adobe. That step is disabled by the software (you cannot print to preview as a helpful dialogue box let&#8217;s me know). It is unclear if it would be possible if I start paying. </p>
+<p>Do you know of a way to get out of Adobe Acrobat prison?</p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/how-do-i-open-completed-adobe-interactive-pdf-as-plain-pdf-outside-adobe/feed/</wfw:commentRss>
+		<slash:comments>9</slash:comments>
+							</item>
+		<item>
+							<title>Into The EU Data Space, Geo-Spatial&#8217;s New Frontier</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/into-the-eu-data-space-geo-spatials-new-frontier/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/into-the-eu-data-space-geo-spatials-new-frontier/#respond</comments>
+				<pubDate>Sat, 08 Oct 2022 21:53:57 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[conferences]]></category>
+		<category><![CDATA[Digital disruption]]></category>
+		<category><![CDATA[ethics]]></category>
+		<category><![CDATA[EU data]]></category>
+		<category><![CDATA[begeo]]></category>
+		<category><![CDATA[begeo2022]]></category>
+		<category><![CDATA[begeo22]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22311</guid>
+				<description><![CDATA[Last Tuesday I provided the opening keynote at BeGeo, the annual conference of Belgium&#8217;s geospatial sector, organised by the Belgian National Geographic Institute. My talk was part of the opening plenary session, after the welcome by NGI&#8217;s administrator-general Ingrid Vanden Berghe, and opening remarks by Belgian Minister for Defence Ludivine Dedonder. With both the Digital [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>Last Tuesday I provided the opening keynote at <a href="https://www.begeo.be/">BeGeo</a>, the annual conference of Belgium&#8217;s geospatial sector, organised by the Belgian National Geographic Institute. My talk was part of the opening plenary session, after the welcome by NGI&#8217;s administrator-general Ingrid Vanden Berghe, and opening remarks by Belgian Minister for Defence Ludivine Dedonder.</p>
+<p>With both the Digital and Data strategies the EU is shaping a geopolitical proposition w.r.t. digitisation and data. Anchored to maximising societal benefits and strengthening citizen rights and European values as measures of success, a wide range of novel legal instruments is being created. Those instruments provide companies, citizens, knowledge institutes and governments alike with new opportunities as well as responsibilities concerning the use of data. The forming of a single European market for data sharing and usage, the EU data space, also has consequences for all applications, including AI and digital twins, that are dependent on that data and produce data in return. </p>
+<p>Geo-data has a key role to play, not just in the Green Deal data space, and finds itself at the center of a variety of ethical issues as it is often the linking pin for other data sources. The EU data space will shape the environment in which data and geo-data is being shared and used for the coming decade, and requires elevating the role and visibility of geo data across other sectors. I explored the EU Data space as geo-data’s new frontier, to provide the audience with an additional perspective and some questions for their participation at the BeGeo conference.</p>
+<p>The slides are embedded below, which you can also embed in your own website, and can be downloaded as <a href="https://tonz.eu/ak/wp-content/uploads/2022/10/BeGeoTonZijlstra.pdf">PDF</a>.</p>
+<div class="speaker-stack-responsive-embed" style="position:relative;display:block;width:100%;padding:0;padding-bottom:75%;"><iframe src="https://tonz.eu/presentation/begeo-2022/" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"></iframe></div>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/into-the-eu-data-space-geo-spatials-new-frontier/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>The Health Risk of Being a Fast Learner in Primary School</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/the-health-risk-of-being-a-fast-learner-in-primary-school/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/the-health-risk-of-being-a-fast-learner-in-primary-school/#respond</comments>
+				<pubDate>Sat, 08 Oct 2022 21:29:26 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Personal]]></category>
+		<category><![CDATA[RSS Only]]></category>
+		<category><![CDATA[mentalhealth]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22298</guid>
+				<description><![CDATA[Content Warning: This is a post about depression and suicidal thoughts in primary school. This year after summer our daughter started group three in primary school. It&#8217;s the first &#8216;proper&#8217; school year, in the sense that actual lessons start. Reading, writing and counting is the focus right now of course. She has a classmate X [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p><strong>Content Warning: This is a post about depression and suicidal thoughts in primary school.</strong></p>
+<p>This year after summer our daughter started group three in primary school. It&#8217;s the first &#8216;proper&#8217; school year, in the sense that actual lessons start. Reading, writing and counting is the focus right now of course. She has a classmate X with whom she was friends already in the past two years. X like Y is a quick learner, a fast learner even. X could already read fluently last school year. As a consequence X is extremely bored right now. The material on offer in class is well below Xs level. In the past weeks I&#8217;ve seen X change from a sparkling little kid to a listless one. We regularly cross paths en route to school and X used to shout a greeting from afar and chat with us, but he fell silent, eyes downcast. Every day X was more reluctant to enter the school, and came back out looking flattened, regularly in tears. </p>
+<p>Myself, I hated primary school after group three. In my memory it literally became very dark at school (years later I saw that this was caused by a bunch of tall oaks keeping sunlight away from that particular classroom, which resonated with my psychological state). From before I remember the sense that something new and exciting was hiding beyond every corner just for me to discover. The endless repetitions of the same things, the same sums, the drone of saying the multiplication tables out loud. Things to which the answers just seemed to already exist in my mind. The teacher kicked me out of the classroom until I had finished all the repetitive work in the hallway, when I refused to do them in class because I didn&#8217;t see the point. It stopped after the head teacher found me in the hallway one day, and apparently had a word with my teacher. I withdrew and lived in my head. In the photos from my school class in those years, I don&#8217;t recognise myself in them. I now know where I am in those images, but back then I found myself in the photos by removing all classmates whom I did recognise, until I was left with the one person that logically would then be me. Back then, realising I would return to that school day after day after day, I lost the energy to live. I started sleeping with my head down below the tight sheets and blanket at the feet end of the bed, so I might suffocate during the night and not wake up. I tried taking a bath early mornings thinking I might fall asleep again in the tub water and drown. I read somewhere that a child had injured themselves stumbling while having a sharp object in their breastpocket. I kept sharpened pencils and a small screwdriver in the shirts with breastpockets I had, in case I stumbled on the way to or from school, so they might stab my heart. It somewhat improved after group 4. Increasingly I gained space and permission for my own projects while the rest did their lessons, which helped. In group 6 at some point, sitting in class, I was playing with a marble in my mouth, rolling it around. It shot down my throat and I choked. I remember thinking, ok, this is it now, and kept quiet while my air ran out. The child next to me noticed after a bit and called out to the teacher &#8220;something&#8217;s wrong with Ton&#8221;. The teacher intervened and dislodged the marble. Group 7 was my best year, with what I thought was the best teacher. He was a young teacher then, he&#8217;s 72 now, twenty years older than me. When I talked to him 7 years ago at my dad&#8217;s funeral and mentioned he was my favourite primary school teacher, he said he still very much remembered me, because he did not have a clue at all how to handle me. That had stayed with him. So he just fed my curiosity and kept suggesting things to see what would stick.</p>
+<p>In hindsight I see that primary school time from group 3 until group 7 as my first depressive period. I was a fast learner. Towards the end of primary school a school psychologist alerted my parents about that, and told them to be aware it could lead to issues at school. My parents never mentioned it to me, thinking that as long as things seemed to go well it would not be needed to talk about it. Not knowing how I actually felt those years, which I in turn didn&#8217;t dare talk about at home. They told me when I became depressed towards the end of my university years. It took me until shortly before Y&#8217;s birth to actually feel sad for primary school age me. When I mentioned it to a coach half jokingly along the lines of how childish and clumsy my attempts at death were. You were seven years old, do you realise how deeply sad that is, the coach asked me. I do now.</p>
+<p>I was a fast learner. Well above two standard deviations out, but below three sigma. X seems to be more than four standard deviations out from the average. Seeing X change these past weeks tore at me. Luckily Y and X&#8217;s primary school is very aware and active when it comes to differences in learning speed. Already last year both were in a group that got additional material and challenges one or two times per week. For Y that seems to be working well enough, she&#8217;s always eager to go to school. But not for X. The school can handle the needs of children up to three sigma out, not beyond. In the past week X visited a different school that is equipped to provide the right level of stimulation full time, and Friday Y came home saying X would be switching schools in a few weeks. X&#8217;s new school looks great I saw on their website. </p>
+<p>I very much hope it brings back the sparkling X from before. I hope the sparkle stays well alive with Y. Seven year old and current me are rooting for them. We&#8217;ll be in ongoing conversation with school of course as well.</p>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/the-health-risk-of-being-a-fast-learner-in-primary-school/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>Week Notes 22-40</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/week-notes-22-40/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/week-notes-22-40/#respond</comments>
+				<pubDate>Sat, 08 Oct 2022 17:29:16 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[RSS Only]]></category>
+		<category><![CDATA[weeknotes]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22293</guid>
+				<description><![CDATA[A week that flew by, with me finally catching my breath Friday afternoon. I started the week with finishing my talk for the BeGeo conference, and sent it to the organising team for inclusion in their production. I used some DALL-E generated images, one of which to underscore a point on what would be missing [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>A week that flew by, with me finally catching my breath Friday afternoon.</p>
+<ul>
+<li>I started the week with finishing my talk for the BeGeo conference, and sent it to the organising team for inclusion in their production. I used some DALL-E generated images, one of which to underscore a point on what would be missing if geo-spatial didn&#8217;t claim its own role well enough in the EU data space.</li>
+<li>Monday afternoon I traveled to Brussels by train arriving early evening. Arriving at the hotel I got a message asking to redo my slides in a different format because of the huge widescreen they would be shown at during the event. This meant replacing some of the images with higher resolution versions and re-arranging the lay-out of the slides.</li>
+<li>Tuesday I spent at the BeGeo conference and provided the <a href="https://tonz.eu/begeo/">opening key-note</a> right after the Belgian defense minister opening remarks. It seemed well received. The rest of the day I sat in on some interesting sessions mostly in the geoAI and digital twins tracks. By the end of the afternoon I took a train back home.</li>
+<li>After last week&#8217;s trouble with ABNAMRO our new bank cards arrived and I activated the one in my name. Although none of the cards currently work as intended, and the online banking interface keeps throwing cryptic errors, we at least regained access to our accounts. Meaning the NGO could refund the salaries I fronted last week and pay taxes as intended.</li>
+<li>Had the weekly client meetings.</li>
+<li>Reached out to my World Bank colleagues of the past years. I think my experience w.r.t. the EU regulatory framework on data and in data ethics will be useful in their programs. My work for the WB had stalled due to the pandemic. I&#8217;ll have a conversation next week with the ICT global practice of the WB, and hopefully later with the good governance global practice as well.</li>
+<li>Had some conversations on how to get through the work load I have before me until the end of this year, and did some project planning with clients for next year. For the rest of 2022 I&#8217;ll bring in some of my team members to take tasks from my plate, to ensure some more speed and more results before December.</li>
+<li>Spent Thursday completely in video calls, which is extremely tiring. Nevertheless had good discussions with the national environmental institute about a potential project, on digital transformation with a province, on our project proposal for a responsible AI maturity assessment with the police, on preparing a session with water authorities about the EU data rules, and on the digital ethics committee for the provinces.</li>
+<li>Did some of the invoicing for September</li>
+<li>Took Y to her swimming lesson.</li>
+<li>Took it slow during the weekend, went for coffee in town with E and Y on Saturday morning. It&#8217;s the annual children&#8217;s books week, so we browsed our usual bookstore for some new books for Y. She&#8217;s starting to read on her own, so it&#8217;s a mix of things she can practice reading on and things to read to her, that she can read herself later.</li>
+<li>I arranged both a public transport card (free) and a Museum year card for Y, ensuring we don&#8217;t have to arrange tickets for her on our trips.</li>
+</ul>
+<p><a href="https://www.flickr.com/photos/tonz/52404422865/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/atomiumTonZijlstraccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22295" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/atomiumTonZijlstraccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/atomiumTonZijlstraccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/atomiumTonZijlstraccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/atomiumTonZijlstraccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/atomiumTonZijlstraccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a><br /><em>The Atomium in Brussels, built for the 1958 world expo. It&#8217;s next to the original 1935 world expo grounds, where the BeGeo conference took place.</em></p>
+<p><a href="https://www.flickr.com/photos/tonz/52403717546/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/auditoriumTonZijlstraccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22294" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/auditoriumTonZijlstraccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/auditoriumTonZijlstraccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/auditoriumTonZijlstraccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/auditoriumTonZijlstraccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/auditoriumTonZijlstraccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a><br /><em>The BeGeo conference hall. Taken from <a href="https://www.flickr.com/photos/tonz/52403473691/in/photostream/">the production booth you see at the top here</a>.</em></p>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/week-notes-22-40/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>Week Notes 22-39</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/week-notes-22-39/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/week-notes-22-39/#respond</comments>
+				<pubDate>Sat, 08 Oct 2022 17:03:05 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[RSS Only]]></category>
+		<category><![CDATA[weeknotes]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22288</guid>
+				<description><![CDATA[A week late, it&#8217;s been busy, here are my week notes for the last week of September. This week I Gave a presentation to 120 or so statisticians at the national statistics office about how the new EU data regulations may impact and aid their work. Spent too many hours on the phone with ABNAMRO [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>A week late, it&#8217;s been busy, here are my week notes for the last week of September.</p>
+<p>This week I</p>
+<ul>
+<li>Gave a presentation to 120 or so statisticians at the national statistics office about how the new EU data regulations may impact and aid their work.</li>
+<li>Spent too many hours on the phone with ABNAMRO bank fixing a big administrative mess w.r.t. the NGO I chair. What started the week before with a seemingly simple call to activate a newly received online access card somehow turned into them not having anyone on record as being the rightful representative of the NGO&#8217;s accounts. This meant all of a sudden none of the cards worked, none of us had access to the account and they weren&#8217;t allowed to talk to us about any details as they couldn&#8217;t verify who we were in their system. As we were supposed to pay the salaries the week before, this was highly disruptive. In the end I privately fronted this month&#8217;s salaries for the team of 9. By the end of the week I and other board members were re-registered again with our accounts, meaning we could finally talk details again. New banking cards were sent on Friday, and should arrive after the weekend.</li>
+<li>Did a first selection with a client for people to ask for an interprovincial digital ethics committee.</li>
+<li>Had the weekly client meetings.</li>
+<li>Worked on a project proposal for my client&#8217;s client for next year. If all goes well, this also means my continued involvement next year.</li>
+<li>Prepared a session for October 13th with a group at the national statistics office about the Green Deal data space, energy transition and the role of the statistics office.</li>
+<li>Created a short overview on how to start writing short factsheets about the coming implementation of the EU High Value Data list and the Data Governance Act for Dutch geo-data holders and proposed translating them to English for wider use.</li>
+<li>Revisited some old work on procurement conditions and public tender criteria to ensure data sovereignty for the public entity doing the procurement. This for a province who asked to use it in a negotiation they&#8217;re currently involved in.</li>
+<li>Had lunch with E in town, after picking up a Nintendo Switch which we&#8217;ll introduce to Y during her fall week off.</li>
+<li>Played some more with DALL-E now that it is made available to the general public.</li>
+<li>Started preparing my talk and slides for BeGeo, the Belgian annual conference for all those involved in geospatial data, organised by the Belgian national geographic institute.</li>
+<li>Saturday we drove to E&#8217;s parents to visit an art exhibition which include a few of my mother in law&#8217;s photographs. The venue was a newly renovated hall, and looked fantastic.</li>
+<li>Sunday, having stayed the night at E&#8217;s parents, we drove to Enschede. There we first visited the Rijksmuseum Twenthe, for an exhibit about the Italian futurists. Such fantastic art work attempting to catch movement, time and dynamics in paintings. Too bad <a href="https://en.wikipedia.org/wiki/Filippo_Tommaso_Marinetti">Marinetti</a>, a poet, got very much involved in Italian fascism as a way to break out of the conservative and stale place Italy was in when the 20th century started, and glorified war for its disruptive potential. Afterwards we visited our neighbours from when we lived there and had good afternoon catching up with them.</li>
+</ul>
+<p><a href="https://www.flickr.com/photos/tonz/52398234782/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurismTonZijlstaccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22291" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurismTonZijlstaccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurismTonZijlstaccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurismTonZijlstaccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurismTonZijlstaccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurismTonZijlstaccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a><br /><em>The &#8216;Marinetti and futurism, manifest for a new world&#8217; exhibit at Rijksmuseum Twenthe</em></p>
+<p><a href="https://www.flickr.com/photos/tonz/52398748771/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurism2TonZijlstaccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22290" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurism2TonZijlstaccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurism2TonZijlstaccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurism2TonZijlstaccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurism2TonZijlstaccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/futurism2TonZijlstaccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a><br /><em>E and Y discussing the art work.</em></p>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/week-notes-22-39/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/10/22284/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/22284/#respond</comments>
+				<pubDate>Fri, 07 Oct 2022 14:53:01 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Flashes]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22284</guid>
+				<description><![CDATA[The blanket I ordered online from the Ukrainian woolkrafts.com arrived today. It has the Kyiv street pattern woven in. Really nice. This blanket was one of the things I bought from Ukrainian makers and brands. There is a newly launched online platform where you can find Ukrainian products. It&#8217;s called Made with Bravery. The list [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>The <a href="https://woolkrafts.com/en/shop/kyiv-blanket">blanket</a> I ordered online from the Ukrainian <a href="https://woolkrafts.com">woolkrafts.com</a> arrived today. It has the Kyiv street pattern woven in. Really nice.</p>
+<p><a href="https://www.flickr.com/photos/tonz/52411002783/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/woolkraftsTonZijlstraccbyncsa-480x640.jpg" alt="" width="480" height="640" class="aligncenter size-large wp-image-22285" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/woolkraftsTonZijlstraccbyncsa-480x640.jpg 480w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/woolkraftsTonZijlstraccbyncsa-225x300.jpg 225w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/woolkraftsTonZijlstraccbyncsa.jpg 600w" sizes="(max-width: 480px) 100vw, 480px" /></a></p>
+<p>This blanket was one of the things <a href="https://www.zylstra.org/blog/2022/09/buying-ukrainian/">I bought from Ukrainian makers and brands</a>.<br />
+There is a newly launched online platform where you can find Ukrainian products. It&#8217;s called <a href="https://shop.brave.ua/">Made with Bravery</a>. The list of makers selling through the platform is slowly growing.</p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/22284/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>Why So Many Fake LinkedIn Profiles?</title>
+				
+		<link>https://www.zylstra.org/blog/2022/10/why-so-many-fake-linkedin-profiles/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/why-so-many-fake-linkedin-profiles/#comments</comments>
+				<pubDate>Thu, 06 Oct 2022 20:23:24 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Day to Day]]></category>
+		<category><![CDATA[Linklog]]></category>
+		<category><![CDATA[social networking]]></category>
+		<category><![CDATA[linkedin]]></category>
+		<category><![CDATA[socialmedia]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22281</guid>
+				<description><![CDATA[Bookmarked Glut of fake LinkedIn profiles pits HR against the bots by Brian Krebs Brian Krebs writes about waves of fake LinkedIn profiles, that don&#8217;t yet serve a purpose that is clear from the outside. I think that the suggestion it may be to set up a network of bot accounts to later spread misinformation [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="12" height="17"><path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"/></svg> <em>Bookmarked <a class="u-bookmark-of" href="https://krebsonsecurity.com/2022/10/glut-of-fake-linkedin-profiles-pits-hr-against-the-bots/">Glut of fake LinkedIn profiles pits HR against the bots</a> by Brian Krebs</em></p>
+<p>Brian Krebs writes about waves of fake LinkedIn profiles, that don&#8217;t yet serve a purpose that is clear from the outside. I think that the suggestion it may be to set up a network of bot accounts to later spread misinformation or propaganda makes a certain amount of sense. I think it might not be companies or potential scam victims that are the target. I can easily imagine that the <em>timeline</em> is the actual target. A way to spread stuff on the timeline when needed at some point. A year ago I <a href="https://www.zylstra.org/blog/2021/09/emptied-my-linkedin-feed/">deleted the timeline from my LinkedIn experience by unfollowing everyone</a>. I did that after <a href="https://www.zylstra.org/blog/2021/03/tuning-out-linkedin/">seeing the timeline deteriorate</a> since the summer of 2020, until the point it became completely useless. A timeline that is &#8216;optimised&#8217; not for you but for &#8216;engagement&#8217; and outside your own control is a timeline that can be manipulated by external actors. That makes it a target. Provided you have enough fake accounts under your control.</p>
+<blockquote><p>Miller says he’s worried someone is creating a massive social network of bots for some future attack in which the automated accounts may be used to amplify false information online, or at least muddle the truthe</p>
+<p>Brian Krebs</p></blockquote>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/why-so-many-fake-linkedin-profiles/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/10/22273/</link>
+				<comments>https://www.zylstra.org/blog/2022/10/22273/#respond</comments>
+				<pubDate>Wed, 05 Oct 2022 20:41:46 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Flashes]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22273</guid>
+				<description><![CDATA[The apple harvest of 2022 is in. We had plentiful potential apples after the blossoming, but heat, lack of rain and then a surplus of rain took their toll. This is what was left. The apples I picked from our small tree Previous harvests 2021, 2020, 2019, 2018, 2017.]]></description>
+								<content:encoded><![CDATA[<p>The apple harvest of 2022 is in. We had plentiful potential apples after the blossoming, but heat, lack of rain and then a surplus of rain took their toll. This is what was left.</p>
+<p><a href="https://www.flickr.com/photos/tonz/52405742671/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/10/apples2022TonZijlstraccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22274" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/10/apples2022TonZijlstraccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/apples2022TonZijlstraccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/apples2022TonZijlstraccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/apples2022TonZijlstraccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/10/apples2022TonZijlstraccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a><br /><em>The apples I picked from our small tree</em></p>
+<p>Previous harvests <a href="https://www.zylstra.org/blog/2021/09/19128/">2021</a>, <a href="https://www.zylstra.org/blog/2020/09/14949/">2020</a>, <a href="https://www.zylstra.org/blog/2019/08/8524/">2019</a>, <a href="https://www.zylstra.org/blog/2018/09/apples/">2018</a>, <a href="https://www.flickr.com/photos/tonz/37766849804/">2017</a>. </p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/10/22273/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/09/22260/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/22260/#respond</comments>
+				<pubDate>Thu, 29 Sep 2022 22:11:25 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Flashes]]></category>
+		<category><![CDATA[misc]]></category>
+		<category><![CDATA[AI]]></category>
+		<category><![CDATA[images]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22260</guid>
+				<description><![CDATA[The DALL-E imaging algorithm is now available to everyone to play with. Do realise while the entity providing DALL-E is called OpenAI, it is no such thing. Generated with DALL-E using the prompt &#8220;A color photograph of a 1960s green Volkswagen camper van parked underneath a night sky with the milky way running from front [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>The DALL-E imaging algorithm is <a href="https://arstechnica.com/information-technology/2022/09/openai-image-generator-dall-e-now-available-without-waitlist/">now available to everyone</a> to play with. Do realise while the entity providing DALL-E is called OpenAI, it is no such thing.</p>
+<p><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper-636x640.jpg" alt="An AI generated color photograph of a 1960s green Volkswagen camper van parked underneath a night sky with the milky way running from front to back, as a commercial airliner with two contrails flies past from left to right" width="636" height="640" class="aligncenter size-large wp-image-22267" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper-636x640.jpg 636w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper-298x300.jpg 298w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper-150x150.jpg 150w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper-768x773.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper-1526x1536.jpg 1526w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper-668x672.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/dallevwcamper.jpg 1562w" sizes="(max-width: 636px) 100vw, 636px" /></p>
+<p><em>Generated with DALL-E using the prompt &#8220;A color photograph of a 1960s green Volkswagen camper van parked underneath a night sky with the milky way running from front to back, as a commercial airliner with two contrails flies past from left to right.&#8221;, a single image selected from the first iteration of four.</em></p>
+<p><a href="https://huggingface.co/spaces/stabilityai/stable-diffusion">Stable Diffusion</a>, an open sourced model that can be run on your own hardware, produces this with the same prompt</p>
+<p><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/09/stablediffusionvwmilkyway.jpg" alt="" width="512" height="512" class="aligncenter size-full wp-image-22269" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/09/stablediffusionvwmilkyway.jpg 512w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/stablediffusionvwmilkyway-300x300.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/stablediffusionvwmilkyway-150x150.jpg 150w" sizes="(max-width: 512px) 100vw, 512px" /><br /><em>Generated with Stable Diffusion using the prompt &#8220;A color photograph of a 1960s green Volkswagen camper van parked underneath a night sky with the milky way running from front to back, as a commercial airliner with two contrails flies past from left to right.&#8221;, a single image selected from the first iteration of four.</em></p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/22260/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/09/22257/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/22257/#comments</comments>
+				<pubDate>Thu, 29 Sep 2022 15:53:33 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[misc]]></category>
+		<category><![CDATA[RSS Only]]></category>
+		<category><![CDATA[energy]]></category>
+		<category><![CDATA[gas usage]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22257</guid>
+				<description><![CDATA[On the 27th the heating system started up for the first time, sometime during the day. Last year it was on the 21st. In 2020 it was on the 26th. It has been colder than usual this time of year, so setting the base temperature lower (19C rather than 20C or 21C) as we did [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>On the 27th the heating system started up for the first time, sometime during the day.<br />
+Last year it was on the 21st.<br />
+In 2020 it was <a href="https://www.zylstra.org/blog/2020/09/15032/">on the 26th</a>.</p>
+<p>It has been colder than usual this time of year, so setting the base temperature lower (19C rather than 20C or 21C) as we did at the start of the year is having an effect. Probably it would have engaged a week earlier otherwise.</p>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/22257/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+						
+		<link>https://www.zylstra.org/blog/2022/09/22253/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/22253/#respond</comments>
+				<pubDate>Thu, 29 Sep 2022 15:12:08 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Flashes]]></category>
+		<category><![CDATA[hops]]></category>
+		<category><![CDATA[vathorst]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22253</guid>
+				<description><![CDATA[I&#8217;ve spotted several locations in our neighbourhood where wild hops grow. This one is along the cycling path where Y and I cycle to school. In the mornings last week when the sun was out, it shone directly on a hops plant around the time we pass it. I still need to stop on the [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>I&#8217;ve spotted several locations in our neighbourhood where wild <a href="https://en.wikipedia.org/wiki/Humulus_lupulus">hops</a> grow. This one is along the cycling path where Y and I cycle to school. In the mornings last week when the sun was out, it shone directly on a hops plant around the time we pass it. I still need to stop on the way back and smell them. Never have seen them here in the north before, I have encountered them in the hills of Limburg in the south though.</p>
+<p><a href="https://www.flickr.com/photos/tonz/52375768906/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/09/wildhopsTonZijlstraccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22254" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/09/wildhopsTonZijlstraccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/wildhopsTonZijlstraccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/wildhopsTonZijlstraccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/wildhopsTonZijlstraccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/wildhopsTonZijlstraccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a></p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/22253/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>The Brain Comes To Obsidian As ExcaliBrain</title>
+				
+		<link>https://www.zylstra.org/blog/2022/09/the-brain-comes-to-obsidian-as-excalibrain/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/the-brain-comes-to-obsidian-as-excalibrain/#comments</comments>
+				<pubDate>Thu, 29 Sep 2022 11:13:37 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Learning]]></category>
+		<category><![CDATA[Linklog]]></category>
+		<category><![CDATA[technology]]></category>
+		<category><![CDATA[obsidianmd]]></category>
+		<category><![CDATA[pkm]]></category>
+		<category><![CDATA[plugin]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22248</guid>
+				<description><![CDATA[The ExcaliBrain plugin for Obsidian by Zsolt Viczián looks like it allows me to bring The Brain (which I used heavily 1997-2004) as a visual navigation layer to Obsidian. I need to try this out!]]></description>
+								<content:encoded><![CDATA[<p><a href="https://nicolevanderhoeven.com/blog/20220916-how-to-use-the-excalibrain-obsidian-plugin/">Nicole van der Hoeven published</a> one of her videos on using Obsidian on the topic of the <a href="https://github.com/zsviczian/excalibrain">ExcaliBrain plugin</a>. The plugin is made by <a href="https://www.zsolt.blog/">Zsolt Viczián</a>, the same creator as the Excalidraw plugin which brings easy visualisation to Obsidian. I use <a href="https://www.zylstra.org/blog/2021/11/impressed-with-excalidraw-obsidian-integration/">Excalidraw within Obsidian</a> with some regularity (I&#8217;m mostly text oriented).</p>
+<p>It&#8217;s not mentioned in the video, but the ExcaliBrain plugin is clearly inspired by <a href="https://www.thebrain.com/">The Brain</a> software, both in terms of types of links between notes, and how it shows them (even the placement of the little circles where links attach). The name suggests so too, and the plugin author names The Brain as source of inspiration in the github reposository. I used The Brain as desktop interface from 1997 until 2004-ish, and this plugin seems to bring The Brain as a visualisation layer to my notes. That alone is enough to try it out.</p>
+<p>The plugin can both infer relationships between notes, through existing links, much as the general graph view in Obsidian does, but does so in a more navigable style. This I hope allows it to be used as a visual navigation interface to notes, something the graph view does not meaningfully, as The Brain so usefully did for me for a number of years.</p>
+<p>You can also set explicit relationships by adding named links to your notes, for which it uses the inline data fields (yourfieldname::) that the DataView plugin makes possible. I already use that plugin so that&#8217;s not an extra step for me.<br />
+I disagree with Nicole van der Hoeven on her suggestion to comment out explicit relationships so that the plugin will visualise them but the note won&#8217;t show the links, except in edit mode.<br />
+The notes should always show all links I explicitly set, that&#8217;s the whole point of links.<br />
+Machine inferred links are a different matter, which deserve a toggle as they are suggestions made to me.<br />
+Links are my own and real work in my notes. </p>
+<p>Setting explicit links (parent, child, friends ExcaliBrain calls them) is similar to how I already create links. When I write a new note I aim to link other notes in <a href="https://www.youtube.com/watch?v=GjpjE5pMZMI&#038;t=3933s">the way Soren Bjornstadt describes in a video of his touring his Zettelkasten</a>. I make three links, if possible, from a new note. One to a higher level of abstraction note, one to a lower level of abstraction but more concrete note, and one to a related note at the same level. This creates &#8216;chains&#8217; of 4 notes with a content-based implied order. </p>
+<p>For example: a note on the role of public transport might link to urban mobility and the liveability of car-free city centers as higher abstration concepts, to a note on urban rail systems or bus networks as a lower abstraction level, to the German 2022 summer reduced fare scheme as an example, and to another communal public service like urban public internet as a same level but different type of note.</p>
+<p>I strongly dislike the parent-child-sibling(-friend) vocabulary Excalibrain introduces though, as it implies an order of creation. Parents exist first, children from parents. This means for the way I described creating links in notes that abstract concepts come first. This is not how it mostly works for me. Abstract notions are often created from, intuited from, less abstratct ones. The scaffolding created by less abstract notes and concrete examples is what leads to them. Overarching concepts and insights emerge from linking lower level items. Thankfully the terms you actually use to denote such connections between notes can be freely chosen in the plugin settings. That is a design choice by Zsolt Viczián I greatly appreciate. </p>
+<p>Nicole van der Hoeven in her run-through of ExcaliBrain also talks about this implied hierarchy, and mentions a higher level type of use, which is adding more semantics to links using the renaming options in the plugin settings. For instance to express lines of argumentation, and how material reflects on eachother (e.g. Note A reinforces / contradicts Note B). This is the type of linking that Tinderbox allows you to do visually too, which I&#8217;ve used a lot. She hasn&#8217;t used it that way herself yet she says, but suggests it&#8217;s likely the most valuable use case. I think that rings true. It&#8217;s where linking becomes the work you have to do yourself again, as opposed to lazy or automatic linking between notes.</p>
+<p>I very much want to experiment with the ExcaliBrain plugin.</p>
+<p><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/09/excalibrain-640x378.png" alt="" width="640" height="378" class="aligncenter size-large wp-image-22250" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/09/excalibrain-640x378.png 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/excalibrain-300x177.png 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/excalibrain-768x453.png 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/excalibrain-668x394.png 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/excalibrain.png 1451w" sizes="(max-width: 640px) 100vw, 640px" /><br /><em>A screenshot after activating ExcaliBrain of the vicinity of a single note</em></p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/the-brain-comes-to-obsidian-as-excalibrain/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+							<title>EU Directive on AI Liability</title>
+				
+		<link>https://www.zylstra.org/blog/2022/09/eu-directive-on-ai-liability/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/eu-directive-on-ai-liability/#respond</comments>
+				<pubDate>Wed, 28 Sep 2022 16:30:54 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Digital disruption]]></category>
+		<category><![CDATA[Linklog]]></category>
+		<category><![CDATA[AI]]></category>
+		<category><![CDATA[EU]]></category>
+		<category><![CDATA[legislation]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22240</guid>
+				<description><![CDATA[Bookmarked AI Liability Directive (PDF) (by the European Commission) This should be interesting to compare with the proposed AI Regulation. The AI Regulation specifies under which conditions an AI product or service, or the output of one will or won&#8217;t be admitted on the EU market (literally a CE mark for AI), based on a [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="12" height="17"><path d="M0 512V48C0 21.49 21.49 0 48 0h288c26.51 0 48 21.49 48 48v464L192 400 0 512z"/></svg> <em>Bookmarked <a class="u-bookmark-of" href="https://ec.europa.eu/info/sites/default/files/1_1_197605_prop_dir_ai_en.pdf">AI Liability Directive (PDF)</a> (by the European Commission)</em></p>
+<p>This should be interesting to compare with the <a href="https://digital-strategy.ec.europa.eu/en/library/proposal-regulation-laying-down-harmonised-rules-artificial-intelligence">proposed AI Regulation</a>. The AI Regulation specifies under which conditions an AI product or service, or the output of one will or won&#8217;t be admitted on the EU market (literally a CE mark for AI), based on a risk assessment that includes risks to civic rights, equipment safety and critical infrastructure. That text is still very much under negotiation, but is a building block of the combined EU digital and data strategies. The EU in parallel is modernising their product liability rules, and now include damage caused by AI related products and services within that scope. Both are listed on the <a href="https://digital-strategy.ec.europa.eu/en/policies/european-approach-artificial-intelligence">EC&#8217;s page concerning AI</a> so some integration is to be expected. Is the proposal already anticipating parts of the AI Regulation, or does it try to replicate some of it within this Directive? Is it fully aligned with the proposed AI Regulation or are there surprising contrasts? As this proposal is a Directive (which needs to be translated into national law in each Member State), and the AI Regulation becomes law without such national translation that too is a dynamic of interest, in the sense that this Directive builds on existing national legal instruments. There was a <a href="https://digital-strategy.ec.europa.eu/en/news/commission-collects-views-making-liability-rules-fit-digital-age-artificial-intelligence-and">consultation on this Directive</a> late 2021. Which DG created this proposal, DG Just?</p>
+<blockquote><p>The problems this proposal aims to address, in particular legal uncertainty and legal fragmentation, hinder the development of the internal market and thus amount to significant obstacles to cross-border trade in AI-enabled products and services. </p>
+<p>The proposal addresses obstacles stemming from the fact that businesses that want to produce, disseminate and operate AI-enabled products and services across borders are uncertain whether and how existing liability regimes apply to damage caused by AI. &#8230; In a cross-border context, the law applicable to a non-contractual liability arising out of a tort or delict is by default the law of the country in which the damage occurs. For these businesses, it is essential to know the relevant liability risks and to be able to insure themselves against them.</p>
+<p>In addition, there are concrete signs that a number of Member States are considering unilateral legislative measures to address the specific challenges posed by AI with respect to liability. &#8230; Given the large divergence between Member States’ existing civil liability rules, it is likely that any national AI-specific measure on liability would follow existing different national approaches and therefore increase fragmentation. Therefore, adaptations of liability rules taken on a purely national basis would increase the barriers to the rollout of AI-enabled products and services across the internal market and contribute further to fragmentation.</p>
+<p>European Commission</p></blockquote>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/eu-directive-on-ai-liability/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>Buying Ukrainian</title>
+				
+		<link>https://www.zylstra.org/blog/2022/09/buying-ukrainian/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/buying-ukrainian/#comments</comments>
+				<pubDate>Tue, 27 Sep 2022 20:46:24 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[misc]]></category>
+		<category><![CDATA[Personal]]></category>
+		<category><![CDATA[artisanship]]></category>
+		<category><![CDATA[makers]]></category>
+		<category><![CDATA[Ukraine]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22234</guid>
+				<description><![CDATA[In support of Ukrainian makers I've ordered several items online. ]]></description>
+								<content:encoded><![CDATA[<p>Back in 2014 the FabLab in Donetsk, Ukraine, was closed at gunpoint at the command of someone who was a user of the space until then, and my acquaintance K who ran the Donetsk FabLab had to flee. In the past months I have regularly wondered about Ukrainian makers and small production companies. I&#8217;m sure all have been struggling. </p>
+<p>During the pandemic lockdowns I ordered online with independent book stores and artisans in several European cities, to contribute something to their continuity. </p>
+<p>After the summer I started looking for Ukraine based makers to similarly order some useful things, but I found it hard to find such makers. Then a FT journalist posted a <a href="https://twitter.com/lydiatomkiw/status/1568637959091412993">number of links to Ukrainian brands in a Twitter thread</a>, which I looked at.</p>
+<p>I&#8217;ve ordered a blanket with the printed street pattern of Kyiv, which is a nice open data touch, from <a href="https://woolkrafts.com/en/shop/">woolkrafts</a>. A glass artefact from <a href="https://www.etsy.com/shop/OlgaTuretskaArtGlass">Olga Turetska</a>, and two copies of an <a href="https://osnovypublishing.com/product/thinking-big-innovation-in-ukraine">English language book on innovation in Ukraine</a> from <a href="https://osnovypublishing.com/">Osnovy Publishing</a>. In a conversation with one of the staff at the publishing house, I was pointed to a newly launched online platform where you can find Ukrainian products. It&#8217;s called <a href="https://shop.brave.ua/">Made with Bravery</a>. The list of makers selling through the platform is slowly growing.</p>
+<p>My packages are making their way to me, and one has reached Dutch customs. If you order something too, do allow for a longish shipping period. There are other logistical issues way more important in Ukraine at the moment than delivery of commercial packages.</p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/buying-ukrainian/feed/</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+							</item>
+		<item>
+							<title>Week Notes 22-38</title>
+				
+		<link>https://www.zylstra.org/blog/2022/09/week-notes-22-38/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/week-notes-22-38/#respond</comments>
+				<pubDate>Sun, 25 Sep 2022 20:40:38 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[RSS Only]]></category>
+		<category><![CDATA[weeknotes]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22230</guid>
+				<description><![CDATA[A busy but regular week, where I somewhat felt I was getting on top of things again. This week I Presented to a wider group of client colleagues about the coming EU regulations w.r.t. data. Made a first draft outline for a keynote I am to give in Brussels early October Did some invoicing Had [&#8230;]]]></description>
+								<content:encoded><![CDATA[<p>A busy but regular week, where I somewhat felt I was getting on top of things again.<br />
+This week I</p>
+<ul>
+<li>Presented to a wider group of client colleagues about the coming EU regulations w.r.t. data.</li>
+<li>Made a first draft outline for a keynote I am to give in Brussels early October</li>
+<li>Did some invoicing</li>
+<li>Had a team meeting of our project w.r.t. a provincial ethics committee, and a client team meeting as well</li>
+<li>Had a session with the ethics working group of all provinces</li>
+<li>Made and gave a presentation to a client&#8217;s program board</li>
+<li>Prepared a half day session with Dutch government geo data holders</li>
+<li>Did a half day session with those agencies</li>
+<li>Had lunch with E in the city, and visited the local photo collective&#8217;s exposition space. I gave E a year of free access on her birthday</li>
+<li>Had our monthly half day meeting with our team. It was good to have the team, with a new colleague, together and have time for conversations.</li>
+<li>Met payroll</li>
+<li>Had my sister and brother in law visit, who live in Portugal. We went into the city and chatted over lunch, and while walking around town, despite the rain</li>
+</ul>
+<br/><aside class="notice"><svg xmlns="http://www.w3.org/2000/svg" class="icon" viewBox="0 0 24 24" width="16" height="16" style="height: 1.2em; width: 1.2em; vertical-align: text-bottom"><path fill="currentColor" d="M 4 4.44 v 2.83 c 7.03 0 12.73 5.7 12.73 12.73 h 2.83 c 0 -8.59 -6.97 -15.56 -15.56 -15.56 Z m 0 5.66 v 2.83 c 3.9 0 7.07 3.17 7.07 7.07 h 2.83 c 0 -5.47 -4.43 -9.9 -9.9 -9.9 Z M 6.18 15.64 A 2.18 2.18 0 0 1 6.18 20 A 2.18 2.18 0 0 1 6.18 15.64" /></svg><br/><tt>This is a RSS only posting for regular readers. Not secret, just unlisted. Comments / webmention / pingback all ok.<br/><a href="https://www.zylstra.org/blog/2019/09/joining-rss-club-as-an-experiment/">Read more about RSS Club</a></tt></aside>]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/week-notes-22-38/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+		<item>
+							<title>Who Decided On Green?</title>
+				
+		<link>https://www.zylstra.org/blog/2022/09/who-decided-on-green/</link>
+				<comments>https://www.zylstra.org/blog/2022/09/who-decided-on-green/#respond</comments>
+				<pubDate>Sat, 24 Sep 2022 19:49:52 +0200</pubDate>
+		<dc:creator><![CDATA[Ton Zijlstra]]></dc:creator>
+				<category><![CDATA[Flashes]]></category>
+		<category><![CDATA[amersfoort]]></category>
+		<category><![CDATA[Nieuwe Stad]]></category>
+
+		<guid isPermaLink="false">https://www.zylstra.org/blog/?p=22227</guid>
+				<description><![CDATA[Who was the person who thought, seeing the stairs, let&#8217;s make the gate green?]]></description>
+								<content:encoded><![CDATA[<p><a href="https://www.flickr.com/photos/tonz/52380693425/in/dateposted/"><img loading="lazy" src="https://www.zylstra.org/wp/wp-content/uploads/2022/09/greengateTonZijlstraccbyncsa-640x480.jpg" alt="" width="640" height="480" class="aligncenter size-large wp-image-22228" srcset="https://www.zylstra.org/wp/wp-content/uploads/2022/09/greengateTonZijlstraccbyncsa-640x480.jpg 640w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/greengateTonZijlstraccbyncsa-300x225.jpg 300w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/greengateTonZijlstraccbyncsa-768x576.jpg 768w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/greengateTonZijlstraccbyncsa-668x501.jpg 668w, https://www.zylstra.org/wp/wp-content/uploads/2022/09/greengateTonZijlstraccbyncsa.jpg 800w" sizes="(max-width: 640px) 100vw, 640px" /></a></p>
+<p>Who was the person who thought, seeing the stairs, let&#8217;s make the gate green?</p>
+]]></content:encoded>
+							<wfw:commentRss>https://www.zylstra.org/blog/2022/09/who-decided-on-green/feed/</wfw:commentRss>
+		<slash:comments>0</slash:comments>
+							</item>
+	</channel>
+</rss>

@@ -273,11 +273,24 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 				}
 			}
 
+			foreach ( array(
+				'http://purl.org/rss/1.0/modules/slash/' => array(
+					'comment_count' => 'comments',
+				),
+			) as $xmlns => $keys ) {
+				foreach ( $keys as $key => $lookup_key ) {
+					if ( ! isset( $item->data['child'][ $xmlns ][ $lookup_key ][0]['data'] ) ) {
+						continue;
+					}
+
+					$feed_item->{$key} = $item->data['child'][ $xmlns ][ $lookup_key ][0]['data'];
+					break;
+				}
+			}
+
 			if ( is_object( $item->get_author() ) ) {
 				$feed_item->author = $item->get_author()->name;
 			}
-
-			$feed_item->comment_count = isset( $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] ) ? $item->data['child']['http://purl.org/rss/1.0/modules/slash/']['comments'][0]['data'] : 0;
 
 			$feed_item->date         = $item->get_gmdate( 'U' );
 			$feed_item->updated_date = $item->get_updated_gmdate( 'U' );

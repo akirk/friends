@@ -536,9 +536,6 @@ class Feed {
 			// Fallback, when no friends plugin is installed.
 			$item->post_id     = $item->permalink;
 			$item->post_status = 'publish';
-			if ( ! isset( $item->comment_count ) ) {
-				$item->comment_count = 0;
-			}
 			if ( ( ! $item->post_content && ! $item->title ) || ! $item->permalink ) {
 				continue;
 			}
@@ -576,6 +573,7 @@ class Feed {
 				$post_data = array_merge( $post_data, $item->_feed_rule_transform );
 			}
 
+			$old_post = null;
 			if ( ! is_null( $post_id ) ) {
 				$old_post = get_post( $post_id );
 				$modified_post_data = array();
@@ -607,16 +605,6 @@ class Feed {
 						$modified_posts[] = $post_id;
 					}
 				}
-
-				if ( intval( $old_post->comment_count ) !== intval( $item->comment_count ) && ! in_array( $post_id, $modified_posts ) ) {
-					// Always update the comment count.
-					wp_update_post(
-						array(
-							'ID'            => $post_id,
-							'comment_count' => $item->comment_count,
-						)
-					);
-				}
 			} else {
 				$post_data['post_type']     = Friends::CPT;
 				$post_data['post_date_gmt'] = $item->date;
@@ -631,6 +619,15 @@ class Feed {
 				$new_posts[] = $post_id;
 
 				$remote_post_ids[ $item->permalink ] = $post_id;
+			}
+
+			if ( is_null( $old_post ) || intval( $old_post->comment_count ) !== intval( $item->comment_count ) ) {
+				// The comment_count needs to be updated manually since it doesn't represent real comments in the database.
+				global $wpdb;
+				$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
+				wp_cache_delete( "comments-{$post_id}", 'counts' );
+				clean_post_cache( $post_id );
+				do_action( 'wp_update_comment_count', $post_id, $item->comment_count, $old_post ? $old_post->comment_count : 0 );
 			}
 
 			$post_format = $feed_post_format;

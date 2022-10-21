@@ -508,7 +508,19 @@ class FeedTest extends \WP_UnitTestCase {
 		foreach ( $due_feeds as $user_feed ) {
 			$user_feed->was_polled();
 		}
-
 	}
 
+	function test_external_comments() {
+		$zylstra = new \SimplePie_File( __DIR__ . '/data/zylstra.rss' );
+		$feed_parsing_test = $this->feed_parsing_test( $zylstra );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 25, $new_items );
+		$post_id = $new_items[0];
+
+		$post = get_post( $post_id );
+
+		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/', $post->guid );
+		$this->assertEquals( 6, $post->comment_count );
+	}
 }
