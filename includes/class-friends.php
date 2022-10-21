@@ -354,7 +354,7 @@ class Friends {
 	 * @return     array  The roles.
 	 */
 	public static function get_friends_plugin_roles() {
-		return array( 'friend', 'pending_friend_request', 'friend_request', 'subscription' );
+		return apply_filters( 'friends_plugin_roles', array( 'friend', 'pending_friend_request', 'friend_request', 'subscription' ) );
 	}
 
 	/**

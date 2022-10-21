@@ -53,6 +53,8 @@ class User_Query extends \WP_User_Query {
 
 	/**
 	 * Gets all friends.
+	 *
+	 * @return     User_Query  The requested users.
 	 */
 	public static function all_friends() {
 		static $all_friends = array();
@@ -70,6 +72,8 @@ class User_Query extends \WP_User_Query {
 
 	/**
 	 * Gets all friends.
+	 *
+	 * @return     User_Query  The requested users.
 	 */
 	public static function all_friends_subscriptions() {
 		static $all_friends_subscriptions = array();
@@ -83,6 +87,51 @@ class User_Query extends \WP_User_Query {
 			);
 		}
 		return $all_friends_subscriptions[ get_current_blog_id() ];
+	}
+
+	/**
+	 * Gets favorite friends.
+	 *
+	 * @return     User_Query  The requested users.
+	 */
+	public static function favorite_friends_subscriptions() {
+		static $favorite_friends_subscriptions = array();
+		if ( ! self::$cache || ! isset( $favorite_friends_subscriptions[ get_current_blog_id() ] ) ) {
+			$favorite_friends_subscriptions[ get_current_blog_id() ] = new self(
+				array(
+					'role__in'     => Friends::get_friends_plugin_roles(),
+					// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+					'meta_key'     => 'favorite_friend_' . get_current_blog_id(),
+					// Using a meta_key EXISTS query is not slow, see https://github.com/WordPress/WordPress-Coding-Standards/issues/1871.
+					'meta_compare' => 'EXISTS',
+					'order'        => 'ASC',
+					'orderby'      => 'display_name',
+				)
+			);
+		}
+		return $favorite_friends_subscriptions[ get_current_blog_id() ];
+	}
+
+	/**
+	 * Gets the recent friends.
+	 *
+	 * @param      int $limit  The limit.
+	 *
+	 * @return     User_Query  The requested users.
+	 */
+	public static function recent_friends_subscriptions( $limit = 5 ) {
+		static $recent_friends_subscriptions = array();
+		if ( ! self::$cache || ! isset( $recent_friends_subscriptions[ get_current_blog_id() ] ) ) {
+			$recent_friends_subscriptions[ get_current_blog_id() . '_' . $limit ] = new self(
+				array(
+					'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+					'number'   => $limit,
+					'orderby'  => 'registered',
+					'order'    => 'DESC',
+				)
+			);
+		}
+		return $recent_friends_subscriptions[ get_current_blog_id() . '_' . $limit ];
 	}
 
 	/**

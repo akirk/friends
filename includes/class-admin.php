@@ -1814,19 +1814,11 @@ class Admin {
 
 		Friends::template_loader()->get_template_part( 'admin/add-friend', null, $args );
 
-		$friend_requests = new User_Query(
-			array(
-				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
-				'orderby'  => 'registered',
-				'order'    => 'DESC',
-			)
-		);
-
 		Friends::template_loader()->get_template_part(
 			'admin/latest-friends',
 			null,
 			array(
-				'friend_requests' => $friend_requests->get_results(),
+				'friend_requests' => User_Query::recent_friends_subscriptions( 25 )->get_results(),
 			)
 		);
 		Friends::template_loader()->get_template_part( 'admin/settings-footer', null, $args );
