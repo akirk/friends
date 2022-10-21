@@ -8,7 +8,7 @@
 
 $args['friends']->frontend->link(
 	get_comments_link(),
-	get_comments_number( '', 1, '%' ),
+	get_comments_number(),
 	array(
 		'class'          => 'comments btn ml-1',
 		'dashicon_front' => 'admin-comments',
