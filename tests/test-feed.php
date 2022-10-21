@@ -162,9 +162,15 @@ class FeedTest extends \WP_UnitTestCase {
 	public function test_parse_feed() {
 		$feed_1_private_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
 		$feed_parsing_test = $this->feed_parsing_test( $feed_1_private_post );
-		$this->assertCount( 1, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+
+		// Parse again, there should not be new items.
 		$feed_parsing_test->send( $feed_1_private_post );
-		$this->assertCount( 0, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
 	}
 
 	/**
@@ -173,9 +179,15 @@ class FeedTest extends \WP_UnitTestCase {
 	public function test_parse_feed_with_url_ampersand() {
 		$feed_url_ampersand = new \SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' );
 		$feed_parsing_test = $this->feed_parsing_test( $feed_url_ampersand );
-		$this->assertCount( 1, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+
+		// Parse again, there should not be new items.
 		$feed_parsing_test->send( $feed_url_ampersand );
-		$this->assertCount( 0, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
 	}
 
 	/**
@@ -184,9 +196,15 @@ class FeedTest extends \WP_UnitTestCase {
 	public function test_parse_feed_with_identical_posts() {
 		$identical_posts = new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' );
 		$feed_parsing_test = $this->feed_parsing_test( $identical_posts );
-		$this->assertCount( 1, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+
+		// Parse again, there should not be new items.
 		$feed_parsing_test->send( $identical_posts );
-		$this->assertCount( 0, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
 	}
 
 	/**
@@ -195,9 +213,15 @@ class FeedTest extends \WP_UnitTestCase {
 	public function test_parse_feed_with_identical_posts_after_fold() {
 		$identical_posts_after_fold = new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' );
 		$feed_parsing_test = $this->feed_parsing_test( $identical_posts_after_fold );
-		$this->assertCount( 11, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 11, $new_items );
+
+		// Parse again, there should not be new items.
 		$feed_parsing_test->send( $identical_posts_after_fold );
-		$this->assertCount( 0, $feed_parsing_test->current() );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
 	}
 
 	/**
