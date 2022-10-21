@@ -19,6 +19,7 @@ namespace Friends;
  */
 class Feed {
 	const XMLNS = 'wordpress-plugin-friends:feed-additions:1';
+	const COMMENTS_FEED_META = 'comments-feed';
 
 	/**
 	 * Contains a reference to the Friends class.
@@ -628,6 +629,10 @@ class Feed {
 				wp_cache_delete( "comments-{$post_id}", 'counts' );
 				clean_post_cache( $post_id );
 				do_action( 'wp_update_comment_count', $post_id, $item->comment_count, $old_post ? $old_post->comment_count : 0 );
+			}
+
+			if ( $item->comments_feed && ( is_null( $old_post ) || $old_post->comments_feed !== $item->comments_feed ) ) {
+				update_post_meta( $post_id, self::COMMENTS_FEED_META, $item->comments_feed, $old_post ? $old_post->comments_feed : '' );
 			}
 
 			$post_format = $feed_post_format;

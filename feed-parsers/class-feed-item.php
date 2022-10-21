@@ -119,6 +119,10 @@ class Feed_Item {
 				$value = $this->validate_integer( $value, 0, 10000, 'invalid-comments-count' );
 				break;
 
+			case 'comments_feed':
+				$value = $this->validate_url( $value, 'invalid-comments-feed' );
+				break;
+
 			case 'post_id':
 				$value = $this->validate_integer( $value, 0, PHP_INT_MAX, 'invalid-post-id' );
 				break;

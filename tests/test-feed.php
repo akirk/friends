@@ -522,5 +522,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/', $post->guid );
 		$this->assertEquals( 6, $post->comment_count );
+
+		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/feed/', get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true ) );
 	}
 }

@@ -881,7 +881,7 @@ class User extends \WP_User {
 		if ( ! $this->user_url ) {
 			return false;
 		}
-		if ( false === strpos( $url, $this->user_url ) ) {
+		if ( 0 !== strpos( $url, $this->user_url ) ) {
 			return false;
 		}
 		return true;

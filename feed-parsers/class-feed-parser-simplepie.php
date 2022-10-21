@@ -277,6 +277,9 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 				'http://purl.org/rss/1.0/modules/slash/' => array(
 					'comment_count' => 'comments',
 				),
+				'http://wellformedweb.org/CommentAPI/'   => array(
+					'comments_feed' => 'commentRss',
+				),
 			) as $xmlns => $keys ) {
 				foreach ( $keys as $key => $lookup_key ) {
 					if ( ! isset( $item->data['child'][ $xmlns ][ $lookup_key ][0]['data'] ) ) {

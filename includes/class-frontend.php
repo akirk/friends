@@ -438,7 +438,11 @@ class Frontend {
 		$author_id = get_post_field( 'post_author', $post_id );
 		$friend_user = new User( $author_id );
 
-		$comments_url = trailingslashit( get_permalink( $post_id ) ) . 'feed/';
+		$comments_url = get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true );
+		if ( ! $comments_url ) {
+			wp_send_json_error( __( 'No comments feed available.', 'friends' ) );
+			exit;
+		}
 
 		if ( $friend_user->is_friend_url( $comments_url ) && current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) {
 			$comments_url = apply_filters( 'friends_friend_private_feed_url', $comments_url, $friend_user );
@@ -918,7 +922,7 @@ class Frontend {
 			$query->set( 'post_status', $post_status );
 		}
 		$query->is_page = false;
-		$query->is_comment_feed = false;
+		$query->is_comments_feed = false;
 		$query->set( 'pagename', null );
 
 		if ( $page_id ) {
