@@ -90,18 +90,19 @@ class User_Query extends \WP_User_Query {
 	}
 
 	/**
-	 * Gets favorite friends.
+	 * Gets Starred friends.
 	 *
 	 * @return     User_Query  The requested users.
 	 */
-	public static function favorite_friends_subscriptions() {
-		static $favorite_friends_subscriptions = array();
-		if ( ! self::$cache || ! isset( $favorite_friends_subscriptions[ get_current_blog_id() ] ) ) {
-			$favorite_friends_subscriptions[ get_current_blog_id() ] = new self(
+	public static function starred_friends_subscriptions() {
+		static $starred_friends_subscriptions = array();
+		if ( ! self::$cache || ! isset( $starred_friends_subscriptions[ get_current_blog_id() ] ) ) {
+			global $wpdb;
+			$starred_friends_subscriptions[ get_current_blog_id() ] = new self(
 				array(
 					'role__in'     => Friends::get_friends_plugin_roles(),
 					// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-					'meta_key'     => 'favorite_friend_' . get_current_blog_id(),
+					'meta_key'     => $wpdb->get_blog_prefix() . 'friends_starred',
 					// Using a meta_key EXISTS query is not slow, see https://github.com/WordPress/WordPress-Coding-Standards/issues/1871.
 					'meta_compare' => 'EXISTS',
 					'order'        => 'ASC',
@@ -109,7 +110,7 @@ class User_Query extends \WP_User_Query {
 				)
 			);
 		}
-		return $favorite_friends_subscriptions[ get_current_blog_id() ];
+		return $starred_friends_subscriptions[ get_current_blog_id() ];
 	}
 
 	/**

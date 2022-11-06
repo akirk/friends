@@ -108,6 +108,12 @@ div {
 	margin-left: 3rem;
 }
 
+h2#page-title a.dashicons {
+	font-size: .8em;
+	margin-right: .5em;
+	vertical-align: baseline;
+}
+
 @media (min-width: $off-canvas-breakpoint) {
 	.off-canvas .off-canvas-content header.navbar #page-title {
 		margin-left: 0;

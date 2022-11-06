@@ -16,7 +16,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Widget_Recent_Friend_List extends Widget_Base_Friend_List {
+class Widget_Recent_Friends_List extends Widget_Base_Friends_List {
 	/**
 	 * Constructor
 	 */

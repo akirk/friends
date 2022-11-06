@@ -16,16 +16,16 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Widget_Favorite_Friend_List extends Widget_Base_Friend_List {
+class Widget_Starred_Friends_List extends Widget_Base_Friends_List {
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
 		parent::__construct(
-			'friends-widget-favorite-friend-list',
-			__( 'Favorite Friend List', 'friends' ),
+			'friends-widget-starred-friend-list',
+			__( 'Starred Friends', 'friends' ),
 			array(
-				'description' => __( 'Shows a list of your favorite friends and subscriptions.', 'friends' ),
+				'description' => __( 'Shows a list of your starred friends and subscriptions.', 'friends' ),
 			)
 		);
 	}
@@ -37,7 +37,7 @@ class Widget_Favorite_Friend_List extends Widget_Base_Friend_List {
 	 * @param array $instance Widget instance settings.
 	 */
 	public function widget( $args, $instance ) {
-		$friends = User_Query::favorite_friends_subscriptions();
+		$friends = User_Query::starred_friends_subscriptions();
 		if ( ! $friends->get_total() ) {
 			return;
 		}
@@ -47,11 +47,11 @@ class Widget_Favorite_Friend_List extends Widget_Base_Friend_List {
 
 		$this->list_friends(
 			$args,
-			_x( 'Favorite', 'Favorite Friends', 'friends' ),
+			_x( 'Starred', 'Starred Friends', 'friends' ),
 			$friends
 		);
 
-		do_action( 'friends_widget_favorite_friend_list_after', $this, $args );
+		do_action( 'friends_widget_starred_friend_list_after', $this, $args );
 
 		echo $args['after_widget'];
 	}

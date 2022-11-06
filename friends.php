@@ -65,18 +65,18 @@ add_action( 'activate_blog', array( __NAMESPACE__ . '\Friends', 'activate_plugin
 add_action( 'wp_initialize_site', array( __NAMESPACE__ . '\Friends', 'activate_for_blog' ) );
 
 // Register widgets.
-require_once __DIR__ . '/widgets/class-widget-base-friend-list.php';
+require_once __DIR__ . '/widgets/class-widget-base-friends-list.php';
 require_once __DIR__ . '/widgets/class-widget-refresh.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Refresh', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-widget-friend-list.php';
-add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_List', 'register' ) );
+require_once __DIR__ . '/widgets/class-widget-friends-list.php';
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friends_List', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-widget-favorite-friend-list.php';
-add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Favorite_Friend_List', 'register' ) );
+require_once __DIR__ . '/widgets/class-widget-starred-friends-list.php';
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Starred_Friends_List', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-widget-recent-friend-list.php';
-add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Recent_Friend_List', 'register' ) );
+require_once __DIR__ . '/widgets/class-widget-recent-friends-list.php';
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Recent_Friends_List', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-friend-request.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Request', 'register' ) );

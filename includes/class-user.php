@@ -818,6 +818,32 @@ class User extends \WP_User {
 	}
 
 	/**
+	 * Determines if starred.
+	 *
+	 * @return     bool  True if starred, False otherwise.
+	 */
+	public function is_starred() {
+		return $this->get_user_option( 'friends_starred' );
+	}
+
+	/**
+	 * Marks a friend as starred or unstarred.
+	 *
+	 * @param      bool $starred  Whether to star the friend.
+	 *
+	 * @return     bool    The new star status.
+	 */
+	public function set_starred( $starred ) {
+		if ( $starred ) {
+			$this->update_user_option( 'friends_starred', true );
+			return true;
+		}
+
+		$this->delete_user_option( 'friends_starred' );
+		return false;
+	}
+
+	/**
 	 * Gets the local friends page url.
 	 *
 	 * @param      integer $post_id  The post identifier.
@@ -919,14 +945,14 @@ class User extends \WP_User {
 	 * Wrap update_user_option
 	 *
 	 * @param string $option_name User option name.
-	 * @param mixed  $newvalue    User option value.
+	 * @param mixed  $new_value    User option value.
 	 * @param bool   $global      Optional. Whether option name is global or blog specific.
 	 *                            Default false (blog specific).
 	 * @return int|bool User meta ID if the option didn't exist, true on successful update,
 	 *                  false on failure.
 	 */
-	function update_user_option( $option_name, $newvalue, $global = false ) {
-		return update_user_option( $this->ID, $option_name, $newvalue, $global );
+	function update_user_option( $option_name, $new_value, $global = false ) {
+		return update_user_option( $this->ID, $option_name, $new_value, $global );
 	}
 
 	/**

@@ -325,5 +325,54 @@
 		return false;
 	} );
 
+	$document.on( 'mouseenter', 'h2#page-title a.dashicons', function() {
+		if ( $( this ).hasClass( 'not-starred' ) ) {
+			if ( $( this ).hasClass( 'dashicons-star-empty' ) ) {
+				$( this ).removeClass( 'dashicons-star-empty' ).addClass( 'dashicons-star-filled' );
+			}
+		} else if ( $( this ).hasClass( 'starred' ) ) {
+			if ( $( this ).hasClass( 'dashicons-star-filled' ) ) {
+				$( this ).removeClass( 'dashicons-star-filled' ).addClass( 'dashicons-star-empty' );
+			}
+		}
+	} );
+
+	$document.on( 'mouseleave', 'h2#page-title a.dashicons', function() {
+		if ( $( this ).hasClass( 'not-starred' ) ) {
+			if ( $( this ).hasClass( 'dashicons-star-filled' ) ) {
+				$( this ).removeClass( 'dashicons-star-filled' ).addClass( 'dashicons-star-empty' );
+			}
+		} else if ( $( this ).hasClass( 'starred' ) ) {
+			if ( $( this ).hasClass( 'dashicons-star-empty' ) ) {
+				$( this ).removeClass( 'dashicons-star-empty' ).addClass( 'dashicons-star-filled' );
+			}
+		}
+	} );
+
+	$document.on( 'click', 'h2#page-title a.dashicons.starred, h2#page-title a.dashicons.not-starred', function() {
+		var removeClass = 'dashicons-star-filled starred';
+		var addClass = 'dashicons-star-empty not-starred';
+		var $this = $( this );
+		if ( $this.hasClass( 'not-starred' ) ) {
+			var s = removeClass;
+			removeClass = addClass;
+			addClass = s;
+		}
+		wp.ajax.send( 'friends-star', {
+			data: {
+				friend_id: $this.data( 'id' ),
+				_ajax_nonce: $this.data( 'nonce' ),
+				starred: $this.hasClass( 'starred' ) ? 0 : 1
+			},
+			beforeSend: function() {
+				$this.removeClass( removeClass + ' dashicons-star-filled dashicons-star-empty' ).addClass( 'form-icon loading' );
+			},
+			success: function( results ) {
+				$this.removeClass( 'form-icon loading' ).addClass( addClass );
+			}
+		} );
+		return false;
+	} );
+
 
 })( jQuery, window.wp, window.friends );

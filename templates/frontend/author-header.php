@@ -5,13 +5,19 @@
  * @package Friends
  */
 
-$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
+$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, $args['friend_user']->ID );
 $feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 
 ?><div id="author-header" class="mb-2">
-<h2 id="page-title"><a href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_url() ); ?>">
+<h2 id="page-title">
+	<?php if ( $args['friend_user']->is_starred() ) : ?>
+		<a href="" class="dashicons dashicons-star-filled starred" data-id="<?php echo esc_attr( $args['friend_user']->ID ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->ID ) ); ?>"></a>
+	<?php else : ?>
+		<a href="" class="dashicons dashicons-star-empty not-starred" data-id="<?php echo esc_attr( $args['friend_user']->ID ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->ID ) ); ?>"></a>
+	<?php endif; ?>
+	<a href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_url() ); ?>">
 <?php
 if ( $args['friends']->frontend->reaction ) {
 	echo esc_html(

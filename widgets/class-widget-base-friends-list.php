@@ -16,7 +16,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-abstract class Widget_Base_Friend_List extends \WP_Widget {
+abstract class Widget_Base_Friends_List extends \WP_Widget {
 	/**
 	 * PHP5 constructor.
 	 *

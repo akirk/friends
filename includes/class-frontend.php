@@ -80,6 +80,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
+		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -482,7 +483,27 @@ class Frontend {
 		ob_end_clean();
 
 		wp_send_json_success( $content );
+	}
 
+	public function ajax_star_friend_user() {
+		if ( ! isset( $_POST['friend_id'] ) || ! intval( $_POST['friend_id'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$friend_id = intval( $_POST['friend_id'] );
+		check_ajax_referer( "star-$friend_id" );
+
+		$friend_user = new User( $friend_id );
+
+		$starred = boolval( $_POST['starred'] );
+		$friend_user->set_starred( $starred );
+
+		wp_send_json_success(
+			array(
+				'starred' => $friend_user->get_starred(),
+			)
+		);
 	}
 
 	/**
