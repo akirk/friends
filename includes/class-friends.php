@@ -580,17 +580,38 @@ class Friends {
 		global $wp_query;
 
 		if ( ! isset( $wp_query ) || ! isset( $wp_query->query['pagename'] ) ) {
-			return false;
+			// The request has not yet been parsed but we need to know, so this snippet is from wp->parse_request().
+			list( $req_uri ) = explode( '?', $_SERVER['REQUEST_URI'] );
+			$home_path       = parse_url( home_url(), PHP_URL_PATH );
+			$home_path_regex = '';
+			if ( is_string( $home_path ) && '' !== $home_path ) {
+				$home_path       = trim( $home_path, '/' );
+				$home_path_regex = sprintf( '|^%s|i', preg_quote( $home_path, '|' ) );
+			}
+			$req_uri = trim( $req_uri, '/' );
+
+			if ( ! empty( $home_path_regex ) ) {
+				$req_uri  = preg_replace( $home_path_regex, '', $req_uri );
+				$req_uri  = trim( $req_uri, '/' );
+				$pathinfo = preg_replace( $home_path_regex, '', $pathinfo );
+				$pathinfo = trim( $pathinfo, '/' );
+				$self     = preg_replace( $home_path_regex, '', $self );
+				$self     = trim( $self, '/' );
+			}
+			$pagename = $req_uri;
+		} else {
+			$pagename = $wp_query->query['pagename'];
 		}
 
 		if ( isset( $_GET['public'] ) ) {
 			return false;
 		}
+
 		if ( ! current_user_can( self::REQUIRED_ROLE ) || ( is_multisite() && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) && is_super_admin( get_current_user_id() ) ) ) {
 			return false;
 		}
 
-		$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
+		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
 		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
 	}
 

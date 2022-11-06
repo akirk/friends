@@ -74,8 +74,7 @@ class Frontend {
 		add_filter( 'template_include', array( $this, 'template_override' ) );
 		add_filter( 'wp_loaded', array( $this, 'add_rewrite_rule' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
-		add_action( 'init', array( $this, 'add_theme_support_title_tag' ) );
-		add_action( 'wp', array( $this, 'add_theme_support_admin_bar' ) );
+		add_action( 'init', array( $this, 'add_theme_supports' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
@@ -111,28 +110,37 @@ class Frontend {
 			'top'
 		);
 	}
+
+	/**
+	 * Run our add_theme_supports if on the frontend.
+	 */
+	public function add_theme_supports() {
+		if ( ! Friends::on_frontend() ) {
+			return;
+		}
+
+		$this->add_theme_support_title_tag();
+		$this->add_theme_support_admin_bar();
+	}
+
 	/**
 	 * We're asking WordPress to handle the title for us.
 	 */
-	public function add_theme_support_title_tag() {
-		if ( Friends::on_frontend() ) {
-			add_theme_support( 'title-tag' );
-			add_filter( 'document_title_parts', array( $this, 'modify_page_title' ) );
-		}
+	private function add_theme_support_title_tag() {
+		add_theme_support( 'title-tag' );
+		add_filter( 'document_title_parts', array( $this, 'modify_page_title' ) );
 	}
 
 	/**
 	 * Remove the margin-top on the friends page.
 	 */
-	public function add_theme_support_admin_bar() {
-		if ( Friends::on_frontend() ) {
-			add_theme_support(
-				'admin-bar',
-				array(
-					'callback' => '__return_false',
-				)
-			);
-		}
+	private function add_theme_support_admin_bar() {
+		add_theme_support(
+			'admin-bar',
+			array(
+				'callback' => '__return_false',
+			)
+		);
 	}
 
 	/**
@@ -181,6 +189,10 @@ class Frontend {
 				'after_title'   => '</h5>',
 			)
 		);
+
+		if ( Friends::on_frontend() ) {
+			add_action( 'customize_register', '__return_true' );
+		}
 	}
 
 	/**
