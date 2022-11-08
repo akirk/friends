@@ -46,6 +46,10 @@
 	margin: 0 auto;
 }
 
+.friends-body.edit-friend-feeds {
+	max-width: 90%;
+}
+
 .friends-body.friends p {
 	margin-bottom: 1.5em;
 }
@@ -101,23 +105,25 @@ tr:hover .row-actions span.friends {
 	display: inline;
 }
 
-table.feed-table.widefat td, table.feed-table.widefat th {
-	padding: .5em;
-}
-
 table.feed-table.widefat .check-column {
 	min-width: 5em;
 	font-weight: bold;
 }
-
 table.reader-table .check-column {
 	width: 5em;
 	vertical-align: top;
 	text-align: center;
 }
+table.feed-table.widefat td, table.feed-table.widefat th {
+	padding: .5em;
+}
 
-table.feed-table.widefat th.checkbox {
-	padding-top: 1em;
+table.feed-table.widefat th, table.feed-table.widefat th.check-column {
+	vertical-align: bottom;
+}
+
+table.feed-table.widefat td.nowrap, table.feed-table.widefat th.nowrap {
+	white-space: nowrap;
 }
 
 #available-widgets [class*="friends-widget"] .widget-title:before { content: "\f307"; }

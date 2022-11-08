@@ -17,10 +17,10 @@ $has_last_log = false;
 					<?php if ( empty( $args['friend']->get_active_feeds() ) ) : ?>
 						<?php esc_html_e( 'There are no active feeds.', 'friends' ); ?>
 					<?php endif; ?>
-					<table class="feed-table widefat fixed<?php echo empty( $args['friend']->get_active_feeds() ) ? ' hidden' : ''; ?>">
+					<table class="feed-table widefat<?php echo empty( $args['friend']->get_active_feeds() ) ? ' hidden' : ''; ?>">
 						<thead>
 							<tr>
-								<td class="manage-column column-cb check-column"><?php esc_html_e( 'Active', 'friends' ); ?></td>
+								<th class="manage-column column-cb check-column"><?php esc_html_e( 'Active', 'friends' ); ?></th>
 								<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
 								<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
 								<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
@@ -41,7 +41,7 @@ $has_last_log = false;
 							<tr class="<?php echo esc_attr( ( ++$alternate % 2 ? 'alternate ' : ' ' ) . ( $feed->get_active() ? 'active' : 'inactive hidden' ) ); ?>">
 								<th class="checkbox"><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></th>
 								<td><input type="url" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="20" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
-								<td><select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
+								<td class="nowrap"><select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
 									<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
 										<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
 									<?php endforeach; ?>
