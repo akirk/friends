@@ -162,12 +162,18 @@
 	} );
 
 	$document.on( 'click', 'a.collapse-post', function() {
-		var contents = $( this ).closest( 'article' ).find( 'div.card-body' );
-		if ( contents.is( ':visible' ) ) {
-			contents.hide();
+		var card = $( this ).closest( 'article' );
+		var collapsed;
+		if ( card.closest( 'section.all-collapsed' ).length ) {
+			card.toggleClass( 'uncollapsed' );
+			collapsed = ! card.is( '.uncollapsed' );
+		} else {
+			card.toggleClass( 'collapsed' );
+			collapsed = card.is( '.collapsed' );
+		}
+		if ( collapsed ) {
 			$( this ).find( 'i' ).removeClass( 'dashicons-fullscreen-exit-alt' ).addClass( 'dashicons-fullscreen-alt' );
 		} else {
-			contents.show();
 			$( this ).find( 'i' ).removeClass( 'dashicons-fullscreen-exit-alt' ).addClass( 'dashicons-fullscreen-alt' );
 		}
 
@@ -176,7 +182,6 @@
 
 	$document.on( 'dblclick', 'a.collapse-post', function() {
 		// Collapse-toggle all visible.
-		$( 'a.collapse-post' ).trigger( 'click' );
 		$( this ).closest( 'section' ).toggleClass( 'all-collapsed' );
 		$( this )[0].scrollIntoView();
 		return false;
@@ -192,6 +197,7 @@
 		if ( content.data( 'loaded' ) ) {
 			content.toggle();
 		} else {
+			content.show();
 			wp.ajax.send( 'friends-load-comments', {
 				data: {
 					_ajax_nonce: $this.data( 'cnonce' ),

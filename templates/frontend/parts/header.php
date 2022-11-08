@@ -37,6 +37,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 				</a>
 			<?php endif; ?>
 		</div>
+		<div class="permalink">
 		<?php
 		echo wp_kses(
 			sprintf(
@@ -58,7 +59,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 		);
 
 		if ( isset( $args['read_time'] ) ) {
-			echo ' | <span title="', esc_html__( 'Estimated reading time', 'friends' ), '">', esc_html(
+			echo ' <span class="reading-time" title="', esc_html__( 'Estimated reading time', 'friends' ), '">', esc_html(
 				sprintf(
 					// translators: %s is a timeframe, e.g. < 1 min or 2min.
 					__( '%s read', 'friends' ),
@@ -67,6 +68,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 			), '</span>';
 		}
 		?>
+		</div>
 	</div>
 	<div class="overflow col-ml-auto">
 		<a class="btn btn-link collapse-post" tabindex="0">

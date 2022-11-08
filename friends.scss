@@ -333,12 +333,7 @@ h2#page-title a.dashicons {
 	}
 
 	section.posts {
-		article.card:before {
-			display: none;
-		}
-
 		.card {
-
 			header.entry-header {
 				display: flex;
 				font-size: 88%;
@@ -377,8 +372,36 @@ h2#page-title a.dashicons {
 			}
 		}
 
-		&.all-collapsed article.card div.card-body {
-			display: none;
+		span.reading-time::before {
+			content: " | ";
+		}
+
+		&.all-collapsed article.card:not(.uncollapsed), article.card.collapsed {
+			div.card-body {
+				display: none;
+			}
+			header {
+				padding-left: 1rem;
+				div.avatar {
+					display: none;
+				}
+				padding-bottom: 0;
+				div.author {
+					display: inline;
+				}
+				div.permalink {
+					&::before {
+						content: " | ";
+					}
+					display: inline;
+				}
+			}
+			h4.card-title {
+				margin-bottom: 0;
+			}
+			footer.entry-meta {
+				margin-top: -2.5em;
+			}
 		}
 
 		footer.entry-meta {
@@ -393,6 +416,10 @@ h2#page-title a.dashicons {
 			.btn:hover {
 				color: $link-color;
 			}
+		}
+
+		footer.comments-content {
+			display: none;
 		}
 	}
 
