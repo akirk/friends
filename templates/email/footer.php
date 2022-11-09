@@ -11,7 +11,7 @@
 <div class="footer">
 	<?php
 		// translators: %s is a site name.
-		echo wp_kses( sprintf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), '<a href="' . esc_attr( home_url() ) . '">' . ( is_multisite() ? get_site_option( 'site_name' ) : get_option( 'blogname' ) ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+		echo wp_kses( sprintf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), '<a href="' . esc_attr( home_url() ) . '">' . get_option( 'blogname' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 	?>
 </div>
 
