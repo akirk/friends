@@ -637,8 +637,8 @@ class Feed {
 
 			$post_format = $feed_post_format;
 			if ( 'autodetect' === $post_format ) {
-				if ( isset( $item->{'post-format'} ) && isset( $post_formats[ $item->{'post-format'} ] ) ) {
-					$post_format = $item->{'post-format'};
+				if ( isset( $item->post_format ) && isset( $post_formats[ $item->post_format ] ) ) {
+					$post_format = $item->post_format;
 				} else {
 					$post_format = $this->post_format_discovery( $item );
 				}
@@ -1077,6 +1077,10 @@ class Feed {
 			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) LIMIT 1', $url, esc_attr( $url ) ) );
 		}
 		return $post_id;
+	}
+
+	public function get_user_feed_by_url( $url ) {
+		return User_Feed::get_by_url( $url );
 	}
 
 	/**

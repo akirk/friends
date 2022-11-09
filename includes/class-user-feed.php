@@ -695,4 +695,25 @@ class User_Feed {
 
 		return new \WP_Error( 'term_not_found' );
 	}
+
+	/**
+	 * Get the feed with a specific URL.
+	 *
+	 * @param      string $url     The feed URL.
+	 *
+	 * @return     object|\WP_Error   A User_Feed object.
+	 */
+	public static function get_by_url( $url ) {
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy' => self::TAXONOMY,
+				'slug'     => $url,
+			)
+		);
+		foreach ( $term_query->get_terms() as $term ) {
+			return new self( $term );
+		}
+
+		return new \WP_Error( 'term_not_found' );
+	}
 }

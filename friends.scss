@@ -274,27 +274,8 @@ h2#page-title a.dashicons {
 		}
 	}
 
-	.friends-post-inline input, .friends-post-inline textarea, .friends-sidebar input, .friends-sidebar textarea {
-		color: #666;
-		background: #fff;
-		border: 1px solid #bbb;
-		border-radius: 3px;
-		display: block;
-		padding: 0.7em;
-		width: 100%;
-		margin: 0;
-	}
-
-	.friends-post-inline select, .friends-sidebar select {
-		border: 1px solid #bbb;
-		border-radius: 3px;
-		height: 3em;
-		max-width: 100%;
-	}
-
-	.friends-post-inline input:focus, .friends-post-inline textarea:focus {
-		color: #222;
-		border-color: #333;
+	.friends-post-inline {
+		margin-bottom: 2em;
 	}
 
 	img.avatar {

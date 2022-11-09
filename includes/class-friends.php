@@ -627,10 +627,12 @@ class Friends {
 	/**
 	 * Gets the post types to be displayed on the frontend, modifyable by filter.
 	 *
+	 * @param      string $post_format  The post format if any.
+	 *
 	 * @return     array  The frontend post types.
 	 */
-	public static function get_frontend_post_types() {
-		return apply_filters( 'friends_frontend_post_types', array( Friends::CPT ) );
+	public static function get_frontend_post_types( $post_format = null ) {
+		return apply_filters( 'friends_frontend_post_types', array( Friends::CPT ), $post_format );
 	}
 
 	/**

@@ -1183,12 +1183,14 @@ class Admin {
 						}
 
 						$feed['active'] = true;
-						User_Feed::save(
+						$new_feed = User_Feed::save(
 							$friend,
 							$feed['url'],
 							$feed
 						);
 
+						do_action( 'friends_user_feed_activated', $new_feed );
+						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
 						continue;
 					}
 
@@ -1204,17 +1206,18 @@ class Admin {
 						}
 
 						if ( $feed['active'] ) {
-							$friend->subscribe( $feed['url'], $feed );
+							$new_feed = $friend->subscribe( $feed['url'], $feed );
+							do_action( 'friends_user_feed_activated', $new_feed );
 						} else {
-							$friend->save_feed( $feed['url'], $feed );
+							$new_feed = $friend->save_feed( $feed['url'], $feed );
 						}
 
 						// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
 						$user_feed->delete();
+
+						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
 						continue;
 					}
-
-					$user_feed->update_metadata( 'active', isset( $feed['active'] ) && $feed['active'] );
 
 					if ( $user_feed->get_title() !== $feed['title'] ) {
 						$user_feed->update_metadata( 'title', $feed['title'] );
@@ -1232,7 +1235,18 @@ class Admin {
 						$user_feed->update_metadata( 'mime-type', $feed['mime-type'] );
 					}
 
-					do_action( 'friends_process_feed_item_submit', $user_feed, $feed, $term_id );
+					$was_active = $user_feed->is_active();
+					$is_active = isset( $feed['active'] ) && $feed['active'];
+					$user_feed->update_metadata( 'active', $is_active );
+					if ( $was_active !== $is_active ) {
+						if ( $is_active ) {
+							do_action( 'friends_user_feed_activated', $user_feed );
+						} else {
+							do_action( 'friends_user_feed_deactivated', $user_feed );
+						}
+					}
+
+					do_action( 'friends_process_feed_item_submit', $user_feed, $feed );
 				}
 
 				// Delete remaining existing feeds since they were not submitted.
@@ -1262,13 +1276,14 @@ class Admin {
 		$post_stats = $friend->get_post_stats();
 
 		$args = array(
-			'friend'               => $friend,
-			'friend_posts'         => $post_stats->post_count,
-			'total_size'           => $post_stats->total_size,
-			'rules'                => $friend->get_feed_rules(),
-			'post_formats'         => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
-			'friends_settings_url' => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-			'registered_parsers'   => $this->friends->feed->get_registered_parsers(),
+			'friend'                 => $friend,
+			'friend_posts'           => $post_stats->post_count,
+			'total_size'             => $post_stats->total_size,
+			'rules'                  => $friend->get_feed_rules(),
+			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
+			'post_formats'           => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
+			'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
 		);
 		if ( ! $args['hide_from_friends_page'] ) {
 			$args['hide_from_friends_page'] = array();
@@ -1485,7 +1500,7 @@ class Admin {
 
 			// If unsuccessful, then the protocol was forgotten.
 			if ( ! $friend_user ) {
-				$friend_url = 'https://' . $friend_url;
+				$friend_url = apply_filters( 'friends_rewrite_incoming_url', 'https://' . $friend_url, $friend_url );
 			}
 		}
 		$friend_user_login = User::get_user_login_for_url( $friend_url );
@@ -1787,12 +1802,13 @@ class Admin {
 		$args = array(
 			'friend_url' => '',
 		);
+
 		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {
 			$friend_url = isset( $_GET['url'] ) ? $_GET['url'] : $_POST['url'];
 			$parsed_url = parse_url( $friend_url );
 			if ( isset( $parsed_url['host'] ) ) {
 				if ( ! isset( $parsed_url['scheme'] ) ) {
-					$args['friend_url'] = 'https://' . ltrim( $friend_url, '/' );
+					$args['friend_url'] = apply_filters( 'friends_rewrite_incoming_url', 'https://' . ltrim( $friend_url, '/' ), $friend_url, $parsed_url );
 				} else {
 					$args['friend_url'] = $friend_url;
 				}

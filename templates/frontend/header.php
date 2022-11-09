@@ -78,5 +78,15 @@ if ( isset( $_GET['s'] ) ) {
 			<?php endif; ?>
 		</header>
 	<?php
+
+	if ( $args['friends']->frontend->post_format ) {
+		// Enable custom additional headers.
+		Friends\Friends::template_loader()->get_template_part(
+			'frontend/subheader',
+			$args['friends']->frontend->post_format,
+			$args
+		);
+	}
+
 	do_action( 'friends_after_header', $args );
 	?>

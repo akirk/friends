@@ -273,19 +273,30 @@ class Frontend {
 	 */
 	public function ajax_frontend_publish_post() {
 		if ( wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
-			$post_id = wp_insert_post(
-				array(
-					'post_type'    => 'post',
-					'post_title'   => $_POST['title'],
-					'post_content' => $_POST['content'],
-					'post_status'  => $_POST['status'],
-				)
+			$p = array(
+				'post_type'    => 'post',
+				'post_title'   => isset( $_POST['title'] ) ? $_POST['title'] : '',
+				'post_content' => isset( $_POST['content'] ) ? $_POST['content'] : '',
+				'post_status'  => isset( $_POST['status'] ) ? $_POST['status'] : '',
+				'post_format'  => isset( $_POST['format'] ) ? $_POST['format'] : '',
 			);
-			$result  = is_wp_error( $post_id ) ? 'error' : 'success';
+
+			if ( empty( $p['post_status'] ) ) {
+				$p['post_status'] = 'publish';
+			}
+			$result = 'empty';
+			if ( ! empty( $p['post_content'] ) || ! empty( $p['post_title'] ) ) {
+				$post_id = wp_insert_post( $p );
+				if ( ! empty( $p['post_format'] ) ) {
+					set_post_format( $post_id, $p['post_format'] );
+				}
+				$result = is_wp_error( $post_id ) ? 'error' : 'success';
+			}
 			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
 				echo esc_html( $result );
+				exit;
 			} else {
-				wp_safe_redirect( $_SERVER['HTTP_REFERER'] );
+				wp_safe_redirect( add_query_arg( 'result', $result, $_SERVER['HTTP_REFERER'] ) );
 				exit;
 			}
 		}
@@ -881,6 +892,7 @@ class Frontend {
 
 		$tax_query = array();
 		$post_formats = get_post_format_slugs();
+		$post_format = null;
 
 		while ( $pagename_parts ) {
 			$pagename_part = $pagename_parts[0];
@@ -943,8 +955,13 @@ class Frontend {
 		$query->is_single = false;
 		$query->queried_object = null;
 		$query->queried_object_id = null;
+		$post_types = Friends::get_frontend_post_types();
 
-		$query->set( 'post_type', Friends::get_frontend_post_types() );
+		if ( 'status' === $post_format ) {
+			// Show your own posts on the status feed.
+			$post_types[] = 'post';
+		}
+		$query->set( 'post_type', $post_types );
 		$query->set( 'tax_query', $tax_query );
 
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
