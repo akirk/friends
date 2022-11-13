@@ -247,7 +247,7 @@ class Feed_Parser_SimplePie extends Feed_Parser {
 	 */
 	public function process_items( $items, $url ) {
 		$feed_items = array();
-		foreach ( $items as $c => $item ) {
+		foreach ( $items as $item ) {
 			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item->get_permalink(),

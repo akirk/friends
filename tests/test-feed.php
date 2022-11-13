@@ -328,7 +328,7 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	private function get_user_feed( $user, $url, $interval, $modifier ) {
-		$term = User_Feed::save(
+		return User_Feed::save(
 			$user,
 			$url,
 			array(
@@ -337,8 +337,6 @@ class FeedTest extends \WP_UnitTestCase {
 				'modifier' => $modifier,
 			)
 		);
-
-		return new User_Feed( $term, $user );
 	}
 
 	public function test_poll_interval() {

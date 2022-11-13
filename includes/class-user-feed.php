@@ -498,7 +498,7 @@ class User_Feed {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 		}
 
-		$term = self::save(
+		$user_feed = self::save(
 			$friend_user,
 			$feed_url,
 			array(
@@ -510,13 +510,13 @@ class User_Feed {
 			)
 		);
 
-		if ( is_wp_error( $term ) ) {
+		if ( is_wp_error( $user_feed ) ) {
 			return null;
 		}
 
 		// $friend_user->delete_user_option( 'friends_feed_url' );
 
-		return array( new self( $term, $friend_user ) );
+		return array( $user_feed );
 	}
 
 	/**
@@ -568,7 +568,7 @@ class User_Feed {
 	 * @param  User   $friend_user The user to be associated.
 	 * @param  string $url         The feed URL.
 	 * @param  array  $args        Further parameters. Possibly array keys: active, parser, post_format, mime_type, title.
-	 * @return \WP_Term                  A newly created term.
+	 * @return User_Feed                  A newly created User_Feed.
 	 */
 	public static function save( User $friend_user, $url, $args = array() ) {
 		$all_urls = array();
@@ -603,7 +603,7 @@ class User_Feed {
 			}
 		}
 
-		return get_term( $term_id );
+		return new self( get_term( $term_id ) );
 	}
 
 	/**

@@ -88,7 +88,6 @@ class Feed_Discovery extends \WP_UnitTestCase {
 	public function test_blueskyweb() {
 		$friends = Friends::get_instance();
 		$feeds = $friends->feed->discover_available_feeds( 'https://blueskyweb.xyz/rss.xml' );
-		var_dump( $feeds );
 		$this->assertArrayHasKey( 'https://blueskyweb.xyz/rss.xml', $feeds );
 		$this->assertArrayHasKey( 'autoselect', $feeds['https://blueskyweb.xyz/rss.xml'] );
 		$this->assertTrue( $feeds['https://blueskyweb.xyz/rss.xml']['autoselect'] );
