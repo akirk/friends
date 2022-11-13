@@ -86,6 +86,23 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.1.0
+- Plugins: Add filters for allowing ActivityPub integrations (see https://github.com/pfefferle/wordpress-activitypub/pull/172): `friends_rewrite_incoming_url`, `friends_user_feed_activated`, `friends_user_feed_deactivated`.
+- Plugins: Add ActivityPub to the Friends Plugins installer.
+- Frontend: Add ability to read a post's comments inside the Friends plugin using the comments button (if it supplies a comments feed in its RSS which all WordPresses do) (https://github.com/akirk/friends/pull/113).
+- Frontend: Add different styling for images and status feed. Add a "post status" box to the status feed.
+- Frontend: Allow starring friends + new widget to display those starred friends for convenient access.
+- Frontend: Add a recent friends widget that displays your newest friends and subscriptions for convenient access.
+- Admin: Introduce tabs on various friends settings for a better overview (https://github.com/akirk/friends/pull/116).
+- Admin: Remove the Welcome admin notice in favor a Welcome screen inside the friends plugin.
+- Admin: Improve the friend space usage calculation for friends with many posts.
+- Admin: Improve Automattic Status (https://github.com/akirk/friends/pull/111).
+- Core: Improved the WP_Query for the frontend to allow to show your reactions to the posts (https://github.com/akirk/friends/pull/114).
+- Core: allow frontend detection earlier in the WordPress boot process allowing our `add_theme_support()`s to kick in based on whether we are on the frontend.
+- Core: Fetch feeds based on their due date. This will allow adjusting feed fetch intervals individually for feeds (https://github.com/akirk/friends/pull/109).
+- Multisite: Improve activation code so that the friend roles should now be created more reliably on new multisite blogs (https://github.com/akirk/friends/pull/107).
+- Plugins: Add filters for the Friends roles plugin: `friends_plugin_roles`.
+
 ### 2.0.2
 - Fix namespace on activation, deactivation and uninstall hooks
 
