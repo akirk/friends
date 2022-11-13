@@ -1,22 +1,4 @@
 jQuery( function( $ ) {
-
-	$( document ).on( 'click', 'input[name=role-preset]', function( el ) {
-		if ( 'private' === el.target.value ) {
-			$( 'input[name=role\\[friend\\]\\[name\\]]' ).val( friends.role_friend );
-			$( 'input[name=role\\[acquaintance\\]\\[name\\]]' ).val( friends.role_acquaintance );
-			$( 'input[name=role\\[friend_request\\]\\[name\\]]' ).val( friends.role_friend_request );
-			$( 'input[name=role\\[pending_friend_request\\]\\[name\\]]' ).val( friends.role_pending_friend_request );
-			$( 'input[name=role\\[subscription\\]\\[name\\]]' ).val( friends.role_subscription );
-		} else {
-			$( 'input[name=role\\[friend\\]\\[name\\]]' ).val( friends.role_connection );
-			$( 'input[name=role\\[acquaintance\\]\\[name\\]]' ).val( friends.role_contact );
-			$( 'input[name=role\\[friend_request\\]\\[name\\]]' ).val( friends.role_connection_request );
-			$( 'input[name=role\\[pending_friend_request\\]\\[name\\]]' ).val( friends.role_pending_connection_request );
-			$( 'input[name=role\\[subscription\\]\\[name\\]]' ).val( friends.role_following );
-		}
-	} );
-
-
 	$( document ).on( 'click', 'input#require_codeword', function() {
 		if ( this.checked ) {
 			$( '#codeword_options' ).removeClass( 'hidden' );
