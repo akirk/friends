@@ -1,7 +1,5 @@
 # Friends
 
-Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
-
 - Contributors: akirk
 - Tags: friends, rss, decentralized, social-network, own-your-data
 - Requires at least: 5.0
@@ -9,6 +7,8 @@ Your own WordPress at the center of your online activity. Follow friends and oth
 - Requires PHP: 5.2.4
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
 - Stable tag: trunk
+
+Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
 ## Description
 
