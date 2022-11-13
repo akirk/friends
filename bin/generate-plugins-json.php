@@ -5,21 +5,48 @@
  * @package Friends
  */
 
-// Use HEAD requests below.
 stream_context_set_default(
 	array(
 		'http' => array(
-			'method' => 'HEAD',
+			'user_agent' => 'WordPress/Friends',
 		),
 	)
 );
+
 
 if ( 'cli' !== php_sapi_name() ) {
 	fwrite( STDERR, "Must run from CLI.\n" );
 	exit( 1 );
 }
 
-$json = array();
+preg_match( '/^\s*\*\s+Version:\s*(.*)$/mi', file_get_contents( 'https://plugins.svn.wordpress.org/activitypub/trunk/activitypub.php' ), $version );
+$activitypub_version = $version[1];
+$activitypub_last_update = array_reduce(
+	$http_response_header,
+	function( $carry, $item ) {
+		if ( preg_match( '/^last-modified:\s*(.*)$/i', $item, $m ) ) {
+			return gmdate( 'Y-m-d', strtotime( $m[1] ) );
+		}
+		return $carry;
+	}
+);
+
+$json = array(
+	'activitypub' => array(
+		'name'              => 'ActivityPub',
+		'short_description' => 'Adds ActivityPub support to your blog. Be followed on Mastodon, follow people on Mastodon with the Friends plugin.',
+		'more_info'         => 'https://wordpress.org/plugins/activitypub/',
+		'author'            => '<a href=\'https://notiz.blog/\'>Matthias Pfefferle</a>',
+		'slug'              => 'activitypub',
+		'version'           => $activitypub_version,
+		'trunk'             => 'https://downloads.wordpress.org/plugin/activitypub.' . $activitypub_version . '.zip',
+		'download_link'     => 'https://downloads.wordpress.org/plugin/activitypub.' . $activitypub_version . '.zip',
+		'last_updated'      => $activitypub_last_update,
+		'sections'          => array(
+			'Description' => 'People can follow your blog on Mastodon and other federated platforms that support ActivityPub, and you can follow them in the Friends plugin.',
+		),
+	),
+);
 foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 	$slug = basename( $dir );
 	if ( ! file_exists( "$dir/$slug.php" ) ) {
