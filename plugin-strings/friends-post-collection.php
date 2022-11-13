@@ -31,6 +31,7 @@ __( 'Show post in the feed', 'friends' );
 __( 'Hide post from the feed', 'friends' );
 // translators: %s is the name of a post collection.
 _x( 'Move to %s', 'post-collection', 'friends' );
+__( 'Fetch full content', 'friends' );
 __( 'This is not a user related to this plugin.', 'friends' );
 __( 'User was updated.', 'friends' );
 __( 'An error occurred.', 'friends' );
@@ -52,6 +53,7 @@ __( 'Could not download the URL.', 'friends' );
 __( 'Error processing HTML: %s', 'friends' );
 _x( 'Post Collection', 'User role', 'friends' );
 _x( 'Post Collections', 'widget-header', 'friends' );
+__( 'Fetch Full Content', 'friends' );
 __( 'Make post public', 'friends' );
 __( 'Make post private', 'friends' );
 __( 'Display Name', 'friends' );
@@ -62,12 +64,13 @@ _n( 'View %d post', 'View %d posts', 1, 'friends' );
 __( 'Syndicate Posts', 'friends' );
 // translators: %s is a URL.
 __( 'Publish this Post Collection at %s', 'friends' );
-__( 'Post Collection Name', 'friends' );
-__( 'External feed', 'friends' );
 __( 'Bookmarklet', 'friends' );
-__( 'disabled', 'friends' );
 // translators: %s is the name of a Post Collection user.
 __( 'Save to %s', 'friends' );
+__( 'Save articles from the web to this Post Collection using this bookmarklet. Drag it to your browser bar.', 'friends' );
+__( 'Post Collection Name', 'friends' );
+__( 'External feed', 'friends' );
+__( 'disabled', 'friends' );
 __( 'Create another user', 'friends' );
 // translators: %s is a URL.
 __( 'To save posts from anywhere on the web, use the <a href=%s>bookmarklets</a>.', 'friends' );
