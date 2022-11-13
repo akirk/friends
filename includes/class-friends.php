@@ -593,10 +593,6 @@ class Friends {
 			if ( ! empty( $home_path_regex ) ) {
 				$req_uri  = preg_replace( $home_path_regex, '', $req_uri );
 				$req_uri  = trim( $req_uri, '/' );
-				$pathinfo = preg_replace( $home_path_regex, '', $pathinfo );
-				$pathinfo = trim( $pathinfo, '/' );
-				$self     = preg_replace( $home_path_regex, '', $self );
-				$self     = trim( $self, '/' );
 			}
 			$pagename = $req_uri;
 		} else {
