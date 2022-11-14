@@ -20,7 +20,7 @@ class Friends {
 	const CPT           = 'friend_post_cache';
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
-	const REQUIRED_ROLE = 'administrator';
+	const REQUIRED_ROLE = 'edit_private_posts';
 
 	/**
 	 * Initialize the plugin
@@ -510,6 +510,18 @@ class Friends {
 		wp_unschedule_event( $timestamp, 'cron_friends_refresh_feeds' );
 	}
 
+	public static function required_menu_role() {
+		return 'edit_private_posts';
+	}
+
+	public static function has_required_privileges() {
+		return self::is_main_user() || current_user_can( 'administrator' );
+	}
+
+	public static function is_main_user() {
+		return get_current_user_id() === self::get_main_friend_user_id();
+	}
+
 	/**
 	 * Get the main friend user id.
 	 *
@@ -531,7 +543,7 @@ class Friends {
 				update_option( 'friends_main_user_id', $main_user_id );
 			}
 		}
-		return $main_user_id;
+		return intval( $main_user_id );
 	}
 
 	/**
@@ -603,7 +615,7 @@ class Friends {
 			return false;
 		}
 
-		if ( ! current_user_can( self::REQUIRED_ROLE ) || ( is_multisite() && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) && is_super_admin( get_current_user_id() ) ) ) {
+		if ( ! self::is_main_user() || ( is_multisite() && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) && is_super_admin( get_current_user_id() ) ) ) {
 			return false;
 		}
 
@@ -617,7 +629,7 @@ class Friends {
 	 * @return     bool  Whether the posts can be accessed.
 	 */
 	public static function authenticated_for_posts() {
-		return Access_Control::private_rss_is_authenticated() || ( is_admin() && current_user_can( Friends::REQUIRED_ROLE ) && apply_filters( 'friends_show_cached_posts', false ) );
+		return Access_Control::private_rss_is_authenticated() || ( is_admin() && self::is_main_user() && apply_filters( 'friends_show_cached_posts', false ) );
 	}
 
 	/**

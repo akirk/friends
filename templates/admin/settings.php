@@ -65,13 +65,41 @@ do_action( 'friends_settings_before_form' );
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Main Friend User', 'friends' ); ?></th>
 					<td>
+						<?php if ( current_user_can( 'administrator' ) ) { ?>
 						<select name="main_user_id">
 							<?php foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) : ?>
 								<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $args['main_user_id'], $potential_main_user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
 
 							<?php endforeach; ?>
 						</select>
-						<p class="description"><?php esc_html_e( 'Since there are multiple users on this site, we need to know which one should be considered the main one.', 'friends' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Since there are multiple users on this site, we need to know which one should be considered the main one.', 'friends' ); ?> <?php esc_html_e( 'They can edit friends-related settings.', 'friends' ); ?> <?php esc_html_e( 'Whenever a friends-related action needs to be associated with a user, this one will be chosen.', 'friends' ); ?></p>
+							<?php
+						} else {
+							$c = 0;
+							foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) {
+								$c += 1;
+								if ( $potential_main_user->ID === $args['main_user_id'] ) {
+									?>
+									<span id="main_user_id"><?php echo esc_html( $potential_main_user->display_name ); ?></span>
+									<?php
+								}
+							}
+							?>
+							<span> (
+							<?php
+							echo esc_html(
+								sprintf(
+								// translators: %s is a number of users.
+									_n( '%s potential user', '%s potential users', $c, 'friends' ),
+									$c
+								),
+							);
+							?>
+							) </span>
+							<p class="description"><?php esc_html_e( 'An administrator can change this.', 'friends' ); ?></p>
+							<?php
+						}
+						?>
 					</td>
 				</tr>
 				<?php

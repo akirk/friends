@@ -78,7 +78,7 @@ abstract class Widget_Base_Friends_List extends \WP_Widget {
 	public function get_list_items( $users ) {
 		foreach ( $users as $friend_user ) {
 			$friend_user = new User( $friend_user );
-			if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			if ( Friends::has_required_privileges() ) {
 				if ( $this->friends->frontend->post_format ) {
 					$url = $friend_user->get_local_friends_page_post_format_url( $this->friends->frontend->post_format );
 				} else {

@@ -196,9 +196,9 @@ class User_Query extends \WP_User_Query {
 		if ( ! self::$cache || ! isset( $all_admin_users ) ) {
 			$all_admin_users = new self(
 				array(
-					'role'    => Friends::REQUIRED_ROLE,
-					'order'   => 'ASC',
-					'orderby' => 'display_name',
+					'capability' => 'edit_private_posts',
+					'order'      => 'ASC',
+					'orderby'    => 'display_name',
 				)
 			);
 		}
