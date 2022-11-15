@@ -15,7 +15,7 @@ class Friends_Status_Post extends Handler {
 				array(
 					'hasUploadPermissions' => current_user_can( 'edit_private_posts' ),
 					'allowedMimeTypes' => get_allowed_mime_types(),
-				),
+				)
 			);
 			$settings['iso']['blocks']['allowBlocks'][] = 'core/image';
 			$settings['iso']['blocks']['allowBlocks'][] = 'core/embed';
