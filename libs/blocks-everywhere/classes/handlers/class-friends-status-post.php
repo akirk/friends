@@ -12,10 +12,10 @@ class Friends_Status_Post extends Handler {
 		add_filter( 'blocks_everywhere_editor_settings', function( $settings ) {
 			$settings['editor'] = array_merge(
 				$settings['editor'],
-				[
-					'hasUploadPermissions' => true,
+				array(
+					'hasUploadPermissions' => current_user_can( 'edit_private_posts' ),
 					'allowedMimeTypes' => get_allowed_mime_types(),
-				]
+				),
 			);
 			$settings['iso']['blocks']['allowBlocks'][] = 'core/image';
 			$settings['iso']['blocks']['allowBlocks'][] = 'core/embed';
