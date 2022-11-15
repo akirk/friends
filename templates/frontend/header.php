@@ -79,7 +79,7 @@ if ( isset( $_GET['s'] ) ) {
 		</header>
 	<?php
 
-	if ( $args['friends']->frontend->post_format ) {
+	if ( $args['friends']->frontend->post_format && ! ( get_the_author() && is_author() ) ) {
 		// Enable custom additional headers.
 		Friends\Friends::template_loader()->get_template_part(
 			'frontend/subheader',
