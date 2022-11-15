@@ -1,9 +1,10 @@
 <?php
-namespace Friends;
+namespace Friends\Blocks_Everywhere\Handler;
 
-require_once __DIR__ . '/iso-gutenberg.php';
+require_once __DIR__ . '/handlers/class-friends-message.php';
+require_once __DIR__ . '/handlers/class-friends-status-post.php';
 
-abstract class Gutenberg_Handler {
+abstract class Handler {
 	private $doing_hook = null;
 
 	/**
@@ -51,10 +52,6 @@ abstract class Gutenberg_Handler {
 		return $content;
 	}
 
-	public function can_show_admin_editor( $hook ) {
-		return false;
-	}
-
 	/**
 	 * Add the Gutenberg editor to the comment editor, but only if it includes blocks.
 	 *
@@ -64,10 +61,10 @@ abstract class Gutenberg_Handler {
 	public function the_editor( $editor ) {
 		$editor = preg_replace( '@.*?(<textarea.*?</textarea>).*@', '$1', $editor );
 
-		return '<div class="gutenberg-everywhere iso-editor__loading">' . $editor . '</div>';
+		return '<div class="blocks-everywhere iso-editor__loading">' . $editor . '</div>';
 	}
 
-	public function wp_editor_settings( $settings, $editor_id ) {
+	public function wp_editor_settings( $settings ) {
 		$settings['tinymce'] = false;
 		$settings['quicktags'] = false;
 		return $settings;
@@ -109,7 +106,7 @@ abstract class Gutenberg_Handler {
 	private function get_allowed_blocks() {
 		global $allowedtags;
 
-		$allowed = [ 'core/paragraph', 'core/list', 'core/code' ];
+		$allowed = [ 'core/paragraph', 'core/list', 'core/code', 'core/list-item' ];
 		$convert = [
 			'blockquote' => 'core/quote',
 			'h1' => 'core/heading',
@@ -129,7 +126,7 @@ abstract class Gutenberg_Handler {
 			}
 		}
 
-		return apply_filters( 'gutenberg_everywhere_allowed_blocks', array_unique( $allowed ), $this->get_editor_type() );
+		return apply_filters( 'blocks_everywhere_allowed_blocks', array_unique( $allowed ), $this->get_editor_type() );
 	}
 
 	/**
@@ -138,35 +135,20 @@ abstract class Gutenberg_Handler {
 	 * @return void
 	 */
 	public function load_editor( $textarea, $container = null ) {
-		$this->gutenberg = new GutenbergEverywhere_Editor();
+		$this->gutenberg = new \Friends\Blocks_Everywhere\Editor();
 		$this->gutenberg->load();
 
 		$asset_file = dirname( __DIR__ ) . '/build/index.asset.php';
 		$asset = file_exists( $asset_file ) ? require_once $asset_file : null;
-		$dependencies = isset( $asset['dependencies'] ) ? $asset['dependencies'] : [];
 		$version = isset( $asset['version'] ) ? $asset['version'] : time();
 
-		$js_dependencies = array_filter(
-			$dependencies,
-			function( $depend ) {
-				return strpos( $depend, '.css' ) === false;
-			}
-		);
+		$plugin = dirname( __DIR__ ) . '/blocks-everywhere.php';
 
-		$css_dependencies = array_filter(
-			$dependencies,
-			function( $depend ) {
-				return strpos( $depend, '.css' ) !== false;
-			}
-		);
+		wp_register_script( 'blocks-everywhere', plugins_url( 'build/index.js', $plugin ), [], $version, true );
+		wp_enqueue_script( 'blocks-everywhere' );
 
-		$plugin = dirname( dirname( __FILE__ ) ) . '/gutenberg-everywhere.php';
-
-		wp_register_script( 'gutenberg-everywhere', plugins_url( 'build/index.js', $plugin ), $js_dependencies, $version, true );
-		wp_enqueue_script( 'gutenberg-everywhere' );
-
-		wp_register_style( 'gutenberg-everywhere', plugins_url( 'build/style-index.css', $plugin ), $css_dependencies, $version );
-		wp_enqueue_style( 'gutenberg-everywhere' );
+		wp_register_style( 'blocks-everywhere', plugins_url( 'build/style-index.css', $plugin ), [], $version );
+		wp_enqueue_style( 'blocks-everywhere' );
 
 		// Settings for the editor
 		$settings = [
@@ -176,12 +158,23 @@ abstract class Gutenberg_Handler {
 					'allowBlocks' => $this->get_allowed_blocks(),
 				],
 				'moreMenu' => false,
+				'sidebar' => [
+					'inserter' => false,
+					'inspector' => false,
+				],
+				'defaultPreferences' => [
+					'fixedToolbar' => true,
+				],
 			],
 			'saveTextarea' => $textarea,
 			'container' => $container,
 			'editorType' => $this->get_editor_type(),
 		];
 
-		wp_localize_script( 'gutenberg-everywhere', 'wpGutenbergEverywhere', $settings );
+		wp_localize_script( 'blocks-everywhere', 'wpBlocksEverywhere', apply_filters( 'blocks_everywhere_editor_settings', $settings ) );
+	}
+
+	public function can_show_admin_editor( $hook ) {
+		return false;
 	}
 }
