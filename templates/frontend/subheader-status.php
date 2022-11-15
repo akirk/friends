@@ -13,8 +13,12 @@
 			<input type="hidden" name="format" value="status" />
 
 			<div class="column col-6 col-sm-12 col-mx-auto">
-				<div class="form-group">
-					<textarea name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( "What's on your mind, %s?", 'friends' ), wp_get_current_user()->display_name ) ); ?>"></textarea><br />
+				<div class="form-group blocks-everywhere iso-editor__loading">
+					<textarea class="form-input friends-status-content" name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( "What's on your mind, %s?", 'friends' ), wp_get_current_user()->display_name ) ); ?>"></textarea><br />
+					<?php
+					do_action( 'friends_post_status_form' );
+					?>
+
 				</div>
 
 				<div class="form-group" style="float:right">
