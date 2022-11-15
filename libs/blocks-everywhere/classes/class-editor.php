@@ -1,4 +1,5 @@
 <?php
+
 namespace Friends\Blocks_Everywhere;
 
 /**
@@ -205,6 +206,11 @@ class Editor {
 	 * @return void
 	 */
 	public function setup_media() {
+		// If we've already loaded the media stuff then don't do it again
+		if ( did_action( 'wp_enqueue_media' ) > 0 ) {
+			return;
+		}
+
 		/**
 		 * @psalm-suppress MissingFile
 		 */

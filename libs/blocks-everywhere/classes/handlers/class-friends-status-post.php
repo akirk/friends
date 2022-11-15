@@ -9,6 +9,20 @@ class Friends_Status_Post extends Handler {
 	public function __construct() {
 		add_action( 'friends_post_status_form', array( $this, 'add_to_form' ) );
 		add_action( 'blocks_everywhere_allowed_blocks', array( $this, 'allowed_blocks' ), 10, 2 );
+		add_filter( 'blocks_everywhere_editor_settings', function( $settings ) {
+			$settings['editor'] = array_merge(
+				$settings['editor'],
+				[
+					'hasUploadPermissions' => true,
+					'allowedMimeTypes' => get_allowed_mime_types(),
+				]
+			);
+			$settings['iso']['blocks']['allowBlocks'][] = 'core/image';
+			$settings['iso']['blocks']['allowBlocks'][] = 'core/embed';
+			$settings['iso']['toolbar']['inspector'] = true;
+			return $settings;
+		} );
+
 	}
 
 	/**

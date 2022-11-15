@@ -35,7 +35,6 @@ class Messages {
 	public function __construct( Friends $friends ) {
 		$this->friends = $friends;
 		$this->register_hooks();
-		new Blocks_Everywhere\Handler\Friends_Message();
 	}
 
 	/**

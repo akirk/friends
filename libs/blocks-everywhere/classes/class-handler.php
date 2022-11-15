@@ -138,16 +138,16 @@ abstract class Handler {
 		$this->gutenberg = new \Friends\Blocks_Everywhere\Editor();
 		$this->gutenberg->load();
 
-		$asset_file = dirname( __DIR__ ) . '/build/index.asset.php';
+		$asset_file = dirname( __DIR__ ) . '/build/index.min.asset.php';
 		$asset = file_exists( $asset_file ) ? require_once $asset_file : null;
 		$version = isset( $asset['version'] ) ? $asset['version'] : time();
 
 		$plugin = dirname( __DIR__ ) . '/blocks-everywhere.php';
 
-		wp_register_script( 'blocks-everywhere', plugins_url( 'build/index.js', $plugin ), [], $version, true );
+		wp_register_script( 'blocks-everywhere', plugins_url( 'build/index.min.js', $plugin ), [], $version, true );
 		wp_enqueue_script( 'blocks-everywhere' );
 
-		wp_register_style( 'blocks-everywhere', plugins_url( 'build/style-index.css', $plugin ), [], $version );
+		wp_register_style( 'blocks-everywhere', plugins_url( 'build/style.min.css', $plugin ), [], $version );
 		wp_enqueue_style( 'blocks-everywhere' );
 
 		// Settings for the editor
