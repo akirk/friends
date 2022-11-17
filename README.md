@@ -86,6 +86,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.1.1
+- Friends messages and status posting UI: Bring back the Gutenberg Editor using the updated blocks-everywhere (https://github.com/akirk/friends/pull/122).
+- Admin: Fix a redirect problem on the autostatus admin page.
+- Status posts: fix collapsing them and only output the status post box on the main status feed to avoid confusion when your posts don't show up on an author status page.
+
 ### 2.1.0
 - Plugins: Add filters for allowing ActivityPub integrations (see https://github.com/pfefferle/wordpress-activitypub/pull/172): `friends_rewrite_incoming_url`, `friends_user_feed_activated`, `friends_user_feed_deactivated`.
 - Plugins: Add ActivityPub to the Friends Plugins installer.
