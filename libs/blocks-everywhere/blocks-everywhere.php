@@ -1,6 +1,13 @@
 <?php
 namespace Friends\Blocks_Everywhere;
-// This is a copy of https://github.com/Automattic/blocks-everywhere with adjusted namespaces and handlers for the Friends plugin.
+/*
+ This is a copy of https://github.com/Automattic/blocks-everywhere version 1.8.0
+
+ Changes:
+ - Adjusted namespaces to start with Friends.
+ - Handlers for the Friends plugin.
+ - Removed the existing handlers.
+ */
 
 use Friends\Blocks_Everywhere\Handler;
 
