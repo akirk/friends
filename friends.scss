@@ -357,7 +357,7 @@ h2#page-title a.dashicons {
 			content: " | ";
 		}
 
-		&.all-collapsed article.card:not(.uncollapsed), article.card.collapsed {
+		&.all-collapsed article:not(.uncollapsed), article.collapsed {
 			div.card-body {
 				display: none;
 			}
