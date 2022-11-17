@@ -62,6 +62,9 @@ class Automatic_Status {
 			'friends-auto-status',
 			array( $this, 'validate_drafts' )
 		);
+
+		add_action( 'load-' . $page_type . '_page_friends-auto-status', array( $this, 'redirect_to_post_format_url' ) );
+
 	}
 
 	/**
@@ -76,10 +79,7 @@ class Automatic_Status {
 		return $menu;
 	}
 
-	/**
-	 * This displays the Automatically Generated Statuses admin page.
-	 */
-	public function validate_drafts() {
+	public function redirect_to_post_format_url() {
 		if ( empty( $_GET['post_format'] ) ) {
 			wp_safe_redirect(
 				add_query_arg(
@@ -91,9 +91,14 @@ class Automatic_Status {
 					self_admin_url( 'admin.php?page=friends-auto-status' )
 				)
 			);
-			wp_die();
+			exit;
 		}
+	}
 
+	/**
+	 * This displays the Automatically Generated Statuses admin page.
+	 */
+	public function validate_drafts() {
 		add_filter(
 			'manage_edit-post_columns',
 			function( $columns ) {
