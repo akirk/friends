@@ -890,7 +890,7 @@ class Feed {
 		$autoselected = false;
 		// Check if a parser already autoselected a feed.
 		foreach ( $available_feeds as $link_url => $feed ) {
-			if ( $feed['autoselect'] ) {
+			if ( isset( $feed['autoselect'] ) && $feed['autoselect'] ) {
 				$autoselected = true;
 				break;
 			}
