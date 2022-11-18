@@ -844,6 +844,16 @@ class Admin {
 		);
 		wp_die();
 	}
+	public function render_friends_list() {
+
+		Friends::template_loader()->get_template_part(
+			'admin/friends-list',
+			null,
+			array(
+				'friends' => User_Query::all_friends_subscriptions()->get_results(),
+			)
+		);
+	}
 
 	/**
 	 * Render the Friend rules preview
