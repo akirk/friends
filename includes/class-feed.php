@@ -888,6 +888,14 @@ class Feed {
 		}
 
 		$autoselected = false;
+		// Check if a parser already autoselected a feed.
+		foreach ( $available_feeds as $link_url => $feed ) {
+			if ( $feed['autoselect'] ) {
+				$autoselected = true;
+				break;
+			}
+		}
+
 		foreach ( $available_feeds as $link_url => $feed ) {
 			$path = wp_parse_url( $link_url, PHP_URL_PATH );
 
