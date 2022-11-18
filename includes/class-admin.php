@@ -2467,6 +2467,14 @@ class Admin {
 	 * @param      integer $user_id  The user identifier.
 	 */
 	public function delete_user( $user_id ) {
+		$friend_user = User::get_user_by_id( $user_id );
+		if ( ! $friend_user ) {
+			return; // user was already deleted?
+		}
+		// Allow unsubscribing to all these feeds.
+		foreach ( $friend_user->get_active_feeds() as $feed ) {
+			do_action( 'friends_user_feed_deactivated', $feed );
+		}
 		User_Feed::delete_user_terms( $user_id );
 	}
 
