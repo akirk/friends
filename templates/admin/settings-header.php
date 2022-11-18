@@ -46,9 +46,9 @@ if ( empty( $args['active'] ) ) {
 				$url = admin_url( 'admin.php?page=' . $page );
 				if ( $page === $args['active'] ) {
 					?>
-					<a href="<?php echo esc_attr( $url ); ?>" class="friends-tab active" aria-current="true">
+					<span class="friends-tab active" aria-current="true">
 					<?php echo esc_html( $label ); ?>
-					</a>
+					</span>
 					<?php
 				} else {
 					?>

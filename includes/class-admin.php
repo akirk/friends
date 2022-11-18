@@ -1452,7 +1452,7 @@ class Admin {
 
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 
-		$friend_user->retrieve_posts();
+		wp_schedule_single_event( time(), 'friends_retrieve_user_feeds', array( $friend_user->ID ) );
 
 		if ( isset( $vars['errors'] ) ) {
 			$this->display_errors( $vars['errors'] );
@@ -1672,11 +1672,11 @@ class Admin {
 			'admin/settings-header',
 			null,
 			array(
-				'active' => 'friends-add-friend-confirm',
+				'active' => 'add-friend-confirm',
 				'title'  => __( 'Add New Friend', 'friends' ),
 				'menu'   => array(
-					'1. ' . __( 'Enter Details', 'friends' ) => 'friends-add-friend',
-					'2. ' . __( 'Confirm', 'friends' ) => 'friends-add-friend-confirm',
+					'1. ' . __( 'Enter Details', 'friends' ) => 'add-friend' . ( isset( $friend_url ) ? '&url=' . urlencode( $friend_url ) : '' ),
+					'2. ' . __( 'Confirm', 'friends' ) => 'add-friend-confirm',
 				),
 			)
 		);
@@ -1883,10 +1883,10 @@ class Admin {
 			'admin/settings-header',
 			null,
 			array(
-				'active' => 'friends-add-friend',
+				'active' => 'add-friend',
 				'title'  => __( 'Add New Friend', 'friends' ),
 				'menu'   => array(
-					'1. ' . __( 'Enter Details', 'friends' ) => 'friends-add-friend',
+					'1. ' . __( 'Enter Details', 'friends' ) => 'add-friend' . ( isset( $friend_url ) ? '&url=' . urlencode( $friend_url ) : '' ),
 					'2. ' . __( 'Confirm', 'friends' ) => false,
 				),
 			)
