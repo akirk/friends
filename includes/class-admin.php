@@ -1574,10 +1574,10 @@ class Admin {
 			if ( ! $feeds ) {
 				return new \WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
 			}
+
 			$better_display_name = User::get_display_name_from_feeds( $feeds );
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
-				$friend_user_login = User::sanitize_username( $better_display_name );
 			}
 
 			$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
