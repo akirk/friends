@@ -603,7 +603,12 @@ class User_Feed {
 			}
 		}
 
-		return new self( get_term( $term_id ) );
+		$term = get_term( $term_id );
+		if ( is_wp_error( $term ) ) {
+			return $term;
+		}
+
+		return new self( $term );
 	}
 
 	/**

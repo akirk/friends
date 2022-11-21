@@ -1188,6 +1188,10 @@ class Admin {
 							$feed['url'],
 							$feed
 						);
+						if ( is_wp_error( $new_feed ) ) {
+							do_action( 'friends_process_feed_item_submit_error', $new_feed, $feed );
+							continue;
+						}
 
 						do_action( 'friends_user_feed_activated', $new_feed );
 						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
@@ -1214,6 +1218,11 @@ class Admin {
 
 						// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
 						$user_feed->delete();
+
+						if ( is_wp_error( $new_feed ) ) {
+							do_action( 'friends_process_feed_item_submit_error', $new_feed, $feed );
+							continue;
+						}
 
 						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
 						continue;
