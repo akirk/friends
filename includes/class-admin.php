@@ -1512,8 +1512,8 @@ class Admin {
 				$friend_url = apply_filters( 'friends_rewrite_incoming_url', 'https://' . $friend_url, $friend_url );
 			}
 		}
-		$friend_user_login = User::get_user_login_for_url( $friend_url );
-		$friend_display_name = User::get_display_name_for_url( $friend_url );
+		$friend_user_login = apply_filters( 'friends_suggest_user_login', User::get_user_login_for_url( $friend_url ), $friend_url );
+		$friend_display_name = apply_filters( 'friends_suggest_display_name', User::get_display_name_for_url( $friend_url ), $friend_url );
 
 		$friend_user = get_user_by( 'login', $friend_user_login );
 
