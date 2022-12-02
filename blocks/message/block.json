@@ -1,4 +1,5 @@
 {
+	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
 	"name": "friends/message",
 	"title": "Friend Message",
@@ -13,7 +14,6 @@
 			"type": "number"
 		}
 	},
-	"example": {
-	},
-	"editorScript": "file:build/index.js"
+	"example": {},
+	"editorScript": "file:./build/index.js"
 }

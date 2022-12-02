@@ -1,4 +1,5 @@
 {
+	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
 	"name": "friends/friend-posts",
 	"title": "Friend Posts",
@@ -38,8 +39,7 @@
 		}
 	},
 	"example": {
-		"attributes": {
-		}
+		"attributes": {}
 	},
-	"editorScript": "file:build/index.js"
+	"editorScript": "file:./build/index.js"
 }

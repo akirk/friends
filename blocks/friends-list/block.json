@@ -1,4 +1,5 @@
 {
+	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
 	"name": "friends/friends-list",
 	"title": "Friends List",
@@ -19,5 +20,5 @@
 			"user_types": "friends"
 		}
 	},
-	"editorScript": "file:build/index.js"
+	"editorScript": "file:./build/index.js"
 }

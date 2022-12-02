@@ -1,13 +1,12 @@
 {
+	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 2,
 	"name": "friends/follow-me",
 	"title": "Follow Me",
 	"category": "widgets",
 	"textdomain": "friends",
 	"icon": "groups",
-	"attributes": {
-	},
-	"example": {
-	},
-	"editorScript": "file:build/index.js"
+	"attributes": {},
+	"example": {},
+	"editorScript": "file:./build/index.js"
 }
