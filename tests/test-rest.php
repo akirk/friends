@@ -112,7 +112,7 @@ class RestTest extends \WP_UnitTestCase {
 				$response = $wp_rest_server->dispatch( $r );
 
 				// Restore the old url.
-				update_option( 'home', $url );
+				update_option( 'home', $home_url );
 
 				return apply_filters(
 					'fake_http_response',
