@@ -539,6 +539,24 @@ class User extends \WP_User {
 	/**
 	 * Gets the post counts by post format.
 	 *
+	 * @return     int  The post count.
+	 */
+	public function get_post_in_trash_count() {
+		global $wpdb;
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM $wpdb->posts WHERE post_type IN ( " . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' ) AND post_status = "trash" AND post_author = %d',
+				array_merge( Friends::get_frontend_post_types(), array( $this->ID ) )
+			)
+		);
+
+		return intval( $count );
+	}
+
+	/**
+	 * Gets the post counts by post format.
+	 *
 	 * @return     array  The post counts.
 	 */
 	public function get_post_count_by_post_format() {

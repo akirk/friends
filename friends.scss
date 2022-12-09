@@ -40,39 +40,39 @@ div {
 @import "node_modules/spectre.css/src/utilities/position";
 
 .friends-dropdown {
-  display: inline-block;
-  position: relative;
+	display: inline-block;
+	position: relative;
 
-  .menu {
-    animation: slide-down .15s ease 1;
-    display: none;
-    left: 0;
-    max-height: 50vh;
-    overflow-y: auto;
-    position: absolute;
-    top: 100%;
-  }
+	.menu {
+		animation: slide-down .15s ease 1;
+		display: none;
+		left: 0;
+		max-height: 50vh;
+		overflow-y: auto;
+		position: absolute;
+		top: 100%;
+	}
 
-  &.friends-dropdown-right {
-    .menu {
-      left: auto;
-      right: 0;
-    }
-  }
+	&.friends-dropdown-right {
+		.menu {
+			left: auto;
+			right: 0;
+		}
+	}
 
-  &.active .menu,
-  .friends-dropdown-toggle:focus + .menu,
-  .menu:hover {
-    display: block;
-  }
+	&.active .menu,
+	.friends-dropdown-toggle:focus+.menu,
+	.menu:hover {
+		display: block;
+	}
 
-  // Fix friends-dropdown-toggle border radius in button groups
-  .btn-group {
-    .friends-dropdown-toggle:nth-last-child(2) {
-      border-bottom-right-radius: $border-radius;
-      border-top-right-radius: $border-radius;
-    }
-  }
+	// Fix friends-dropdown-toggle border radius in button groups
+	.btn-group {
+		.friends-dropdown-toggle:nth-last-child(2) {
+			border-bottom-right-radius: $border-radius;
+			border-top-right-radius: $border-radius;
+		}
+	}
 }
 
 .off-canvas .off-canvas-content {
@@ -104,6 +104,7 @@ div {
 	width: 12rem;
 	background: #f7f8f9;
 }
+
 .off-canvas .off-canvas-content header.navbar #page-title {
 	margin-left: 3rem;
 }
@@ -125,15 +126,22 @@ h2#page-title a.dashicons {
 	color: $body-font-color;
 	overflow-wrap: break-word;
 
-	code, pre {
+	code,
+	pre {
 		overflow: auto;
 	}
 
 	min-height: 100vh;
+
 	a:visited:not(.off-canvas-toggle) {
 		color: $link-color-dark;
 	}
-	a, a:visited, a:hover, a:focus, a:active {
+
+	a,
+	a:visited,
+	a:hover,
+	a:focus,
+	a:active {
 		color: $link-color;
 	}
 
@@ -145,17 +153,23 @@ h2#page-title a.dashicons {
 	}
 
 	.accordion[open] .accordion-body {
-	    max-height: 100rem;
+		max-height: 100rem;
 	}
 
-	.nav-links div a, .nav-links div a:hover {
+	.nav-links div a,
+	.nav-links div a:hover {
 		@extend .btn, .btn-primary;
 	}
+
 	.menu {
-		a, a:active, a:visited {
+
+		a,
+		a:active,
+		a:visited {
 			color: #333;
 		}
-		.menu-item + .menu-item {
+
+		.menu-item+.menu-item {
 			margin-top: 0;
 		}
 
@@ -171,11 +185,14 @@ h2#page-title a.dashicons {
 		.menu-item small.label-secondary {
 			display: none;
 		}
+
 		.menu-item:hover small.label-secondary {
 			display: inline-block;
 		}
 	}
-	button, input {
+
+	button,
+	input {
 		min-height: auto;
 	}
 
@@ -191,23 +208,33 @@ h2#page-title a.dashicons {
 
 		.card-body {
 			padding: 0;
-			ul, ol {
+
+			ul,
+			ol {
 				margin-left: 1rem;
 			}
-			img, video {
-				max-width:100% !important;
+
+			img,
+			video {
+				max-width: 100% !important;
 				height: auto;
 			}
-			.wp-block-image, .wp-block-gallery {
-				&.alignfull, &.alignwide {
+
+			.wp-block-image,
+			.wp-block-gallery {
+
+				&.alignfull,
+				&.alignwide {
 					margin: 0;
 				}
+
 				figcaption {
 					text-align: center;
 					font-size: .8rem;
 				}
 			}
 		}
+
 		border-bottom: 1px solid #eee;
 		padding: 0 0 1em 0;
 		margin: 0 0 1em 0;
@@ -215,7 +242,7 @@ h2#page-title a.dashicons {
 		@media (min-width: $off-canvas-breakpoint) {
 			& {
 				border: 0;
-				box-shadow: 0 .25rem 1rem rgba(48,55,66,.15);
+				box-shadow: 0 .25rem 1rem rgba(48, 55, 66, .15);
 				border-bottom: 1px solid #87a6bc;
 				padding: 0 0 1em 0;
 				margin: 0 0 1em 0;
@@ -236,9 +263,13 @@ h2#page-title a.dashicons {
 		position: fixed;
 
 		.friends-logo {
-			a, a:visited, a:active {
+
+			a,
+			a:visited,
+			a:active {
 				color: $link-color;
 			}
+
 			h2 {
 				display: inline-block;
 				font-size: 1.2rem;
@@ -290,6 +321,7 @@ h2#page-title a.dashicons {
 		color: #222;
 		text-decoration: none;
 	}
+
 	div.friends-widget h4 a {
 		color: #222;
 		text-decoration: none;
@@ -339,14 +371,17 @@ h2#page-title a.dashicons {
 				line-height: 1.4;
 				margin: 0 0 1em 0;
 				text-align: left;
+
 				a {
 					text-decoration: none;
+
 					span.dashicons {
 						margin-top: 4px;
 						margin-left: 6px;
 						color: #32c170;
 					}
 				}
+
 				&:after {
 					display: none;
 				}
@@ -357,29 +392,42 @@ h2#page-title a.dashicons {
 			content: " | ";
 		}
 
-		&.all-collapsed article:not(.uncollapsed), article.collapsed {
+		article.status-trash {
+			opacity: .5;
+		}
+
+		&.all-collapsed article:not(.uncollapsed),
+		article.collapsed {
 			div.card-body {
 				display: none;
 			}
+
 			header {
 				padding-left: 1rem;
+
 				div.avatar {
 					display: none;
 				}
+
 				padding-bottom: 0;
+
 				div.author {
 					display: inline;
 				}
+
 				div.permalink {
 					&::before {
 						content: " | ";
 					}
+
 					display: inline;
 				}
 			}
+
 			h4.card-title {
 				margin-bottom: 0;
 			}
+
 			footer.entry-meta {
 				margin-top: -2.5em;
 			}
@@ -388,12 +436,15 @@ h2#page-title a.dashicons {
 		footer.entry-meta {
 			display: flex;
 			justify-content: flex-end;
+
 			a {
 				color: $link-color;
+
 				.dashicons {
 					vertical-align: middle;
 				}
 			}
+
 			.btn:hover {
 				color: $link-color;
 			}
@@ -409,7 +460,13 @@ h2#page-title a.dashicons {
 		margin-right: .3em;
 	}
 
-	a.explanation-friends-auth-link, a.friends-auth-link, a.friends-auth-link:link, a.friends-auth-link:active, a.friends-auth-link, a.friends-auth-link:link, a.friends-auth-link:active {
+	a.explanation-friends-auth-link,
+	a.friends-auth-link,
+	a.friends-auth-link:link,
+	a.friends-auth-link:active,
+	a.friends-auth-link,
+	a.friends-auth-link:link,
+	a.friends-auth-link:active {
 		color: #333;
 	}
 
@@ -417,20 +474,29 @@ h2#page-title a.dashicons {
 		display: inline;
 	}
 
-	a.friends-auth-link span.dashicons, button.friends-auth-link span.dashicons {
+	a.friends-auth-link span.dashicons,
+	button.friends-auth-link span.dashicons {
 		color: #32c170;
 		margin-left: 6px;
 	}
 
-	a.explanation-friends-auth-link:hover, a.friends-auth-link :hover, a.friends-auth-link:hover, a.friends-auth-link:hover span.dashicons, button.friends-auth-link:hover span.dashicons {
+	a.explanation-friends-auth-link:hover,
+	a.friends-auth-link :hover,
+	a.friends-auth-link:hover,
+	a.friends-auth-link:hover span.dashicons,
+	button.friends-auth-link:hover span.dashicons {
 		color: #32c170;
 	}
 
-	a.explanation-friends-auth-link:hover, a.friends-auth-link :hover, a.friends-auth-link:hover {
+	a.explanation-friends-auth-link:hover,
+	a.friends-auth-link :hover,
+	a.friends-auth-link:hover {
 		text-decoration: underline;
 	}
 
-	a.explanation-friends-auth-link:hover span, a.friends-auth-link :hover span, a.friends-auth-link:hover span {
+	a.explanation-friends-auth-link:hover span,
+	a.friends-auth-link :hover span,
+	a.friends-auth-link:hover span {
 		text-decoration: none;
 	}
 
@@ -459,6 +525,7 @@ h2#page-title a.dashicons {
 	.friend-message .conversation .messages {
 		max-height: 40em;
 		overflow: auto;
+
 		.wp-block-friends-message {
 			max-width: 80%;
 			margin: 1em;

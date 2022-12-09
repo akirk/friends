@@ -966,7 +966,7 @@ class Frontend {
 
 		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
 			$post_status = array( 'publish', 'private' );
-			if ( isset( $_GET['maybe-in-trash'] ) ) {
+			if ( isset( $_GET['show-hidden'] ) ) {
 				$post_status[] = 'trash';
 			}
 			$query->set( 'post_status', $post_status );
