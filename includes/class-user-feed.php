@@ -721,4 +721,27 @@ class User_Feed {
 
 		return new \WP_Error( 'term_not_found' );
 	}
+
+	/**
+	 * Get all feeds for a parser
+	 *
+	 * @param      string $parser     The feed parser.
+	 *
+	 * @return     array   A list of user feeds.
+	 */
+	public static function get_by_parser( $parser ) {
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy'   => self::TAXONOMY,
+				'meta_key'   => 'parser',
+				'meta_value' => $parser,
+			)
+		);
+		$feeds = array();
+		foreach ( $term_query->get_terms() as $term ) {
+			$feeds[] = new self( $term );
+		}
+
+		return $feeds;
+	}
 }
