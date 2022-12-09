@@ -9,6 +9,7 @@ $edit_user_link = $args['friends']->admin->admin_edit_user_link( false, $args['f
 $feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
+$hidden_post_count = $args['friend_user']->get_post_in_trash_count();
 
 ?><div id="author-header" class="mb-2">
 <h2 id="page-title">
@@ -62,6 +63,15 @@ $args['friends']->frontend->link(
 <?php foreach ( $args['friend_user']->get_post_count_by_post_format() as $post_format => $count ) : ?>
 	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_post_format_url( $post_format ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
+<?php if ( isset( $_GET['show-hidden'] ) ) : ?>
+	<a class="chip" href="<?php echo esc_attr( remove_query_arg( 'show-hidden' ) ); ?>">
+		<?php echo esc_html__( 'Hide hidden items', 'friends' ); ?>
+	</a>
+<?php elseif ( $hidden_post_count > 0 ) : ?>
+	<a class="chip" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
+		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), $hidden_post_count ) ); ?>
+	</a>
+<?php endif; ?>
 
 <?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
 	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_reaction_url( $slug ) ); ?>">

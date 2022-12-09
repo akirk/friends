@@ -37,7 +37,7 @@ function preview_row( $post, $args ) {
 				?>
 				</td>
 				<td class="view column-view" data-colname="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'View' ); ?>">
-				<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url( $post->ID ) ); ?>?maybe-in-trash"><?php esc_html_e( 'View post', 'friends' ); ?></a>
+				<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url( $post->ID ) ); ?>?show-hidden"><?php esc_html_e( 'View post', 'friends' ); ?></a>
 				<?php
 			}
 			?>
