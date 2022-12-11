@@ -86,6 +86,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.1.2
+- Frontend: add option to show/hide hidden entries on a user page ((https://github.com/akirk/friends/pull/124).
+- Admin: Fix that the main settings page would not save.
+- Plugins (ActivityPub): Add a function to get all friends for a specific parser. This is for https://github.com/pfefferle/wordpress-activitypub/pull/213.
+- Plugins: Allow plugins to suggest a better display name and username for friends via two new hooks `friends_suggest_user_login` and `friends_suggest_display_name`.
+
 ### 2.1.1
 - Friends messages and status posting UI: Bring back the Gutenberg Editor using the updated blocks-everywhere (https://github.com/akirk/friends/pull/122).
 - Admin: Fix a redirect problem on the autostatus admin page.
