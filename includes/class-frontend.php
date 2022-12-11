@@ -475,7 +475,7 @@ class Frontend {
 
 		$comments = $this->friends->feed->preview( 'simplepie', $comments_url );
 		if ( is_wp_error( $comments ) || ! is_array( $comments ) ) {
-			wp_send_json_error( '<small>' . __( 'Unforunately, comments were not available via RSS.', 'friends' ) . '</small>' );
+			wp_send_json_error( '<small>' . __( 'Unfortunately, comments were not available via RSS.', 'friends' ) . '</small>' );
 			exit;
 		}
 
