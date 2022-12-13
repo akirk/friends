@@ -1061,15 +1061,20 @@ class Friends {
 			wp_delete_post( $post->ID, true );
 		}
 
+		// We have to resort to using direct database statements since the taxonomy is not registered because the plugin is deactivated.
+		global $wpdb;
 		foreach ( $taxonomies as $taxonomy ) {
-			$term_query = new \WP_Term_Query(
-				array(
-					'taxonomy' => $taxonomy,
-				)
-			);
-			foreach ( $term_query->get_terms() as $term ) {
-				wp_delete_term( $term->term_id, $taxonomy );
+			$terms = $wpdb->get_results( $wpdb->prepare( "SELECT t.*, tt.* FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.taxonomy = %s ORDER BY t.name ASC", $taxonomy ) );
+
+			if ( $terms ) {
+				foreach ( $terms as $term ) {
+					$wpdb->delete( $wpdb->term_taxonomy, array( 'term_taxonomy_id' => $term->term_taxonomy_id ) );
+					$wpdb->delete( $wpdb->terms, array( 'term_id' => $term->term_id ) );
+					delete_option( 'prefix_' . $taxonomy->slug . '_option_name' );
+				}
 			}
+
+			$wpdb->delete( $wpdb->term_taxonomy, array( 'taxonomy' => $taxonomy ), array( '%s' ) );
 		}
 	}
 }
