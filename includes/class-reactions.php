@@ -67,6 +67,7 @@ class Reactions {
 			'show_admin_column' => true,
 			'query_var'         => true,
 			'rewrite'           => false,
+			'public'            => false,
 		);
 		register_taxonomy( 'friend-reaction-' . $user_id, Friends::get_frontend_post_types(), $args );
 	}
