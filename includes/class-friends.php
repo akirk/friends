@@ -1064,7 +1064,7 @@ class Friends {
 		foreach ( $taxonomies as $taxonomy ) {
 			$term_query = new \WP_Term_Query(
 				array(
-					'taxonomy' => User_Feed::TAXONOMY,
+					'taxonomy' => $taxonomy,
 				)
 			);
 			foreach ( $term_query->get_terms() as $term ) {
