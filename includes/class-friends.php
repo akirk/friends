@@ -1028,6 +1028,10 @@ class Friends {
 	 * Delete all the data the plugin has stored in WordPress
 	 */
 	public static function uninstall_plugin() {
+		$taxonomies = array(
+			User_Feed::TAXONOMY,
+		);
+
 		$affected_users = new \WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {
 			$in_token = get_user_option( 'friends_in_token', $user->ID );
@@ -1035,6 +1039,7 @@ class Friends {
 			delete_user_option( $user->ID, 'friends_out_token' );
 			delete_user_option( $user->ID, 'friends_in_token' );
 			delete_user_option( $user->ID, 'friends_new_friend' );
+			$taxonomies[] = 'friend-reaction-' . $user->ID;
 		}
 
 		delete_option( 'friends_main_user_id' );
@@ -1054,6 +1059,17 @@ class Friends {
 		while ( $friend_posts->have_posts() ) {
 			$post = $friend_posts->next_post();
 			wp_delete_post( $post->ID, true );
+		}
+
+		foreach ( $taxonomies as $taxonomy ) {
+			$term_query = new \WP_Term_Query(
+				array(
+					'taxonomy' => User_Feed::TAXONOMY,
+				)
+			);
+			foreach ( $term_query->get_terms() as $term ) {
+				wp_delete_term( $term->term_id, $taxonomy );
+			}
 		}
 	}
 }
