@@ -113,12 +113,12 @@ class FeedTest extends \WP_UnitTestCase {
 	function get_rss2( $url ) {
 		$display_errors = ini_get( 'display_errors' );
 		ini_set( 'display_errors', 0 );
+
 		ob_start();
 		$this->go_to( $url );
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
-
 			require( ABSPATH . 'wp-includes/feed-rss2.php' );
 			$out = ob_get_clean();
 			ini_set( 'display_errors', $display_errors );
