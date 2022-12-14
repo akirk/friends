@@ -238,11 +238,11 @@ class Feed_Item {
 	 * @return     string|\WP_Error  The validated date.
 	 */
 	public function validate_date( $date, $error_code ) {
-		if ( ! is_numeric( $date ) ) {
+		if ( is_string( $date ) && ! is_numeric( $date ) ) {
 			$date = strtotime( $date );
 		}
 
-		if ( 0 > $date ) {
+		if ( is_null( $date ) || 0 > $date ) {
 			return new \WP_Error( $error_code, 'An invalid timestamp was supplied.' );
 		}
 
