@@ -5,10 +5,10 @@
         "more_info": "https://wordpress.org/plugins/activitypub/",
         "author": "<a href='https://notiz.blog/'>Matthias Pfefferle</a>",
         "slug": "activitypub",
-        "version": "0.13.4",
-        "trunk": "https://downloads.wordpress.org/plugin/activitypub.0.13.4.zip",
-        "download_link": "https://downloads.wordpress.org/plugin/activitypub.0.13.4.zip",
-        "last_updated": "2022-07-08",
+        "version": "0.14.2",
+        "trunk": "https://downloads.wordpress.org/plugin/activitypub.0.14.2.zip",
+        "download_link": "https://downloads.wordpress.org/plugin/activitypub.0.14.2.zip",
+        "last_updated": "2022-12-11",
         "sections": {
             "Description": "People can follow your blog on Mastodon and other federated platforms that support ActivityPub, and you can follow them in the Friends plugin."
         }
