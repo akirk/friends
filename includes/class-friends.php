@@ -1070,7 +1070,7 @@ class Friends {
 				foreach ( $terms as $term ) {
 					$wpdb->delete( $wpdb->term_taxonomy, array( 'term_taxonomy_id' => $term->term_taxonomy_id ) );
 					$wpdb->delete( $wpdb->terms, array( 'term_id' => $term->term_id ) );
-					delete_option( 'prefix_' . $taxonomy->slug . '_option_name' );
+					delete_option( 'prefix_' . $term->slug . '_option_name' );
 				}
 			}
 
