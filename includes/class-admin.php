@@ -1212,6 +1212,7 @@ class Admin {
 						}
 
 						// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
+						do_action( 'friends_user_feed_deactivated', $user_feed );
 						$user_feed->delete();
 
 						if ( is_wp_error( $new_feed ) ) {
@@ -1256,6 +1257,7 @@ class Admin {
 
 				// Delete remaining existing feeds since they were not submitted.
 				foreach ( $existing_feeds as $term_id => $user_feed ) {
+					do_action( 'friends_user_feed_deactivated', $user_feed );
 					$user_feed->delete();
 				}
 
