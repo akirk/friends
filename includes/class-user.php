@@ -313,7 +313,7 @@ class User extends \WP_User {
 	 * @param      string $feed_url  The feed URL to subscribe to.
 	 * @param      array  $options   The options.
 	 *
-	 * @return     \WP_Term|\WP_error  $user The new feed or an error object.
+	 * @return     User_Feed|\WP_Error  $user The new feed or an error object.
 	 */
 	public function save_feed( $feed_url, $options = array() ) {
 		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
@@ -352,13 +352,11 @@ class User extends \WP_User {
 	 * @param      string $feed_url  The feed URL to subscribe to.
 	 * @param      array  $options   The options.
 	 *
-	 * @return     \WP_User|\WP_error  $user The new associated user or an error object.
+	 * @return     User_Feed|\WP_error  $user The new associated user or an error object.
 	 */
 	public function subscribe( $feed_url, $options = array() ) {
 		$options['active'] = true;
-		$new_feed = $this->save_feed( $feed_url, $options );
-		do_action( 'friends_user_feed_activated', $new_feed );
-		return $new_feed;
+		return $this->save_feed( $feed_url, $options );
 	}
 
 	/**

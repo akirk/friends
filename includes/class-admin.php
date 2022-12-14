@@ -1189,6 +1189,7 @@ class Admin {
 							continue;
 						}
 
+						do_action( 'friends_user_feed_activated', $new_feed );
 						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
 						continue;
 					}
@@ -1218,6 +1219,7 @@ class Admin {
 							continue;
 						}
 
+						do_action( 'friends_user_feed_activated', $new_feed );
 						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
 						continue;
 					}
@@ -1396,8 +1398,11 @@ class Admin {
 			if ( ! isset( $feed_options[ $feed_url ] ) ) {
 				continue;
 			}
-			$friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
-			$count += 1;
+			$new_feed = $friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
+			if ( ! is_wp_error( $new_feed ) ) {
+				do_action( 'friends_user_feed_activated', $new_feed );
+				$count += 1;
+			}
 		}
 
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
