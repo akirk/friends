@@ -95,18 +95,20 @@ class APITest extends \WP_UnitTestCase {
 	 * @throws \Exception  This might be triggered by feed-rss2.
 	 */
 	public function local_fetch_feed( $file ) {
+		$display_errors = ini_get( 'display_errors' );
+		ini_set( 'display_errors', 0 );
+
 		ob_start();
 		$this->go_to( $file->url );
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
-			$display_errors = ini_get( 'display_errors' );
-			ini_set( 'display_errors', 0 );
 			require( ABSPATH . 'wp-includes/feed-rss2.php' );
-			ini_set( 'display_errors', $display_errors );
 			$out = ob_get_clean();
+			ini_set( 'display_errors', $display_errors );
 		} catch ( \Exception $e ) {
 			$out = ob_get_clean();
+			ini_set( 'display_errors', $display_errors );
 			throw($e);
 		}
 		$file->body = $out;
