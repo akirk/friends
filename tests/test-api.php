@@ -100,7 +100,10 @@ class APITest extends \WP_UnitTestCase {
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
+			$display_errors = ini_get( 'display_errors' );
+			ini_set( 'display_errors', 0 );
 			require( ABSPATH . 'wp-includes/feed-rss2.php' );
+			ini_set( 'display_errors', $display_errors );
 			$out = ob_get_clean();
 		} catch ( \Exception $e ) {
 			$out = ob_get_clean();
