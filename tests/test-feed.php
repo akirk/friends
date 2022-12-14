@@ -111,6 +111,9 @@ class FeedTest extends \WP_UnitTestCase {
 	 * @throws \Exception Relaying any exception.
 	 */
 	function get_rss2( $url ) {
+		$display_errors = ini_get( 'display_errors' );
+		ini_set( 'display_errors', 0 );
+
 		ob_start();
 		$this->go_to( $url );
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
@@ -118,8 +121,10 @@ class FeedTest extends \WP_UnitTestCase {
 		try {
 			require( ABSPATH . 'wp-includes/feed-rss2.php' );
 			$out = ob_get_clean();
+			ini_set( 'display_errors', $display_errors );
 		} catch ( \Exception $e ) {
 			$out = ob_get_clean();
+			ini_set( 'display_errors', $display_errors );
 			throw($e);
 		}
 		return $out;
@@ -230,7 +235,7 @@ class FeedTest extends \WP_UnitTestCase {
 	public function test_parse_own_feed_with_correct_friend_auth() {
 		$friends = Friends::get_instance();
 		$feed_url = $friends->access_control->append_auth( 'https://me.local/?feed=rss2', new User( $this->friend_id ) );
-		$this->assertContains( 'me=', $feed_url );
+		$this->assertStringContainsString( 'me=', $feed_url );
 		$feed = $this->get_rss2( $feed_url );
 		$xml  = xml_to_array( $feed );
 
