@@ -230,7 +230,7 @@ class FeedTest extends \WP_UnitTestCase {
 	public function test_parse_own_feed_with_correct_friend_auth() {
 		$friends = Friends::get_instance();
 		$feed_url = $friends->access_control->append_auth( 'https://me.local/?feed=rss2', new User( $this->friend_id ) );
-		$this->assertContains( 'me=', $feed_url );
+		$this->assertStringContainsString( 'me=', $feed_url );
 		$feed = $this->get_rss2( $feed_url );
 		$xml  = xml_to_array( $feed );
 
