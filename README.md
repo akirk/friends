@@ -86,6 +86,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.1.3
+- Feeds: fixed a bug where when adding a new user and subscribing to an ActivityPub feed at the same time, the ActivityPub account won't be followed (would need a deactivate/actiate of the feed).
+- Taxonomies: Hide the user-feed and reactions taxonomies from the public and delete their entries when uninstalling the plugin (https://github.com/akirk/friends/pull/132).
+- Improved PHP8 compatibility and start testing with PHP8.2 in the CI.
+
 ### 2.1.2
 - Frontend: add option to show/hide hidden entries on a user page (https://github.com/akirk/friends/pull/124).
 - Admin: Fix that the main settings page would not save.

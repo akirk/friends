@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 2.1.2
+ * Version: 2.1.3
  *
  * Description: Decentralized Social Networking with WordPress. Connect WordPresses through friend requests and read each other’s (private) posts in a feed reader.
  *
@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
-define( 'FRIENDS_VERSION', '2.1.2' );
+define( 'FRIENDS_VERSION', '2.1.3' );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 require_once __DIR__ . '/libs/blocks-everywhere/blocks-everywhere.php';
