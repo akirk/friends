@@ -1201,6 +1201,8 @@ class Admin {
 					unset( $existing_feeds[ $term_id ] );
 
 					if ( $user_feed->get_url() !== $feed['url'] ) {
+						do_action( 'friends_user_feed_deactivated', $user_feed );
+
 						if ( ! isset( $feed['mime-type'] ) ) {
 							$feed['mime-type'] = $user_feed->get_mime_type();
 						}
@@ -1213,7 +1215,6 @@ class Admin {
 						}
 
 						// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
-						do_action( 'friends_user_feed_deactivated', $user_feed );
 						$user_feed->delete();
 
 						if ( is_wp_error( $new_feed ) ) {
