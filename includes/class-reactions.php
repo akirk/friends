@@ -250,7 +250,7 @@ class Reactions {
 	/**
 	 * Fetches the Emojis from the JSON file.
 	 *
-	 * @return array The emojis.
+	 * @return object The emojis.
 	 */
 	public static function get_all_emojis() {
 		static $emojis;
