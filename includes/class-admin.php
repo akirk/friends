@@ -1183,17 +1183,12 @@ class Admin {
 						}
 
 						$feed['active'] = true;
-						$new_feed = User_Feed::save(
-							$friend,
-							$feed['url'],
-							$feed
-						);
+						$new_feed = $friend->subscribe( $feed['url'], $feed );
 						if ( is_wp_error( $new_feed ) ) {
 							do_action( 'friends_process_feed_item_submit_error', $new_feed, $feed );
 							continue;
 						}
 
-						do_action( 'friends_user_feed_activated', $new_feed );
 						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
 						continue;
 					}
@@ -1211,7 +1206,6 @@ class Admin {
 
 						if ( $feed['active'] ) {
 							$new_feed = $friend->subscribe( $feed['url'], $feed );
-							do_action( 'friends_user_feed_activated', $new_feed );
 						} else {
 							$new_feed = $friend->save_feed( $feed['url'], $feed );
 						}

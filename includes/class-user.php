@@ -356,7 +356,9 @@ class User extends \WP_User {
 	 */
 	public function subscribe( $feed_url, $options = array() ) {
 		$options['active'] = true;
-		return $this->save_feed( $feed_url, $options );
+		$new_feed = $this->save_feed( $feed_url, $options );
+		do_action( 'friends_user_feed_activated', $new_feed );
+		return $new_feed;
 	}
 
 	/**
