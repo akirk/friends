@@ -1207,6 +1207,7 @@ class Admin {
 
 						if ( $feed['active'] ) {
 							$new_feed = $friend->subscribe( $feed['url'], $feed );
+							do_action( 'friends_user_feed_activated', $new_feed );
 						} else {
 							$new_feed = $friend->save_feed( $feed['url'], $feed );
 						}
@@ -1220,7 +1221,6 @@ class Admin {
 							continue;
 						}
 
-						do_action( 'friends_user_feed_activated', $new_feed );
 						do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
 						continue;
 					}
