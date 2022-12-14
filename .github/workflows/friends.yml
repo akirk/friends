@@ -5,11 +5,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['5.6', '7.3', '7.4', '8.0', '8.1', '8.2']
-        phpunit: [ 'auto' ]
-        wordpress: [ '5.6', '5.9', '6.1', 'trunk' ]
+        php: [ '5.6', '7.0', '7.1', '7.2', '7.3', '7.4' ]
+        phpunit: [ '5.7.21' ]
+        wordpress: [ '5.6', '5.8', 'trunk' ]
 
         include:
+          - php: '7.2'
+            phpunit: '6.3.1'
+            wordpress: '5.8'
+          - php: '7.2'
+            phpunit: '6.3.1'
+            wordpress: 'trunk'
           - php: '7.3'
             phpunit: '7.2.7'
             wordpress: '5.8'
@@ -17,9 +23,6 @@ jobs:
             phpunit: '8.1.6'
             wordpress: 'trunk'
           - php: '8.0'
-            phpunit: '8.5.16'
-            wordpress: 'trunk'
-          - php: '8.1'
             phpunit: '8.5.16'
             wordpress: 'trunk'
           - php: '8.2'
