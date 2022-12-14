@@ -1028,6 +1028,10 @@ class Friends {
 	 * Delete all the data the plugin has stored in WordPress
 	 */
 	public static function uninstall_plugin() {
+		$taxonomies = array(
+			User_Feed::TAXONOMY,
+		);
+
 		$affected_users = new \WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {
 			$in_token = get_user_option( 'friends_in_token', $user->ID );
@@ -1035,6 +1039,7 @@ class Friends {
 			delete_user_option( $user->ID, 'friends_out_token' );
 			delete_user_option( $user->ID, 'friends_in_token' );
 			delete_user_option( $user->ID, 'friends_new_friend' );
+			$taxonomies[] = 'friend-reaction-' . $user->ID;
 		}
 
 		delete_option( 'friends_main_user_id' );
@@ -1054,6 +1059,22 @@ class Friends {
 		while ( $friend_posts->have_posts() ) {
 			$post = $friend_posts->next_post();
 			wp_delete_post( $post->ID, true );
+		}
+
+		// We have to resort to using direct database statements since the taxonomy is not registered because the plugin is deactivated.
+		global $wpdb;
+		foreach ( $taxonomies as $taxonomy ) {
+			$terms = $wpdb->get_results( $wpdb->prepare( "SELECT t.*, tt.* FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.taxonomy = %s ORDER BY t.name ASC", $taxonomy ) );
+
+			if ( $terms ) {
+				foreach ( $terms as $term ) {
+					$wpdb->delete( $wpdb->term_taxonomy, array( 'term_taxonomy_id' => $term->term_taxonomy_id ) );
+					$wpdb->delete( $wpdb->terms, array( 'term_id' => $term->term_id ) );
+					delete_option( 'prefix_' . $term->slug . '_option_name' );
+				}
+			}
+
+			$wpdb->delete( $wpdb->term_taxonomy, array( 'taxonomy' => $taxonomy ), array( '%s' ) );
 		}
 	}
 }

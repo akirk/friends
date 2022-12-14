@@ -372,6 +372,7 @@ class User_Feed {
 			'show_admin_column' => true,
 			'query_var'         => true,
 			'rewrite'           => false,
+			'public'            => false,
 		);
 		register_taxonomy( self::TAXONOMY, 'user', $args );
 		register_taxonomy_for_object_type( self::TAXONOMY, 'user' );
