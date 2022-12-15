@@ -137,7 +137,7 @@ class Feed {
 			}
 		}
 
-		$items = $this->parsers[ $parser ]->fetch_feed( $url );
+		$items = $this->parsers[ $parser ]->fetch_feed( $url, $user_feed );
 
 		if ( ! is_wp_error( $items ) ) {
 			if ( empty( $items ) ) {

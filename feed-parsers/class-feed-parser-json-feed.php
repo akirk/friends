@@ -110,11 +110,12 @@ class Feed_Parser_JSON_Feed extends Feed_Parser {
 	/**
 	 * Fetches a feed and returns the processed items.
 	 *
-	 * @param      string $url        The url.
+	 * @param      string    $url        The url.
+	 * @param      User_Feed $user_feed  The user feed.
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url ) {
+	public function fetch_feed( $url, User_Feed $user_feed = null ) {
 		$args = array();
 		$res = wp_safe_remote_request( $url, $args );
 
@@ -131,7 +132,7 @@ class Feed_Parser_JSON_Feed extends Feed_Parser {
 	/**
 	 * Parse the JSON object as a JSON Feed.
 	 *
-	 * @param      array $json   The parsed JSON.
+	 * @param      object $json   The parsed JSON.
 	 *
 	 * @return     array   An array of Feed items.
 	 */
