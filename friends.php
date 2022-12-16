@@ -95,7 +95,8 @@ add_action(
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-simplepie.php';
 		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie );
-	}
+	},
+	9
 );
 
 add_action(
@@ -103,7 +104,8 @@ add_action(
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-microformats.php';
 		$friends_feed->register_parser( Feed_Parser_Microformats::SLUG, new Feed_Parser_Microformats );
-	}
+	},
+	9
 );
 
 add_action(
@@ -111,7 +113,8 @@ add_action(
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-json-feed.php';
 		$friends_feed->register_parser( Feed_Parser_JSON_Feed::SLUG, new Feed_Parser_JSON_Feed );
-	}
+	},
+	9
 );
 
 add_action(
@@ -129,5 +132,6 @@ add_action(
 
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-activitypub.php';
 		$friends_feed->register_parser( Feed_Parser_ActivityPub::SLUG, new Feed_Parser_ActivityPub( $friends_feed ) );
-	}
+	},
+	9
 );
