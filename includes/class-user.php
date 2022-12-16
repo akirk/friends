@@ -945,7 +945,7 @@ class User extends \WP_User {
 				return null;
 			}
 
-			if ( ! $rest_url ) {
+			if ( $rest_url ) {
 				$this->update_user_option( 'friends_rest_url', $rest_url );
 			}
 		}
