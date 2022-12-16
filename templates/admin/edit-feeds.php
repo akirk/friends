@@ -72,7 +72,19 @@ $has_last_log = false;
 							</tr>
 							<?php if ( $feed->get_last_log() ) : ?>
 							<tr class="<?php echo esc_attr( ( $alternate % 2 ? 'alternate ' : ' ' ) . ( $feed->get_active() ? 'active' : 'inactive' ) ); ?> lastlog hidden">
-								<td colspan="5" class="notice"><?php echo esc_html( $feed->get_last_log() ); ?></td>
+								<td colspan="5" class="notice">
+								<?php
+								echo esc_html( $feed->get_last_log() );
+								echo ' ';
+								echo wp_kses_post(
+									sprintf(
+									// translators: %s is a date.
+										__( 'Will be fetched again at %s.', 'friends' ),
+										esc_html( $feed->get_next_poll() )
+									)
+								);
+								?>
+								</td>
 							</tr>
 							<?php endif; ?>
 						<?php endforeach; ?>
