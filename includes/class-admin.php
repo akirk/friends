@@ -1536,11 +1536,6 @@ class Admin {
 				$errors->add( 'user_login', __( '<strong>Error</strong>: This username is already registered. Please choose another one.' ) );
 			}
 
-			if ( empty( $vars['subscribe'] ) && empty( $vars['friendship'] ) ) {
-				// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				$errors->add( 'no_action', __( '<strong>Error</strong>: Nothing to subscribe selected.', 'friends' ) );
-			}
-
 			$feeds = $vars['feeds'];
 			if ( ! $errors->has_errors() ) {
 				$friend_user = false;

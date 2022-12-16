@@ -175,6 +175,7 @@ jQuery( function ( $ ) {
 
 	$( document ).on( 'click', 'a.add-feed', function () {
 		$( 'table.feed-table' )
+			.removeClass( 'hidden' )
 			.find( 'tr.template' )
 			.removeClass( 'hidden' )
 			.find( 'input:first' )
