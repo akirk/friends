@@ -20,6 +20,7 @@ namespace Friends;
 class Feed_Parser_SimplePie extends Feed_Parser {
 	const NAME = 'SimplePie';
 	const URL = 'http://simplepie.org';
+	const SLUG = 'simplepie';
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *

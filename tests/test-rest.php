@@ -10,7 +10,7 @@ namespace Friends;
 /**
  * Test the REST API.
  */
-class RestTest extends \WP_UnitTestCase {
+class RestTest extends Friends_TestCase_Cache_HTTP {
 	/**
 	 * The REST server.
 	 *
@@ -23,32 +23,6 @@ class RestTest extends \WP_UnitTestCase {
 	 */
 	public function set_up() {
 		parent::set_up();
-
-		// Manually activate the REST server.
-		global $wp_rest_server;
-		$wp_rest_server = new \Spy_REST_Server;
-		$this->server   = $wp_rest_server;
-		do_action( 'rest_api_init' );
-
-		add_filter(
-			'rest_url',
-			function() {
-				return get_option( 'home' ) . '/wp-json/';
-			}
-		);
-
-		add_filter(
-			'friends_host_is_valid',
-			function( $return, $host ) {
-				if ( 'me.local' === $host || 'friend.local' === $host || 'example.org' === $host ) {
-					// Hosts used for test cases.
-					return $host;
-				}
-				return $return;
-			},
-			10,
-			2
-		);
 
 		// Emulate HTTP requests to the REST API.
 		add_filter(
@@ -100,35 +74,7 @@ class RestTest extends \WP_UnitTestCase {
 						$request
 					);
 				}
-
-				$url = substr( $url, strlen( $rest_prefix ) );
-				$r   = new \WP_REST_Request( $request['method'], $url );
-				if ( ! empty( $request['body'] ) ) {
-					foreach ( $request['body'] as $key => $value ) {
-						$r->set_param( $key, $value );
-					}
-				}
-				global $wp_rest_server;
-				$response = $wp_rest_server->dispatch( $r );
-
-				// Restore the old url.
-				update_option( 'home', $home_url );
-
-				return apply_filters(
-					'fake_http_response',
-					array(
-						'headers'  => array(
-							'content-type' => 'text/json',
-						),
-						'body'     => wp_json_encode( $response->data ),
-						'response' => array(
-							'code' => $response->status,
-						),
-					),
-					$p['scheme'] . '://' . $p['host'],
-					$url,
-					$request
-				);
+				return $preempt;
 			},
 			10,
 			3
@@ -161,7 +107,7 @@ class RestTest extends \WP_UnitTestCase {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 		update_option( 'home', $my_url );
-		$friends = Friends::get_instance();
+
 		$future_in_token = 'future_in_token';
 		$future_out_token = 'future_out_token';
 

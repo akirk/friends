@@ -15,6 +15,10 @@
 		<exclude-pattern>bin/tests/isolated/*</exclude-pattern>
 	</rule>
 
+	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+
 	<rule ref="WordPress.Security.EscapeOutput">
 		<properties>
 			<!-- Some common functions that might technically require output escaping, but rarely cause anything but false positives -->

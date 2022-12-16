@@ -941,7 +941,11 @@ class User extends \WP_User {
 		$rest_url = $this->get_user_option( 'friends_rest_url' );
 		if ( ! $rest_url || false === strpos( $rest_url, REST::PREFIX ) ) {
 			$rest_url = $friends->rest->discover_rest_url( $this->user_url );
-			if ( $rest_url ) {
+			if ( is_wp_error( $rest_url ) ) {
+				return null;
+			}
+
+			if ( ! $rest_url ) {
 				$this->update_user_option( 'friends_rest_url', $rest_url );
 			}
 		}
