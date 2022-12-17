@@ -20,6 +20,7 @@ namespace Friends;
 class Feed_Parser_Microformats extends Feed_Parser {
 	const NAME = 'Microformats';
 	const URL = 'https://www.microformats.org/';
+	const SLUG = 'microformats';
 
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.

@@ -94,22 +94,44 @@ add_action(
 	'friends_load_parsers',
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-simplepie.php';
-		$friends_feed->register_parser( 'simplepie', new Feed_Parser_SimplePie );
-	}
+		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie );
+	},
+	9
 );
 
 add_action(
 	'friends_load_parsers',
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-microformats.php';
-		$friends_feed->register_parser( 'microformats', new Feed_Parser_Microformats );
-	}
+		$friends_feed->register_parser( Feed_Parser_Microformats::SLUG, new Feed_Parser_Microformats );
+	},
+	9
 );
 
 add_action(
 	'friends_load_parsers',
 	function( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-json-feed.php';
-		$friends_feed->register_parser( 'jsonfeed', new Feed_Parser_JSON_Feed );
-	}
+		$friends_feed->register_parser( Feed_Parser_JSON_Feed::SLUG, new Feed_Parser_JSON_Feed );
+	},
+	9
+);
+
+add_action(
+	'friends_load_parsers',
+	function( \Friends\Feed $friends_feed ) {
+		if ( class_exists( 'Friends_Feed_Parser_ActivityPub' ) ) {
+			// Was included in ActivityPub 0.14.
+			return;
+		}
+
+		if ( ! class_exists( '\Activitypub\Activitypub' ) ) {
+			// ActivityPub plugin not active.
+			return;
+		}
+
+		require_once __DIR__ . '/feed-parsers/class-feed-parser-activitypub.php';
+		$friends_feed->register_parser( Feed_Parser_ActivityPub::SLUG, new Feed_Parser_ActivityPub( $friends_feed ) );
+	},
+	9
 );

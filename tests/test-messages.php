@@ -10,7 +10,7 @@ namespace Friends;
 /**
  * Test the Notifications
  */
-class MessagesTest extends \WP_UnitTestCase {
+class MessagesTest extends Friends_TestCase_Cache_HTTP {
 	/**
 	 * Current User ID
 	 *
@@ -81,72 +81,6 @@ class MessagesTest extends \WP_UnitTestCase {
 			10,
 			4
 		);
-
-		add_filter(
-			'get_user_option_friends_rest_url',
-			function() {
-				return get_option( 'home' ) . '/wp-json/' . REST::PREFIX;
-			}
-		);
-
-		// Manually activate the REST server.
-		global $wp_rest_server;
-		$wp_rest_server = new \Spy_REST_Server;
-		$this->server   = $wp_rest_server;
-		do_action( 'rest_api_init' );
-
-		add_filter(
-			'rest_url',
-			function() {
-				return get_option( 'home' ) . '/wp-json/';
-			}
-		);
-
-		// Emulate HTTP requests to the REST API.
-		add_filter(
-			'pre_http_request',
-			function( $preempt, $request, $url ) {
-				$p = wp_parse_url( $url );
-
-				$home_url = home_url();
-
-				// Pretend the url now is the requested one.
-				update_option( 'home', $p['scheme'] . '://' . $p['host'] );
-				$rest_prefix = home_url() . '/wp-json';
-
-				$url = substr( $url, strlen( $rest_prefix ) );
-				$r   = new \WP_REST_Request( $request['method'], $url );
-				if ( ! empty( $request['body'] ) ) {
-					foreach ( $request['body'] as $key => $value ) {
-						$r->set_param( $key, $value );
-					}
-				}
-				global $wp_rest_server;
-				$response = $wp_rest_server->dispatch( $r );
-
-				// Restore the old url.
-				update_option( 'home', $url );
-
-				return apply_filters(
-					'fake_http_response',
-					array(
-						'headers'  => array(
-							'content-type' => 'text/json',
-						),
-						'body'     => wp_json_encode( $response->data ),
-						'response' => array(
-							'code' => $response->status,
-						),
-					),
-					$p['scheme'] . '://' . $p['host'],
-					$url,
-					$request
-				);
-			},
-			10,
-			3
-		);
-
 	}
 
 	/**

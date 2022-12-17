@@ -270,7 +270,7 @@ class Access_Control {
 	 *
 	 * @param  int    $user_id   The user id.
 	 * @param  string $new_role  The new role.
-	 * @param  string $old_roles The old roles.
+	 * @param  array  $old_roles The old roles.
 	 *
 	 * @return string The new token.
 	 */

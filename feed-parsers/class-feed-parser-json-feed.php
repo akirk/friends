@@ -20,6 +20,7 @@ namespace Friends;
 class Feed_Parser_JSON_Feed extends Feed_Parser {
 	const NAME = 'JSON Feed';
 	const URL = 'https://www.jsonfeed.org/';
+	const SLUG = 'jsonfeed';
 
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.

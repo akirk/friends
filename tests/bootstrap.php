@@ -31,6 +31,14 @@ require_once dirname( dirname( __FILE__ ) ) . '/vendor/yoast/phpunit-polyfills/p
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
+	$activitypub_plugin = dirname( dirname( dirname( __FILE__ ) ) ) . '/activitypub/activitypub.php';
+	$activitypub_plugin_alternate = dirname( dirname( dirname( __FILE__ ) ) ) . '/wordpress-activitypub/activitypub.php';
+	if ( file_exists( $activitypub_plugin ) ) {
+		require $activitypub_plugin;
+	} elseif ( file_exists( $activitypub_plugin_alternate ) ) {
+		require $activitypub_plugin_alternate;
+	}
+
 	require dirname( dirname( __FILE__ ) ) . '/friends.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
@@ -40,6 +48,7 @@ ob_start();
 
 // Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
+require __DIR__ . '/class-friends-testcase-cache-http.php';
 Friends\Friends::activate_plugin();
 ob_end_clean();
 
@@ -47,7 +56,7 @@ ob_end_clean();
 add_filter(
 	'http_request_host_is_external',
 	function( $in, $host ) {
-		if ( in_array( $host, array( 'me.local', 'friend.local' ) ) ) {
+		if ( in_array( $host, array( 'me.local', 'friend.local', 'mastodon.local' ) ) ) {
 			return true;
 		}
 		return $in;
@@ -59,7 +68,7 @@ add_filter(
 add_filter(
 	'http_request_args',
 	function( $args, $url ) {
-		if ( in_array( parse_url( $url, PHP_URL_HOST ), array( 'me.local', 'friend.local' ) ) ) {
+		if ( in_array( parse_url( $url, PHP_URL_HOST ), array( 'me.local', 'friend.local', 'mastodon.local' ) ) ) {
 			$args['reject_unsafe_urls'] = false;
 		}
 		return $args;
