@@ -843,7 +843,6 @@ class Frontend {
 	 */
 	public function friend_posts_query( $query ) {
 		global $wp_query, $wp, $authordata;
-
 		if ( $wp_query !== $query || $query->is_admin() || $query->is_home() ) {
 			return $query;
 		}
@@ -851,6 +850,8 @@ class Frontend {
 		$pagename = '';
 		if ( isset( $wp_query->query['pagename'] ) ) {
 			$pagename = $wp_query->query['pagename'];
+		} elseif ( isset( $wp_query->query['name'] ) ) {
+			$pagename = $wp_query->query['name'];
 		}
 
 		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
