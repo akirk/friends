@@ -11,9 +11,6 @@
 		<exclude name="Squiz.Commenting.FunctionComment.Missing" />
 	</rule>
 	<rule ref="WordPress-Docs" />
-	<rule ref="WordPress.WP.GlobalVariablesOverride.OverrideProhibited">
-		<exclude-pattern>bin/tests/isolated/*</exclude-pattern>
-	</rule>
 
 	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
 		<exclude-pattern>tests/*</exclude-pattern>
