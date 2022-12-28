@@ -878,7 +878,10 @@ class Feed {
 				continue;
 			}
 			$parser = $this->parsers[ $available_feeds[ $link_url ]['parser'] ];
-			$available_feeds[ $link_url ] = array_merge( $available_feeds[ $link_url ], $parser->update_feed_details( $available_feeds[ $link_url ] ) );
+			$updated_feed_details = $parser->update_feed_details( $available_feeds[ $link_url ] );
+			if ( is_array( $updated_feed_details ) && ! is_wp_error( $updated_feed_details ) ) {
+				$available_feeds[ $link_url ] = array_merge( $available_feeds[ $link_url ], $updated_feed_details );
+			}
 			$available_feeds[ $link_url ] = apply_filters( 'friends_update_feed_details', $available_feeds[ $link_url ], $slug );
 			if ( $available_feeds[ $link_url ]['url'] !== $link_url ) {
 				$new_url = $available_feeds[ $link_url ]['url'];
