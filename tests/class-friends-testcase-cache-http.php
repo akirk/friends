@@ -51,7 +51,15 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 	}
 
 	public static function friends_host_is_valid( $return, $host ) {
-		if ( 'me.local' === $host || 'friend.local' === $host || 'example.org' === $host ) {
+		if ( in_array(
+			$host,
+			array(
+				'me.local',
+				'friend.local',
+				'example.org',
+				'notiz.blog',
+			)
+		) ) {
 			// Hosts used for test cases.
 			return $host;
 		}

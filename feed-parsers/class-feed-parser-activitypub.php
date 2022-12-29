@@ -197,12 +197,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser {
 		}
 		$actor_url = $object['actor'];
 		$user_feed = false;
-		if ( \wp_http_validate_url( $actor_url ) ) {
+		if ( Friends::check_url( $actor_url ) ) {
 			// Let's check if we follow this actor. If not it might be a different URL representation.
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
 
-		if ( is_wp_error( $user_feed ) || ! \wp_http_validate_url( $actor_url ) ) {
+		if ( is_wp_error( $user_feed ) || ! Friends::check_url( $actor_url ) ) {
 			$meta = \Activitypub\get_remote_metadata_by_actor( $actor_url );
 			if ( ! $meta || ! isset( $meta['url'] ) ) {
 				$this->log( 'Received invalid meta for ' . $actor_url );
@@ -210,7 +210,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser {
 			}
 
 			$actor_url = $meta['url'];
-			if ( ! \wp_http_validate_url( $actor_url ) ) {
+			if ( ! Friends::check_url( $actor_url ) ) {
 				$this->log( 'Received invalid meta url for ' . $actor_url );
 				return false;
 			}
@@ -321,7 +321,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser {
 	 * @param      int       $user_id  The user id.
 	 */
 	private function handle_incoming_announce( $url, User_Feed $user_feed, $user_id ) {
-		if ( ! \wp_http_validate_url( $url ) ) {
+		if ( ! Friends::check_url( $url ) ) {
 			$this->log( 'Received invalid announce', compact( 'url' ) );
 			return false;
 		}
