@@ -120,14 +120,21 @@ add_action(
 add_action(
 	'friends_load_parsers',
 	function( \Friends\Feed $friends_feed ) {
-		if ( class_exists( 'Friends_Feed_Parser_ActivityPub' ) ) {
-			// Was included in ActivityPub 0.14.
-			return;
-		}
-
 		if ( ! class_exists( '\Activitypub\Activitypub' ) ) {
 			// ActivityPub plugin not active.
 			return;
+		}
+
+		global $wp_filter;
+		if ( isset( $wp_filter['friends_load_parsers']->callbacks[10] ) && class_exists( '\\ReflectionFunction' ) ) {
+			// Unhook the parser from ActivityPub 0.14.
+			foreach ( $wp_filter['friends_load_parsers']->callbacks[10] as $key => $hook ) {
+				$r = new \ReflectionFunction( $hook['function'] );
+				if ( \str_ends_with( $r->getFileName(), 'activitypub.php' ) ) {
+					remove_filter( 'friends_load_parsers', $hook['function'], 10 );
+					break;
+				}
+			}
 		}
 
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-activitypub.php';

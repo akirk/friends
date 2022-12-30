@@ -538,7 +538,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser {
 
 	public function replace_with_links( $result ) {
 		$users = $this->get_possible_mentions();
-		if ( isset( $users[ $result[0] ] ) ) {
+		if ( class_exists( '\\Activitypub\\Mention' ) && isset( $users[ $result[0] ] ) ) {
 			return \Activitypub\Mention::replace_with_links( array( $users[ $result[0] ] ) );
 		}
 
