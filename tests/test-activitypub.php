@@ -263,6 +263,27 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 	/**
 	 * Test whether the example domains are skipped.
+	 */
+	public function test_feed_details() {
+		$friends = Friends::get_instance();
+		$friend = new User( $this->friend_id );
+		$feeds = $friend->get_feeds();
+		$feed = array_pop( $feeds );
+		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
+
+		$details = $parser->update_feed_details(
+			array(
+				'url' => $feed->get_url(),
+			)
+		);
+
+		$this->assertEquals( 'https://mastodon.local/users/akirk', $details['url'] );
+		$this->assertEquals( 'Alex Kirk', $details['title'] );
+		$this->assertEquals( 'https://mastodon.local/users/akirk.png', $details['avatar'] );
+	}
+
+	/**
+	 * Test whether the example domains are skipped.
 	 *
 	 * @param string $actor The actor.
 	 * @param string $domain The domain.
@@ -322,6 +343,10 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		self::$users[ $this->actor ] = array(
 			'url'  => $this->actor,
 			'name' => $this->friend_name,
+			'icon' => array(
+				'type' => 'Image',
+				'url'  => $this->actor . '.png',
+			),
 		);
 		self::$users['https://mastodon.local/@akirk'] = self::$users[ $this->actor ];
 

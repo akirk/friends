@@ -617,22 +617,8 @@ class User extends \WP_User {
 		}
 
 		if ( $user_icon_url && Friends::check_url( $user_icon_url ) ) {
-			if ( $this->has_cap( 'friend' ) || $this->has_cap( 'pending_friend_request' ) || $this->has_cap( 'friend_request' ) || $this->has_cap( 'subscription' ) ) {
-				$icon_host_parts = array_reverse( explode( '.', parse_url( strtolower( $user_icon_url ), PHP_URL_HOST ) ) );
-				if ( 'gravatar.com' === $icon_host_parts[1] . '.' . $icon_host_parts[0] ) {
-					update_user_option( $this->ID, 'friends_user_icon_url', $user_icon_url );
-					return $user_icon_url;
-				}
-
-				$user_host_parts = array_reverse( explode( '.', parse_url( strtolower( $this->user_url ), PHP_URL_HOST ) ) );
-				if ( $user_host_parts[1] . '.' . $user_host_parts[0] === $icon_host_parts[1] . '.' . $icon_host_parts[0] ) {
-					update_user_option( $this->ID, 'friends_user_icon_url', $user_icon_url );
-					return $user_icon_url;
-				}
-			} elseif ( $this->has_cap( 'subscription' ) ) {
-				update_user_option( $this->ID, 'friends_user_icon_url', $user_icon_url );
-				return $user_icon_url;
-			}
+			update_user_option( $this->ID, 'friends_user_icon_url', $user_icon_url );
+			return $user_icon_url;
 		}
 
 		return false;
