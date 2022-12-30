@@ -22,8 +22,17 @@ esc_html_e( 'Automatically Generated Statuses', 'friends' );
 	<summary><?php esc_html_e( /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ 'Settings' ); ?></summary>
 	<form method="post">
 	<?php wp_nonce_field( 'friends-automatic-status' ); ?>
-	<input type="checkbox" name="enabled" <?php checked( ! get_option( 'friends_automatic_status_disabled' ) ); ?> id="automatic-status-enabled" />
-	<label for="automatic-status-enabled">Enable automatic status</label>
+	<table class="form-table">
+		<tbody>
+			<tr>
+				<td><input type="checkbox" name="enabled" <?php checked( ! get_option( 'friends_automatic_status_disabled' ) ); ?> id="automatic-status-enabled" />
+				<label for="automatic-status-enabled"><?php esc_html_e( 'Enable automatic status', 'friends' ); ?></label>
+				<p class="description"><?php esc_html_e( 'When disabled, no draft posts will be automatically created.', 'friends' ); ?></p>
+			</td>
+			</tr>
+		</tbody>
+	</table>
+
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 	</p>
