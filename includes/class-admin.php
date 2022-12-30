@@ -1077,7 +1077,7 @@ class Admin {
 		$friend = new User( $user_id );
 		$url = $friend->update_user_icon_url( $_POST['avatar'] );
 
-		if ( is_wp_error( $url ) ) {
+		if ( ! $url || is_wp_error( $url ) ) {
 			wp_send_json_error( $url );
 			exit;
 		}
