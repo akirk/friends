@@ -39,12 +39,16 @@ class Automatic_Status {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
-		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 3 );
-		add_action( 'set', array( $this, 'new_friend_user' ), 10, 2 );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		add_action( 'friends_admin_tabs', array( $this, 'admin_tabs' ), 20 );
 		add_filter( 'handle_bulk_actions-edit-post', array( $this, 'bulk_publish' ), 10, 3 );
+
+		if ( ! get_option( 'friends_automatic_status_disabled' ) ) {
+			return;
+		}
+		add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
+		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 3 );
+		add_action( 'set', array( $this, 'new_friend_user' ), 10, 2 );
 	}
 
 	/**
@@ -64,7 +68,7 @@ class Automatic_Status {
 		);
 
 		add_action( 'load-' . $page_type . '_page_friends-auto-status', array( $this, 'redirect_to_post_format_url' ) );
-
+		add_action( 'load-' . $page_type . '_page_friends-auto-status', array( $this, 'process_settings' ) );
 	}
 
 	/**
@@ -92,6 +96,28 @@ class Automatic_Status {
 				)
 			);
 			exit;
+		}
+	}
+
+	public function process_settings() {
+		if ( empty( $_REQUEST ) || ! isset( $_REQUEST['_wpnonce'] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-automatic-status' ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['enabled'] ) && $_POST['enabled'] ) {
+			delete_option( 'friends_automatic_status_disabled' );
+		} else {
+			update_option( 'friends_automatic_status_disabled', 1 );
+		}
+
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
+		} else {
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}
 	}
 
@@ -213,6 +239,16 @@ class Automatic_Status {
 				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
+
+		if ( isset( $_GET['updated'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Settings were updated.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['error'] ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
+			<?php
+		}
 		Friends::template_loader()->get_template_part( 'admin/automatic-status-list-table', false, compact( 'wp_list_table', 'post_type' ) );
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
