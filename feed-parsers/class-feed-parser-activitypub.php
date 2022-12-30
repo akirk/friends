@@ -103,8 +103,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser {
 
 		if ( isset( $meta['icon']['type'] ) && 'image' === strtolower( $meta['icon']['type'] ) ) {
 			$feed_details['avatar'] = $meta['icon']['url'];
-		} elseif ( isset( $meta['image']['type'] ) && 'image' === strtolower( $meta['image']['type'] ) ) {
-			$feed_details['avatar'] = $meta['image']['url'];
 		}
 
 		// Disable polling.
