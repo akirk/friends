@@ -113,6 +113,12 @@ class Automatic_Status {
 		} else {
 			update_option( 'friends_automatic_status_disabled', 1 );
 		}
+
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
+		} else {
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+		}
 	}
 
 	/**
@@ -233,6 +239,16 @@ class Automatic_Status {
 				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
+
+		if ( isset( $_GET['updated'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Settings were updated.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['error'] ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
+			<?php
+		}
 		Friends::template_loader()->get_template_part( 'admin/automatic-status-list-table', false, compact( 'wp_list_table', 'post_type' ) );
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
