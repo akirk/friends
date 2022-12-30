@@ -1095,6 +1095,20 @@ class Feed {
 	}
 
 	/**
+	 * Gets the actual feed parser parser.
+	 *
+	 * @param      string $parser  The parser slug.
+	 *
+	 * @return     Feed_Parser  The actual parser.
+	 */
+	public function get_feed_parser( $parser ) {
+		if ( ! isset( $this->parsers[ $parser ] ) ) {
+			return null;
+		}
+		return $this->parsers[ $parser ];
+	}
+
+	/**
 	 * Gets the registered parser.
 	 *
 	 * @param      string $parser  The parser slug.
