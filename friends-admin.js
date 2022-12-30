@@ -301,4 +301,26 @@ jQuery( function ( $ ) {
 			}
 		}
 	);
+
+	$( document ).on( 'click', 'a.set-avatar', function () {
+		const url = $( this ).find( 'img' ).prop( 'src' );
+		if ( ! url ) {
+			return;
+		}
+		$.post(
+			friends.ajax_url,
+			{
+				user: $( this ).data( 'id' ),
+				avatar: url,
+				_ajax_nonce: $( this ).data( 'nonce' ),
+				action: 'friends_set_avatar',
+			},
+			function ( response ) {
+				if ( response.success ) {
+					window.location.reload();
+				}
+			}
+		);
+		return false;
+	} );
 } );

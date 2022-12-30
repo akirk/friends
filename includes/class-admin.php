@@ -57,6 +57,7 @@ class Admin {
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'wp_ajax_friends_refresh_link_token', array( $this, 'ajax_refresh_link_token' ) );
+		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
@@ -1058,6 +1059,36 @@ class Admin {
 		Friends::template_loader()->get_template_part( 'admin/edit-friend', null, $args );
 	}
 
+	public function ajax_set_avatar() {
+		$user_id = isset( $_POST['user'] ) ? (int) $_POST['user'] : 0;
+
+		check_ajax_referer( "set-avatar-$user_id" );
+
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		if ( empty( $_POST['avatar'] ) || ! Friends::check_url( $_POST['avatar'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$friend = new User( $user_id );
+		$url = $friend->update_user_icon_url( $_POST['avatar'] );
+
+		if ( is_wp_error( $url ) ) {
+			wp_send_json_error( $url );
+			exit;
+		}
+
+		wp_send_json_success(
+			array(
+				'url' => $url,
+			)
+		);
+	}
+
 	/**
 	 * Process the Friends Edit Notifications page
 	 */
@@ -1546,8 +1577,16 @@ class Admin {
 					}
 				}
 
+				$avatar = null;
+				foreach ( $feeds as $feed_details ) {
+					if ( ! empty( $feed_details['avatar'] ) ) {
+						$avatar = $feed_details['avatar'];
+						break;
+					}
+				}
+
 				if ( ! $friend_user || is_wp_error( $friend_user ) ) {
-					$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
+					$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name, $avatar );
 				}
 
 				return $this->process_admin_add_friend_response( $friend_user, $vars );
@@ -1603,8 +1642,16 @@ class Admin {
 				$friend_user = $this->send_friend_request( $rest_url, $friend_user_login, $friend_url, $friend_display_name, $codeword, $message );
 			}
 
+			$avatar = null;
+			foreach ( $feeds as $feed_details ) {
+				if ( ! empty( $feed_details['avatar'] ) ) {
+					$avatar = $feed_details['avatar'];
+					break;
+				}
+			}
+
 			if ( ! $friend_user || is_wp_error( $friend_user ) ) {
-				$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name );
+				$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name, $avatar );
 			}
 
 			return $this->process_admin_add_friend_response( $friend_user, $vars );

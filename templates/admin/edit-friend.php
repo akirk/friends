@@ -16,6 +16,7 @@
 				<?php echo get_avatar( $args['friend']->ID ); ?>
 			</td>
 			</tr>
+			<?php do_action( 'friends_edit_friend_after_avatar', $args['friend'] ); ?>
 			<tr>
 				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>
 				<td><input type="text" name="friends_display_name" id="friends_display_name" value="<?php echo esc_attr( $args['friend']->display_name ); ?>" class="regular-text" /> <p class="description"><?php esc_html_e( 'Careful, your friend can discover this.', 'friends' ); ?></p></td>
