@@ -10,7 +10,7 @@ if ( empty( $args['menu'] ) ) {
 		'friends_admin_tabs',
 		array(
 			__( 'Welcome', 'friends' )              => 'friends',
-			__( 'Settings', 'friends' )             => 'friends-settings',
+			__( 'Settings' )                        => 'friends-settings',  // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			__( 'Notification Manager', 'friends' ) => 'friends-notification-manager',
 		)
 	);

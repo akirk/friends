@@ -18,6 +18,17 @@ esc_html_e( 'Automatically Generated Statuses', 'friends' );
 <hr class="wp-header-end">
 
 <p><?php esc_html_e( 'For certain actions that you take in the Friends plugin, a status post is created automatically. Here you can review them and publish them as you like.', 'friends' ); ?></p>
+<details>
+	<summary><?php esc_html_e( /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ 'Settings' ); ?></summary>
+	<form method="post">
+	<?php wp_nonce_field( 'friends-automatic-status' ); ?>
+	<input type="checkbox" name="enabled" <?php checked( ! get_option( 'friends_automatic_status_disabled' ) ); ?> id="automatic-status-enabled" />
+	<label for="automatic-status-enabled">Enable automatic status</label>
+	<p class="submit">
+		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
+	</p>
+</form>
+</details>
 
 <?php $args['wp_list_table']->views(); ?>
 
@@ -38,4 +49,4 @@ if ( $args['wp_list_table']->has_items() ) {
 }
 ?>
 
-</div>
+	</div>

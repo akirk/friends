@@ -63,7 +63,12 @@
 	margin-bottom: .5em;
 }
 
-.friends-notice b.headline:before, #friends-welcome-panel h2:before {
+.friends-body summary {
+	cursor: pointer;
+}
+
+.friends-notice b.headline:before,
+#friends-welcome-panel h2:before {
 	content: "\f307";
 	color: #82878c;
 	font-family: dashicons;
@@ -73,7 +78,7 @@
 	position: relative;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-	text-decoration: none!important;
+	text-decoration: none !important;
 	vertical-align: top;
 }
 
@@ -109,31 +114,42 @@ table.feed-table.widefat .check-column {
 	min-width: 5em;
 	font-weight: bold;
 }
+
 table.reader-table .check-column {
 	width: 5em;
 	vertical-align: top;
 	text-align: center;
 }
-table.feed-table.widefat td, table.feed-table.widefat th {
+
+table.feed-table.widefat td,
+table.feed-table.widefat th {
 	padding: .5em;
 }
 
-table.feed-table.widefat th, table.feed-table.widefat th.check-column {
+table.feed-table.widefat th,
+table.feed-table.widefat th.check-column {
 	vertical-align: bottom;
 }
 
-table.feed-table.widefat td.nowrap, table.feed-table.widefat th.nowrap {
+table.feed-table.widefat td.nowrap,
+table.feed-table.widefat th.nowrap {
 	white-space: nowrap;
 }
 
-#available-widgets [class*="friends-widget"] .widget-title:before { content: "\f307"; }
+#available-widgets [class*="friends-widget"] .widget-title:before {
+	content: "\f307";
+}
 
-a.friends-auth-link span.dashicons, button.friends-auth-link span.dashicons {
+a.friends-auth-link span.dashicons,
+button.friends-auth-link span.dashicons {
 	color: #32c170;
 	margin-left: 6px;
 }
 
-a.explanation-friends-auth-link:hover, a.friends-auth-link :hover, a.friends-auth-link:hover span.dashicons, button.friends-auth-link:hover span.dashicons {
+a.explanation-friends-auth-link:hover,
+a.friends-auth-link :hover,
+a.friends-auth-link:hover span.dashicons,
+button.friends-auth-link:hover span.dashicons {
 	color: #32c170;
 }
 
@@ -142,7 +158,8 @@ tr.lastlog td {
 	margin-bottom: 2em;
 }
 
-.friends-plugin-installer .plugin-card .desc, .friends-plugin-installer .plugin-card .name {
+.friends-plugin-installer .plugin-card .desc,
+.friends-plugin-installer .plugin-card .name {
 	margin: auto;
 }
 
@@ -150,7 +167,8 @@ span.disabled {
 	color: #999;
 }
 
-span#friends_enable_retention_days_line, span#friends_enable_retention_number_line {
+span#friends_enable_retention_days_line,
+span#friends_enable_retention_number_line {
 	cursor: pointer;
 }
 

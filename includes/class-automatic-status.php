@@ -39,12 +39,16 @@ class Automatic_Status {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
-		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 3 );
-		add_action( 'set', array( $this, 'new_friend_user' ), 10, 2 );
 		add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		add_action( 'friends_admin_tabs', array( $this, 'admin_tabs' ), 20 );
 		add_filter( 'handle_bulk_actions-edit-post', array( $this, 'bulk_publish' ), 10, 3 );
+
+		if ( ! get_option( 'friends_automatic_status_disabled' ) ) {
+			return;
+		}
+		add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
+		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 3 );
+		add_action( 'set', array( $this, 'new_friend_user' ), 10, 2 );
 	}
 
 	/**
@@ -64,7 +68,7 @@ class Automatic_Status {
 		);
 
 		add_action( 'load-' . $page_type . '_page_friends-auto-status', array( $this, 'redirect_to_post_format_url' ) );
-
+		add_action( 'load-' . $page_type . '_page_friends-auto-status', array( $this, 'process_settings' ) );
 	}
 
 	/**
@@ -92,6 +96,22 @@ class Automatic_Status {
 				)
 			);
 			exit;
+		}
+	}
+
+	public function process_settings() {
+		if ( empty( $_REQUEST ) || ! isset( $_REQUEST['_wpnonce'] ) ) {
+			return;
+		}
+
+		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-automatic-status' ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['enabled'] ) && $_POST['enabled'] ) {
+			delete_option( 'friends_automatic_status_disabled' );
+		} else {
+			update_option( 'friends_automatic_status_disabled', 1 );
 		}
 	}
 
