@@ -534,13 +534,33 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $the_content;
 	}
 
-	public function replace_with_links( $result ) {
+	/**
+	 * Replace the mention with a link to the user.
+	 *
+	 * @param array $result The matched username.
+	 *
+	 * @return string The replaced username.
+	 */
+	public function replace_with_links( array $result ) {
 		$users = $this->get_possible_mentions();
-		if ( class_exists( '\\Activitypub\\Mention' ) && isset( $users[ $result[0] ] ) ) {
-			return \Activitypub\Mention::replace_with_links( array( $users[ $result[0] ] ) );
+		if ( ! isset( $users[ $result[0] ] ) ) {
+			return $result[0];
 		}
 
-		return $result[0];
+		$metadata = \ActivityPub\get_remote_metadata_by_actor( $users[ $result[0] ] );
+		if ( is_wp_error( $metadata ) || empty( $metadata['url'] ) ) {
+			return $result[0];
+		}
+
+		$username = ltrim( $users[ $result[0] ], '@' );
+		if ( ! empty( $metadata['name'] ) ) {
+			$username = $metadata['name'];
+		}
+		if ( ! empty( $metadata['preferredUsername'] ) ) {
+			$username = $metadata['preferredUsername'];
+		}
+		$username = '@<span>' . $username . '</span>';
+		return \sprintf( '<a rel="mention" class="u-url mention" href="%s">%s</a>', $metadata['url'], $username );
 	}
 
 	public function activitypub_save_settings( User $friend ) {
