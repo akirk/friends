@@ -15,7 +15,7 @@ namespace Friends;
 /**
  * This is the class for integrating ActivityPub into the Friends Plugin.
  */
-class Feed_Parser_ActivityPub extends Feed_Parser {
+class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const SLUG = 'activitypub';
 	const NAME = 'ActivityPub';
 	const URL = 'https://www.w3.org/TR/activitypub/';

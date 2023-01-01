@@ -17,7 +17,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Feed_Parser_SimplePie extends Feed_Parser {
+class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	const NAME = 'SimplePie';
 	const URL = 'http://simplepie.org';
 	const SLUG = 'simplepie';

@@ -17,7 +17,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Feed_Parser_Microformats extends Feed_Parser {
+class Feed_Parser_Microformats extends Feed_Parser_V2 {
 	const NAME = 'Microformats';
 	const URL = 'https://www.microformats.org/';
 	const SLUG = 'microformats';

@@ -35,6 +35,7 @@ require_once __DIR__ . '/includes/class-user-query.php';
 
 // Classes to be implemented or used by parser plugins.
 require_once __DIR__ . '/feed-parsers/class-feed-parser.php';
+require_once __DIR__ . '/feed-parsers/class-feed-parser-v2.php';
 require_once __DIR__ . '/feed-parsers/class-feed-item.php';
 
 require_once __DIR__ . '/includes/class-access-control.php';

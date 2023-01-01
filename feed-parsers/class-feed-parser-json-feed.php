@@ -17,7 +17,7 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Feed_Parser_JSON_Feed extends Feed_Parser {
+class Feed_Parser_JSON_Feed extends Feed_Parser_V2 {
 	const NAME = 'JSON Feed';
 	const URL = 'https://www.jsonfeed.org/';
 	const SLUG = 'jsonfeed';
