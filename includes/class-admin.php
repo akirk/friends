@@ -60,6 +60,7 @@ class Admin {
 		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
+		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
 		add_filter( 'site_status_tests', array( $this, 'site_status_tests' ) );
@@ -2529,6 +2530,16 @@ class Admin {
 			do_action( 'friends_user_feed_deactivated', $feed );
 		}
 		User_Feed::delete_user_terms( $user_id );
+
+		global $wpdb;
+		$post_types_to_delete = implode( "', '", Friends::get_frontend_post_types() );
+
+		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d AND post_type IN ('$post_types_to_delete')", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( $post_ids ) {
+			foreach ( $post_ids as $post_id ) {
+				wp_delete_post( $post_id );
+			}
+		}
 	}
 
 	/**
