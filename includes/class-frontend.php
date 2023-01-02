@@ -835,6 +835,30 @@ class Frontend {
 		exit;
 	}
 
+	private function has_required_priviledges() {
+		if ( Friends::is_main_user() ) {
+			return true;
+		}
+
+		if ( is_multisite() ) {
+			if ( is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) ) {
+				return true;
+			}
+
+			if ( is_super_admin( get_current_user_id() ) ) {
+				// Super admins would count as administrators.
+				return false;
+			}
+		}
+
+		if ( current_user_can( 'administrator' ) ) {
+			return true;
+		}
+
+		return false;
+
+	}
+
 	/**
 	 * Modify the main query for the /friends page
 	 *
@@ -861,7 +885,7 @@ class Frontend {
 		}
 
 		// Not available for the general public or friends.
-		$viewable = friends::has_required_privileges();
+		$viewable = $this->has_required_priviledges();
 		if ( $query->is_feed() ) {
 			// Feeds can be viewed through extra authentication.
 			if ( $this->friends->access_control->private_rss_is_authenticated() ) {
@@ -883,6 +907,8 @@ class Frontend {
 					wp_safe_redirect( home_url( '/friends/' ) );
 					exit;
 				}
+			} elseif ( ! Friends::is_main_user() ) {
+				wp_die( __( 'You are not allowed to view this page.', 'friends' ) );
 			}
 
 			return $query;

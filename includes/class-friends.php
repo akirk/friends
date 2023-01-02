@@ -615,10 +615,6 @@ class Friends {
 			return false;
 		}
 
-		if ( ! self::is_main_user() || ( is_multisite() && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) && is_super_admin( get_current_user_id() ) ) ) {
-			return false;
-		}
-
 		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
 		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
 	}
