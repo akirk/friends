@@ -295,7 +295,7 @@ class Friends {
 		$content .= __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' );
 		$content .= PHP_EOL;
 		// translators: %1$s and %2$s are URLs.
-		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, follow me and get your own <a href="%1$s">WordPress</a> now and install the <a href="%2$s">Friends plugin</a>!', 'friends' ), 'https://wordpress.org/', self::PLUGIN_URL );
+		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, get your own <a href="%1$s">WordPress</a> now, install the <a href="%2$s">Friends plugin</a>, and follow me!', 'friends' ), 'https://wordpress.org/', self::PLUGIN_URL );
 		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
 
 		$content .= '<!-- wp:friends/follow-me {"className":"not-friends"} -->' . PHP_EOL . '<div class="wp-block-friends-follow-me not-friends">';
