@@ -308,7 +308,7 @@ class Friends {
 		$content .= '</p>' . PHP_EOL . '<!-- /wp:friends/follow-me -->' . PHP_EOL;
 
 		$post_data = array(
-			'post_title'   => __( 'Welcome to my Friends Page', 'friends' ),
+			'post_title'   => __( 'Friends', 'friends' ),
 			'post_content' => $content,
 			'post_type'    => 'page',
 			'post_name'    => 'friends',
