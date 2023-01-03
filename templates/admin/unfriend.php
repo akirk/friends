@@ -69,7 +69,7 @@ $numfeeds = count( $args['friend']->get_active_feeds() );
 	</ul>
 	<p class="description">
 	<?php
-	esc_html_e( 'This will delete all cached posts, feeds and other metadata for this user on this site.', 'friends' );
+	esc_html_e( 'This will delete all cached posts, feeds, and other metadata for this user on this site.', 'friends' );
 	if ( is_multisite() ) {
 		echo ' ';
 		esc_html_e( 'Since this is a multisite install, the user will only be removed from this site.', 'friends' );
