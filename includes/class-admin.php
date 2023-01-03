@@ -46,7 +46,7 @@ class Admin {
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'manage_users_columns', array( $this, 'user_list_columns' ) );
-		add_filter( 'manage_users_custom_column', array( $this, 'user_list_custom_column' ), 10, 3 );
+		add_filter( 'manage_users_custom_column', array( get_called_class(), 'user_list_custom_column' ), 10, 3 );
 		add_filter( 'the_title', array( $this, 'override_post_format_title' ), 10, 2 );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
@@ -421,7 +421,7 @@ class Admin {
 	 * @param  int    $user_id The user id.
 	 * @return string|bool The edit link or false.
 	 */
-	public function admin_edit_user_link( $link, $user_id ) {
+	public static function admin_edit_user_link( $link, $user_id ) {
 		$user = new \WP_User( $user_id );
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return $link;
@@ -436,6 +436,25 @@ class Admin {
 		}
 
 		return self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID );
+	}
+
+	public static function get_edit_friend_link( $user_id ) {
+		$user = new \WP_User( $user_id );
+		return apply_filters( 'get_edit_user_link', $user->user_url, $user_id );
+	}
+
+	public static function get_unfriend_link( $user_id ) {
+		$user = new \WP_User( $user_id );
+		if (
+			! $user->has_cap( 'friend_request' ) &&
+			! $user->has_cap( 'pending_friend_request' ) &&
+			! $user->has_cap( 'friend' ) &&
+			! $user->has_cap( 'subscription' )
+		) {
+			return '';
+		}
+
+		return wp_nonce_url( self_admin_url( 'admin.php?page=unfriend&user=' . $user->ID ), 'unfriend_' . $user->ID );
 	}
 
 	/**
@@ -2171,7 +2190,7 @@ class Admin {
 	}
 
 	/**
-	 * Add a column "Posts" (that emcompasses both user andfriend posts.)
+	 * Add a column "Posts" (that emcompasses both user and friend posts.)
 	 *
 	 * @param      array $columns  The columns.
 	 *
@@ -2192,7 +2211,7 @@ class Admin {
 	 *
 	 * @return     string  The column contents.
 	 */
-	public function user_list_custom_column( $output, $column_name, $user_id ) {
+	public static function user_list_custom_column( $output, $column_name, $user_id ) {
 		if ( 'friends_posts' !== $column_name ) {
 			return $output;
 		}

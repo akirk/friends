@@ -44,7 +44,7 @@ if ( $args['no_new_post_notification'] ) : ?>
 			<?php foreach ( $args['friend_users'] as $friend_user ) : ?>
 				<tr>
 					<td class="column-friend">
-						<a href="<?php echo esc_url( apply_filters( 'get_edit_user_link', $friend_user->user_url, $friend_user->ID ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+						<a href="<?php echo esc_url( Friends\Admin::get_edit_friend_link( $friend_user->ID ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
 						<input type="hidden" name="friend_listed[]" value="<?php echo esc_attr( $friend_user->ID ); ?>" />
 					</td>
 					<td class="column-friends-page-feeds">
