@@ -597,7 +597,7 @@ class Frontend {
 	 */
 	function link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
 		echo wp_kses(
-			$this->get_link( $url, $text, $html_attributes, $friend_user ),
+			self::get_link( $url, $text, $html_attributes, $friend_user ),
 			array(
 				'a'    => array(
 					'href'        => array(),
@@ -627,7 +627,7 @@ class Frontend {
 	 *
 	 * @return     string       The link.
 	 */
-	function get_link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
+	public static function get_link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
 			$friend_user = new User( get_the_author_meta( 'ID' ) );
 		}

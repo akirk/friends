@@ -109,7 +109,7 @@ class Blocks {
 				break;
 
 			case 'friends_subscriptions':
-				$friends  = User_Query::all_friends_subscriptions();
+				$friends  = User_Query::all_associated_users();
 				$no_users = __( "You don't have any friends or subscriptions yet.", 'friends' );
 				break;
 

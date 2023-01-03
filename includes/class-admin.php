@@ -42,7 +42,7 @@ class Admin {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_open_friend_request' ), 10, 2 );
 		add_filter( 'users_list_table_query_args', array( $this, 'allow_role_multi_select' ) );
-		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
+		add_filter( 'user_row_actions', array( get_called_class(), 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'manage_users_columns', array( $this, 'user_list_columns' ) );
@@ -166,7 +166,7 @@ class Admin {
 				unset( $args['role'] );
 			}
 
-			$roles = $this->get_associated_roles();
+			$roles = self::get_associated_roles();
 			if (
 				( isset( $args['role__in'] ) && array_intersect( $args['role__in'], array_keys( $roles ) ) )
 				|| ( isset( $args['role'] ) && isset( $roles[ $args['role'] ] ) )
@@ -186,7 +186,7 @@ class Admin {
 			jQuery( document ).ready( function ( $ ) {
 				$( '#toplevel_page_friends-settings, #toplevel_page_friends-settings > a' ).addClass( 'wp-has-current-submenu wp-menu-open' ).removeClass( 'wp-not-current-submenu' );
 				$( '#menu-users > a' ).removeClass( 'wp-has-current-submenu wp-menu-open' );
-				$( "#toplevel_page_friends-settings ul li a[href='<?php echo esc_html( $this->get_users_url() ); ?>']" ).closest( 'li' ).addClass( 'current' );
+				$( "#toplevel_page_friends-settings ul li a[href='<?php echo esc_html( self::get_users_url() ); ?>']" ).closest( 'li' ).addClass( 'current' );
 			} );
 		</script>
 		<?php
@@ -217,7 +217,7 @@ class Admin {
 							sprintf(
 								// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
 								__( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ),
-								'"' . esc_attr( self_admin_url( $this->get_users_url() ) ) . '"',
+								'"' . esc_attr( self_admin_url( self::get_users_url() ) ) . '"',
 								__( 'Friends &amp; Requests', 'friends' )
 							) .
 							'</p>',
@@ -599,7 +599,7 @@ class Admin {
 	 * Render the Friends Admin home page
 	 */
 	public function render_admin_home() {
-		$friends_subscriptions = User_Query::all_friends_subscriptions();
+		$friends_subscriptions = User_Query::all_associated_users();
 		$has_friend_users = $friends_subscriptions->get_total() > 0;
 
 		Friends::template_loader()->get_template_part(
@@ -850,7 +850,7 @@ class Admin {
 			'admin/friends-list',
 			null,
 			array(
-				'friends' => User_Query::all_friends_subscriptions()->get_results(),
+				'friends' => User_Query::all_associated_users()->get_results(),
 			)
 		);
 	}
@@ -2019,7 +2019,7 @@ class Admin {
 	 *
 	 * @return     array  The associated roles.
 	 */
-	public function get_associated_roles() {
+	public static function get_associated_roles() {
 		$roles = new \WP_Roles;
 		$friend_roles = array();
 		foreach ( $roles->roles as $role => $data ) {
@@ -2030,8 +2030,8 @@ class Admin {
 		return $friend_roles;
 	}
 
-	public function get_users_url() {
-		return 'users.php?role=' . implode( ',', array_keys( $this->get_associated_roles() ) );
+	public static function get_users_url() {
+		return 'users.php?role=' . implode( ',', array_keys( self::get_associated_roles() ) );
 	}
 
 	/**
@@ -2041,7 +2041,7 @@ class Admin {
 	 * @param  \WP_User $user    The user in question.
 	 * @return array The extended actions.
 	 */
-	public function user_row_actions( array $actions, \WP_User $user ) {
+	public static function user_row_actions( array $actions, \WP_User $user ) {
 		if (
 			! friends::has_required_privileges() ||
 			(
@@ -2062,7 +2062,7 @@ class Admin {
 		// Ensuire we have a friends user here.
 		$user = new User( $user );
 
-		$actions['view'] = $this->friends->frontend->get_link(
+		$actions['view'] = Frontend::get_link(
 			$user->user_url,
 			sprintf(
 			// translators: %s: Author’s display name.
@@ -2367,7 +2367,7 @@ class Admin {
 							get_bloginfo( 'name' )
 						) . '</span>'
 					),
-					'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
+					'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
 				)
 			);
 		}
@@ -2386,7 +2386,7 @@ class Admin {
 					'id'     => 'friends-requests',
 					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'My Friends & Requests', 'friends' ),
-					'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
+					'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
 				)
 			);
 			$wp_menu->add_menu(
@@ -2405,7 +2405,7 @@ class Admin {
 							'id'     => 'add-friend',
 							'parent' => 'friends-menu',
 							'title'  => esc_html__( 'Friendship Already Requested', 'friends' ),
-							'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
+							'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
 						)
 					);
 				} elseif ( ! $they_requested_friendship ) {

@@ -364,7 +364,7 @@ class Friends {
 	 */
 	public static function upgrade_plugin( $previous_version ) {
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
-			$friends_subscriptions = User_Query::all_friends_subscriptions();
+			$friends_subscriptions = User_Query::all_associated_users();
 			foreach ( $friends_subscriptions->get_results() as $user ) {
 				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
 				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
