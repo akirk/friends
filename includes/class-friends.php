@@ -359,10 +359,10 @@ class Friends {
 
 	/**
 	 * If a plugin version upgrade requires changes, they can be done here
-	 *
-	 * @param  string $previous_version The previous plugin version number.
 	 */
-	public static function upgrade_plugin( $previous_version ) {
+	public static function upgrade_plugin() {
+		$previous_version = get_option( 'friends_plugin_version' );
+
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
 			$friends_subscriptions = User_Query::all_associated_users();
 			foreach ( $friends_subscriptions->get_results() as $user ) {
@@ -375,6 +375,10 @@ class Friends {
 					delete_user_option( $user->ID, 'friends_gravatar' );
 				}
 			}
+		}
+
+		if ( version_compare( $previous_version, '2.1.3', '<' ) ) {
+			self::setup_roles();
 		}
 
 		update_option( 'friends_plugin_version', Friends::VERSION );
@@ -436,10 +440,7 @@ class Friends {
 		self::setup_roles();
 		self::create_friends_page();
 
-		$previous_version = get_option( 'friends_plugin_version' );
-		if ( Friends::VERSION !== $previous_version ) {
-			self::upgrade_plugin( $previous_version );
-		}
+		self::upgrade_plugin();
 
 		if ( false === get_option( 'friends_main_user_id' ) ) {
 			update_option( 'friends_main_user_id', get_current_user_id() );
