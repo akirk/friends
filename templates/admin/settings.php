@@ -17,12 +17,14 @@ if ( 'friends' === $args['codeword'] || ! $args['friends_require_codeword'] ) {
 
 do_action( 'friends_settings_before_form' );
 
-?><form method="post">
+?>
+<form method="post">
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
 		<tbody>
+			<?php if ( current_user_can( 'manage_options' ) ) : ?>
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Comments', 'friends' ); ?></th>
+				<th scope="row"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Comments' ); ?></th>
 				<td>
 					<fieldset>
 						<label for="comment_registration">
@@ -59,13 +61,14 @@ do_action( 'friends_settings_before_form' );
 					</div>
 				</td>
 			</tr>
-			<?php
+					<?php
+			endif;
 			if ( $args['potential_main_users']->get_total() > 1 ) :
 				?>
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Main Friend User', 'friends' ); ?></th>
 					<td>
-						<?php if ( current_user_can( 'administrator' ) ) { ?>
+					<?php if ( current_user_can( 'manage_options' ) ) { ?>
 						<select name="main_user_id">
 							<?php foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) : ?>
 								<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $args['main_user_id'], $potential_main_user->ID ); ?>><?php echo esc_html( $potential_main_user->display_name ); ?></option>
@@ -74,35 +77,35 @@ do_action( 'friends_settings_before_form' );
 						</select>
 						<p class="description"><?php esc_html_e( 'Since there are multiple users on this site, we need to know which one should be considered the main one.', 'friends' ); ?> <?php esc_html_e( 'They can edit friends-related settings.', 'friends' ); ?> <?php esc_html_e( 'Whenever a friends-related action needs to be associated with a user, this one will be chosen.', 'friends' ); ?></p>
 							<?php
-						} else {
-							$c = 0;
-							foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) {
-								$c += 1;
-								if ( $potential_main_user->ID === $args['main_user_id'] ) {
-									?>
+					} else {
+						$c = 0;
+						foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) {
+							$c += 1;
+							if ( $potential_main_user->ID === $args['main_user_id'] ) {
+								?>
 									<span id="main_user_id"><?php echo esc_html( $potential_main_user->display_name ); ?></span>
 									<?php
-								}
 							}
-							?>
+						}
+						?>
 							<span> (
-							<?php
-							echo esc_html(
-								sprintf(
-								// translators: %s is a number of users.
-									_n( '%s potential user', '%s potential users', $c, 'friends' ),
-									$c
-								),
-							);
-							?>
+						<?php
+						echo esc_html(
+							sprintf(
+							// translators: %s is a number of users.
+								_n( '%s potential user', '%s potential users', $c, 'friends' ),
+								$c
+							),
+						);
+						?>
 							) </span>
 							<p class="description"><?php esc_html_e( 'An administrator can change this.', 'friends' ); ?></p>
 							<?php
-						}
-						?>
+					}
+					?>
 					</td>
 				</tr>
-				<?php
+					<?php
 			endif;
 			?>
 			<tr>
@@ -200,6 +203,10 @@ do_action( 'friends_settings_before_form' );
 					</p>
 				</td>
 			</tr>
+			<?php
+			if ( current_user_can( 'manage_options' ) ) :
+				;
+				?>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Post Formats', 'friends' ); ?></th>
 				<td>
@@ -274,6 +281,7 @@ do_action( 'friends_settings_before_form' );
 					</fieldset>
 				</td>
 			</tr>
+			<?php endif; ?>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Reactions', 'friends' ); ?></th>
 				<td>
@@ -336,6 +344,21 @@ do_action( 'friends_settings_before_form' );
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 	</p>
+	<?php if ( ! current_user_can( 'manage_options' ) ) : ?>
+		<p class="description">
+			<?php esc_html_e( 'Administrators have access to these additional settings:', 'friends' ); ?>
+			<ul class="ul-disc">
+				<?php
+				foreach ( array(
+					__( 'Comments' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					__( 'Post Formats', 'friends' ),
+				) as $setting ) :
+					?>
+					<li><?php echo esc_html( $setting ); ?></li>
+				<?php endforeach; ?>
+			</ul>
+		</p>
+	<?php endif; ?>
 </form>
 <?php
 do_action( 'friends_settings_after_form' );

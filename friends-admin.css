@@ -163,6 +163,10 @@ tr.lastlog td {
 	margin: auto;
 }
 
+a.unfriend {
+	color: #a00;
+}
+
 span.disabled {
 	color: #999;
 }
