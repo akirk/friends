@@ -1,14 +1,12 @@
 <?php
 /**
- * This template shows the latest friends section.
+ * This template shows the Friends list.
  *
  * @version 1.0
  * @package Friends
  */
 
 ?>
-<div class="wrap">
-<h3><?php esc_html_e( 'Your Friends & Subscriptions', 'friends' ); ?></h3>
 <?php if ( empty( $args['friends'] ) ) : ?>
 	<p><?php esc_html_e( "You don't have any friends or subscriptions yet.", 'friends' ); ?></a></p>
 <?php else : ?>
@@ -99,4 +97,3 @@
 </table>
 	<?php endif; ?>
 <p><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add New Friend', 'friends' ); ?></a></p>
-</div>

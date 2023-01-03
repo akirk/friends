@@ -69,7 +69,7 @@ $args['friends']->frontend->link(
 	</a>
 <?php elseif ( $hidden_post_count > 0 ) : ?>
 	<a class="chip" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
-		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), $hidden_post_count ) ); ?>
+		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) ); ?>
 	</a>
 <?php endif; ?>
 
@@ -89,10 +89,10 @@ $args['friends']->frontend->link(
 
 <?php if ( $edit_user_link ) : ?>
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend_user']->ID ) ); ?>">
-	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), $active_feeds ) ); ?>
+	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), number_format_i18n( $active_feeds ) ) ); ?>
 
 	<?php if ( $feeds - $active_feeds > 1 ) : ?>
-	&nbsp;<small><?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '(+%s more)', '(+%s more)', $feeds - $active_feeds, 'friends' ), $feeds - $active_feeds ) ); ?></small>
+	&nbsp;<small><?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '(+%s more)', '(+%s more)', $feeds - $active_feeds, 'friends' ), number_format_i18n( $feeds - $active_feeds ) ) ); ?></small>
 	<?php endif; ?>
 </a>
 
