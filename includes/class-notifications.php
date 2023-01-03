@@ -91,45 +91,40 @@ class Notifications {
 		) {
 			return;
 		}
-
-		$users = User_Query::all_admin_users();
-		$users = $users->get_results();
-
-		foreach ( $users as $user ) {
-			if ( ! $user->user_email ) {
-				continue;
-			}
-			$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
-			$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_notification_' . $post->post_author, $user->ID );
-
-			if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post ) ) {
-				continue;
-			}
-
-			$author      = new User( $post->post_author );
-			$email_title = $post->post_title;
-
-			$params = array(
-				'author' => $author,
-				'post'   => $post,
-			);
-
-			$email_message = array();
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part( 'email/new-friend-post', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer' );
-			$email_message['html'] = ob_get_contents();
-			ob_end_clean();
-
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/new-friend-post.text', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer.text' );
-			$email_message['text'] = ob_get_contents();
-			ob_end_clean();
-
-			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
+		$user = new User( Friends::get_main_friend_user_id() );
+		if ( ! $user->user_email ) {
+			return;
 		}
+		$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
+		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_notification_' . $post->post_author, $user->ID );
+
+		if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post ) ) {
+			return;
+		}
+
+		$author      = new User( $post->post_author );
+		$email_title = $post->post_title;
+
+		$params = array(
+			'author' => $author,
+			'post'   => $post,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/new-friend-post', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/new-friend-post.text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
 	}
 
 	/**
@@ -144,49 +139,43 @@ class Notifications {
 			return $notified;
 		}
 
-		$users = User_Query::all_admin_users();
-		$users = $users->get_results();
+		$user = new User( Friends::get_main_friend_user_id() );
+		if ( ! $user->user_email ) {
+			return $notified;
+		}
+		$notify_user = ! get_user_option( 'friends_no_keyword_notification_' . $post->post_author, $user->ID );
 
-		foreach ( $users as $user ) {
-			if ( ! $user->user_email ) {
-				continue;
-			}
-			$notify_user = ! get_user_option( 'friends_no_keyword_notification_' . $post->post_author, $user->ID );
-
-			if ( ! apply_filters( 'notify_user_about_keyword_post', $notify_user, $user, $post, $keyword ) ) {
-				continue;
-			}
-
-			$notified = true;
-
-			$author = new User( $post->post_author );
-			// translators: %s is a keyword string specified by the user.
-			$email_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
-
-			$params = array(
-				'author'  => $author,
-				'post'    => $post,
-				'keyword' => $keyword,
-			);
-
-			$email_message = array();
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part( 'email/keyword-match-post', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer' );
-			$email_message['html'] = ob_get_contents();
-			ob_end_clean();
-
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/keyword-match-post.text', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer.text' );
-			$email_message['text'] = ob_get_contents();
-			ob_end_clean();
-
-			$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
+		if ( ! apply_filters( 'notify_user_about_keyword_post', $notify_user, $user, $post, $keyword ) ) {
+			return $notified;
 		}
 
-		return $notified;
+		$author = new User( $post->post_author );
+		// translators: %s is a keyword string specified by the user.
+		$email_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
+
+		$params = array(
+			'author'  => $author,
+			'post'    => $post,
+			'keyword' => $keyword,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/keyword-match-post', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/keyword-match-post.text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
+
+		return true;
 	}
 
 	/**
@@ -198,45 +187,40 @@ class Notifications {
 		if ( ! $friend_user->has_cap( 'friend_request' ) ) {
 			return;
 		}
+		$user = new User( Friends::get_main_friend_user_id() );
 
-		$users = User_Query::all_admin_users();
-		$users = $users->get_results();
-
-		foreach ( $users as $user ) {
-			if ( ! $user->user_email ) {
-				continue;
-			}
-
-			$notify_user = ! get_user_option( 'friends_no_friend_request_notification', $user->ID );
-			if ( ! apply_filters( 'notify_user_about_friend_request', $notify_user, $user, $friend_user ) ) {
-				continue;
-			}
-
-			// translators: %s is a user display name.
-			$email_title = sprintf( __( '%s sent a Friend Request', 'friends' ), $friend_user->display_name );
-
-			$params = array(
-				'user'        => $user,
-				'friend_user' => $friend_user,
-			);
-
-			$email_message = array();
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part( 'email/new-friend-request', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer' );
-			$email_message['html'] = ob_get_contents();
-			ob_end_clean();
-
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/new-friend-request.text', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer.text' );
-			$email_message['text'] = ob_get_contents();
-			ob_end_clean();
-
-			$this->send_mail( $user->user_email, $email_title, $email_message );
+		if ( ! $user->user_email ) {
+			return;
 		}
 
+		$notify_user = ! get_user_option( 'friends_no_friend_request_notification', $user->ID );
+		if ( ! apply_filters( 'notify_user_about_friend_request', $notify_user, $user, $friend_user ) ) {
+			return;
+		}
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( '%s sent a Friend Request', 'friends' ), $friend_user->display_name );
+
+		$params = array(
+			'user'        => $user,
+			'friend_user' => $friend_user,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/new-friend-request', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/new-friend-request.text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
 	}
 
 	/**
@@ -245,42 +229,38 @@ class Notifications {
 	 * @param  User $friend_user The user who accepted friendship.
 	 */
 	public function notify_accepted_friend_request( User $friend_user ) {
-		$users = User_Query::all_admin_users();
-		$users = $users->get_results();
-
-		foreach ( $users as $user ) {
-			if ( ! $user->user_email ) {
-				continue;
-			}
-
-			if ( ! apply_filters( 'notify_user_about_accepted_friend_request', true, $user, $friend_user ) ) {
-				continue;
-			}
-
-			// translators: %s is a user display name.
-			$email_title = sprintf( __( '%s accepted your Friend Request', 'friends' ), $friend_user->display_name );
-
-			$params = array(
-				'user'        => $user,
-				'friend_user' => $friend_user,
-			);
-
-			$email_message = array();
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part( 'email/accepted-friend-request', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer' );
-			$email_message['html'] = ob_get_contents();
-			ob_end_clean();
-
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/accepted-friend-request.text', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer.text' );
-			$email_message['text'] = ob_get_contents();
-			ob_end_clean();
-
-			$this->send_mail( $user->user_email, $email_title, $email_message );
+		$user = new User( Friends::get_main_friend_user_id() );
+		if ( ! $user->user_email ) {
+			return;
 		}
+
+		if ( ! apply_filters( 'notify_user_about_accepted_friend_request', true, $user, $friend_user ) ) {
+			return;
+		}
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( '%s accepted your Friend Request', 'friends' ), $friend_user->display_name );
+
+		$params = array(
+			'user'        => $user,
+			'friend_user' => $friend_user,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/accepted-friend-request', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/accepted-friend-request.text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
 	}
 
 	/**
@@ -297,44 +277,40 @@ class Notifications {
 	 * @param       string $subject     The subject.
 	 */
 	public function notify_friend_message_received( User $friend_user, $message, $subject ) {
-		$users = User_Query::all_admin_users();
-		$users = $users->get_results();
-
-		foreach ( $users as $user ) {
-			if ( ! $user->user_email ) {
-				continue;
-			}
-
-			if ( ! apply_filters( 'notify_user_about_friend_message', true, $user, $friend_user ) ) {
-				continue;
-			}
-
-			// translators: %s is a user display name.
-			$email_title = sprintf( __( '%s sent you a message', 'friends' ), $friend_user->display_name );
-
-			$params = array(
-				'user'        => $user,
-				'friend_user' => $friend_user,
-				'subject'     => $subject,
-				'message'     => $message,
-			);
-
-			$email_message = array();
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-			Friends::template_loader()->get_template_part( 'email/friend-message-received', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer' );
-			$email_message['html'] = ob_get_contents();
-			ob_end_clean();
-
-			ob_start();
-			Friends::template_loader()->get_template_part( 'email/friend-message-received.text', null, $params );
-			Friends::template_loader()->get_template_part( 'email/footer.text' );
-			$email_message['text'] = ob_get_contents();
-			ob_end_clean();
-
-			$this->send_mail( $user->user_email, $email_title, $email_message );
+		$user = new User( Friends::get_main_friend_user_id() );
+		if ( ! $user->user_email ) {
+			return;
 		}
+
+		if ( ! apply_filters( 'notify_user_about_friend_message', true, $user, $friend_user ) ) {
+			return;
+		}
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( '%s sent you a message', 'friends' ), $friend_user->display_name );
+
+		$params = array(
+			'user'        => $user,
+			'friend_user' => $friend_user,
+			'subject'     => $subject,
+			'message'     => $message,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/friend-message-received', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/friend-message-received.text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
 	}
 
 	/**
