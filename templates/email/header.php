@@ -56,6 +56,9 @@
 		blockquote p {
 			margin-top: .2rem;
 		}
+		img {
+			object-fit: contain;
+		}
 
 		figure img, img.size-full {
 			max-width: 100% !important;
