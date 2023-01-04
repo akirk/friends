@@ -138,7 +138,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function get_metadata( $url ) {
-		if ( strpos( $url, '@' ) !== false && preg_match( '#^https?://#', $url, $m ) ) {
+		if ( false !== strpos( $url, '@' ) && false === strpos( $url, '/' ) && preg_match( '#^https?://#', $url, $m ) ) {
 			$url = substr( $url, strlen( $m[0] ) );
 		}
 		return \Activitypub\get_remote_metadata_by_actor( $url );
@@ -188,7 +188,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$meta = self::get_metadata( $url );
-		if ( ! isset( $meta['outbox'] ) ) {
+		if ( is_wp_error( $meta ) || ! isset( $meta['outbox'] ) ) {
+			var_dump( $meta );
 			return array();
 		}
 
