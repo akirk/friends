@@ -338,7 +338,7 @@ class Blocks {
 		}
 		$access_transient_key = 'friends_follow_me_' . crc32( $_SERVER['REMOTE_ADDR'] );
 		$access_count = get_transient( $access_transient_key );
-		if ( $access_count >= 30 ) {
+		if ( $access_count >= 10 ) {
 			header( 'HTTP/1.0 529 Too Many Requests' );
 			wp_die( 'Too Many Requests' );
 		}
