@@ -38,6 +38,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
 		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'follow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'unfollow_user' ), 10, 2 );
+		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'like_post' ), 10, 3 );
 		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_rewrite_incoming_url' ), 10, 2 );
 
 		\add_filter( 'friends_edit_friend_table_end', array( $this, 'activitypub_settings' ), 10 );
@@ -48,6 +49,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
+
+		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 	}
@@ -89,7 +92,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     array  The (potentially) modified feed details.
 	 */
 	public function update_feed_details( $feed_details ) {
-		$meta = \Activitypub\get_remote_metadata_by_actor( $feed_details['url'] );
+		$meta = $this->get_metadata( $feed_details['url'] );
 		if ( ! $meta || is_wp_error( $meta ) ) {
 			return $feed_details;
 		}
@@ -189,7 +192,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$meta = self::get_metadata( $url );
 		if ( is_wp_error( $meta ) || ! isset( $meta['outbox'] ) ) {
-			var_dump( $meta );
 			return array();
 		}
 
@@ -225,11 +227,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+
 		$items = array();
 		foreach ( $outbox_page['orderedItems'] as $object ) {
 			$type = strtolower( $object['type'] );
 			$items[] = $this->process_incoming_activity( $type, $object );
 		}
+
 		return $items;
 	}
 
@@ -277,7 +281,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( is_wp_error( $user_feed ) || ! Friends::check_url( $actor_url ) ) {
-			$meta = \Activitypub\get_remote_metadata_by_actor( $actor_url );
+			$meta = $this->get_metadata( $actor_url );
 			if ( ! $meta || ! isset( $meta['url'] ) ) {
 				$this->log( 'Received invalid meta for ' . $actor_url );
 				return false;
@@ -357,7 +361,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 
 		if ( isset( $object['attributedTo'] ) ) {
-			$meta = \Activitypub\get_remote_metadata_by_actor( $object['attributedTo'] );
+			$meta = $this->get_metadata( $object['attributedTo'] );
 			$this->log( 'Attributed to ' . $object['attributedTo'], compact( 'meta' ) );
 			if ( isset( $meta['name'] ) ) {
 				$data['author'] = $meta['name'];
@@ -380,7 +384,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '" width="' . esc_attr( $attachment['width'] ) . '"  height="' . esc_attr( $attachment['height'] ) . '" class="size-full" /></p>';
 				$data['content'] .= '<!-- /wp:image  -->';
 			}
-			$meta = \Activitypub\get_remote_metadata_by_actor( $object['attributedTo'] );
+			$meta = $this->get_metadata( $object['attributedTo'] );
 			$this->log( 'Attributed to ' . $object['attributedTo'], compact( 'meta' ) );
 			if ( isset( $meta['name'] ) ) {
 				$data['author'] = $meta['name'];
@@ -465,7 +469,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function follow_user( $url, $user_id ) {
-		$meta = \Activitypub\get_remote_metadata_by_actor( $url );
+		$meta = $this->get_metadata( $url );
 		$to = $meta['id'];
 		$inbox = \Activitypub\get_inbox_by_actor( $to );
 		$actor = \get_author_posts_url( $user_id );
@@ -527,7 +531,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function unfollow_user( $url, $user_id ) {
-		$meta = \Activitypub\get_remote_metadata_by_actor( $url );
+		$meta = $this->get_metadata( $url );
 		$to = $meta['id'];
 		$inbox = \Activitypub\get_inbox_by_actor( $to );
 		$actor = \get_author_posts_url( $user_id );
@@ -629,7 +633,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $result[0];
 		}
 
-		$metadata = \ActivityPub\get_remote_metadata_by_actor( $users[ $result[0] ] );
+		$metadata = $this->get_metadata( $users[ $result[0] ] );
 		if ( is_wp_error( $metadata ) || empty( $metadata['url'] ) ) {
 			return $result[0];
 		}
@@ -756,6 +760,95 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				</td>
 			</tr>
 		<?php
+	}
+
+	/**
+	 * Create a status based on a post reaction.
+	 *
+	 * @param      int    $post_id  The post ID.
+	 * @param      string $emoji    The emoji.
+	 */
+	public function post_reaction( $post_id, $emoji ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+		$friend = new User( $post->post_author );
+		if ( ! $friend || is_wp_error( $friend ) ) {
+			return $friend;
+		}
+
+		$host = wp_parse_url( $post->guid, PHP_URL_HOST );
+
+		foreach ( $friend->get_active_feeds() as $feed ) {
+			if ( 'activitypub' !== $feed->get_parser() ) {
+				continue;
+			}
+
+			$feed_host = wp_parse_url( $feed->get_url(), PHP_URL_HOST );
+			if ( $feed_host !== $host ) {
+				continue;
+			}
+
+			$this->queue_like_post( $post, $feed );
+		}
+	}
+
+	/**
+	 * Prepare to follow the user via a scheduled event.
+	 *
+	 * @param      \WP_Post  $post       The post.
+	 * @param      User_Feed $user_feed  The user feed.
+	 *
+	 * @return     bool|WP_Error              Whether the event was queued.
+	 */
+	public function queue_like_post( \WP_Post $post, User_Feed $user_feed ) {
+		$this->like_post( $user_feed->get_url(), $post->guid, get_current_user_id() );
+		exit;
+		$args = array( $user_feed->get_url(), $post->guid, get_current_user_id() );
+
+		if ( wp_next_scheduled( 'friends_feed_parser_activitypub_like', $args ) ) {
+			return;
+		}
+
+		$user_feed->update_last_log( __( 'Queued like request.', 'friends' ) );
+
+		return \wp_schedule_single_event( \time(), 'friends_feed_parser_activitypub_like', $args );
+	}
+
+	/**
+	 * Like a post.
+	 *
+	 * @param mixed $url The URL of the user.
+	 * @param mixed $post_url The post to like.
+	 * @param mixed $user_id The current user id.
+	 * @return void
+	 */
+	public function like_post( $url, $post_url, $user_id ) {
+		$to = $post_url;
+		$inbox = \Activitypub\get_inbox_by_actor( $url );
+		$actor = \get_author_posts_url( $user_id );
+
+		$activity = new \Activitypub\Model\Activity( 'Like', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity->set_to( null );
+		$activity->set_cc( null );
+		$activity->set_actor( $actor );
+		$activity->set_object( $to );
+		$activity->set_id( $actor . '#like-' . \preg_replace( '~^https?://~', '', $to ) );
+		$activity = $activity->to_json();
+		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
+
+		$user_feed = User_Feed::get_by_url( $url );
+		if ( $user_feed instanceof User_Feed ) {
+			$user_feed->update_last_log(
+				sprintf(
+				// translators: %s is the response from the remote server.
+					__( 'Sent like request with response: %s', 'friends' ),
+					wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response )
+				)
+			);
+		}
+
 	}
 
 	/**
