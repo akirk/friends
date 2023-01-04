@@ -6,6 +6,8 @@
  * @package Friends
  */
 
+$active_feeds = $args['friend']->get_active_feeds();
+$feeds = $args['friend']->get_feeds();
 $has_last_log = false;
 ?><form method="post">
 	<?php wp_nonce_field( 'edit-friend-feeds-' . $args['friend']->ID ); ?>
@@ -14,10 +16,10 @@ $has_last_log = false;
 			<tr>
 				<th><label for="url"><?php esc_html_e( 'Feeds', 'friends' ); ?></label></th>
 				<td>
-					<?php if ( empty( $args['friend']->get_active_feeds() ) ) : ?>
+					<?php if ( empty( $active_feeds ) ) : ?>
 						<?php esc_html_e( 'There are no active feeds.', 'friends' ); ?>
 					<?php endif; ?>
-					<table class="feed-table widefat<?php echo empty( $args['friend']->get_active_feeds() ) ? ' hidden' : ''; ?>">
+					<table class="feed-table widefat<?php echo empty( $active_feeds ) ? ' hidden' : ''; ?>">
 						<thead>
 							<tr>
 								<th class="manage-column column-cb check-column"><?php esc_html_e( 'Active', 'friends' ); ?></th>
@@ -32,7 +34,7 @@ $has_last_log = false;
 						<tbody>
 						<?php
 						$alternate = 0;
-						foreach ( $args['friend']->get_feeds() as $term_id => $feed ) :
+						foreach ( $feeds as $term_id => $feed ) :
 							if ( $feed->get_last_log() ) {
 								$has_last_log = true;
 								$last_log = $feed->get_last_log();
@@ -107,7 +109,7 @@ $has_last_log = false;
 						</tr>
 						</tbody>
 					</table>
-					<?php if ( count( $args['friend']->get_active_feeds() ) !== count( $args['friend']->get_feeds() ) ) : ?>
+					<?php if ( count( $active_feeds ) !== count( $feeds ) ) : ?>
 					<a href="" class="show-inactive-feeds"><?php esc_html_e( 'Show inactive feeds', 'friends' ); ?></a> |
 					<?php endif; ?>
 					<?php if ( $has_last_log ) : ?>

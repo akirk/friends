@@ -6,10 +6,11 @@
  * @package Friends
  */
 
+$content = get_the_content();
 ?>
 <div class="card-body">
 	<?php
-	if ( empty( get_the_content() ) ) {
+	if ( empty( $content ) ) {
 		the_title();
 	} else {
 		the_content();

@@ -4,7 +4,7 @@
 - Tags: friends, rss, decentralized, social-network, own-your-data
 - Requires at least: 5.0
 - Tested up to: 6.1
-- Requires PHP: 5.2.4
+- Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
 - Stable tag: trunk
 
