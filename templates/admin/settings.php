@@ -95,7 +95,7 @@ do_action( 'friends_settings_before_form' );
 							// translators: %s is a number of users.
 								_n( '%s potential user', '%s potential users', $c, 'friends' ),
 								$c
-							),
+							)
 						);
 						?>
 							) </span>
