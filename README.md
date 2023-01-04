@@ -86,6 +86,14 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.2.0
+- Fix remote friends plugin detection on public Friends page when headers are stripped (https://github.com/akirk/friends/pull/160).
+- Permissions: Allow using the friends plugin as an Editor (https://github.com/akirk/friends/pull/121). An administrator account no longer required, you only need one to set the main user and adjust blog-level settings.
+- Automatic status: Add option to disable creation of automatic status post drafts (https://github.com/akirk/friends/pull/141).
+- ActivityPub: Support for outgoing mentions (prepared in https://github.com/pfefferle/wordpress-activitypub/pull/213 by removing the parser from there for quicker iteration). Implemented in https://github.com/akirk/friends/pull/137.
+- ActivityPub: Use the avatar from ActivityPub (https://github.com/akirk/friends/pull/#142) and allow setting it after the fact (it won't change automatically).
+- ActivityPub: Add outbox support (https://github.com/akirk/friends/pull/163) which means that when you now subscribe to someone new, it will fetch old posts.
+
 ### 2.1.3
 - Feeds: fixed a bug where when adding a new user and subscribing to an ActivityPub feed at the same time, the ActivityPub account won't be followed (would need a deactivate/actiate of the feed).
 - Taxonomies: Hide the user-feed and reactions taxonomies from the public and delete their entries when uninstalling the plugin (https://github.com/akirk/friends/pull/132).
