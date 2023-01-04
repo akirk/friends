@@ -333,11 +333,12 @@ class Blocks {
 			return;
 		}
 		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_follow_me' ) ) {
-			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+			wp_safe_redirect( add_query_arg( 'error', __( 'Unable to verify nonce, please try again.', 'friends' ) ) );
+			exit;
 		}
 		$access_transient_key = 'friends_follow_me_' . crc32( $_SERVER['REMOTE_ADDR'] );
 		$access_count = get_transient( $access_transient_key );
-		if ( $access_count >= 3 ) {
+		if ( $access_count >= 10 ) {
 			header( 'HTTP/1.0 529 Too Many Requests' );
 			wp_die( 'Too Many Requests' );
 		}
@@ -352,7 +353,8 @@ class Blocks {
 		$parts = parse_url( $url );
 
 		if ( ! preg_match( '/' . $fqdn_regex . '/', $parts['host'] ) ) {
-			wp_die( 'Invalid URL' );
+			wp_safe_redirect( add_query_arg( 'error', __( 'You specified an invalid URL.', 'friends' ) ) );
+			exit;
 		}
 
 		$response = wp_safe_remote_head(
@@ -366,7 +368,16 @@ class Blocks {
 			)
 		);
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			wp_die( 'Invalid HTTP Response' );
+			wp_safe_redirect(
+				add_query_arg(
+					'error',
+					sprintf( /* translators: %s is an HTTP status code */
+						__( 'The server returned an HTTP status: %s', 'friends' ),
+						wp_remote_retrieve_response_code( $response )
+					)
+				)
+			);
+			exit;
 		}
 
 		$links = (array) wp_remote_retrieve_header( $response, 'link' );
@@ -381,6 +392,39 @@ class Blocks {
 			if ( ! empty( $friends_base_url_endpoints ) ) {
 				header( 'Location: ' . $url . '?add-friend=' . urlencode( home_url() ) );
 				exit;
+			}
+		}
+
+		// Try again for servers that filter out the Link headers.
+		$response = wp_safe_remote_get(
+			$url,
+			array(
+				'timeout'     => 5,
+				'redirection' => 5,
+			)
+		);
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			wp_safe_redirect(
+				add_query_arg(
+					'error',
+					sprintf( /* translators: %s is an HTTP status code */
+						__( 'The server returned an HTTP status: %s', 'friends' ),
+						wp_remote_retrieve_response_code( $response )
+					)
+				)
+			);
+			exit;
+		}
+
+		$content = wp_remote_retrieve_body( $response );
+		$mf = Mf2\parse( $content, $url );
+
+		if ( isset( $mf['rel-urls'] ) ) {
+			foreach ( $mf['rel-urls'] as $link_url => $link ) {
+				if ( in_array( 'friends-base-url', $link['rels'] ) ) {
+					header( 'Location: ' . $link_url . '?add-friend=' . urlencode( home_url() ) );
+					exit;
+				}
 			}
 		}
 
