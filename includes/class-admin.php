@@ -1680,15 +1680,18 @@ class Admin {
 				}
 
 				$avatar = null;
+				$description = null;
 				foreach ( $feeds as $feed_details ) {
-					if ( ! empty( $feed_details['avatar'] ) ) {
+					if ( ! $avatar && ! empty( $feed_details['avatar'] ) ) {
 						$avatar = $feed_details['avatar'];
-						break;
+					}
+					if ( ! $description && ! empty( $feed_details['description'] ) ) {
+						$description = $feed_details['description'];
 					}
 				}
 
 				if ( ! $friend_user || is_wp_error( $friend_user ) ) {
-					$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name, $avatar );
+					$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name, $avatar, $description );
 				}
 
 				return $this->process_admin_add_friend_response( $friend_user, $vars );
@@ -1745,15 +1748,18 @@ class Admin {
 			}
 
 			$avatar = null;
+			$description = null;
 			foreach ( $feeds as $feed_details ) {
-				if ( ! empty( $feed_details['avatar'] ) ) {
+				if ( ! $avatar && ! empty( $feed_details['avatar'] ) ) {
 					$avatar = $feed_details['avatar'];
-					break;
+				}
+				if ( ! $description && ! empty( $feed_details['description'] ) ) {
+					$description = $feed_details['description'];
 				}
 			}
 
 			if ( ! $friend_user || is_wp_error( $friend_user ) ) {
-				$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name, $avatar );
+				$friend_user = User::create( $friend_user_login, 'subscription', $friend_url, $friend_display_name, $avatar, $description );
 			}
 
 			return $this->process_admin_add_friend_response( $friend_user, $vars );
@@ -1875,7 +1881,7 @@ class Admin {
 				foreach ( $items as $item ) {
 					$title = $item->title;
 					if ( 'status' === $item->post_format ) {
-						$title = $item->content;
+						$title = strip_tags( $item->content );
 					}
 					?>
 					<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):

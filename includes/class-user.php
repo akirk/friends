@@ -43,10 +43,11 @@ class User extends \WP_User {
 	 *                                   to create the user.
 	 * @param      string $display_name  The user's display name.
 	 * @param      string $icon_url      The user_icon_url URL.
+	 * @param      string $description   A description for the user.
 	 *
 	 * @return     User|\WP_Error  The created user or an error.
 	 */
-	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null ) {
+	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null, $description = null ) {
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -88,6 +89,7 @@ class User extends \WP_User {
 			'display_name' => $display_name,
 			'first_name'   => $display_name,
 			'nickname'     => $display_name,
+			'description'  => $description,
 			'user_url'     => $url,
 			'user_pass'    => wp_generate_password( 256 ),
 			'role'         => $role,
@@ -97,6 +99,8 @@ class User extends \WP_User {
 
 		$friend_user = new User( $friend_id );
 		$friend_user->update_user_icon_url( $icon_url );
+
+		do_action( 'friends_after_create_friend_user', $friend_user );
 		return $friend_user;
 	}
 
