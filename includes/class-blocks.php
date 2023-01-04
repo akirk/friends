@@ -109,7 +109,7 @@ class Blocks {
 				break;
 
 			case 'friends_subscriptions':
-				$friends  = User_Query::all_friends_subscriptions();
+				$friends  = User_Query::all_associated_users();
 				$no_users = __( "You don't have any friends or subscriptions yet.", 'friends' );
 				break;
 
@@ -146,7 +146,7 @@ class Blocks {
 				$out .= '<li>';
 			}
 
-			if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+			if ( friends::has_required_privileges() ) {
 				$url = $friend_user->get_local_friends_page_url();
 			} else {
 				$url = $friend_user->user_url;
@@ -427,7 +427,7 @@ class Blocks {
 
 		switch ( $visibility ) {
 			case 'only-friends':
-				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+				if ( friends::has_required_privileges() ) {
 					if ( $this->current_excerpt ) {
 						return $content;
 					}
@@ -439,7 +439,7 @@ class Blocks {
 				return '';
 
 			case 'not-friends':
-				if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+				if ( friends::has_required_privileges() ) {
 					if ( $this->current_excerpt ) {
 						return $content;
 					}

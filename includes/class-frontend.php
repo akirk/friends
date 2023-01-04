@@ -468,7 +468,7 @@ class Frontend {
 			exit;
 		}
 
-		if ( $friend_user->is_friend_url( $comments_url ) && current_user_can( Friends::REQUIRED_ROLE ) || wp_doing_cron() ) {
+		if ( $friend_user->is_friend_url( $comments_url ) && friends::has_required_privileges() || wp_doing_cron() ) {
 			$comments_url = apply_filters( 'friends_friend_private_feed_url', $comments_url, $friend_user );
 			$comments_url = $this->friends->access_control->append_auth( $comments_url, $friend_user, 300 );
 		}
@@ -597,7 +597,7 @@ class Frontend {
 	 */
 	function link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
 		echo wp_kses(
-			$this->get_link( $url, $text, $html_attributes, $friend_user ),
+			self::get_link( $url, $text, $html_attributes, $friend_user ),
 			array(
 				'a'    => array(
 					'href'        => array(),
@@ -627,7 +627,7 @@ class Frontend {
 	 *
 	 * @return     string       The link.
 	 */
-	function get_link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
+	public static function get_link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
 			$friend_user = new User( get_the_author_meta( 'ID' ) );
 		}
@@ -835,6 +835,30 @@ class Frontend {
 		exit;
 	}
 
+	private function has_required_priviledges() {
+		if ( Friends::is_main_user() ) {
+			return true;
+		}
+
+		if ( is_multisite() ) {
+			if ( is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) ) {
+				return true;
+			}
+
+			if ( is_super_admin( get_current_user_id() ) ) {
+				// Super admins would count as administrators.
+				return false;
+			}
+		}
+
+		if ( current_user_can( 'manage_options' ) ) {
+			return true;
+		}
+
+		return false;
+
+	}
+
 	/**
 	 * Modify the main query for the /friends page
 	 *
@@ -861,7 +885,7 @@ class Frontend {
 		}
 
 		// Not available for the general public or friends.
-		$viewable = current_user_can( Friends::REQUIRED_ROLE );
+		$viewable = $this->has_required_priviledges();
 		if ( $query->is_feed() ) {
 			// Feeds can be viewed through extra authentication.
 			if ( $this->friends->access_control->private_rss_is_authenticated() ) {
@@ -883,6 +907,8 @@ class Frontend {
 					wp_safe_redirect( home_url( '/friends/' ) );
 					exit;
 				}
+			} elseif ( ! Friends::is_main_user() ) {
+				wp_die( __( 'You are not allowed to view this page.', 'friends' ) );
 			}
 
 			return $query;
@@ -965,7 +991,7 @@ class Frontend {
 		$query->set( 'post_type', $post_types );
 		$query->set( 'tax_query', $tax_query );
 
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( friends::has_required_privileges() ) {
 			$post_status = array( 'publish', 'private' );
 			if ( isset( $_GET['show-hidden'] ) ) {
 				$post_status[] = 'trash';

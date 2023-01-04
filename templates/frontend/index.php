@@ -53,7 +53,7 @@ Friends\Friends::template_loader()->get_template_part(
 					<?php
 				}
 			} else {
-				$any_friends = Friends\User_Query::all_friends_subscriptions();
+				$any_friends = Friends\User_Query::all_associated_users();
 				if ( $any_friends->get_total() > 0 ) {
 					Friends\Friends::template_loader()->get_template_part( 'frontend/no-posts' );
 				} else {

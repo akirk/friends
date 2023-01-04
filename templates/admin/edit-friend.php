@@ -110,11 +110,6 @@
 	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
-	</p>
-	<p class="description" id="friend_url-description">
-		<?php
-		// translators: %s is the user URL.
-		echo wp_kses( sprintf( __( 'To unfriend this user, just <a href=%s>delete them on the users page</a>.', 'friends' ), '"' . self_admin_url( 'users.php?s=' . urlencode( $args['friend']->user_login ) ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-		?>
+		<span class="unfriend"><a class="unfriend" href="<?php echo esc_url( Friends\Admin::get_unfriend_link( $args['friend']->ID ) ); ?>"><?php esc_html_e( 'Unfriend', 'friends' ); ?></a></span>
 	</p>
 </form>

@@ -20,7 +20,7 @@ class Friends {
 	const CPT           = 'friend_post_cache';
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
-	const REQUIRED_ROLE = 'administrator';
+	const REQUIRED_ROLE = 'edit_private_posts';
 
 	/**
 	 * Initialize the plugin
@@ -359,12 +359,12 @@ class Friends {
 
 	/**
 	 * If a plugin version upgrade requires changes, they can be done here
-	 *
-	 * @param  string $previous_version The previous plugin version number.
 	 */
-	public static function upgrade_plugin( $previous_version ) {
+	public static function upgrade_plugin() {
+		$previous_version = get_option( 'friends_plugin_version' );
+
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
-			$friends_subscriptions = User_Query::all_friends_subscriptions();
+			$friends_subscriptions = User_Query::all_associated_users();
 			foreach ( $friends_subscriptions->get_results() as $user ) {
 				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
 				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
@@ -375,6 +375,10 @@ class Friends {
 					delete_user_option( $user->ID, 'friends_gravatar' );
 				}
 			}
+		}
+
+		if ( version_compare( $previous_version, '2.1.3', '<' ) ) {
+			self::setup_roles();
 		}
 
 		update_option( 'friends_plugin_version', Friends::VERSION );
@@ -436,10 +440,7 @@ class Friends {
 		self::setup_roles();
 		self::create_friends_page();
 
-		$previous_version = get_option( 'friends_plugin_version' );
-		if ( Friends::VERSION !== $previous_version ) {
-			self::upgrade_plugin( $previous_version );
-		}
+		self::upgrade_plugin();
 
 		if ( false === get_option( 'friends_main_user_id' ) ) {
 			update_option( 'friends_main_user_id', get_current_user_id() );
@@ -510,6 +511,18 @@ class Friends {
 		wp_unschedule_event( $timestamp, 'cron_friends_refresh_feeds' );
 	}
 
+	public static function required_menu_role() {
+		return 'edit_private_posts';
+	}
+
+	public static function has_required_privileges() {
+		return self::is_main_user() || current_user_can( 'administrator' );
+	}
+
+	public static function is_main_user() {
+		return get_current_user_id() === self::get_main_friend_user_id();
+	}
+
 	/**
 	 * Get the main friend user id.
 	 *
@@ -531,7 +544,7 @@ class Friends {
 				update_option( 'friends_main_user_id', $main_user_id );
 			}
 		}
-		return $main_user_id;
+		return intval( $main_user_id );
 	}
 
 	/**
@@ -603,10 +616,6 @@ class Friends {
 			return false;
 		}
 
-		if ( ! current_user_can( self::REQUIRED_ROLE ) || ( is_multisite() && ! is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) && is_super_admin( get_current_user_id() ) ) ) {
-			return false;
-		}
-
 		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
 		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
 	}
@@ -617,7 +626,7 @@ class Friends {
 	 * @return     bool  Whether the posts can be accessed.
 	 */
 	public static function authenticated_for_posts() {
-		return Access_Control::private_rss_is_authenticated() || ( is_admin() && current_user_can( Friends::REQUIRED_ROLE ) && apply_filters( 'friends_show_cached_posts', false ) );
+		return Access_Control::private_rss_is_authenticated() || ( is_admin() && self::is_main_user() && apply_filters( 'friends_show_cached_posts', false ) );
 	}
 
 	/**

@@ -68,6 +68,7 @@ class Feed {
 		add_action( 'rss2_ns', array( $this, 'additional_feed_namespaces' ) );
 
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
+		add_action( 'friends_retrieve_user_feeds', array( $this, 'friends_retrieve_user_feeds' ) );
 		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 2 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
@@ -112,6 +113,24 @@ class Feed {
 	 */
 	public function cron_friends_refresh_feeds() {
 		$this->retrieve_friend_posts();
+	}
+
+	/**
+	 * Function to fetch a users feeds.
+	 *
+	 * @param      int $user_id  The user id.
+	 */
+	public function friends_retrieve_user_feeds( $user_id ) {
+		$friend_user = User::get_user_by_id( $user_id );
+		if ( ! $friend_user ) {
+			return;
+		}
+
+		foreach ( $friend_user->get_active_feeds() as $feed ) {
+			$this->retrieve_feed( $feed );
+			$feed->was_polled();
+			$feed->get_friend_user()->delete_outdated_posts();
+		}
 	}
 
 	/**

@@ -57,7 +57,7 @@ class Shortcodes {
 			return do_shortcode( $content );
 		}
 
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( friends::has_required_privileges() ) {
 			return '<div class="only-friends"><span class="watermark">' . __( 'Only friends', 'friends' ) . '</span>' . do_shortcode( $content ) . '</div>';
 		}
 
@@ -76,7 +76,7 @@ class Shortcodes {
 			return '';
 		}
 
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( friends::has_required_privileges() ) {
 			return '<div class="not-friends"><span class="watermark">' . __( 'Not friends', 'friends' ) . '</span>' . do_shortcode( $content ) . '</div>';
 		}
 

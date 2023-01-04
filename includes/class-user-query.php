@@ -75,18 +75,18 @@ class User_Query extends \WP_User_Query {
 	 *
 	 * @return     User_Query  The requested users.
 	 */
-	public static function all_friends_subscriptions() {
-		static $all_friends_subscriptions = array();
-		if ( ! self::$cache || ! isset( $all_friends_subscriptions[ get_current_blog_id() ] ) ) {
-			$all_friends_subscriptions[ get_current_blog_id() ] = new self(
+	public static function all_associated_users() {
+		static $all = array();
+		if ( ! self::$cache || ! isset( $all[ get_current_blog_id() ] ) ) {
+			$all[ get_current_blog_id() ] = new self(
 				array(
-					'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+					'role__in' => array_keys( Admin::get_associated_roles() ),
 					'order'    => 'ASC',
 					'orderby'  => 'display_name',
 				)
 			);
 		}
-		return $all_friends_subscriptions[ get_current_blog_id() ];
+		return $all[ get_current_blog_id() ];
 	}
 
 	/**
@@ -196,9 +196,9 @@ class User_Query extends \WP_User_Query {
 		if ( ! self::$cache || ! isset( $all_admin_users ) ) {
 			$all_admin_users = new self(
 				array(
-					'role'    => Friends::REQUIRED_ROLE,
-					'order'   => 'ASC',
-					'orderby' => 'display_name',
+					'capability' => 'edit_private_posts',
+					'order'      => 'ASC',
+					'orderby'    => 'display_name',
 				)
 			);
 		}

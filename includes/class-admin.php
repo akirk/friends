@@ -42,11 +42,11 @@ class Admin {
 		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_open_friend_request' ), 10, 2 );
 		add_filter( 'users_list_table_query_args', array( $this, 'allow_role_multi_select' ) );
-		add_filter( 'user_row_actions', array( $this, 'user_row_actions' ), 10, 2 );
+		add_filter( 'user_row_actions', array( get_called_class(), 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
 		add_filter( 'manage_users_columns', array( $this, 'user_list_columns' ) );
-		add_filter( 'manage_users_custom_column', array( $this, 'user_list_custom_column' ), 10, 3 );
+		add_filter( 'manage_users_custom_column', array( get_called_class(), 'user_list_custom_column' ), 10, 3 );
 		add_filter( 'the_title', array( $this, 'override_post_format_title' ), 10, 2 );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
@@ -111,45 +111,55 @@ class Admin {
 			wp_safe_redirect( add_query_arg( array( 'reran-activation' => 'friends' ), wp_get_referer() ) );
 			exit;
 		}
-
+		$required_role = Friends::required_menu_role();
 		$unread_badge = $this->get_unread_badge();
 
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
 		$page_type = sanitize_title( $menu_title );
-		add_menu_page( 'friends', $menu_title, Friends::REQUIRED_ROLE, 'friends', null, 'dashicons-groups', 3 );
+		add_menu_page( 'friends', $menu_title, $required_role, 'friends', null, 'dashicons-groups', 3 );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		add_submenu_page( 'friends', __( 'Home' ), __( 'Home' ), Friends::REQUIRED_ROLE, 'friends', array( $this, 'render_admin_home' ) );
+		add_submenu_page( 'friends', __( 'Home' ), __( 'Home' ), $required_role, 'friends', array( $this, 'render_admin_home' ) );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		add_submenu_page( 'friends', __( 'Settings' ), __( 'Settings' ), Friends::REQUIRED_ROLE, 'friends-settings', array( $this, 'render_admin_settings' ) );
+		add_submenu_page( 'friends', __( 'Settings' ), __( 'Settings' ), $required_role, 'friends-settings', array( $this, 'render_admin_settings' ) );
 		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
-		add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), __( 'Notification Manager', 'friends' ), Friends::REQUIRED_ROLE, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
+		add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
 		add_action( 'load-' . $page_type . '_page_friends-notification-manager', array( $this, 'process_admin_notification_manager' ) );
-		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), Friends::REQUIRED_ROLE, 'add-friend', array( $this, 'render_admin_add_friend' ) );
+		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
 		add_action( 'load-' . $page_type . '_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
 		if ( $this->friends_unread_friend_request_count( 0 ) > 0 ) {
-			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, Friends::REQUIRED_ROLE, 'users.php?role=friend_request' );
+			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friend-list?requests' );
 		}
 
-		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), Friends::REQUIRED_ROLE, $this->get_users_url() );
+		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
 
 		if ( isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page'] ) {
-			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), Friends::REQUIRED_ROLE, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
+			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), $required_role, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 		}
 
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		add_submenu_page( 'friends', __( 'Plugins' ), __( 'Plugins' ), Friends::REQUIRED_ROLE, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
+		add_submenu_page( 'friends', __( 'Plugins' ), __( 'Plugins' ), $required_role, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
 
 		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
-			add_submenu_page( 'friends', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
-			add_submenu_page( 'friends', __( 'Edit Feeds', 'friends' ), __( 'Edit Feeds', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-feeds' . ( 'edit-friend-feeds' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_feeds' ) );
-			add_submenu_page( 'friends', __( 'Edit Notifications', 'friends' ), __( 'Edit Notifications', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-notifications' . ( 'edit-friend-notifications' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_notifications' ) );
-			add_submenu_page( 'friends', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), Friends::REQUIRED_ROLE, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
+			add_submenu_page( 'friends', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), $required_role, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
+			add_submenu_page( 'friends', __( 'Edit Feeds', 'friends' ), __( 'Edit Feeds', 'friends' ), $required_role, 'edit-friend-feeds' . ( 'edit-friend-feeds' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_feeds' ) );
+			add_submenu_page( 'friends', __( 'Edit Notifications', 'friends' ), __( 'Edit Notifications', 'friends' ), $required_role, 'edit-friend-notifications' . ( 'edit-friend-notifications' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_notifications' ) );
+			add_submenu_page( 'friends', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), $required_role, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-feeds', array( $this, 'process_admin_edit_friend_feeds' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-notifications', array( $this, 'process_admin_edit_friend_notifications' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
 		}
+
+		if ( isset( $_GET['page'] ) && 'unfriend' === $_GET['page'] ) {
+			$user = new User( $_GET['user'] );
+			if ( $user ) {
+				$title = /* translators: %s is a username. */ sprintf( __( 'Unfriend %s', 'friends' ), $user->user_login );
+				add_submenu_page( 'friends', $title, $title, $required_role, 'unfriend', array( $this, 'render_admin_unfriend' ) );
+				add_action( 'load-' . $page_type . '_page_unfriend', array( $this, 'process_admin_unfriend' ) );
+			}
+		}
+
 	}
 
 	/**
@@ -166,7 +176,7 @@ class Admin {
 				unset( $args['role'] );
 			}
 
-			$roles = $this->get_associated_roles();
+			$roles = self::get_associated_roles();
 			if (
 				( isset( $args['role__in'] ) && array_intersect( $args['role__in'], array_keys( $roles ) ) )
 				|| ( isset( $args['role'] ) && isset( $roles[ $args['role'] ] ) )
@@ -186,7 +196,7 @@ class Admin {
 			jQuery( document ).ready( function ( $ ) {
 				$( '#toplevel_page_friends-settings, #toplevel_page_friends-settings > a' ).addClass( 'wp-has-current-submenu wp-menu-open' ).removeClass( 'wp-not-current-submenu' );
 				$( '#menu-users > a' ).removeClass( 'wp-has-current-submenu wp-menu-open' );
-				$( "#toplevel_page_friends-settings ul li a[href='<?php echo esc_html( $this->get_users_url() ); ?>']" ).closest( 'li' ).addClass( 'current' );
+				$( "#toplevel_page_friends-settings ul li a[href='<?php echo esc_html( self::get_users_url() ); ?>']" ).closest( 'li' ).addClass( 'current' );
 			} );
 		</script>
 		<?php
@@ -217,7 +227,7 @@ class Admin {
 							sprintf(
 								// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
 								__( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ),
-								'"' . esc_attr( self_admin_url( $this->get_users_url() ) ) . '"',
+								'"' . esc_attr( self_admin_url( self::get_users_url() ) ) . '"',
 								__( 'Friends &amp; Requests', 'friends' )
 							) .
 							'</p>',
@@ -421,21 +431,30 @@ class Admin {
 	 * @param  int    $user_id The user id.
 	 * @return string|bool The edit link or false.
 	 */
-	public function admin_edit_user_link( $link, $user_id ) {
+	public static function admin_edit_user_link( $link, $user_id ) {
 		$user = new \WP_User( $user_id );
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return $link;
 		}
-		if (
-			! $user->has_cap( 'friend_request' ) &&
-			! $user->has_cap( 'pending_friend_request' ) &&
-			! $user->has_cap( 'friend' ) &&
-			! $user->has_cap( 'subscription' )
-		) {
+		if ( ! $user->has_cap( 'friends_plugin' ) ) {
 			return $link;
 		}
 
 		return self_admin_url( 'admin.php?page=edit-friend&user=' . $user->ID );
+	}
+
+	public static function get_edit_friend_link( $user_id ) {
+		$user = new \WP_User( $user_id );
+		return apply_filters( 'get_edit_user_link', $user->user_url, $user_id );
+	}
+
+	public static function get_unfriend_link( $user_id ) {
+		$user = new \WP_User( $user_id );
+		if ( ! $user->has_cap( 'friends_plugin' ) ) {
+			return '';
+		}
+
+		return wp_nonce_url( self_admin_url( 'admin.php?page=unfriend&user=' . $user->ID ), 'unfriend_' . $user->ID );
 	}
 
 	/**
@@ -450,7 +469,7 @@ class Admin {
 	 * Check access for the Friends Admin settings page
 	 */
 	public function check_admin_settings() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! Friends::has_required_privileges() ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to change the settings.', 'friends' ) );
 		}
 	}
@@ -459,8 +478,6 @@ class Admin {
 	 * Process the Friends Admin settings page
 	 */
 	public function process_admin_settings() {
-		$this->check_admin_settings();
-
 		if ( empty( $_REQUEST ) || ! isset( $_REQUEST['_wpnonce'] ) ) {
 			return;
 		}
@@ -469,18 +486,13 @@ class Admin {
 			return;
 		}
 
-		foreach ( array( 'ignore_incoming_friend_requests', 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
+		$this->check_admin_settings();
+		foreach ( array( 'ignore_incoming_friend_requests' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
 				delete_option( 'friends_' . $checkbox );
 			}
-		}
-
-		if ( isset( $_POST['limit_homepage_post_format'] ) && $_POST['limit_homepage_post_format'] && in_array( $_POST['limit_homepage_post_format'], get_post_format_slugs() ) ) {
-			update_option( 'friends_limit_homepage_post_format', $_POST['limit_homepage_post_format'] );
-		} else {
-			delete_option( 'friends_limit_homepage_post_format' );
 		}
 
 		foreach ( array( 'friend_request_notification' ) as $negative_user_checkbox ) {
@@ -491,35 +503,51 @@ class Admin {
 			}
 		}
 
-		if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
-			update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
-		} else {
-			$main_user_id = intval( Friends::get_main_friend_user_id() );
-			$main_user_id_exists = false;
-			$users = User_Query::all_admin_users();
-			foreach ( $users->get_results() as $user ) {
-				if ( $user->ID === $main_user_id ) {
-					$main_user_id_exists = true;
-					break;
+		if ( current_user_can( 'manage_options' ) ) {
+			foreach ( array( 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
+				if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
+					update_option( 'friends_' . $checkbox, true );
+				} else {
+					delete_option( 'friends_' . $checkbox );
 				}
 			}
-			if ( ! $main_user_id_exists ) {
-				// Reset the main user id.
-				delete_option( 'friends_main_user_id' );
-				Friends::get_main_friend_user_id();
+
+			if ( isset( $_POST['limit_homepage_post_format'] ) && $_POST['limit_homepage_post_format'] && in_array( $_POST['limit_homepage_post_format'], get_post_format_slugs() ) ) {
+				update_option( 'friends_limit_homepage_post_format', $_POST['limit_homepage_post_format'] );
+			} else {
+				delete_option( 'friends_limit_homepage_post_format' );
 			}
-		}
 
-		if ( isset( $_POST['comment_registration'] ) && $_POST['comment_registration'] ) {
-			update_option( 'comment_registration', true );
-		} else {
-			delete_option( 'comment_registration' );
-		}
+			if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
+				update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
+			} else {
+				$main_user_id = Friends::get_main_friend_user_id();
+				$main_user_id_exists = false;
+				$users = User_Query::all_admin_users();
+				foreach ( $users->get_results() as $user ) {
+					if ( $user->ID === $main_user_id ) {
+						$main_user_id_exists = true;
+						break;
+					}
+				}
+				if ( ! $main_user_id_exists ) {
+					// Reset the main user id.
+					delete_option( 'friends_main_user_id' );
+					Friends::get_main_friend_user_id();
+				}
+			}
 
-		if ( isset( $_POST['comment_registration_message'] ) && $_POST['comment_registration_message'] ) {
-			update_option( 'friends_comment_registration_message', $_POST['comment_registration_message'] );
-		} else {
-			delete_option( 'friends_comment_registration_message' );
+			if ( isset( $_POST['comment_registration'] ) && $_POST['comment_registration'] ) {
+				update_option( 'comment_registration', true );
+			} else {
+				delete_option( 'comment_registration' );
+			}
+
+			if ( isset( $_POST['comment_registration_message'] ) && $_POST['comment_registration_message'] ) {
+				update_option( 'friends_comment_registration_message', $_POST['comment_registration_message'] );
+			} else {
+				delete_option( 'friends_comment_registration_message' );
+			}
 		}
 
 		if ( isset( $_POST['require_codeword'] ) && $_POST['require_codeword'] ) {
@@ -598,7 +626,7 @@ class Admin {
 	 * Render the Friends Admin home page
 	 */
 	public function render_admin_home() {
-		$friends_subscriptions = User_Query::all_friends_subscriptions();
+		$friends_subscriptions = User_Query::all_associated_users();
 		$has_friend_users = $friends_subscriptions->get_total() > 0;
 
 		Friends::template_loader()->get_template_part(
@@ -619,8 +647,6 @@ class Admin {
 	 * Render the Friends Admin settings page
 	 */
 	public function render_admin_settings() {
-		$this->check_admin_settings();
-
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
 			null,
@@ -629,6 +655,7 @@ class Admin {
 				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
+		$this->check_admin_settings();
 
 		if ( isset( $_GET['updated'] ) ) {
 			?>
@@ -693,7 +720,7 @@ class Admin {
 	 * Process access for the Friends Edit Rules page
 	 */
 	private function check_admin_edit_friend_rules() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! Friends::is_main_user() ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to edit the rules.', 'friends' ) );
 		}
 
@@ -801,7 +828,7 @@ class Admin {
 	 * Respond to the Ajax request to the Friend rules preview
 	 */
 	public function ajax_preview_friend_rules() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! Friends::has_required_privileges() ) {
 			wp_die( -1 );
 		}
 
@@ -825,7 +852,7 @@ class Admin {
 		$url = $_POST['url'];
 		check_ajax_referer( 'auth-link-' . $url );
 
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! friends::has_required_privileges() ) {
 			wp_die( -1 );
 		}
 
@@ -843,6 +870,43 @@ class Admin {
 			)
 		);
 		wp_die();
+	}
+	public function render_friends_list() {
+		echo '<div class="wrap"><h3>' . esc_html__( 'Your Friends & Subscriptions', 'friends' ) . '</h3>';
+
+		if ( isset( $_GET['deleted'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p>
+			<?php
+			echo esc_html(
+				sprintf(
+				// translators: % s is a username.
+					__( '%s was deleted.', 'friends' ),
+					$_GET['deleted']
+				)
+			);
+			?>
+				</p></div>
+			<?php
+		} elseif ( isset( $_GET['error'] ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p>
+			<?php
+			esc_html_e( 'An error occurred.', 'friends' );
+			echo ' ';
+			echo esc_html( $_GET['error'] );
+			?>
+			</p></div>
+			<?php
+		}
+		Friends::template_loader()->get_template_part(
+			'admin/friends-list',
+			null,
+			array(
+				'friends' => User_Query::all_associated_users()->get_results(),
+			)
+		);
+		echo '</div>';
 	}
 
 	/**
@@ -879,7 +943,7 @@ class Admin {
 	 * Process access for the Friends Edit User page
 	 */
 	private function check_admin_edit_friend() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! friends::has_required_privileges() ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to edit this user.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
@@ -892,12 +956,7 @@ class Admin {
 			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
-		if (
-			! $friend->has_cap( 'friend_request' ) &&
-			! $friend->has_cap( 'pending_friend_request' ) &&
-			! $friend->has_cap( 'friend' ) &&
-			! $friend->has_cap( 'subscription' )
-		) {
+		if ( ! $friend->has_cap( 'friends_plugin' ) ) {
 			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
 		}
 
@@ -1157,7 +1216,7 @@ class Admin {
 	}
 
 	/**
-	 * Process the Friends Edit Notifications page
+	 * Process the Friends Edit Feeds page
 	 */
 	public function process_admin_edit_friend_feeds() {
 		$friend    = $this->check_admin_edit_friend();
@@ -1344,6 +1403,48 @@ class Admin {
 	}
 
 	/**
+	 * Process the Unfriend page
+	 */
+	public function process_admin_unfriend() {
+		$friend    = $this->check_admin_edit_friend();
+		$arg       = 'deleted';
+		$arg_value = $friend->user_login;
+
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'unfriend-' . $friend->ID ) ) {
+			if ( is_multisite() ) {
+				remote_user_from_blog( $friend->ID, get_current_blog_id() );
+			} else {
+				wp_delete_user( $friend->ID );
+			}
+		} else {
+			return;
+		}
+
+		if ( isset( $_GET['_wp_http_referer'] ) ) {
+			wp_safe_redirect( wp_get_referer() );
+		} else {
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, self_admin_url( 'admin.php?page=friends-list' ) ) );
+		}
+		exit;
+	}
+
+	/**
+	 * Render the Unfriend page
+	 */
+	public function render_admin_unfriend() {
+		$friend = $this->check_admin_edit_friend();
+		$post_stats = $friend->get_post_stats();
+
+		$args = array(
+			'friend'       => $friend,
+			'friend_posts' => $post_stats->post_count,
+			'total_size'   => $post_stats->total_size,
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/unfriend', null, $args );
+	}
+
+	/**
 	 * Display error messages.
 	 *
 	 * @param      object $errors  The errors.
@@ -1442,7 +1543,7 @@ class Admin {
 
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 
-		$friend_user->retrieve_posts();
+		wp_schedule_single_event( time(), 'friends_retrieve_user_feeds', array( $friend_user->ID ) );
 
 		if ( isset( $vars['errors'] ) ) {
 			$this->display_errors( $vars['errors'] );
@@ -1662,11 +1763,11 @@ class Admin {
 			'admin/settings-header',
 			null,
 			array(
-				'active' => 'friends-add-friend-confirm',
+				'active' => 'add-friend-confirm',
 				'title'  => __( 'Add New Friend', 'friends' ),
 				'menu'   => array(
-					'1. ' . __( 'Enter Details', 'friends' ) => 'friends-add-friend',
-					'2. ' . __( 'Confirm', 'friends' ) => 'friends-add-friend-confirm',
+					'1. ' . __( 'Enter Details', 'friends' ) => 'add-friend' . ( isset( $friend_url ) ? '&url=' . urlencode( $friend_url ) : '' ),
+					'2. ' . __( 'Confirm', 'friends' ) => 'add-friend-confirm',
 				),
 			)
 		);
@@ -1704,7 +1805,7 @@ class Admin {
 	 * Render the admin form for sending a friend request.
 	 */
 	public function render_admin_add_friend() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! friends::has_required_privileges() ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to add friends.', 'friends' ) );
 		}
 
@@ -1873,10 +1974,10 @@ class Admin {
 			'admin/settings-header',
 			null,
 			array(
-				'active' => 'friends-add-friend',
+				'active' => 'add-friend',
 				'title'  => __( 'Add New Friend', 'friends' ),
 				'menu'   => array(
-					'1. ' . __( 'Enter Details', 'friends' ) => 'friends-add-friend',
+					'1. ' . __( 'Enter Details', 'friends' ) => 'add-friend' . ( isset( $friend_url ) ? '&url=' . urlencode( $friend_url ) : '' ),
 					'2. ' . __( 'Confirm', 'friends' ) => false,
 				),
 			)
@@ -1898,7 +1999,6 @@ class Admin {
 	 * Process the admin notification manager form submission.
 	 */
 	public function process_admin_notification_manager() {
-		$this->check_admin_settings();
 
 		if ( empty( $_POST ) || empty( $_POST['friend_listed'] ) ) {
 			return;
@@ -1907,6 +2007,8 @@ class Admin {
 		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'notification-manager' ) ) {
 			return;
 		}
+
+		$this->check_admin_settings();
 		$friend_ids = $_POST['friend_listed'];
 		$current_user_id = get_current_user_id();
 		$hide_from_friends_page = array();
@@ -1944,10 +2046,6 @@ class Admin {
 	 * Render the admin notification manager.
 	 */
 	public function render_admin_notification_manager() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_die( esc_html__( 'Sorry, you are not allowed to add friends.', 'friends' ) );
-		}
-
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
 			null,
@@ -1956,6 +2054,7 @@ class Admin {
 				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
+		$this->check_admin_settings();
 
 		?>
 		<h1><?php esc_html_e( 'Notification Manager', 'friends' ); ?></h1>
@@ -2011,7 +2110,7 @@ class Admin {
 	 *
 	 * @return     array  The associated roles.
 	 */
-	public function get_associated_roles() {
+	public static function get_associated_roles() {
 		$roles = new \WP_Roles;
 		$friend_roles = array();
 		foreach ( $roles->roles as $role => $data ) {
@@ -2022,8 +2121,8 @@ class Admin {
 		return $friend_roles;
 	}
 
-	public function get_users_url() {
-		return 'users.php?role=' . implode( ',', array_keys( $this->get_associated_roles() ) );
+	public static function get_users_url() {
+		return 'users.php?role=' . implode( ',', array_keys( self::get_associated_roles() ) );
 	}
 
 	/**
@@ -2033,9 +2132,9 @@ class Admin {
 	 * @param  \WP_User $user    The user in question.
 	 * @return array The extended actions.
 	 */
-	public function user_row_actions( array $actions, \WP_User $user ) {
+	public static function user_row_actions( array $actions, \WP_User $user ) {
 		if (
-			! current_user_can( Friends::REQUIRED_ROLE ) ||
+			! Friends::has_required_privileges() ||
 			(
 				! $user->has_cap( 'friend_request' ) &&
 				! $user->has_cap( 'pending_friend_request' ) &&
@@ -2054,7 +2153,7 @@ class Admin {
 		// Ensuire we have a friends user here.
 		$user = new User( $user );
 
-		$actions['view'] = $this->friends->frontend->get_link(
+		$actions['view'] = Frontend::get_link(
 			$user->user_url,
 			sprintf(
 			// translators: %s: Author’s display name.
@@ -2163,7 +2262,7 @@ class Admin {
 	}
 
 	/**
-	 * Add a column "Posts" (that emcompasses both user andfriend posts.)
+	 * Add a column "Posts" (that emcompasses both user and friend posts.)
 	 *
 	 * @param      array $columns  The columns.
 	 *
@@ -2184,7 +2283,7 @@ class Admin {
 	 *
 	 * @return     string  The column contents.
 	 */
-	public function user_list_custom_column( $output, $column_name, $user_id ) {
+	public static function user_list_custom_column( $output, $column_name, $user_id ) {
 		if ( 'friends_posts' !== $column_name ) {
 			return $output;
 		}
@@ -2196,7 +2295,7 @@ class Admin {
 			$numposts,
 			sprintf(
 				/* translators: %s: Number of posts. */
-				_n( '%s post by this author', '%s posts by this author', $numposts, 'friends' ),
+				_n( '%s post', '%s posts', $numposts ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				number_format_i18n( $numposts )
 			)
 		);
@@ -2312,7 +2411,7 @@ class Admin {
 			}
 
 			$my_url = $current_user->user_url;
-		} elseif ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+		} elseif ( Friends::has_required_privileges() ) {
 			$my_url = home_url();
 			$on_my_own_site = true;
 		}
@@ -2359,7 +2458,7 @@ class Admin {
 							get_bloginfo( 'name' )
 						) . '</span>'
 					),
-					'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
+					'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
 				)
 			);
 		}
@@ -2378,7 +2477,7 @@ class Admin {
 					'id'     => 'friends-requests',
 					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'My Friends & Requests', 'friends' ),
-					'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
+					'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
 				)
 			);
 			$wp_menu->add_menu(
@@ -2397,7 +2496,7 @@ class Admin {
 							'id'     => 'add-friend',
 							'parent' => 'friends-menu',
 							'title'  => esc_html__( 'Friendship Already Requested', 'friends' ),
-							'href'   => $my_url . '/wp-admin/' . $this->get_users_url(),
+							'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
 						)
 					);
 				} elseif ( ! $they_requested_friendship ) {
@@ -2441,7 +2540,7 @@ class Admin {
 	 * @param  \WP_Admin_Bar $wp_menu The admin bar to modify.
 	 */
 	public function admin_bar_new_content( \WP_Admin_Bar $wp_menu ) {
-		if ( current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( Friends::has_required_privileges() ) {
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'new-friend-request',
