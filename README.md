@@ -87,44 +87,44 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ## Changelog
 
 ### 2.2.0
-- Fix remote friends plugin detection on public Friends page when headers are stripped (https://github.com/akirk/friends/pull/160).
-- Permissions: Allow using the friends plugin as an Editor (https://github.com/akirk/friends/pull/121). An administrator account no longer required, you only need one to set the main user and adjust blog-level settings.
-- Automatic status: Add option to disable creation of automatic status post drafts (https://github.com/akirk/friends/pull/141).
-- ActivityPub: Support for outgoing mentions (prepared in https://github.com/pfefferle/wordpress-activitypub/pull/213 by removing the parser from there for quicker iteration). Implemented in https://github.com/akirk/friends/pull/137.
-- ActivityPub: Use the avatar from ActivityPub (https://github.com/akirk/friends/pull/#142) and allow setting it after the fact (it won't change automatically).
-- ActivityPub: Add outbox support (https://github.com/akirk/friends/pull/163) which means that when you now subscribe to someone new, it will fetch old posts.
+- Fix remote friends plugin detection on public Friends page when headers are stripped ([#160]).
+- Permissions: Allow using the friends plugin as an Editor ([#121]). An administrator account no longer required, you only need one to set the main user and adjust blog-level settings.
+- Automatic status: Add option to disable creation of automatic status post drafts ([#141]).
+- ActivityPub: Support for outgoing mentions (prepared in [activitypub#213] by removing the parser from there for quicker iteration). Implemented in [#137].
+- ActivityPub: Use the avatar from ActivityPub ([#142]) and allow setting it after the fact (it won't change automatically).
+- ActivityPub: Add outbox support ([#163]) which means that when you now subscribe to someone new, it will fetch old posts.
 
 ### 2.1.3
 - Feeds: fixed a bug where when adding a new user and subscribing to an ActivityPub feed at the same time, the ActivityPub account won't be followed (would need a deactivate/actiate of the feed).
-- Taxonomies: Hide the user-feed and reactions taxonomies from the public and delete their entries when uninstalling the plugin (https://github.com/akirk/friends/pull/132).
+- Taxonomies: Hide the user-feed and reactions taxonomies from the public and delete their entries when uninstalling the plugin ([#132]).
 - Improved PHP8 compatibility and start testing with PHP8.2 in the CI.
 
 ### 2.1.2
-- Frontend: add option to show/hide hidden entries on a user page (https://github.com/akirk/friends/pull/124).
+- Frontend: add option to show/hide hidden entries on a user page ([#124]).
 - Admin: Fix that the main settings page would not save.
-- Plugins (ActivityPub): Add a function to get all friends for a specific parser. This is for https://github.com/pfefferle/wordpress-activitypub/pull/213.
+- Plugins (ActivityPub): Add a function to get all friends for a specific parser. This is for [activitypub#213].
 - Plugins: Allow plugins to suggest a better display name and username for friends via two new hooks `friends_suggest_user_login` and `friends_suggest_display_name`.
 
 ### 2.1.1
-- Friends messages and status posting UI: Bring back the Gutenberg Editor using the updated blocks-everywhere (https://github.com/akirk/friends/pull/122).
+- Friends messages and status posting UI: Bring back the Gutenberg Editor using the updated blocks-everywhere ([#122]).
 - Admin: Fix a redirect problem on the autostatus admin page.
 - Status posts: fix collapsing them and only output the status post box on the main status feed to avoid confusion when your posts don't show up on an author status page.
 
 ### 2.1.0
-- Plugins: Add filters for allowing ActivityPub integrations (see https://github.com/pfefferle/wordpress-activitypub/pull/172): `friends_rewrite_incoming_url`, `friends_user_feed_activated`, `friends_user_feed_deactivated`.
+- Plugins: Add filters for allowing ActivityPub integrations (see [activitypub#172]): `friends_rewrite_incoming_url`, `friends_user_feed_activated`, `friends_user_feed_deactivated`.
 - Plugins: Add ActivityPub to the Friends Plugins installer.
-- Frontend: Add ability to read a post's comments inside the Friends plugin using the comments button (if it supplies a comments feed in its RSS which all WordPresses do) (https://github.com/akirk/friends/pull/113).
+- Frontend: Add ability to read a post's comments inside the Friends plugin using the comments button (if it supplies a comments feed in its RSS which all WordPresses do) ([#113]).
 - Frontend: Add different styling for images and status feed. Add a "post status" box to the status feed.
 - Frontend: Allow starring friends + new widget to display those starred friends for convenient access.
 - Frontend: Add a recent friends widget that displays your newest friends and subscriptions for convenient access.
-- Admin: Introduce tabs on various friends settings for a better overview (https://github.com/akirk/friends/pull/116).
+- Admin: Introduce tabs on various friends settings for a better overview ([#116]).
 - Admin: Remove the Welcome admin notice in favor a Welcome screen inside the friends plugin.
 - Admin: Improve the friend space usage calculation for friends with many posts.
-- Admin: Improve Automattic Status (https://github.com/akirk/friends/pull/111).
-- Core: Improved the WP_Query for the frontend to allow to show your reactions to the posts (https://github.com/akirk/friends/pull/114).
+- Admin: Improve Automattic Status ([#111]).
+- Core: Improved the WP_Query for the frontend to allow to show your reactions to the posts ([#114]).
 - Core: allow frontend detection earlier in the WordPress boot process allowing our `add_theme_support()`s to kick in based on whether we are on the frontend.
-- Core: Fetch feeds based on their due date. This will allow adjusting feed fetch intervals individually for feeds (https://github.com/akirk/friends/pull/109).
-- Multisite: Improve activation code so that the friend roles should now be created more reliably on new multisite blogs (https://github.com/akirk/friends/pull/107).
+- Core: Fetch feeds based on their due date. This will allow adjusting feed fetch intervals individually for feeds ([#109]).
+- Multisite: Improve activation code so that the friend roles should now be created more reliably on new multisite blogs ([#107]).
 - Plugins: Add filters for the Friends roles plugin: `friends_plugin_roles`.
 
 ### 2.0.2
@@ -169,3 +169,22 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ### 1.7.0
 - Add Emoji reactions
 - Add blog to blog messaging
+
+
+[#160]: https://github.com/akirk/friends/pull/160
+[#121]: https://github.com/akirk/friends/pull/121
+[#141]: https://github.com/akirk/friends/pull/141
+[#137]: https://github.com/akirk/friends/pull/137
+[#142]: https://github.com/akirk/friends/pull/142
+[#163]: https://github.com/akirk/friends/pull/163
+[#132]: https://github.com/akirk/friends/pull/132
+[#124]: https://github.com/akirk/friends/pull/124
+[#122]: https://github.com/akirk/friends/pull/122
+[#113]: https://github.com/akirk/friends/pull/113
+[#116]: https://github.com/akirk/friends/pull/116
+[#111]: https://github.com/akirk/friends/pull/111
+[#114]: https://github.com/akirk/friends/pull/114
+[#109]: https://github.com/akirk/friends/pull/109
+[#107]: https://github.com/akirk/friends/pull/107
+[activitypub#213]: https://github.com/pfefferle/wordpress-activitypub/pull/213
+[activitypub#172]: https://github.com/pfefferle/wordpress-activitypub/pull/172
