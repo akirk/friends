@@ -12,6 +12,8 @@
 
 namespace Friends;
 
+use WP_Error;
+
 /**
  * This is the class for integrating ActivityPub into the Friends Plugin.
  */
@@ -42,6 +44,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_edit_friend_after_form_submit', array( $this, 'activitypub_save_settings' ), 10 );
 		\add_filter( 'friends_modify_feed_item', array( $this, 'modify_incoming_item' ), 9, 3 );
 		\add_filter( 'friends_edit_friend_after_avatar', array( $this, 'admin_show_update_avatar' ) );
+		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login' ), 10, 2 );
 
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
@@ -105,6 +108,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$feed_details['avatar'] = $meta['icon']['url'];
 		}
 
+		if ( ! empty( $meta['summary'] ) ) {
+			$feed_details['description'] = $meta['summary'];
+		}
+
 		// Disable polling.
 		$feed_details['interval'] = YEAR_IN_SECONDS;
 		$feed_details['next-poll'] = gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS );
@@ -130,6 +137,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $url;
 	}
 
+	public static function get_metadata( $url ) {
+		if ( strpos( $url, '@' ) !== false && preg_match( '#^https?://#', $url, $m ) ) {
+			$url = substr( $url, strlen( $m[0] ) );
+		}
+		return \Activitypub\get_remote_metadata_by_actor( $url );
+	}
+
 	/**
 	 * Discover the feeds available at the URL specified.
 	 *
@@ -141,7 +155,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function discover_available_feeds( $content, $url ) {
 		$discovered_feeds = array();
 
-		$meta = \Activitypub\get_remote_metadata_by_actor( $url );
+		$meta = self::get_metadata( $url );
 		if ( $meta && ! is_wp_error( $meta ) ) {
 			$discovered_feeds[ $meta['id'] ] = array(
 				'type'        => 'application/activity+json',
@@ -164,12 +178,66 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     array            An array of feed items.
 	 */
 	public function fetch_feed( $url, User_Feed $user_feed = null ) {
-		$this->disable_polling( $user_feed );
+		if ( $user_feed ) {
+			$this->disable_polling( $user_feed );
+		}
 
-		// There is no feed to fetch, we'll receive items via ActivityPub.
-		return array();
+		// This is only for previwing.
+		if ( wp_doing_cron() ) {
+			return array();
+		}
+
+		$meta = self::get_metadata( $url );
+		if ( ! isset( $meta['outbox'] ) ) {
+			return array();
+		}
+
+		$response = \Activitypub\safe_remote_get( $meta['outbox'], get_current_user_id() );
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return new \WP_Error( 'activitypub_could_not_get_outbox_meta', null, compact( 'meta', 'url' ) );
+		}
+
+		$outbox = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! isset( $outbox['first'] ) ) {
+			return new \WP_Error( 'activitypub_could_not_find_outbox_first_page', null, compact( 'url', 'meta', 'outbox' ) );
+		}
+
+		$response = \Activitypub\safe_remote_get( $outbox['first'], get_current_user_id() );
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return new \WP_Error(
+				'activitypub_could_not_get_outbox',
+				null,
+				array(
+					'meta' => $outbox,
+					$url   => $outbox['first'],
+				)
+			);
+		}
+		$outbox_page = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! isset( $outbox_page['type'] ) || 'OrderedCollectionPage' !== $outbox_page['type'] ) {
+			return new \WP_Error(
+				'activitypub_outbox_page_invalid_type',
+				null,
+				array(
+					'outbox_page' => $outbox_page,
+					$url          => $outbox['first'],
+				)
+			);
+		}
+		$items = array();
+		foreach ( $outbox_page['orderedItems'] as $object ) {
+			$type = strtolower( $object['type'] );
+			$items[] = $this->process_incoming_activity( $type, $object );
+		}
+		return $items;
 	}
 
+	public function suggest_user_login( $login, $url ) {
+		if ( preg_match( '#^https?://([^/]+)/users/([^/]+)#', $url, $m ) ) {
+			return $m[2] . '-' . $m[1];
+		}
+		return $login;
+	}
 	/**
 	 * Disable polling for this feed.
 	 *
@@ -228,15 +296,34 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 
-		switch ( $type ) {
-			case 'create':
-				return $this->handle_incoming_post( $object['object'], $user_feed );
-			case 'announce':
-				return $this->handle_incoming_announce( $object['object'], $user_feed, $user_id );
+		$item = $this->process_incoming_activity( $type, $object, $user_id );
 
+		if ( $item instanceof Feed_Item ) {
+			$this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
+			return true;
 		}
 
-		return true;
+		return false;
+	}
+
+	/**
+	 * Process an incoming activity.
+	 *
+	 * @param string $type The type of the activity.
+	 * @param array  $object The activity object.
+	 * @param int    $user_id The id of the local user if any.
+	 * @return Feed_Item|null The feed item or null if it's not a valid activity.
+	 */
+	private function process_incoming_activity( $type, $object, $user_id = null ) {
+		switch ( $type ) {
+			case 'create':
+				return $this->handle_incoming_post( $object['object'] );
+				break;
+			case 'announce':
+				return $this->handle_incoming_announce( $object['object'], $user_id );
+				break;
+		}
+		return null;
 	}
 
 	/**
@@ -253,10 +340,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * We received a post for a feed, handle it.
 	 *
-	 * @param      array     $object     The object from ActivityPub.
-	 * @param      User_Feed $user_feed  The user feed.
+	 * @param      array $object     The object from ActivityPub.
 	 */
-	private function handle_incoming_post( $object, User_Feed $user_feed ) {
+	private function handle_incoming_post( $object ) {
 		$permalink = $object['id'];
 		if ( isset( $object['url'] ) ) {
 			$permalink = $object['url'];
@@ -309,29 +395,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'data' => $data,
 			)
 		);
-		$item = new Feed_Item( $data );
-
-		$this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
-
-		$this->disable_polling( $user_feed );
-
-		return true;
+		return new Feed_Item( $data );
 	}
 
 	/**
 	 * We received an announced URL (boost) for a feed, handle it.
 	 *
-	 * @param      array     $url     The announced URL.
-	 * @param      User_Feed $user_feed  The user feed.
-	 * @param      int       $user_id  The user id.
+	 * @param      array $url     The announced URL.
+	 * @param      int   $user_id  The user id.
 	 */
-	private function handle_incoming_announce( $url, User_Feed $user_feed, $user_id ) {
+	private function handle_incoming_announce( $url, $user_id = null ) {
 		if ( ! Friends::check_url( $url ) ) {
 			$this->log( 'Received invalid announce', compact( 'url' ) );
 			return false;
 		}
 		$this->log( 'Received announce for ' . $url );
-
+		if ( null === $user_id ) {
+			$user_id = get_current_user_id();
+		}
 		$response = \Activitypub\safe_remote_get( $url, $user_id );
 		if ( \is_wp_error( $response ) ) {
 			return $response;
@@ -344,7 +425,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		$this->log( 'Received response', compact( 'url', 'object' ) );
 
-		return $this->handle_incoming_post( $object, $user_feed );
+		return $this->handle_incoming_post( $object );
 	}
 
 	/**
