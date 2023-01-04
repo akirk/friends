@@ -5,7 +5,7 @@
  * Plugin URI: https://github.com/akirk/friends
  * Version: 2.1.3
  *
- * Description: Decentralized Social Networking with WordPress. Connect WordPresses through friend requests and read each other’s (private) posts in a feed reader.
+ * Description: A social network between WordPresses. Privacy focused, by itself a self-hosted RSS++ reader with notifications.
  *
  * License: GPL2
  * Text Domain: friends

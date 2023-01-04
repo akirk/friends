@@ -141,7 +141,7 @@ class Friends {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
-		add_action( 'init', array( User_Feed::class, 'register_taxonomy' ) );
+		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 
 		add_action( 'template_redirect', array( $this, 'http_header' ), 5 );

@@ -1,25 +1,27 @@
 {
 	"name": "akirk/friends",
+	"description": "A social network between WordPresses. Privacy focused, by itself a self-hosted RSS++ reader with notifications.",
+	"license": "GPL-2.0-or-later",
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "*",
 		"object-calisthenics/phpcs-calisthenics-rules": "*",
 		"phpcompatibility/php-compatibility": "*",
 		"wp-coding-standards/wpcs": "*",
 		"yoast/phpunit-polyfills": "*",
-		"phpunit/phpunit": "7.5.20"
+		"phpunit/phpunit": "*"
 	},
 	"config": {
 		"allow-plugins": {
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
 	},
-	"prefer-stable" : true,
+	"prefer-stable": true,
 	"scripts": {
 		"lint7": [
-			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git --exclude src/Exceptions/Error.php --exclude src/Exceptions/TypeError.php --exclude tests/Polyfills/Fixtures/ValueObjectUnion.php --exclude tests/Polyfills/Fixtures/ValueObjectUnionNoReturnType.php"
+			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git"
 		],
 		"lint-lt70": [
-			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git --exclude src/TestCases/TestCasePHPUnitGte8.php --exclude src/TestListeners/TestListenerDefaultImplementationPHPUnitGte7.php --exclude tests/Polyfills/Fixtures/ChildValueObject.php --exclude tests/Polyfills/Fixtures/ValueObject.php --exclude tests/Polyfills/Fixtures/ValueObjectUnion.php --exclude tests/Polyfills/Fixtures/ValueObjectUnionNoReturnType.php"
+			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git"
 		],
 		"lint-gte80": [
 			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git"
@@ -33,5 +35,8 @@
 		"test": [
 			"@php ./vendor/phpunit/phpunit/phpunit --no-coverage"
 		]
+	},
+	"require": {
+		"php-parallel-lint/php-parallel-lint": "^1.3"
 	}
 }
