@@ -1,5 +1,7 @@
 {
 	"name": "akirk/friends",
+	"description": "A social network between WordPresses. Privacy focused, by itself a self-hosted RSS++ reader with notifications.",
+	"license": "GPL-2.0-or-later",
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "*",
 		"object-calisthenics/phpcs-calisthenics-rules": "*",

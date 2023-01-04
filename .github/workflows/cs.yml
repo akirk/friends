@@ -40,7 +40,7 @@ jobs:
       # Validate the composer.json file.
       # @link https://getcomposer.org/doc/03-cli.md#validate
       - name: Validate Composer installation
-        run: composer validate --no-check-all
+        run: composer validate --no-check-all --strict
 
       # Check the code-style consistency of the PHP files.
       - name: Check PHP code style
