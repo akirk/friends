@@ -857,7 +857,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return void
 	 */
 	public function like_post( $url, $external_post_id, $user_id ) {
-		$to = $external_post_id;
 		$inbox = \Activitypub\get_inbox_by_actor( $url );
 		$actor = \get_author_posts_url( $user_id );
 
@@ -865,8 +864,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
-		$activity->set_object( $to );
-		$activity->set_id( $actor . '#like-' . \preg_replace( '~^https?://~', '', $to ) );
+		$activity->set_object( $external_post_id );
+		$activity->set_id( $actor . '#like-' . \preg_replace( '~^https?://~', '', $external_post_id ) );
 		$activity = $activity->to_json();
 		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
 
@@ -935,7 +934,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return void
 	 */
 	public function unlike_post( $url, $external_post_id, $user_id ) {
-		$to = $external_post_id;
 		$inbox = \Activitypub\get_inbox_by_actor( $url );
 		$actor = \get_author_posts_url( $user_id );
 
@@ -947,11 +945,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			array(
 				'type'   => 'Like',
 				'actor'  => $actor,
-				'object' => $to,
-				'id'     => $to,
+				'object' => $external_post_id,
+				'id'     => $actor . '#like-' . \preg_replace( '~^https?://~', '', $external_post_id ),
 			)
 		);
-		$activity->set_id( $actor . '#unlike-' . \preg_replace( '~^https?://~', '', $to ) );
+		$activity->set_id( $actor . '#unlike-' . \preg_replace( '~^https?://~', '', $external_post_id ) );
 		$activity = $activity->to_json();
 		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
 
