@@ -39,6 +39,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'follow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'like_post' ), 10, 3 );
+		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'unlike_post' ), 10, 3 );
 		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_rewrite_incoming_url' ), 10, 2 );
 
 		\add_filter( 'friends_edit_friend_table_end', array( $this, 'activitypub_settings' ), 10 );
@@ -50,7 +51,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
 
-		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
+		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
+		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 	}
@@ -354,10 +356,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$data = array(
-			'permalink'   => $permalink,
-			'content'     => $object['content'],
-			'post_format' => $this->map_type_to_post_format( $object['type'] ),
-			'date'        => $object['published'],
+			'permalink'    => $permalink,
+			'content'      => $object['content'],
+			'post_format'  => $this->map_type_to_post_format( $object['type'] ),
+			'date'         => $object['published'],
+			'_external_id' => $object['id'],
 		);
 
 		if ( isset( $object['attributedTo'] ) ) {
@@ -434,6 +437,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Queue a hook to run async.
+	 *
+	 * @param string $hook The hook name.
+	 * @param array  $args The arguments to pass to the hook.
+	 * @param string $unqueue_hook Optional a hook to unschedule before queuing.
+	 * @return void|bool Whether the hook was queued.
+	 */
+	public function queue( $hook, $args, $unqueue_hook = null ) {
+		if ( $unqueue_hook ) {
+			$hook_timestamp = wp_next_scheduled( $unqueue_hook, $args );
+			if ( $hook_timestamp ) {
+				wp_unschedule_event( $hook_timestamp, $unqueue_hook, $args );
+			}
+		}
+
+		if ( wp_next_scheduled( $hook, $args ) ) {
+			return;
+		}
+
+		return \wp_schedule_single_event( \time(), $hook, $args );
+	}
+
+	/**
 	 * Prepare to follow the user via a scheduled event.
 	 *
 	 * @param      User_Feed $user_feed  The user feed.
@@ -445,21 +471,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$args = array( $user_feed->get_url(), get_current_user_id() );
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_follow',
+			array( $user_feed->get_url(), get_current_user_id() ),
+			'friends_feed_parser_activitypub_unfollow'
+		);
 
-		$unfollow_timestamp = wp_next_scheduled( 'friends_feed_parser_activitypub_unfollow', $args );
-		if ( $unfollow_timestamp ) {
-			// If we just unfollowed, we don't want the event to potentially be executed after our follow event.
-			wp_unschedule_event( $unfollow_timestamp, 'friends_feed_parser_activitypub_unfollow', $args );
+		if ( $queued ) {
+			$user_feed->update_last_log( __( 'Queued follow request.', 'friends' ) );
 		}
 
-		if ( wp_next_scheduled( 'friends_feed_parser_activitypub_follow', $args ) ) {
-			return;
-		}
-
-		$user_feed->update_last_log( __( 'Queued follow request.', 'friends' ) );
-
-		return \wp_schedule_single_event( \time(), 'friends_feed_parser_activitypub_follow', $args );
+		return $queued;
 	}
 
 	/**
@@ -507,21 +529,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 
-		$args = array( $user_feed->get_url(), get_current_user_id() );
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_unfollow',
+			array( $user_feed->get_url(), get_current_user_id() ),
+			'friends_feed_parser_activitypub_follow'
+		);
 
-		$follow_timestamp = wp_next_scheduled( 'friends_feed_parser_activitypub_follow', $args );
-		if ( $follow_timestamp ) {
-			// If we just followed, we don't want the event to potentially be executed after our unfollow event.
-			wp_unschedule_event( $follow_timestamp, 'friends_feed_parser_activitypub_follow', $args );
+		if ( $queued ) {
+			$user_feed->update_last_log( __( 'Queued unfollow request.', 'friends' ) );
 		}
 
-		if ( wp_next_scheduled( 'friends_feed_parser_activitypub_unfollow', $args ) ) {
-			return true;
-		}
-
-		$user_feed->update_last_log( __( 'Queued unfollow request.', 'friends' ) );
-
-		return \wp_schedule_single_event( \time(), 'friends_feed_parser_activitypub_unfollow', $args );
+		return $queued;
 	}
 
 	/**
@@ -762,17 +780,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		<?php
 	}
 
-	/**
-	 * Create a status based on a post reaction.
-	 *
-	 * @param      int    $post_id  The post ID.
-	 * @param      string $emoji    The emoji.
-	 */
-	public function post_reaction( $post_id, $emoji ) {
-		$post = get_post( $post_id );
-		if ( ! $post ) {
-			return;
-		}
+	private function get_feed_for_post( \WP_Post $post ) {
 		$friend = new User( $post->post_author );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			return $friend;
@@ -790,8 +798,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				continue;
 			}
 
-			$this->queue_like_post( $post, $feed );
+			return $feed;
 		}
+
+		return null;
+	}
+
+	/**
+	 * Create a status based on a post reaction.
+	 *
+	 * @param      int $post_id  The post ID.
+	 */
+	public function post_reaction( $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+		$feed = $this->get_feed_for_post( $post );
+		if ( ! $feed ) {
+			return;
+		}
+		return $this->queue_like_post( $post, $feed );
 	}
 
 	/**
@@ -803,29 +830,34 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     bool|WP_Error              Whether the event was queued.
 	 */
 	public function queue_like_post( \WP_Post $post, User_Feed $user_feed ) {
-		$this->like_post( $user_feed->get_url(), $post->guid, get_current_user_id() );
-		return; // TODO: do the queue.
-		$args = array( $user_feed->get_url(), $post->guid, get_current_user_id() );
-
-		if ( wp_next_scheduled( 'friends_feed_parser_activitypub_like', $args ) ) {
-			return;
+		$external_post_id = get_post_meta( $post->ID, 'external-id', true );
+		if ( ! $external_post_id ) {
+			$external_post_id = $post->guid;
 		}
 
-		$user_feed->update_last_log( __( 'Queued like request.', 'friends' ) );
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_like',
+			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
+			'friends_feed_parser_activitypub_unlike'
+		);
 
-		return \wp_schedule_single_event( \time(), 'friends_feed_parser_activitypub_like', $args );
+		if ( $queued ) {
+			$user_feed->update_last_log( __( 'Queued like request.', 'friends' ) );
+		}
+
+		return $queued;
 	}
 
 	/**
 	 * Like a post.
 	 *
 	 * @param mixed $url The URL of the user.
-	 * @param mixed $post_url The post to like.
+	 * @param mixed $external_post_id The post to like.
 	 * @param mixed $user_id The current user id.
 	 * @return void
 	 */
-	public function like_post( $url, $post_url, $user_id ) {
-		$to = $post_url;
+	public function like_post( $url, $external_post_id, $user_id ) {
+		$to = $external_post_id;
 		$inbox = \Activitypub\get_inbox_by_actor( $url );
 		$actor = \get_author_posts_url( $user_id );
 
@@ -848,7 +880,91 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+	}
 
+	/**
+	 * Create a status based on a post reaction.
+	 *
+	 * @param      int $post_id  The post ID.
+	 */
+	public function undo_post_reaction( $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return;
+		}
+		$feed = $this->get_feed_for_post( $post );
+		if ( ! $feed ) {
+			return;
+		}
+		return $this->queue_unlike_post( $post, $feed );
+	}
+
+	/**
+	 * Prepare to follow the user via a scheduled event.
+	 *
+	 * @param      \WP_Post  $post       The post.
+	 * @param      User_Feed $user_feed  The user feed.
+	 *
+	 * @return     bool|WP_Error              Whether the event was queued.
+	 */
+	public function queue_unlike_post( \WP_Post $post, User_Feed $user_feed ) {
+		$external_post_id = get_post_meta( $post->ID, 'external-id', true );
+		if ( ! $external_post_id ) {
+			$external_post_id = $post->guid;
+		}
+
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_unlike',
+			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
+			'friends_feed_parser_activitypub_like'
+		);
+
+		if ( $queued ) {
+			$user_feed->update_last_log( __( 'Queued unlike request.', 'friends' ) );
+		}
+
+		return $queued;
+	}
+
+	/**
+	 * Unlike a post.
+	 *
+	 * @param mixed $url The URL of the user.
+	 * @param mixed $external_post_id The post to like.
+	 * @param mixed $user_id The current user id.
+	 * @return void
+	 */
+	public function unlike_post( $url, $external_post_id, $user_id ) {
+		$to = $external_post_id;
+		$inbox = \Activitypub\get_inbox_by_actor( $url );
+		$actor = \get_author_posts_url( $user_id );
+
+		$activity = new \Activitypub\Model\Activity( 'Undo', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity->set_to( null );
+		$activity->set_cc( null );
+		$activity->set_actor( $actor );
+		$activity->set_object(
+			array(
+				'type'   => 'Like',
+				'actor'  => $actor,
+				'object' => $to,
+				'id'     => $to,
+			)
+		);
+		$activity->set_id( $actor . '#unlike-' . \preg_replace( '~^https?://~', '', $to ) );
+		$activity = $activity->to_json();
+		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
+
+		$user_feed = User_Feed::get_by_url( $url );
+		if ( $user_feed instanceof User_Feed ) {
+			$user_feed->update_last_log(
+				sprintf(
+				// translators: %s is the response from the remote server.
+					__( 'Sent unlike request with response: %s', 'friends' ),
+					wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response )
+				)
+			);
+		}
 	}
 
 	/**
@@ -886,7 +1002,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				|| preg_match( '/(my|your|our)-(domain)/', $domain )
 				|| preg_match( '/(test)/', $domain )
 				|| in_array( $username, array( 'example' ), true )
-				) {
+			) {
 				$metadata = array(
 					'url'  => sprintf( 'https://%s/users/%s/', $domain, $username ),
 					'name' => $username,

@@ -159,6 +159,10 @@ class Feed_Item {
 				$value = boolval( $value );
 				$this->data['meta']['full-content-fetched'] = $value;
 				return $value;
+			case '_external_id':
+				$value = strval( $value );
+				$this->data['meta']['external-id'] = $value;
+				return $value;
 
 			default:
 				return new \WP_Error( 'invalid-key', 'This value cannot be stored in a feed item.' );
