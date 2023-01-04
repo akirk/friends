@@ -804,7 +804,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function queue_like_post( \WP_Post $post, User_Feed $user_feed ) {
 		$this->like_post( $user_feed->get_url(), $post->guid, get_current_user_id() );
-		exit;
+		return; // TODO: do the queue.
 		$args = array( $user_feed->get_url(), $post->guid, get_current_user_id() );
 
 		if ( wp_next_scheduled( 'friends_feed_parser_activitypub_like', $args ) ) {
