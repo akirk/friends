@@ -58,7 +58,11 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 		continue;
 	}
 	$version = $version[1];
-
+	if ( ! file_exists( "$dir/README.md" ) ) {
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo realpath( $dir ), '/README.md does not exist.', PHP_EOL;
+		continue;
+	}
 	$readme_md = file_get_contents( "$dir/README.md" );
 
 	$headline = strtok( $readme_md, PHP_EOL );
@@ -94,8 +98,8 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 	}
 	if ( ! $exists ) {
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		echo $slug, ' version ', $version, ' does not exist at ', $data['download_link'];
-		exit( 1 );
+		echo $slug, ' version ', $version, ' does not exist at ', $data['download_link'], PHP_EOL;
+		continue;
 	}
 
 	$data['last_updated'] = gmdate( 'Y-m-d', exec( 'git --git-dir=' . $dir . '/.git/ log -1 --format=%ct ' ) );

@@ -5,10 +5,10 @@
         "more_info": "https://wordpress.org/plugins/activitypub/",
         "author": "<a href='https://notiz.blog/'>Matthias Pfefferle</a>",
         "slug": "activitypub",
-        "version": "0.14.2",
-        "trunk": "https://downloads.wordpress.org/plugin/activitypub.0.14.2.zip",
-        "download_link": "https://downloads.wordpress.org/plugin/activitypub.0.14.2.zip",
-        "last_updated": "2022-12-11",
+        "version": "0.14.3",
+        "trunk": "https://downloads.wordpress.org/plugin/activitypub.0.14.3.zip",
+        "download_link": "https://downloads.wordpress.org/plugin/activitypub.0.14.3.zip",
+        "last_updated": "2022-12-15",
         "sections": {
             "Description": "People can follow your blog on Mastodon and other federated platforms that support ActivityPub, and you can follow them in the Friends plugin."
         }
@@ -22,7 +22,7 @@
         "version": "1.1.0",
         "trunk": "https://github.com/akirk/friends-autoresolve-links/archive/refs/tags/1.1.0.zip",
         "download_link": "https://github.com/akirk/friends-autoresolve-links/archive/refs/tags/1.1.0.zip",
-        "last_updated": "2022-09-09",
+        "last_updated": "2022-11-18",
         "sections": {
             "Description": "This plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>."
         }
@@ -47,13 +47,13 @@
         "more_info": "https://github.com/akirk/friends-parser-fraidyscrape",
         "author": "<a href=\"https://github.com/akirk/\">Alex Kirk</a>",
         "slug": "friends-parser-fraidyscrape",
-        "version": "1.2",
-        "trunk": "https://github.com/akirk/friends-parser-fraidyscrape/archive/refs/tags/1.2.zip",
-        "download_link": "https://github.com/akirk/friends-parser-fraidyscrape/archive/refs/tags/1.2.zip",
-        "last_updated": "2022-10-17",
+        "version": "1.3",
+        "trunk": "https://github.com/akirk/friends-parser-fraidyscrape/archive/refs/tags/1.3.zip",
+        "download_link": "https://github.com/akirk/friends-parser-fraidyscrape/archive/refs/tags/1.3.zip",
+        "last_updated": "2023-01-04",
         "sections": {
             "Description": "This is a PHP port of the JavaScript extractor Fraidyscrape to be used as a plugin for the <a href=\"https://wordpress.org/plugins/friends\">Friends Plugin</a> which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.<br/>\n<h4>Fraidyscrape</h4><br/>\nFraidyscrape is the rule-based HTML, JSON and TXT scraper - used in the<br/>\nmicro-famous, macro-fearful Web research tool <a href=\"https://fraidyc.at/\">Fraidycat</a>.<br/>\n<blockquote>It is presently quite a dark art to figure out. No one really knows what it does!</blockquote><br/>\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>.",
-            "Changelog": "<h4>1.1</h4><br/>\n- Update for Friends 2.0"
+            "Changelog": "<h4>1.3</h4><br/>\n- Update to the Feed_Parser_V2 interface.<br/>\n- Reduce required priviledges, see https://github.com/akirk/friends/pull/121.<br/>\n<h4>1.2</h4><br/>\n- Update for Friends 2.0"
         }
     },
     "friends-parser-rss-bridge": {
@@ -62,13 +62,13 @@
         "more_info": "https://github.com/akirk/friends-parser-rss-bridge",
         "author": "<a href=\"https://github.com/akirk/\">Alex Kirk</a>",
         "slug": "friends-parser-rss-bridge",
-        "version": "1.2",
-        "trunk": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.2.zip",
-        "download_link": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.2.zip",
-        "last_updated": "2022-09-09",
+        "version": "1.3",
+        "trunk": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.3.zip",
+        "download_link": "https://github.com/akirk/friends-parser-rss-bridge/archive/refs/tags/1.3.zip",
+        "last_updated": "2023-01-04",
         "sections": {
             "Description": "This parser is powered by the open source project <a href=\"https://github.com/RSS-Bridge/rss-bridge\">RSS Bridge</a> (resp. a very similar fork at <a href=\"https://github.com/akirk/rss-bridge\">akirk/rss-bridge</a>) and allows to parse many external services that don't provide RSS feeds, such as Skimfeed, Twitter, Bandcamp, Wikipedia and more.<br/>\nThe RSS Bridge project provides a set of \"bridges\" that overcome the gap between web sites' content and a machine readable format, such as RSS. This plugin extends the bridge into the WordPress world, especially to the <a href=\"https://wordpress.org/plugins/friends\">Friends Plugin</a> which can then be used to follow your friends on platforms that don't provide RSS feeds, or some news sites.<br/>\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>.",
-            "Changelog": "<h4>1.1</h4><br/>\n- Update for Friends 2.0"
+            "Changelog": "<h4>1.3</h4><br/>\n- Update for the Feed_Parser_V2 interface.<br/>\n- Reduce required priviledges, see https://github.com/akirk/friends/pull/121.<br/>\n<h4>1.2</h4><br/>\n- Update for Friends 2.0"
         }
     },
     "friends-post-collection": {
@@ -77,13 +77,13 @@
         "more_info": "https://github.com/akirk/friends-post-collection",
         "author": "<a href=\"https://github.com/akirk/\">Alex Kirk</a>",
         "slug": "friends-post-collection",
-        "version": "1.0",
-        "trunk": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.0.zip",
-        "download_link": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.0.zip",
-        "last_updated": "2022-11-13",
+        "version": "1.1",
+        "trunk": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.1.zip",
+        "download_link": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.1.zip",
+        "last_updated": "2023-01-04",
         "sections": {
             "Description": "This plugin provides the facilities to store feed items in a separate post type. These can be used to create your own compliation of posts and re-publish them for friends.",
-            "Changelog": "<h4>1.0</h4><br/>\n- Add a feed option to fetch full content: Make use of Readability to get the contents of posts from the original URL (useful for excerpt feeds), either via a dropdown entry for each feed item, or for new entries in incoming feeds (checkbox in the feeds overview).<br/>\n<h4>0.8</h4><br/>\n- Update for Friends 2.0"
+            "Changelog": "<h4>1.1</h4><br/>\n- Reduce required priviledges, see https://github.com/akirk/friends/pull/121.<br/>\n<h4>1.0</h4><br/>\n- Add a feed option to fetch full content: Make use of Readability to get the contents of posts from the original URL (useful for excerpt feeds), either via a dropdown entry for each feed item, or for new entries in incoming feeds (checkbox in the feeds overview).<br/>\n<h4>0.8</h4><br/>\n- Update for Friends 2.0"
         }
     },
     "friends-send-to-e-reader": {
@@ -92,13 +92,13 @@
         "more_info": "https://github.com/akirk/friends-send-to-e-reader",
         "author": "<a href=\"https://github.com/akirk/\">Alex Kirk</a>",
         "slug": "friends-send-to-e-reader",
-        "version": "0.6",
-        "trunk": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.6.zip",
-        "download_link": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.6.zip",
-        "last_updated": "2022-11-13",
+        "version": "0.7",
+        "trunk": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.7.zip",
+        "download_link": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.7.zip",
+        "last_updated": "2023-01-04",
         "sections": {
             "Description": "See the post <a href=\"https://wpfriends.at/2021/09/20/subscribing-to-rss-feeds-on-your-e-reader/\">Subscribing to RSS Feeds on your E-Reader using your own WordPress blog</a> for more details on how it works.<br/>\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>.",
-            "Changelog": "<h4>0.6</h4><br/>\n- Remove MOBI support since Amazon now accepts EPubs by mail.<br/>\n- Introduce Reading Summaries: You can create a new draft posts from your sent articles so that you can easily post about them.<br/>\n- Remember which posts were already sent, enabling a \"Send x new posts to your e-reader\" button in the header.<br/>\n<h4>0.5</h4><br/>\n- Remember which posts were sent and allow sending just the new ones. [WIP display works, actual sending not yet]<br/>\n- Automatically send new posts every week. [WIP setting screen is there, saving setting and cron not yet]<br/>\n- Allow auto-creating of \"reading summary\" draft posts with link plus excerpt and room for your own comments.<br/>\n- New-style setting screen with separate screen for reading summaries.<br/>\n<h4>0.4</h4><br/>\n- Update for Friends 2.0<br/>\n<h4>0.3</h4><br/>\n- Allow downloading the ePub.<br/>\n- Theoretically add support for Tolino. Not functional because Thalia doesn't want to provide OAuth2 credentials."
+            "Changelog": "<h4>0.7</h4><br/>\n- Fix multi-item dialog not popping up.<br/>\n<h4>0.6</h4><br/>\n- Remove MOBI support since Amazon now accepts EPubs by mail.<br/>\n- Introduce Reading Summaries: You can create a new draft posts from your sent articles so that you can easily post about them.<br/>\n- Remember which posts were already sent, enabling a \"Send x new posts to your e-reader\" button in the header.<br/>\n<h4>0.5</h4><br/>\n- Remember which posts were sent and allow sending just the new ones. [WIP display works, actual sending not yet]<br/>\n- Automatically send new posts every week. [WIP setting screen is there, saving setting and cron not yet]<br/>\n- Allow auto-creating of \"reading summary\" draft posts with link plus excerpt and room for your own comments.<br/>\n- New-style setting screen with separate screen for reading summaries.<br/>\n<h4>0.4</h4><br/>\n- Update for Friends 2.0<br/>\n<h4>0.3</h4><br/>\n- Allow downloading the ePub.<br/>\n- Theoretically add support for Tolino. Not functional because Thalia doesn't want to provide OAuth2 credentials."
         }
     }
 }
