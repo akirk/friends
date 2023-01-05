@@ -117,9 +117,9 @@ uksort(
 	$filters,
 	function( $a, $b ) use ( $filters ) {
 		if ( $filters[ $a ]['section'] === $filters[ $b ]['section'] ) {
-			return $a <=> $b;
+			return $a < $b ? -1 : 1;
 		}
-		return $filters[ $a ]['section'] <=> $filters[ $b ]['section'];
+		return $filters[ $a ]['section'] < $filters[ $b ]['section'] ? -1 : 1;
 	}
 );
 
