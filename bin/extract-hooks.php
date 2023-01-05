@@ -70,7 +70,7 @@ foreach ( $files as $file ) {
 				break;
 			}
 
-			if ( T_DOC_COMMENT === $tokens[ $j ][0] ) {
+			if ( T_COMMENT === $tokens[ $j ][0] ) {
 				$comment = $tokens[ $j ][1];
 				break;
 			}
@@ -105,10 +105,10 @@ foreach ( $files as $file ) {
 			$filters[ $hook ]['base_dirs'][ $main_dir ] = true;
 
 			if ( $comment ) {
-				if ( ! isset( $filters[ $hook ]['comment'] ) ) {
-					$filters[ $hook ]['comment'] = '';
+				$docblock = parse_docblock( $comment );
+				if ( ! empty( $docblock['comment'] ) && ! preg_match( '#^Documented in#i', $docblock['comment'] ) ) {
+					$filters[ $hook ] = array_merge( $docblock, $filters[ $hook ] );
 				}
-				$filters[ $hook ]['comment'] .= $comment;
 			}
 		}
 	}
@@ -122,6 +122,69 @@ uksort(
 		return $filters[ $a ]['section'] < $filters[ $b ]['section'] ? -1 : 1;
 	}
 );
+
+function parse_docblock( $raw_comment ) {
+	// Adapted from https://github.com/kamermans/docblock-reflection.
+	$tags = array();
+	$lines = \explode( "\n", $raw_comment );
+	$matches = null;
+	$comment = '';
+
+	switch ( \count( $lines ) ) {
+		case 1:
+			// Handle single-line docblock.
+			if ( ! \preg_match( '#\\/\\*\\*([^*]*)\\*\\/#', $lines[0], $matches ) ) {
+				return;
+			}
+			$lines[0] = \substr( $lines[0], 3, -2 );
+			break;
+
+		case 2:
+			// Probably malformed.
+			return array();
+
+		default:
+			// Handle multi-line docblock.
+			\array_shift( $lines );
+			\array_pop( $lines );
+			break;
+	}
+
+	foreach ( $lines as $line ) {
+		$line = \preg_replace( '#^[ \t]*\* #', '', $line );
+
+		if ( \preg_match( '#@([^ ]+)(.*)#', $line, $matches ) ) {
+			$tag_name = $matches[1];
+			$tag_value = \trim( $matches[2] );
+
+			// If this tag was already parsed, make its value an array.
+			if ( isset( $tags[ $tag_name ] ) ) {
+				if ( ! \is_array( $tags[ $tag_name ] ) ) {
+					$tags[ $tag_name ] = array( $tags[ $tag_name ] );
+				}
+
+				$tags[ $tag_name ][] = $tag_value;
+			} else {
+				$tags[ $tag_name ] = $tag_value;
+			}
+			continue;
+		}
+
+		$comment .= "$line\n";
+	}
+	$ret = array_filter(
+		array_merge(
+			$tags,
+			array(
+				'comment' => trim( $comment ),
+			)
+		)
+	);
+	if ( empty( $ret ) ) {
+		return array();
+	}
+	return $ret;
+}
 
 $docs = $base . '/../friends.wiki/';
 if ( ! file_exists( $docs ) ) {
@@ -137,11 +200,15 @@ foreach ( $filters as $hook => $data ) {
 	}
 	$doc = '';
 	$index .= "- [`$hook`]($hook)\n";
+
 	if ( ! empty( $data['comment'] ) ) {
-		$doc .= "```php\n";
-		$doc .= $data['comment'];
-		$doc .= "\n```\n";
+		$doc .= $data['comment'] . PHP_EOL . PHP_EOL;
 	}
+
+	if ( ! empty( $data['param'] ) ) {
+		$doc .= "## Parameters\n\n- " . implode( "\n- ", $data['param'] ) . PHP_EOL . PHP_EOL;
+	}
+
 	$doc .= "## Files\n\n";
 	foreach ( $data['files'] as $file ) {
 		$doc .= "- [$file](https://github.com/akirk/friends/blob/main/" . str_replace( ':', '#L', $file ) . ")\n";
