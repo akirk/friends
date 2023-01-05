@@ -20,7 +20,10 @@ $author_name = get_the_author_meta( 'display_name' );
  * Example:
  * ```php
  * add_filter( 'friends_override_author_name', function( $override_author_name, $author_name, $post_id ) {
- *     return get_post_meta( $post_id, 'author', true );
+ *     if ( ! $override_author_name ) { // Only override if not already overridden.
+ *         $override_author_name = get_post_meta( $post_id, 'author', true );
+ *     }
+ *     return $override_author_name;
  * }, 10, 3 );
  * ```
  */
