@@ -9,6 +9,21 @@
 $friend_user = $args['friend_user'];
 $avatar = $args['avatar'];
 $author_name = get_the_author_meta( 'display_name' );
+
+/**
+ * Allows overriding the authorname for a post.
+ *
+ * @param string $override_author_name The author name to override with.
+ * @param string $author_name The author name.
+ * @param int $post_id The post ID.
+ *
+ * Example:
+ * ```php
+ * add_filter( 'friends_override_author_name', function( $override_author_name, $author_name, $post_id ) {
+ *     return get_post_meta( $post_id, 'author', true );
+ * }
+ * ```
+ */
 $override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, get_the_id() );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2">

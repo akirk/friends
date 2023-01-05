@@ -65,6 +65,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return void
 	 */
 	private function log( $message, $objects = array() ) {
+		// Receive debug messages from the ActivityPub feed parser.
 		do_action( 'friends_activitypub_log', $message, $objects );
 	}
 
