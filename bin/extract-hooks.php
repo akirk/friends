@@ -126,15 +126,17 @@ uksort(
 function parse_docblock( $raw_comment ) {
 	// Adapted from https://github.com/kamermans/docblock-reflection.
 	$tags = array();
-	$lines = \explode( "\n", $raw_comment );
+	$lines = explode( PHP_EOL, trim( $raw_comment ) );
 	$matches = null;
 	$comment = '';
 
-	switch ( \count( $lines ) ) {
+	switch ( count( $lines ) ) {
 		case 1:
 			// Handle single-line docblock.
-			if ( ! \preg_match( '#\\/\\*\\*([^*]*)\\*\\/#', $lines[0], $matches ) ) {
-				return;
+			if ( ! preg_match( '#\\/\\*\\*([^*]*)\\*\\/#', $lines[0], $matches ) ) {
+				return array(
+					'comment' => trim( ltrim( $lines[0], "/ \t" ) ),
+				);
 			}
 			$lines[0] = \substr( $lines[0], 3, -2 );
 			break;
@@ -145,15 +147,15 @@ function parse_docblock( $raw_comment ) {
 
 		default:
 			// Handle multi-line docblock.
-			\array_shift( $lines );
-			\array_pop( $lines );
+			array_shift( $lines );
+			array_pop( $lines );
 			break;
 	}
 
 	foreach ( $lines as $line ) {
-		$line = \preg_replace( '#^[ \t]*\* ?#', '', $line );
+		$line = preg_replace( '#^[ \t]*\* ?#', '', $line );
 
-		if ( \preg_match( '#@([^ ]+)(.*)#', $line, $matches ) ) {
+		if ( preg_match( '#@([^ ]+)(.*)#', $line, $matches ) ) {
 			$tag_name = $matches[1];
 			$tag_value = \trim( $matches[2] );
 
