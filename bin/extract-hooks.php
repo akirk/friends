@@ -151,7 +151,7 @@ function parse_docblock( $raw_comment ) {
 	}
 
 	foreach ( $lines as $line ) {
-		$line = \preg_replace( '#^[ \t]*\* #', '', $line );
+		$line = \preg_replace( '#^[ \t]*\* ?#', '', $line );
 
 		if ( \preg_match( '#@([^ ]+)(.*)#', $line, $matches ) ) {
 			$tag_name = $matches[1];
@@ -183,6 +183,7 @@ function parse_docblock( $raw_comment ) {
 	if ( empty( $ret ) ) {
 		return array();
 	}
+
 	return $ret;
 }
 
@@ -199,11 +200,14 @@ foreach ( $filters as $hook => $data ) {
 		$index .= PHP_EOL . '## ' . $section . PHP_EOL . PHP_EOL;
 	}
 	$doc = '';
-	$index .= "- [`$hook`]($hook)\n";
+	$index .= "- [`$hook`]($hook)";
 
 	if ( ! empty( $data['comment'] ) ) {
-		$doc .= $data['comment'] . PHP_EOL . PHP_EOL;
+		$index .= ' ' . strtok( $data['comment'], PHP_EOL );
+		$doc .= PHP_EOL . $data['comment'] . PHP_EOL . PHP_EOL;
 	}
+
+	$index .= PHP_EOL;
 
 	if ( ! empty( $data['param'] ) ) {
 		$doc .= "## Parameters\n\n- " . implode( "\n- ", $data['param'] ) . PHP_EOL . PHP_EOL;
