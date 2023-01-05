@@ -6,6 +6,7 @@
  * @package Friends
  */
 
+// Documented in templates/frontend/parts/header.php.
 $override_author_name = apply_filters( 'friends_override_author_name', '', $args['author']->display_name, $args['post']->ID );
 
 ?>
