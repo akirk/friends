@@ -215,7 +215,7 @@ foreach ( $filters as $hook => $data ) {
 		$doc .= "## Parameters\n";
 		foreach ( $data['param'] as $param ) {
 			$p = explode( ' ', $param, 3 );
-			$doc .= "\n- `{$p[0]}` `{$p[1]}` {$p[2]}";
+			$doc .= "\n- {$p[0]} `{$p[1]}` {$p[2]}";
 		}
 
 		$doc .= PHP_EOL . PHP_EOL;

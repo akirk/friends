@@ -21,7 +21,7 @@ $author_name = get_the_author_meta( 'display_name' );
  * ```php
  * add_filter( 'friends_override_author_name', function( $override_author_name, $author_name, $post_id ) {
  *     return get_post_meta( $post_id, 'author', true );
- * }
+ * }, 10, 3 );
  * ```
  */
 $override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, get_the_id() );
