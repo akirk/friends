@@ -4,11 +4,10 @@
 	"license": "GPL-2.0-or-later",
 	"require-dev": {
 		"dealerdirect/phpcodesniffer-composer-installer": "*",
-		"object-calisthenics/phpcs-calisthenics-rules": "*",
 		"phpcompatibility/php-compatibility": "*",
 		"wp-coding-standards/wpcs": "*",
 		"yoast/phpunit-polyfills": "*",
-		"phpunit/phpunit": "*"
+		"phpunit/phpunit": "7.5"
 	},
 	"config": {
 		"allow-plugins": {
