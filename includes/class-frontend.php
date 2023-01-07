@@ -1003,6 +1003,7 @@ class Frontend {
 			// Show your own posts on the status feed.
 			$post_types[] = 'post';
 		}
+
 		$query->set( 'post_type', $post_types );
 		$query->set( 'tax_query', $tax_query );
 

@@ -351,6 +351,25 @@
 		} );
 	} );
 
+	/* ActivityPub */
+	$( function () {
+		$document.on( 'click', 'a.friends-activitypub-reblog', function () {
+			const $this = $( this );
+			wp.ajax.send( 'friends-activitypub-reblog', {
+				data: {
+					_ajax_nonce: $this.data( 'nonce' ),
+					post_id: $this.data( 'id' ),
+				},
+				success() {
+					$this
+						.find( 'i.friends-reblog-status' )
+						.addClass( 'dashicons dashicons-saved' );
+				},
+			} );
+			return false;
+		} );
+	} );
+
 	$document.on( 'click', 'a.send-new-message', function () {
 		$( '#friends-send-new-message' )
 			.toggle()

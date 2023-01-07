@@ -58,6 +58,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
 
+		\add_action( 'friends_post_footer_first', array( $this, 'announce_button' ) );
+		\add_action( 'wp_ajax_friends-activitypub-reblog', array( $this, 'wp_ajax_reblog' ) );
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
@@ -1069,6 +1071,92 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response )
 				)
 			);
+		}
+	}
+
+
+	public function announce_button() {
+		Friends::template_loader()->get_template_part(
+			'frontend/activitypub-announce',
+			null,
+			array(
+				'feed' => $this,
+			)
+		);
+	}
+
+	public function wp_ajax_reblog() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error( 'error' );
+		}
+
+		$post = get_post( $_POST['post_id'] );
+		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
+			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
+		}
+
+		$author = get_post_meta( $post->ID, 'author', true );
+		if ( ! $author ) {
+			$friend = new User( $post->post_author );
+			$author = $friend->display_name;
+		}
+
+		$old_guid = $post->guid;
+		$old_post_id = $post->ID;
+
+		$post_format = get_post_format( $post );
+
+		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p >';
+		$reblog .= sprintf(
+			// translators: %s is a link.
+			__( 'Reblog via %s', 'friends' ),
+			'<a href="' . esc_url( $post->guid ) . '">' . esc_html( $author ) . '</a>',
+		);
+
+		$reblog .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
+
+		// Don't post via ActivityPub since we'll announce there.
+		remove_action( 'transition_post_status', array( '\Activitypub\Activitypub', 'schedule_post_activity' ), 10, 3 );
+
+		unset( $post->ID, $post->guid, $post->name, $post->post_date, $post->post_date_gmt, $post->post_modified, $post->post_modified_gmt );
+		$post->post_author = get_current_user_id();
+		$post->post_status = 'publish';
+		$post->post_type = 'post';
+		$post->post_content = $reblog . $post->post_content;
+		$post_id = wp_insert_post( $post );
+
+		set_post_format( $post_id, $post_format );
+		update_post_meta( $post_id, 'reblog', $old_guid );
+		update_post_meta( $old_post_id, 'reblogged', $post_id );
+
+		$this->announce( $old_guid );
+
+		wp_send_json_success(
+			array(
+				'post_id' => $post_id,
+			)
+		);
+	}
+
+	public function announce( $url ) {
+		$user_id = get_current_user_id();
+		$actor = \get_author_posts_url( get_current_user_id() );
+
+		$activity = new \Activitypub\Model\Activity( 'Announce', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity->set_to( null );
+		$activity->set_cc( null );
+		$activity->set_actor( $actor );
+		$activity->set_object( $url );
+		$activity->set_id( $actor . '#announce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$inboxes = \Activitypub\get_follower_inboxes( $user_id );
+
+		$followers_url = \get_rest_url( null, '/activitypub/1.0/users/' . intval( $user_id ) . '/followers' );
+
+		foreach ( $inboxes as $inbox => $to ) {
+			$to = array_values( array_unique( $to ) );
+			$activity->set_to( $to );
+
+			\Activitypub\safe_remote_post( $inbox, $activity->to_json(), $user_id );
 		}
 	}
 
