@@ -703,7 +703,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				</fieldset>
 				<p class="description">
 				<?php
-				esc_html_e( "If an incoming post from ActivityPub starts with an @mention of someone you don't follow, it won't be hidden automatically.", 'friends' );
+				esc_html_e( "Show ActivityPub '@mention' posts even when you do not follow the feed being mentioned.", 'friends' );
 				?>
 				</p>
 			</td>
