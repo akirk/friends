@@ -1129,6 +1129,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		update_post_meta( $post_id, 'reblog', $old_guid );
 		update_post_meta( $old_post_id, 'reblogged', $post_id );
 
+		// Todo: Only announce ActvityPub posts.
 		$this->announce( $old_guid );
 
 		wp_send_json_success(
