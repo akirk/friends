@@ -26,10 +26,10 @@ jobs:
             phpunit: '8.5.16'
             wordpress: 'trunk'
           - php: '8.1'
-            phpunit: '9.5'
+            phpunit: '9.5.27'
             wordpress: 'trunk'
           - php: '8.2'
-            phpunit: '9.5'
+            phpunit: '9.5.27'
             wordpress: 'trunk'
 
     services:
