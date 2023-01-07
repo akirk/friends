@@ -1110,7 +1110,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$reblog .= sprintf(
 			// translators: %s is a link.
 			__( 'Reblog via %s', 'friends' ),
-			'<a href="' . esc_url( $post->guid ) . '">' . esc_html( $author ) . '</a>',
+			'<a href="' . esc_url( $post->guid ) . '">' . esc_html( $author ) . '</a>'
 		);
 
 		$reblog .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
