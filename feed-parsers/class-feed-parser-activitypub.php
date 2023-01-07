@@ -698,7 +698,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				<fieldset>
 					<div>
 						<input type="checkbox" name="friends_show_replies" id="friends_show_replies" value="1" <?php checked( '1', $friend->get_user_option( 'activitypub_friends_show_replies' ) ); ?> />
-						<label for="friends_show_replies"><?php esc_html_e( "Don't hide @mentions of people you don't follow", 'friends' ); ?></label>
+						<label for="friends_show_replies"><?php esc_html_e( "Don't hide @mentions of feeds you don't follow", 'friends' ); ?></label>
 						</div>
 				</fieldset>
 				<p class="description">
