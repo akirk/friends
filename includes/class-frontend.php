@@ -682,6 +682,22 @@ class Frontend {
 			} else {
 				$new_link = get_the_guid( $post );
 			}
+			/**
+			 * Allow overriding the link for editing friend posts.
+			 *
+			 * By default on the Frontend, a post cannot be edited because $new_link is false.
+			 *
+			 * Example:
+			 *
+			 * ```php
+			 * add_filter( 'friend_post_edit_link', function( $link, $original_link ) {
+			 *     if ( ! $link ) {
+			 *          $link = $original_link; // always allow editing.
+			 *      }
+			 *      return $link;
+			 * }, 10, 2 );
+			 * ```
+			 */
 			return apply_filters( 'friend_post_edit_link', $new_link, $link );
 		}
 		return $link;
