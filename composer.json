@@ -7,7 +7,7 @@
 		"phpcompatibility/php-compatibility": "*",
 		"wp-coding-standards/wpcs": "*",
 		"yoast/phpunit-polyfills": "*",
-		"phpunit/phpunit": "7.5"
+		"phpunit/phpunit": "*"
 	},
 	"config": {
 		"allow-plugins": {
