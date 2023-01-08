@@ -757,6 +757,7 @@ class Friends {
 		$data = array(
 			'description'               => '',
 			'post_count_by_post_format' => $this->get_post_count_by_post_format(),
+			'post_count_by_post_status' => \wp_count_posts( self::CPT ),
 		);
 
 		return $data;

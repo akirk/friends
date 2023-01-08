@@ -6,6 +6,10 @@
  */
 
 $data = $args['friends']->get_main_header_data();
+$hidden_post_count = 0;
+if ( isset( $data['post_count_by_post_status']->trash ) ) {
+	$hidden_post_count = $data['post_count_by_post_status']->trash;
+}
 ?><div id="main-header" class="mb-2">
 <h2 id="page-title"><a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 <?php
@@ -70,6 +74,17 @@ if ( $args['friends']->frontend->reaction ) {
 <?php foreach ( $data['post_count_by_post_format'] as $post_format => $count ) : ?>
 	<a class="chip" href="<?php echo esc_url( home_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
+
+<?php if ( isset( $_GET['show-hidden'] ) ) : ?>
+	<a class="chip" href="<?php echo esc_attr( remove_query_arg( 'show-hidden' ) ); ?>">
+		<?php echo esc_html__( 'Hide hidden items', 'friends' ); ?>
+	</a>
+<?php elseif ( $hidden_post_count > 0 ) : ?>
+	<a class="chip" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
+		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) ); ?>
+	</a>
+<?php endif; ?>
+
 
 <?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
 	<a class="chip" href="<?php echo esc_url( home_url( '/friends/reaction' . $slug . '/' ) ); ?>">
