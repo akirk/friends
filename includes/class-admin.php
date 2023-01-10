@@ -604,6 +604,18 @@ class Admin {
 			update_user_option( get_current_user_id(), 'friends_no_new_post_notification', 1 );
 		}
 
+		// Global retention.
+		$retention_number_enabled = boolval( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] );
+		update_option( 'friends_enable_retention_number', $retention_number_enabled );
+		if ( $retention_number_enabled ) {
+			update_option( 'friends_retention_number', max( 1, intval( $_POST['friends_retention_number'] ) ) );
+		}
+		$retention_days_enabled = boolval( isset( $_POST['friends_enable_retention_days'] ) && $_POST['friends_enable_retention_days'] );
+		update_option( 'friends_enable_retention_days', $retention_days_enabled );
+		if ( $retention_days_enabled ) {
+			update_option( 'friends_retention_days', max( 1, intval( $_POST['friends_retention_days'] ) ) );
+		}
+
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
@@ -685,31 +697,39 @@ class Admin {
 		// Now let's switch back to the admin language.
 		remove_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
 		restore_previous_locale();
+		$post_stats = Friends::get_post_stats();
 
 		Friends::template_loader()->get_template_part(
 			'admin/settings',
 			null,
-			array(
-				'potential_main_users'           => User_Query::all_admin_users(),
-				'main_user_id'                   => Friends::get_main_friend_user_id(),
-				'friend_roles'                   => $this->get_friend_roles(),
-				'default_role'                   => get_option( 'friends_default_friend_role', 'friend' ),
-				'force_enable_post_formats'      => get_option( 'friends_force_enable_post_formats' ),
-				'post_format_strings'            => get_post_format_strings(),
-				'limit_homepage_post_format'     => get_option( 'friends_limit_homepage_post_format', false ),
-				'expose_post_format_feeds'       => get_option( 'friends_expose_post_format_feeds' ),
-				'private_rss_key'                => get_option( 'friends_private_rss_key' ),
-				'comment_registration'           => get_option( 'comment_registration' ), // WordPress option.
-				'comment_registration_message'   => get_option( 'friends_comment_registration_message', $comment_registration_message ),
-				'comment_registration_default'   => $comment_registration_default,
-				'my_network'                     => $my_network,
-				'public_profile_link'            => home_url( '/friends/' ),
-				'codeword'                       => get_option( 'friends_codeword', 'friends' ),
-				'require_codeword'               => get_option( 'friends_require_codeword' ),
-				'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message', $wrong_codeword_message ),
-				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
-				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
-				'notification_keywords'          => Feed::get_all_notification_keywords(),
+			array_merge(
+				Friends::get_post_stats(),
+				array(
+					'potential_main_users'           => User_Query::all_admin_users(),
+					'main_user_id'                   => Friends::get_main_friend_user_id(),
+					'friend_roles'                   => $this->get_friend_roles(),
+					'default_role'                   => get_option( 'friends_default_friend_role', 'friend' ),
+					'force_enable_post_formats'      => get_option( 'friends_force_enable_post_formats' ),
+					'post_format_strings'            => get_post_format_strings(),
+					'limit_homepage_post_format'     => get_option( 'friends_limit_homepage_post_format', false ),
+					'expose_post_format_feeds'       => get_option( 'friends_expose_post_format_feeds' ),
+					'private_rss_key'                => get_option( 'friends_private_rss_key' ),
+					'comment_registration'           => get_option( 'comment_registration' ), // WordPress option.
+					'comment_registration_message'   => get_option( 'friends_comment_registration_message', $comment_registration_message ),
+					'comment_registration_default'   => $comment_registration_default,
+					'my_network'                     => $my_network,
+					'public_profile_link'            => home_url( '/friends/' ),
+					'codeword'                       => get_option( 'friends_codeword', 'friends' ),
+					'require_codeword'               => get_option( 'friends_require_codeword' ),
+					'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message', $wrong_codeword_message ),
+					'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
+					'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
+					'notification_keywords'          => Feed::get_all_notification_keywords(),
+					'retention_days'                 => Friends::get_retention_days(),
+					'retention_number'               => Friends::get_retention_number(),
+					'retention_days_enabled'         => get_option( 'friends_enable_retention_days' ),
+					'retention_number_enabled'       => get_option( 'friends_enable_retention_number' ),
+				)
 			)
 		);
 
@@ -1078,15 +1098,14 @@ class Admin {
 	public function render_admin_edit_friend() {
 		$friend = $this->check_admin_edit_friend();
 
-		$post_stats = $friend->get_post_stats();
-
-		$args = array(
-			'friend'                 => $friend,
-			'friend_posts'           => $post_stats->post_count,
-			'total_size'             => $post_stats->total_size,
-			'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
-			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
+		$args = array_merge(
+			$friend->get_post_stats(),
+			array(
+				'friend'                 => $friend,
+				'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
+				'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
+			)
 		);
 		if ( ! $args['hide_from_friends_page'] ) {
 			$args['hide_from_friends_page'] = array();
@@ -1372,17 +1391,21 @@ class Admin {
 	 */
 	public function render_admin_edit_friend_feeds() {
 		$friend = $this->check_admin_edit_friend();
-		$post_stats = $friend->get_post_stats();
 
-		$args = array(
-			'friend'                 => $friend,
-			'friend_posts'           => $post_stats->post_count,
-			'total_size'             => $post_stats->total_size,
-			'rules'                  => $friend->get_feed_rules(),
-			'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
-			'post_formats'           => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
-			'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-			'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
+		$args = array_merge(
+			$friend->get_post_stats(),
+			array(
+				'friend'                          => $friend,
+				'rules'                           => $friend->get_feed_rules(),
+				'hide_from_friends_page'          => get_user_option( 'friends_hide_from_friends_page' ),
+				'post_formats'                    => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
+				'friends_settings_url'            => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'registered_parsers'              => $this->friends->feed->get_registered_parsers(),
+				'global_retention_days'           => Friends::get_retention_days(),
+				'global_retention_number'         => Friends::get_retention_number(),
+				'global_retention_days_enabled'   => get_option( 'friends_enable_retention_days' ),
+				'global_retention_number_enabled' => get_option( 'friends_enable_retention_number' ),
+			)
 		);
 		if ( ! $args['hide_from_friends_page'] ) {
 			$args['hide_from_friends_page'] = array();

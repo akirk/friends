@@ -387,27 +387,30 @@ class User extends \WP_User {
 	 */
 	public function delete_outdated_posts() {
 		$count = 0;
+		$date_before = false;
 		if ( $this->is_retention_days_enabled() ) {
 			$date_before = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $this->get_retention_days() * 24 ) . 'hours' ) );
-			$args        = array(
-				'post_type'  => Friends::CPT,
-				'author'     => $this->ID,
-				'nopaging'   => true,
-				'date_query' => array(
-					'before' => $date_before,
-				),
-			);
+		} elseif ( get_option( 'friends_enable_retention_days' ) ) {
+			$date_before = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( Friends::get_retention_days() * 24 ) . 'hours' ) );
+		}
+		$args = array(
+			'post_type'  => Friends::CPT,
+			'author'     => $this->ID,
+			'nopaging'   => true,
+			'date_query' => array(
+				'before' => $date_before,
+			),
+		);
 
-			$query = new \WP_Query( $args );
+		$query = new \WP_Query( $args );
 
-			while ( $query->have_posts() ) {
-				$count ++;
-				$query->the_post();
-				if ( apply_filters( 'friends_debug', false ) ) {
-					echo 'Deleting ', get_the_ID(), '<br/>';
-				}
-				wp_delete_post( get_the_ID(), true );
+		while ( $query->have_posts() ) {
+			$count ++;
+			$query->the_post();
+			if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
+				echo 'Deleting ', get_the_ID(), '<br/>';
 			}
+			wp_delete_post( get_the_ID(), true );
 		}
 
 		if ( $this->is_retention_number_enabled() ) {
@@ -422,7 +425,26 @@ class User extends \WP_User {
 			while ( $query->have_posts() ) {
 				$count ++;
 				$query->the_post();
-				if ( apply_filters( 'friends_debug', false ) ) {
+				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
+					echo 'Deleting ', get_the_ID(), '<br/>';
+				}
+				wp_delete_post( get_the_ID(), true );
+			}
+		}
+
+		// Global setting.
+		if ( get_option( 'friends_enable_retention_number' ) ) {
+			$args = array(
+				'post_type' => Friends::CPT,
+				'offset'    => Friends::get_retention_number(),
+			);
+
+			$query = new \WP_Query( $args );
+
+			while ( $query->have_posts() ) {
+				$count ++;
+				$query->the_post();
+				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
 					echo 'Deleting ', get_the_ID(), '<br/>';
 				}
 				wp_delete_post( get_the_ID(), true );
@@ -575,7 +597,7 @@ class User extends \WP_User {
 	 */
 	public function get_post_stats() {
 		global $wpdb;
-		return $wpdb->get_row(
+		$post_stats = $wpdb->get_row(
 			$wpdb->prepare(
 				'SELECT SUM(
 					LENGTH( ID ) +
@@ -603,10 +625,21 @@ class User extends \WP_User {
 					LENGTH( comment_count )
 					) AS total_size,
 					COUNT(*) as post_count
-				FROM ' . $wpdb->posts . ' WHERE post_author = %d',
-				$this->ID
+				FROM ' . $wpdb->posts . ' WHERE post_author = %d AND post_type IN ( ' . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
+				array_merge( array( $this->ID ), Friends::get_frontend_post_types() )
+			),
+			ARRAY_A
+		);
+		$post_stats['earliest_post_date'] = mysql2date(
+			'U',
+			$wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT MIN(post_date) FROM $wpdb->posts WHERE post_author = %d AND post_status = 'publish' AND post_type IN ( " . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
+					array_merge( array( $this->ID ), Friends::get_frontend_post_types() )
+				)
 			)
 		);
+		return $post_stats;
 	}
 
 	/**
