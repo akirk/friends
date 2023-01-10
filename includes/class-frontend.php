@@ -930,6 +930,9 @@ class Frontend {
 			return $query;
 		}
 
+		// Don't let the Post Kinds plugin interfere with this query.
+		remove_action( 'pre_get_posts', array( 'Kind_Taxonomy', 'kind_firehose_query' ), 99 );
+
 		switch_to_locale( get_user_locale() );
 		$page_id = get_query_var( 'page' );
 
