@@ -254,7 +254,11 @@ $has_last_log = false;
 						esc_html_e( 'If you need to limit the amount of space, choose one of the options above (they can be combined).', 'friends' );
 						echo ' ';
 						esc_html_e( 'The next auto-delete will kick in when refreshing the feeds of this friend.', 'friends' );
-						echo ' ';
+						?>
+					</p>
+					</p>
+					<p class="description">
+						<?php
 						esc_html_e( 'Lower global settings have preceedence over the friend settings.', 'friends' );
 						?>
 					</p>
