@@ -7,14 +7,72 @@ namespace Friends\Blocks_Everywhere;
  */
 class Editor {
 	/**
+	 * Can upload?
+	 *
+	 * @var boolean
+	 */
+	private $can_upload = false;
+
+	/**
 	 * Constructor
 	 */
 	public function __construct() {
 		add_action( 'template_redirect', [ $this, 'setup_media' ] );
 		add_filter( 'block_editor_settings_all', [ $this, 'block_editor_settings_all' ] );
-
-		add_action( 'wp_footer', [ $this, 'wp_add_iframed_editor_assets_html' ], 20 );
 		add_filter( 'should_load_block_editor_scripts_and_styles', '__return_true' );
+		add_filter( 'wp_theme_json_data_theme', [ $this, 'wp_theme_json_data_theme' ] );
+	}
+
+	/**
+	 * Provide theme.json
+	 *
+	 * @param \WP_Theme_JSON_Data_Gutenberg $json JSON.
+	 * @return \WP_Theme_JSON_Data_Gutenberg
+	 */
+	public function wp_theme_json_data_theme( $json ) {
+		$theme = new \WP_Theme_JSON_Data_Gutenberg(
+			[
+				'version' => 2,
+				'settings' => [
+					'color' => [
+						'background' => false,
+						'custom' => false,
+						'customDuotone' => false,
+						'customGradient' => false,
+						'defaultGradients' => false,
+						'defaultPalette' => false,
+						'text' => false,
+					],
+					'typography' => [
+						'customFontSize' => false,
+						'dropCap' => false,
+						'fontStyle' => false,
+						'fontWeight' => false,
+						'letterSpacing' => false,
+						'lineHeight' => false,
+						'textDecoration' => false,
+						'textTransform' => false,
+						'fontSizes' => [],
+						'fontFamilies' => [],
+					],
+				],
+			]
+		);
+
+		return $theme;
+	}
+
+	/**
+	 * Restrict TinyMCE to the basics
+	 *
+	 * @param array $settings TinyMCE settings.
+	 * @return array
+	 */
+	public function tiny_mce_before_init( $settings ) {
+		$settings['toolbar1'] = 'bold,italic,bullist,numlist,blockquote,pastetext,removeformat,undo,redo';
+		$settings['toolbar2'] = '';
+
+		return $settings;
 	}
 
 	/**
@@ -22,12 +80,17 @@ class Editor {
 	 *
 	 * Based on wp-admin/edit-form-blocks.php
 	 *
+	 * @param array $settings Plugin settings.
 	 * @return void
 	 */
-	public function load() {
+	public function load( $settings ) {
 		global $post;
 
+		$this->can_upload = isset( $settings['editor']['hasUploadPermissions'] ) && $settings['editor']['hasUploadPermissions'];
 		$this->load_extra_blocks();
+
+		// Restrict tinymce buttons
+		add_filter( 'tiny_mce_before_init', [ $this, 'tiny_mce_before_init' ] );
 
 		// Gutenberg scripts
 		wp_enqueue_script( 'wp-block-library' );
@@ -121,9 +184,6 @@ class Editor {
 		$settings['availableLegacyWidgets']        = (object) [];
 		$settings['hasPermissionsToManageWidgets'] = false;
 
-		// Start with no patterns
-		$settings['__experimentalBlockPatterns'] = [];
-
 		return $settings;
 	}
 
@@ -143,20 +203,22 @@ class Editor {
 			'disablePostFormats'                   => ! current_theme_supports( 'post-formats' ),
 			/** This filter is documented in wp-admin/edit-form-advanced.php */
 			// phpcs:ignore
-			'titlePlaceholder'                     => apply_filters( 'enter_title_here', __( 'Add title' ), $post ),
+			'titlePlaceholder'                     => apply_filters( 'enter_title_here', __( 'Add title', 'blocks-everywhere' ), $post ),
 			'bodyPlaceholder'                      => $body_placeholder,
 			'autosaveInterval'                     => AUTOSAVE_INTERVAL,
 			'styles'                               => get_block_editor_theme_styles(),
 			'richEditingEnabled'                   => user_can_richedit(),
 			'postLock'                             => false,
 			'supportsLayout'                       => \WP_Theme_JSON_Resolver::theme_has_support(),
-			'__experimentalBlockPatterns'          => \WP_Block_Patterns_Registry::get_instance()->get_all_registered(),
-			'__experimentalBlockPatternCategories' => \WP_Block_Pattern_Categories_Registry::get_instance()->get_all_registered(),
+			'__experimentalBlockPatterns'          => [],
+			'__experimentalBlockPatternCategories' => [],
 			'supportsTemplateMode'                 => current_theme_supports( 'block-templates' ),
 			'enableCustomFields'                   => false,
 			'generateAnchors'                      => true,
 			'canLockBlocks'                        => false,
 		);
+
+		$editor_settings['__unstableResolvedAssets'] = $this->wp_get_iframed_editor_assets();
 
 		$block_editor_context = new \WP_Block_Editor_Context( array( 'post' => $post ) );
 		return get_block_editor_settings( $editor_settings, $block_editor_context );
@@ -206,6 +268,10 @@ class Editor {
 	 * @return void
 	 */
 	public function setup_media() {
+		if ( ! $this->can_upload ) {
+			return;
+		}
+
 		// If we've already loaded the media stuff then don't do it again
 		if ( did_action( 'wp_enqueue_media' ) > 0 ) {
 			return;
@@ -219,40 +285,39 @@ class Editor {
 		wp_enqueue_media();
 	}
 
-	public function wp_add_iframed_editor_assets_html() {
+	public function wp_get_iframed_editor_assets() {
 		$script_handles = array();
 		$style_handles  = array(
 			'wp-block-editor',
 			'wp-block-library',
-			'wp-block-library-theme',
 			'wp-edit-blocks',
 		);
+
+		if ( current_theme_supports( 'wp-block-styles' ) ) {
+			$style_handles[] = 'wp-block-library-theme';
+		}
 
 		$block_registry = \WP_Block_Type_Registry::get_instance();
 
 		foreach ( $block_registry->get_all_registered() as $block_type ) {
 			if ( ! empty( $block_type->style ) ) {
-				$style_handles[] = $block_type->style;
+				$style_handles = array_merge( $style_handles, (array) $block_type->style );
 			}
 
 			if ( ! empty( $block_type->editor_style ) ) {
-				$style_handles[] = $block_type->editor_style;
+				$style_handles = array_merge( $style_handles, (array) $block_type->editor_style );
 			}
 
 			if ( ! empty( $block_type->script ) ) {
-				$script_handles[] = $block_type->script;
+				$script_handles = array_merge( $script_handles, (array) $block_type->script );
+			}
+
+			if ( ! empty( $block_type->view_script ) ) {
+				$script_handles = array_merge( $script_handles, (array) $block_type->view_script );
 			}
 		}
 
 		$style_handles = apply_filters( 'blocks_everywhere_editor_styles', $style_handles );
-
-		// Make sure there are only strings in this array
-		$style_handles = array_filter(
-			$style_handles,
-			function( $handle ) {
-				return is_string( $handle );
-			}
-		);
 		$style_handles = array_unique( $style_handles );
 		$done          = wp_styles()->done;
 
@@ -276,14 +341,11 @@ class Editor {
 
 		$scripts = ob_get_clean();
 
-		$editor_assets = wp_json_encode(
-			array(
+		return wp_json_encode(
+			[
 				'styles'  => $styles,
 				'scripts' => $scripts,
-			)
+			]
 		);
-
-		// phpcs:ignore
-		echo "<script>window.__editorAssets = $editor_assets</script>";
 	}
 }
