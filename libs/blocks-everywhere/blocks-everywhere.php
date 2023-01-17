@@ -1,7 +1,7 @@
 <?php
 namespace Friends\Blocks_Everywhere;
 /*
- This is a copy of https://github.com/Automattic/blocks-everywhere version 1.8.0
+ This is a copy of https://github.com/Automattic/blocks-everywhere version 1.14.1
 
  Changes:
  - Adjusted namespaces to start with Friends.
@@ -15,6 +15,8 @@ require_once __DIR__ . '/classes/class-handler.php';
 require_once __DIR__ . '/classes/class-editor.php';
 
 class Blocks_Everywhere {
+	const VERSION = '1.14.1';
+
 	/**
 	 * Instance variable
 	 * @var Blocks_Everywhere|null
@@ -24,14 +26,14 @@ class Blocks_Everywhere {
 	/**
 	 * Gutenberg editor
 	 *
-	 * @var IsoEditor_Gutenberg|null
+	 * @var Blocks_Everywhere|null
 	 */
 	private $gutenberg = null;
 
 	/**
 	 * Gutenberg handlers
 	 *
-	 * @var Gutenberg_Handler[]
+	 * @var Handler\Handler[]
 	 */
 	private $handlers = [];
 
@@ -58,6 +60,11 @@ class Blocks_Everywhere {
 		add_action( 'admin_enqueue_scripts', [ $this, 'admin_enqueue_scripts' ] );
 	}
 
+	/**
+	 * Load whatever handler is configured
+	 *
+	 * @return void
+	 */
 	public function load_handlers() {
 		$this->handlers[] = new Handler\Friends_Message();
 		$this->handlers[] = new Handler\Friends_Status_Post();

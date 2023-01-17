@@ -200,6 +200,11 @@ h2#page-title a.dashicons {
 		flex: 3;
 	}
 
+	summary.quick-status-panel-opener {
+		margin-bottom: 2em;
+		cursor: pointer;
+	}
+
 	.card {
 		height: 100%;
 		box-shadow: none;
