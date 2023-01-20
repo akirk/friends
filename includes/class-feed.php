@@ -75,6 +75,7 @@ class Feed {
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
 
 		add_action( 'wp_insert_post', array( $this, 'invalidate_post_count_cache' ), 10, 2 );
+		add_action( 'oembed_request_post_id', array( $this, 'oembed_request_post_id' ), 10, 2 );
 	}
 
 	/**
@@ -1107,6 +1108,25 @@ class Feed {
 			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) LIMIT 1', $url, esc_attr( $url ) ) );
 		}
 		return $post_id;
+	}
+
+	public function oembed_request_post_id( $post_id, $url ) {
+		if ( ! $post_id ) {
+			$post_id = $this->url_to_postid( $url );
+			remove_filter( 'oembed_response_data', 'get_oembed_response_data_rich', 10, 4 );
+			add_action( 'oembed_response_data', array( $this, 'oembed_response_data' ), 10, 4 );
+			global $wp_post_types;
+			$wp_post_types[ Friends::CPT ]->publicly_queryable = true;
+		}
+		return $post_id;
+	}
+
+	public function oembed_response_data( $data, $post, $width, $height ) {
+		$data['width']  = absint( $width );
+		$data['height'] = absint( $height );
+		$data['type']   = 'rich';
+		$data['html']   = $post->post_content;
+		return $data;
 	}
 
 	public function get_user_feed_by_url( $url ) {
