@@ -1088,7 +1088,7 @@ class Feed {
 		if ( ( 'friend' === $new_role || 'acquaintance' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
 			update_user_option( $user_id, 'friends_new_friend', true );
 			$friend = new User( $user_id );
-			$friend->retrieve_posts();
+			$friend->retrieve_posts_from_active_feeds();
 		}
 	}
 

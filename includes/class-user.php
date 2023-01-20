@@ -368,86 +368,102 @@ class User extends \WP_User {
 	 *
 	 * @return array The new posts.
 	 */
-	public function retrieve_posts() {
+	public function retrieve_posts_from_active_feeds() {
+		return $this->retrieve_posts_from_feeds( $this->get_active_feeds() );
+	}
+
+	/**
+	 * Retrieve the posts for these user feeds
+	 *
+	 * @param      array $feeds  The feeds to retrieve from.
+	 *
+	 * @return array The new posts.
+	 */
+	public function retrieve_posts_from_feeds( array $feeds ) {
 		$friends = Friends::get_instance();
 		$new_posts = array();
-		foreach ( $this->get_active_feeds() as $feed ) {
+		foreach ( $feeds as $feed ) {
 			$posts = $friends->feed->retrieve_feed( $feed );
 			if ( ! is_wp_error( $posts ) ) {
 				$new_posts = array_merge( $new_posts, $posts );
 			}
 		}
 
-		$this->delete_outdated_posts();
-		return $new_posts;
+		$deleted_posts = $this->delete_outdated_posts();
+
+		return array_values( array_diff( $new_posts, $deleted_posts ) );
 	}
 
 	/**
 	 * Delete posts the user decided to automatically delete.
 	 */
 	public function delete_outdated_posts() {
-		$count = 0;
-		$date_before = false;
-		if ( $this->is_retention_days_enabled() ) {
-			$date_before = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $this->get_retention_days() * 24 ) . 'hours' ) );
-		} elseif ( get_option( 'friends_enable_retention_days' ) ) {
-			$date_before = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( Friends::get_retention_days() * 24 ) . 'hours' ) );
-		}
+		$deleted_posts = array();
+
 		$args = array(
-			'post_type'  => Friends::CPT,
-			'author'     => $this->ID,
-			'nopaging'   => true,
-			'date_query' => array(
-				'before' => $date_before,
-			),
+			'post_type' => Friends::CPT,
+			'author'    => $this->ID,
 		);
 
-		$query = new \WP_Query( $args );
-
-		while ( $query->have_posts() ) {
-			$count ++;
-			$query->the_post();
-			if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-				echo 'Deleting ', get_the_ID(), '<br/>';
-			}
-			wp_delete_post( get_the_ID(), true );
+		if ( $this->is_retention_days_enabled() ) {
+			$args['date_query'] = array(
+				'before' => gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $this->get_retention_days() * 24 ) . 'hours' ) ),
+			);
+		} elseif ( get_option( 'friends_enable_retention_days' ) ) {
+			$args['date_query'] = array(
+				'before' => gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( Friends::get_retention_days() * 24 ) . 'hours' ) ),
+			);
 		}
 
-		if ( $this->is_retention_number_enabled() ) {
-			$args = array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->ID,
-				'offset'    => $this->get_retention_number(),
-			);
-
+		if ( isset( $args['date_query'] ) ) {
 			$query = new \WP_Query( $args );
 
 			while ( $query->have_posts() ) {
-				$count ++;
 				$query->the_post();
+				$post_id = get_the_ID();
+
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', get_the_ID(), '<br/>';
+					echo 'Deleting ', esc_html( $post_id ), '<br/>';
 				}
-				wp_delete_post( get_the_ID(), true );
+				wp_delete_post( $post_id, true );
+				$deleted_posts[] = $post_id;
+			}
+		}
+
+		unset( $args['date_query'] );
+		$args['orderby'] = 'date';
+		$args['order'] = 'asc';
+		if ( $this->is_retention_number_enabled() ) {
+			$args['offset'] = $this->get_retention_number();
+			$query = new \WP_Query( $args );
+
+			while ( $query->have_posts() ) {
+				$query->the_post();
+				$post_id = get_the_ID();
+
+				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
+					echo 'Deleting ', esc_html( $post_id ), '<br/>';
+				}
+				wp_delete_post( $post_id, true );
+				$deleted_posts[] = $post_id;
 			}
 		}
 
 		// Global setting.
 		if ( get_option( 'friends_enable_retention_number' ) ) {
-			$args = array(
-				'post_type' => Friends::CPT,
-				'offset'    => Friends::get_retention_number(),
-			);
-
+			unset( $args['author'] );
+			$args['offset'] = Friends::get_retention_number();
 			$query = new \WP_Query( $args );
 
 			while ( $query->have_posts() ) {
-				$count ++;
 				$query->the_post();
+				$post_id = get_the_ID();
+
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', get_the_ID(), '<br/>';
+					echo 'Deleting ', esc_html( $post_id ), '<br/>';
 				}
-				wp_delete_post( get_the_ID(), true );
+				wp_delete_post( $post_id, true );
+				$deleted_posts[] = $post_id;
 			}
 		}
 
@@ -462,13 +478,17 @@ class User extends \WP_User {
 		$query = new \WP_Query( $args );
 
 		while ( $query->have_posts() ) {
-			$count ++;
 			$query->the_post();
-			if ( apply_filters( 'friends_debug', false ) ) {
-				echo 'Deleting ', get_the_ID(), '<br/>';
+			$post_id = get_the_ID();
+
+			if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
+				echo 'Deleting ', esc_html( $post_id ), '<br/>';
 			}
-			wp_delete_post( get_the_ID(), true );
+			wp_delete_post( $post_id, true );
+			$deleted_posts[ $post_id ] = $post_id;
 		}
+
+		return $deleted_posts;
 	}
 
 	/**

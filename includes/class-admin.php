@@ -341,7 +341,7 @@ class Admin {
 			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
 				wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
-			$friend_user->retrieve_posts();
+			$friend_user->retrieve_posts_from_active_feeds();
 		} else {
 			$this->friends->feed->retrieve_friend_posts();
 		}

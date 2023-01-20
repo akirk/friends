@@ -218,7 +218,10 @@ class REST {
 		}
 		$friend_user->update_user_icon_url( $request->get_param( 'icon_url' ) );
 		$friend_user->update_user_option( 'friends_future_out_token', $request->get_param( 'key' ) );
-		$friend_user->update_user_option( 'friends_request_message', mb_substr( $request->get_param( 'message' ), 0, 2000 ) );
+		$message = $request->get_param( 'message' );
+		if ( is_string( $message ) ) {
+			$friend_user->update_user_option( 'friends_request_message', mb_substr( $message, 0, 2000 ) );
+		}
 
 		$request_id = wp_generate_password( 128, false );
 		$friend_user->update_user_option( 'friends_request_id', $request_id );
