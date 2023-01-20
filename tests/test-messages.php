@@ -64,10 +64,10 @@ class MessagesTest extends Friends_TestCase_Cache_HTTP {
 			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
 		}
 
-		$this->friends_out_token = wp_generate_password( 128, false );
-		update_user_option( $this->user_id, 'friends_in_token', $this->friends_out_token );
-		if ( update_user_option( $this->friend_id, 'friends_out_token', $this->friends_out_token ) ) {
-			update_option( 'friends_in_token_' . $this->friends_out_token, $this->user_id );
+		$friends_out_token = wp_generate_password( 128, false );
+		update_user_option( $this->user_id, 'friends_in_token', $friends_out_token );
+		if ( update_user_option( $this->friend_id, 'friends_out_token', $friends_out_token ) ) {
+			update_option( 'friends_in_token_' . $friends_out_token, $this->user_id );
 		}
 
 		add_filter(

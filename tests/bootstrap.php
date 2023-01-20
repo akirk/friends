@@ -49,6 +49,7 @@ ob_start();
 // Start up the WP testing environment.
 require $_tests_dir . '/includes/bootstrap.php';
 require __DIR__ . '/class-friends-testcase-cache-http.php';
+require __DIR__ . '/class-feed-parser-local-file.php';
 Friends\Friends::activate_plugin();
 ob_end_clean();
 

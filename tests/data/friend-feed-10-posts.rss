@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<rss version="2.0">
+	<channel>
+		<title>friend.local</title>
+		<link>http://friend.local</link>
+		<description>My friend's site</description>
+		<item>
+			<title>First Post</title>
+			<link>http://friend.local/2023/01/01/first-post</link>
+			<description>This is the first post content.</description>
+		</item>
+		<item>
+			<title>Second Post</title>
+			<link>http://friend.local/2023/01/02/second-post</link>
+			<description>This is the second post content.</description>
+		</item>
+		<item>
+			<title>Third Post</title>
+			<link>http://friend.local/2023/01/03/third-post</link>
+			<description>This is the third post content.</description>
+		</item>
+		<item>
+			<title>Fourth Post</title>
+			<link>http://friend.local/2023/01/04/fourth-post</link>
+			<description>This is the fourth post content.</description>
+		</item>
+		<item>
+			<title>Fifth Post</title>
+			<link>http://friend.local/2023/01/05/fifth-post</link>
+			<description>This is the fifth post content.</description>
+		</item>
+		<item>
+			<title>Sixth Post</title>
+			<link>http://friend.local/2023/01/06/sixth-post</link>
+			<description>This is the sixth post content.</description>
+		</item>
+		<item>
+			<title>Seventh Post</title>
+			<link>http://friend.local/2023/01/07/seventh-post</link>
+			<description>This is the seventh post content.</description>
+		</item>
+		<item>
+			<title>Eighth Post</title>
+			<link>http://friend.local/2023/01/08/eighth-post</link>
+			<description>This is the eighth post content.</description>
+		</item>
+		<item>
+			<title>Ninth Post</title>
+			<link>http://friend.local/2023/01/09/ninth-post</link>
+			<description>This is the ninth post content.</description>
+		</item>
+		<item>
+			<title>Tenth Post</title>
+			<link>http://friend.local/2023/01/10/tenth-post</link>
+			<description>This is the tenth post content.</description>
+		</item>
+	</channel>
+</rss>
