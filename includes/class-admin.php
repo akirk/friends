@@ -128,7 +128,7 @@ class Admin {
 		add_action( 'load-' . $page_type . '_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
 		if ( $this->friends_unread_friend_request_count( 0 ) > 0 ) {
-			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friend-list?requests' );
+			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friends-list-requests', array( $this, 'render_friends_list' ) );
 		}
 
 		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
@@ -872,7 +872,13 @@ class Admin {
 		wp_die();
 	}
 	public function render_friends_list() {
-		echo '<div class="wrap"><h3>' . esc_html__( 'Your Friends & Subscriptions', 'friends' ) . '</h3>';
+		if ( isset( $_GET['page'] ) && 'friends-list-requests' === $_GET['page'] ) {
+			echo '<div class="wrap"><h3>' . esc_html__( 'Your Friend Requests', 'friends' ) . '</h3>';
+			$query = User_Query::all_friend_requests();
+		} else {
+			echo '<div class="wrap"><h3>' . esc_html__( 'Your Friends & Subscriptions', 'friends' ) . '</h3>';
+			$query = User_Query::all_associated_users();
+		}
 
 		if ( isset( $_GET['deleted'] ) ) {
 			?>
@@ -899,11 +905,12 @@ class Admin {
 			</p></div>
 			<?php
 		}
+
 		Friends::template_loader()->get_template_part(
 			'admin/friends-list',
 			null,
 			array(
-				'friends' => User_Query::all_associated_users()->get_results(),
+				'friends' => $query->get_results(),
 			)
 		);
 		echo '</div>';
@@ -2128,7 +2135,7 @@ class Admin {
 	}
 
 	public static function get_users_url() {
-		return 'users.php?role=' . implode( ',', array_keys( self::get_associated_roles() ) );
+		return 'admin.php?page=friends-list';
 	}
 
 	/**
@@ -2483,7 +2490,7 @@ class Admin {
 					'id'     => 'friends-requests',
 					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'My Friends & Requests', 'friends' ),
-					'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
+					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list-requests',
 				)
 			);
 			$wp_menu->add_menu(
