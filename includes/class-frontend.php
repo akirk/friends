@@ -914,7 +914,7 @@ class Frontend {
 			}
 		}
 
-		if ( ! $viewable ) {
+		if ( ! $viewable || ! Friends::on_frontend() ) {
 			if ( $query->is_feed() ) {
 				status_header( 404 );
 				$query->set_404();
