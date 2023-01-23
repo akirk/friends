@@ -132,14 +132,14 @@ $has_last_log = false;
 					<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url() ); ?>">
 						<?php
 						// translators: %d is the number of posts.
-						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
+						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['post_count'], 'friends' ), $args['post_count'] ) );
 						?>
 					</a>
 					<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
 						| <a href="<?php echo esc_url( self_admin_url( 'edit.php?post_type=' . Friends\Friends::CPT . '&author=' . $args['friend']->ID ) ); ?>">
 							<?php
 							// translators: %d is the number of posts.
-							echo esc_html( sprintf( _n( 'View %d cached post', 'View %d cached posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
+							echo esc_html( sprintf( _n( 'View %d cached post', 'View %d cached posts', $args['post_count'], 'friends' ), $args['post_count'] ) );
 							?>
 						</a>
 
@@ -179,6 +179,25 @@ $has_last_log = false;
 									),
 								)
 							);
+							echo '. ';
+							echo esc_html(
+								sprintf(
+								// translators: %s is a date.
+									__( 'Earliest post: %s', 'friends' ),
+									/* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ date_i18n( __( 'F j, Y' ), $args['earliest_post_date'] )
+								)
+							);
+							if ( $args['global_retention_days_enabled'] ) {
+								echo '. ';
+								echo esc_html(
+									sprintf(
+									// translators: %s is a number of days.
+										__( 'Global setting: %s days', 'friends' ),
+										number_format_i18n( $args['global_retention_days'] )
+									)
+								);
+							}
+
 							?>
 							</span>
 						</div>
@@ -204,6 +223,16 @@ $has_last_log = false;
 									),
 								)
 							);
+							if ( $args['global_retention_number_enabled'] ) {
+								echo '. ';
+								echo esc_html(
+									sprintf(
+										// translators: %s is a number.
+										__( 'Global setting: %s posts', 'friends' ),
+										number_format_i18n( $args['global_retention_number'] )
+									)
+								);
+							}
 							?>
 							</span>
 						</div>
@@ -212,11 +241,25 @@ $has_last_log = false;
 						<?php
 						echo esc_html(
 							sprintf(
-							// translators: %s is a size in bytes or kilo bytes (kB).
-								__( 'Currently the posts use %s of disk space. If you need to limit the amount of space, choose one of the options above (they can be combined). The next auto-delete will kick in when refreshing the feeds of this friend.', 'friends' ),
+								// translators: %s is a size in bytes or kilo bytes (kB).
+								__( 'Currently the posts use %s of disk space.', 'friends' ),
 								size_format( $args['total_size'], 1 )
 							)
 						);
+						?>
+					</p>
+					<p class="description">
+						<?php
+						echo ' ';
+						esc_html_e( 'If you need to limit the amount of space, choose one of the options above (they can be combined).', 'friends' );
+						echo ' ';
+						esc_html_e( 'The next auto-delete will kick in when refreshing the feeds of this friend.', 'friends' );
+						?>
+					</p>
+					</p>
+					<p class="description">
+						<?php
+						esc_html_e( 'Lower global settings have preceedence over the friend settings.', 'friends' );
 						?>
 					</p>
 				</td>

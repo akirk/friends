@@ -133,30 +133,27 @@ class FeedTest extends \WP_UnitTestCase {
 	/**
 	 * Common code for testing parsing a feed.
 	 *
-	 * @param      \SimplePie_File $file  A SimplePie File.
-	 * @param      User            $user   The optional user, otherwise the friend_id will be used.
+	 * @param      string $file  A SimplePie File.
+	 * @param      User   $user   The optional user, otherwise the friend_id will be used.
 	 */
-	private function feed_parsing_test( \SimplePie_File $file, User $user = null ) {
-		$parser = new Feed_Parser_SimplePie;
-
+	private function feed_parsing_test( $file, User $user = null ) {
 		if ( is_null( $user ) ) {
 			$user = new User( $this->friend_id );
 		}
-		$term = new \WP_Term(
-			(object) array(
-				'url' => $user->user_url . '/feed/',
-			)
-		);
-		$user_feed = new User_Feed( $term, $user );
-
 		$friends = Friends::get_instance();
+		$friends->feed->register_parser( 'local', new Feed_Parser_Local_File( $friends->feed ) );
 
-		$feed = new \SimplePie();
 		do {
-			$feed->set_file( $file );
-			$feed->init();
+			if ( ! isset( $feeds[ $file ] ) ) {
+				$feeds[ $file ] = User_Feed::save(
+					$user,
+					$file,
+					array( 'parser' => 'local' )
+				);
+			}
+			$user_feed = $feeds[ $file ];
 
-			$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
+			$new_items = $user->retrieve_posts_from_feeds( array( $user_feed ) );
 			$file = ( yield $new_items );
 		} while ( $file );
 	}
@@ -165,7 +162,7 @@ class FeedTest extends \WP_UnitTestCase {
 	 * Test parsing a feed.
 	 */
 	public function test_parse_feed() {
-		$feed_1_private_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
+		$feed_1_private_post = __DIR__ . '/data/friend-feed-1-private-post.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $feed_1_private_post );
 
 		$new_items = $feed_parsing_test->current();
@@ -182,7 +179,7 @@ class FeedTest extends \WP_UnitTestCase {
 	 * Test parsing a feed with ampersand URLs.
 	 */
 	public function test_parse_feed_with_url_ampersand() {
-		$feed_url_ampersand = new \SimplePie_File( __DIR__ . '/data/friend-feed-url-ampersand.rss' );
+		$feed_url_ampersand = __DIR__ . '/data/friend-feed-url-ampersand.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $feed_url_ampersand );
 
 		$new_items = $feed_parsing_test->current();
@@ -199,7 +196,7 @@ class FeedTest extends \WP_UnitTestCase {
 	 * Test parsing a feed with identical posts.
 	 */
 	public function test_parse_feed_with_identical_posts() {
-		$identical_posts = new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts.rss' );
+		$identical_posts = __DIR__ . '/data/friend-feed-identical-posts.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $identical_posts );
 
 		$new_items = $feed_parsing_test->current();
@@ -216,7 +213,7 @@ class FeedTest extends \WP_UnitTestCase {
 	 * Test parsing a feed with identical posts after the fold.
 	 */
 	public function test_parse_feed_with_identical_posts_after_fold() {
-		$identical_posts_after_fold = new \SimplePie_File( __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss' );
+		$identical_posts_after_fold = __DIR__ . '/data/friend-feed-identical-posts-after-fold.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $identical_posts_after_fold );
 
 		$new_items = $feed_parsing_test->current();
@@ -275,7 +272,7 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	public function test_feed_item_revisions_modified_content() {
-		$feed_1_public_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post.rss' );
+		$feed_1_public_post = __DIR__ . '/data/friend-feed-1-public-post.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
 
 		$new_items = $feed_parsing_test->current();
@@ -287,13 +284,13 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
 
-		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-content.rss' ) );
+		$feed_parsing_test->send( __DIR__ . '/data/friend-feed-1-public-post-modified-content.rss' );
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 1, wp_get_post_revisions( $post_id ) );
 	}
 
 	public function test_feed_item_revisions_modified_title() {
-		$feed_1_public_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post.rss' );
+		$feed_1_public_post = __DIR__ . '/data/friend-feed-1-public-post.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
 
 		$new_items = $feed_parsing_test->current();
@@ -305,13 +302,13 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
 
-		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-title.rss' ) );
+		$feed_parsing_test->send( __DIR__ . '/data/friend-feed-1-public-post-modified-title.rss' );
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 1, wp_get_post_revisions( $post_id ) );
 	}
 
 	public function test_feed_item_revisions_modified_title_content() {
-		$feed_1_public_post = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post.rss' );
+		$feed_1_public_post = __DIR__ . '/data/friend-feed-1-public-post.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
 
 		$new_items = $feed_parsing_test->current();
@@ -323,11 +320,11 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
 
-		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-title.rss' ) );
+		$feed_parsing_test->send( __DIR__ . '/data/friend-feed-1-public-post-modified-title.rss' );
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 1, wp_get_post_revisions( $post_id ) );
 
-		$feed_parsing_test->send( new \SimplePie_File( __DIR__ . '/data/friend-feed-1-public-post-modified-content.rss' ) );
+		$feed_parsing_test->send( __DIR__ . '/data/friend-feed-1-public-post-modified-content.rss' );
 		$this->assertCount( 0, $feed_parsing_test->current() );
 		$this->assertCount( 2, wp_get_post_revisions( $post_id ) );
 	}
@@ -514,7 +511,7 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	function test_external_comments() {
-		$zylstra = new \SimplePie_File( __DIR__ . '/data/zylstra.rss' );
+		$zylstra = __DIR__ . '/data/zylstra.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $zylstra );
 
 		$new_items = $feed_parsing_test->current();
@@ -527,5 +524,96 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( 6, $post->comment_count );
 
 		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/feed/', get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true ) );
+	}
+
+	function test_global_retention_count() {
+		$this->assertTrue( Friends::get_retention_number() > 10 );
+		$user = new User( $this->friend_id );
+
+		$feed = __DIR__ . '/data/friend-feed-10-posts.rss';
+		$feed_parsing_test = $this->feed_parsing_test( $feed, $user );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 10, $new_items );
+		$count = wp_count_posts( Friends::CPT );
+
+		$this->assertEquals( 10, $count->publish );
+		$this->assertTrue( Friends::get_retention_number() > 10 );
+
+		// Now we fetch it again, there are no posts.
+		$feed_parsing_test->send( $feed );
+
+		$new_items = $feed_parsing_test->current();
+			$this->assertCount( 0, $new_items );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 10, $count->publish );
+
+		// Now we'll set the global retention and fetch again.
+		update_option( 'friends_retention_number', 10 );
+		$this->assertEquals( 10, Friends::get_retention_number() );
+
+		// We're just at the limit, so nothing should change.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 10, $count->publish );
+
+		// Now we'll reduce the global retention and fetch again.
+		update_option( 'friends_retention_number', 9 );
+		$this->assertEquals( 9, Friends::get_retention_number() );
+
+		// It's not enabled, so nothing should change.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 10, $count->publish );
+
+		update_option( 'friends_enable_retention_number', true );
+
+		// Now finally, it should go down to 9.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 9, $count->publish );
+
+		// No new items but one more than we had.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 9, $count->publish );
+
+		update_option( 'friends_enable_retention_number', false );
+
+		// Since retention limiting was disabled, it should go back up to 10.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 10, $count->publish );
+
+		$user->set_retention_number( 5 );
+		// Nothing should change since it's not enabled.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 10, $count->publish );
+
+		$user->set_retention_number_enabled( true );
+		// Now the number should go down to 5.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 5, $count->publish );
 	}
 }

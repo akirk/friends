@@ -9,6 +9,8 @@
 
 namespace Friends;
 
+use stdClass;
+
 /**
  * This is the class for the Friends Plugin.
  *
@@ -746,6 +748,89 @@ class Friends {
 		}
 
 		return $counts;
+	}
+
+	/**
+	 * Get the retention by number of posts.
+	 *
+	 * @return int The retention by number of posts.
+	 */
+	public static function get_retention_number() {
+		$number = get_option( 'friends_retention_number' );
+		if ( $number <= 0 ) {
+			return 2000;
+		}
+
+		return $number;
+	}
+
+	/**
+	 * Get the retention by days of posts.
+	 *
+	 * @return int The retention by days of posts.
+	 */
+	public static function get_retention_days() {
+		$days = get_option( 'friends_retention_days' );
+		if ( $days <= 0 ) {
+			return 30;
+		}
+
+		return $days;
+	}
+
+
+
+	/**
+	 * Gets the post stats.
+	 *
+	 * @return     object  The post stats.
+	 */
+	public static function get_post_stats() {
+		global $wpdb;
+		$post_stats = $wpdb->get_row(
+			$wpdb->prepare(
+				'SELECT SUM(
+				LENGTH( ID ) +
+				LENGTH( post_author ) +
+				LENGTH( post_date ) +
+				LENGTH( post_date_gmt ) +
+				LENGTH( post_content ) +
+				LENGTH( post_title ) +
+				LENGTH( post_excerpt ) +
+				LENGTH( post_status ) +
+				LENGTH( comment_status ) +
+				LENGTH( ping_status ) +
+				LENGTH( post_password ) +
+				LENGTH( post_name ) +
+				LENGTH( to_ping ) +
+				LENGTH( pinged ) +
+				LENGTH( post_modified ) +
+				LENGTH( post_modified_gmt ) +
+				LENGTH( post_content_filtered ) +
+				LENGTH( post_parent ) +
+				LENGTH( guid ) +
+				LENGTH( menu_order ) +
+				LENGTH( post_type ) +
+				LENGTH( post_mime_type ) +
+				LENGTH( comment_count )
+				) AS total_size,
+				COUNT(*) as post_count
+			FROM ' . $wpdb->posts . ' WHERE post_type IN ( ' . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
+				Friends::get_frontend_post_types()
+			),
+			ARRAY_A
+		);
+		$post_stats['earliest_post_date'] = mysql2date(
+			'U',
+			$wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT MIN(post_date) FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ( " . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
+					Friends::get_frontend_post_types()
+				)
+			)
+		);
+
+		return $post_stats;
 	}
 
 	/**

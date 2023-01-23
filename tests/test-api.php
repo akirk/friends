@@ -131,7 +131,7 @@ class APITest extends \WP_UnitTestCase {
 	 */
 	public function test_get_non_friend_posts() {
 		$friend_user = new User( $this->friend_id );
-		$posts = $friend_user->retrieve_posts();
+		$posts = $friend_user->retrieve_posts_from_active_feeds();
 		$this->assertCount( 1, $posts );
 	}
 
@@ -141,7 +141,7 @@ class APITest extends \WP_UnitTestCase {
 	public function test_get_friend_posts() {
 		wp_set_current_user( $this->user_id );
 		$friend_user = new User( $this->friend_id );
-		$posts = $friend_user->retrieve_posts();
+		$posts = $friend_user->retrieve_posts_from_active_feeds();
 		$this->assertCount( 2, $posts );
 	}
 }

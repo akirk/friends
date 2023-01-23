@@ -82,14 +82,14 @@
 					<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url() ); ?>">
 						<?php
 						// translators: %d is the number of posts.
-						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
+						echo esc_html( sprintf( _n( 'View %d post', 'View %d posts', $args['post_count'], 'friends' ), $args['post_count'] ) );
 						?>
 					</a>
 					<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
 						| <a href="<?php echo esc_url( self_admin_url( 'edit.php?post_type=' . Friends\Friends::CPT . '&author=' . $args['friend']->ID ) ); ?>">
 							<?php
 							// translators: %d is the number of posts.
-							echo esc_html( sprintf( _n( 'View %d cached post', 'View %d cached posts', $args['friend_posts'], 'friends' ), $args['friend_posts'] ) );
+							echo esc_html( sprintf( _n( 'View %d cached post', 'View %d cached posts', $args['post_count'], 'friends' ), $args['post_count'] ) );
 							?>
 						</a>
 

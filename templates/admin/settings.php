@@ -203,10 +203,104 @@ do_action( 'friends_settings_before_form' );
 					</p>
 				</td>
 			</tr>
-			<?php
-			if ( current_user_can( 'manage_options' ) ) :
-				;
-				?>
+			<tr>
+				<th><?php esc_html_e( 'Retention', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<div>
+							<input type="checkbox" name="friends_enable_retention_days" id="friends_enable_retention_days" value="1" <?php checked( '1', $args['retention_days_enabled'] ); ?> />
+							<span id="friends_enable_retention_days_line" class="<?php echo esc_attr( $args['retention_days_enabled'] ? '' : 'disabled' ); ?>">
+							<?php
+							echo wp_kses(
+								sprintf(
+									// translators: %s is an input field that allows specifying a number.
+									__( 'Only keep posts for %s days', 'friends' ),
+									'<input type="number" min="1" id="friends_retention_days" name="friends_retention_days" value="' . esc_attr( $args['retention_days'] ) . '"' . ( $args['retention_days_enabled'] ? '' : ' disabled="disabled"' ) . ' size="3">'
+								),
+								array(
+									'input' => array(
+										'type'     => array(),
+										'min'      => array(),
+										'id'       => array(),
+										'name'     => array(),
+										'value'    => array(),
+										'size'     => array(),
+										'disabled' => array(),
+									),
+								)
+							);
+							echo '. ';
+							echo esc_html(
+								sprintf(
+								// translators: %s is a date.
+									__( 'Earliest post: %s', 'friends' ),
+									/* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ date_i18n( __( 'F j, Y' ), $args['earliest_post_date'] )
+								)
+							);
+							?>
+							</span>
+						</div>
+						<div>
+							<input type="checkbox" name="friends_enable_retention_number" id="friends_enable_retention_number" value="1" <?php checked( '1', $args['retention_number_enabled'] ); ?> />
+							<span id="friends_enable_retention_number_line" class="<?php echo esc_attr( $args['retention_number_enabled'] ? '' : 'disabled' ); ?>">
+							<?php
+							echo wp_kses(
+								sprintf(
+									// translators: %s is an input field that allows specifying a number.
+									__( 'Only keep the last %s posts', 'friends' ),
+									'<input type="number" min="1" id="friends_retention_number" name="friends_retention_number" value="' . esc_attr( $args['retention_number'] ) . '"' . ( $args['retention_number_enabled'] ? '' : ' disabled="disabled"' ) . ' size="3">'
+								),
+								array(
+									'input' => array(
+										'type'     => array(),
+										'min'      => array(),
+										'id'       => array(),
+										'name'     => array(),
+										'value'    => array(),
+										'size'     => array(),
+										'disabled' => array(),
+									),
+								)
+							);
+							echo '. ';
+							echo esc_html(
+								sprintf(
+								// translators: %s is a date.
+									__( 'Current number of posts: %s', 'friends' ),
+									number_format_i18n( $args['post_count'] )
+								)
+							);
+							?>
+							</span>
+						</div>
+					</fieldset>
+					<p class="description">
+						<?php
+						echo esc_html(
+							sprintf(
+								// translators: %s is a size in bytes or kilo bytes (kB).
+								__( 'Currently the posts use %s of disk space.', 'friends' ),
+								size_format( $args['total_size'], 1 )
+							)
+						);
+						?>
+					</p>
+					<p class="description">
+						<?php
+						echo ' ';
+						esc_html_e( 'If you need to limit the amount of space, choose one of the options above (they can be combined).', 'friends' );
+						echo ' ';
+						esc_html_e( 'The next auto-delete will kick in when refreshing the feeds.', 'friends' );
+						?>
+					</p>
+					<p class="description">
+						<?php
+						esc_html_e( 'You can also specify this for individual friends.', 'friends' );
+						?>
+					</p>
+				</td>
+			</tr>
+			<?php if ( current_user_can( 'manage_options' ) ) : ?>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Post Formats', 'friends' ); ?></th>
 				<td>
