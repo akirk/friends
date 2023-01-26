@@ -698,12 +698,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				<fieldset>
 					<div>
 						<input type="checkbox" name="friends_show_replies" id="friends_show_replies" value="1" <?php checked( '1', $friend->get_user_option( 'activitypub_friends_show_replies' ) ); ?> />
-						<label for="friends_show_replies"><?php esc_html_e( "Don't hide @mentions of others", 'friends' ); ?></label>
+						<label for="friends_show_replies"><?php esc_html_e( "Don't hide @mentions of feeds you don't follow", 'friends' ); ?></label>
 						</div>
 				</fieldset>
 				<p class="description">
 				<?php
-				esc_html_e( "If an incoming post from ActivityPub starts with an @mention of someone you don't follow, it won't be hidden automatically.", 'friends' );
+				esc_html_e( "Show ActivityPub '@mention' posts even when you do not follow the feed being mentioned.", 'friends' );
 				?>
 				</p>
 			</td>
