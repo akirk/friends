@@ -77,6 +77,15 @@ class REST {
 				'permission_callback' => '__return_true',
 			)
 		);
+		register_rest_route(
+			self::PREFIX,
+			'embed',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'rest_embed_friend_post' ),
+				'permission_callback' => '__return_true',
+			)
+		);
 	}
 
 	/**
@@ -299,6 +308,30 @@ class REST {
 		return array(
 			'deleted' => true,
 		);
+	}
+
+	public function rest_embed_friend_post( $request ) {
+		if ( empty( $_GET['url'] ) ) {
+			return false;
+		}
+		$post_id = $this->friends->feed->url_to_postid( $_GET['url'] );
+		if ( empty( $post_id ) ) {
+			return false;
+		}
+
+		if ( ! in_array( get_post_type( $post_id ), Friends::get_frontend_post_types() ) ) {
+			return false;
+		}
+
+		enqueue_embed_scripts();
+		$post = get_post( $post_id );
+		$args = compact( 'post' );
+		setup_postdata( $post );
+
+		header( 'Content-type: text/html' );
+		Friends::template_loader()->get_template_part( 'embed/header-embed', null, $args );
+		Friends::template_loader()->get_template_part( 'embed/embed-content', null, $args );
+		exit;
 	}
 
 	/**

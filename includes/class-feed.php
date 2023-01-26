@@ -75,6 +75,8 @@ class Feed {
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
 
 		add_action( 'wp_insert_post', array( $this, 'invalidate_post_count_cache' ), 10, 2 );
+		add_action( 'oembed_request_post_id', array( $this, 'oembed_request_post_id' ), 10, 2 );
+		add_action( 'post_embed_url', array( $this, 'post_embed_url' ), 10, 2 );
 	}
 
 	/**
@@ -1100,13 +1102,62 @@ class Feed {
 	 * @return int Post ID, or 0 on failure.
 	 */
 	public function url_to_postid( $url, $author_id = false ) {
+		$post_types = Friends::get_frontend_post_types();
+		$args = $post_types;
+
 		global $wpdb;
+		$sql = sprintf(
+			'SELECT ID from ' . $wpdb->posts . ' WHERE post_type IN ( %s )',
+			implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
+		);
+
 		if ( $author_id ) {
-			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) AND post_author = %d LIMIT 1', $url, esc_attr( $url ), $author_id ) );
-		} else {
-			$post_id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID from ' . $wpdb->posts . ' WHERE guid IN (%s, %s) LIMIT 1', $url, esc_attr( $url ) ) );
+			$args[] = $author_id;
+			$sql .= ' AND post_author = %d';
+		}
+
+		$sql .= 'AND guid IN (%s, %s) LIMIT 1';
+		$args[] = $url;
+		$args[] = esc_attr( $url );
+
+		$post_id = $wpdb->get_var(
+			$wpdb->prepare(
+				$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+				$args
+			)
+		);
+		return $post_id;
+	}
+
+	public function oembed_request_post_id( $post_id, $url ) {
+		if ( ! $post_id ) {
+			$post_id = $this->url_to_postid( $url );
+			global $wp_post_types;
+			$wp_post_types[ Friends::CPT ]->publicly_queryable = true;
 		}
 		return $post_id;
+	}
+
+	public function post_embed_url( $embed_url, $post ) {
+		if ( ! in_array( $post->post_type, Friends::get_frontend_post_types() ) ) {
+			return $embed_url;
+		}
+
+		return add_query_arg( 'url', $post->guid, rest_url( Rest::PREFIX . '/embed' ) );
+	}
+
+	public function oembed_response_data( $data, $post, $width, $height ) {
+		$data['width']  = absint( $width );
+		$data['height'] = absint( $height );
+		$data['type']   = 'rich';
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'oembed/status', null, array( 'post' => $post ) );
+		$data['html'] = ob_get_contents();
+		ob_end_clean();
+
+		$data['html'] = '<p>' . wp_kses_post( $post->post_content ) . '</p>';
+		return $data;
 	}
 
 	public function get_user_feed_by_url( $url ) {
