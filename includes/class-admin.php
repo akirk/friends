@@ -894,6 +894,21 @@ class Admin {
 	public function render_friends_list() {
 		if ( isset( $_GET['page'] ) && 'friends-list-requests' === $_GET['page'] ) {
 			echo '<div class="wrap"><h3>' . esc_html__( 'Your Friend Requests', 'friends' ) . '</h3>';
+			echo '<p>';
+			echo wp_kses(
+				sprintf(
+					// translators: %1$s is a URL, %2$s is the translated text "Your Friends & Subscriptions".
+					__( 'These are your current friend requests. To see all your friends and subscriptions, go to <a href="%1$s">%2$s</a>.', 'friends' ),
+					self_admin_url( 'admin.php?page=friends-list' ),
+					__( 'Your Friends & Subscriptions', 'friends' )
+				),
+				array(
+					'a' => array(
+						'href' => array(),
+					),
+				)
+			);
+			echo '</p>';
 			$query = User_Query::all_friend_requests();
 		} else {
 			echo '<div class="wrap"><h3>' . esc_html__( 'Your Friends & Subscriptions', 'friends' ) . '</h3>';
@@ -2384,7 +2399,7 @@ class Admin {
 					'parent' => 'friends-menu',
 					// translators: %s is the number of open friend requests.
 					'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $friend_request_count, 'friends' ), $friend_request_count ) ),
-					'href'   => $my_url . '/wp-admin/users.php?role=friend_request',
+					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list-requests',
 				)
 			);
 		}
@@ -2494,7 +2509,7 @@ class Admin {
 							get_bloginfo( 'name' )
 						) . '</span>'
 					),
-					'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
+					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list-requests',
 				)
 			);
 		}
@@ -2513,7 +2528,7 @@ class Admin {
 					'id'     => 'friends-requests',
 					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'My Friends & Requests', 'friends' ),
-					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list-requests',
+					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list',
 				)
 			);
 			$wp_menu->add_menu(
