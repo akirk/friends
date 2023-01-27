@@ -73,7 +73,6 @@ __( 'Summary Draft Title', 'friends' );
 __( 'This title for the draft post will be used. You can use the following variables: <tt>$date</tt> <tt>$day</tt> <tt>$month</tt> <tt>$year</tt> <tt>$author</tt>', 'friends' );
 // translators: %s is an E-Reader name.
 _n( 'Send %1$d new post to %2$s', 'Send %1$d new posts to %2$s', 1, 'friends' );
-__( 'No new posts', 'friends' );
 __( 'Close', 'friends' );
 __( 'Here you can choose a title and author for the book. You can also leave them empty, then they will be generated.', 'friends' );
 __( 'E-Book Title', 'friends' );

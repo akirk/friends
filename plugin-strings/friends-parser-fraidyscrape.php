@@ -13,6 +13,12 @@
 __( 'Friends Parser Fraidyscrape', 'friends' );
 // Description of the Friends Parser Fraidyscrape plugin.
 __( 'Provides the parsing capabilities of Fraidyscrape (the parser behind Fraidycat).', 'friends' );
+// translators: %s is the number of photos.
+_n( '%d photo', '%d photos', 1, 'friends' );
+// translators: %s is the number of videos.
+_n( '%d video', '%d videos', 1, 'friends' );
+// translators: %s is a URL.
+__( 'Could not parse %s.', 'friends' );
 __( 'Default Confidence', 'friends' );
 __( 'If you set this to a higher value, this parser will take precedence over others that also say they can handle the URL.', 'friends' );
 __( 'Save Changes', 'friends' );
