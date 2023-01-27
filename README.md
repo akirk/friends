@@ -6,7 +6,7 @@
 - Tested up to: 6.1
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: trunk
+- Stable tag: 2.3.0
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -85,6 +85,15 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. You can react to a post or share it using Post Collections.
 
 ## Changelog
+
+### 2.3.0
+- The Wiki now contains a [Hooks Documentation](https://github.com/akirk/friends/wiki/Hooks) ([#167]) 
+- Frontend: Add CSS rule to fix odd resizing ([#166]) 
+- Frontend: Add a "Show hidden items" in the main feed header ([#172]) 
+- Frontend: Upgrade Blocks Everywhere, hide Quick Post Panel by default ([#180], [#183]) 
+- Frontend: Don't let the Post Kinds plugin interfere with the friends query ([#176]) 
+- Admin: Fix inconsistencies with links to the new friends list link ([#184]) props @pfefferle
+- Admin: Tweak text for "Show Hidden Items" setting, per-feed. ([#173]) props @alecmuffett
 
 ### 2.2.0
 - Fix remote friends plugin detection on public Friends page when headers are stripped ([#160]).
@@ -170,7 +179,14 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
-
+[#184]: https://github.com/akirk/friends/pull/184
+[#183]: https://github.com/akirk/friends/pull/183
+[#180]: https://github.com/akirk/friends/pull/180
+[#176]: https://github.com/akirk/friends/pull/176
+[#173]: https://github.com/akirk/friends/pull/173
+[#172]: https://github.com/akirk/friends/pull/172
+[#167]: https://github.com/akirk/friends/pull/167
+[#166]: https://github.com/akirk/friends/pull/166
 [#160]: https://github.com/akirk/friends/pull/160
 [#121]: https://github.com/akirk/friends/pull/121
 [#141]: https://github.com/akirk/friends/pull/141
