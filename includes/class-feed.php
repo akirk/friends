@@ -1116,7 +1116,7 @@ class Feed {
 			$sql .= ' AND post_author = %d';
 		}
 
-		$sql .= 'AND guid IN (%s, %s) LIMIT 1';
+		$sql .= ' AND guid IN (%s, %s) LIMIT 1';
 		$args[] = $url;
 		$args[] = esc_attr( $url );
 
