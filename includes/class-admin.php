@@ -129,6 +129,10 @@ class Admin {
 
 		if ( $this->friends_unread_friend_request_count( 0 ) > 0 ) {
 			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friends-list-requests', array( $this, 'render_friends_list' ) );
+		} elseif ( isset( $_GET['page'] ) && 'friends-list-requests' === $_GET['page'] ) {
+			// Don't show a no permission page but redirect to the friends list.
+			wp_safe_redirect( self_admin_url( 'admin.php?page=friends-list' ) );
+			exit;
 		}
 
 		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
@@ -2438,7 +2442,14 @@ class Admin {
 		$we_requested_friendship = false;
 		$they_requested_friendship = false;
 
-		if ( is_multisite() ) {
+		if ( current_user_can( 'friend' ) ) {
+			$current_user = wp_get_current_user();
+			if ( ! $current_user->user_url ) {
+				return;
+			}
+
+			$my_url = $current_user->user_url;
+		} elseif ( is_multisite() ) {
 			$site = get_active_blog_for_user( get_current_user_id() );
 			if ( ! $site ) {
 				// If we cannot find a site, we shouldn't show the admin bar entry.
@@ -2455,13 +2466,6 @@ class Admin {
 					$we_requested_friendship = true;
 				}
 			}
-		} elseif ( current_user_can( 'friend' ) ) {
-			$current_user = wp_get_current_user();
-			if ( ! $current_user->user_url ) {
-				return;
-			}
-
-			$my_url = $current_user->user_url;
 		} elseif ( Friends::has_required_privileges() ) {
 			$my_url = home_url();
 			$on_my_own_site = true;
@@ -2471,16 +2475,22 @@ class Admin {
 			switch_to_blog( $my_own_site->blog_id );
 		}
 
+		$unread = '';
+		if ( $on_my_own_site ) {
+			$unread = $this->get_unread_badge();
+		}
 		$wp_menu->add_node(
 			array(
 				'id'     => 'friends-menu',
 				'parent' => '',
-				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $this->get_unread_badge() . '</span>',
+				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $unread . '</span>',
 				'href'   => $my_url . '/friends/',
 			)
 		);
 
-		do_action( 'friends_own_site_menu_top', $wp_menu, $my_url );
+		if ( $on_my_own_site ) {
+			do_action( 'friends_own_site_menu_top', $wp_menu, $my_url );
+		}
 
 		if ( ! $on_my_own_site && $my_own_site ) {
 			restore_current_blog();
