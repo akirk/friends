@@ -86,6 +86,13 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.3.1
+- Remove stale ActivityPub version and use the information from WordPress.org (#195)
+- Allow mixing of post formats on the frontend
+- Allow filtering notifications by the incoming feed (#196)
+- Fix friends menu on other site (#189) 
+- Added missing space to generated SQL query (#191) 
+
 ### 2.3.0
 - The Wiki now contains a [Hooks Documentation](https://github.com/akirk/friends/wiki/Hooks) ([#167]) 
 - Frontend: Add CSS rule to fix odd resizing ([#166]) 
