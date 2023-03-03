@@ -19,18 +19,6 @@ if ( 'cli' !== php_sapi_name() ) {
 	exit( 1 );
 }
 
-preg_match( '/^\s*\*\s+Version:\s*(.*)$/mi', file_get_contents( 'https://plugins.svn.wordpress.org/activitypub/trunk/activitypub.php' ), $version );
-$activitypub_version = $version[1];
-$activitypub_last_update = array_reduce(
-	$http_response_header,
-	function( $carry, $item ) {
-		if ( preg_match( '/^last-modified:\s*(.*)$/i', $item, $m ) ) {
-			return gmdate( 'Y-m-d', strtotime( $m[1] ) );
-		}
-		return $carry;
-	}
-);
-
 $json = array();
 foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 	$slug = basename( $dir );
