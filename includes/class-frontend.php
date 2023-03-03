@@ -966,12 +966,8 @@ class Frontend {
 					return $this->render_opml( isset( $_REQUEST['public'] ) );
 
 				case 'type':
-					if ( ! isset( $pagename_parts[0], $post_formats[ $pagename_parts[0] ] ) ) {
-						break;
-					}
-
 					$post_format = array_shift( $pagename_parts );
-					$tax_query = $this->friends->wp_query_get_post_format_tax_query( $tax_query, $post_format );
+					$tax_query = $this->friends->wp_query_get_post_format_tax_query( $tax_query, explode( ',', $post_format ) );
 
 					if ( $tax_query ) {
 						$this->post_format = $post_format;

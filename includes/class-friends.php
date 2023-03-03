@@ -901,48 +901,59 @@ class Friends {
 	/**
 	 * Add a post_format filter to a \WP_Query.
 	 *
-	 * @param      array  $tax_query             The tax query.
-	 * @param      string $filter_by_post_format  The filter by post format.
+	 * @param      array        $tax_query             The tax query.
+	 * @param      string|array $filter_by_post_format  The filter by post format.
 	 *
 	 * @return     array|null  The tax query, if any.
 	 */
 	public function wp_query_get_post_format_tax_query( $tax_query, $filter_by_post_format ) {
-		if ( ! $filter_by_post_format ) {
+		if ( empty( $filter_by_post_format ) ) {
 			return $tax_query;
 		}
+
+		if ( ! is_array( $filter_by_post_format ) ) {
+			$filter_by_post_format = array( $filter_by_post_format );
+		}
+
 		$post_formats = get_post_format_slugs();
-		if ( ! isset( $post_formats[ $filter_by_post_format ] ) ) {
+		$filter_by_post_format = array_filter(
+			$filter_by_post_format,
+			function( $post_format ) use ( $post_formats ) {
+				return in_array( $post_format, $post_formats, true );
+			}
+		);
+		if ( empty( $filter_by_post_format ) ) {
 			return $tax_query;
 		}
 
 		if ( ! empty( $tax_query ) ) {
 			$tax_query['relation'] = 'AND';
 		}
+		$post_format_query = array(
+			'taxonomy' => 'post_format',
+			'field'    => 'slug',
+		);
 
-		if ( 'standard' === $filter_by_post_format ) {
-			$formats = array();
-
-			foreach ( $post_formats as $format ) {
-				if ( ! in_array( $format, array( 'standard' ) ) ) {
-					$formats[] = 'post-format-' . $format;
-				}
-			}
-
-			if ( ! empty( $formats ) ) {
-				$tax_query[] = array(
-					'operator' => 'NOT IN',
-					'taxonomy' => 'post_format',
-					'field'    => 'slug',
-					'terms'    => $formats,
-				);
-			}
+		if ( in_array( 'standard', $filter_by_post_format, true ) ) {
+			$post_format_query['operator'] = 'NOT IN';
+			$post_format_query['terms']    = array_values(
+				array_map(
+					function( $post_format ) {
+						return 'post-format-' . $post_format;
+					},
+					array_diff( $post_formats, $filter_by_post_format )
+				)
+			);
 		} else {
-				$tax_query[] = array(
-					'taxonomy' => 'post_format',
-					'field'    => 'slug',
-					'terms'    => array( 'post-format-' . $filter_by_post_format ),
-				);
+			$post_format_query['operator'] = 'IN';
+			$post_format_query['terms']    = array_map(
+				function( $post_format ) {
+					return 'post-format-' . $post_format;
+				},
+				$filter_by_post_format
+			);
 		}
+		$tax_query[] = $post_format_query;
 
 		return $tax_query;
 	}

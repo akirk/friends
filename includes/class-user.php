@@ -922,11 +922,14 @@ class User extends \WP_User {
 	/**
 	 * Gets the local friends page url for a post format.
 	 *
-	 * @param      string $post_format  The post format.
+	 * @param      string|array $post_format  The post format.
 	 *
 	 * @return     string      The local friends page url.
 	 */
 	function get_local_friends_page_post_format_url( $post_format ) {
+		if ( is_array( $post_format ) ) {
+			$post_format = implode( ',', $post_format );
+		}
 		return home_url( '/friends/' . $this->user_login . '/type/' . $post_format . '/' );
 	}
 

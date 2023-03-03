@@ -12,8 +12,8 @@
 	<?php esc_html_e( 'With this plugin you can make your WordPress the center of your online activity.', 'friends' ); ?>
 </p>
 <p>
-	<?php esc_html_e( 'By building up your network based on your own website, you can stay independent of external social networks.', 'friends' ); ?>
-	<?php esc_html_e( 'This is how it works:', 'friends' ); ?>
+	<span><?php esc_html_e( 'By building up your network based on your own website, you can stay independent of external social networks.', 'friends' ); ?></span>
+	<span><?php esc_html_e( 'This is how it works:', 'friends' ); ?></span>
 </p>
 <ul>
 	<li>
@@ -29,11 +29,13 @@
 		?>
 	</li>
 	<li>
-		<?php esc_html_e( 'A lot of the functionality you might know from other networks is provided by this plugin, just without outside dependencies.', 'friends' ); ?>
+		<span><?php esc_html_e( 'A lot of the functionality you might know from other networks is provided by this plugin, just without outside dependencies.', 'friends' ); ?></span>
+		<span>
 		<?php
 		// translators: %s is the URL of the user's friends page.
 		echo wp_kses( sprintf( __( 'For example, when you take certain actions like subcribe to a new site, <a href=%1$s>automatic status posts</a> will be created but you decide when and if you want to publish them.', 'friends' ), '"' . admin_url( 'admin.php?page=automatic-status' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 		?>
+		</span>
 	</li>
 	<li>
 		<?php
