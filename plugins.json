@@ -1,18 +1,4 @@
 {
-    "activitypub": {
-        "name": "ActivityPub",
-        "short_description": "Adds ActivityPub support to your blog. Be followed on Mastodon, follow people on Mastodon with the Friends plugin.",
-        "more_info": "https://wordpress.org/plugins/activitypub/",
-        "author": "<a href='https://notiz.blog/'>Matthias Pfefferle</a>",
-        "slug": "activitypub",
-        "version": "0.15.0",
-        "trunk": "https://downloads.wordpress.org/plugin/activitypub.0.15.0.zip",
-        "download_link": "https://downloads.wordpress.org/plugin/activitypub.0.15.0.zip",
-        "last_updated": "2023-01-12",
-        "sections": {
-            "Description": "People can follow your blog on Mastodon and other federated platforms that support ActivityPub, and you can follow them in the Friends plugin."
-        }
-    },
     "friends-autoresolve-links": {
         "name": "Friends Autoresolve Links",
         "short_description": "Transform plaintext links of incoming content (especially t.co shortlinks) into rich(er) links.",
