@@ -31,22 +31,7 @@ $activitypub_last_update = array_reduce(
 	}
 );
 
-$json = array(
-	'activitypub' => array(
-		'name'              => 'ActivityPub',
-		'short_description' => 'Adds ActivityPub support to your blog. Be followed on Mastodon, follow people on Mastodon with the Friends plugin.',
-		'more_info'         => 'https://wordpress.org/plugins/activitypub/',
-		'author'            => '<a href=\'https://notiz.blog/\'>Matthias Pfefferle</a>',
-		'slug'              => 'activitypub',
-		'version'           => $activitypub_version,
-		'trunk'             => 'https://downloads.wordpress.org/plugin/activitypub.' . $activitypub_version . '.zip',
-		'download_link'     => 'https://downloads.wordpress.org/plugin/activitypub.' . $activitypub_version . '.zip',
-		'last_updated'      => $activitypub_last_update,
-		'sections'          => array(
-			'Description' => 'People can follow your blog on Mastodon and other federated platforms that support ActivityPub, and you can follow them in the Friends plugin.',
-		),
-	),
-);
+$json = array();
 foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 	$slug = basename( $dir );
 	if ( ! file_exists( "$dir/$slug.php" ) ) {

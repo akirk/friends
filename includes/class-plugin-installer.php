@@ -46,10 +46,18 @@ class Plugin_Installer {
 	 * @since      1.0
 	 */
 	public static function init() {
-
-		$plugins = self::get_friends_plugins();
+		$additional_plugins = array(
+			'activitypub' => __( 'Adds ActivityPub support to your blog. Be followed on Mastodon, follow people on Mastodon with the Friends plugin.', 'friends' ),
+			'nodeinfo'    => true,
+		);
+		$plugins = array_merge( $additional_plugins, self::get_friends_plugins() );
+		ksort( $plugins );
 
 		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+
+		wp_enqueue_script( 'plugin-install' );
+		add_thickbox();
+		wp_enqueue_script( 'updates' );
 
 		foreach ( array_keys( (array) $plugins ) as $plugin_slug ) {
 
@@ -76,6 +84,13 @@ class Plugin_Installer {
 					),
 				)
 			);
+
+			if ( isset( $additional_plugins[ $plugin_slug ] ) ) {
+				$api->more_info = admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_slug . '&TB_iframe=true' );
+				if ( is_string( $additional_plugins[ $plugin_slug ] ) ) {
+					$api->comment = $additional_plugins[ $plugin_slug ];
+				}
+			}
 
 			if ( ! is_wp_error( $api ) ) {
 				$main_plugin_file = self::get_plugin_file( $plugin_slug );
@@ -142,6 +157,9 @@ class Plugin_Installer {
 
 			$data = array();
 			foreach ( json_decode( wp_remote_retrieve_body( $remote ) ) as $slug => $plugin_data ) {
+				if ( 'activitypub' === $slug ) {
+					continue;
+				}
 				$plugin_data->sections = (array) $plugin_data->sections;
 				$data[ $slug ] = $plugin_data;
 			}
