@@ -223,10 +223,11 @@ class Feed {
 	/**
 	 * Notify users about new posts of this friend
 	 *
-	 * @param      User  $friend_user  The friend.
-	 * @param      array $new_posts    The new posts of this friend.
+	 * @param      User      $friend_user  The friend.
+	 * @param      array     $new_posts    The new posts of this friend.
+	 * @param      User_Feed $user_feed    The user feed.
 	 */
-	public function notify_about_new_posts( User $friend_user, $new_posts ) {
+	public function notify_about_new_posts( User $friend_user, $new_posts, User_Feed $user_feed ) {
 		$keywords = self::get_active_notification_keywords();
 		foreach ( $new_posts as $post_id ) {
 			$post = false;
@@ -254,7 +255,7 @@ class Feed {
 				}
 			}
 
-			$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id );
+			$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id, $user_feed );
 			if ( $notify_users ) {
 				if ( ! $post ) {
 					$post = get_post( intval( $post_id ) );
@@ -686,7 +687,7 @@ class Feed {
 			wp_set_current_user( $current_user->ID );
 		}
 
-		$this->notify_about_new_posts( $friend_user, $new_posts );
+		$this->notify_about_new_posts( $friend_user, $new_posts, $user_feed );
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $modified_posts, $friend_user );
 
