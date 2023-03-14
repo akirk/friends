@@ -33,6 +33,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function __construct( Feed $friends_feed ) {
 		$this->friends_feed = $friends_feed;
 
+		\add_action( 'init', array( $this, 'register_post_meta' ) );
+		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
+
 		\add_action( 'activitypub_inbox', array( $this, 'handle_received_activity' ), 10, 3 );
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
@@ -55,6 +58,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
+	}
+
+	function register_post_meta() {
+		register_post_meta(
+			Friends::CPT,
+			self::SLUG,
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'object',
+			)
+		);
+	}
+
+	function feed_item_allow_set_metadata( $verdict, $key, $value ) {
+		if ( self::SLUG === $key && ! empty( $value ) ) {
+			// We don't want to insert empty post meta.
+			return true;
+		}
+		return $verdict;
 	}
 
 	/**
@@ -362,16 +385,47 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'post_format'  => $this->map_type_to_post_format( $object['type'] ),
 			'date'         => $object['published'],
 			'_external_id' => $object['id'],
+			self::SLUG     => array(),
 		);
+
+		if ( isset( $object['reblog'] ) && $object['reblog'] ) {
+			$data[ self::SLUG ]['reblog'] = $object['reblog'];
+		}
 
 		if ( isset( $object['attributedTo'] ) ) {
 			$meta = $this->get_metadata( $object['attributedTo'] );
 			$this->log( 'Attributed to ' . $object['attributedTo'], compact( 'meta' ) );
-			if ( isset( $meta['name'] ) ) {
-				$data['author'] = $meta['name'];
-			} elseif ( isset( $meta['preferredUsername'] ) ) {
-				$data['author'] = $meta['preferredUsername'];
+
+			if ( $meta ) {
+				if ( isset( $meta['name'] ) ) {
+					$data['author'] = $meta['name'];
+				} elseif ( isset( $meta['preferredUsername'] ) ) {
+					$data['author'] = $meta['preferredUsername'];
+				}
+
+				$data[ self::SLUG ]['attributedTo'] = array(
+					'id' => $meta['id'],
+				);
+				if ( ! empty( $meta['icon']['url'] ) ) {
+					$data[ self::SLUG ]['attributedTo']['icon'] = $meta['icon']['url'];
+				}
+
+				if ( ! empty( $meta['summary'] ) ) {
+					$data[ self::SLUG ]['attributedTo']['summary'] = $meta['summary'];
+				}
+
+				if ( ! empty( $meta['preferredUsername'] ) ) {
+					$data[ self::SLUG ]['attributedTo']['preferredUsername'] = $meta['preferredUsername'];
+				}
+
+				if ( ! empty( $meta['name'] ) ) {
+					$data[ self::SLUG ]['attributedTo']['name'] = $meta['name'];
+				}
 			}
+		}
+
+		if ( isset( $object['application'] ) && $object['application'] ) {
+			$data[ self::SLUG ]['application'] = $object['application'];
 		}
 
 		if ( ! empty( $object['attachment'] ) ) {
@@ -386,14 +440,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$data['content'] .= PHP_EOL;
 				$data['content'] .= '<!-- wp:image -->';
 				$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '" width="' . esc_attr( $attachment['width'] ) . '"  height="' . esc_attr( $attachment['height'] ) . '" class="size-full" /></p>';
-				$data['content'] .= '<!-- /wp:image  -->';
-			}
-			$meta = $this->get_metadata( $object['attributedTo'] );
-			$this->log( 'Attributed to ' . $object['attributedTo'], compact( 'meta' ) );
-			if ( isset( $meta['name'] ) ) {
-				$data['author'] = $meta['name'];
-			} elseif ( isset( $meta['preferredUsername'] ) ) {
-				$data['author'] = $meta['preferredUsername'];
+				$data['content'] .= '<!-- /wp:image -->';
 			}
 		}
 
@@ -411,7 +458,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * We received an announced URL (boost) for a feed, handle it.
 	 *
 	 * @param      array $url     The announced URL.
-	 * @param      int   $user_id  The user id.
+	 * @param      int   $user_id  The user id (for retrieving the keys).
 	 */
 	private function handle_incoming_announce( $url, $user_id = null ) {
 		if ( ! Friends::check_url( $url ) ) {
@@ -433,6 +480,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 		$this->log( 'Received response', compact( 'url', 'object' ) );
+
+		$object['reblog'] = true;
 
 		return $this->handle_incoming_post( $object );
 	}
