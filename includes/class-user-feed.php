@@ -667,6 +667,10 @@ class User_Feed {
 	 * @return array                    An array of User_Feed objects.
 	 */
 	public static function get_for_user( \WP_User $friend_user ) {
+		if ( ! $friend_user instanceof User ) {
+			return array();
+		}
+
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,
