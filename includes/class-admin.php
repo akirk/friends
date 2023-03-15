@@ -2342,7 +2342,7 @@ class Admin {
 		if ( 'friends_posts' !== $column_name ) {
 			return $output;
 		}
-		$numposts = count_user_posts( $user_id, array_merge( array( 'post' ), Friends::get_frontend_post_types() ) );
+		$numposts = count_user_posts( $user_id, apply_filters( 'friends_frontend_post_types', array( 'post' ) ) );
 		$user = User::get_user_by_id( $user_id );
 		return sprintf(
 			'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
@@ -2692,7 +2692,7 @@ class Admin {
 		User_Feed::delete_user_terms( $user_id );
 
 		global $wpdb;
-		$post_types_to_delete = implode( "', '", Friends::get_frontend_post_types() );
+		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
 
 		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d AND post_type IN ('$post_types_to_delete')", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( $post_ids ) {

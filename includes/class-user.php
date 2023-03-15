@@ -104,6 +104,20 @@ class User extends \WP_User {
 		return $friend_user;
 	}
 
+	public static function register_wrapper_hooks() {
+		add_filter( 'friends_get_user_feeds', array( 'Friends\User', 'friends_get_user_feeds' ), 10, 2 );
+	}
+
+	/**
+	 * Get the feeds for a user.
+	 *
+	 * @param      array    $feeds  The feeds.
+	 * @param      \WP_User $user   The user.
+	 */
+	public static function friends_get_user_feeds( $feeds, $user ) {
+		return array_merge( $feeds, User_Feed::get_for_user( $user ) );
+	}
+
 	/**
 	 * Convert a site URL to a username
 	 *
@@ -589,11 +603,12 @@ class User extends \WP_User {
 	 */
 	public function get_post_in_trash_count() {
 		global $wpdb;
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $wpdb->posts WHERE post_type IN ( " . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' ) AND post_status = "trash" AND post_author = %d',
-				array_merge( Friends::get_frontend_post_types(), array( $this->ID ) )
+				"SELECT COUNT(*) FROM $wpdb->posts WHERE post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash" AND post_author = %d',
+				array_merge( $post_types, array( $this->ID ) )
 			)
 		);
 
@@ -617,6 +632,7 @@ class User extends \WP_User {
 	 */
 	public function get_post_stats() {
 		global $wpdb;
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$post_stats = $wpdb->get_row(
 			$wpdb->prepare(
 				'SELECT SUM(
@@ -645,8 +661,8 @@ class User extends \WP_User {
 					LENGTH( comment_count )
 					) AS total_size,
 					COUNT(*) as post_count
-				FROM ' . $wpdb->posts . ' WHERE post_author = %d AND post_type IN ( ' . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
-				array_merge( array( $this->ID ), Friends::get_frontend_post_types() )
+				FROM ' . $wpdb->posts . ' WHERE post_author = %d AND post_type IN ( ' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+				array_merge( array( $this->ID ), $post_types )
 			),
 			ARRAY_A
 		);
@@ -654,8 +670,8 @@ class User extends \WP_User {
 			'U',
 			$wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT MIN(post_date) FROM $wpdb->posts WHERE post_author = %d AND post_status = 'publish' AND post_type IN ( " . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
-					array_merge( array( $this->ID ), Friends::get_frontend_post_types() )
+					"SELECT MIN(post_date) FROM $wpdb->posts WHERE post_author = %d AND post_status = 'publish' AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+					array_merge( array( $this->ID ), $post_types )
 				)
 			)
 		);

@@ -43,7 +43,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'like_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'unlike_post' ), 10, 3 );
-		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_rewrite_incoming_url' ), 10, 2 );
+		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_webfinger_resolve' ), 10, 2 );
 
 		\add_filter( 'friends_edit_friend_table_end', array( $this, 'activitypub_settings' ), 10 );
 		\add_filter( 'friends_edit_friend_after_form_submit', array( $this, 'activitypub_save_settings' ), 10 );
@@ -58,6 +58,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
+
+		add_filter( 'friends_get_feed_metadata', array( $this, 'friends_get_feed_metadata' ), 10, 2 );
+		add_filter( 'friends_webfinger_resolve', array( $this, 'friends_webfinger_resolve' ), 10, 2 );
+	}
+
+	public function friends_get_feed_metadata( $meta, $feed ) {
+		if ( self::SLUG === $feed->get_parser() ) {
+			return array_merge( $meta, self::get_metadata( $feed->get_url() ) );
+		}
+		return $meta;
 	}
 
 	function register_post_meta() {
@@ -156,7 +166,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 *
 	 * @return     string  The rewritten URL.
 	 */
-	public function friends_rewrite_incoming_url( $url, $incoming_url ) {
+	public function friends_webfinger_resolve( $url, $incoming_url ) {
 		if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $incoming_url ) ) {
 			$resolved_url = \Activitypub\Webfinger::resolve( $incoming_url );
 			if ( ! is_wp_error( $resolved_url ) ) {

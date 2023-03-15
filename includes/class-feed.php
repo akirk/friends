@@ -1103,7 +1103,7 @@ class Feed {
 	 * @return int Post ID, or 0 on failure.
 	 */
 	public function url_to_postid( $url, $author_id = false ) {
-		$post_types = Friends::get_frontend_post_types();
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$args = $post_types;
 
 		global $wpdb;
@@ -1140,7 +1140,7 @@ class Feed {
 	}
 
 	public function post_embed_url( $embed_url, $post ) {
-		if ( ! in_array( $post->post_type, Friends::get_frontend_post_types() ) ) {
+		if ( ! in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ) ) ) {
 			return $embed_url;
 		}
 

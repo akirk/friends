@@ -24,7 +24,7 @@ if ( is_multisite() ) {
 		$args['friend']->user_login
 	);
 }
-$numposts = count_user_posts( $args['friend']->ID, array_merge( array( 'post' ), \Friends\Friends::get_frontend_post_types() ) );
+$numposts = count_user_posts( $args['friend']->ID, apply_filters( 'friends_frontend_post_types', array( 'post' ) ) );
 $numfeeds = count( $args['friend']->get_active_feeds() );
 
 ?>

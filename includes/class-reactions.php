@@ -69,7 +69,7 @@ class Reactions {
 			'rewrite'           => false,
 			'public'            => false,
 		);
-		register_taxonomy( 'friend-reaction-' . $user_id, Friends::get_frontend_post_types(), $args );
+		register_taxonomy( 'friend-reaction-' . $user_id, apply_filters( 'friends_frontend_post_types', array() ), $args );
 	}
 
 	/**
