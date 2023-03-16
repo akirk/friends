@@ -60,14 +60,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 
 		add_filter( 'friends_get_feed_metadata', array( $this, 'friends_get_feed_metadata' ), 10, 2 );
-		add_filter( 'friends_webfinger_resolve', array( $this, 'friends_webfinger_resolve' ), 10, 2 );
+		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
 	}
 
 	public function friends_get_feed_metadata( $meta, $feed ) {
 		if ( self::SLUG === $feed->get_parser() ) {
-			return array_merge( $meta, self::get_metadata( $feed->get_url() ) );
+			return $this->friends_activitypub_metadata( $meta, $feed->get_url() );
 		}
 		return $meta;
+	}
+
+	public function friends_activitypub_metadata( $meta, $url ) {
+		return array_merge( $meta, self::get_metadata( $url ) );
 	}
 
 	function register_post_meta() {
@@ -177,6 +181,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function get_metadata( $url ) {
+		if ( ! is_string( $url ) ) {
+			return array();
+		}
+
 		if ( false !== strpos( $url, '@' ) && false === strpos( $url, '/' ) && preg_match( '#^https?://#', $url, $m ) ) {
 			$url = substr( $url, strlen( $m[0] ) );
 		}
