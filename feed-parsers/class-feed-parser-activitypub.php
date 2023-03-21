@@ -121,6 +121,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return 10;
 		}
 
+		if ( 'application/activity+json' === $mime_type ) {
+			return 10;
+		}
+
 		return 0;
 	}
 

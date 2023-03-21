@@ -184,12 +184,6 @@ class Feed {
 	}
 
 	/**
-	 * Retrieve posts from a remote WordPress for a friend.
-	 *
-	 * @param  User $friend_user A single user to fetch.
-	 */
-
-	/**
 	 * Retrieves a user feed.
 	 *
 	 * @param      User_Feed $user_feed  The user feed.

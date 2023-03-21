@@ -470,6 +470,21 @@ class User_Feed {
 		do_action( 'friends_after_register_feed_taxonomy' );
 	}
 
+	public function activate() {
+		if ( metadata_exists( 'term', $this->term->term_id, 'active' ) ) {
+			update_metadata( 'term', $this->term->term_id, 'active', true );
+		} else {
+			add_metadata( 'term', $this->term->term_id, 'active', true, true );
+		}
+		do_action( 'friends_user_feed_activated', $this );
+	}
+
+	public function deactivate() {
+		delete_metadata( 'term', $this->term->term_id, 'active' );
+		do_action( 'friends_user_feed_deactivated', $this );
+	}
+
+
 	/**
 	 * Delete all feeds for a user (when it its being deleted).
 	 *
