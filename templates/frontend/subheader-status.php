@@ -23,8 +23,8 @@
 
 			<div class="form-group col-4">
 				<select name="status" class="form-select">
-					<option value="public"><?php esc_html_e( 'Visible to everyone', 'friends' ); ?></option>
-					<option value="pivate"><?php esc_html_e( 'Only visible to my friends', 'friends' ); ?></option>
+					<option value="publish"><?php esc_html_e( 'Visible to everyone', 'friends' ); ?></option>
+					<option value="private"><?php esc_html_e( 'Only visible to my friends', 'friends' ); ?></option>
 				</select>
 			</div>
 
