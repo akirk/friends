@@ -672,6 +672,9 @@ class Feed {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
 
+			update_post_meta( $post_id, 'parser', $user_feed->get_parser() );
+			update_post_meta( $post_id, 'feed_url', $user_feed->get_url() );
+
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 		}
