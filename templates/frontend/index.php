@@ -16,7 +16,7 @@ Friends\Friends::template_loader()->get_template_part(
 );
 
 ?>
-<section class="posts columns">
+<section class="posts columns translator-exclude">
 	<?php
 	if ( ! have_posts() ) {
 		?>
