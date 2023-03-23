@@ -54,6 +54,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
 
+		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
+
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 	}
 
@@ -964,6 +966,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Approve comments that
+	 *
+	 * @param      bool  $approved     Whether the comment is approved.
+	 * @param      array $commentdata  The commentdata.
+	 *
+	 * @return     bool    Whether the comment is approved.
+	 */
+	public function pre_comment_approved( $approved, $commentdata ) {
+		if ( ! $approved || is_string( $approved ) ) {
+			$user_feed = User_Feed::get_by_url( $commentdata['comment_author_url'] );
+			if ( $user_feed instanceof User_Feed ) {
+				$approved = true;
+			}
+		}
+		return $approved;
 	}
 
 	/**
