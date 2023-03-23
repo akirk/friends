@@ -1180,6 +1180,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function reblog( $ret, $post ) {
 		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
 			$this->announce( $post->guid );
+			update_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			return true;
 		}
 		return $ret;
