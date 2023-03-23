@@ -282,14 +282,14 @@ class Frontend {
 			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
 		}
 
-		$ret = apply_filters( 'friends_reblog', null, $post );
-		if ( ! $ret || is_wp_error( $ret ) ) {
+		$reblog_post_id = apply_filters( 'friends_reblog', null, $post );
+		if ( ! $reblog_post_id || is_wp_error( $reblog_post_id ) ) {
 			wp_send_json_error( 'error' );
 		}
 
 		wp_send_json_success(
 			array(
-				'post_id' => $post->ID,
+				'post_id' => $reblog_post_id,
 			)
 		);
 	}
@@ -338,7 +338,7 @@ class Frontend {
 		update_post_meta( $post_id, 'reblog', $old_guid );
 		update_post_meta( $old_post_id, 'reblogged', $post_id );
 
-		return true;
+		return $post_id;
 	}
 
 	/**

@@ -40,7 +40,9 @@ class Reactions {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
-		add_action( 'wp_ajax_friends-toggle-react', array( $this, 'toggle_react' ) );
+		add_action( 'wp_ajax_friends-toggle-react', array( $this, 'wp_ajax_toggle_react' ) );
+		add_action( 'friends_react', array( $this, 'react' ), 10, 3 );
+		add_action( 'friends_unreact', array( $this, 'unreact' ), 10, 3 );
 	}
 
 	/**
@@ -192,7 +194,7 @@ class Reactions {
 	/**
 	 * Store a reaction.
 	 */
-	public function toggle_react() {
+	public function wp_ajax_toggle_react() {
 		check_ajax_referer( 'friends-reaction' );
 
 		if ( ! is_user_logged_in() ) {
@@ -215,7 +217,6 @@ class Reactions {
 		}
 
 		$post_id = intval( $_POST['post_id'] );
-		$available_emojis = self::get_available_emojis();
 		$emoji = self::validate_emoji( $_POST['reaction'] );
 
 		if ( ! $emoji ) {
@@ -233,11 +234,17 @@ class Reactions {
 		}
 
 		if ( ! $term ) {
-			wp_set_object_terms( $post_id, $_POST['reaction'], $taxonomy, true );
-			do_action( 'friends_user_post_reaction', $post_id, $emoji );
+			$ret = apply_filters( 'friends_react', null, $post_id, $_POST['reaction'] );
 		} else {
-			wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
-			do_action( 'friends_user_post_undo_reaction', $post_id, $emoji );
+			$ret = apply_filters( 'friends_unreact', null, $post_id, $_POST['reaction'] );
+		}
+
+		if ( ! $ret || is_wp_error( $ret ) ) {
+			wp_send_json_error(
+				array(
+					'result' => false,
+				)
+			);
 		}
 
 		wp_send_json_success(
@@ -245,6 +252,44 @@ class Reactions {
 				'result' => true,
 			)
 		);
+	}
+
+	public function react( $ret, $post_id, $reaction ) {
+		$taxonomy = 'friend-reaction-' . get_current_user_id();
+		$term = false;
+		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
+			if ( $t->slug === $reaction ) {
+				$term = $t;
+				break;
+			}
+		}
+
+		if ( ! $term ) {
+			wp_set_object_terms( $post_id, $_POST['reaction'], $taxonomy, true );
+			do_action( 'friends_user_post_reaction', $post_id, self::validate_emoji( $_POST['reaction'] ), $_POST['reaction'] );
+			return true;
+		}
+
+		return false;
+	}
+
+	public function unreact( $ret, $post_id, $reaction ) {
+		$taxonomy = 'friend-reaction-' . get_current_user_id();
+		$term = false;
+		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
+			if ( $t->slug === $reaction ) {
+				$term = $t;
+				break;
+			}
+		}
+
+		if ( $term ) {
+			wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
+			do_action( 'friends_user_post_undo_reaction', $post_id, self::validate_emoji( $_POST['reaction'] ), $_POST['reaction'] );
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
