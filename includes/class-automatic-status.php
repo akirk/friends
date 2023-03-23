@@ -55,7 +55,6 @@ class Automatic_Status {
 	 * Add the admin menu to the sidebar.
 	 */
 	public function admin_menu() {
-		$required_role = Friends::required_menu_role();
 		$unread_badge = $this->friends->admin->get_unread_badge();
 
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;

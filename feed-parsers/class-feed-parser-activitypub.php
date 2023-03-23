@@ -12,7 +12,6 @@
 
 namespace Friends;
 
-use PO;
 use WP_Error;
 
 /**
@@ -35,6 +34,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$this->friends_feed = $friends_feed;
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
+		\add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
 
 		\add_action( 'activitypub_inbox', array( $this, 'handle_received_activity' ), 10, 3 );
@@ -66,6 +66,76 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_filter( 'friends_get_feed_metadata', array( $this, 'friends_get_feed_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
+	}
+
+	/**
+	 * Add the admin menu to the sidebar.
+	 */
+	public function admin_menu() {
+		$friends = Friends::get_instance();
+		$unread_badge = $friends->admin->get_unread_badge();
+
+		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
+		$page_type = sanitize_title( $menu_title );
+
+		add_submenu_page(
+			'friends',
+			__( 'ActivityPub', 'friends' ),
+			__( 'ActivityPub', 'friends' ),
+			Friends::required_menu_role(),
+			'friends-activitypub-settings',
+			array( $this, 'settings' )
+		);
+
+		add_action( 'load-' . $page_type . '_page_friends-activitypub-settings', array( $this, 'process_settings' ) );
+	}
+
+	public function settings() {
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'menu'   => array(
+					__( 'ActivityPub Settings', 'friends' ) => 'friends-activitypub-settings',
+				),
+				'active' => 'friends-activitypub-settings',
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
+
+		if ( isset( $_GET['updated'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Settings were updated.', 'friends' ); ?></p></div>
+			<?php
+		} elseif ( isset( $_GET['error'] ) ) {
+			?>
+			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
+			<?php
+		}
+
+		Friends::template_loader()->get_template_part(
+			'admin/activitypub-settings',
+			null,
+			array(
+				'reblog' => ! get_user_option( 'activitypub_dont_reblog' ),
+			)
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
+
+	public function process_settings() {
+		if ( empty( $_POST ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'friends-activitypub-settings' ) ) {
+			return;
+		}
+
+		if ( isset( $_POST['activitypub_reblog'] ) ) {
+			delete_user_option( get_current_user_id(), 'activitypub_dont_reblog' );
+		} else {
+			update_user_option( get_current_user_id(), 'activitypub_dont_reblog', true );
+		}
+		wp_safe_redirect( add_query_arg( 'updated', 'true', admin_url( 'admin.php?page=friends-activitypub-settings' ) ) );
+		exit;
 	}
 
 	public function friends_get_feed_metadata( $meta, $feed ) {
@@ -1074,13 +1144,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 	}
 
-
 	public function announce_button() {
+		$button_label = _x( 'Reblog & Boost', 'button', 'friends' );
+		if ( get_user_option( 'activitypub_dont_reblog' ) ) {
+			$button_label = _x( 'Boost', 'button', 'friends' );
+		}
+
 		Friends::template_loader()->get_template_part(
 			'frontend/activitypub-announce',
 			null,
 			array(
-				'feed' => $this,
+				'feed'         => $this,
+				'button-label' => $button_label,
 			)
 		);
 	}
