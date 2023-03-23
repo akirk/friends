@@ -184,12 +184,6 @@ class Feed {
 	}
 
 	/**
-	 * Retrieve posts from a remote WordPress for a friend.
-	 *
-	 * @param  User $friend_user A single user to fetch.
-	 */
-
-	/**
 	 * Retrieves a user feed.
 	 *
 	 * @param      User_Feed $user_feed  The user feed.
@@ -678,6 +672,9 @@ class Feed {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
 
+			update_post_meta( $post_id, 'parser', $user_feed->get_parser() );
+			update_post_meta( $post_id, 'feed_url', $user_feed->get_url() );
+
 			global $wpdb;
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 		}
@@ -1103,7 +1100,7 @@ class Feed {
 	 * @return int Post ID, or 0 on failure.
 	 */
 	public function url_to_postid( $url, $author_id = false ) {
-		$post_types = Friends::get_frontend_post_types();
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$args = $post_types;
 
 		global $wpdb;
@@ -1140,7 +1137,7 @@ class Feed {
 	}
 
 	public function post_embed_url( $embed_url, $post ) {
-		if ( ! in_array( $post->post_type, Friends::get_frontend_post_types() ) ) {
+		if ( ! in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ) ) ) {
 			return $embed_url;
 		}
 

@@ -30,7 +30,7 @@ $author_name = get_the_author_meta( 'display_name' );
 $override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, get_the_id() );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2">
-		<?php if ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) ) : ?>
+		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
 				<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
 			</a>
@@ -42,7 +42,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 	</div>
 	<div class="post-meta">
 		<div class="author">
-			<?php if ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) ) : ?>
+			<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
 					<strong><?php the_author(); ?></strong>
 					<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
@@ -115,7 +115,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 				<?php if ( current_user_can( 'edit_post', get_current_user_id(), get_the_ID() ) ) : ?>
 					<li class="menu-item"><?php edit_post_link(); ?></li>
 				<?php endif; ?>
-				<?php if ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) ) : ?>
+				<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 					<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . get_the_author_meta( 'ID' ) . '&post=' . get_the_ID() ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
 						<?php esc_html_e( 'Muffle posts like these', 'friends' ); ?>
 					</a></li>

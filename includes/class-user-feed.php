@@ -470,6 +470,21 @@ class User_Feed {
 		do_action( 'friends_after_register_feed_taxonomy' );
 	}
 
+	public function activate() {
+		if ( metadata_exists( 'term', $this->term->term_id, 'active' ) ) {
+			update_metadata( 'term', $this->term->term_id, 'active', true );
+		} else {
+			add_metadata( 'term', $this->term->term_id, 'active', true, true );
+		}
+		do_action( 'friends_user_feed_activated', $this );
+	}
+
+	public function deactivate() {
+		delete_metadata( 'term', $this->term->term_id, 'active' );
+		do_action( 'friends_user_feed_deactivated', $this );
+	}
+
+
 	/**
 	 * Delete all feeds for a user (when it its being deleted).
 	 *
@@ -663,10 +678,14 @@ class User_Feed {
 	/**
 	 * Fetch the feeds associated with the User.
 	 *
-	 * @param  User $friend_user The user we're looking for.
+	 * @param  \WP_User $friend_user The user we're looking for.
 	 * @return array                    An array of User_Feed objects.
 	 */
-	public static function get_for_user( User $friend_user ) {
+	public static function get_for_user( \WP_User $friend_user ) {
+		if ( ! $friend_user instanceof User ) {
+			return array();
+		}
+
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,

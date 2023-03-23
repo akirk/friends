@@ -155,8 +155,11 @@ class Friends {
 		add_filter( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
+		add_filter( 'friends_frontend_post_types', array( $this, 'add_frontend_post_types' ) );
 
 		add_filter( 'request', array( $this, 'limit_post_format_request' ), 20 );
+
+		User::register_wrapper_hooks();
 	}
 
 	/**
@@ -636,14 +639,14 @@ class Friends {
 	}
 
 	/**
-	 * Gets the post types to be displayed on the frontend, modifyable by filter.
+	 * Adds the post types to be displayed on the frontend.
 	 *
-	 * @param      string $post_format  The post format if any.
+	 * @param      string $post_types  The incoming post types.
 	 *
 	 * @return     array  The frontend post types.
 	 */
-	public static function get_frontend_post_types( $post_format = null ) {
-		return apply_filters( 'friends_frontend_post_types', array( Friends::CPT ), $post_format );
+	public static function add_frontend_post_types( $post_types ) {
+		return array_merge( array( Friends::CPT ), $post_types );
 	}
 
 	/**
@@ -665,7 +668,7 @@ class Friends {
 		$counts = get_transient( $cache_key );
 		if ( false === $counts ) {
 			$counts = array();
-			$post_types = Friends::get_frontend_post_types();
+			$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
 			global $wpdb;
 
@@ -787,6 +790,7 @@ class Friends {
 	 */
 	public static function get_post_stats() {
 		global $wpdb;
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$post_stats = $wpdb->get_row(
 			$wpdb->prepare(
 				'SELECT SUM(
@@ -815,8 +819,8 @@ class Friends {
 				LENGTH( comment_count )
 				) AS total_size,
 				COUNT(*) as post_count
-			FROM ' . $wpdb->posts . ' WHERE post_type IN ( ' . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
-				Friends::get_frontend_post_types()
+			FROM ' . $wpdb->posts . ' WHERE post_type IN ( ' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+				$post_types
 			),
 			ARRAY_A
 		);
@@ -824,8 +828,8 @@ class Friends {
 			'U',
 			$wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT MIN(post_date) FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ( " . implode( ', ', array_fill( 0, count( Friends::get_frontend_post_types() ), '%s' ) ) . ' )',
-					Friends::get_frontend_post_types()
+					"SELECT MIN(post_date) FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+					$post_types
 				)
 			)
 		);

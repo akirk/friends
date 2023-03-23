@@ -90,6 +90,11 @@ class Feed_Item {
 	 * @return     mixed|\WP_Error  The value or a wp error.
 	 */
 	public function __set( $key, $value ) {
+		if ( apply_filters( 'feed_item_allow_set_metadata', false, $key, $value, $this ) ) {
+			$this->data['meta'][ $key ] = $value;
+			return $value;
+		}
+
 		switch ( $key ) {
 			case 'permalink':
 				$value = $this->validate_url( $value, 'invalid-permalink' );
@@ -161,7 +166,7 @@ class Feed_Item {
 				return $value;
 			case '_external_id':
 				$value = strval( $value );
-				$this->data['meta']['external-id'] = $value;
+				$this->data['meta'][ $key ] = $value;
 				return $value;
 
 			default:

@@ -66,6 +66,7 @@ class Admin {
 		add_filter( 'site_status_tests', array( $this, 'site_status_tests' ) );
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
 		add_filter( 'debug_information', array( $this, 'site_health_debug' ) );
+		add_filter( 'friends_create_and_follow', array( $this, 'create_and_follow' ), 10, 4 );
 
 		if ( ! get_option( 'permalink_structure' ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
@@ -1532,6 +1533,32 @@ class Admin {
 		<?php
 	}
 
+	public function create_and_follow( $user_id, $url, $type, $vars = array() ) {
+		$vars['friend_url'] = $url;
+
+		$vars['user_login'] = apply_filters( 'friends_suggest_user_login', User::get_user_login_for_url( $url ), $url );
+		$vars['display_name'] = apply_filters( 'friends_suggest_display_name', User::get_display_name_for_url( $url ), $url );
+
+		$vars['step2'] = true;
+
+		$vars['subscribe'] = array( $url );
+		$vars['feeds'] = $this->friends->feed->discover_available_feeds( $url );
+
+		ob_start();
+		$ret = $this->process_admin_add_friend( $vars );
+		ob_end_clean();
+
+		if ( is_wp_error( $ret ) ) {
+			return $ret;
+		}
+		$friend_user = get_user_by( 'login', $vars['user_login'] );
+		if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+			return new \WP_Error( 'friend_not_created', __( 'Friend could not be created.', 'friends' ) );
+		}
+
+		return $friend_user->ID;
+	}
+
 	/**
 	 * Previous process the Add Friend form. Todo: re-integrate.
 	 *
@@ -2342,7 +2369,7 @@ class Admin {
 		if ( 'friends_posts' !== $column_name ) {
 			return $output;
 		}
-		$numposts = count_user_posts( $user_id, array_merge( array( 'post' ), Friends::get_frontend_post_types() ) );
+		$numposts = count_user_posts( $user_id, apply_filters( 'friends_frontend_post_types', array( 'post' ) ) );
 		$user = User::get_user_by_id( $user_id );
 		return sprintf(
 			'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
@@ -2692,7 +2719,7 @@ class Admin {
 		User_Feed::delete_user_terms( $user_id );
 
 		global $wpdb;
-		$post_types_to_delete = implode( "', '", Friends::get_frontend_post_types() );
+		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
 
 		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d AND post_type IN ('$post_types_to_delete')", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		if ( $post_ids ) {

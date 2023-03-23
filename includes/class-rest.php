@@ -319,7 +319,7 @@ class REST {
 			return false;
 		}
 
-		if ( ! in_array( get_post_type( $post_id ), Friends::get_frontend_post_types() ) ) {
+		if ( ! in_array( get_post_type( $post_id ), apply_filters( 'friends_frontend_post_types', array() ) ) ) {
 			return false;
 		}
 

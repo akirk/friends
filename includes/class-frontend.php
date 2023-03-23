@@ -537,7 +537,7 @@ class Frontend {
 	 * @param string $previous_status The status of the post at the point where it was trashed.
 	 */
 	public function untrash_post_status( $new_status, $post_id, $previous_status ) {
-		if ( in_array( get_post_type( $post_id ), Friends::get_frontend_post_types(), true ) ) {
+		if ( in_array( get_post_type( $post_id ), apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
 			return $new_status;
 		}
 		return 'publish';
@@ -676,7 +676,7 @@ class Frontend {
 	public function friend_post_edit_link( $link ) {
 		global $post;
 
-		if ( $post && in_array( $post->post_type, Friends::get_frontend_post_types(), true ) ) {
+		if ( $post && in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
 			if ( Friends::on_frontend() ) {
 				$new_link = false;
 			} else {
@@ -711,7 +711,7 @@ class Frontend {
 	 * @reeturn string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, \WP_Post $post ) {
-		if ( $post && in_array( $post->post_type, Friends::get_frontend_post_types(), true ) ) {
+		if ( $post && in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
 			return get_the_guid( $post );
 		}
 		return $post_link;
@@ -997,7 +997,7 @@ class Frontend {
 		$query->is_single = false;
 		$query->queried_object = null;
 		$query->queried_object_id = null;
-		$post_types = Friends::get_frontend_post_types();
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
 		if ( 'status' === $post_format ) {
 			// Show your own posts on the status feed.
