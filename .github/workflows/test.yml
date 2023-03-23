@@ -45,14 +45,14 @@ jobs:
     name: "Tests: PHP ${{ matrix.php }} - PHPUnit: ${{matrix.phpunit}} - WordPress: ${{matrix.wordpress}}"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup PHP with tools
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           extensions: mysql
-          tools: phpunit-polyfills
+          tools: phpunit-polyfills composer
           ini-values: error_reporting=E_ALL, display_errors=On
           coverage: none
 
@@ -73,12 +73,12 @@ jobs:
       # @link https://github.com/marketplace/actions/install-composer-dependencies
       - name: Install Composer dependencies for PHP < 8.2
         if: ${{ matrix.php < 8.2 }}
-        uses: "ramsey/composer-install@v1"
+        uses: "ramsey/composer-install@v2"
 
       # For PHP 8.2 and above, we need to install with ignore platform reqs as not all dependencies allow it yet.
       - name: Install Composer dependencies for PHP >= 8.2
         if: ${{ matrix.php >= 8.2 }}
-        uses: "ramsey/composer-install@v1"
+        uses: "ramsey/composer-install@v2"
         with:
           composer-options: --ignore-platform-reqs
 
@@ -93,20 +93,6 @@ jobs:
       - name: "Lint PHP files against parse errors - PHP >= 8.0"
         if: ${{ matrix.phpunit == 'auto' && matrix.php >= 8.0 }}
         run: composer lint-gte80
-
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-
-      - name: Configure Composer cache
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
-
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --optimize-autoloader  --no-suggest --no-progress --no-interaction
 
       # Scan the logs for failing tests and surface that information by creating annotations and log file decorations.
       - name: Setup problem matcher to provide annotations for PHPUnit test errors and failures
