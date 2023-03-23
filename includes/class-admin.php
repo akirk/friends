@@ -39,7 +39,7 @@ class Admin {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'admin_menu', array( $this, 'register_admin_menu' ) );
+		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_open_friend_request' ), 10, 2 );
 		add_filter( 'users_list_table_query_args', array( $this, 'allow_role_multi_select' ) );
 		add_filter( 'user_row_actions', array( get_called_class(), 'user_row_actions' ), 10, 2 );
@@ -106,7 +106,7 @@ class Admin {
 	/**
 	 * Registers the admin menus
 	 */
-	public function register_admin_menu() {
+	public function admin_menu() {
 		if ( isset( $_REQUEST['rerun-activate'] ) && isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-settings' ) ) {
 			Friends::activate_plugin();
 			wp_safe_redirect( add_query_arg( array( 'reran-activation' => 'friends' ), wp_get_referer() ) );
@@ -128,15 +128,14 @@ class Admin {
 		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
 		add_action( 'load-' . $page_type . '_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
+		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
+
 		if ( $this->friends_unread_friend_request_count( 0 ) > 0 ) {
 			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friends-list-requests', array( $this, 'render_friends_list' ) );
 		} elseif ( isset( $_GET['page'] ) && 'friends-list-requests' === $_GET['page'] ) {
 			// Don't show a no permission page but redirect to the friends list.
-			wp_safe_redirect( self_admin_url( 'admin.php?page=friends-list' ) );
-			exit;
+			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friends-list-requests', array( $this, 'render_friends_list' ) );
 		}
-
-		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
 
 		if ( isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page'] ) {
 			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), $required_role, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
@@ -896,9 +895,22 @@ class Admin {
 		);
 		wp_die();
 	}
+
 	public function render_friends_list() {
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'menu'   => array(
+					__( 'Your Friends & Subscriptions', 'friends' ) => 'friends-list',
+					__( 'Your Friend Requests', 'friends' ) => 'friends-list-requests',
+				),
+				'active' => $_GET['page'],
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
+
 		if ( isset( $_GET['page'] ) && 'friends-list-requests' === $_GET['page'] ) {
-			echo '<div class="wrap"><h3>' . esc_html__( 'Your Friend Requests', 'friends' ) . '</h3>';
 			echo '<p>';
 			echo wp_kses(
 				sprintf(
@@ -916,7 +928,6 @@ class Admin {
 			echo '</p>';
 			$query = User_Query::all_friend_requests();
 		} else {
-			echo '<div class="wrap"><h3>' . esc_html__( 'Your Friends & Subscriptions', 'friends' ) . '</h3>';
 			$query = User_Query::all_associated_users();
 		}
 
@@ -953,7 +964,8 @@ class Admin {
 				'friends' => $query->get_results(),
 			)
 		);
-		echo '</div>';
+
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
 
 	/**

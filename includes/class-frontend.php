@@ -81,6 +81,9 @@ class Frontend {
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
 		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
+		add_action( 'wp_ajax_friends-reblog', array( $this, 'wp_ajax_reblog' ) );
+		add_action( 'friends_post_footer_first', array( $this, 'reblog_button' ) );
+		add_filter( 'friends_reblog', array( get_called_class(), 'reblog' ), 10, 2 );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -266,6 +269,76 @@ class Frontend {
 	 */
 	private function get_minimal_query_vars( $query_vars ) {
 		return array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query' ) ) ) );
+	}
+
+
+	public function wp_ajax_reblog() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error( 'error' );
+		}
+
+		$post = get_post( $_POST['post_id'] );
+		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
+			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
+		}
+
+		$ret = apply_filters( 'friends_reblog', null, $post );
+		if ( ! $ret || is_wp_error( $ret ) ) {
+			wp_send_json_error( 'error' );
+		}
+
+		wp_send_json_success(
+			array(
+				'post_id' => $post->ID,
+			)
+		);
+	}
+
+	public function reblog_button() {
+		$button_label = apply_filters( 'friends_reblog_button_label', _x( 'Reblog', 'button', 'friends' ) );
+
+		Friends::template_loader()->get_template_part(
+			'frontend/parts/reblog-button',
+			null,
+			array(
+				'button-label' => $button_label,
+			)
+		);
+	}
+
+	public static function reblog( $ret, $post ) {
+		$author = get_post_meta( $post->ID, 'author', true );
+		if ( ! $author ) {
+			$friend = new User( $post->post_author );
+			$author = $friend->display_name;
+		}
+
+		$old_guid = $post->guid;
+		$old_post_id = $post->ID;
+
+		$post_format = get_post_format( $post );
+
+		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p >';
+		$reblog .= sprintf(
+			// translators: %s is a link.
+			__( 'Reblog via %s', 'friends' ),
+			'<a href="' . esc_url( $post->guid ) . '">' . esc_html( $author ) . '</a>'
+		);
+
+		$reblog .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
+
+		unset( $post->ID, $post->guid, $post->name, $post->post_date, $post->post_date_gmt, $post->post_modified, $post->post_modified_gmt );
+		$post->post_author = get_current_user_id();
+		$post->post_status = 'publish';
+		$post->post_type = 'post';
+		$post->post_content = $reblog . $post->post_content;
+		$post_id = wp_insert_post( $post );
+
+		set_post_format( $post_id, $post_format );
+		update_post_meta( $post_id, 'reblog', $old_guid );
+		update_post_meta( $old_post_id, 'reblogged', $post_id );
+
+		return true;
 	}
 
 	/**
@@ -1003,6 +1076,7 @@ class Frontend {
 			// Show your own posts on the status feed.
 			$post_types[] = 'post';
 		}
+
 		$query->set( 'post_type', $post_types );
 		$query->set( 'tax_query', $tax_query );
 
