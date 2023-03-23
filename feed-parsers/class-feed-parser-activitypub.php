@@ -58,9 +58,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
 
-		\add_action( 'friends_post_footer_first', array( $this, 'announce_button' ) );
-		\add_action( 'wp_ajax_friends-activitypub-reblog', array( $this, 'wp_ajax_reblog' ) );
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
+
+		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
+		// Don't post via ActivityPub since we'll use announce there.
+		\add_filter( 'friends_reblog', array( $this, 'unqueue_activitypub_create' ), 9 );
+		\add_filter( 'friends_reblog', array( $this, 'reblog' ), 20, 2 );
+		\add_filter( 'friends_reblog', array( $this, 'maybe_unqueue_friends_reblog_post' ), 9, 2 );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 
@@ -117,7 +121,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'admin/activitypub-settings',
 			null,
 			array(
-				'reblog' => ! get_user_option( 'activitypub_dont_reblog' ),
+				'reblog' => ! get_user_option( 'friends_activitypub_dont_reblog' ),
 			)
 		);
 
@@ -130,9 +134,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( isset( $_POST['activitypub_reblog'] ) ) {
-			delete_user_option( get_current_user_id(), 'activitypub_dont_reblog' );
+			delete_user_option( get_current_user_id(), 'friends_activitypub_dont_reblog' );
 		} else {
-			update_user_option( get_current_user_id(), 'activitypub_dont_reblog', true );
+			update_user_option( get_current_user_id(), 'friends_activitypub_dont_reblog', true );
 		}
 		wp_safe_redirect( add_query_arg( 'updated', 'true', admin_url( 'admin.php?page=friends-activitypub-settings' ) ) );
 		exit;
@@ -1144,75 +1148,43 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 	}
 
-	public function announce_button() {
-		$button_label = _x( 'Reblog & Boost', 'button', 'friends' );
-		if ( get_user_option( 'activitypub_dont_reblog' ) ) {
-			$button_label = _x( 'Boost', 'button', 'friends' );
+	public function friends_reblog_button_label( $button_label ) {
+		if ( get_post_meta( get_the_ID(), 'parser', true ) === 'activitypub' ) {
+			if ( get_user_option( 'friends_activitypub_dont_reblog' ) ) {
+				$button_label = _x( 'Boost', 'button', 'friends' );
+			} else {
+				$button_label = _x( 'Reblog & Boost', 'button', 'friends' );
+			}
 		}
-
-		Friends::template_loader()->get_template_part(
-			'frontend/activitypub-announce',
-			null,
-			array(
-				'feed'         => $this,
-				'button-label' => $button_label,
-			)
-		);
+		return $button_label;
 	}
 
-	public function wp_ajax_reblog() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
-			wp_send_json_error( 'error' );
-		}
-
-		$post = get_post( $_POST['post_id'] );
-		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
-			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
-		}
-
-		$author = get_post_meta( $post->ID, 'author', true );
-		if ( ! $author ) {
-			$friend = new User( $post->post_author );
-			$author = $friend->display_name;
-		}
-
-		$old_guid = $post->guid;
-		$old_post_id = $post->ID;
-
-		$post_format = get_post_format( $post );
-
-		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p >';
-		$reblog .= sprintf(
-			// translators: %s is a link.
-			__( 'Reblog via %s', 'friends' ),
-			'<a href="' . esc_url( $post->guid ) . '">' . esc_html( $author ) . '</a>'
-		);
-
-		$reblog .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
-
-		// Don't post via ActivityPub since we'll announce there.
-		remove_action( 'transition_post_status', array( '\Activitypub\Activitypub', 'schedule_post_activity' ), 10, 3 );
-
-		unset( $post->ID, $post->guid, $post->name, $post->post_date, $post->post_date_gmt, $post->post_modified, $post->post_modified_gmt );
-		$post->post_author = get_current_user_id();
-		$post->post_status = 'publish';
-		$post->post_type = 'post';
-		$post->post_content = $reblog . $post->post_content;
-		$post_id = wp_insert_post( $post );
-
-		set_post_format( $post_id, $post_format );
-		update_post_meta( $post_id, 'reblog', $old_guid );
-		update_post_meta( $old_post_id, 'reblogged', $post_id );
-
-		// Todo: Only announce ActvityPub posts.
-		$this->announce( $old_guid );
-
-		wp_send_json_success(
-			array(
-				'post_id' => $post_id,
-			)
-		);
+	public function unqueue_activitypub_create( $ret ) {
+		// TODO: Harden against cases when ActivityPub changes the priority.
+		remove_action( 'transition_post_status', array( '\Activitypub\Activitypub', 'schedule_post_activity' ), 33, 3 );
+		return $ret;
 	}
+
+	public function maybe_unqueue_friends_reblog_post( $ret, $post ) {
+		if ( ! get_user_option( 'friends_activitypub_dont_reblog' ) ) {
+			return $ret;
+		}
+
+		if ( get_post_meta( $post->ID, 'parser', true ) !== 'activitypub' ) {
+			return $ret;
+		}
+
+		remove_filter( 'friends_reblog', array( 'Friends\Frontend', 'reblog' ), 10, 2 );
+	}
+
+	public function reblog( $ret, $post ) {
+		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
+			$this->announce( $post->guid );
+			return true;
+		}
+		return $ret;
+	}
+
 
 	public function announce( $url ) {
 		$user_id = get_current_user_id();

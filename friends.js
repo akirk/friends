@@ -353,9 +353,9 @@
 
 	/* ActivityPub */
 	$( function () {
-		$document.on( 'click', 'a.friends-activitypub-reblog', function () {
+		$document.on( 'click', 'a.friends-reblog', function () {
 			const $this = $( this );
-			wp.ajax.send( 'friends-activitypub-reblog', {
+			wp.ajax.send( 'friends-reblog', {
 				data: {
 					_ajax_nonce: $this.data( 'nonce' ),
 					post_id: $this.data( 'id' ),

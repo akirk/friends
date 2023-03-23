@@ -895,6 +895,7 @@ class Admin {
 		);
 		wp_die();
 	}
+
 	public function render_friends_list() {
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
