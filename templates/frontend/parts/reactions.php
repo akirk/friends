@@ -6,7 +6,8 @@
  * @package Friends
  */
 
-foreach ( Friends\Reactions::get_post_reactions() as $slug => $reaction ) {
+$reactions = Friends\Reactions::get_post_reactions();
+foreach ( $reactions as $slug => $reaction ) {
 	$classes = array();
 	if ( $reaction->user_reacted ) {
 		$classes[] = 'pressed';

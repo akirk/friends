@@ -12,6 +12,7 @@
 
 namespace Friends;
 
+use PO;
 use WP_Error;
 
 /**
@@ -243,7 +244,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return array();
 		}
 
-		$response = \Activitypub\safe_remote_get( $meta['outbox'], get_current_user_id() );
+		$response = \Activitypub\safe_remote_get( $meta['outbox'], Friends::get_main_friend_user_id() );
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			return new \WP_Error( 'activitypub_could_not_get_outbox_meta', null, compact( 'meta', 'url' ) );
 		}
@@ -253,7 +254,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return new \WP_Error( 'activitypub_could_not_find_outbox_first_page', null, compact( 'url', 'meta', 'outbox' ) );
 		}
 
-		$response = \Activitypub\safe_remote_get( $outbox['first'], get_current_user_id() );
+		$response = \Activitypub\safe_remote_get( $outbox['first'], Friends::get_main_friend_user_id() );
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			return new \WP_Error(
 				'activitypub_could_not_get_outbox',
@@ -489,7 +490,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		$this->log( 'Received announce for ' . $url );
 		if ( null === $user_id ) {
-			$user_id = get_current_user_id();
+			$user_id = Friends::get_main_friend_user_id();
 		}
 		$response = \Activitypub\safe_remote_get( $url, $user_id );
 		if ( \is_wp_error( $response ) ) {
@@ -545,7 +546,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_follow',
-			array( $user_feed->get_url(), get_current_user_id() ),
+			array( $user_feed->get_url() ),
 			'friends_feed_parser_activitypub_unfollow'
 		);
 
@@ -562,8 +563,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      string $url    The url.
 	 * @param      int    $user_id   The current user id.
 	 */
-	public function follow_user( $url, $user_id ) {
+	public function follow_user( $url, $user_id = null ) {
+		if ( null === $user_id ) {
+			$user_id = Friends::get_main_friend_user_id();
+		}
+
 		$meta = $this->get_metadata( $url );
+		$user_feed = User_Feed::get_by_url( $url );
+		if ( is_wp_error( $meta ) ) {
+			if ( $user_feed instanceof User_Feed ) {
+				$user_feed->update_last_log(
+					sprintf(
+						// translators: %s an error message.
+						__( 'Error: %s', 'friends' ),
+						$meta->get_error_code() . ' ' . $meta->get_error_message()
+					)
+				);
+			}
+			return $meta;
+		}
 		$to = $meta['id'];
 		$inbox = \Activitypub\get_inbox_by_actor( $to );
 		$actor = \get_author_posts_url( $user_id );
@@ -577,7 +595,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity = $activity->to_json();
 		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
 
-		$user_feed = User_Feed::get_by_url( $url );
 		if ( $user_feed instanceof User_Feed ) {
 			$user_feed->update_last_log(
 				sprintf(
@@ -603,7 +620,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unfollow',
-			array( $user_feed->get_url(), get_current_user_id() ),
+			array( $user_feed->get_url() ),
 			'friends_feed_parser_activitypub_follow'
 		);
 
@@ -620,8 +637,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      string $url    The url.
 	 * @param      int    $user_id   The current user id.
 	 */
-	public function unfollow_user( $url, $user_id ) {
+	public function unfollow_user( $url, $user_id = null ) {
+		if ( null === $user_id ) {
+			$user_id = Friends::get_main_friend_user_id();
+		}
 		$meta = $this->get_metadata( $url );
+		$user_feed = User_Feed::get_by_url( $url );
+		if ( is_wp_error( $meta ) ) {
+			if ( $user_feed instanceof User_Feed ) {
+				$user_feed->update_last_log(
+					sprintf(
+						// translators: %s an error message.
+						__( 'Error: %s', 'friends' ),
+						$meta->get_error_code() . ' ' . $meta->get_error_message()
+					)
+				);
+			}
+			return $meta;
+		}
 		$to = $meta['id'];
 		$inbox = \Activitypub\get_inbox_by_actor( $to );
 		$actor = \get_author_posts_url( $user_id );
@@ -909,7 +942,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_like',
-			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
+			array( $user_feed->get_url(), $external_post_id ),
 			'friends_feed_parser_activitypub_unlike'
 		);
 
@@ -986,7 +1019,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unlike',
-			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
+			array( $user_feed->get_url(), $external_post_id ),
 			'friends_feed_parser_activitypub_like'
 		);
 
