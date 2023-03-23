@@ -43,6 +43,7 @@ class Reactions {
 		add_action( 'wp_ajax_friends-toggle-react', array( $this, 'wp_ajax_toggle_react' ) );
 		add_action( 'friends_react', array( $this, 'react' ), 10, 3 );
 		add_action( 'friends_unreact', array( $this, 'unreact' ), 10, 3 );
+		add_action( 'friends_get_reactions', array( $this, 'friends_get_reactions' ), 10, 2 );
 	}
 
 	/**
@@ -290,6 +291,13 @@ class Reactions {
 		}
 
 		return false;
+	}
+
+	public function friends_get_reactions( $reactions, $post_id ) {
+		if ( ! is_array( $reactions ) ) {
+			$reactions = array();
+		}
+		return array_merge( $reactions, self::get_post_reactions( $post_id ) );
 	}
 
 	/**

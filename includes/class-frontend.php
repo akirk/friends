@@ -337,6 +337,7 @@ class Frontend {
 		set_post_format( $post_id, $post_format );
 		update_post_meta( $post_id, 'reblog', $old_guid );
 		update_post_meta( $old_post_id, 'reblogged', $post_id );
+		update_post_meta( $old_post_id, 'reblogged_by', get_current_user_id() );
 
 		return $post_id;
 	}

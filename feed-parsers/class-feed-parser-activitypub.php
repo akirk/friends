@@ -1020,7 +1020,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_like',
-			array( $user_feed->get_url(), $external_post_id ),
+			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_unlike'
 		);
 
@@ -1097,7 +1097,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unlike',
-			array( $user_feed->get_url(), $external_post_id ),
+			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_like'
 		);
 
@@ -1181,6 +1181,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
 			$this->announce( $post->guid );
 			update_post_meta( $post->ID, 'reblogged', 'activitypub' );
+			update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 			return true;
 		}
 		return $ret;
