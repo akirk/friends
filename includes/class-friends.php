@@ -730,7 +730,7 @@ class Friends {
 						$post_count = $count;
 					} else {
 						foreach ( (array) $count as $post_status => $c ) {
-							$post_count->$post_status += $c;
+							$post_count->$post_status = ( isset( $post_count->$post_status ) ? $post_count->$post_status : 0 ) + $c;
 						}
 					}
 				}
