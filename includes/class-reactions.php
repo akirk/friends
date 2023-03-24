@@ -43,7 +43,7 @@ class Reactions {
 		add_action( 'wp_ajax_friends-toggle-react', array( $this, 'wp_ajax_toggle_react' ) );
 		add_action( 'friends_react', array( $this, 'react' ), 10, 4 );
 		add_action( 'friends_unreact', array( $this, 'unreact' ), 10, 4 );
-		add_action( 'friends_get_reactions', array( $this, 'friends_get_reactions' ), 10, 2 );
+		add_action( 'friends_get_user_reactions', array( $this, 'get_user_reactions' ), 10, 3 );
 	}
 
 	/**
@@ -60,7 +60,6 @@ class Reactions {
 	 */
 	public static function register_user_taxonomy( $user_id ) {
 		$taxonomy = 'friend-reaction-' . $user_id;
-
 		$args = array(
 			'labels'            => array(
 				'name'          => _x( 'Reactions', 'taxonomy general name', 'friends' ),
@@ -80,17 +79,27 @@ class Reactions {
 	}
 
 	/**
-	 * Get my reactions for a post.
+	 * Gets the user reactions for a post.
 	 *
-	 * @param  int $post_id The post ID.
+	 * @param  array $reactions  The reactions.
+	 * @param  int   $post_id The post ID.
+	 * @param  int   $user_id The user ID.
 	 * @return array The users' reactions.
 	 */
-	public function get_my_reactions( $post_id ) {
-		$my_reactions = wp_get_object_terms( $post_id, 'friend-reaction-' . get_current_user_id() );
+	public static function get_user_reactions( $reactions, $post_id, $user_id = null ) {
+		if ( is_null( $user_id ) ) {
+			$user_id = get_current_user_id();
+		}
+		// Ensure the taxonomy is queryable.
+		self::register_user_taxonomy( $user_id );
+
+		$my_reactions = wp_get_object_terms( $post_id, 'friend-reaction-' . $user_id );
 		if ( is_wp_error( $my_reactions ) ) {
 			return array();
 		}
-		$reactions = array();
+		if ( ! $reactions ) {
+			$reactions = array();
+		}
 		foreach ( $my_reactions as $term ) {
 			$reactions[] = $term->slug;
 		}
@@ -267,6 +276,9 @@ class Reactions {
 		if ( is_null( $user_id ) ) {
 			$user_id = get_current_user_id();
 		}
+		// Ensure the taxonomy is queryable.
+		self::register_user_taxonomy( $user_id );
+
 		$taxonomy = 'friend-reaction-' . $user_id;
 		$term = false;
 		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
@@ -275,9 +287,11 @@ class Reactions {
 				break;
 			}
 		}
+			error_log( 'term ' . print_r( $term, true ) );
 
 		if ( ! $term ) {
 			$terms = wp_set_object_terms( $post_id, $reaction, $taxonomy, true );
+			error_log( 'terms ' . print_r( $terms, true ) );
 			if ( ! is_wp_error( $terms ) ) {
 				do_action( 'friends_user_post_reaction', $post_id, self::validate_emoji( $reaction ), $reaction, $terms[0] );
 				return $terms[0];
@@ -308,13 +322,6 @@ class Reactions {
 		}
 
 		return false;
-	}
-
-	public function friends_get_reactions( $reactions, $post_id ) {
-		if ( ! is_array( $reactions ) ) {
-			$reactions = array();
-		}
-		return array_merge( $reactions, self::get_post_reactions( $post_id ) );
 	}
 
 	/**
