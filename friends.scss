@@ -205,6 +205,16 @@ h2#page-title a.dashicons {
 		cursor: pointer;
 	}
 
+	article {
+		.card-body {
+			img,
+			video {
+				max-width: 100% !important;
+				height: auto;
+			}
+		}
+	}
+
 	.card {
 		height: 100%;
 		box-shadow: none;
