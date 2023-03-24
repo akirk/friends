@@ -41,8 +41,8 @@ class Reactions {
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomies' ) );
 		add_action( 'wp_ajax_friends-toggle-react', array( $this, 'wp_ajax_toggle_react' ) );
-		add_action( 'friends_react', array( $this, 'react' ), 10, 3 );
-		add_action( 'friends_unreact', array( $this, 'unreact' ), 10, 3 );
+		add_action( 'friends_react', array( $this, 'react' ), 10, 4 );
+		add_action( 'friends_unreact', array( $this, 'unreact' ), 10, 4 );
 		add_action( 'friends_get_reactions', array( $this, 'friends_get_reactions' ), 10, 2 );
 	}
 
@@ -50,7 +50,7 @@ class Reactions {
 	 * Register the taxonomies necessary
 	 */
 	public function register_taxonomies() {
-		$this->register_user_taxonomy( get_current_user_id() );
+		self::register_user_taxonomy( get_current_user_id() );
 	}
 
 	/**
@@ -58,7 +58,9 @@ class Reactions {
 	 *
 	 * @param  int $user_id The user id.
 	 */
-	public function register_user_taxonomy( $user_id ) {
+	public static function register_user_taxonomy( $user_id ) {
+		$taxonomy = 'friend-reaction-' . $user_id;
+
 		$args = array(
 			'labels'            => array(
 				'name'          => _x( 'Reactions', 'taxonomy general name', 'friends' ),
@@ -72,7 +74,9 @@ class Reactions {
 			'rewrite'           => false,
 			'public'            => false,
 		);
-		register_taxonomy( 'friend-reaction-' . $user_id, apply_filters( 'friends_frontend_post_types', array() ), $args );
+		register_taxonomy( $taxonomy, apply_filters( 'friends_frontend_post_types', array() ), $args );
+
+		return $taxonomy;
 	}
 
 	/**
@@ -135,15 +139,19 @@ class Reactions {
 				continue;
 			}
 
-			$user = new \WP_User( $user_id );
-			if ( ! $user || is_wp_error( $user ) ) {
-				continue;
+			$user_display_name = apply_filters( 'friends_get_reaction_display_name', false, $term );
+			if ( ! $user_display_name ) {
+				$user = new \WP_User( $user_id );
+				if ( ! $user || is_wp_error( $user ) ) {
+					continue;
+				}
+				$user_display_name = $user->display_name;
 			}
 
 			if ( ! isset( $reactions[ $term->slug ] ) ) {
 				$reactions[ $term->slug ] = array();
 			}
-			$reactions[ $term->slug ][ $user_id ] = $user->display_name;
+			$reactions[ $term->slug ][ $user_id ] = $user_display_name;
 		}
 
 		$remote_reactions = maybe_unserialize( get_post_meta( $post, 'remote_reactions', true ) );
@@ -255,8 +263,11 @@ class Reactions {
 		);
 	}
 
-	public function react( $ret, $post_id, $reaction ) {
-		$taxonomy = 'friend-reaction-' . get_current_user_id();
+	public function react( $ret, $post_id, $reaction, $user_id = null ) {
+		if ( is_null( $user_id ) ) {
+			$user_id = get_current_user_id();
+		}
+		$taxonomy = 'friend-reaction-' . $user_id;
 		$term = false;
 		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
 			if ( $t->slug === $reaction ) {
@@ -266,16 +277,22 @@ class Reactions {
 		}
 
 		if ( ! $term ) {
-			wp_set_object_terms( $post_id, $_POST['reaction'], $taxonomy, true );
-			do_action( 'friends_user_post_reaction', $post_id, self::validate_emoji( $_POST['reaction'] ), $_POST['reaction'] );
-			return true;
+			$terms = wp_set_object_terms( $post_id, $reaction, $taxonomy, true );
+			if ( ! is_wp_error( $terms ) ) {
+				do_action( 'friends_user_post_reaction', $post_id, self::validate_emoji( $reaction ), $reaction, $terms[0] );
+				return $terms[0];
+			}
+			return false;
 		}
 
 		return false;
 	}
 
-	public function unreact( $ret, $post_id, $reaction ) {
-		$taxonomy = 'friend-reaction-' . get_current_user_id();
+	public function unreact( $ret, $post_id, $reaction, $user_id = null ) {
+		if ( is_null( $user_id ) ) {
+			$user_id = get_current_user_id();
+		}
+		$taxonomy = 'friend-reaction-' . $user_id;
 		$term = false;
 		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
 			if ( $t->slug === $reaction ) {
@@ -286,7 +303,7 @@ class Reactions {
 
 		if ( $term ) {
 			wp_remove_object_terms( $post_id, $term->term_id, $taxonomy );
-			do_action( 'friends_user_post_undo_reaction', $post_id, self::validate_emoji( $_POST['reaction'] ), $_POST['reaction'] );
+			do_action( 'friends_user_post_undo_reaction', $post_id, self::validate_emoji( $reaction ), $reaction, $term );
 			return true;
 		}
 
@@ -352,6 +369,11 @@ class Reactions {
 				);
 			}
 		}
+
+		$available_emojis['2b50'] = (object) array(
+			'char' => '⭐️',
+			'name' => 'WHITE MEDIUM STAR',
+		);
 		return $available_emojis;
 	}
 
