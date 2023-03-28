@@ -86,12 +86,19 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.4.0
+- Reactions: Make it possible to issue reactions from outside ([#201]) 
+- Add Reblogging and Announce support for ActivityPub ([#168]) 
+- Add filters and metadata to make the  Enable Mastodon Apps plugin possible ([#200]) 
+- ActivityPub: Auto-approve comments by people you follow ([#199]) 
+- Add more explicit plugin recommendations ([#203] and [#202])
+
 ### 2.3.1
-- Remove stale ActivityPub version and use the information from WordPress.org (#195)
+- Remove stale ActivityPub version and use the information from WordPress.org ([#195])
 - Allow mixing of post formats on the frontend
-- Allow filtering notifications by the incoming feed (#196)
-- Fix friends menu on other site (#189) 
-- Added missing space to generated SQL query (#191) 
+- Allow filtering notifications by the incoming feed ([#196])
+- Fix friends menu on other site ([#189]) 
+- Added missing space to generated SQL query ([#191]) 
 
 ### 2.3.0
 - The Wiki now contains a [Hooks Documentation](https://github.com/akirk/friends/wiki/Hooks) ([#167]) 
@@ -186,6 +193,16 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[#201]: https://github.com/akirk/friends/pull/201
+[#168]: https://github.com/akirk/friends/pull/168
+[#200]: https://github.com/akirk/friends/pull/200
+[#199]: https://github.com/akirk/friends/pull/199
+[#203]: https://github.com/akirk/friends/pull/203
+[#202]: https://github.com/akirk/friends/pull/202
+[#195]: https://github.com/akirk/friends/pull/195
+[#196]: https://github.com/akirk/friends/pull/196
+[#189]: https://github.com/akirk/friends/pull/189
+[#191]: https://github.com/akirk/friends/pull/191
 [#184]: https://github.com/akirk/friends/pull/184
 [#183]: https://github.com/akirk/friends/pull/183
 [#180]: https://github.com/akirk/friends/pull/180
