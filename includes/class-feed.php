@@ -566,7 +566,7 @@ class Feed {
 			}
 
 			if ( is_null( $post_id ) ) {
-				$post_id = $this->url_to_postid( $item->permalink, $friend_user->ID );
+				$post_id = self::url_to_postid( $item->permalink, $friend_user->ID );
 			}
 			$item->_is_new = is_null( $post_id );
 			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user, $post_id );
@@ -1099,7 +1099,7 @@ class Feed {
 	 * @param int    $author_id The id of the author.
 	 * @return int Post ID, or 0 on failure.
 	 */
-	public function url_to_postid( $url, $author_id = false ) {
+	public static function url_to_postid( $url, $author_id = false ) {
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$args = $post_types;
 
@@ -1129,7 +1129,7 @@ class Feed {
 
 	public function oembed_request_post_id( $post_id, $url ) {
 		if ( ! $post_id ) {
-			$post_id = $this->url_to_postid( $url );
+			$post_id = self::url_to_postid( $url );
 			global $wp_post_types;
 			$wp_post_types[ Friends::CPT ]->publicly_queryable = true;
 		}

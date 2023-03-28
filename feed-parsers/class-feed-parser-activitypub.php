@@ -57,6 +57,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
+		\add_action( 'friends_get_reaction_display_name', array( $this, 'get_reaction_display_name' ), 10, 2 );
 
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
 
@@ -389,12 +390,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param string $type  The type of the activity.
 	 */
 	public function handle_received_activity( $object, $user_id, $type ) {
+		if ( 'undo' === $type ) {
+			if ( ! isset( $object['object'] ) ) {
+				return false;
+			}
+			$object = $object['object'];
+			switch ( strtolower( $object['type'] ) ) {
+				case 'like':
+					$type = 'unlike';
+					break;
+				default:
+					return false;
+			}
+		}
 		if ( ! in_array(
 			$type,
 			array(
 				// We don't need to handle 'Accept' types since it's handled by the ActivityPub plugin itself.
 				'create',
 				'announce',
+				'like',
+				'unlike',
 			),
 			true
 		) ) {
@@ -453,6 +469,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				break;
 			case 'announce':
 				return $this->handle_incoming_announce( $object['object'], $user_id );
+				break;
+			case 'like':
+				return $this->handle_incoming_like( $object, $user_id );
+				break;
+			case 'unlike':
+				return $this->handle_incoming_unlike( $object, $user_id );
 				break;
 		}
 		return null;
@@ -585,6 +607,71 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$object['reblog'] = true;
 
 		return $this->handle_incoming_post( $object );
+	}
+
+	public function get_reaction_display_name( $display_name, $term ) {
+		$url = get_term_meta( $term->term_id, 'url', true );
+		$meta = \Activitypub\get_remote_metadata_by_actor( $url );
+		if ( $meta && ! is_wp_error( $meta ) && ! empty( $meta['preferredUsername'] ) ) {
+			$host = parse_url( $meta['id'], PHP_URL_HOST );
+			return '@' . $meta['preferredUsername'] . '@' . $host;
+		}
+		return $display_name;
+	}
+	public function handle_incoming_like( $object, $user_id ) {
+		error_log( __FUNCTION__ . print_r( $object, true ) );
+		$post_id = Feed::url_to_postid( $object['object'] );
+		if ( ! $post_id ) {
+			return false;
+		}
+		$taxonomy_username = 'ap-' . crc32( $object['actor'] );
+
+		// Allow setting the term with its meta.
+		$taxonomy = Reactions::register_user_taxonomy( $taxonomy_username );
+
+		register_term_meta(
+			$taxonomy,
+			'url',
+			array(
+				'show_in_rest'      => false,
+				'single'            => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			)
+		);
+
+		// 2b50 = star.
+		// 2764 = heart.
+		$term_id = apply_filters( 'friends_react', null, $post_id, '2b50', $taxonomy_username );
+		if ( ! $term_id || is_wp_error( $term_id ) ) {
+			return false;
+		}
+
+		update_term_meta( $term_id, 'url', $object['actor'] );
+
+		return $term_id;
+	}
+
+	public function handle_incoming_unlike( $object, $user_id ) {
+		error_log( __FUNCTION__ . print_r( $object, true ) );
+		$post_id = Feed::url_to_postid( $object['object'] );
+		if ( ! $post_id ) {
+			return false;
+		}
+
+		$taxonomy_username = 'ap-' . crc32( $object['actor'] );
+
+		// Allow removing the term.
+		Reactions::register_user_taxonomy( $taxonomy_username );
+
+		// 2b50 = star.
+		// 2764 = heart.
+		$ret = apply_filters( 'friends_unreact', null, $post_id, '2b50', $taxonomy_username );
+		if ( ! $ret || is_wp_error( $ret ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -1020,7 +1107,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_like',
-			array( $user_feed->get_url(), $external_post_id ),
+			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_unlike'
 		);
 
@@ -1097,7 +1184,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unlike',
-			array( $user_feed->get_url(), $external_post_id ),
+			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_like'
 		);
 
@@ -1181,6 +1268,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
 			$this->announce( $post->guid );
 			update_post_meta( $post->ID, 'reblogged', 'activitypub' );
+			update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 			return true;
 		}
 		return $ret;
