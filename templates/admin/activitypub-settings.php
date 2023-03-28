@@ -16,7 +16,7 @@
 					<fieldset>
 						<label for="activitypub_reblog">
 							<input name="activitypub_reblog" type="checkbox" id="activitypub_reblog" value="1" <?php checked( $args['reblog'] ); ?> />
-							<?php esc_html_e( 'When you boost a status, also reblog it.', 'friends' ); ?>
+							<span><?php esc_html_e( 'When you boost a status, also reblog it.', 'friends' ); ?></span>
 						</label>
 					</fieldset>
 					<p class="description"><?php esc_html_e( 'If unchecked, the boosting will only happen via ActivityPub.', 'friends' ); ?></p>
