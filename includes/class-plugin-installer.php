@@ -47,8 +47,8 @@ class Plugin_Installer {
 	 */
 	public static function init() {
 		$additional_plugins = array(
-			'activitypub' => __( 'Adds ActivityPub support to your blog. Be followed on Mastodon, follow people on Mastodon with the Friends plugin.', 'friends' ),
-			'nodeinfo'    => true,
+			'activitypub'          => __( 'Adds ActivityPub support to your blog. Be followed on Mastodon, follow people on Mastodon with the Friends plugin.', 'friends' ),
+			'enable-mastodon-apps' => true,
 		);
 		$plugins = array_merge( $additional_plugins, self::get_friends_plugins() );
 		ksort( $plugins );
