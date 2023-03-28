@@ -644,6 +644,9 @@ class Admin {
 	public function render_admin_home() {
 		$friends_subscriptions = User_Query::all_associated_users();
 		$has_friend_users = $friends_subscriptions->get_total() > 0;
+		wp_enqueue_script( 'plugin-install' );
+		add_thickbox();
+		wp_enqueue_script( 'updates' );
 
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
@@ -654,7 +657,7 @@ class Admin {
 			)
 		);
 
-		Friends::template_loader()->get_template_part( 'admin/welcome' );
+		Friends::template_loader()->get_template_part( 'admin/welcome', null, array( 'installed_plugins' => get_plugins() ) );
 
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}

@@ -60,7 +60,12 @@
 
 .friends-body.friends ul li {
 	list-style: disc;
-	margin-bottom: .5em;
+	margin-bottom: 1em;
+}
+
+.friends-body.friends ul li ul li {
+	list-style: circle;
+	margin-top: 1em;
 }
 
 .friends-body summary {
