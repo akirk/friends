@@ -166,7 +166,7 @@ class Feed_Item {
 				return $value;
 			case '_external_id':
 				$value = strval( $value );
-				$this->data['meta'][ $key ] = $value;
+				$this->data['meta']['external-id'] = $value;
 				return $value;
 
 			default:
