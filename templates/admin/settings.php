@@ -29,7 +29,7 @@ do_action( 'friends_settings_before_form' );
 					<fieldset>
 						<label for="comment_registration">
 							<input name="comment_registration" type="checkbox" id="comment_registration" value="1" <?php checked( '1', $args['comment_registration'] ); ?> />
-							<?php esc_html_e( 'Only people in your network can comment.', 'friends' ); ?>
+							<span><?php esc_html_e( 'Only people in your network can comment.', 'friends' ); ?></span>
 						</label>
 					</fieldset>
 					<div id="comment_registration_options" class="<?php echo esc_attr( $comment_registration_class ); ?>">
@@ -404,13 +404,18 @@ do_action( 'friends_settings_before_form' );
 			<tr>
 				<th scope="row" rowspan="2"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
 				<td>
+					<span>
 					<?php
 					// translators: %s is a URL.
 					echo wp_kses( sprintf( __( 'Download the <a href=%s>Private OPML file (contains private urls!)</a> and import it to your feed reader.', 'friends' ), esc_url( home_url( '/friends/opml/?auth=' . $args['private_rss_key'] ) ) ), array( 'a' => array( 'href' => array() ) ) );
-					echo ' ';
+					?>
+					</span>
+					<span>
+					<?php
 					// translators: %s is a URL.
 					echo wp_kses( sprintf( __( 'Alternative: <a href=%s>Public OPML file (only public urls)</a>.', 'friends' ), esc_url( home_url( '/friends/opml/?public' ) ) ), array( 'a' => array( 'href' => array() ) ) );
 					?>
+					</span>
 					<p class="description">
 					<?php
 					echo __( 'If your feed reader supports it, you can also subscribe to this URL as the OPML file gets updated as you add or remove friends.', 'friends' );

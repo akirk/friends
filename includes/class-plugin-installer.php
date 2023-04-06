@@ -518,8 +518,8 @@ class Plugin_Installer {
 				'install_now'    => __( 'Are you sure you want to install this plugin?', 'friends' ),
 				'install_btn'    => __( 'Install Now', 'friends' ),
 				'activate_btn'   => __( 'Activate' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				'deactivate_btn' => __( 'Dectivate' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				'installed_btn'  => __( 'Active' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'deactivate_btn' => __( 'Deactivate' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'installed_btn'  => _x( 'Active', 'plugin', 'friends' ),
 			)
 		);
 	}

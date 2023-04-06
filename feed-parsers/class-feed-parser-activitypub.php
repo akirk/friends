@@ -44,6 +44,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'like_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'unlike_post' ), 10, 3 );
+		\add_action( 'friends_feed_parser_activitypub_announce', array( $this, 'announce' ), 10, 2 );
+		\add_action( 'friends_feed_parser_activitypub_unannounce', array( $this, 'unannounce' ), 10, 2 );
 		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_webfinger_resolve' ), 10, 2 );
 
 		\add_filter( 'friends_edit_friend_table_end', array( $this, 'activitypub_settings' ), 10 );
@@ -57,14 +59,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
+		\add_action( 'mastodon_api_react', array( $this, 'mastodon_api_react' ), 10, 2 );
+		\add_action( 'mastodon_api_unreact', array( $this, 'mastodon_api_unreact' ), 10, 2 );
 		\add_action( 'friends_get_reaction_display_name', array( $this, 'get_reaction_display_name' ), 10, 2 );
 
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
 
 		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
-		// Don't post via ActivityPub since we'll use announce there.
+
 		\add_filter( 'friends_reblog', array( $this, 'unqueue_activitypub_create' ), 9 );
+		\add_action( 'mastodon_api_reblog', array( $this, 'mastodon_api_reblog' ) );
+		\add_action( 'mastodon_api_unreblog', array( $this, 'mastodon_api_unreblog' ) );
 		\add_filter( 'friends_reblog', array( $this, 'reblog' ), 20, 2 );
+		\add_filter( 'friends_unreblog', array( $this, 'unreblog' ), 20, 2 );
 		\add_filter( 'friends_reblog', array( $this, 'maybe_unqueue_friends_reblog_post' ), 9, 2 );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
@@ -359,7 +366,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$items = array();
 		foreach ( $outbox_page['orderedItems'] as $object ) {
 			$type = strtolower( $object['type'] );
-			$items[] = $this->process_incoming_activity( $type, $object );
+			$items[] = $this->process_incoming_activity( $type, $object, get_current_user_id(), $user_feed );
 		}
 
 		return $items;
@@ -399,6 +406,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				case 'like':
 					$type = 'unlike';
 					break;
+				case 'announce':
+					$type = 'unannounce';
+					break;
 				default:
 					return false;
 			}
@@ -409,6 +419,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				// We don't need to handle 'Accept' types since it's handled by the ActivityPub plugin itself.
 				'create',
 				'announce',
+				'unannounce',
 				'like',
 				'unlike',
 			),
@@ -444,7 +455,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 
-		$item = $this->process_incoming_activity( $type, $object, $user_id );
+		$item = $this->process_incoming_activity( $type, $object, $user_id, $user_feed );
 
 		if ( $item instanceof Feed_Item ) {
 			$this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
@@ -457,25 +468,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * Process an incoming activity.
 	 *
-	 * @param string $type The type of the activity.
-	 * @param array  $object The activity object.
-	 * @param int    $user_id The id of the local user if any.
+	 * @param string    $type The type of the activity.
+	 * @param array     $object The activity object.
+	 * @param int       $user_id The id of the local user if any.
+	 * @param User_Feed $user_feed The user feed.
 	 * @return Feed_Item|null The feed item or null if it's not a valid activity.
 	 */
-	private function process_incoming_activity( $type, $object, $user_id = null ) {
+	private function process_incoming_activity( $type, $object, $user_id, $user_feed ) {
 		switch ( $type ) {
 			case 'create':
 				return $this->handle_incoming_post( $object['object'] );
-				break;
 			case 'announce':
 				return $this->handle_incoming_announce( $object['object'], $user_id );
-				break;
+			case 'unannounce':
+				return $this->handle_incoming_unannounce( $object['object'], $user_feed );
 			case 'like':
 				return $this->handle_incoming_like( $object, $user_id );
-				break;
 			case 'unlike':
 				return $this->handle_incoming_unlike( $object, $user_id );
-				break;
 		}
 		return null;
 	}
@@ -603,10 +613,34 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 		$this->log( 'Received response', compact( 'url', 'object' ) );
-
+		$object['published'] = gmdate( 'Y-m-d H:i:s' );
 		$object['reblog'] = true;
 
 		return $this->handle_incoming_post( $object );
+	}
+
+	/**
+	 * We received an announced URL (boost) for a feed, handle it.
+	 *
+	 * @param      array     $url     The announced URL.
+	 * @param      User_Feed $user_feed The user feed.
+	 */
+	private function handle_incoming_unannounce( $url, $user_feed ) {
+		if ( ! Friends::check_url( $url ) ) {
+			$this->log( 'Received invalid unannounce', compact( 'url' ) );
+			return false;
+		}
+		$this->log( 'Received unannounce for ' . $url );
+
+		$post_id = Feed::url_to_postid( $url, $user_feed->get_friend_user()->ID );
+		if ( $post_id ) {
+			$meta = get_post_meta( $post_id, self::SLUG, true );
+			if ( isset( $meta['reblog'] ) ) {
+				wp_trash_post( $post_id );
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public function get_reaction_display_name( $display_name, $term ) {
@@ -618,8 +652,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		return $display_name;
 	}
+
 	public function handle_incoming_like( $object, $user_id ) {
-		error_log( __FUNCTION__ . print_r( $object, true ) );
 		$post_id = Feed::url_to_postid( $object['object'] );
 		if ( ! $post_id ) {
 			return false;
@@ -653,7 +687,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function handle_incoming_unlike( $object, $user_id ) {
-		error_log( __FUNCTION__ . print_r( $object, true ) );
 		$post_id = Feed::url_to_postid( $object['object'] );
 		if ( ! $post_id ) {
 			return false;
@@ -1246,9 +1279,36 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $button_label;
 	}
 
+	public function mastodon_api_react( $post_id, $reaction ) {
+		apply_filters( 'friends_react', null, $post_id, $reaction );
+	}
+
+	public function mastodon_api_unreact( $post_id, $reaction ) {
+		apply_filters( 'friends_unreact', null, $post_id, $reaction );
+	}
+
+	public function mastodon_api_reblog( $post_id ) {
+		apply_filters( 'friends_reblog', null, $post_id );
+	}
+
+	public function mastodon_api_unreblog( $post_id ) {
+		apply_filters( 'friends_unreblog', null, $post_id );
+	}
+
+	/**
+	 * Don't create a note via ActivityPub since we'll use announce there.
+	 *
+	 * @param      bool $ret  The return value.
+	 *
+	 * @return     bool  The return value.
+	 */
 	public function unqueue_activitypub_create( $ret ) {
-		// TODO: Harden against cases when ActivityPub changes the priority.
-		remove_action( 'transition_post_status', array( '\Activitypub\Activitypub', 'schedule_post_activity' ), 33, 3 );
+		$hook = 'transition_post_status';
+		$filter = array( '\Activitypub\Activitypub', 'schedule_post_activity' );
+		$priority = has_filter( $hook, $filter );
+		if ( $priority ) {
+			remove_filter( $hook, $filter, $priority );
+		}
 		return $ret;
 	}
 
@@ -1262,22 +1322,62 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		remove_filter( 'friends_reblog', array( 'Friends\Frontend', 'reblog' ), 10, 2 );
+		return $ret;
 	}
 
 	public function reblog( $ret, $post ) {
-		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
-			$this->announce( $post->guid );
-			update_post_meta( $post->ID, 'reblogged', 'activitypub' );
-			update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
+		$post = get_post( $post );
+		if ( ! $post ) {
+			return $ret;
+		}
+		if ( true || get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
+			$this->queue_announce( $post->guid );
+			\update_post_meta( $post->ID, 'reblogged', 'activitypub' );
+			\update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 			return true;
 		}
 		return $ret;
 	}
 
+	public function unreblog( $ret, $post ) {
+		$post = get_post( $post );
+		if ( ! $post ) {
+			return $ret;
+		}
+		if ( get_post_meta( $post->ID, 'reblogged', true ) === 'activitypub' ) {
+			$this->queue_unannounce( $post->guid );
+			\delete_post_meta( $post->ID, 'reblogged', 'activitypub' );
+			\delete_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
+			return true;
+		}
+		return $ret;
+	}
 
-	public function announce( $url ) {
-		$user_id = get_current_user_id();
-		$actor = \get_author_posts_url( get_current_user_id() );
+	/**
+	 * Prepare to announce the post via a scheduled event.
+	 *
+	 * @param      string $url  The url to announce.
+	 *
+	 * @return     bool|WP_Error              Whether the event was queued.
+	 */
+	public function queue_announce( $url ) {
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_announce',
+			array( $url, get_current_user_id() ),
+			'friends_feed_parser_activitypub_unannounce'
+		);
+
+		return $queued;
+	}
+
+	/**
+	 * Announce the post via ActivityPub.
+	 *
+	 * @param      string $url      The url.
+	 * @param      id     $user_id  The user id.
+	 */
+	public function announce( $url, $user_id ) {
+		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Model\Activity( 'Announce', \Activitypub\Model\Activity::TYPE_SIMPLE );
 		$activity->set_to( null );
@@ -1285,6 +1385,57 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_actor( $actor );
 		$activity->set_object( $url );
 		$activity->set_id( $actor . '#announce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$inboxes = \Activitypub\get_follower_inboxes( $user_id );
+
+		$followers_url = \get_rest_url( null, '/activitypub/1.0/users/' . intval( $user_id ) . '/followers' );
+
+		foreach ( $inboxes as $inbox => $to ) {
+			$to = array_values( array_unique( $to ) );
+			$activity->set_to( $to );
+
+			\Activitypub\safe_remote_post( $inbox, $activity->to_json(), $user_id );
+		}
+	}
+
+	/**
+	 * Prepare to announce the post via a scheduled event.
+	 *
+	 * @param      string $url  The url to announce.
+	 *
+	 * @return     bool|WP_Error              Whether the event was queued.
+	 */
+	public function queue_unannounce( $url ) {
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_unannounce',
+			array( $url, get_current_user_id() ),
+			'friends_feed_parser_activitypub_announce'
+		);
+
+		return $queued;
+	}
+
+	/**
+	 * Unannounce the post via ActivityPub.
+	 *
+	 * @param      string $url      The url.
+	 * @param      id     $user_id  The user id.
+	 */
+	public function unannounce( $url, $user_id ) {
+		$actor = \get_author_posts_url( $user_id );
+
+		$activity = new \Activitypub\Model\Activity( 'Undo', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity->set_to( null );
+		$activity->set_cc( null );
+		$activity->set_actor( $actor );
+		$activity->set_id( $actor . '#unannounce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$activity->set_object(
+			array(
+				'type'   => 'Announce',
+				'actor'  => $actor,
+				'object' => $url,
+				'id'     => $actor . '#announce-' . \preg_replace( '~^https?://~', '', $url ),
+			)
+		);
 		$inboxes = \Activitypub\get_follower_inboxes( $user_id );
 
 		$followers_url = \get_rest_url( null, '/activitypub/1.0/users/' . intval( $user_id ) . '/followers' );
