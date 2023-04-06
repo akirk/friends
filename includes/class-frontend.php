@@ -84,6 +84,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-reblog', array( $this, 'wp_ajax_reblog' ) );
 		add_action( 'friends_post_footer_first', array( $this, 'reblog_button' ) );
 		add_filter( 'friends_reblog', array( get_called_class(), 'reblog' ), 10, 2 );
+		add_filter( 'friends_unreblog', array( get_called_class(), 'unreblog' ), 10, 2 );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -282,6 +283,12 @@ class Frontend {
 			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
 		}
 
+		/**
+		 * Reblogs a post
+		 *
+		 * @param int|null $reblog_post_id The post ID of the reblogged post. Default null.
+		 * @param WP_Post  $post           The post object.
+		 */
 		$reblog_post_id = apply_filters( 'friends_reblog', null, $post );
 		if ( ! $reblog_post_id || is_wp_error( $reblog_post_id ) ) {
 			wp_send_json_error( 'error' );
@@ -307,16 +314,19 @@ class Frontend {
 	}
 
 	public static function reblog( $ret, $post ) {
+		if ( ! $post ) {
+			return $ret;
+		}
+		$post = get_post( $post );
+		if ( ! $post ) {
+			return $ret;
+		}
+
 		$author = get_post_meta( $post->ID, 'author', true );
 		if ( ! $author ) {
 			$friend = new User( $post->post_author );
 			$author = $friend->display_name;
 		}
-
-		$old_guid = $post->guid;
-		$old_post_id = $post->ID;
-
-		$post_format = get_post_format( $post );
 
 		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p >';
 		$reblog .= sprintf(
@@ -326,20 +336,41 @@ class Frontend {
 		);
 
 		$reblog .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
+		$new_post = array(
+			'post_title'   => $post->title,
+			'post_author'  => get_current_user_id(),
+			'post_status'  => 'publish',
+			'post_type'    => 'post',
+			'post_content' => $reblog . $post->post_content,
+		);
+		$new_post_id = wp_insert_post( $new_post );
 
-		unset( $post->ID, $post->guid, $post->name, $post->post_date, $post->post_date_gmt, $post->post_modified, $post->post_modified_gmt );
-		$post->post_author = get_current_user_id();
-		$post->post_status = 'publish';
-		$post->post_type = 'post';
-		$post->post_content = $reblog . $post->post_content;
-		$post_id = wp_insert_post( $post );
+		set_post_format( $new_post_id, get_post_format( $post ) );
+		update_post_meta( $new_post_id, 'reblog', $post->guid );
+		update_post_meta( $new_post_id, 'reblog_of', $post->ID );
+		update_post_meta( $post->ID, 'reblogged', $new_post_id );
+		update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 
-		set_post_format( $post_id, $post_format );
-		update_post_meta( $post_id, 'reblog', $old_guid );
-		update_post_meta( $old_post_id, 'reblogged', $post_id );
-		update_post_meta( $old_post_id, 'reblogged_by', get_current_user_id() );
+		return $new_post_id;
+	}
 
-		return $post_id;
+	public static function unreblog( $ret, $post ) {
+		if ( ! $post ) {
+			return $ret;
+		}
+		$post = get_post( $post );
+		if ( ! $post ) {
+			return $ret;
+		}
+
+		$reblogged = get_post_meta( $post->ID, 'reblogged', true );
+		if ( ! $reblogged ) {
+			return $ret;
+		}
+
+		wp_trash_post( $reblogged );
+
+		return $reblogged;
 	}
 
 	/**

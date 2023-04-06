@@ -203,6 +203,66 @@ class Friends {
 		);
 
 		register_post_type( self::CPT, $args );
+
+		register_post_meta(
+			self::CPT,
+			Feed::COMMENTS_FEED_META,
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+
+		register_post_meta(
+			self::CPT,
+			'remote_post_id',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+
+		register_post_meta(
+			self::CPT,
+			'parser',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+
+		register_post_meta(
+			self::CPT,
+			'feed_url',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+
+		register_post_meta(
+			self::CPT,
+			'reblogged',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'string',
+			)
+		);
+
+		register_post_meta(
+			self::CPT,
+			'reblogged_by',
+			array(
+				'show_in_rest' => true,
+				'single'       => true,
+				'type'         => 'integer',
+			)
+		);
 	}
 
 	public static function get_role_capabilities( $role ) {

@@ -604,7 +604,7 @@ class Feed {
 				if ( ! empty( $modified_post_data ) && apply_filters( 'friends_can_update_modified_feed_posts', true, $item, $user_feed, $friend_user, $post_id ) ) {
 					$was_modified_by_user = false;
 					foreach ( wp_get_post_revisions( $post_id ) as $revision ) {
-						if ( intval( $revision->post_author ) !== $friend_user->ID ) {
+						if ( intval( $revision->post_author ) && intval( $revision->post_author ) !== $friend_user->ID ) {
 							$was_modified_by_user = true;
 							break;
 						}

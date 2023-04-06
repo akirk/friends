@@ -281,17 +281,18 @@ class Reactions {
 
 		$taxonomy = 'friend-reaction-' . $user_id;
 		$term = false;
-		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
-			if ( $t->slug === $reaction ) {
-				$term = $t;
-				break;
+		$terms = wp_get_object_terms( $post_id, $taxonomy );
+		if ( is_array( $terms ) ) {
+			foreach ( $terms as $t ) {
+				if ( $t->slug === $reaction ) {
+					$term = $t;
+					break;
+				}
 			}
 		}
-			error_log( 'term ' . print_r( $term, true ) );
 
 		if ( ! $term ) {
 			$terms = wp_set_object_terms( $post_id, $reaction, $taxonomy, true );
-			error_log( 'terms ' . print_r( $terms, true ) );
 			if ( ! is_wp_error( $terms ) ) {
 				do_action( 'friends_user_post_reaction', $post_id, self::validate_emoji( $reaction ), $reaction, $terms[0] );
 				return $terms[0];
@@ -306,12 +307,18 @@ class Reactions {
 		if ( is_null( $user_id ) ) {
 			$user_id = get_current_user_id();
 		}
+		// Ensure the taxonomy is queryable.
+		self::register_user_taxonomy( $user_id );
+
 		$taxonomy = 'friend-reaction-' . $user_id;
 		$term = false;
-		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
-			if ( $t->slug === $reaction ) {
-				$term = $t;
-				break;
+		$terms = wp_get_object_terms( $post_id, $taxonomy );
+		if ( is_array( $terms ) ) {
+			foreach ( $terms as $t ) {
+				if ( $t->slug === $reaction ) {
+					$term = $t;
+					break;
+				}
 			}
 		}
 
