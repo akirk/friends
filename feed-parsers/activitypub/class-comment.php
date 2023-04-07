@@ -138,7 +138,7 @@ class Comment extends Post {
 	 */
 	public function to_array() {
 		$array = array(
-			'id'           => $this->comment->comment_ID,
+			'id'           => $this->get_id(),
 			'type'         => $this->get_object_type(),
 			'published'    => \gmdate( 'Y-m-d\TH:i:s\Z', \strtotime( $this->comment->comment_date_gmt ) ),
 			'attributedTo' => \get_author_posts_url( $this->comment->user_id ),
@@ -153,8 +153,14 @@ class Comment extends Post {
 			'attachment'   => $this->get_attachments(),
 			'tag'          => $this->get_tags(),
 		);
+		if ( $this->comment->comment_parent ) {
+			$source_url = get_comment_meta( $this->comment->comment_parent, 'source_url', true );
+			if ( $source_url ) {
+				$array['inReplyTo'] = $source_url;
+			}
+		}
 
-		return \apply_filters( 'activitypub_post', $array, $this->post );
+		return \apply_filters( 'activitypub_post', $array, $this->comment );
 	}
 
 
@@ -171,10 +177,8 @@ class Comment extends Post {
 		if ( 'trash' === $this->comment->post_status ) {
 			$permalink = \get_post_meta( $this->comment->comment_post_ID, 'activitypub_canonical_url', true );
 		} else {
-			$permalink = \get_permalink( $this->comment->comment_post_ID );
+			$permalink = \get_comment_link( $this->comment->comment_ID );
 		}
-
-		$permalink .= '#comment-' . $this->comment->comment_ID;
 
 		$this->id = $permalink;
 

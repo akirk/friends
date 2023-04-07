@@ -588,6 +588,8 @@ class Frontend {
 		if ( empty( $comments ) && ( is_wp_error( $feed_comments ) || ! is_array( $feed_comments ) ) ) {
 			wp_send_json_error( '<small>' . __( 'Unfortunately, comments were not available via RSS.', 'friends' ) . '</small>' );
 			exit;
+		} elseif ( is_wp_error( $feed_comments ) ) {
+			$feed_comments = array();
 		}
 
 		$template_loader = Friends::template_loader();
