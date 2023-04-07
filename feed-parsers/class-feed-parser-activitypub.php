@@ -34,18 +34,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$this->friends_feed = $friends_feed;
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
+		\add_action( 'init', array( $this, 'include_activitypub_model_comment' ), 2 );
 		\add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
 
 		\add_action( 'activitypub_inbox', array( $this, 'handle_received_activity' ), 10, 3 );
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
-		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'follow_user' ), 10, 2 );
-		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'unfollow_user' ), 10, 2 );
-		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'like_post' ), 10, 3 );
-		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'unlike_post' ), 10, 3 );
-		\add_action( 'friends_feed_parser_activitypub_announce', array( $this, 'announce' ), 10, 2 );
-		\add_action( 'friends_feed_parser_activitypub_unannounce', array( $this, 'unannounce' ), 10, 2 );
+		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'activitypub_follow_user' ), 10, 2 );
+		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'activitypub_unfollow_user' ), 10, 2 );
+		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'activitypub_like_post' ), 10, 3 );
+		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'activitypub_unlike_post' ), 10, 3 );
+		\add_action( 'friends_feed_parser_activitypub_announce', array( $this, 'activitypub_announce' ), 10, 2 );
+		\add_action( 'friends_feed_parser_activitypub_unannounce', array( $this, 'activitypub_unannounce' ), 10, 2 );
 		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_webfinger_resolve' ), 10, 2 );
 
 		\add_filter( 'friends_edit_friend_table_end', array( $this, 'activitypub_settings' ), 10 );
@@ -64,6 +65,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_get_reaction_display_name', array( $this, 'get_reaction_display_name' ), 10, 2 );
 
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
+		\add_action( 'comment_post', array( $this, 'comment_post' ), 10, 3 );
+		\add_action( 'trashed_comment', array( $this, 'trashed_comment' ), 10, 2 );
 
 		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
 
@@ -418,6 +421,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			array(
 				// We don't need to handle 'Accept' types since it's handled by the ActivityPub plugin itself.
 				'create',
+				'delete',
 				'announce',
 				'unannounce',
 				'like',
@@ -477,7 +481,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private function process_incoming_activity( $type, $object, $user_id, $user_feed ) {
 		switch ( $type ) {
 			case 'create':
-				return $this->handle_incoming_post( $object['object'] );
+				return $this->handle_incoming_create( $object['object'] );
+			case 'delete':
+				return $this->handle_incoming_delete( $object['object'] );
 			case 'announce':
 				return $this->handle_incoming_announce( $object['object'], $user_id );
 			case 'unannounce':
@@ -506,7 +512,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 *
 	 * @param      array $object     The object from ActivityPub.
 	 */
-	private function handle_incoming_post( $object ) {
+	private function handle_incoming_create( $object ) {
 		$permalink = $object['id'];
 		if ( isset( $object['url'] ) ) {
 			$permalink = $object['url'];
@@ -587,6 +593,46 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return new Feed_Item( $data );
 	}
 
+
+	/**
+	 * We received a delete of a post, handle it.
+	 *
+	 * @param      array $object     The object from ActivityPub.
+	 */
+	private function handle_incoming_delete( $object ) {
+		$permalink = $object['id'];
+		if ( isset( $object['url'] ) ) {
+			$permalink = $object['url'];
+		}
+
+		$this->log( 'Received delete for ' . $permalink );
+
+		$comment_id = null;
+		if ( preg_match( '/#comment-(\d+)$/i', $permalink, $matches ) ) {
+			$comment_id = $matches[1];
+			$permalink = substr( $permalink, 0, - strlen( $matches[0] ) );
+		}
+
+		$post_id = Feed::url_to_postid( $permalink );
+		if ( $post_id ) {
+			if ( $comment_id ) {
+				$comment = get_comment( $comment_id );
+				if ( $comment ) {
+					wp_delete_comment( $comment_id );
+					return true;
+				}
+			} else {
+				$meta = get_post_meta( $post_id, self::SLUG, true );
+				if ( ! empty( $meta ) ) {
+					wp_trash_post( $post_id );
+					return true;
+				}
+			}
+		}
+		return false;
+
+	}
+
 	/**
 	 * We received an announced URL (boost) for a feed, handle it.
 	 *
@@ -616,7 +662,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$object['published'] = gmdate( 'Y-m-d H:i:s' );
 		$object['reblog'] = true;
 
-		return $this->handle_incoming_post( $object );
+		return $this->handle_incoming_create( $object );
 	}
 
 	/**
@@ -761,7 +807,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      string $url    The url.
 	 * @param      int    $user_id   The current user id.
 	 */
-	public function follow_user( $url, $user_id = null ) {
+	public function activitypub_follow_user( $url, $user_id = null ) {
 		if ( null === $user_id ) {
 			$user_id = Friends::get_main_friend_user_id();
 		}
@@ -835,7 +881,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      string $url    The url.
 	 * @param      int    $user_id   The current user id.
 	 */
-	public function unfollow_user( $url, $user_id = null ) {
+	public function activitypub_unfollow_user( $url, $user_id = null ) {
 		if ( null === $user_id ) {
 			$user_id = Friends::get_main_friend_user_id();
 		}
@@ -1159,7 +1205,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param mixed $user_id The current user id.
 	 * @return void
 	 */
-	public function like_post( $url, $external_post_id, $user_id ) {
+	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
 		$inbox = \Activitypub\get_inbox_by_actor( $url );
 		$actor = \get_author_posts_url( $user_id );
 
@@ -1236,7 +1282,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param mixed $user_id The current user id.
 	 * @return void
 	 */
-	public function unlike_post( $url, $external_post_id, $user_id ) {
+	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
 		$inbox = \Activitypub\get_inbox_by_actor( $url );
 		$actor = \get_author_posts_url( $user_id );
 
@@ -1376,7 +1422,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      string $url      The url.
 	 * @param      id     $user_id  The user id.
 	 */
-	public function announce( $url, $user_id ) {
+	public function activitypub_announce( $url, $user_id ) {
 		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Model\Activity( 'Announce', \Activitypub\Model\Activity::TYPE_SIMPLE );
@@ -1384,7 +1430,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
 		$activity->set_object( $url );
-		$activity->set_id( $actor . '#announce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$activity->set_id( $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ) );
 		$inboxes = \Activitypub\get_follower_inboxes( $user_id );
 
 		$followers_url = \get_rest_url( null, '/activitypub/1.0/users/' . intval( $user_id ) . '/followers' );
@@ -1420,20 +1466,20 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      string $url      The url.
 	 * @param      id     $user_id  The user id.
 	 */
-	public function unannounce( $url, $user_id ) {
+	public function activitypub_unannounce( $url, $user_id ) {
 		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Model\Activity( 'Undo', \Activitypub\Model\Activity::TYPE_SIMPLE );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
-		$activity->set_id( $actor . '#unannounce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$activity->set_id( $actor . '#activitypub_unannounce-' . \preg_replace( '~^https?://~', '', $url ) );
 		$activity->set_object(
 			array(
 				'type'   => 'Announce',
 				'actor'  => $actor,
 				'object' => $url,
-				'id'     => $actor . '#announce-' . \preg_replace( '~^https?://~', '', $url ),
+				'id'     => $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ),
 			)
 		);
 		$inboxes = \Activitypub\get_follower_inboxes( $user_id );
@@ -1464,6 +1510,55 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 		return $approved;
+	}
+
+	public function include_activitypub_model_comment() {
+		require_once __DIR__ . '/activitypub/class-comment.php';
+	}
+
+	public function comment_post( $comment_id, $comment_approved, $commentdata ) {
+		if ( isset( $commentdata['commentmeta']['protocol'] ) && 'activitypub' === $commentdata['commentmeta']['protocol'] ) {
+			// Don't act upon incoming comments via ActivityPub.
+			return;
+		}
+
+		if ( empty( $commentdata['user_id'] ) ) {
+			// Don't act on other people's comments.
+			return;
+		}
+
+		$user = new \WP_User( $commentdata['user_id'] );
+		if ( User::is_friends_plugin_user( $user ) ) {
+			// Don't act on non-local comments.
+			return;
+		}
+		$this->include_activitypub_model_comment();
+		$activitypub_comment = new \Activitypub\Model\Comment( $comment_id );
+
+		\wp_schedule_single_event( \time(), 'activitypub_send_post_activity', array( $activitypub_comment ) );
+	}
+
+	public function trashed_comment( $comment_id, $comment ) {
+		if ( get_comment_meta( $comment_id, 'protocol', true ) === 'activitypub' ) {
+			// Don't act on comments that came via ActivityPub.
+			return;
+		}
+
+		if ( empty( $comment->user_id ) ) {
+			// Don't act on other people's comments.
+			return;
+		}
+
+		$user = new \WP_User( $comment->user_id );
+		if ( User::is_friends_plugin_user( $user ) ) {
+			// Don't act on non-local comments.
+			return;
+		}
+
+		$this->include_activitypub_model_comment();
+		$activitypub_comment = new \Activitypub\Model\Comment( $comment );
+
+		\wp_schedule_single_event( \time(), 'activitypub_send_delete_activity', array( $activitypub_comment ) );
 	}
 
 	/**
