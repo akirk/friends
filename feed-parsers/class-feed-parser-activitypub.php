@@ -22,6 +22,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const NAME = 'ActivityPub';
 	const URL = 'https://www.w3.org/TR/activitypub/';
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
+	const EXTERNAL_MENTIONS_USER_LOGIN = 'external-mentions';
 
 	private $friends_feed;
 
@@ -393,6 +394,38 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Gets the external mentions user.
+	 *
+	 * @return     User  The external mentions user.
+	 */
+	private function get_external_mentions_user() {
+		$external_mentions_user_login = apply_filters( 'friends_external_mentions_user_login', self::EXTERNAL_MENTIONS_USER_LOGIN );
+		$user = get_user_by( 'login', $external_mentions_user_login );
+		if ( ! $user ) {
+			$display_name = __( 'External Mentions', 'friends' );
+			$user_id = wp_insert_user(
+				array(
+					'user_login'   => $external_mentions_user_login,
+					'display_name' => $display_name,
+					'first_name'   => $display_name,
+					'nickname'     => $display_name,
+					'user_pass'    => wp_generate_password( 256 ),
+					'role'         => 'subscription',
+				)
+			);
+
+			$user = new User( $user_id );
+		}
+		return $user;
+	}
+
+	private function get_external_mentions_feed() {
+		require_once __DIR__ . '/activitypub/class-virtual-user-feed.php';
+		$user = $this->get_external_mentions_user();
+		return new Virtual_User_Feed( $user, 'External Mentions' );
+	}
+
+	/**
 	 * Handles "Create" requests
 	 *
 	 * @param  array  $object  The activity object.
@@ -453,6 +486,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
+		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
+			if ( isset( $object['object']['tag'] ) && is_array( $object['object']['tag'] ) ) {
+				$my_activitypub_id = \get_author_posts_url( $user_id );
+				error_log( 'my_activitypub_id ' . $my_activitypub_id );
+				foreach ( $object['object']['tag'] as $tag ) {
+					error_log( serialize( $tag ) );
+					if ( isset( $tag['type'] ) && 'Mention' === $tag['type'] && isset( $tag['href'] ) && $tag['href'] === $my_activitypub_id ) {
+						error_log( 'It was a mention' );
+						// It was a mention.
+						$user_feed = $this->get_external_mentions_feed();
+						error_log( serialize( $user_feed ) );
+						break;
+					}
+				}
+			} else {
+				error_log( 'no tag' );
+
+			}
+		}
+
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
 			$this->log( 'We\'re not following ' . $actor_url );
 			// We're not following this user.

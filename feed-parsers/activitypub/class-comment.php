@@ -2,7 +2,7 @@
 /**
  * ActivityPub Comment Model Class
  *
- * @package Activitypub
+ * @package Friends
  */
 
 namespace Activitypub\Model;
