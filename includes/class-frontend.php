@@ -564,11 +564,17 @@ class Frontend {
 		$post_id = intval( $_POST['post_id'] );
 		check_ajax_referer( "comments-$post_id" );
 
+		$comments = get_comments(
+			array(
+				'post_id' => $post_id,
+			)
+		);
+
 		$author_id = get_post_field( 'post_author', $post_id );
 		$friend_user = new User( $author_id );
 
 		$comments_url = get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true );
-		if ( ! $comments_url ) {
+		if ( $comments_url && empty( $comments ) ) {
 			wp_send_json_error( __( 'No comments feed available.', 'friends' ) );
 			exit;
 		}
@@ -578,10 +584,12 @@ class Frontend {
 			$comments_url = $this->friends->access_control->append_auth( $comments_url, $friend_user, 300 );
 		}
 
-		$comments = $this->friends->feed->preview( 'simplepie', $comments_url );
-		if ( is_wp_error( $comments ) || ! is_array( $comments ) ) {
+		$feed_comments = $this->friends->feed->preview( 'simplepie', $comments_url );
+		if ( empty( $comments ) && ( is_wp_error( $feed_comments ) || ! is_array( $feed_comments ) ) ) {
 			wp_send_json_error( '<small>' . __( 'Unfortunately, comments were not available via RSS.', 'friends' ) . '</small>' );
 			exit;
+		} elseif ( is_wp_error( $feed_comments ) ) {
+			$feed_comments = array();
 		}
 
 		$template_loader = Friends::template_loader();
@@ -590,6 +598,18 @@ class Frontend {
 		<h5><?php esc_html_e( 'Comments' ); /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></h5>
 		<?php
 		foreach ( $comments as $comment ) {
+			$template_loader->get_template_part(
+				'frontend/parts/comment',
+				null,
+				array(
+					'author'       => $comment->comment_author,
+					'date'         => $comment->comment_date,
+					'permalink'    => $comment->guid . '#comment-' . $comment->comment_ID,
+					'post_content' => $comment->comment_content,
+				)
+			);
+		}
+		foreach ( $feed_comments as $comment ) {
 			$template_loader->get_template_part(
 				'frontend/parts/comment',
 				null,
