@@ -6,7 +6,7 @@
 - Tested up to: 6.2
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.5.0
+- Stable tag: 2.5.1
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -85,6 +85,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. You can react to a post or share it using Post Collections.
 
 ## Changelog
+
+### 2.5.1
+- Prevent creation of a new feed for a virtual external mentions feed
 
 ### 2.5.0
 - Fix/improve outgoing ActivityPub mention behavior for comments ([#205] and [#206])
