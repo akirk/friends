@@ -177,7 +177,7 @@ class Comment extends Post {
 		if ( 'trash' === $this->comment->post_status ) {
 			$permalink = \get_post_meta( $this->comment->comment_post_ID, 'activitypub_canonical_url', true );
 		} else {
-			$permalink = \get_comment_link( $this->comment->comment_ID );
+			$permalink = add_query_arg( 'c', $this->comment->comment_ID, \home_url() );
 		}
 
 		$this->id = $permalink;
@@ -260,5 +260,9 @@ class Comment extends Post {
 		$this->content = $content;
 
 		return $content;
+	}
+
+	public function get_post_author() {
+		return $this->comment->user_id;
 	}
 }

@@ -1201,10 +1201,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		<?php
 	}
 
-	private function get_feed_for_post( \WP_Post $post ) {
+	private function get_author_of_post( \WP_Post $post ) {
 		$friend = new User( $post->post_author );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			return $friend;
+		}
+
+		$meta = get_post_meta( $post->ID, self::SLUG, true );
+		if ( isset( $meta['attributedTo']['id'] ) ) {
+			return $meta['attributedTo']['id'];
 		}
 
 		$host = wp_parse_url( $post->guid, PHP_URL_HOST );
@@ -1219,7 +1224,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				continue;
 			}
 
-			return $feed;
+			return $feed->get_url();
 		}
 
 		return null;
@@ -1235,22 +1240,22 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $post ) {
 			return;
 		}
-		$feed = $this->get_feed_for_post( $post );
-		if ( ! $feed ) {
+		$author_url = $this->get_author_of_post( $post );
+		if ( ! $author_url || is_wp_error( $author_url ) ) {
 			return;
 		}
-		return $this->queue_like_post( $post, $feed );
+		return $this->queue_like_post( $post, $author_url );
 	}
 
 	/**
 	 * Prepare to follow the user via a scheduled event.
 	 *
-	 * @param      \WP_Post  $post       The post.
-	 * @param      User_Feed $user_feed  The user feed.
+	 * @param      \WP_Post $post       The post.
+	 * @param      string   $author_url  The author url.
 	 *
 	 * @return     bool|WP_Error              Whether the event was queued.
 	 */
-	public function queue_like_post( \WP_Post $post, User_Feed $user_feed ) {
+	public function queue_like_post( \WP_Post $post, $author_url ) {
 		$external_post_id = get_post_meta( $post->ID, 'external-id', true );
 		if ( ! $external_post_id ) {
 			$external_post_id = $post->guid;
@@ -1258,13 +1263,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_like',
-			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
+			array( $author_url, $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_unlike'
 		);
-
-		if ( $queued ) {
-			$user_feed->update_last_log( __( 'Queued like request.', 'friends' ) );
-		}
 
 		return $queued;
 	}
@@ -1312,22 +1313,22 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $post ) {
 			return;
 		}
-		$feed = $this->get_feed_for_post( $post );
-		if ( ! $feed ) {
+		$author_url = $this->get_author_of_post( $post );
+		if ( ! $author_url || is_wp_error( $author_url ) ) {
 			return;
 		}
-		return $this->queue_unlike_post( $post, $feed );
+		return $this->queue_unlike_post( $post, $author_url );
 	}
 
 	/**
 	 * Prepare to follow the user via a scheduled event.
 	 *
-	 * @param      \WP_Post  $post       The post.
-	 * @param      User_Feed $user_feed  The user feed.
+	 * @param      \WP_Post $post       The post.
+	 * @param      string   $author_url  The author url.
 	 *
 	 * @return     bool|WP_Error              Whether the event was queued.
 	 */
-	public function queue_unlike_post( \WP_Post $post, User_Feed $user_feed ) {
+	public function queue_unlike_post( \WP_Post $post, $author_url ) {
 		$external_post_id = get_post_meta( $post->ID, 'external-id', true );
 		if ( ! $external_post_id ) {
 			$external_post_id = $post->guid;
@@ -1335,7 +1336,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unlike',
-			array( $user_feed->get_url(), $external_post_id, get_current_user_id() ),
+			array( $author_url, $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_like'
 		);
 
@@ -1448,7 +1449,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $post ) {
 			return $ret;
 		}
-		if ( true || get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
+		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
 			$this->queue_announce( $post->guid );
 			\update_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			\update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
