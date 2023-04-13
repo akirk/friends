@@ -415,6 +415,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			);
 
 			$user = new User( $user_id );
+		} else {
+			$user = new User( $user->ID );
 		}
 		return $user;
 	}
