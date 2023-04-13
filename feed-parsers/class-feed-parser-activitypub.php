@@ -489,20 +489,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
 			if ( isset( $object['object']['tag'] ) && is_array( $object['object']['tag'] ) ) {
 				$my_activitypub_id = \get_author_posts_url( $user_id );
-				error_log( 'my_activitypub_id ' . $my_activitypub_id );
 				foreach ( $object['object']['tag'] as $tag ) {
-					error_log( serialize( $tag ) );
 					if ( isset( $tag['type'] ) && 'Mention' === $tag['type'] && isset( $tag['href'] ) && $tag['href'] === $my_activitypub_id ) {
-						error_log( 'It was a mention' );
 						// It was a mention.
 						$user_feed = $this->get_external_mentions_feed();
-						error_log( serialize( $user_feed ) );
 						break;
 					}
 				}
-			} else {
-				error_log( 'no tag' );
-
 			}
 		}
 
@@ -1127,14 +1120,38 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( ! $friend_user->get_user_option( 'activitypub_friends_show_replies' ) ) {
 			$plain_text_content = \wp_strip_all_tags( $item->post_content );
+			$possible_mentions = $this->get_possible_mentions();
 
-			if ( preg_match( ' /^@(?:[a-zA-Z0-9_.-]+)/i', $plain_text_content, $m ) ) {
-				$users = $this->get_possible_mentions();
-				if ( ! isset( $users[ $m[0] ] ) ) {
-					$item->_feed_rule_transform = array(
-						'post_status' => 'trash',
-					);
+			$no_known_user_found = true;
+			if ( preg_match( '/^@(?:[a-zA-Z0-9_.-]+)/i', $plain_text_content, $m ) ) {
+				if ( ! isset( $possible_mentions[ $m[0] ] ) ) {
+					$no_known_user_found = false;
 				}
+			}
+
+			if ( $no_known_user_found ) {
+				if ( $friend_user && false !== strpos( $item->post_content, \get_author_posts_url( $friend_user->ID ) ) ) {
+					$no_known_user_found = false;
+				}
+			}
+
+			if ( $no_known_user_found ) {
+				foreach ( $possible_mentions as $username => $mention_url ) {
+					if ( false !== strpos( $item->post_content, $mention_url ) ) {
+						$no_known_user_found = false;
+						break;
+					}
+					if ( false !== strpos( $username, $mention_url ) ) {
+						$no_known_user_found = false;
+						break;
+					}
+				}
+			}
+
+			if ( ! $no_known_user_found ) {
+				$item->_feed_rule_transform = array(
+					'post_status' => 'trash',
+				);
 			}
 		}
 
