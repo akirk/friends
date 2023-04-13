@@ -36,7 +36,7 @@ class Virtual_User_Feed extends User_Feed {
 		return $this->friend_user;
 	}
 	public function get_active() {
-		return array();
+		return false;
 	}
 	public function get_post_format() {
 		return 'status';

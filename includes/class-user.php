@@ -765,9 +765,6 @@ class User extends \WP_User {
 	 */
 	public function get_feeds() {
 		$feeds = User_Feed::get_for_user( $this );
-		if ( empty( $feeds ) ) {
-			$feeds = User_Feed::convert_user( $this );
-		}
 
 		return $feeds;
 	}

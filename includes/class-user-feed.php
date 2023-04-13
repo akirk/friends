@@ -503,39 +503,6 @@ class User_Feed {
 	}
 
 	/**
-	 * Convert the previous storage of a feed URL as a user option to use terms.
-	 *
-	 * @param  User $friend_user The user to be converted.
-	 * @return array                    An array of newly created User_Feed items.
-	 */
-	public static function convert_user( User $friend_user ) {
-		$feed_url = $friend_user->get_user_option( 'friends_feed_url' );
-		if ( ! $feed_url ) {
-			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
-		}
-
-		$user_feed = self::save(
-			$friend_user,
-			$feed_url,
-			array(
-				'active'      => true,
-				'parser'      => 'simplepie',
-				'post-format' => 'standard',
-				'mime-type'   => 'application/rss+xml',
-				'title'       => $friend_user->display_name . ' RSS Feed',
-			)
-		);
-
-		if ( is_wp_error( $user_feed ) ) {
-			return null;
-		}
-
-		// $friend_user->delete_user_option( 'friends_feed_url' );
-
-		return array( $user_feed );
-	}
-
-	/**
 	 * Saves multiple feeds for a user.
 	 *
 	 * See save() for possible options.

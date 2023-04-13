@@ -88,6 +88,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ### 2.5.0
 - Fix/improve outgoing ActivityPub mention behavior for comments ([#205] and [#206])
+- Support for external ActivityPub mentions ([#206])
 
 - ### 2.4.0
 - Reactions: Make it possible to issue reactions from outside ([#201]) 
