@@ -1477,7 +1477,7 @@ class Admin {
 
 		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'unfriend-' . $friend->ID ) ) {
 			if ( is_multisite() ) {
-				remote_user_from_blog( $friend->ID, get_current_blog_id() );
+				remove_user_from_blog( $friend->ID, get_current_blog_id() );
 			} else {
 				wp_delete_user( $friend->ID );
 			}
