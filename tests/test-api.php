@@ -80,6 +80,25 @@ class APITest extends \WP_UnitTestCase {
 		if ( update_user_option( $this->friend_id, 'friends_in_token', $this->friends_in_token ) ) {
 			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
 		}
+
+		$friend_user = new User( $this->friend_id );
+		$feed_url = $friend_user->get_user_option( 'friends_feed_url' );
+		if ( ! $feed_url ) {
+			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
+		}
+
+		$user_feed = User_Feed::save(
+			$friend_user,
+			$feed_url,
+			array(
+				'active'      => true,
+				'parser'      => 'simplepie',
+				'post-format' => 'standard',
+				'mime-type'   => 'application/rss+xml',
+				'title'       => $friend_user->display_name . ' RSS Feed',
+			)
+		);
+
 		fetch_feed( null ); // load SimplePie.
 		require_once __DIR__ . '/class-local-feed-fetcher.php';
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 100, 2 );

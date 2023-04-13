@@ -181,6 +181,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$status_id = 123;
 
 		self::$users['https://notiz.blog/author/matthias-pfefferle/'] = array(
+			'id'   => 'https://notiz.blog/author/matthias-pfefferle/',
 			'url'  => 'https://notiz.blog/author/matthias-pfefferle/',
 			'name' => 'Matthias Pfefferle',
 		);
@@ -341,6 +342,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->friend_nicename = $userdata->user_nicename;
 
 		self::$users[ $this->actor ] = array(
+			'id'   => $this->actor,
 			'url'  => $this->actor,
 			'name' => $this->friend_name,
 			'icon' => array(
