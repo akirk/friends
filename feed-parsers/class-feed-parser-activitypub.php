@@ -58,6 +58,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
+		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_mentions_user' ) );
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
@@ -398,7 +399,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 *
 	 * @return     User  The external mentions user.
 	 */
-	private function get_external_mentions_user() {
+	public function get_external_mentions_user() {
 		$external_mentions_user_login = apply_filters( 'friends_external_mentions_user_login', self::EXTERNAL_MENTIONS_USER_LOGIN );
 		$user = get_user_by( 'login', $external_mentions_user_login );
 		if ( ! $user ) {
@@ -418,13 +419,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		} else {
 			$user = new User( $user->ID );
 		}
+
+		if ( ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
+			add_user_to_blog( get_current_blog_id(), $user->ID, 'subscription' );
+		}
+
 		return $user;
 	}
 
 	private function get_external_mentions_feed() {
 		require_once __DIR__ . '/activitypub/class-virtual-user-feed.php';
 		$user = $this->get_external_mentions_user();
-		return new Virtual_User_Feed( $user, 'External Mentions' );
+		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
 	}
 
 	/**
