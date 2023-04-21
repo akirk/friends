@@ -1552,7 +1552,9 @@ class Admin {
 		$vars['friend_url'] = $url;
 
 		$vars['user_login'] = apply_filters( 'friends_suggest_user_login', User::get_user_login_for_url( $url ), $url );
-		$vars['display_name'] = apply_filters( 'friends_suggest_display_name', User::get_display_name_for_url( $url ), $url );
+		if ( empty( $vars['display_name'] ) ) {
+			$vars['display_name'] = apply_filters( 'friends_suggest_display_name', User::get_display_name_for_url( $url ), $url );
+		}
 
 		$vars['step2'] = true;
 

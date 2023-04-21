@@ -589,7 +589,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$meta = $this->get_metadata( $object['attributedTo'] );
 			$this->log( 'Attributed to ' . $object['attributedTo'], compact( 'meta' ) );
 
-			if ( $meta ) {
+			if ( $meta && ! is_wp_error( $meta ) ) {
 				if ( isset( $meta['name'] ) ) {
 					$data['author'] = $meta['name'];
 				} elseif ( isset( $meta['preferredUsername'] ) ) {
