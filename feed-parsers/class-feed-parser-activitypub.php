@@ -481,7 +481,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( is_wp_error( $user_feed ) || ! Friends::check_url( $actor_url ) ) {
 			$meta = $this->get_metadata( $actor_url );
-			if ( ! $meta || ! isset( $meta['url'] ) ) {
+			if ( ! $meta || is_wp_error( $meta ) || ! isset( $meta['url'] ) ) {
 				$this->log( 'Received invalid meta for ' . $actor_url );
 				return false;
 			}
