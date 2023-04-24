@@ -15,7 +15,7 @@ require_once __DIR__ . '/classes/class-handler.php';
 require_once __DIR__ . '/classes/class-editor.php';
 
 class Blocks_Everywhere {
-	const VERSION = '1.14.1';
+	const VERSION = '1.18.0';
 
 	/**
 	 * Instance variable

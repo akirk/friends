@@ -43,6 +43,7 @@
 			return false;
 		}
 	);
+
 	$document.on( 'keyup', 'input#master-search', function () {
 		const input = $( this );
 		const query = input.val().trim();
@@ -479,4 +480,39 @@
 			return false;
 		}
 	);
+
+	$document.on( 'click', '#in_reply_to_preview a', function () {
+		const a = $( this );
+		document.execCommand( 'insertText', false, a[ 0 ].outerHTML );
+		return false;
+	} );
+	$document.on( 'keyup', 'input#friends_in_reply_to', function () {
+		const input = $( this );
+		const url = input.val().trim();
+
+		if ( alreadySearching === url ) {
+			return;
+		}
+		const searchIndicator = input
+			.closest( '.form-autocomplete-input' )
+			.find( '.form-icon' );
+
+		wp.ajax.send( 'friends-in-reply-to-preview', {
+			data: {
+				url,
+			},
+			beforeSend() {
+				searchIndicator.addClass( 'loading' );
+				alreadySearching = url;
+			},
+			success( results ) {
+				searchIndicator.removeClass( 'loading' );
+				if ( results ) {
+					$( '#in_reply_to_preview' ).html( results.html ).show();
+				} else {
+					$( '#in_reply_to_preview' ).hide();
+				}
+			},
+		} );
+	} );
 } )( jQuery, window.wp, window.friends );

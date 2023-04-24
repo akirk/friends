@@ -7,12 +7,20 @@
  */
 
 ?>
-<details class="column col-8 col-sm-12 col-mx-auto">
+<details class="column col-8 col-sm-12 col-mx-auto" open>
 	<summary class="quick-status-panel-opener"><?php esc_html_e( 'Quick post panel', 'friends' ); ?></summary>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="friends-post-inline">
 		<?php wp_nonce_field( 'friends_publish' ); ?>
 		<input type="hidden" name="action" value="friends_publish" />
 		<input type="hidden" name="format" value="status" />
+		<input type="hidden" name="status" value="publish" />
+			<div class="form-group">
+				<div class="has-icon-right">
+					Reply to: <input class="form-input" type="url" name="in_reply_to" placeholder="<?php esc_attr_e( 'In reply to https://...', 'friends' ); ?>" value="<?php echo esc_attr( isset( $args['in_reply_to'] ) ? $args['in_reply_to'] : '' ); ?>" id="friends_in_reply_to" autocomplete="off"/>
+					<i class="form-icon"></i>
+				</div>
+			</div>
+			<div id="in_reply_to_preview"></div>
 
 			<div class="form-group blocks-everywhere iso-editor__loading">
 				<textarea class="form-input friends-status-content" name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( "What's on your mind, %s?", 'friends' ), wp_get_current_user()->display_name ) ); ?>"></textarea><br />

@@ -79,6 +79,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
+		add_action( 'wp_ajax_friends-in-reply-to-preview', array( $this, 'ajax_in_reply_to_preview' ) );
 		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
 		add_action( 'wp_ajax_friends-reblog', array( $this, 'wp_ajax_reblog' ) );
@@ -328,7 +329,7 @@ class Frontend {
 			$author = $friend->display_name;
 		}
 
-		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p >';
+		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p>';
 		$reblog .= sprintf(
 			// translators: %s is a link.
 			__( 'Reblog via %s', 'friends' ),
@@ -531,6 +532,54 @@ class Frontend {
 		wp_send_json_success( $posts );
 	}
 
+	/**
+	 * The Ajax function to fill the in-reply-to-preview.
+	 */
+	function ajax_in_reply_to_preview() {
+		$url = wp_unslash( $_POST['url'] );
+		$is_url = wp_parse_url( $url );
+		if ( ! $is_url ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $url );
+		if ( ! $meta ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		if ( is_wp_error( $meta ) ) {
+			wp_send_json_error( $meta->get_error_message() );
+			exit;
+		}
+
+		$mentions = array();
+		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
+
+		if ( $webfinger && ! is_wp_error( $webfinger ) ) {
+			$mentions[] = '<a href="' . $meta['attributedTo'] . '>' . esc_html( $webfinger['preferredUsername'] ) . '</a>';
+		}
+
+		$mention = '';
+		if ( $mentions ) {
+			$mention = '<!-- wp:paragraph -->' . PHP_EOL . '<p>';
+			$mention .= implode( ' ', $mentions );
+
+			$mention .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
+		}
+
+		$html = 'URL: ' . make_clickable( $meta['url'] );
+		$html .= '<div>' . wp_kses_post( $meta['content'] ) . '</div>';
+
+		wp_send_json_success(
+			array(
+				'html'    => $html,
+				'mention' => $mention,
+			)
+		);
+
+	}
 	/**
 	 * The Ajax function to autocomplete search.
 	 */
