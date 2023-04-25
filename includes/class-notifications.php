@@ -40,7 +40,6 @@ class Notifications {
 	 */
 	private function register_hooks() {
 		add_action( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
-		add_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ) );
 		add_filter( 'notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
@@ -378,7 +377,12 @@ class Notifications {
 			}
 		}
 
+		add_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
+
 		$mail = wp_mail( $to, $subject, $message, $headers, $attachments );
+
+		remote_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
+
 		if ( $alt_function ) {
 			remove_action( 'phpmailer_init', $alt_function );
 		}
