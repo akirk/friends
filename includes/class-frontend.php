@@ -537,14 +537,14 @@ class Frontend {
 	 */
 	function ajax_in_reply_to_preview() {
 		$url = wp_unslash( $_POST['url'] );
-		$is_url = wp_parse_url( $url );
-		if ( ! $is_url ) {
+
+		if ( ! wp_parse_url( $url ) ) {
 			wp_send_json_error();
 			exit;
 		}
 
 		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $url );
-		if ( ! $meta ) {
+		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
 			wp_send_json_error();
 			exit;
 		}
@@ -563,10 +563,7 @@ class Frontend {
 
 		$mention = '';
 		if ( $mentions ) {
-			$mention = '<!-- wp:paragraph -->' . PHP_EOL . '<p>';
 			$mention .= implode( ' ', $mentions );
-
-			$mention .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
 		}
 
 		$html = 'URL: ' . make_clickable( $meta['url'] );
