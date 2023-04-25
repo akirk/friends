@@ -381,7 +381,7 @@ class Notifications {
 
 		$mail = wp_mail( $to, $subject, $message, $headers, $attachments );
 
-		remote_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
+		remove_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
 
 		if ( $alt_function ) {
 			remove_action( 'phpmailer_init', $alt_function );
