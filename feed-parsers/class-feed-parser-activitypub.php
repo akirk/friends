@@ -934,7 +934,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$inbox = \Activitypub\get_inbox_by_actor( $to );
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Follow', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity = new \Activitypub\Model\Activity( 'Follow', false );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1007,7 +1007,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$inbox = \Activitypub\get_inbox_by_actor( $to );
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Undo', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity = new \Activitypub\Model\Activity( 'Undo', false );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1338,7 +1338,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$inbox = \Activitypub\get_inbox_by_actor( $url );
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Like', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity = new \Activitypub\Model\Activity( 'Like', false );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1415,7 +1415,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$inbox = \Activitypub\get_inbox_by_actor( $url );
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Undo', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity = new \Activitypub\Model\Activity( 'Undo', false );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1554,7 +1554,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function activitypub_announce( $url, $user_id ) {
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Announce', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity = new \Activitypub\Model\Activity( 'Announce', false );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1598,7 +1598,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function activitypub_unannounce( $url, $user_id ) {
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Undo', \Activitypub\Model\Activity::TYPE_SIMPLE );
+		$activity = new \Activitypub\Model\Activity( 'Undo', false );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
