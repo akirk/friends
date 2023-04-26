@@ -509,12 +509,11 @@
 				searchIndicator.removeClass( 'loading' );
 				if ( results ) {
 					$( '#in_reply_to_preview' ).html( results.html ).show();
-					const p = wp.blocks.createBlock( 'core/paragraph', {
-						content: results.mention,
-					} );
-					wp.data
-						.dispatch( 'core/block-editor' )
-						.resetBlocks( [ p ] );
+					wp.data.dispatch( 'core/block-editor' ).insertBlocks(
+						wp.blocks.createBlock( 'core/paragraph', {
+							content: results.mention,
+						} )
+					);
 				} else {
 					$( '#in_reply_to_preview' ).hide();
 				}
