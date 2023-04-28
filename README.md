@@ -6,7 +6,7 @@
 - Tested up to: 6.2
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.5.2
+- Stable tag: 2.5.3
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -85,6 +85,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. You can react to a post or share it using Post Collections.
 
 ## Changelog
+
+### 2.5.3
+- Add a new Reply To field to the Status post form ([#210]), also see the related update to the Firefox extension at https://addons.mozilla.org/addon/wpfriends/
+- Fix a Fatal regarding ActivityPub metadata
 
 ### 2.5.2
 - Create better display name from follows from the Enable Mastodon Apps plugin
@@ -204,6 +208,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[#210]: https://github.com/akirk/friends/pull/210
 [#206]: https://github.com/akirk/friends/pull/206
 [#205]: https://github.com/akirk/friends/pull/205
 [#201]: https://github.com/akirk/friends/pull/201
