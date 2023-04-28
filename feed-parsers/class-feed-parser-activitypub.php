@@ -163,8 +163,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $meta;
 	}
 
-	public function friends_activitypub_metadata( $meta, $url ) {
-		return array_merge( $meta, self::get_metadata( $url ) );
+	public function friends_activitypub_metadata( $array, $url ) {
+		$meta = self::get_metadata( $url );
+		if ( is_wp_error( $meta ) ) {
+			if ( ! empty( $array ) ) {
+				return $array;
+			}
+			return $meta;
+		}
+		return array_merge( $array, $meta );
 	}
 
 	function register_post_meta() {
@@ -229,11 +236,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     array  The (potentially) modified feed details.
 	 */
 	public function update_feed_details( $feed_details ) {
-		$meta = $this->get_metadata( $feed_details['url'] );
+		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $feed_details['url'] );
 		if ( ! $meta || is_wp_error( $meta ) ) {
 			return $feed_details;
 		}
-
 		if ( isset( $meta['name'] ) ) {
 			$feed_details['title'] = $meta['name'];
 		} elseif ( isset( $meta['preferredUsername'] ) ) {
