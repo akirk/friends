@@ -270,6 +270,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$friend = new User( $this->friend_id );
 		$feeds = $friend->get_feeds();
 		$feed = array_pop( $feeds );
+
 		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
 
 		$details = $parser->update_feed_details(
@@ -305,7 +306,8 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		}
 		parent::set_up();
 
-		add_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'pre_get_remote_metadata_by_actor' ), 10, 2 );
+		add_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
+		add_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
 
 		$user_id = $this->factory->user->create(
 			array(
@@ -356,16 +358,17 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function tear_down() {
-		remove_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'pre_get_remote_metadata_by_actor' ) );
+		remove_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
+		remove_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
 		remove_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8 );
 		parent::tear_down();
 	}
 
-	public static function pre_get_remote_metadata_by_actor( $pre, $actor ) {
-		if ( isset( self::$users[ $actor ] ) ) {
-			return self::$users[ $actor ];
+	public static function friends_get_activitypub_metadata( $array, $url ) {
+		if ( isset( self::$users[ $url ] ) ) {
+			return self::$users[ $url ];
 		}
-		return $pre;
+		return $array;
 	}
 
 	public function invalid_http_response() {

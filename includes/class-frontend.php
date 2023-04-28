@@ -79,6 +79,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
+		add_action( 'wp_ajax_friends-in-reply-to-preview', array( $this, 'ajax_in_reply_to_preview' ) );
 		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
 		add_action( 'wp_ajax_friends-reblog', array( $this, 'wp_ajax_reblog' ) );
@@ -328,7 +329,7 @@ class Frontend {
 			$author = $friend->display_name;
 		}
 
-		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p >';
+		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p>';
 		$reblog .= sprintf(
 			// translators: %s is a link.
 			__( 'Reblog via %s', 'friends' ),
@@ -377,33 +378,41 @@ class Frontend {
 	 * The Ajax function to be called upon posting from /friends
 	 */
 	public function ajax_frontend_publish_post() {
-		if ( wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
-			$p = array(
-				'post_type'    => 'post',
-				'post_title'   => isset( $_POST['title'] ) ? $_POST['title'] : '',
-				'post_content' => isset( $_POST['content'] ) ? $_POST['content'] : '',
-				'post_status'  => isset( $_POST['status'] ) ? $_POST['status'] : '',
-				'post_format'  => isset( $_POST['format'] ) ? $_POST['format'] : '',
-			);
+		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
+			return false;
+		}
+		$p = array(
+			'post_type'    => 'post',
+			'post_title'   => isset( $_POST['title'] ) ? $_POST['title'] : '',
+			'post_content' => isset( $_POST['content'] ) ? $_POST['content'] : '',
+			'post_status'  => isset( $_POST['status'] ) ? $_POST['status'] : '',
+			'post_format'  => isset( $_POST['format'] ) ? $_POST['format'] : '',
+		);
 
-			if ( empty( $p['post_status'] ) ) {
-				$p['post_status'] = 'publish';
+		if ( empty( $p['post_status'] ) ) {
+			$p['post_status'] = 'publish';
+		}
+		$result = 'empty';
+
+		if ( ! empty( $_POST['in_reply_to'] ) ) {
+			$p['post_meta_input'] = array(
+				'activitypub_in_reply_to' => $_POST['in_reply_to'],
+			);
+		}
+
+		if ( ! empty( $p['post_content'] ) || ! empty( $p['post_title'] ) ) {
+			$post_id = wp_insert_post( $p );
+			if ( ! empty( $p['post_format'] ) ) {
+				set_post_format( $post_id, $p['post_format'] );
 			}
-			$result = 'empty';
-			if ( ! empty( $p['post_content'] ) || ! empty( $p['post_title'] ) ) {
-				$post_id = wp_insert_post( $p );
-				if ( ! empty( $p['post_format'] ) ) {
-					set_post_format( $post_id, $p['post_format'] );
-				}
-				$result = is_wp_error( $post_id ) ? 'error' : 'success';
-			}
-			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
-				echo esc_html( $result );
-				exit;
-			} else {
-				wp_safe_redirect( add_query_arg( 'result', $result, $_SERVER['HTTP_REFERER'] ) );
-				exit;
-			}
+			$result = is_wp_error( $post_id ) ? 'error' : 'success';
+		}
+		if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
+			echo esc_html( $result );
+			exit;
+		} else {
+			wp_safe_redirect( remove_query_arg( 'in_reply_to', add_query_arg( 'result', $result, $_SERVER['HTTP_REFERER'] ) ) );
+			exit;
 		}
 	}
 
@@ -531,6 +540,60 @@ class Frontend {
 		wp_send_json_success( $posts );
 	}
 
+	/**
+	 * Get metadata for in_reply_to_preview.
+	 *
+	 * @param      string $url    The url.
+	 *
+	 * @return    array|WP_Error  The in reply to metadata.
+	 */
+	function get_in_reply_to_metadata( $url ) {
+		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $url );
+		if ( is_wp_error( $meta ) ) {
+			return $meta;
+		}
+
+		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
+			return new \WP_Error( 'no-activitypub', 'No ActivityPub metadata found.' );
+		}
+
+		$html = 'URL: ' . make_clickable( $meta['id'] );
+		$html .= '<div>' . wp_kses_post( $meta['content'] ) . '</div>';
+
+		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
+		$mention = '';
+		if ( $webfinger && ! is_wp_error( $webfinger ) ) {
+			$mention = '@' . $webfinger['preferredUsername'] . '@' . parse_url( $url, PHP_URL_HOST );
+		}
+
+		return array(
+			'url'     => $url,
+			'html'    => $html,
+			'author'  => $meta['attributedTo'],
+			'mention' => $mention,
+		);
+
+	}
+
+	/**
+	 * The Ajax function to fill the in-reply-to-preview.
+	 */
+	function ajax_in_reply_to_preview() {
+		$url = wp_unslash( $_POST['url'] );
+
+		if ( ! wp_parse_url( $url ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$meta = $this->get_in_reply_to_metadata( $_POST['url'] );
+
+		if ( is_wp_error( $meta ) ) {
+			wp_send_json_error( $meta->get_error_message() );
+			exit;
+		}
+		wp_send_json_success( $meta );
+	}
 	/**
 	 * The Ajax function to autocomplete search.
 	 */

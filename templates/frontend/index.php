@@ -7,12 +7,17 @@
  */
 
 $friends = Friends\Friends::get_instance();
+$args = array(
+	'friends' => $friends,
+);
+if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
+	$args['in_reply_to'] = $friends->frontend->get_in_reply_to_metadata( $_GET['in_reply_to'] );
+}
+
 Friends\Friends::template_loader()->get_template_part(
 	'frontend/header',
 	null,
-	array(
-		'friends' => $friends,
-	)
+	$args
 );
 
 ?>
@@ -74,7 +79,5 @@ Friends\Friends::template_loader()->get_template_part(
 Friends\Friends::template_loader()->get_template_part(
 	'frontend/footer',
 	null,
-	array(
-		'friends' => $friends,
-	)
+	$args
 );
