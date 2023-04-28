@@ -2066,6 +2066,8 @@ class Admin {
 				} else {
 					$args['friend_url'] = $friend_url;
 				}
+			} elseif ( preg_match( '/^@?' . Feed_Parser_ActivityPub::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $friend_url ) ) {
+				$args['friend_url'] = $friend_url;
 			}
 		}
 

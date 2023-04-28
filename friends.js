@@ -481,9 +481,25 @@
 		}
 	);
 
+	function getAcct( href ) {
+		const url = new URL( href );
+		const username = url.pathname.replace( /\/$/, '' ).split( '/' ).pop();
+		return '@' + username.replace( /^@/, '' ) + '@' + url.hostname;
+	}
+
+	function insertTextInGutenberg( text ) {
+		const element = jQuery( '.is-root-container p' )[ 0 ];
+		const len = element.textContent.length;
+		element.focus();
+		window.getSelection().collapse( element.firstChild, len );
+		document.execCommand( 'insertText', false, text + ' ' );
+	}
+
 	$document.on( 'click', '#in_reply_to_preview a', function () {
-		const a = $( this );
-		document.execCommand( 'insertText', false, a[ 0 ].outerHTML );
+		if ( ! $( this ).hasClass( 'mention' ) ) {
+			return true;
+		}
+		insertTextInGutenberg( getAcct( $( this ).attr( 'href' ) ) );
 		return false;
 	} );
 	$document.on( 'keyup', 'input#friends_in_reply_to', function () {
@@ -509,11 +525,7 @@
 				searchIndicator.removeClass( 'loading' );
 				if ( results ) {
 					$( '#in_reply_to_preview' ).html( results.html ).show();
-					wp.data.dispatch( 'core/block-editor' ).insertBlocks(
-						wp.blocks.createBlock( 'core/paragraph', {
-							content: results.mention,
-						} )
-					);
+					insertTextInGutenberg( getAcct( results.author ) );
 				} else {
 					$( '#in_reply_to_preview' ).hide();
 				}

@@ -59,6 +59,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
 		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_mentions_user' ) );
+		add_filter( 'activitypub_post', array( $this, 'activitypub_post_in_reply_to' ), 10, 2 );
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
@@ -281,12 +282,46 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return array();
 		}
 
-		if ( false !== strpos( $url, '@' ) && false === strpos( $url, '/' ) && preg_match( '#^https?://#', $url, $m ) ) {
-			$url = substr( $url, strlen( $m[0] ) );
+		if ( false !== strpos( $url, '@' ) ) {
+			if ( false === strpos( $url, '/' ) && preg_match( '#^https?://#', $url, $m ) ) {
+				$url = substr( $url, strlen( $m[0] ) );
+			}
+			return \Activitypub\get_remote_metadata_by_actor( $url );
 		}
-		return \Activitypub\get_remote_metadata_by_actor( $url );
-	}
 
+		$transient_key = 'friends_activitypub_' . crc32( $url );
+
+		$response = \get_transient( $transient_key );
+		if ( $response ) {
+			return $response;
+		}
+
+		$response = \wp_remote_get(
+			$url,
+			array(
+				'headers'     => array( 'Accept' => 'application/activity+json' ),
+				'redirection' => 2,
+				'timeout'     => 5,
+			)
+		);
+
+		if ( \is_wp_error( $response ) ) {
+			\set_transient( $transient_key, $response, HOUR_IN_SECONDS ); // Cache the error for a shorter period.
+			return $response;
+		}
+
+		if ( \is_wp_error( $response ) ) {
+			\set_transient( $transient_key, $response, HOUR_IN_SECONDS ); // Cache the error for a shorter period.
+			return $response;
+		}
+
+		$body = \wp_remote_retrieve_body( $response );
+		$body = \json_decode( $body, true );
+
+		\set_transient( $transient_key, $body, HOUR_IN_SECONDS ); // Cache the error for a shorter period.
+
+		return $body;
+	}
 	/**
 	 * Discover the feeds available at the URL specified.
 	 *
@@ -432,6 +467,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$user = $this->get_external_mentions_user();
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
 	}
+
+	public function activitypub_post_in_reply_to( $array, $post ) {
+		if ( get_post_meta( $post->ID, 'activitypub_in_reply_to', true ) ) {
+			$array['inReplyTo'] = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
+		}
+
+		return $array;
+	}
+
 
 	/**
 	 * Handles "Create" requests
