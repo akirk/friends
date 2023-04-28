@@ -7,7 +7,7 @@
  */
 
 ?>
-<details class="column col-8 col-sm-12 col-mx-auto" open>
+<details class="column col-8 col-sm-12 col-mx-auto">
 	<summary class="quick-status-panel-opener"><?php esc_html_e( 'Quick post panel', 'friends' ); ?></summary>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="friends-post-inline">
 		<?php wp_nonce_field( 'friends_publish' ); ?>
