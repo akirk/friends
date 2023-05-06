@@ -165,6 +165,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function friends_activitypub_metadata( $array, $url ) {
 		$meta = self::get_metadata( $url );
+		if ( is_null( $meta ) ) {
+			return $array;
+		}
 		if ( is_wp_error( $meta ) ) {
 			if ( ! empty( $array ) ) {
 				return $array;
