@@ -94,6 +94,9 @@ class Plugin_Installer {
 
 			if ( ! is_wp_error( $api ) ) {
 				$main_plugin_file = self::get_plugin_file( $plugin_slug );
+				if ( ! $main_plugin_file ) {
+					continue;
+				}
 				if ( self::check_file_extension( $main_plugin_file ) ) {
 					if ( is_plugin_active( $main_plugin_file ) ) {
 						$button_classes = 'installed button disabled';
