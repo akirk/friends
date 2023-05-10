@@ -37,14 +37,15 @@ if ( isset( $_GET['s'] ) ) {
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
 			</a>
 			<?php
-			if ( get_the_author() && is_singular() ) {
+			global $authordata;
+			if ( $authordata && is_singular() ) {
 				$args['friend_user'] = new Friends\User( get_the_author_meta( 'ID' ) );
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/single-header',
 					null,
 					$args
 				);
-			} elseif ( get_the_author() && is_author() ) {
+			} elseif ( $authordata && is_author() ) {
 				$args['friend_user'] = new Friends\User( get_the_author_meta( 'ID' ) );
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/author-header',
