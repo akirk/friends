@@ -42,6 +42,8 @@ class Admin {
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_open_friend_request' ), 10, 2 );
 		add_filter( 'users_list_table_query_args', array( $this, 'allow_role_multi_select' ) );
+		add_filter( 'views_users', array( $this, 'views_users' ) );
+		add_filter( 'users_list_table_query_args', array( $this, 'users_list_table_query_args' ) );
 		add_filter( 'user_row_actions', array( get_called_class(), 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
 		add_filter( 'bulk_actions-users', array( $this, 'add_user_bulk_options' ) );
@@ -166,6 +168,35 @@ class Admin {
 
 	}
 
+	public function views_users( $views ) {
+		$attrs = array(
+			' class="current"',
+			'aria-current="page"',
+		);
+		$href = 'href="' . esc_attr( 'users.php' ) . '"';
+		$href_all = 'href="' . esc_attr( 'users.php?all' ) . '"';
+		if ( isset( $_GET['all'] ) ) {
+			$views['all'] = str_replace( $href, $href_all . implode( ' ', $attrs ), $views['all'] );
+		} else {
+			$views['all'] = str_replace( $attrs, '', $views['all'] );
+			$views['all'] = str_replace( $href, $href_all, $views['all'] );
+		}
+		if ( isset( $_GET['all'] ) || isset( $_GET['role'] ) ) {
+			$attrs = array();
+		}
+		$all_users = new \WP_User_Query( array( 'role__not_in' => Friends::get_friends_plugin_roles() ) );
+		array_unshift( $views, '<a ' . $href . implode( ' ', $attrs ) . '>' . __( 'All (except friend users)', 'friends' ) . ' <span class="count">(' . esc_attr( $all_users->get_total() ) . ')</span></a>' );
+		return $views;
+	}
+
+	public function users_list_table_query_args( $args ) {
+		if ( ! isset( $_GET['all'] ) && ! isset( $_GET['role'] ) ) {
+			$args['role__not_in'] = Friends::get_friends_plugin_roles();
+			unset( $args['role__in'] );
+		}
+		return $args;
+	}
+
 	/**
 	 * Allow making use of the role__in query.
 	 *
@@ -174,6 +205,10 @@ class Admin {
 	 * @return     array  The modified array.
 	 */
 	public function allow_role_multi_select( $args ) {
+		if ( empty( $args['role'] ) ) {
+			$args['role__in'] = array_keys( self::get_associated_roles() );
+		}
+
 		if ( isset( $args['role'] ) && ! isset( $args['role__in'] ) ) {
 			if ( false !== strpos( $args['role'], ',' ) ) {
 				$args['role__in'] = explode( ',', $args['role'] );
