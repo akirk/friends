@@ -32,6 +32,14 @@ class User extends \WP_User {
 	 */
 	public static $feed_catch_all = array();
 
+	public static function get_by_username( $username ) {
+		$user = get_user_by( 'user_login', $username );
+		if ( $user && ! is_wp_error( $user ) ) {
+			return new self( $user );
+		}
+		return Subscription::get_by_username( $username );
+	}
+
 	/**
 	 * Create a User with a specific Friends-related role
 	 *
@@ -48,6 +56,9 @@ class User extends \WP_User {
 	 * @return     User|\WP_Error  The created user or an error.
 	 */
 	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null, $description = null ) {
+		if ( 'subscription' === $role ) {
+			return Subscription::create( $user_login, $role, $url, $display_name, $icon_url, $description );
+		}
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -95,9 +106,9 @@ class User extends \WP_User {
 			'role'         => $role,
 		);
 		$friend_id = wp_insert_user( $userdata );
-		update_user_option( $friend_id, 'friends_new_friend', true );
 
 		$friend_user = new User( $friend_id );
+		$friend_user->update_user_option( 'friends_new_friend', true );
 		$friend_user->update_user_icon_url( $icon_url );
 
 		do_action( 'friends_after_create_friend_user', $friend_user );
@@ -690,7 +701,7 @@ class User extends \WP_User {
 		}
 
 		if ( $user_icon_url && Friends::check_url( $user_icon_url ) ) {
-			update_user_option( $this->ID, 'friends_user_icon_url', $user_icon_url );
+			$this->update_user_option( 'friends_user_icon_url', $user_icon_url );
 			return $user_icon_url;
 		}
 

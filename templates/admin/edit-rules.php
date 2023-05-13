@@ -7,8 +7,8 @@
  */
 
 ?><form method="post" id="edit-rules">
-	<?php wp_nonce_field( 'edit-friend-rules-' . $args['friend']->ID ); ?>
-	<input type="hidden" name="friend" value="<?php echo esc_attr( $args['friend']->ID ); ?>" />
+	<?php wp_nonce_field( 'edit-friend-rules-' . $args['friend']->user_login ); ?>
+	<input type="hidden" name="friend" value="<?php echo esc_attr( $args['friend']->user_login ); ?>" />
 	<p class="description"><?php esc_html_e( 'By specifying rules, you can automatically accept, trash, or transform individual feed items, thus filter incoming posts according to your interest.', 'friends' ); ?></p>
 	<p class="description"><?php esc_html_e( 'Save changes to add another rule, leave the rule text empty to delete the rule.', 'friends' ); ?></p>
 	<table>
@@ -52,8 +52,8 @@
 	</table>
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
-		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->ID ) ); ?>" style="margin-left: 1em"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Back' ); ?></a>
+		<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ); ?>" style="margin-left: 1em"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Back' ); ?></a>
 	</p>
 </form>
 
-<p class="description"><?php esc_html_e( 'See how the rules apply to these items:', 'friends' ); ?> <button id="refresh-preview-rules" data-id="<?php echo esc_attr( $args['friend']->ID ); ?>" data-post="<?php echo $args['post'] ? esc_attr( $args['post']->ID ) : ''; ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'preview-rules-' . $args['friend']->ID ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></button></p>
+<p class="description"><?php esc_html_e( 'See how the rules apply to these items:', 'friends' ); ?> <button id="refresh-preview-rules" data-friend="<?php echo esc_attr( $args['friend']->user_login ); ?>" data-post="<?php echo $args['post'] ? esc_attr( $args['post']->ID ) : ''; ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'preview-rules-' . $args['friend']->user_login ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></button></p>

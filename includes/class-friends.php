@@ -143,6 +143,7 @@ class Friends {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'init', array( 'Friends\Subscription', 'register_taxonomy' ) );
 		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 
@@ -621,7 +622,7 @@ class Friends {
 	 */
 	public function get_avatar_data( $args, $id_or_email ) {
 		if ( is_object( $id_or_email ) ) {
-			if ( $id_or_email instanceof \WP_User ) {
+			if ( $id_or_email instanceof User ) {
 				$id_or_email = $id_or_email->ID;
 			} elseif ( $id_or_email instanceof \WP_Post ) {
 				$id_or_email = $id_or_email->post_author;
@@ -631,7 +632,20 @@ class Friends {
 		}
 
 		if ( is_numeric( $id_or_email ) && $id_or_email > 0 ) {
-			$url = get_user_option( 'friends_user_icon_url', $id_or_email );
+			$user = get_user_by( 'ID', $id_or_email );
+			if ( $user ) {
+				$user = new User( $user );
+			}
+		} elseif ( is_string( $id_or_email ) ) {
+			$user = User::get_by_username( $id_or_email );
+		}
+
+		if ( $user ) {
+			if ( is_wp_error( $user ) ) {
+				return $args;
+			}
+
+			$url = $user->get_user_option( 'friends_user_icon_url' );
 			if ( $url ) {
 				$args['url']          = $url;
 				$args['found_avatar'] = true;

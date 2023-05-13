@@ -7,7 +7,7 @@
  */
 
 ?><form method="post">
-	<?php wp_nonce_field( 'edit-friend-notifications-' . $args['friend']->ID ); ?>
+	<?php wp_nonce_field( 'edit-friend-notifications-' . $args['friend']->user_login ); ?>
 	<table class="form-table">
 		<tbody>
 			<?php if ( $args['friend']->can_refresh_feeds() ) : ?>

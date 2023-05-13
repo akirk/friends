@@ -54,7 +54,7 @@ $numfeeds = count( $args['friend']->get_active_feeds() );
 			?>
 		</li>
 		<li>
-			<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend']->ID ) ); ?>">
+			<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend']->user_login ) ); ?>">
 								<?php
 								echo esc_html(
 									sprintf(

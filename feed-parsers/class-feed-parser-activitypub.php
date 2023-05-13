@@ -1124,7 +1124,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function activitypub_save_settings( User $friend ) {
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-feeds-' . $friend->ID ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-feeds-' . $friend->user_login ) ) {
 
 			if ( isset( $_POST['friends_show_replies'] ) && $_POST['friends_show_replies'] ) {
 				$friend->update_user_option( 'activitypub_friends_show_replies', '1' );

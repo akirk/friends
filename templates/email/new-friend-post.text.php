@@ -42,5 +42,5 @@ printf(
 	// translators: %1$s is a username, %2$s is a URL.
 	__( 'Or just unsubscribe from %1$s\'s posts at %2$s', 'friends' ),
 	$args['author']->display_name,
-	self_admin_url( 'admin.php?page=edit-friend&user=' . $args['author']->ID )
+	self_admin_url( 'admin.php?page=edit-friend&user=' . $args['author']->user_login )
 );

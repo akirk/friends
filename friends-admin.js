@@ -100,7 +100,7 @@ jQuery( function ( $ ) {
 
 	const previewRules = function () {
 		const $this = $( 'button#refresh-preview-rules' );
-		let url = friends.ajax_url + '?user=' + $this.data( 'id' );
+		let url = friends.ajax_url + '?user=' + $this.data( 'friend' );
 		if ( $this.data( 'post' ) ) {
 			url += '&post=' + $this.data( 'post' );
 		}
@@ -111,7 +111,7 @@ jQuery( function ( $ ) {
 				.serialize() +
 				'&_ajax_nonce=' +
 				$this.data( 'nonce' ) +
-				'&action=friends_previewRules',
+				'&action=friends_preview_rules',
 			function ( response ) {
 				$( '#preview-rules' ).html( response );
 			}
