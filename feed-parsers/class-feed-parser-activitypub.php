@@ -1447,7 +1447,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function friends_reblog_button_label( $button_label ) {
-		if ( get_post_meta( get_the_ID(), 'parser', true ) === 'activitypub' ) {
+		if ( User_Feed::get_parser_for_post_id( get_the_ID() ) === 'activitypub' ) {
 			if ( get_user_option( 'friends_activitypub_dont_reblog' ) ) {
 				$button_label = _x( 'Boost', 'button', 'friends' );
 			} else {
@@ -1495,7 +1495,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $ret;
 		}
 
-		if ( get_post_meta( $post->ID, 'parser', true ) !== 'activitypub' ) {
+		if ( User_Feed::get_parser_for_post_id( $post->ID ) !== 'activitypub' ) {
 			return $ret;
 		}
 
@@ -1508,7 +1508,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $post ) {
 			return $ret;
 		}
-		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
+		if ( User_Feed::get_parser_for_post_id( $post->ID ) === 'activitypub' ) {
 			$this->queue_announce( $post->guid );
 			\update_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			\update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );

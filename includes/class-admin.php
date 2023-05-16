@@ -752,12 +752,12 @@ class Admin {
 		}
 
 		if ( ! isset( $_GET['user'] ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			wp_die( esc_html__( 'Invalid user.', 'friends' ) );
 		}
 
-		$friend = new User( intval( $_GET['user'] ) );
+		$friend = User::get_by_username( $_GET['user'] );
 		if ( ! $friend || is_wp_error( $friend ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			wp_die( esc_html__( 'Invalid username.', 'friends' ) );
 		}
 
 		if (
@@ -1009,13 +1009,13 @@ class Admin {
 			wp_die( esc_html__( 'Sorry, you are not allowed to edit this user.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
-		if ( ! isset( $_GET['user'] ) || ! is_numeric( $_GET['user'] ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		if ( ! isset( $_GET['user'] ) ) {
+			wp_die( esc_html__( 'Invalid user.', 'friends' ) );
 		}
 
-		$friend = new User( intval( $_GET['user'] ) );
+		$friend = User::get_by_username( $_GET['user'] );
 		if ( ! $friend || is_wp_error( $friend ) ) {
-			wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			wp_die( esc_html__( 'Invalid username.', 'friends' ) );
 		}
 
 		if ( ! $friend->has_cap( 'friends_plugin' ) ) {
@@ -1117,7 +1117,7 @@ class Admin {
 	 * @param      string $active  The active menu entry.
 	 */
 	public function header_edit_friend( User $friend, $active ) {
-		$append = '&user=' . $friend->ID;
+		$append = '&user=' . $friend->user_login;
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
 			null,
@@ -2734,17 +2734,11 @@ class Admin {
 		// Allow unsubscribing to all these feeds.
 		foreach ( $friend_user->get_active_feeds() as $feed ) {
 			do_action( 'friends_user_feed_deactivated', $feed );
+			$feed->delete();
 		}
-		User_Feed::delete_user_terms( $user_id );
 
-		global $wpdb;
-		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
-
-		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d AND post_type IN ('$post_types_to_delete')", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( $post_ids ) {
-			foreach ( $post_ids as $post_id ) {
-				wp_delete_post( $post_id );
-			}
+		foreach ( $friend_user->get_all_post_ids() as $post_id ) {
+			wp_delete_post( $post_id );
 		}
 	}
 

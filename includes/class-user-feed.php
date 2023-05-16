@@ -122,10 +122,15 @@ class User_Feed {
 		if ( empty( $this->friend_user ) ) {
 			$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
 			if ( empty( $user_ids ) ) {
-				return null;
+				// Is it a subscription?
+				if ( ! $this->term->parent ) {
+					return null;
+				}
+				$this->friend_user = new Subscription( new \WP_Term( $this->term->parent ) );
+			} else {
+				$user_id = reset( $user_ids );
+				$this->friend_user = new User( $user_id );
 			}
-			$user_id = reset( $user_ids );
-			$this->friend_user = new User( $user_id );
 		}
 
 		return $this->friend_user;
@@ -484,22 +489,11 @@ class User_Feed {
 		do_action( 'friends_user_feed_deactivated', $this );
 	}
 
-
-	/**
-	 * Delete all feeds for a user (when it its being deleted).
-	 *
-	 * @param      integer $user_id  The user id.
-	 */
-	public static function delete_user_terms( $user_id ) {
-		wp_delete_object_term_relationships( $user_id, self::TAXONOMY );
-	}
-
 	/**
 	 * Delete this feed.
 	 */
 	public function delete() {
-		$friend_user = $this->get_friend_user();
-		wp_remove_object_terms( $friend_user->ID, $this->term->term_id, self::TAXONOMY );
+		wp_delete_term( $this->term->term_id, self::TAXONOMY );
 	}
 
 	/**
@@ -554,37 +548,17 @@ class User_Feed {
 	 * @return User_Feed                  A newly created User_Feed.
 	 */
 	public static function save( User $friend_user, $url, $args = array() ) {
-		$all_urls = array();
-		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
-			$all_urls[ $term->name ] = $term->term_id;
-		}
-
-		if ( ! isset( $all_urls[ $url ] ) ) {
-			$all_urls[ $url ] = false;
-
-			$term_ids = wp_set_object_terms( $friend_user->ID, array_keys( $all_urls ), self::TAXONOMY );
-			if ( is_wp_error( $term_ids ) ) {
-				return $term_ids;
-			}
-			foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
-				$all_urls[ $term->name ] = $term->term_id;
-			}
-		}
+		$all_urls = $friend_user->save_feeds(
+			array(
+				$url => $args,
+			)
+		);
 
 		if ( ! isset( $all_urls[ $url ] ) ) {
 			return false;
 		}
 
 		$term_id = $all_urls[ $url ];
-		foreach ( $args as $key => $value ) {
-			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title', 'interval', 'modifier' ) ) ) {
-				if ( metadata_exists( 'term', $term_id, $key ) ) {
-					update_metadata( 'term', $term_id, $key, $value );
-				} else {
-					add_metadata( 'term', $term_id, $key, $value, true );
-				}
-			}
-		}
 
 		$term = get_term( $term_id );
 		if ( is_wp_error( $term ) ) {
@@ -730,5 +704,24 @@ class User_Feed {
 		}
 
 		return $feeds;
+	}
+
+	/**
+	 * Get the parser for a post
+	 *
+	 * @param      int $post_id     The post id.
+	 *
+	 * @return     string The feed parser.
+	 */
+	public static function get_parser_for_post_id( $post_id ) {
+		$user_feeds = wp_get_object_terms( $post_id, User_Feed::TAXONOMY );
+		if ( empty( $user_feeds ) ) {
+			// We used to save the parser as post meta.
+			return get_post_meta( $post_id, 'parser', true );
+		}
+
+		$user_feed = reset( $user_feeds );
+		$user_feed = new self( $user_feed );
+		return $user_feed->get_parser();
 	}
 }

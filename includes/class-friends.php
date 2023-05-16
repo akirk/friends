@@ -726,18 +726,10 @@ class Friends {
 	/**
 	 * Gets the post count by post format.
 	 *
-	 * @param      int $author_id  The author userid.
-	 *
 	 * @return     array  The post count by post format.
 	 */
-	public function get_post_count_by_post_format( $author_id = null ) {
+	public function get_post_count_by_post_format() {
 		$cache_key = 'friends_post_count_by_post_format';
-		if ( is_numeric( $author_id ) && $author_id > 0 ) {
-			$author_id = intval( $author_id );
-			$cache_key .= '_author_' . $author_id;
-		} else {
-			$author_id = null;
-		}
 
 		$counts = get_transient( $cache_key );
 		if ( false === $counts ) {
@@ -747,72 +739,38 @@ class Friends {
 			global $wpdb;
 
 			$counts = array();
-			if ( $author_id ) {
-				$post_format_counts = $wpdb->get_results(
-					$wpdb->prepare(
-						sprintf(
-							"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-							FROM %s AS posts
-							JOIN %s AS relationships
-							JOIN %s AS taxonomy
-							JOIN %s AS terms
 
-							WHERE posts.post_author = %s
-							AND posts.post_status IN ( 'publish', 'private' )
-							AND posts.post_type IN ( %s )
-							AND relationships.object_id = posts.ID
-							AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-							AND taxonomy.taxonomy = 'post_format'
+			$post_format_counts = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+					FROM {$wpdb->posts} AS posts
+					JOIN {$wpdb->term_relationships} AS relationships
+					JOIN {$wpdb->term_taxonomy} AS taxonomy
+					JOIN {$wpdb->terms} AS terms
 
-							AND terms.term_id = taxonomy.term_id
-							GROUP BY terms.slug",
-							$wpdb->posts,
-							$wpdb->term_relationships,
-							$wpdb->term_taxonomy,
-							$wpdb->terms,
-							'%d',
-							implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
-						),
-						array_merge(
-							array( $author_id ),
-							$post_types
-						)
-					)
-				);
-				$counts['standard'] = count_user_posts( $author_id, $post_types );
-			} else {
-				$post_format_counts = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-						FROM {$wpdb->posts} AS posts
-						JOIN {$wpdb->term_relationships} AS relationships
-						JOIN {$wpdb->term_taxonomy} AS taxonomy
-						JOIN {$wpdb->terms} AS terms
+					WHERE posts.post_status IN ( 'publish', 'private' )
+					AND posts.post_type IN ( " . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . " )
+					AND relationships.object_id = posts.ID
+					AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+					AND taxonomy.taxonomy = 'post_format'
 
-						WHERE posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type IN ( " . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . " )
-						AND relationships.object_id = posts.ID
-						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-						AND taxonomy.taxonomy = 'post_format'
-
-						AND terms.term_id = taxonomy.term_id
-						GROUP BY terms.slug",
-						$post_types
-					)
-				);
-				$post_count = null;
-				foreach ( $post_types as $post_type ) {
-					$count = wp_count_posts( $post_type );
-					if ( is_null( $post_count ) ) {
-						$post_count = $count;
-					} else {
-						foreach ( (array) $count as $post_status => $c ) {
-							$post_count->$post_status = ( isset( $post_count->$post_status ) ? $post_count->$post_status : 0 ) + $c;
-						}
+					AND terms.term_id = taxonomy.term_id
+					GROUP BY terms.slug",
+					$post_types
+				)
+			);
+			$post_count = null;
+			foreach ( $post_types as $post_type ) {
+				$count = wp_count_posts( $post_type );
+				if ( is_null( $post_count ) ) {
+					$post_count = $count;
+				} else {
+					foreach ( (array) $count as $post_status => $c ) {
+						$post_count->$post_status = ( isset( $post_count->$post_status ) ? $post_count->$post_status : 0 ) + $c;
 					}
 				}
-				$counts['standard'] = $post_count->publish + $post_count->private;
 			}
+			$counts['standard'] = $post_count->publish + $post_count->private;
 
 			foreach ( $post_format_counts as $row ) {
 				$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;

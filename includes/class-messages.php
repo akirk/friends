@@ -226,10 +226,9 @@ class Messages {
 				)
 			);
 		} else {
-			$post_id = wp_insert_post(
+			$post_id = $friend_user->save_post(
 				array(
 					'post_type'    => self::CPT,
-					'post_author'  => $friend_user->ID,
 					'post_title'   => $subject,
 					'post_content' => $content,
 					'post_status'  => $mark_unread ? 'friends_unread' : 'friends_read',
@@ -273,7 +272,7 @@ class Messages {
 
 		while ( $unread_messages->have_posts() ) {
 			$unread_messages->the_post();
-			$friend_user = new User( $post->post_author );
+			$friend_user = User::get_post_author( $post );
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'friend-message-' . $friend_user->ID,
@@ -365,7 +364,7 @@ class Messages {
 	 * @param      array $args         The arguments.
 	 */
 	public function friends_display_messages( $args ) {
-		if ( ! isset( $args['friend_user'] ) ) {
+		if ( ! isset( $args['friend_user'] ) || ! $args['friend_user'] ) {
 			return;
 		}
 
@@ -397,7 +396,7 @@ class Messages {
 	 * @param      array $args         The arguments.
 	 */
 	public function friends_message_form( $args ) {
-		if ( ! isset( $args['friend_user'] ) ) {
+		if ( ! isset( $args['friend_user'] ) || ! $args['friend_user'] ) {
 			return;
 		}
 

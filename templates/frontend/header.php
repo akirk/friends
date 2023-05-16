@@ -10,6 +10,7 @@ $search = '';
 if ( isset( $_GET['s'] ) ) {
 	$search = wp_unslash( $_GET['s'] );
 }
+
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?> class="no-js no-svg">
 <head>
@@ -37,16 +38,13 @@ if ( isset( $_GET['s'] ) ) {
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
 			</a>
 			<?php
-			global $authordata;
-			if ( $authordata && is_singular() ) {
-				$args['friend_user'] = new Friends\User( get_the_author_meta( 'ID' ) );
+			if ( $args['friend_user'] && is_singular() ) {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/single-header',
 					null,
 					$args
 				);
-			} elseif ( $authordata && is_author() ) {
-				$args['friend_user'] = new Friends\User( get_the_author_meta( 'ID' ) );
+			} elseif ( $args['friend_user'] ) {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/author-header',
 					null,

@@ -6,14 +6,6 @@
  * @package Friends
  */
 
-$friends = Friends\Friends::get_instance();
-$args = array(
-	'friends' => $friends,
-);
-if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
-	$args['in_reply_to'] = $friends->frontend->get_in_reply_to_metadata( $_GET['in_reply_to'] );
-}
-
 Friends\Friends::template_loader()->get_template_part(
 	'frontend/header',
 	null,
@@ -28,29 +20,27 @@ Friends\Friends::template_loader()->get_template_part(
 		<div class="card">
 			<div class="card-body">
 			<?php
-			if ( $friends->frontend->post_format ) {
+			if ( $args['friends']->frontend->post_format ) {
 				$post_formats = get_post_format_strings();
 
-				if ( get_the_author() ) {
+				if ( $args['friend_user'] ) {
 					echo esc_html(
 						sprintf(
 						// translators: %s is the name of an author.
 							__( '%1$s hasn\'t posted anything with the post format %2$s yet!', 'friends' ),
 							get_the_author(),
-							$post_formats[ $friends->frontend->post_format ]
+							$post_formats[ $args['friends']->frontend->post_format ]
 						)
 					);
-
-					$friend_user = new Friends\User( get_the_author_meta( 'ID' ) );
 					?>
-					<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url() ); ?>"><?php esc_html_e( 'Remove post format filter', 'friends' ); ?></a>
+					<a href="<?php echo esc_url( $args['friend_user']->get_local_friends_page_url() ); ?>"><?php esc_html_e( 'Remove post format filter', 'friends' ); ?></a>
 					<?php
 				} else {
 					echo esc_html(
 						sprintf(
 						// translators: %s is a post format title.
 							__( "Your friends haven't posted anything with the post format %s yet!", 'friends' ),
-							$post_formats[ $friends->frontend->post_format ]
+							$post_formats[ $args['friends']->frontend->post_format ]
 						)
 					);
 					?>

@@ -529,10 +529,6 @@ class Feed {
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
 
-		$current_user = wp_get_current_user();
-		// Posts and revisions should be associated with this user.
-		wp_set_current_user( $friend_user->ID );
-
 		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
@@ -595,6 +591,9 @@ class Feed {
 				$old_post = get_post( $post_id );
 				$modified_post_data = array();
 				foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
+					if ( empty( $old_post->$field ) || empty( $post_data[ $field ] ) ) {
+						continue;
+					}
 					if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
 						$modified_post_data[ $field ] = $post_data[ $field ];
 						break;
@@ -628,7 +627,7 @@ class Feed {
 				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 				$post_data['meta_input'] = $item->meta;
 
-				$post_id = wp_insert_post( $post_data, true );
+				$post_id = $friend_user->save_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
@@ -672,6 +671,8 @@ class Feed {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
 
+			wp_set_object_terms( $post_id, $user_feed->get_id(), User_Feed::TAXONOMY );
+
 			update_post_meta( $post_id, 'parser', $user_feed->get_parser() );
 			update_post_meta( $post_id, 'feed_url', $user_feed->get_url() );
 
@@ -679,10 +680,6 @@ class Feed {
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 		}
 		remove_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
-
-		if ( $current_user ) {
-			wp_set_current_user( $current_user->ID );
-		}
 
 		$this->notify_about_new_posts( $friend_user, $new_posts, $user_feed );
 
