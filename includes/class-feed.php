@@ -539,6 +539,10 @@ class Feed {
 			}
 			$item->permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
 
+			if ( empty( $item->post_content ) ) {
+				$item->post_content = '';
+			}
+
 			$item->post_content = wp_kses_post( trim( $item->post_content ) );
 
 			$item = apply_filters( 'friends_early_modify_feed_item', $item, $user_feed, $friend_user );

@@ -71,7 +71,7 @@ class User extends \WP_User {
 	 */
 	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null, $description = null ) {
 		if ( 'subscription' === $role ) {
-			return Subscription::create( $user_login, $role, $url, $display_name, $icon_url, $description );
+			// return Subscription::create( $user_login, $role, $url, $display_name, $icon_url, $description ); //.
 		}
 		$role_rank = array_flip(
 			array(

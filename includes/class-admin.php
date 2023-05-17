@@ -447,9 +447,11 @@ class Admin {
 		return self_admin_url( 'admin.php?page=edit-friend&user=' . $user->user_login );
 	}
 
-	public static function get_edit_friend_link( $user_id ) {
-		$user = new \WP_User( $user_id );
-		return apply_filters( 'get_edit_user_link', $user->user_url, $user_id );
+	public static function get_edit_friend_link( $user ) {
+		if ( ! $user instanceof \WP_User ) {
+			$user = new \WP_User( $user );
+		}
+		return apply_filters( 'get_edit_user_link', $user->user_url, $user->user_login );
 	}
 
 	public static function get_unfriend_link( $user ) {
@@ -1032,12 +1034,24 @@ class Admin {
 		$arg       = 'updated';
 		$arg_value = 1;
 
-		if ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( $_GET['accept-friend-request'], 'accept-friend-request-' . $friend->ID ) ) {
+		if ( isset( $_GET['convert-to-user'] ) && wp_verify_nonce( $_GET['convert-to-user'], 'convert-to-user-' . $friend->user_login ) ) {
+			if ( $friend instanceof Subscription ) {
+				if ( $friend->has_cap( 'friends_plugin' ) && ! $friend->has_cap( 'friend' ) ) {
+					Subscription::convert_to_user( $friend );
+				}
+			}
+		} elseif ( isset( $_GET['convert-from-user'] ) && wp_verify_nonce( $_GET['convert-from-user'], 'convert-from-user-' . $friend->user_login ) ) {
+			if ( $friend instanceof User && ! $friend instanceof Subscription ) {
+				if ( $friend->has_cap( 'friends_plugin' ) && ! $friend->has_cap( 'friend' ) ) {
+					Subscription::convert_from_user( $friend );
+				}
+			}
+		} elseif ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( $_GET['accept-friend-request'], 'accept-friend-request-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'friend_request' ) ) {
 				$friend->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 				$arg = 'friend';
 			}
-		} elseif ( isset( $_GET['add-friend'] ) && wp_verify_nonce( $_GET['add-friend'], 'add-friend-' . $friend->ID ) ) {
+		} elseif ( isset( $_GET['add-friend'] ) && wp_verify_nonce( $_GET['add-friend'], 'add-friend-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'pending_friend_request' ) || $friend->has_cap( 'subscription' ) ) {
 				$rest_url = $this->friends->rest->discover_rest_url( $friend->user_url );
 				if ( ! is_wp_error( $rest_url ) ) {
@@ -1062,15 +1076,15 @@ class Admin {
 					}
 				}
 			}
-		} elseif ( isset( $_GET['change-to-restricted-friend'] ) && wp_verify_nonce( $_GET['change-to-restricted-friend'], 'change-to-restricted-friend-' . $friend->ID ) ) {
+		} elseif ( isset( $_GET['change-to-restricted-friend'] ) && wp_verify_nonce( $_GET['change-to-restricted-friend'], 'change-to-restricted-friend-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'friend' ) ) {
 				$friend->set_role( 'acquaintance' );
 			}
-		} elseif ( isset( $_GET['change-to-friend'] ) && wp_verify_nonce( $_GET['change-to-friend'], 'change-to-friend-' . $friend->ID ) ) {
+		} elseif ( isset( $_GET['change-to-friend'] ) && wp_verify_nonce( $_GET['change-to-friend'], 'change-to-friend-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'acquaintance' ) ) {
 				$friend->set_role( 'friend' );
 			}
-		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-' . $friend->ID ) ) {
+		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-' . $friend->user_login ) ) {
 			if ( trim( $_POST['friends_display_name'] ) ) {
 				$friend->first_name   = trim( $_POST['friends_display_name'] );
 				$friend->display_name = trim( $_POST['friends_display_name'] );
@@ -1087,13 +1101,13 @@ class Admin {
 				$hide_from_friends_page = array();
 			}
 			if ( ! isset( $_POST['show_on_friends_page'] ) || ! $_POST['show_on_friends_page'] ) {
-				if ( ! in_array( $friend->ID, $hide_from_friends_page ) ) {
-					$hide_from_friends_page[] = $friend->ID;
+				if ( ! in_array( $friend->user_login, $hide_from_friends_page ) ) {
+					$hide_from_friends_page[] = $friend->user_login;
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 				}
 			} else {
-				if ( in_array( $friend->ID, $hide_from_friends_page ) ) {
-					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->ID ) ) );
+				if ( in_array( $friend->user_login, $hide_from_friends_page ) ) {
+					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->user_login ) ) );
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 				}
 			}

@@ -29,12 +29,13 @@ class Subscription extends User {
 		$this->caps['subscription'] = true;
 		$this->get_role_caps();
 
+		$this->roles = array_values( $this->roles );
+
 		$this->data = (object) array(
 			'ID'              => $this->ID,
 			'user_login'      => $term->name,
 			'display_name'    => get_metadata( 'term', $term->term_id, 'display_name', true ),
 			'user_url'        => get_metadata( 'term', $term->term_id, 'user_url', true ),
-			'avatar_url'      => get_metadata( 'term', $term->term_id, 'avatar_url', true ),
 			'description'     => get_metadata( 'term', $term->term_id, 'description', true ),
 			'user_registered' => get_metadata( 'term', $term->term_id, 'created', true ),
 		);
@@ -308,7 +309,7 @@ class Subscription extends User {
 	}
 
 	public function get_avatar_url() {
-		return $this->data->avatar_url;
+		return get_metadata( 'term', $this->get_term_id(), 'avatar_url', true );
 	}
 
 	public function delete() {
@@ -351,6 +352,7 @@ class Subscription extends User {
 		}
 
 		global $wpdb;
+		// Convert feeds.
 		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $subscription->get_term_id(), $user->ID, USER_FEED::TAXONOMY ) );
 
 		// \wp_delete_user( $user->ID );
@@ -358,23 +360,29 @@ class Subscription extends User {
 	}
 
 	public static function convert_to_user( Subscription $subscription ) {
-		$user = User::create( $subscription->user_login, $subscription->role, $subscription->user_url, $subscription->display_name, $subscription->get_avatar_url(), $subscription->description, $subscription->user_registered );
+		$user = User::create( $subscription->user_login, $subscription->roles[0], $subscription->user_url, $subscription->display_name, $subscription->get_avatar_url(), $subscription->description, $subscription->user_registered );
 
 		if ( is_wp_error( $user ) ) {
 			return $user;
 		}
+
 		$query = new \WP_Query();
-		$query->set( 'post_type', Friends::CPT );
+		$query->set( 'post_type', apply_filters( 'friends_frontend_post_types', array() ) );
+		$query->set( 'post_status', array( 'publish', 'private', 'draft', 'trashed' ) );
 		$query->set( 'posts_per_page', -1 );
 		$query = $subscription->modify_query_by_author( $query );
 
 		foreach ( $query->get_posts() as $post ) {
-			$post->post_author = $user->user_login;
+			$post->post_author = $user->ID;
 			wp_update_post( $post );
 			wp_remove_object_terms( $post->ID, $subscription->get_term_id(), self::TAXONOMY );
 		}
 
-		wp_delete_term( $subscription->ID, self::TAXONOMY );
+		global $wpdb;
+		// Convert feeds.
+		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $user->ID, $subscription->get_term_id(), USER_FEED::TAXONOMY ) );
+
+		wp_delete_term( $subscription->get_term_id(), self::TAXONOMY );
 
 		return $user;
 	}

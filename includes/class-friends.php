@@ -630,7 +630,6 @@ class Friends {
 				$id_or_email = $id_or_email->user_id;
 			}
 		}
-
 		if ( is_numeric( $id_or_email ) && $id_or_email > 0 ) {
 			$user = get_user_by( 'ID', $id_or_email );
 			if ( $user ) {
@@ -645,7 +644,7 @@ class Friends {
 				return $args;
 			}
 
-			$url = $user->get_user_option( 'friends_user_icon_url' );
+			$url = $user->get_avatar_url();
 			if ( $url ) {
 				$args['url']          = $url;
 				$args['found_avatar'] = true;

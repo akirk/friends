@@ -36,7 +36,19 @@
 			<tr>
 				<th><label for="status"><?php echo esc_html( _x( 'Type', 'of user', 'friends' ) ); ?></label></th>
 				<td>
-					<?php echo esc_html( get_class( $args['friend'] ) ); ?>
+					<?php if ( $args['friend'] instanceof Friends\Subscription ) : ?>
+						<?php esc_html_e( 'Virtual User', 'friends' ); ?>
+						<?php echo esc_html( $args['friend']->get_term_id() ); ?>
+						<p class="description">
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'convert-to-user-' . $args['friend']->user_login, 'convert-to-user' ) ); ?>"><?php esc_html_e( 'Convert to User', 'friends' ); ?></a>
+						</p>
+					<?php else : ?>
+						<?php esc_html_e( 'User', 'friends' ); ?>
+						<?php echo esc_html( $args['friend']->ID ); ?>
+						<p class="description">
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'convert-from-user-' . $args['friend']->user_login, 'convert-from-user' ) ); ?>"><?php esc_html_e( 'Convert to Virtual User', 'friends' ); ?></a>
+						</p>
+					<?php endif; ?>
 				</td>
 			</tr>
 			<tr>

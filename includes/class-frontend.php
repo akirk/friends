@@ -770,13 +770,6 @@ class Frontend {
 		}
 
 		global $args;
-		// TODO determine when the conversion should happen.
-		if ( $this->author instanceof User && ! $this->author instanceof Subscription ) {
-			if ( $this->author->has_cap( 'friends_plugin' ) && ! $this->author->has_cap( 'friend' ) ) {
-				$subscription = Subscription::convert_from_user( $this->author );
-				$this->author = $subscription;
-			}
-		}
 		$args = array(
 			'friends'     => $this->friends,
 			'friend_user' => $this->author,

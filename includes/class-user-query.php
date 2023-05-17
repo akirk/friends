@@ -85,8 +85,23 @@ class User_Query extends \WP_User_Query {
 					'orderby'  => 'display_name',
 				)
 			);
+			$all[ get_current_blog_id() ]->augment_results_with_virtual_subscriptions();
 		}
 		return $all[ get_current_blog_id() ];
+	}
+
+	public function augment_results_with_virtual_subscriptions() {
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy'   => Subscription::TAXONOMY,
+				'hide_empty' => false,
+			)
+		);
+
+		foreach ( $term_query->get_terms() as $term ) {
+			$this->results[] = new Subscription( $term );
+		}
+
 	}
 
 	/**

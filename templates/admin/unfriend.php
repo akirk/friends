@@ -35,7 +35,7 @@ $numfeeds = count( $args['friend']->get_active_feeds() );
 	<p><?php esc_html_e( 'Since friends correspond to WordPress users, unfriending a user means to delete the user.', 'friends' ); ?></p>
 	<h4>
 	<?php
-			echo get_avatar( $args['friend']->ID, 24 );
+			echo get_avatar( $args['friend']->user_login, 24 );
 			echo ' ';
 			echo esc_html( $args['friend']->user_login );
 	?>
