@@ -720,6 +720,29 @@ class User extends \WP_User {
 			global $wpdb;
 
 			$counts = array();
+			$counts['standard'] = $wpdb->get_var(
+				$wpdb->prepare(
+					sprintf(
+						"SELECT COUNT(*)
+						FROM %s AS posts
+						JOIN %s AS relationships_post_format
+
+						WHERE posts.post_author = %s
+						AND posts.post_status IN ( 'publish', 'private' )
+						AND posts.post_type IN ( %s )
+						AND relationships_post_format.object_id = posts.ID",
+						$wpdb->posts,
+						$wpdb->term_relationships,
+						'%d',
+						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+					),
+					array_merge(
+						array( $this->ID ),
+						$post_types,
+					)
+				)
+			);
+
 			$post_format_counts = $wpdb->get_results(
 				$wpdb->prepare(
 					sprintf(
@@ -749,33 +772,8 @@ class User extends \WP_User {
 
 			foreach ( $post_format_counts as $row ) {
 				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
+				$counts['standard'] -= $row->count;
 			}
-
-			$counts['standard'] = $wpdb->get_var(
-				$wpdb->prepare(
-					sprintf(
-						"SELECT COUNT(*)
-						FROM %s AS posts
-						JOIN %s AS relationships_post_format
-
-						WHERE posts.post_author = %s
-						AND posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type IN ( %s )
-						AND relationships_post_format.object_id = posts.ID
-						AND relationships_post_format.term_taxonomy_id NOT IN ( %s )",
-						$wpdb->posts,
-						$wpdb->term_relationships,
-						'%d',
-						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) )
-					),
-					array_merge(
-						array( $this->ID ),
-						$post_types,
-						array_keys( $post_formats_term_ids )
-					)
-				)
-			);
 
 			$counts = array_filter( $counts );
 

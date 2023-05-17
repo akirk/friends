@@ -219,6 +219,36 @@ class Subscription extends User {
 			global $wpdb;
 
 			$counts = array();
+
+			$counts['standard'] = $wpdb->get_var(
+				$wpdb->prepare(
+					sprintf(
+						"SELECT COUNT(DISTINCT posts.ID)
+						FROM %s AS posts
+						JOIN %s AS relationships_post_format
+						JOIN %s AS relationships_author
+
+						WHERE posts.post_author = %s
+						AND posts.post_status IN ( 'publish', 'private' )
+						AND posts.post_type IN ( %s )
+						AND relationships_post_format.object_id = posts.ID
+						AND relationships_author.object_id = posts.ID
+						AND relationships_author.term_taxonomy_id = %s",
+						$wpdb->posts,
+						$wpdb->term_relationships,
+						$wpdb->term_relationships,
+						'%d',
+						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+						'%d'
+					),
+					array_merge(
+						array( get_current_user_id() ),
+						$post_types,
+						array( $this->get_term_id() )
+					)
+				)
+			);
+
 			$post_format_counts = $wpdb->get_results(
 				$wpdb->prepare(
 					sprintf(
@@ -254,39 +284,8 @@ class Subscription extends User {
 
 			foreach ( $post_format_counts as $row ) {
 				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
+				$counts['standard'] -= $row->count;
 			}
-
-			$counts['standard'] = $wpdb->get_var(
-				$wpdb->prepare(
-					sprintf(
-						"SELECT COUNT(*)
-						FROM %s AS posts
-						JOIN %s AS relationships_post_format
-						JOIN %s AS relationships_author
-
-						WHERE posts.post_author = %s
-						AND posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type IN ( %s )
-						AND relationships_post_format.object_id = posts.ID
-						AND relationships_post_format.term_taxonomy_id NOT IN ( %s )
-						AND relationships_author.object_id = posts.ID
-						AND relationships_author.term_taxonomy_id = %s",
-						$wpdb->posts,
-						$wpdb->term_relationships,
-						$wpdb->term_relationships,
-						'%d',
-						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) ),
-						'%d'
-					),
-					array_merge(
-						array( get_current_user_id() ),
-						$post_types,
-						$post_formats_term_ids,
-						array( $this->get_term_id() )
-					)
-				)
-			);
 
 			$counts = array_filter( $counts );
 
@@ -294,6 +293,25 @@ class Subscription extends User {
 		}
 
 		return $counts;
+	}
+
+	/**
+	 * Gets the post counts by post format.
+	 *
+	 * @return     int  The post count.
+	 */
+	public function get_post_in_trash_count() {
+		global $wpdb;
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+
+		$count = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash" AND post_author = %d ',
+				array_merge( array( $this->get_term_id() ), $post_types, array( get_current_user_id() ) )
+			)
+		);
+
+		return intval( $count );
 	}
 
 	/**
