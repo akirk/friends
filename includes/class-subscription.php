@@ -312,10 +312,41 @@ class Subscription extends User {
 		return get_metadata( 'term', $this->get_term_id(), 'avatar_url', true );
 	}
 
+	/**
+	 * Determines if starred.
+	 *
+	 * @return     bool  True if starred, False otherwise.
+	 */
+	public function is_starred() {
+		return get_metadata( 'term', $this->get_term_id(), 'starred', true );
+	}
+
+	/**
+	 * Marks a friend as starred or unstarred.
+	 *
+	 * @param      bool $starred  Whether to star the friend.
+	 *
+	 * @return     bool    The new star status.
+	 */
+	public function set_starred( $starred ) {
+		if ( $starred ) {
+			update_metadata( 'term', $this->get_term_id(), 'starred', true );
+			return true;
+		}
+
+		delete_metadata( 'term', $this->get_term_id(), 'starred' );
+		return false;
+	}
+
 	public function delete() {
 		// Allow unsubscribing to all these feeds.
 		foreach ( $this->get_active_feeds() as $feed ) {
 			do_action( 'friends_user_feed_deactivated', $feed );
+			$feed->delete();
+		}
+
+		// Delete the rest.
+		foreach ( $this->get_feeds() as $feed ) {
 			$feed->delete();
 		}
 
@@ -355,12 +386,13 @@ class Subscription extends User {
 		// Convert feeds.
 		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $subscription->get_term_id(), $user->ID, USER_FEED::TAXONOMY ) );
 
-		// \wp_delete_user( $user->ID );
+		$user->delete();
+
 		return $user;
 	}
 
 	public static function convert_to_user( Subscription $subscription ) {
-		$user = User::create( $subscription->user_login, $subscription->roles[0], $subscription->user_url, $subscription->display_name, $subscription->get_avatar_url(), $subscription->description, $subscription->user_registered );
+		$user = User::create( $subscription->user_login, $subscription->roles[0], $subscription->user_url, $subscription->display_name, $subscription->get_avatar_url(), $subscription->description, $subscription->user_registered, true );
 
 		if ( is_wp_error( $user ) ) {
 			return $user;
@@ -382,12 +414,26 @@ class Subscription extends User {
 		// Convert feeds.
 		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $user->ID, $subscription->get_term_id(), USER_FEED::TAXONOMY ) );
 
-		wp_delete_term( $subscription->get_term_id(), self::TAXONOMY );
+		$subscription->delete();
 
 		return $user;
 	}
 
-	public static function create( $user_login, $role, $user_url, $display_name = null, $avatar_url = null, $description = null, $created = null ) {
+	/**
+	 * Create a Subscription (virtual user).
+	 *
+	 * @param      string $user_login    The user login.
+	 * @param      string $role          The role: subscription.
+	 * @param      string $user_url      The site URL.
+	 * @param      string $display_name  The user's display name.
+	 * @param      string $avatar_url      The user_icon_url URL.
+	 * @param      string $description   A description for the user.
+	 * @param      string $user_registered   When the user was registered.
+	 * @param      bool   $subscription_override  Whether to override the automatic creation of a subscription.
+	 *
+	 * @return     Subscription|\WP_Error  The created subscription or an error.
+	 */
+	public static function create( $user_login, $role, $user_url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
 		$term = term_exists( $user_login, self::TAXONOMY );
 
 		if ( ! $term || ! isset( $term['term_id'] ) ) {
@@ -409,7 +455,7 @@ class Subscription extends User {
 		delete_metadata( 'term', $term_id, 'description' );
 		add_metadata( 'term', $term_id, 'description', $description, true );
 		delete_metadata( 'term', $term_id, 'created' );
-		add_metadata( 'term', $term_id, 'created', $created ? $created : gmdate( 'Y-m-d H:i:s' ), true );
+		add_metadata( 'term', $term_id, 'created', $user_registered ? $user_registered : gmdate( 'Y-m-d H:i:s' ), true );
 
 		$term = get_term( $term['term_id'] );
 		if ( is_wp_error( $term ) ) {

@@ -64,15 +64,18 @@ class User extends \WP_User {
 	 * @param      string $url           The site URL for which
 	 *                                   to create the user.
 	 * @param      string $display_name  The user's display name.
-	 * @param      string $icon_url      The user_icon_url URL.
+	 * @param      string $avatar_url      The user_avatar_url URL.
 	 * @param      string $description   A description for the user.
+	 * @param      string $user_registered   When the user was registered.
+	 * @param      bool   $subscription_override  Whether to override the automatic creation of a subscription.
 	 *
 	 * @return     User|\WP_Error  The created user or an error.
 	 */
-	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null, $description = null ) {
-		if ( 'subscription' === $role ) {
-			// return Subscription::create( $user_login, $role, $url, $display_name, $icon_url, $description ); //.
+	public static function create( $user_login, $role, $url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
+		if ( 'subscription' === $role && ! $subscription_override ) {
+			return Subscription::create( $user_login, $role, $url, $display_name, $avatar_url, $description );
 		}
+
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -109,7 +112,7 @@ class User extends \WP_User {
 			return $friend_user;
 		}
 
-		$userdata  = array(
+		$userdata = array(
 			'user_login'   => $user_login,
 			'display_name' => $display_name,
 			'first_name'   => $display_name,
@@ -119,11 +122,16 @@ class User extends \WP_User {
 			'user_pass'    => wp_generate_password( 256 ),
 			'role'         => $role,
 		);
+
+		if ( $user_registered ) {
+			$userdata['user_registered'] = $user_registered;
+		}
+
 		$friend_id = wp_insert_user( $userdata );
 
 		$friend_user = new User( $friend_id );
 		$friend_user->update_user_option( 'friends_new_friend', true );
-		$friend_user->update_user_icon_url( $icon_url );
+		$friend_user->update_user_icon_url( $avatar_url );
 
 		do_action( 'friends_after_create_friend_user', $friend_user );
 		return $friend_user;
@@ -479,6 +487,7 @@ class User extends \WP_User {
 		} else {
 			wp_delete_user( $this->ID );
 		}
+		// The content (posts and feeds) will be deleted with the 'delete_user' hook.
 	}
 
 	/**

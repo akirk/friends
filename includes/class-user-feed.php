@@ -121,15 +121,14 @@ class User_Feed {
 	public function get_friend_user() {
 		if ( empty( $this->friend_user ) ) {
 			$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
-			if ( empty( $user_ids ) ) {
-				// Is it a subscription?
-				if ( ! $this->term->parent ) {
-					return null;
-				}
-				$this->friend_user = new Subscription( new \WP_Term( $this->term->parent ) );
-			} else {
+			if ( ! empty( $user_ids ) ) {
 				$user_id = reset( $user_ids );
-				$this->friend_user = new User( $user_id );
+				$user_id = intval( $user_id );
+				if ( term_exists( $user_id, Subscription::TAXONOMY ) ) {
+					$this->friend_user = new Subscription( get_term( $user_id, Subscription::TAXONOMY ) );
+				} else {
+					$this->friend_user = new User( $user_id );
+				}
 			}
 		}
 
@@ -624,17 +623,12 @@ class User_Feed {
 	 * @return     object|\WP_Error   A User_Feed object.
 	 */
 	public static function get_by_id( $id ) {
-		$term_query = new \WP_Term_Query(
-			array(
-				'taxonomy' => self::TAXONOMY,
-				'include'  => $id,
-			)
-		);
-		foreach ( $term_query->get_terms() as $term ) {
-			return new self( $term );
+		$term = get_term( $id, self::TAXONOMY );
+		if ( is_wp_error( $term ) ) {
+			return $term;
 		}
 
-		return new \WP_Error( 'term_not_found' );
+		return new self( $term );
 	}
 
 	/**

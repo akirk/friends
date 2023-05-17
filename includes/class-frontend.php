@@ -713,15 +713,15 @@ class Frontend {
 	}
 
 	public function ajax_star_friend_user() {
-		if ( ! isset( $_POST['friend_id'] ) || ! intval( $_POST['friend_id'] ) ) {
+		if ( ! isset( $_POST['friend_id'] ) || ! $_POST['friend_id'] ) {
 			wp_send_json_error();
 			exit;
 		}
 
-		$friend_id = intval( $_POST['friend_id'] );
+		$friend_id = wp_unslash( $_POST['friend_id'] );
 		check_ajax_referer( "star-$friend_id" );
 
-		$friend_user = new User( $friend_id );
+		$friend_user = User::get_by_username( $friend_id );
 
 		$starred = boolval( $_POST['starred'] );
 		$friend_user->set_starred( $starred );

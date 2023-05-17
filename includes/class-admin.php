@@ -431,12 +431,14 @@ class Admin {
 	/**
 	 * Don't show the edit link for friend posts
 	 *
-	 * @param  string $link    The edit link.
-	 * @param  int    $user_id The user id.
+	 * @param  string   $link    The edit link.
+	 * @param  int|User $user The user.
 	 * @return string|bool The edit link or false.
 	 */
-	public static function admin_edit_user_link( $link, $user_id ) {
-		$user = new \WP_User( $user_id );
+	public static function admin_edit_user_link( $link, $user ) {
+		if ( ! $user instanceof \WP_User ) {
+			$user = new \WP_User( $user );
+		}
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return $link;
 		}
@@ -2745,6 +2747,11 @@ class Admin {
 		// Allow unsubscribing to all these feeds.
 		foreach ( $friend_user->get_active_feeds() as $feed ) {
 			do_action( 'friends_user_feed_deactivated', $feed );
+			$feed->delete();
+		}
+
+		// Delete the rest.
+		foreach ( $friend_user->get_feeds() as $feed ) {
 			$feed->delete();
 		}
 

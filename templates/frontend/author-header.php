@@ -5,7 +5,7 @@
  * @package Friends
  */
 
-$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, $args['friend_user']->user_login );
+$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, $args['friend_user'] );
 $feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
