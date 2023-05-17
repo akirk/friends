@@ -24,14 +24,14 @@ if ( is_multisite() ) {
 		$args['friend']->user_login
 	);
 }
-$numposts = count_user_posts( $args['friend']->ID, apply_filters( 'friends_frontend_post_types', array( 'post' ) ) );
+$numposts = count( $args['friend']->get_all_post_ids() );
 $numfeeds = count( $args['friend']->get_active_feeds() );
 
 ?>
 <div class="wrap">
 <h3><?php echo esc_html( $heading ); ?></h3>
 <form method="post">
-	<?php wp_nonce_field( 'unfriend-' . $args['friend']->ID ); ?>
+	<?php wp_nonce_field( 'unfriend-' . $args['friend']->user_login ); ?>
 	<p><?php esc_html_e( 'Since friends correspond to WordPress users, unfriending a user means to delete the user.', 'friends' ); ?></p>
 	<h4>
 	<?php

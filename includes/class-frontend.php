@@ -497,15 +497,20 @@ class Frontend {
 	 * Handles the post loop on the Friends page.
 	 */
 	public static function have_posts() {
-		global $authordata;
 		$friends = Friends::get_instance();
 		while ( have_posts() ) {
 			the_post();
 			$args = array(
-				'friends'     => $friends,
-				'friend_user' => $authordata,
-				'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
+				'friends' => $friends,
+				'avatar'  => get_post_meta( get_the_ID(), 'gravatar', true ),
 			);
+
+			$subscription = wp_get_object_terms( get_the_ID(), Subscription::TAXONOMY );
+			if ( empty( $subscription ) ) {
+				$args['friend_user'] = new User( get_the_author() );
+			} else {
+				$args['friend_user'] = new Subscription( $subscription[0] );
+			}
 
 			$read_time = self::calculate_read_time( get_the_content() );
 			if ( $read_time >= 60 ) {
@@ -764,11 +769,12 @@ class Frontend {
 			$this->friends->feed->retrieve_friend_posts( true );
 		}
 
-		global $authordata, $args;
-		if ( $this->author instanceof User ) {
+		global $args;
+		// TODO determine when the conversion should happen.
+		if ( $this->author instanceof User && ! $this->author instanceof Subscription ) {
 			if ( $this->author->has_cap( 'friends_plugin' ) && ! $this->author->has_cap( 'friend' ) ) {
-				// $subscription = Subscription::convert_from_user( new User( $this->author ) );
-				// $authordata = $subscription;
+				$subscription = Subscription::convert_from_user( $this->author );
+				$this->author = $subscription;
 			}
 		}
 		$args = array(

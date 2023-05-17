@@ -8,6 +8,7 @@
 
 $active_feeds = $args['friend']->get_active_feeds();
 $feeds = $args['friend']->get_feeds();
+var_dump( $args['friend']->get_term_id() );
 $has_last_log = false;
 ?><form method="post">
 	<?php wp_nonce_field( 'edit-friend-feeds-' . $args['friend']->user_login ); ?>
@@ -41,7 +42,7 @@ $has_last_log = false;
 							}
 							?>
 							<tr class="<?php echo esc_attr( ( ++$alternate % 2 ? 'alternate ' : ' ' ) . ( $feed->get_active() ? 'active' : 'inactive hidden' ) ); ?>">
-								<th class="checkbox"><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></th>
+								<th class="checkbox"><?php echo esc_attr( $term_id ); ?><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></th>
 								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
 								<td class="nowrap"><select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
 									<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
@@ -104,7 +105,7 @@ $has_last_log = false;
 								<?php endforeach; ?>
 							</select></td>
 							<td><input type="text" name="feeds[new][title]" value="" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
-							<?php do_action( 'friends_feed_table_row', $feed, 'new' ); ?>
+							<?php do_action( 'friends_feed_table_row', isset( $feed ) ? $feed : array(), 'new' ); ?>
 							<td></td>
 						</tr>
 						</tbody>
@@ -148,7 +149,7 @@ $has_last_log = false;
 					<p class="description">
 					<?php
 					// translators: %s is a URL.
-					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->ID ) ) );
+					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->user_login ) ) );
 					?>
 					</p>
 				</td>

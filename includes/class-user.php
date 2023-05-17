@@ -140,7 +140,7 @@ class User extends \WP_User {
 	 * @param      \WP_User $user   The user.
 	 */
 	public static function friends_get_user_feeds( $feeds, $user ) {
-		return array_merge( $feeds, User_Feed::get_for_user( $user ) );
+		return array_merge( $feeds, $user->get_feeds() );
 	}
 
 	/**
@@ -318,6 +318,10 @@ class User extends \WP_User {
 		return $post;
 	}
 
+	public function get_object_id() {
+		return $this->ID;
+	}
+
 	/**
 	 * Save multiple feeds for a user.
 	 *
@@ -354,16 +358,16 @@ class User extends \WP_User {
 		}
 
 		$all_urls = array();
-		foreach ( wp_get_object_terms( $this->ID, User_Feed::TAXONOMY ) as $term ) {
+		foreach ( wp_get_object_terms( $this->get_object_id(), User_Feed::TAXONOMY ) as $term ) {
 			$all_urls[ $term->name ] = $term->term_id;
 		}
 
-		$user_feeds = wp_set_object_terms( $this->ID, array_keys( array_merge( $all_urls, $feeds ) ), User_Feed::TAXONOMY );
+		$user_feeds = wp_set_object_terms( $this->get_object_id(), array_keys( array_merge( $all_urls, $feeds ) ), User_Feed::TAXONOMY );
 		if ( is_wp_error( $user_feeds ) ) {
 			return $user_feeds;
 		}
 
-		foreach ( wp_get_object_terms( $this->ID, User_Feed::TAXONOMY ) as $term ) {
+		foreach ( wp_get_object_terms( $this->get_object_id(), User_Feed::TAXONOMY ) as $term ) {
 			$all_urls[ $term->name ] = $term->term_id;
 		}
 
@@ -387,7 +391,7 @@ class User extends \WP_User {
 			return $errors;
 		}
 
-		return $user_feeds;
+		return $all_urls;
 	}
 
 	/**
@@ -399,71 +403,25 @@ class User extends \WP_User {
 	 * @return     User_Feed|\WP_Error  $user The new feed or an error object.
 	 */
 	public function save_feed( $feed_url, $options = array() ) {
-		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
-			return new \WP_Error( 'invalid-url', 'An invalid URL was provided' );
+		$all_urls = $this->save_feeds( array( $feed_url => $options ) );
+
+		if ( is_wp_error( $all_urls ) ) {
+			return $all_urls;
 		}
 
-		$default_options = array(
-			'active'      => false,
-			'parser'      => 'simplepie',
-			'post-format' => 'standard',
-			'mime-type'   => 'application/rss+xml',
-			'title'       => $this->display_name . ' RSS Feed',
-		);
-
-		$feed_options = array();
-		foreach ( $default_options as $key => $value ) {
-			if ( isset( $options[ $key ] ) ) {
-				$feed_options[ $key ] = $options[ $key ];
-			} else {
-				$feed_options[ $key ] = $value;
-			}
+		if ( ! isset( $all_urls[ $feed_url ] ) ) {
+			return new \WP_Error(
+				'error-saving-feed',
+				sprintf(
+					// translators: %s is a URL.
+					__( 'The feed %s could not be saved', 'friends' )
+				)
+			);
 		}
 
-		$all_urls = array();
-		foreach ( wp_get_object_terms( $this->ID, User_Feed::TAXONOMY ) as $term ) {
-			$all_urls[ $term->name ] = $term->term_id;
-		}
+		$term = get_term( $all_urls[ $feed_url ], User_Feed::TAXONOMY );
 
-		if ( ! isset( $all_urls[ $url ] ) ) {
-			$all_urls[ $url ] = false;
-
-			$term_ids = wp_set_object_terms( $this->ID, array_keys( $all_urls ), User_Feed::TAXONOMY );
-			if ( is_wp_error( $term_ids ) ) {
-				return $term_ids;
-			}
-			foreach ( wp_get_object_terms( $this->ID, User_Feed::TAXONOMY ) as $term ) {
-				$all_urls[ $term->name ] = $term->term_id;
-			}
-		}
-
-		if ( ! isset( $all_urls[ $url ] ) ) {
-			return false;
-		}
-
-		$term_id = $all_urls[ $url ];
-		foreach ( $feed_options as $key => $value ) {
-			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title', 'interval', 'modifier' ) ) ) {
-				if ( metadata_exists( 'term', $term_id, $key ) ) {
-					update_metadata( 'term', $term_id, $key, $value );
-				} else {
-					add_metadata( 'term', $term_id, $key, $value, true );
-				}
-			}
-		}
-
-		$term = get_term( $term_id );
-		if ( is_wp_error( $term ) ) {
-			return $term;
-		}
-
-		$user_feed = User_Feed::save(
-			$this,
-			$feed_url,
-			$feed_options
-		);
-
-		return $user_feed;
+		return new User_Feed( $term );
 	}
 
 	/**
@@ -513,6 +471,14 @@ class User extends \WP_User {
 	public function modify_query_by_author( \WP_Query $query ) {
 		$query->set( 'author', $this->ID );
 		return $query;
+	}
+
+	public function delete() {
+		if ( is_multisite() ) {
+			remove_user_from_blog( $this->ID, get_current_blog_id() );
+		} else {
+			wp_delete_user( $this->ID );
+		}
 	}
 
 	/**
@@ -957,8 +923,17 @@ class User extends \WP_User {
 	 * @return array An array of User_Feed items.
 	 */
 	public function get_feeds() {
-		return array();
-		$feeds = User_Feed::get_for_user( $this );
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy'   => User_Feed::TAXONOMY,
+				'object_ids' => $this->get_object_id(),
+			)
+		);
+
+		$feeds = array();
+		foreach ( $term_query->get_terms() as $term ) {
+			$feeds[ $term->term_id ] = new User_Feed( $term, $this );
+		}
 
 		return $feeds;
 	}
@@ -1203,6 +1178,10 @@ class User extends \WP_User {
 			}
 		}
 		return $rest_url;
+	}
+
+	public function get_avatar_url() {
+		return $this->get_user_option( 'friends_user_icon_url' );
 	}
 
 	/**

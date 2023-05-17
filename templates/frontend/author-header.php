@@ -58,6 +58,10 @@ $args['friends']->frontend->link(
 
 <span class="chip"><?php echo esc_html( $args['friend_user']->get_role_name() ); ?></span>
 
+<?php if ( true || apply_filters( 'friends_debug', false ) ) : ?>
+	<span class="chip"><?php echo esc_html( get_class( $args['friend_user'] ) ); ?></span>
+<?php endif; ?>
+
 <span class="chip"><?php echo /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html( sprintf( /* translators: %s is a localized date (F j, Y) */__( 'Since %s', 'friends' ), date_i18n( __( 'F j, Y' ), strtotime( $args['friend_user']->user_registered ) ) ) ); ?></span>
 
 <?php foreach ( $args['friend_user']->get_post_count_by_post_format() as $post_format => $count ) : ?>

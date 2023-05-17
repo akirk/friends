@@ -34,6 +34,12 @@
 				<td><?php echo esc_html( date_i18n( /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ) ); ?></td>
 			</tr>
 			<tr>
+				<th><label for="status"><?php echo esc_html( _x( 'Type', 'of user', 'friends' ) ); ?></label></th>
+				<td>
+					<?php echo esc_html( get_class( $args['friend'] ) ); ?>
+				</td>
+			</tr>
+			<tr>
 				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
 				<td>
 					<?php echo esc_html( $args['friend']->get_role_name() ); ?>
@@ -110,6 +116,6 @@
 	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
-		<span class="unfriend"><a class="unfriend" href="<?php echo esc_url( Friends\Admin::get_unfriend_link( $args['friend']->user_login ) ); ?>"><?php esc_html_e( 'Unfriend', 'friends' ); ?></a></span>
+		<span class="unfriend"><a class="unfriend" href="<?php echo esc_url( Friends\Admin::get_unfriend_link( $args['friend'] ) ); ?>"><?php esc_html_e( 'Unfriend', 'friends' ); ?></a></span>
 	</p>
 </form>

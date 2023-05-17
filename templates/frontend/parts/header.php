@@ -8,7 +8,7 @@
 
 $friend_user = $args['friend_user'];
 $avatar = $args['avatar'];
-$author_name = get_the_author_meta( 'display_name' );
+$author_name = $args['friend_user']->display_name;
 
 /**
  * Allows overriding the authorname for a post.
@@ -32,7 +32,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 	<div class="avatar col-auto mr-2">
 		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
-				<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
+				<img src="<?php echo esc_url( $args['friend_user']->get_avatar_url() ); ?>" width="36" height="36" class="avatar" />
 			</a>
 		<?php else : ?>
 			<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
@@ -44,7 +44,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 		<div class="author">
 			<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
-					<strong><?php the_author(); ?></strong>
+					<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
 					<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
 						– <?php echo esc_html( $override_author_name ); ?>
 					<?php endif; ?>

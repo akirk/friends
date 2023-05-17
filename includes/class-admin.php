@@ -341,7 +341,7 @@ class Admin {
 		);
 
 		if ( isset( $_GET['user'] ) ) {
-			$friend_user = new User( intval( $_GET['user'] ) );
+			$friend_user = User::get_by_username( $_GET['user'] );
 			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
 				wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
@@ -452,13 +452,12 @@ class Admin {
 		return apply_filters( 'get_edit_user_link', $user->user_url, $user_id );
 	}
 
-	public static function get_unfriend_link( $user_id ) {
-		$user = new \WP_User( $user_id );
+	public static function get_unfriend_link( $user ) {
 		if ( ! $user->has_cap( 'friends_plugin' ) ) {
 			return '';
 		}
 
-		return wp_nonce_url( self_admin_url( 'admin.php?page=unfriend&user=' . $user->ID ), 'unfriend_' . $user->ID );
+		return wp_nonce_url( self_admin_url( 'admin.php?page=unfriend&user=' . $user->user_login ), 'unfriend_' . $user->user_login );
 	}
 
 	/**
@@ -1320,9 +1319,11 @@ class Admin {
 				} else {
 					foreach ( $existing_feeds as $term_id => $user_feed ) {
 						if ( $user_feed->get_url() === trim( $_POST['feeds']['new']['url'] ) ) {
-							// Let a newly entered feed overrule an existing one.
-							$_POST['feeds'][ $term_id ] = array_merge( $_POST['feeds'][ $term_id ], $_POST['feeds']['new'] );
-							$_POST['feeds'][ $term_id ]['active'] = 1;
+							if ( isset( $_POST['feeds'][ $term_id ] ) ) {
+								// Let a newly entered feed overrule an existing one.
+								$_POST['feeds'][ $term_id ] = array_merge( $_POST['feeds'][ $term_id ], $_POST['feeds']['new'] );
+								$_POST['feeds'][ $term_id ]['active'] = 1;
+							}
 							unset( $_POST['feeds']['new'] );
 							break;
 						}
@@ -1475,12 +1476,8 @@ class Admin {
 		$arg       = 'deleted';
 		$arg_value = $friend->user_login;
 
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'unfriend-' . $friend->ID ) ) {
-			if ( is_multisite() ) {
-				remove_user_from_blog( $friend->ID, get_current_blog_id() );
-			} else {
-				wp_delete_user( $friend->ID );
-			}
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'unfriend-' . $friend->user_login ) ) {
+			$friend->delete();
 		} else {
 			return;
 		}
