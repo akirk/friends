@@ -96,6 +96,9 @@ class User_Query extends \WP_User_Query {
 		if ( isset( $args['meta_key'] ) && str_ends_with( $args['meta_key'], '_starred' ) ) {
 			$args['meta_key'] = 'starred';
 		}
+		if ( isset( $args['search'] ) ) {
+			$args['search'] = str_replace( '*', '', $args['search'] );
+		}
 
 		$term_query = new \WP_Term_Query(
 			array_merge(
@@ -196,15 +199,28 @@ class User_Query extends \WP_User_Query {
 	 * @return     self    The search result.
 	 */
 	public static function search( $query ) {
-		return new self(
-			array(
-				'role__in'       => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
-				'order'          => 'ASC',
-				'orderby'        => 'display_name',
-				'search'         => $query,
-				'search_columns' => array( 'display_name' ),
+		$query = array(
+			'search' => $query,
+		);
+		$sort = array(
+			'order'   => 'ASC',
+			'orderby' => 'display_name',
+		);
+		$search = new self(
+			array_merge(
+				array(
+					'role__in'       => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+					'search_columns' => array( 'display_name' ),
+				),
+				$query,
+				$sort
 			)
 		);
+
+		$search->add_virtual_subscriptions( $query );
+		$search->sort( $sort['orderby'], $sort['order'] );
+		return $search;
+
 	}
 
 	/**
