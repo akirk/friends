@@ -57,6 +57,7 @@ class Admin {
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'wp_ajax_friends_refresh_link_token', array( $this, 'ajax_refresh_link_token' ) );
+		add_action( 'wp_ajax_friends_fetch_feeds', array( $this, 'ajax_fetch_feeds' ) );
 		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
@@ -873,22 +874,42 @@ class Admin {
 	}
 
 	/**
+	 * Respond to the Ajax request to fetch feeds
+	 */
+	public function ajax_fetch_feeds() {
+		if ( ! isset( $_POST['friend'] ) ) {
+			wp_send_json_error( 'missing-parameters' );
+		}
+		check_ajax_referer( 'fetch-feeds-' . $_POST['friend'] );
+
+		$friend_user = User::get_by_username( $_POST['friend'] );
+		if ( ! $friend_user ) {
+			wp_send_json_error( 'unknown-user' );
+		}
+
+		$friend_user->retrieve_posts_from_active_feeds();
+
+		wp_send_json_success();
+	}
+
+
+	/**
 	 * Respond to the Ajax request to refresh the link token
 	 */
 	public function ajax_refresh_link_token() {
 		if ( ! isset( $_POST['url'] ) || ! isset( $_POST['friend'] ) ) {
-			wp_die( -1 );
+			wp_send_json_error( 'missing-parameters' );
 		}
 		$url = $_POST['url'];
 		check_ajax_referer( 'auth-link-' . $url );
 
 		if ( ! friends::has_required_privileges() ) {
-			wp_die( -1 );
+			wp_send_json_error( 'missing-priviledges' );
 		}
 
 		$friend_user = User::get_user( $_POST['friend'] );
 		if ( ! $friend_user ) {
-			wp_die( -1 );
+			wp_send_json_error( 'unknown-user' );
 		}
 
 		wp_send_json_success(
@@ -899,7 +920,6 @@ class Admin {
 				),
 			)
 		);
-		wp_die();
 	}
 
 	public function render_friends_list() {
@@ -1656,57 +1676,41 @@ class Admin {
 		}
 
 		$friend_link = '<a href="' . esc_url( $this->admin_edit_user_link( $friend_user->get_local_friends_page_url(), $friend_user ) ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $friend_user->display_name ) . '</a>';
+		$message = false;
+
 		if ( $friend_user->has_cap( 'pending_friend_request' ) ) {
+			// translators: %s is a Site URL.
+			$message = sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link );
+			$message .= ' ' . sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link );
+		} elseif ( $friend_user->has_cap( 'friend' ) ) {
+			// translators: %s is a Site URL.
+			$message = sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link );
+				// translators: %s is the friends page URL.
+		} elseif ( $friend_user->has_cap( 'subscription' ) ) {
+			if ( isset( $vars['friendship'] ) ) {
+				// translators: %s is a Site URL.
+				$message = sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link );
+			} else {
+				// translators: %s is a Site URL.
+				$message = sprintf( __( "You're now subscribed to %s.", 'friends' ), $friend_link );
+			}
+			$message .= ' ' . esc_html__( 'We subscribed you to their updates.', 'friends' );
+		}
+
+		if ( $message ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
 				<?php
-				// translators: %s is a Site URL.
-				echo wp_kses( sprintf( __( 'Friendship requested for site %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-				// translators: %s is a Site URL.
-				echo ' ', wp_kses( sprintf( __( 'Until they respond, we have already subscribed you to their updates.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
+				echo wp_kses( $message, array( 'a' => array( 'href' => array() ) ) );
 				// translators: %s is the friends page URL.
 				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . esc_url( $friend_user->get_local_friends_page_url() ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+				echo ' <span data-nonce="', esc_attr( wp_create_nonce( 'fetch-feeds-' . $friend_user->user_login ) ), '" data-friend=', esc_attr( $friend_user->user_login ), '>', __( 'Fetching feeds...', 'friends' ), '</span>';
 				?>
 			</p></div>
 			<?php
 			return true;
 		}
 
-		if ( $friend_user->has_cap( 'friend' ) ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p>
-				<?php
-				// translators: %s is a Site URL.
-				echo wp_kses( sprintf( __( "You're now a friend of site %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . home_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-				?>
-			</p></div>
-			<?php
-			return true;
-		}
-
-		if ( $friend_user->has_cap( 'subscription' ) ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p>
-				<?php
-				if ( isset( $vars['friendship'] ) ) {
-					// translators: %s is a Site URL.
-					echo wp_kses( sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-					echo ' ';
-				} else {
-					// translators: %s is a Site URL.
-					echo wp_kses( sprintf( __( "You're now subscribed to %s.", 'friends' ), $friend_link ), array( 'a' => array( 'href' => array() ) ) );
-					echo ' ';
-				}
-				esc_html_e( 'We subscribed you to their updates.', 'friends' );
-				// translators: %s is the friends page URL.
-				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . home_url( '/friends/' . $friend_user->user_login . '/' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-				?>
-			</p></div>
-			<?php
-			return true;
-		}
 		?>
 		<div id="message" class="updated notice is-dismissible"><p>
 			<?php

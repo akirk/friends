@@ -462,16 +462,25 @@ class Subscription extends User {
 		}
 
 		$term_id = $term['term_id'];
+
 		delete_metadata( 'term', $term_id, 'roles' );
 		add_metadata( 'term', $term_id, 'roles', $role, true );
 		delete_metadata( 'term', $term_id, 'user_url' );
 		add_metadata( 'term', $term_id, 'user_url', $user_url, true );
+
 		delete_metadata( 'term', $term_id, 'display_name' );
-		add_metadata( 'term', $term_id, 'display_name', $display_name, true );
+		if ( $display_name ) {
+			add_metadata( 'term', $term_id, 'display_name', $display_name, true );
+		}
+
 		delete_metadata( 'term', $term_id, 'avatar_url' );
-		add_metadata( 'term', $term_id, 'avatar_url', $avatar_url, true );
+		if ( $avatar_url ) {
+			add_metadata( 'term', $term_id, 'avatar_url', $avatar_url, true );
+		}
 		delete_metadata( 'term', $term_id, 'description' );
-		add_metadata( 'term', $term_id, 'description', $description, true );
+		if ( $description ) {
+			add_metadata( 'term', $term_id, 'description', $description, true );
+		}
 		delete_metadata( 'term', $term_id, 'created' );
 		add_metadata( 'term', $term_id, 'created', $user_registered ? $user_registered : gmdate( 'Y-m-d H:i:s' ), true );
 

@@ -214,3 +214,39 @@ span#friends_enable_retention_number_line {
 #wpadminbar li#wp-admin-bar-friends {
 	display: block;
 }
+@keyframes loading{
+	0% {
+		transform: rotate(0deg);
+	}
+	100% {
+		transform: rotate(360deg);
+	}
+}
+.friends-loading {
+	color: rgba(0,0,0,0) !important;
+	min-height: .8rem;
+	pointer-events: none;
+	position: relative;
+	margin-left: 1em;
+}
+
+.friends-loading::after{
+	animation: loading 500ms infinite linear;
+	background: rgba(0,0,0,0);
+	border: .1rem solid #2e5bec;
+	border-radius: 50%;
+	border-right-color: rgba(0,0,0,0);
+	border-top-color: rgba(0,0,0,0);
+	content: "";
+	display: block;
+	height: .8rem;
+	left: 50%;
+	margin-left: -0.4rem;
+	margin-top: -0.4rem;
+	opacity: 1;
+	padding: 0;
+	position: absolute;
+	top: 50%;
+	width: .8rem;
+	z-index: 1;
+}

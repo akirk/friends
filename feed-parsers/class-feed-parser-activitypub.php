@@ -22,7 +22,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const NAME = 'ActivityPub';
 	const URL = 'https://www.w3.org/TR/activitypub/';
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
-	const EXTERNAL_MENTIONS_USER_LOGIN = 'external-mentions';
+	const EXTERNAL_MENTIONS_USERNAME = 'external-mentions';
 
 	private $friends_feed;
 
@@ -444,24 +444,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     User  The external mentions user.
 	 */
 	public function get_external_mentions_user() {
-		$external_mentions_user_login = apply_filters( 'friends_external_mentions_user_login', self::EXTERNAL_MENTIONS_USER_LOGIN );
-		$user = get_user_by( 'login', $external_mentions_user_login );
+		$external_mentions_username = apply_filters( 'friends_external_mentions_username', self::EXTERNAL_MENTIONS_USERNAME );
+		$user = get_user_by( 'login', $external_mentions_username );
 		if ( ! $user ) {
-			$display_name = __( 'External Mentions', 'friends' );
-			$user_id = wp_insert_user(
-				array(
-					'user_login'   => $external_mentions_user_login,
-					'display_name' => $display_name,
-					'first_name'   => $display_name,
-					'nickname'     => $display_name,
-					'user_pass'    => wp_generate_password( 256 ),
-					'role'         => 'subscription',
-				)
-			);
-
-			$user = new User( $user_id );
+			$user = Subscription::create( $external_mentions_username, 'subscription', home_url(), __( 'External Mentions', 'friends' ) );
 		} else {
-			$user = new User( $user->ID );
+			$user = User::get_by_username( $external_mentions_username );
 		}
 
 		if ( ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
@@ -1261,7 +1249,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	private function get_author_of_post( \WP_Post $post ) {
-		$friend = new User( $post->post_author );
+		$friend = User::get_post_author( $post );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			return $friend;
 		}

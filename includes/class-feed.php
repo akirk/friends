@@ -69,7 +69,6 @@ class Feed {
 
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
 		add_action( 'friends_retrieve_user_feeds', array( $this, 'friends_retrieve_user_feeds' ) );
-		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 2 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
@@ -1081,20 +1080,6 @@ class Feed {
 		}
 
 		return $query;
-	}
-
-	/**
-	 * Retrieve new friend's posts after changing roles
-	 *
-	 * @param  int    $user_id   The user id.
-	 * @param  string $new_role  The new role.
-	 */
-	public function retrieve_new_friends_posts( $user_id, $new_role ) {
-		if ( ( 'friend' === $new_role || 'acquaintance' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
-			update_user_option( $user_id, 'friends_new_friend', true );
-			$friend = new User( $user_id );
-			$friend->retrieve_posts_from_active_feeds();
-		}
 	}
 
 	/**
