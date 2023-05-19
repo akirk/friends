@@ -40,6 +40,7 @@ class Third_Parties {
 	 */
 	private function register_hooks() {
 		add_filter( 'option_fx-private-site', array( $this, 'fx_private_site' ) );
+		add_filter( 'wp_sweep_excluded_taxonomies', array( $this, 'wp_sweep_excluded_taxonomies' ) );
 	}
 
 	/**
@@ -52,5 +53,18 @@ class Third_Parties {
 			$value['enable'] = false;
 		}
 		return $value;
+	}
+
+	/**
+	 * WP Sweep
+	 * Prevent WP Sweep from sweeping our taxonomies.
+	 *
+	 * @since 2.0
+	 *
+	 * @param array $excluded_taxonomies list of taxonomies excluded from sweeping.
+	 * @return array
+	 */
+	public function wp_sweep_excluded_taxonomies( $excluded_taxonomies ) {
+		return array_merge( $excluded_taxonomies, array( User_Feed::TAXONOMY ) );
 	}
 }
