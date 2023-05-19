@@ -730,7 +730,7 @@ class User extends \WP_User {
 						$wpdb->posts,
 						$wpdb->term_relationships,
 						'%d',
-						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+						implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
 					),
 					array_merge(
 						array( $this->ID ),
