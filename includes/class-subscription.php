@@ -482,4 +482,41 @@ class Subscription extends User {
 
 		return new self( $term );
 	}
+
+	/**
+	 * Wrap get_user_option
+	 *
+	 * @param string $option_name User option name.
+	 * @return int|bool User meta ID if the option didn't exist, true on successful update,
+	 *                  false on failure.
+	 */
+	function get_user_option( $option_name ) {
+		return get_metadata( 'term', $this->get_term_id(), $option_name, true );
+	}
+
+	/**
+	 * Wrap update_user_option
+	 *
+	 * @param string $option_name User option name.
+	 * @param mixed  $new_value    User option value.
+	 * @param bool   $global      Optional. Whether option name is global or blog specific.
+	 *                            Default false (blog specific).
+	 * @return int|bool User meta ID if the option didn't exist, true on successful update,
+	 *                  false on failure.
+	 */
+	function update_user_option( $option_name, $new_value, $global = false ) {
+		return update_metadata( 'term', $this->get_term_id(), $option_name, $new_value );
+	}
+
+	/**
+	 * Wrap delete_user_option
+	 *
+	 * @param string $option_name User option name.
+	 * @param bool   $global      Optional. Whether option name is global or blog specific.
+	 *                            Default false (blog specific).
+	 * @return bool True on success, false on failure.
+	 */
+	function delete_user_option( $option_name, $global = false ) {
+		return delete_metadata( 'term', $this->get_term_id(), $option_name );
+	}
 }

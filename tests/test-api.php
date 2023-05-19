@@ -10,7 +10,7 @@ namespace Friends;
 /**
  * Test the Notifications
  */
-class APITest extends \WP_UnitTestCase {
+class APITest extends Friends_TestCase_Cache_HTTP {
 	/**
 	 * Current User ID
 	 *
@@ -87,8 +87,7 @@ class APITest extends \WP_UnitTestCase {
 			$feed_url = rtrim( $friend_user->user_url, '/' ) . '/feed/';
 		}
 
-		$user_feed = User_Feed::save(
-			$friend_user,
+		$user_feed = $friend_user->save_feed(
 			$feed_url,
 			array(
 				'active'      => true,

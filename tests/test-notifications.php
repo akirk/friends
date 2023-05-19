@@ -79,7 +79,8 @@ class NotificationTest extends \WP_UnitTestCase {
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
 			(object) array(
-				'url' => $user->user_url . '/feed/',
+				'term_id' => 100,
+				'url'     => $user->user_url . '/feed/',
 			)
 		);
 		$user_feed = new User_Feed( $term, $user );
@@ -117,7 +118,8 @@ class NotificationTest extends \WP_UnitTestCase {
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
 			(object) array(
-				'url' => $user->user_url . '/feed/',
+				'term_id' => 100,
+				'url'     => $user->user_url . '/feed/',
 			)
 		);
 		$user_feed = new User_Feed( $term, $user );
@@ -296,7 +298,8 @@ class NotificationTest extends \WP_UnitTestCase {
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
 			(object) array(
-				'url' => $user->user_url . '/feed/',
+				'term_id' => 100,
+				'url'     => $user->user_url . '/feed/',
 			)
 		);
 		$user_feed = new User_Feed( $term, $user );

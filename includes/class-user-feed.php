@@ -9,6 +9,8 @@
 
 namespace Friends;
 
+use WP_Error;
+
 /**
  * This is the class for the feed URLs part of the Friends Plugin.
  *
@@ -553,8 +555,12 @@ class User_Feed {
 			)
 		);
 
-		if ( ! isset( $all_urls[ $url ] ) ) {
-			return false;
+		if ( is_wp_error( $all_urls ) ) {
+			return $all_urls;
+		}
+
+		if ( ! is_array( $all_urls ) || ! isset( $all_urls[ $url ] ) ) {
+			return new \WP_Error( 'cound-not-save-feed' );
 		}
 
 		$term_id = $all_urls[ $url ];

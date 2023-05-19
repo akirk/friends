@@ -65,6 +65,7 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 		}
 			return $return;
 	}
+
 	public static function get_cache_filename( $url ) {
 		$p = wp_parse_url( $url );
 		if ( ! $p ) {
@@ -83,6 +84,9 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 		}
 		$p = wp_parse_url( $url );
 		$cache = self::get_cache_filename( $url );
+		if ( ! $cache ) {
+			return $preempt;
+		}
 		if ( file_exists( $cache ) ) {
 			return apply_filters(
 				'fake_http_response',

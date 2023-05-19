@@ -630,6 +630,8 @@ class Friends {
 				$id_or_email = $id_or_email->user_id;
 			}
 		}
+
+		$user = false;
 		if ( is_numeric( $id_or_email ) && $id_or_email > 0 ) {
 			$user = get_user_by( 'ID', $id_or_email );
 			if ( $user ) {
@@ -1159,6 +1161,10 @@ class Friends {
 	 * @return false|string URL or false on failure.
 	 */
 	public static function check_url( $url ) {
+		$pre = apply_filters( 'friends_pre_check_url', null );
+		if ( ! is_null( $pre ) ) {
+			return $pre;
+		}
 		$host = parse_url( $url, PHP_URL_HOST );
 
 		$check_url = apply_filters( 'friends_host_is_valid', null, $host );

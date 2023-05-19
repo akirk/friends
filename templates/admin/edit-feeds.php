@@ -8,7 +8,7 @@
 
 $active_feeds = $args['friend']->get_active_feeds();
 $feeds = $args['friend']->get_feeds();
-var_dump( $args['friend']->get_term_id() );
+
 $has_last_log = false;
 ?><form method="post">
 	<?php wp_nonce_field( 'edit-friend-feeds-' . $args['friend']->user_login ); ?>

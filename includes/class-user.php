@@ -214,6 +214,9 @@ class User extends \WP_User {
 		}
 
 		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( ! $host ) {
+			return false;
+		}
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
 		$site_id = get_blog_id_from_url( $host, trailingslashit( $path ) );
@@ -354,15 +357,7 @@ class User extends \WP_User {
 				'title'       => $this->display_name . ' RSS Feed',
 			);
 
-			$feed_options = array();
-			foreach ( $default_options as $key => $value ) {
-				if ( isset( $options[ $key ] ) ) {
-					$feed_options[ $key ] = $options[ $key ];
-				} else {
-					$feed_options[ $key ] = $value;
-				}
-			}
-			$feeds[ $feed_url ] = $feed_options;
+			$feeds[ $feed_url ] = array_merge( $default_options, $options );
 		}
 
 		$all_urls = array();
@@ -385,7 +380,8 @@ class User extends \WP_User {
 			}
 			$term_id = $all_urls[ $url ];
 			foreach ( $feed_options as $key => $value ) {
-				if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title' ) ) ) {
+				if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title', 'interval', 'modifier' ) ) ) {
+
 					if ( metadata_exists( 'term', $term_id, $key ) ) {
 						update_metadata( 'term', $term_id, $key, $value );
 					} else {

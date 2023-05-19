@@ -576,6 +576,10 @@ class Feed {
 				$updated_date = $item->updated_date;
 			}
 
+			if ( empty( $item->title ) ) {
+				$item->title = '';
+			}
+
 			$post_data = array(
 				'post_title'        => $item->title,
 				'post_content'      => force_balance_tags( $item->post_content ),
