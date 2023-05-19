@@ -55,14 +55,14 @@
 				);
 
 				?>
-				<a href="<?php echo esc_url( Friends\Admin::admin_edit_user_link( false, $friend_user->user_login ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+				<a href="<?php echo esc_url( Friends\Admin::admin_edit_user_link( false, $friend_user ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
 				<button type="button" class="toggle-row"><span class="screen-reader-text"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Show more details' ); ?></span></button>
 				<div class="row-actions">
 				<?php
 				$actions = array(
 					'edit' => sprintf(
 						'<a href="%s">%s</a>',
-						esc_url( Friends\Admin::admin_edit_user_link( false, $friend_user->user_login ) ),
+						esc_url( Friends\Admin::admin_edit_user_link( false, $friend_user ) ),
 						esc_html__( 'Edit', 'friends' )
 					),
 				);

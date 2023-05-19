@@ -42,7 +42,7 @@ $has_last_log = false;
 							}
 							?>
 							<tr class="<?php echo esc_attr( ( ++$alternate % 2 ? 'alternate ' : ' ' ) . ( $feed->get_active() ? 'active' : 'inactive hidden' ) ); ?>">
-								<th class="checkbox"><?php echo esc_attr( $term_id ); ?><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></th>
+								<th class="checkbox"><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></th>
 								<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
 								<td class="nowrap"><select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
 									<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>

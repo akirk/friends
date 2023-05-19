@@ -324,27 +324,29 @@ jQuery( function ( $ ) {
 		return false;
 	} );
 
-	if ( $( '#fetch-feeds' ).length ) {
-		$( '#fetch-feeds' ).append( ' <i class="friends-loading"></i>' );
-		$.post(
-			friends.ajax_url,
-			{
-				friend: $( '#fetch-feeds' ).data( 'friend' ),
-				_ajax_nonce: $( '#fetch-feeds' ).data( 'nonce' ),
-				action: 'friends_fetch_feeds',
-			},
-			function ( response ) {
-				if ( response.success ) {
-					$( '#fetch-feeds i' )
-						.removeClass( 'friends-loading' )
-						.addClass( 'dashicons dashicons-saved' );
-				} else {
-					$( '#fetch-feeds i' )
-						.removeClass( 'friends-loading' )
-						.addClass( 'dashicons dashicons-warning' )
-						.prop( 'title', response.data );
+	setTimeout( function () {
+		if ( $( '#fetch-feeds' ).length ) {
+			$( '#fetch-feeds' ).append( ' <i class="friends-loading"></i>' );
+			$.post(
+				friends.ajax_url,
+				{
+					friend: $( '#fetch-feeds' ).data( 'friend' ),
+					_ajax_nonce: $( '#fetch-feeds' ).data( 'nonce' ),
+					action: 'friends_fetch_feeds',
+				},
+				function ( response ) {
+					if ( response.success ) {
+						$( '#fetch-feeds i' )
+							.removeClass( 'friends-loading' )
+							.addClass( 'dashicons dashicons-saved' );
+					} else {
+						$( '#fetch-feeds i' )
+							.removeClass( 'friends-loading' )
+							.addClass( 'dashicons dashicons-warning' )
+							.prop( 'title', response.data );
+					}
 				}
-			}
-		);
-	}
+			);
+		}
+	}, 500 );
 } );

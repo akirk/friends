@@ -438,8 +438,13 @@ class Admin {
 	 */
 	public static function admin_edit_user_link( $link, $user ) {
 		if ( ! $user instanceof \WP_User ) {
-			$user = new \WP_User( $user );
+			if ( is_string( $user ) ) {
+				$user = User::get_by_username( $user );
+			} else {
+				$user = new \WP_User( $user );
+			}
 		}
+
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			return $link;
 		}
@@ -1704,7 +1709,7 @@ class Admin {
 				echo wp_kses( $message, array( 'a' => array( 'href' => array() ) ) );
 				// translators: %s is the friends page URL.
 				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . esc_url( $friend_user->get_local_friends_page_url() ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-				echo ' <span data-nonce="', esc_attr( wp_create_nonce( 'fetch-feeds-' . $friend_user->user_login ) ), '" data-friend=', esc_attr( $friend_user->user_login ), '>', __( 'Fetching feeds...', 'friends' ), '</span>';
+				echo ' <span id="fetch-feeds" data-nonce="', esc_attr( wp_create_nonce( 'fetch-feeds-' . $friend_user->user_login ) ), '" data-friend=', esc_attr( $friend_user->user_login ), '>', __( 'Fetching feeds...', 'friends' ), '</span>';
 				?>
 			</p></div>
 			<?php
@@ -1769,7 +1774,7 @@ class Admin {
 		$rest_url = false;
 
 		if ( ( isset( $vars['step2'] ) && isset( $vars['feeds'] ) && is_array( $vars['feeds'] ) ) || isset( $vars['step3'] ) ) {
-			$friend_user_login = sanitize_user( $vars['user_login'] );
+			$friend_user_login = str_replace( ' ', '-', sanitize_user( $vars['user_login'] ) );
 			$friend_display_name = sanitize_text_field( $vars['display_name'] );
 			if ( ! $friend_user_login ) {
 				// phpcs:ignore WordPress.WP.I18n.MissingArgDomain

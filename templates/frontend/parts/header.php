@@ -99,7 +99,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 			</a>
 			<ul class="menu" style="min-width: <?php echo esc_attr( intval( _x( '250', 'dropdown-menu-width', 'friends' ) ) ); ?>px">
 				<?php
-				$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
+				$edit_user_link = Friends\Admin::admin_edit_user_link( false, $friend_user );
 				if ( $edit_user_link ) :
 					?>
 					<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>"><?php esc_html_e( 'Edit friend', 'friends' ); ?></a></li>

@@ -42,7 +42,7 @@ class User extends \WP_User {
 		if ( $user && ! is_wp_error( $user ) ) {
 			return new self( $user );
 		}
-		return Subscription::get_by_username( $username );
+		return $user;
 	}
 
 	public static function get_post_author( \WP_Post $post ) {

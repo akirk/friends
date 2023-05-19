@@ -38,13 +38,13 @@ if ( isset( $_GET['s'] ) ) {
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
 			</a>
 			<?php
-			if ( $args['friend_user'] && is_singular() ) {
+			if ( $args['friend_user'] && $args['friend_user'] instanceof Friends\User && is_singular() ) {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/single-header',
 					null,
 					$args
 				);
-			} elseif ( $args['friend_user'] ) {
+			} elseif ( $args['friend_user'] && $args['friend_user'] instanceof Friends\User ) {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/author-header',
 					null,

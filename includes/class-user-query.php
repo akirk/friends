@@ -177,15 +177,22 @@ class User_Query extends \WP_User_Query {
 		static $recent_friends_subscriptions = array();
 		$cache_key = get_current_blog_id() . '_' . $limit;
 		if ( ! self::$cache || ! isset( $recent_friends_subscriptions[ $cache_key ] ) ) {
+			$query = array(
+				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+				'number'   => $limit,
+			);
+			$sort = array(
+				'orderby' => 'user_registered',
+				'order'   => 'DESC',
+			);
 			$recent_friends_subscriptions[ $cache_key ] = new self(
-				array(
-					'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
-					'number'   => $limit,
-					'orderby'  => 'registered',
-					'order'    => 'DESC',
+				array_merge(
+					$query,
+					$sort
 				)
 			);
 			$recent_friends_subscriptions[ $cache_key ]->add_virtual_subscriptions();
+			$recent_friends_subscriptions[ $cache_key ]->sort( $sort['orderby'], $sort['order'] );
 			$recent_friends_subscriptions[ $cache_key ]->limit( $limit );
 		}
 		return $recent_friends_subscriptions[ $cache_key ];

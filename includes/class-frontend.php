@@ -160,8 +160,8 @@ class Frontend {
 	public function modify_page_title( $title ) {
 		if ( is_single() ) {
 			$title['page'] = __( 'Friends', 'friends' );
-			$title['site'] = get_the_author();
-		} elseif ( $this->author ) {
+			$title['site'] = $this->author->display_name;
+		} elseif ( $this->author instanceof User ) {
 			$title['title'] = __( 'Friends', 'friends' );
 			$title['site'] = $this->author->display_name;
 		} else {
@@ -1192,7 +1192,7 @@ class Frontend {
 
 				default: // Maybe an author.
 					$author = User::get_by_username( $current_part );
-					if ( false === $author ) {
+					if ( false === $author || is_wp_error( $author ) ) {
 						if ( $query->is_feed() ) {
 							status_header( 404 );
 							$query->set_404();
@@ -1250,10 +1250,14 @@ class Frontend {
 		}
 
 		if ( $this->author ) {
-			$authordata = $this->author;
-			$this->author->modify_query_by_author( $query );
-			if ( ! $page_id ) {
-				$query->is_author = true;
+			if ( $this->author instanceof User ) {
+				$authordata = $this->author;
+				$this->author->modify_query_by_author( $query );
+				if ( ! $page_id ) {
+					$query->is_author = true;
+				}
+			} else {
+				$this->author = null;
 			}
 		}
 
