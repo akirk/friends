@@ -734,7 +734,7 @@ class User extends \WP_User {
 					),
 					array_merge(
 						array( $this->ID ),
-						$post_types,
+						$post_types
 					)
 				)
 			);
