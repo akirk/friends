@@ -929,7 +929,7 @@ class Feed {
 			// Backfill titles.
 			if ( empty( $feed['title'] ) ) {
 				$host = wp_parse_url( $link_url, PHP_URL_HOST );
-				if ( trim( $path, '/' ) ) {
+				if ( is_string( $path ) && trim( $path, '/' ) ) {
 					$feed['title'] = trim( preg_replace( '#^www\.#i', '', preg_replace( '#[^a-z0-9.:-]#i', ' ', ucwords( $host . ': ' . $path ) ) ), ': ' );
 				} else {
 					$feed['title'] = strtolower( $host );
