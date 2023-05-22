@@ -170,7 +170,7 @@ class Subscription extends User {
 					LENGTH( comment_count )
 					) AS total_size,
 					COUNT(*) as post_count
-				FROM ' . $wpdb->posts . ' p, ' . $wpdb->term_relationships . ' r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND p.post_type IN ( ' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+				FROM ' . $wpdb->posts . ' p, ' . $wpdb->term_taxonomy . ' t, ' . $wpdb->term_relationships . ' r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t    .term_taxonomy_id AND t.term_id = %d AND p.post_type IN ( ' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
 				array_merge( array( $this->get_term_id() ), $post_types )
 			),
 			ARRAY_A
@@ -180,7 +180,7 @@ class Subscription extends User {
 			'U',
 			$wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT MIN(post_date) FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND p.post_status = 'publish' AND p.post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+					"SELECT MIN(post_date) FROM $wpdb->posts p, ' . $wpdb->term_taxonomy . ' t, ' . $wpdb->term_relationships . ' r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t    .term_taxonomy_id AND t.term_id = %d AND p.post_status = 'publish' AND p.post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
 					array_merge( array( $this->get_term_id() ), $post_types )
 				)
 			)
@@ -226,6 +226,7 @@ class Subscription extends User {
 						"SELECT COUNT(DISTINCT posts.ID)
 						FROM %s AS posts
 						JOIN %s AS relationships_post_format
+						JOIN %s AS taxonomy_author
 						JOIN %s AS relationships_author
 
 						WHERE posts.post_author = %s
@@ -233,9 +234,11 @@ class Subscription extends User {
 						AND posts.post_type IN ( %s )
 						AND relationships_post_format.object_id = posts.ID
 						AND relationships_author.object_id = posts.ID
-						AND relationships_author.term_taxonomy_id = %s",
+						AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
+						AND taxonomy_author.term_id = %s",
 						$wpdb->posts,
 						$wpdb->term_relationships,
+						$wpdb->term_taxonomy,
 						$wpdb->term_relationships,
 						'%d',
 						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
@@ -255,6 +258,7 @@ class Subscription extends User {
 						"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
 						FROM %s AS posts
 						JOIN %s AS relationships_post_format
+						JOIN %s AS taxonomy_author
 						JOIN %s AS relationships_author
 
 						WHERE posts.post_author = %s
@@ -263,10 +267,12 @@ class Subscription extends User {
 						AND relationships_post_format.object_id = posts.ID
 						AND relationships_post_format.term_taxonomy_id IN ( %s )
 						AND relationships_author.object_id = posts.ID
-						AND relationships_author.term_taxonomy_id = %s
+						AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
+						AND taxonomy_author.term_id = %s
 						GROUP BY relationships_post_format.term_taxonomy_id",
 						$wpdb->posts,
 						$wpdb->term_relationships,
+						$wpdb->term_taxonomy,
 						$wpdb->term_relationships,
 						'%d',
 						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
