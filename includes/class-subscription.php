@@ -180,7 +180,7 @@ class Subscription extends User {
 			'U',
 			$wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT MIN(post_date) FROM $wpdb->posts p, ' . $wpdb->term_taxonomy . ' t, ' . $wpdb->term_relationships . ' r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND p.post_status = 'publish' AND p.post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+					"SELECT MIN(post_date) FROM $wpdb->posts p, $wpdb->term_taxonomy t, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND p.post_status = 'publish' AND p.post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
 					array_merge( array( $this->get_term_id() ), $post_types )
 				)
 			)
