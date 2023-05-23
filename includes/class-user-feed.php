@@ -659,6 +659,42 @@ class User_Feed {
 	}
 
 	/**
+	 * Get the feed with a specific URL.
+	 *
+	 * @param      bool $also_undue     The feed URL.
+	 *
+	 * @return     object|\WP_Error   A User_Feed object.
+	 */
+	public static function get_all_due( $also_undue = false ) {
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy'   => self::TAXONOMY,
+				'meta_key'   => 'active',
+				'meta_value' => true,
+			)
+		);
+
+		$due_feeds = array();
+		foreach ( $term_query->get_terms() as $term ) {
+			$feed = new self( $term );
+			// Explicitly use time() to allow mocking it inside the namespace.
+			if ( $also_undue || gmdate( 'Y-m-d H:i:s', time() ) >= $feed->get_next_poll() ) {
+				$due_feeds[] = $feed;
+			}
+		}
+
+		// Let's poll the oldest feeds first.
+		usort(
+			$due_feeds,
+			function( $a, $b ) {
+				return strcmp( $a->get_next_poll(), $b->get_next_poll() );
+			}
+		);
+
+		return $due_feeds;
+	}
+
+	/**
 	 * Get all feeds for a parser
 	 *
 	 * @param      string $parser     The feed parser.

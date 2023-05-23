@@ -264,38 +264,13 @@ class Feed {
 	 * @param      bool $force  Whether to force retrieval.
 	 */
 	public function retrieve_friend_posts( $force = false ) {
-		$friends = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
-		$friends = $friends->get_results();
-
-		if ( empty( $friends ) ) {
-			return;
-		}
-
-		$feeds = array();
-		foreach ( $friends as $friend_user ) {
-			if ( $force ) {
-				$due_feeds = $friend_user->get_active_feeds();
-			} else {
-				// Respect the next poll date.
-				$due_feeds = $friend_user->get_due_feeds();
-			}
-			$feeds = array_merge( $feeds, $due_feeds );
-		}
-
-		// Let's poll the oldest feeds first.
-		usort(
-			$feeds,
-			function( $a, $b ) {
-				return strcmp( $a->get_next_poll(), $b->get_next_poll() );
-			}
-		);
-
-		foreach ( $feeds as $feed ) {
+		foreach ( User_Feed::get_all_due() as $feed ) {
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
 			$feed->get_friend_user()->delete_outdated_posts();
 		}
 	}
+
 	/**
 	 * Apply the feed rules that need to be applied early.
 	 *
