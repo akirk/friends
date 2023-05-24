@@ -1234,9 +1234,9 @@ class Frontend {
 			$query->set( 'page_id', $page_id );
 			if ( ! $this->author ) {
 				$post = get_post( $page_id );
-				$author = get_user_by( 'ID', $post->post_author );
+				$author = User::get_post_author( $post );
 				if ( false !== $author ) {
-					$this->author = new User( $author );
+					$this->author = $author;
 				}
 			}
 			$query->is_single = true;

@@ -606,7 +606,7 @@ class Feed {
 						if ( intval( $old_post->comment_count ) !== intval( $item->comment_count ) ) {
 							$modified_post_data['comment_count'] = $item->comment_count;
 						}
-						wp_update_post( $modified_post_data );
+						$friend_user->save_post( $modified_post_data );
 						$modified_posts[] = $post_id;
 					}
 				}

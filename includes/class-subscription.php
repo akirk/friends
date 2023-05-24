@@ -97,7 +97,6 @@ class Subscription extends User {
 	}
 
 	public function modify_query_by_author( \WP_Query $query ) {
-		$query->set( 'author', get_current_user_id() );
 		$tax_query = $query->get( 'tax_query' );
 		if ( ! $tax_query ) {
 			$tax_query = array();
@@ -229,8 +228,7 @@ class Subscription extends User {
 						JOIN %s AS taxonomy_author
 						JOIN %s AS relationships_author
 
-						WHERE posts.post_author = %s
-						AND posts.post_status IN ( 'publish', 'private' )
+						WHERE posts.post_status IN ( 'publish', 'private' )
 						AND posts.post_type IN ( %s )
 						AND relationships_post_format.object_id = posts.ID
 						AND relationships_author.object_id = posts.ID
@@ -245,7 +243,6 @@ class Subscription extends User {
 						'%d'
 					),
 					array_merge(
-						array( get_current_user_id() ),
 						$post_types,
 						array( $this->get_term_id() )
 					)
@@ -261,8 +258,7 @@ class Subscription extends User {
 						JOIN %s AS taxonomy_author
 						JOIN %s AS relationships_author
 
-						WHERE posts.post_author = %s
-						AND posts.post_status IN ( 'publish', 'private' )
+						WHERE posts.post_status IN ( 'publish', 'private' )
 						AND posts.post_type IN ( %s )
 						AND relationships_post_format.object_id = posts.ID
 						AND relationships_post_format.term_taxonomy_id IN ( %s )
@@ -280,7 +276,6 @@ class Subscription extends User {
 						'%d'
 					),
 					array_merge(
-						array( get_current_user_id() ),
 						$post_types,
 						array_keys( $post_formats_term_ids ),
 						array( $this->get_term_id() )
@@ -312,8 +307,8 @@ class Subscription extends User {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash" AND post_author = %d ',
-				array_merge( array( $this->get_term_id() ), $post_types, array( get_current_user_id() ) )
+				"SELECT COUNT(*) FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash"',
+				array_merge( array( $this->get_term_id() ), $post_types )
 			)
 		);
 
@@ -401,7 +396,7 @@ class Subscription extends User {
 		$query = $user->modify_query_by_author( $query );
 
 		foreach ( $query->get_posts() as $post ) {
-			$post->post_author = get_current_user_id();
+			$post->post_author = 0;
 			wp_update_post( $post );
 			wp_set_object_terms( $post->ID, $subscription->get_term_id(), self::TAXONOMY );
 		}
