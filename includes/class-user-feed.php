@@ -21,6 +21,7 @@ use WP_Error;
  */
 class User_Feed {
 	const TAXONOMY = 'friend-user-feed';
+	const POST_TAXONOMY = 'friend-post-feed';
 	const INTERVAL_BACKTRACK = 600;
 
 	/**
@@ -381,6 +382,22 @@ class User_Feed {
 	 * Registers the taxonomy
 	 */
 	public static function register_taxonomy() {
+		$args = array(
+			'labels'            => array(
+				'name'          => _x( 'Posts from Feed', 'taxonomy general name', 'friends' ),
+				'singular_name' => _x( 'Post from Feed', 'taxonomy singular name', 'friends' ),
+				'menu_name'     => __( 'Post from Feed', 'friends' ),
+			),
+			'hierarchical'      => false,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => false,
+			'public'            => false,
+		);
+		register_taxonomy( self::POST_TAXONOMY, 'post', $args );
+		register_taxonomy_for_object_type( self::POST_TAXONOMY, 'post' );
+
 		$args = array(
 			'labels'            => array(
 				'name'          => _x( 'Feed URL', 'taxonomy general name', 'friends' ),

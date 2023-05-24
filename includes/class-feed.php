@@ -653,7 +653,7 @@ class Feed {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
 
-			wp_set_object_terms( $post_id, $user_feed->get_id(), User_Feed::TAXONOMY );
+			wp_set_object_terms( $post_id, $user_feed->get_id(), User_Feed::POST_TAXONOMY );
 
 			update_post_meta( $post_id, 'parser', $user_feed->get_parser() );
 			update_post_meta( $post_id, 'feed_url', $user_feed->get_url() );
