@@ -128,9 +128,12 @@ class Feed {
 		}
 
 		foreach ( $friend_user->get_active_feeds() as $feed ) {
-			$this->retrieve_feed( $feed );
-			$feed->was_polled();
-			$feed->get_friend_user()->delete_outdated_posts();
+			$friend_user = $feed->get_friend_user();
+			if ( $friend_user ) {
+				$this->retrieve_feed( $feed );
+				$feed->was_polled();
+				$friend_user->delete_outdated_posts();
+			}
 		}
 	}
 
