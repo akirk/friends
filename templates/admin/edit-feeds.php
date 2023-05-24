@@ -125,7 +125,7 @@ $has_last_log = false;
 				<td>
 					<fieldset>
 						<label for="show_on_friends_page">
-							<input name="show_on_friends_page" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $args['friend']->ID, $args['hide_from_friends_page'] ) ); ?>>
+							<input name="show_on_friends_page" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $args['friend']->user_login, $args['hide_from_friends_page'] ) ); ?>>
 							<?php esc_html_e( 'Show posts on your friends page', 'friends' ); ?>
 						</label>
 					</fieldset>

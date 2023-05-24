@@ -19,7 +19,7 @@
 					<?php else : ?>
 					<fieldset>
 						<label for="friends_new_post_notification">
-							<input name="friends_new_post_notification" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $args['friend']->ID ) ); ?> />
+							<input name="friends_new_post_notification" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $args['friend']->user_login ) ); ?> />
 							<?php esc_html_e( 'Send me an e-mail for posts of this friend', 'friends' ); ?>
 						</label>
 					</fieldset>
@@ -31,7 +31,7 @@
 				<td>
 					<fieldset>
 						<label for="friends_keyword_notification">
-							<input name="friends_keyword_notification" type="checkbox" id="friends_keyword_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_keyword_notification_' . $args['friend']->ID ) ); ?> />
+							<input name="friends_keyword_notification" type="checkbox" id="friends_keyword_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_keyword_notification_' . $args['friend']->user_login ) ); ?> />
 							<?php
 							echo wp_kses_post(
 								sprintf(

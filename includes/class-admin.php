@@ -1258,20 +1258,20 @@ class Admin {
 		$arg       = 'updated';
 		$arg_value = 1;
 
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-notifications-' . $friend->ID ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-notifications-' . $friend->user_login ) ) {
 			if ( ! get_user_option( 'friends_no_new_post_notification' ) ) {
 				if ( isset( $_POST['friends_new_post_notification'] ) && $_POST['friends_new_post_notification'] ) {
-					delete_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID );
+					delete_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->user_login );
 				} else {
-					update_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->ID, 1 );
+					update_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->user_login, 1 );
 				}
 			}
 
 			if ( ! get_user_option( 'friends_no_keyword_notification' ) ) {
 				if ( isset( $_POST['friends_keyword_notification'] ) && $_POST['friends_keyword_notification'] ) {
-					delete_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID );
+					delete_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->user_login );
 				} else {
-					update_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->ID, 1 );
+					update_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->user_login, 1 );
 				}
 			}
 
@@ -1330,13 +1330,13 @@ class Admin {
 				$hide_from_friends_page = array();
 			}
 			if ( ! isset( $_POST['show_on_friends_page'] ) || ! $_POST['show_on_friends_page'] ) {
-				if ( ! in_array( $friend->ID, $hide_from_friends_page ) ) {
-					$hide_from_friends_page[] = $friend->ID;
+				if ( ! in_array( $friend->user_login, $hide_from_friends_page ) ) {
+					$hide_from_friends_page[] = $friend->user_login;
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 				}
 			} else {
-				if ( in_array( $friend->ID, $hide_from_friends_page ) ) {
-					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->ID ) ) );
+				if ( in_array( $friend->user_login, $hide_from_friends_page ) ) {
+					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->user_login ) ) );
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 				}
 			}

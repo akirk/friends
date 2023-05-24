@@ -253,7 +253,7 @@ class Feed {
 				if ( ! $post ) {
 					$post = get_post( intval( $post_id ) );
 				}
-				do_action( 'notify_new_friend_post', $post );
+				do_action( 'notify_new_friend_post', $post, $user_feed );
 			}
 		}
 	}

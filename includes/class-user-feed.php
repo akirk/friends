@@ -122,19 +122,33 @@ class User_Feed {
 	 */
 	public function get_friend_user() {
 		if ( empty( $this->friend_user ) ) {
-			$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
-			if ( ! empty( $user_ids ) ) {
-				$user_id = reset( $user_ids );
-				$user_id = intval( $user_id );
-				if ( term_exists( $user_id, Subscription::TAXONOMY ) ) {
-					$this->friend_user = new Subscription( get_term( $user_id, Subscription::TAXONOMY ) );
-				} else {
-					$this->friend_user = new User( $user_id );
+			$users = $this->get_all_friend_users();
+			$this->friend_user = reset( $users );
+		}
+
+		return $this->friend_user;
+	}
+
+	/**
+	 * Gets the friend users associated wit the term.
+	 *
+	 * @return array(User) The associated users.
+	 */
+	public function get_all_friend_users() {
+		$users = array();
+		$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
+		foreach ( $user_ids as $user_id ) {
+			if ( term_exists( $user_id, Subscription::TAXONOMY ) ) {
+				$users[] = new Subscription( get_term( $user_id, Subscription::TAXONOMY ) );
+			} else {
+				$user = get_userdata( $user_id );
+				if ( $user && ! is_wp_error( $user ) ) {
+					$users[] = new User( $user );
 				}
 			}
 		}
 
-		return $this->friend_user;
+		return $users;
 	}
 
 	/**

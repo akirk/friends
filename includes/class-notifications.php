@@ -79,9 +79,10 @@ class Notifications {
 	/**
 	 * Notify the users of this site about a new friend post
 	 *
-	 * @param  \WP_Post $post The new post by a friend or subscription.
+	 * @param  \WP_Post  $post The new post by a friend or subscription.
+	 * @param  User_Feed $user_feed The feed where the post came from.
 	 */
-	public function notify_new_friend_post( \WP_Post $post ) {
+	public function notify_new_friend_post( \WP_Post $post, User_Feed $user_feed ) {
 		if (
 			// Post might be trashed through rules.
 			'trash' === $post->post_status
@@ -94,14 +95,15 @@ class Notifications {
 		if ( ! $user->user_email ) {
 			return;
 		}
-		$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
-		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_notification_' . $post->post_author, $user->ID );
+		$author = $user_feed->get_friend_user();
 
-		if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post ) ) {
+		$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
+		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_notification_' . $author->user_login, $user->ID );
+
+		if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post, $author ) ) {
 			return;
 		}
 
-		$author      = new User( $post->post_author );
 		$email_title = $post->post_title;
 
 		$params = array(

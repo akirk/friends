@@ -44,18 +44,18 @@ if ( $args['no_new_post_notification'] ) : ?>
 			<?php foreach ( $args['friend_users'] as $friend_user ) : ?>
 				<tr>
 					<td class="column-friend">
-						<a href="<?php echo esc_url( Friends\Admin::get_edit_friend_link( $friend_user->ID ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
-						<input type="hidden" name="friend_listed[]" value="<?php echo esc_attr( $friend_user->ID ); ?>" />
+						<a href="<?php echo esc_url( Friends\Admin::get_edit_friend_link( $friend_user->user_login ) ); ?>"><?php echo esc_html( $friend_user->display_name ); ?></a>
+						<input type="hidden" name="friend_listed[]" value="<?php echo esc_attr( $friend_user->user_login ); ?>" />
 					</td>
 					<td class="column-friends-page-feeds">
-						<input name="show_on_friends_page[<?php echo esc_attr( $friend_user->ID ); ?>]" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $friend_user->ID, $args['hide_from_friends_page'] ) ); ?> />
+						<input name="show_on_friends_page[<?php echo esc_attr( $friend_user->user_login ); ?>]" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $friend_user->user_login, $args['hide_from_friends_page'] ) ); ?> />
 					</td>
 					<td class="column-email-notification">
-						<input name="new_post_notification[<?php echo esc_attr( $friend_user->ID ); ?>]" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $friend_user->ID ) ); ?> <?php echo $args['no_new_post_notification'] ? 'disabled="disabled"' : ''; ?>
+						<input name="new_post_notification[<?php echo esc_attr( $friend_user->user_login ); ?>]" type="checkbox" id="friends_new_post_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_new_post_notification_' . $friend_user->user_login ) ); ?> <?php echo $args['no_new_post_notification'] ? 'disabled="disabled"' : ''; ?>
 						/>
 					</td>
 					<td class="column-keyword-notification">
-						<input name="keyword_notification[<?php echo esc_attr( $friend_user->ID ); ?>]" type="checkbox" id="friends_keyword_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_keyword_notification_' . $friend_user->ID ) ); ?> <?php echo $args['no_keyword_notification'] ? 'disabled="disabled"' : ''; ?>
+						<input name="keyword_notification[<?php echo esc_attr( $friend_user->user_login ); ?>]" type="checkbox" id="friends_keyword_notification" value="1" <?php checked( '1', ! get_user_option( 'friends_no_keyword_notification_' . $friend_user->user_login ) ); ?> <?php echo $args['no_keyword_notification'] ? 'disabled="disabled"' : ''; ?>
 						/>
 					</td>
 				<?php do_action( 'friends_notification_manager_row', $friend_user ); ?>
