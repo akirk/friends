@@ -169,7 +169,7 @@ class Subscription extends User {
 					LENGTH( comment_count )
 					) AS total_size,
 					COUNT(*) as post_count
-				FROM ' . $wpdb->posts . ' p, ' . $wpdb->term_taxonomy . ' t, ' . $wpdb->term_relationships . ' r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t    .term_taxonomy_id AND t.term_id = %d AND p.post_type IN ( ' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+				FROM ' . $wpdb->posts . ' p, ' . $wpdb->term_taxonomy . ' t, ' . $wpdb->term_relationships . ' r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND p.post_type IN ( ' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
 				array_merge( array( $this->get_term_id() ), $post_types )
 			),
 			ARRAY_A
@@ -238,7 +238,6 @@ class Subscription extends User {
 						$wpdb->term_relationships,
 						$wpdb->term_taxonomy,
 						$wpdb->term_relationships,
-						'%d',
 						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
 						'%d'
 					),
@@ -270,7 +269,6 @@ class Subscription extends User {
 						$wpdb->term_relationships,
 						$wpdb->term_taxonomy,
 						$wpdb->term_relationships,
-						'%d',
 						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
 						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) ),
 						'%d'
