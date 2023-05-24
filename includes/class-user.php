@@ -294,9 +294,11 @@ class User extends \WP_User {
 	public function __get( $key ) {
 		if ( 'user_url' === $key && empty( $this->data->user_url ) && is_multisite() ) {
 			$site = get_active_blog_for_user( $this->ID );
-			// Ensure we're using the same URL protocol.
-			$this->data->user_url = set_url_scheme( $site->siteurl );
-			return $this->data->user_url;
+			if ( $site ) {
+				// Ensure we're using the same URL protocol.
+				$this->data->user_url = set_url_scheme( $site->siteurl );
+				return $this->data->user_url;
+			}
 		}
 
 		return parent::__get( $key );
