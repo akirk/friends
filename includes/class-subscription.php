@@ -73,7 +73,7 @@ class Subscription extends User {
 	public static function get_by_username( $username ) {
 		if ( 0 === strpos( $username, 'friends-virtual-user-' ) ) {
 			$term_id = substr( $username, strlen( 'friends-virtual-user-' ) );
-			$term = get_term( $term_id, self::TAXONOMY );
+			$term = get_term( intval( $term_id ), self::TAXONOMY );
 			if ( $term ) {
 				return new self( $term );
 			}

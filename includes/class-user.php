@@ -148,7 +148,11 @@ class User extends \WP_User {
 	 * @param      \WP_User $user   The user.
 	 */
 	public static function friends_get_user_feeds( $feeds, $user ) {
-		return array_merge( $feeds, $user->get_feeds() );
+		$user_feeds = $user->get_feeds();
+		if ( is_array( $user_feeds ) ) {
+			$feeds = array_merge( $feeds, $user_feeds );
+		}
+		return $feeds;
 	}
 
 	/**
