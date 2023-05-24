@@ -305,7 +305,7 @@ class Subscription extends User {
 
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash"',
+				"SELECT COUNT(*) FROM $wpdb->posts p, $wpdb->term_taxonomy t, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash"',
 				array_merge( array( $this->get_term_id() ), $post_types )
 			)
 		);
@@ -389,7 +389,7 @@ class Subscription extends User {
 
 		$query = new \WP_Query();
 		$query->set( 'post_type', apply_filters( 'friends_frontend_post_types', array() ) );
-		$query->set( 'post_status', array( 'publish', 'private', 'draft', 'trashed' ) );
+		$query->set( 'post_status', array( 'publish', 'private', 'draft', 'trash' ) );
 		$query->set( 'posts_per_page', -1 );
 		$query = $user->modify_query_by_author( $query );
 
