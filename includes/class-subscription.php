@@ -86,14 +86,13 @@ class Subscription extends User {
 		return new \WP_Error( 'user-not-found' );
 	}
 
-	public function save_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
-		if ( ! isset( $postarr['tax_input'] ) ) {
-			$postarr['tax_input'] = array();
+	public function insert_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
+		$post_id = wp_insert_post( $postarr, $wp_error, $fire_after_hooks );
+		if ( ! is_wp_error( $post_id ) ) {
+			wp_set_object_terms( $post_id, $this->get_term_id(), self::TAXONOMY );
 		}
-		$postarr['tax_input'][ self::TAXONOMY ] = array( $this->get_term_id() );
-		$post = wp_insert_post( $postarr, $wp_error, $fire_after_hooks );
 
-		return $post;
+		return $post_id;
 	}
 
 	public function modify_query_by_author( \WP_Query $query ) {
@@ -401,7 +400,7 @@ class Subscription extends User {
 
 		global $wpdb;
 		// Convert feeds.
-		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $subscription->get_term_id(), $user->ID, USER_FEED::TAXONOMY ) );
+		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $subscription->get_term_id(), $user->ID, User_Feed::TAXONOMY ) );
 
 		$user->delete();
 
@@ -429,7 +428,7 @@ class Subscription extends User {
 
 		global $wpdb;
 		// Convert feeds.
-		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $user->ID, $subscription->get_term_id(), USER_FEED::TAXONOMY ) );
+		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $user->ID, $subscription->get_term_id(), User_Feed::TAXONOMY ) );
 
 		$subscription->delete();
 

@@ -616,7 +616,7 @@ class Feed {
 				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 				$post_data['meta_input'] = $item->meta;
 
-				$post_id = $friend_user->save_post( $post_data, true );
+				$post_id = $friend_user->insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}

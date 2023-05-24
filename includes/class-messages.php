@@ -226,7 +226,7 @@ class Messages {
 				)
 			);
 		} else {
-			$post_id = $friend_user->save_post(
+			$post_id = $friend_user->insert_post(
 				array(
 					'post_type'    => self::CPT,
 					'post_title'   => $subject,

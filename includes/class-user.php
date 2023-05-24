@@ -314,7 +314,7 @@ class User extends \WP_User {
 		return $friends->messages->send_message( $this, $message, $subject );
 	}
 
-	public function save_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
+	public function insert_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
 		$current_user = wp_get_current_user();
 
 		// Posts and revisions should be associated with this user.
