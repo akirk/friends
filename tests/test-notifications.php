@@ -126,7 +126,7 @@ class NotificationTest extends \WP_UnitTestCase {
 
 		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
 		$this->assertInstanceOf( 'WP_User', $test_user );
-		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
+		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $user->user_login, true );
 
 		$feed = new \SimplePie();
 		$feed->set_file( $file );

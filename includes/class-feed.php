@@ -498,7 +498,11 @@ class Feed {
 	 * @return array                             The post ids of the new posts.
 	 */
 	public function process_incoming_feed_items( array $items, User_Feed $user_feed ) {
-		$friend_user     = $user_feed->get_friend_user();
+		$friend_user = $user_feed->get_friend_user();
+		if ( ! $friend_user ) {
+			error_log( var_export( $user_feed, true ) );
+			return;
+		}
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();

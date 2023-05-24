@@ -40,7 +40,7 @@ class Notifications {
 	 */
 	private function register_hooks() {
 		add_action( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
-		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ) );
+		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 2 );
 		add_filter( 'notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
