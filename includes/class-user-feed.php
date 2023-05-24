@@ -139,8 +139,9 @@ class User_Feed {
 		$users = array();
 		$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
 		foreach ( $user_ids as $user_id ) {
-			if ( term_exists( intval( $user_id ), Subscription::TAXONOMY ) ) {
-				$users[] = new Subscription( get_term( intval( $user_id ), Subscription::TAXONOMY ) );
+			$term_id = term_exists( intval( $user_id ), Subscription::TAXONOMY );
+			if ( $term_id ) {
+				$users[] = new Subscription( get_term( $term_id['term_id'], Subscription::TAXONOMY ) );
 			} else {
 				$user = get_userdata( $user_id );
 				if ( $user && ! is_wp_error( $user ) ) {

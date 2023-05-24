@@ -51,7 +51,7 @@ class User extends \WP_User {
 			return new self( $post->post_author );
 		}
 
-		return array_pop( $subscriptions );
+		return new Subscription( reset( $subscriptions ) );
 	}
 
 	/**

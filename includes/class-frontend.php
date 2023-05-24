@@ -499,18 +499,14 @@ class Frontend {
 	public static function have_posts() {
 		$friends = Friends::get_instance();
 		while ( have_posts() ) {
+			global $post;
 			the_post();
 			$args = array(
 				'friends' => $friends,
 				'avatar'  => get_post_meta( get_the_ID(), 'gravatar', true ),
 			);
 
-			$subscription = wp_get_object_terms( get_the_ID(), Subscription::TAXONOMY );
-			if ( empty( $subscription ) ) {
-				$args['friend_user'] = new User( get_the_author() );
-			} else {
-				$args['friend_user'] = new Subscription( $subscription[0] );
-			}
+			$args['friend_user'] = User::get_post_author( $post );
 
 			$read_time = self::calculate_read_time( get_the_content() );
 			if ( $read_time >= 60 ) {

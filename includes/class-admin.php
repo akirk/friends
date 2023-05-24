@@ -1063,14 +1063,15 @@ class Admin {
 
 		if ( isset( $_GET['convert-to-user'] ) && wp_verify_nonce( $_GET['convert-to-user'], 'convert-to-user-' . $friend->user_login ) ) {
 			if ( $friend instanceof Subscription ) {
-				if ( $friend->has_cap( 'friends_plugin' ) && ! $friend->has_cap( 'friend' ) ) {
-					Subscription::convert_to_user( $friend );
-				}
+				Subscription::convert_to_user( $friend );
 			}
 		} elseif ( isset( $_GET['convert-from-user'] ) && wp_verify_nonce( $_GET['convert-from-user'], 'convert-from-user-' . $friend->user_login ) ) {
 			if ( $friend instanceof User && ! $friend instanceof Subscription ) {
-				if ( $friend->has_cap( 'friends_plugin' ) && ! $friend->has_cap( 'friend' ) ) {
+				if ( $friend->has_cap( 'friends_plugin' ) && ! $friend->has_cap( 'friend' ) && ! $friend->has_cap( 'pending_friend_request' ) && ! $friend->has_cap( 'friend_request' ) ) {
 					Subscription::convert_from_user( $friend );
+				} else {
+					$arg = 'error';
+					$arg_value = __( 'A friend cannot be converted to a virtual user.', 'friends' );
 				}
 			}
 		} elseif ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( $_GET['accept-friend-request'], 'accept-friend-request-' . $friend->user_login ) ) {
@@ -1143,7 +1144,7 @@ class Admin {
 		}
 
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
-			wp_safe_redirect( wp_get_referer() );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, wp_get_referer() ) );
 		} else {
 			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}

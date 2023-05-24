@@ -32,7 +32,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 	<div class="avatar col-auto mr-2">
 		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
-				<img src="<?php echo esc_url( $args['friend_user']->get_avatar_url() ); ?>" width="36" height="36" class="avatar" />
+				<?php echo get_avatar( $args['friend_user']->user_login, 36 ); ?>
 			</a>
 		<?php else : ?>
 			<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
