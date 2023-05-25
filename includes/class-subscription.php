@@ -20,6 +20,18 @@ namespace Friends;
 class Subscription extends User {
 	const TAXONOMY = 'friends-virtual-user';
 	private $term;
+	const MIGRATE_USER_OPTIONS = array(
+		'friends_retention_number',
+		'friends_enable_retention_days',
+		'friends_retention_days',
+		'friends_feed_rules',
+		'friends_feed_catch_all',
+		'friends_in_token',
+		'friends_out_token',
+		'friends_starred',
+		'friends_rest_url',
+		'friends_user_icon_url',
+	);
 
 	public function __construct( \WP_Term $term ) {
 		$this->term = $term;
@@ -409,6 +421,10 @@ class Subscription extends User {
 		// Convert feeds.
 		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $subscription->get_term_id(), $user->ID, User_Feed::TAXONOMY ) );
 
+		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
+			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
+		}
+
 		$user->delete();
 
 		return $user;
@@ -436,6 +452,10 @@ class Subscription extends User {
 		global $wpdb;
 		// Convert feeds.
 		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $user->ID, $subscription->get_term_id(), User_Feed::TAXONOMY ) );
+
+		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
+			$user->update_user_option( $option_name, $subscription->get_user_option( $option_name ) );
+		}
 
 		$subscription->delete();
 
