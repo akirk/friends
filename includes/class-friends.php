@@ -430,8 +430,8 @@ class Friends {
 		$previous_version = get_option( 'friends_plugin_version' );
 
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
-			$friends_subscriptions = User_Query::all_associated_users();
-			foreach ( $friends_subscriptions->get_results() as $user ) {
+			$users = User_Query::all_associated_users();
+			foreach ( $users->get_results() as $user ) {
 				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
 				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
 				if ( $gravatar ) {
@@ -445,6 +445,18 @@ class Friends {
 
 		if ( version_compare( $previous_version, '2.1.3', '<' ) ) {
 			self::setup_roles();
+		}
+
+		if ( version_compare( $previous_version, '2.5.3', '<' ) ) {
+			$users = User_Query::all_associated_users();
+			foreach ( $users->get_results() as $user ) {
+				if ( get_option( 'friends_feed_rules_' . $user->ID ) ) {
+					$user->update_user_option( 'friends_feed_rules', get_option( 'friends_feed_rules_' . $user->ID ) );
+				}
+				if ( get_option( 'friends_feed_catch_all_' . $user->ID ) ) {
+					$user->update_user_option( 'friends_feed_catch_all', get_option( 'friends_feed_catch_all_' . $user->ID ) );
+				}
+			}
 		}
 
 		update_option( 'friends_plugin_version', Friends::VERSION );
