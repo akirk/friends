@@ -517,7 +517,7 @@ class User extends \WP_User {
 			foreach ( $args as $key => $value ) {
 				$query->set( $key, $value );
 			}
-			$query = $query->modify_query_by_author( $query );
+			$query = $this->modify_query_by_author( $query );
 
 			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
@@ -537,7 +537,7 @@ class User extends \WP_User {
 			foreach ( $args as $key => $value ) {
 				$query->set( $key, $value );
 			}
-			$query = $query->modify_query_by_author( $query );
+			$query = $this->modify_query_by_author( $query );
 
 			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
@@ -556,7 +556,7 @@ class User extends \WP_User {
 			foreach ( $args as $key => $value ) {
 				$query->set( $key, $value );
 			}
-			$query = $query->modify_query_by_author( $query );
+			$query = $this->modify_query_by_author( $query );
 
 			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
@@ -578,7 +578,7 @@ class User extends \WP_User {
 		foreach ( $args as $key => $value ) {
 			$query->set( $key, $value );
 		}
-		$query = $query->modify_query_by_author( $query );
+		$query = $this->modify_query_by_author( $query );
 
 		foreach ( $query->get_posts() as $post ) {
 			if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
