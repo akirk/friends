@@ -500,7 +500,6 @@ class User extends \WP_User {
 
 		$args = array(
 			'post_type' => Friends::CPT,
-			'author'    => $this->ID,
 		);
 
 		if ( $this->is_retention_days_enabled() ) {
@@ -514,17 +513,18 @@ class User extends \WP_User {
 		}
 
 		if ( isset( $args['date_query'] ) ) {
-			$query = new \WP_Query( $args );
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+			$query = $query->modify_query_by_author( $query );
 
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				$post_id = get_the_ID();
-
+			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post_id ), '<br/>';
+					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 				}
-				wp_delete_post( $post_id, true );
-				$deleted_posts[] = $post_id;
+				wp_delete_post( $post->ID, true );
+				$deleted_posts[] = $post->ID;
 			}
 		}
 
@@ -533,17 +533,18 @@ class User extends \WP_User {
 		$args['order'] = 'asc';
 		if ( $this->is_retention_number_enabled() ) {
 			$args['offset'] = $this->get_retention_number();
-			$query = new \WP_Query( $args );
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+			$query = $query->modify_query_by_author( $query );
 
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				$post_id = get_the_ID();
-
+			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post_id ), '<br/>';
+					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 				}
-				wp_delete_post( $post_id, true );
-				$deleted_posts[] = $post_id;
+				wp_delete_post( $post->ID, true );
+				$deleted_posts[] = $post->ID;
 			}
 		}
 
@@ -551,39 +552,40 @@ class User extends \WP_User {
 		if ( get_option( 'friends_enable_retention_number' ) ) {
 			unset( $args['author'] );
 			$args['offset'] = Friends::get_retention_number();
-			$query = new \WP_Query( $args );
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+			$query = $query->modify_query_by_author( $query );
 
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				$post_id = get_the_ID();
-
+			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post_id ), '<br/>';
+					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 				}
-				wp_delete_post( $post_id, true );
-				$deleted_posts[] = $post_id;
+				wp_delete_post( $post->ID, true );
+				$deleted_posts[] = $post->ID;
 			}
 		}
 
 		// In any case, don't overflow the trash.
 		$args = array(
 			'post_type'   => Friends::CPT,
-			'author'      => $this->ID,
 			'post_status' => 'trash',
 			'offset'      => 30,
 		);
 
-		$query = new \WP_Query( $args );
+		$query = new \WP_Query();
+		foreach ( $args as $key => $value ) {
+			$query->set( $key, $value );
+		}
+		$query = $query->modify_query_by_author( $query );
 
-		while ( $query->have_posts() ) {
-			$query->the_post();
-			$post_id = get_the_ID();
-
+		foreach ( $query->get_posts() as $post ) {
 			if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-				echo 'Deleting ', esc_html( $post_id ), '<br/>';
+				echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 			}
-			wp_delete_post( $post_id, true );
-			$deleted_posts[ $post_id ] = $post_id;
+			wp_delete_post( $post->ID, true );
+			$deleted_posts[ $post->ID ] = $post->ID;
 		}
 
 		return $deleted_posts;
@@ -871,10 +873,21 @@ class User extends \WP_User {
 	 * @return array The rules set by the user for this feed.
 	 */
 	public function get_feed_rules() {
-		$friends = Friends::get_instance();
 		if ( ! isset( self::$feed_rules[ $this->ID ] ) ) {
-			self::$feed_rules[ $this->ID ] = $friends->feed->validate_feed_rules( get_option( 'friends_feed_rules_' . $this->ID ) );
+			$this->set_feed_rules( $this->get_user_option( 'friends_feed_rules' ) );
 		}
+		return self::$feed_rules[ $this->ID ];
+	}
+
+	/**
+	 * Set the rules for this feed.
+	 *
+	 * @param      array $rules  The rules to set for this feed.
+	 * @return array The rules set by the user for this feed.
+	 */
+	public function set_feed_rules( $rules ) {
+		$friends = Friends::get_instance();
+		self::$feed_rules[ $this->ID ] = $friends->feed->validate_feed_rules( $rules );
 		return self::$feed_rules[ $this->ID ];
 	}
 
@@ -885,10 +898,22 @@ class User extends \WP_User {
 	 * @return array The rules set by the user for this feed.
 	 */
 	public function get_feed_catch_all() {
-		$friends = Friends::get_instance();
 		if ( ! isset( self::$feed_catch_all[ $this->ID ] ) ) {
-			self::$feed_catch_all[ $this->ID ] = $friends->feed->validate_feed_catch_all( get_option( 'friends_feed_catch_all_' . $this->ID ) );
+			$this->set_feed_catch_all( $this->get_user_option( 'friends_feed_catch_all' ) );
 		}
+		return self::$feed_catch_all[ $this->ID ];
+	}
+
+
+	/**
+	 * Set the catch_all value for this feed.
+	 *
+	 * @param      array $catchall  The catchall rule to set for this feed.
+	 * @return array The catchall rukle set by the user for this feed.
+	 */
+	public function set_feed_catch_all( $catchall ) {
+			$friends = Friends::get_instance();
+		self::$feed_catch_all[ $this->ID ] = $friends->feed->validate_feed_catch_all( $catchall );
 		return self::$feed_catch_all[ $this->ID ];
 	}
 

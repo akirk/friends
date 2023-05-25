@@ -87,8 +87,8 @@ if ( $args['post'] ) :
 			<th class="column-view"><?php esc_html_e( 'Friends Page', 'friends' ); ?></th>
 		</tr>
 		<?php
-		while ( $args['friend_posts']->have_posts() ) {
-			preview_row( $args['friend_posts']->next_post(), $args );
+		foreach ( $args['friend_posts']->get_posts() as $post ) {
+			preview_row( $post, $args );
 		}
 		?>
 	</tbody>

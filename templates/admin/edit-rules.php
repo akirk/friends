@@ -32,7 +32,7 @@
 						<option value="replace" <?php selected( 'replace', $rule['action'] ); ?>><?php echo esc_html_e( 'replace the match with this:', 'friends' ); ?></option>
 					</select>
 				</td>
-				<td style="<?php echo esc_attr( 'replace' !== $rule['action'] ? 'display: none' : '' ); ?>" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_attr( $rule['replace'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
+				<td style="<?php echo esc_attr( 'replace' !== $rule['action'] ? 'display: none' : '' ); ?>" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_attr( isset( $rule['replace'] ) ? $rule['replace'] : '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
 				<?php if ( empty( $rule['regex'] ) ) : ?>
 					<td><span class="description">(<?php esc_html_e( 'Unsubmitted rule', 'friends' ); ?>)</span></td>
 				<?php endif; ?>

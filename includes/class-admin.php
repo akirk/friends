@@ -788,16 +788,16 @@ class Admin {
 		$friend    = $this->check_admin_edit_friend_rules();
 		$arg       = 'updated';
 		$arg_value = 1;
-		if ( isset( $_POST['friend-rules-raw'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'friend-rules-raw-' . $friend->ID ) ) {
+		if ( isset( $_POST['friend-rules-raw'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'friend-rules-raw-' . $friend->user_login ) ) {
 			$rules = $this->friends->feed->validate_feed_rules( json_decode( stripslashes( $_POST['rules'] ), true ) );
 			if ( false === $rules ) {
 				$arg = 'error';
 			} else {
-				update_option( 'friends_feed_rules_' . $friend->ID, $rules );
+				$friend->update_user_option( 'friends_feed_rules', $rules );
 			}
-		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-rules-' . $friend->ID ) ) {
-			update_option( 'friends_feed_catch_all_' . $friend->ID, $this->friends->feed->validate_feed_catch_all( $_POST['catch_all'] ) );
-			update_option( 'friends_feed_rules_' . $friend->ID, $this->friends->feed->validate_feed_rules( $_POST['rules'] ) );
+		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-rules-' . $friend->user_login ) ) {
+				$friend->update_user_option( 'friends_feed_catch_all', $this->friends->feed->validate_feed_catch_all( $_POST['catch_all'] ) );
+				$friend->update_user_option( 'friends_feed_rules', $this->friends->feed->validate_feed_rules( $_POST['rules'] ) );
 		} else {
 			return;
 		}
@@ -1008,23 +1008,22 @@ class Admin {
 	 */
 	public function render_preview_friend_rules( $rules, $catch_all, \WP_Post $post = null ) {
 		$friend = $this->check_admin_edit_friend_rules();
+		$friend_posts = new \WP_Query();
+
+		$friend_posts->set( 'post_type', Friends::CPT );
+		$friend_posts->set( 'post_status', array( 'publish', 'private', 'trash' ) );
+		$friend_posts->set( 'posts_per_page', 25 );
+		$friend_posts = $friend->modify_query_by_author( $friend_posts );
 
 		$args = array(
 			'friend'       => $friend,
-			'friend_posts' => new \WP_Query(
-				array(
-					'post_type'      => Friends::CPT,
-					'post_status'    => array( 'publish', 'private', 'trash' ),
-					'author'         => $friend->ID,
-					'posts_per_page' => 25,
-				)
-			),
+			'friend_posts' => $friend_posts,
 			'feed'         => $this->friends->feed,
 			'post'         => $post,
 		);
 
-		User::$feed_rules[ $friend->ID ]     = $this->friends->feed->validate_feed_rules( $rules );
-		User::$feed_catch_all[ $friend->ID ] = $this->friends->feed->validate_feed_catch_all( $catch_all );
+		$friend->set_feed_rules( $rules );
+		$friend->set_feed_catch_all( $catch_all );
 
 		Friends::template_loader()->get_template_part( 'admin/preview-rules', null, $args );
 	}

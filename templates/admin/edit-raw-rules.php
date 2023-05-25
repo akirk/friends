@@ -24,7 +24,7 @@ echo wp_kses(
 <div id="raw-rules-data" style="display: none">
 	<h2><?php esc_html_e( 'Raw Rules Data', 'friends' ); ?></h2>
 	<form method="post">
-		<?php wp_nonce_field( 'friend-rules-raw-' . $args['friend']->ID ); ?>
+		<?php wp_nonce_field( 'friend-rules-raw-' . $args['friend']->user_login ); ?>
 		<table>
 			<tbody>
 				<tr>
