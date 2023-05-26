@@ -86,8 +86,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
-### 2.5.3
-- Don't create a user when only following someone ([#215])
+### 2.6.0
+- Don't create a user when only following someone ([#215]). This means that if you only want to use the Friends plugin to follow people, it will no longer create a user for each follow.
 
 ### 2.5.3
 - Add a new Reply To field to the Status post form ([#210]), also see the related update to the Firefox extension at https://addons.mozilla.org/addon/wpfriends/

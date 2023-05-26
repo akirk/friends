@@ -427,6 +427,18 @@ class Friends {
 	 * If a plugin version upgrade requires changes, they can be done here
 	 */
 	public static function upgrade_plugin() {
+		$upgraded = false;
+		if ( 'update' === $options['action'] && 'plugin' === $options['type'] && isset( $options['plugins'] ) ) {
+			foreach ( $options['plugins'] as $plugin ) {
+				if ( FRIENDS_PLUGIN_BASENAME === $plugin ) {
+					$upgraded = true;
+					break;
+				}
+			}
+		}
+		if ( ! $upgraded ) {
+			return;
+		}
 		$previous_version = get_option( 'friends_plugin_version' );
 
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
@@ -447,7 +459,7 @@ class Friends {
 			self::setup_roles();
 		}
 
-		if ( version_compare( $previous_version, '2.5.3', '<' ) ) {
+		if ( version_compare( $previous_version, '2.6.0', '<' ) ) {
 			$users = User_Query::all_associated_users();
 			foreach ( $users->get_results() as $user ) {
 				if ( get_option( 'friends_feed_rules_' . $user->ID ) ) {
@@ -459,7 +471,7 @@ class Friends {
 			}
 		}
 
-		update_option( 'friends_plugin_version', Friends::VERSION );
+			update_option( 'friends_plugin_version', Friends::VERSION );
 	}
 
 	/**
@@ -826,8 +838,6 @@ class Friends {
 		return $days;
 	}
 
-
-
 	/**
 	 * Gets the post stats.
 	 *
@@ -1059,7 +1069,6 @@ class Friends {
 		$defaults['must_log_in'] = $comment_registration_message;
 		return $defaults;
 	}
-
 
 	/**
 	 * Get all of the rel links for the HTML head.
