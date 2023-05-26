@@ -87,6 +87,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ## Changelog
 
 ### 2.5.3
+- Don't create a user when only following someone ([#215])
+
+### 2.5.3
 - Add a new Reply To field to the Status post form ([#210]), also see the related update to the Firefox extension at https://addons.mozilla.org/addon/wpfriends/
 - Fix a Fatal regarding ActivityPub metadata
 
@@ -208,6 +211,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[#215]: https://github.com/akirk/friends/pull/215
 [#210]: https://github.com/akirk/friends/pull/210
 [#206]: https://github.com/akirk/friends/pull/206
 [#205]: https://github.com/akirk/friends/pull/205
