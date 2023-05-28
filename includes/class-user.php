@@ -727,7 +727,7 @@ class User extends \WP_User {
 			$counts['standard'] = $wpdb->get_var(
 				$wpdb->prepare(
 					sprintf(
-						"SELECT COUNT(*)
+						"SELECT COUNT(DISTINCT posts.ID)
 						FROM %s AS posts
 						JOIN %s AS relationships_post_format
 
