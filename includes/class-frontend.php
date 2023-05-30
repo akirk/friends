@@ -1101,8 +1101,12 @@ class Frontend {
 				}
 			}
 		}
+		$page_id = get_query_var( 'page' );
+		$share_hash = hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ) ) . $page_id );
 
-		if ( ! $viewable || ! Friends::on_frontend() ) {
+		if ( isset( $_GET['share'] ) && $_GET['share'] === $share_hash ) {
+			$viewable = true;
+		} elseif ( ! $viewable || ! Friends::on_frontend() ) {
 			if ( $query->is_feed() ) {
 				status_header( 404 );
 				$query->set_404();
@@ -1122,7 +1126,6 @@ class Frontend {
 		remove_action( 'pre_get_posts', array( 'Kind_Taxonomy', 'kind_firehose_query' ), 99 );
 
 		switch_to_locale( get_user_locale() );
-		$page_id = get_query_var( 'page' );
 
 		$tax_query = array();
 		$post_formats = get_post_format_slugs();
@@ -1195,7 +1198,7 @@ class Frontend {
 		$query->set( 'post_type', $post_types );
 		$query->set( 'tax_query', $tax_query );
 
-		if ( friends::has_required_privileges() ) {
+		if ( ( isset( $_GET['share'] ) && $_GET['share'] === $share_hash ) || friends::has_required_privileges() ) {
 			$post_status = array( 'publish', 'private' );
 			if ( isset( $_GET['show-hidden'] ) ) {
 				$post_status[] = 'trash';
