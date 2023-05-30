@@ -496,6 +496,13 @@ class Feed {
 		return 10;
 	}
 
+	public function dissallowed_html( $allowedposttags, $context ) {
+		if ( 'post' === $context ) {
+			unset( $allowedposttags['article'] );
+		}
+		return $allowedposttags;
+	}
+
 	/**
 	 * Process incoming feed items
 	 *
@@ -527,7 +534,9 @@ class Feed {
 				$item->post_content = '';
 			}
 
+			add_filter( 'wp_kses_allowed_html', array( $this, 'dissallowed_html' ), 10, 2 );
 			$item->post_content = wp_kses_post( trim( $item->post_content ) );
+			remove_filter( 'wp_kses_allowed_html', array( $this, 'dissallowed_html' ), 10 );
 
 			$item = apply_filters( 'friends_early_modify_feed_item', $item, $user_feed, $friend_user );
 			if ( ! $item || $item->_feed_rule_delete ) {
