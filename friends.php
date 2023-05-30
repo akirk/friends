@@ -58,7 +58,7 @@ require_once __DIR__ . '/includes/class-friends.php';
 
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );
 add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_hooks' ) );
-add_action( 'upgrader_process_complete', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ) );
+add_action( 'upgrader_process_complete', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ), 10, 2 );
 register_activation_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'uninstall_plugin' ) );

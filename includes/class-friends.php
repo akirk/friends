@@ -425,8 +425,11 @@ class Friends {
 
 	/**
 	 * If a plugin version upgrade requires changes, they can be done here
+	 *
+	 * @param      \WP_Upgrader $upgrader_object  The WP_Upgrader instance.
+	 * @param      array        $options          Array of bulk item update data.
 	 */
-	public static function upgrade_plugin() {
+	public static function upgrade_plugin( $upgrader_object, $options ) {
 		$upgraded = false;
 		if ( 'update' === $options['action'] && 'plugin' === $options['type'] && isset( $options['plugins'] ) ) {
 			foreach ( $options['plugins'] as $plugin ) {
@@ -530,7 +533,14 @@ class Friends {
 		self::setup_roles();
 		self::create_friends_page();
 
-		self::upgrade_plugin();
+		self::upgrade_plugin(
+			null,
+			array(
+				'action'  => 'update',
+				'plugins' => array( FRIENDS_PLUGIN_BASENAME ),
+				'type'    => 'plugin',
+			)
+		);
 
 		if ( false === get_option( 'friends_main_user_id' ) ) {
 			update_option( 'friends_main_user_id', get_current_user_id() );
