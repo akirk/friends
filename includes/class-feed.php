@@ -444,7 +444,7 @@ class Feed {
 
 	public function extract_tags( $item, User_Feed $feed = null, User $friend_user = null ) {
 		// This is a variation of the ACTIVITYPUB_HASHTAGS_REGEXP.
-		if ( \preg_match_all( '/(?:(?<=\s)|(?<=<p>)|(?<=<br\s*/?>)|^)#(\w+)(?:(?=\s|[[:punct:]]|$))/ui', \wp_strip_all_tags( $item->post_content ), $match ) ) {
+		if ( \preg_match_all( '/(?:(?<=\s)|(?<=<p>)|(?<=<br>)|^)#(\w+)(?:(?=\s|[[:punct:]]|$))/ui', \wp_strip_all_tags( $item->post_content ), $match ) ) {
 			$tags = \implode( ', ', $match[1] );
 			$item->tags = $tags;
 		}
