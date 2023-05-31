@@ -140,6 +140,10 @@ class Feed_Item {
 				$value = $this->validate_post_status( $value );
 				break;
 
+			case 'tags':
+				$value = $this->validate_tags( $value );
+				break;
+
 			case 'date':
 				$value = $this->validate_date( $value, 'invalid-date' );
 				break;
@@ -291,6 +295,42 @@ class Feed_Item {
 
 		}
 		return $status;
+	}
+
+	/**
+	 * Validate a given post status.
+	 *
+	 * @param      string|array $tags  The tags.
+	 *
+	 * @return     string|\WP_Error  The validated status.
+	 */
+	public function validate_tags( $tags ) {
+		if ( ! is_array( $tags ) ) {
+			if ( ! is_string( $tags ) ) {
+				return new \WP_Error( 'invalid-tags', 'The tags need to be a hashtag string or an array.' );
+			}
+			if ( false !== strpos( $tags, '#' ) ) {
+				$tags = explode( '#', $tags );
+			} elseif ( false !== strpos( $tags, ',' ) ) {
+				$tags = explode( ',', $tags );
+			} else {
+				$tags = array( $tags );
+			}
+		}
+
+		$validated_tags = array();
+		foreach ( $tags as $tag ) {
+			if ( ! is_string( $tag ) ) {
+				continue;
+			}
+			$tag = mb_substr( trim( ltrim( trim( $tag ), '#,' ) ), 0, 50 );
+			if ( ! $tag ) {
+				continue;
+			}
+			$validated_tags[ $tag ] = true;
+		}
+
+		return array_keys( $validated_tags );
 	}
 
 	/**

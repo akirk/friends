@@ -61,6 +61,7 @@ class Feed {
 		add_filter( 'pre_option_rss_use_excerpt', array( $this, 'feed_use_excerpt' ), 90 );
 		add_filter( 'friends_early_modify_feed_item', array( $this, 'apply_early_feed_rules' ), 10, 3 );
 		add_filter( 'friends_modify_feed_item', array( $this, 'apply_feed_rules' ), 10, 3 );
+		add_filter( 'friends_modify_feed_item', array( $this, 'extract_tags' ), 10, 3 );
 
 		add_action( 'rss_item', array( $this, 'feed_additional_fields' ) );
 		add_action( 'rss2_item', array( $this, 'feed_additional_fields' ) );
@@ -441,6 +442,16 @@ class Feed {
 		return $catch_all;
 	}
 
+	public function extract_tags( $item, User_Feed $feed = null, User $friend_user = null ) {
+		// This is a variation of the ACTIVITYPUB_HASHTAGS_REGEXP.
+		if ( \preg_match_all( '/(?:(?<=\s)|(?<=<p>)|(?<=<br\s*/?>)|^)#(\w+)(?:(?=\s|[[:punct:]]|$))/ui', \wp_strip_all_tags( $item->post_content ), $match ) ) {
+			$tags = \implode( ', ', $match[1] );
+			$item->tags = $tags;
+		}
+
+		return $item;
+	}
+
 	/**
 	 * Gets the notification keywords.
 	 *
@@ -627,6 +638,7 @@ class Feed {
 				$post_data['post_date_gmt'] = $item->date;
 				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 				$post_data['meta_input'] = $item->meta;
+				$post_data['tags_input'] = $item->tags;
 
 				$post_id = $friend_user->insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
