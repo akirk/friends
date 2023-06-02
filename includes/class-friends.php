@@ -143,6 +143,7 @@ class Friends {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'init', array( 'Friends\Subscription', 'register_taxonomy' ) );
 		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 
@@ -424,13 +425,28 @@ class Friends {
 
 	/**
 	 * If a plugin version upgrade requires changes, they can be done here
+	 *
+	 * @param      \WP_Upgrader $upgrader_object  The WP_Upgrader instance.
+	 * @param      array        $options          Array of bulk item update data.
 	 */
-	public static function upgrade_plugin() {
+	public static function upgrade_plugin( $upgrader_object, $options ) {
+		$upgraded = false;
+		if ( 'update' === $options['action'] && 'plugin' === $options['type'] && isset( $options['plugins'] ) ) {
+			foreach ( $options['plugins'] as $plugin ) {
+				if ( FRIENDS_PLUGIN_BASENAME === $plugin ) {
+					$upgraded = true;
+					break;
+				}
+			}
+		}
+		if ( ! $upgraded ) {
+			return;
+		}
 		$previous_version = get_option( 'friends_plugin_version' );
 
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
-			$friends_subscriptions = User_Query::all_associated_users();
-			foreach ( $friends_subscriptions->get_results() as $user ) {
+			$users = User_Query::all_associated_users();
+			foreach ( $users->get_results() as $user ) {
 				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
 				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
 				if ( $gravatar ) {
@@ -446,7 +462,19 @@ class Friends {
 			self::setup_roles();
 		}
 
-		update_option( 'friends_plugin_version', Friends::VERSION );
+		if ( version_compare( $previous_version, '2.6.0', '<' ) ) {
+			$users = User_Query::all_associated_users();
+			foreach ( $users->get_results() as $user ) {
+				if ( get_option( 'friends_feed_rules_' . $user->ID ) ) {
+					$user->update_user_option( 'friends_feed_rules', get_option( 'friends_feed_rules_' . $user->ID ) );
+				}
+				if ( get_option( 'friends_feed_catch_all_' . $user->ID ) ) {
+					$user->update_user_option( 'friends_feed_catch_all', get_option( 'friends_feed_catch_all_' . $user->ID ) );
+				}
+			}
+		}
+
+			update_option( 'friends_plugin_version', Friends::VERSION );
 	}
 
 	/**
@@ -505,7 +533,14 @@ class Friends {
 		self::setup_roles();
 		self::create_friends_page();
 
-		self::upgrade_plugin();
+		self::upgrade_plugin(
+			null,
+			array(
+				'action'  => 'update',
+				'plugins' => array( FRIENDS_PLUGIN_BASENAME ),
+				'type'    => 'plugin',
+			)
+		);
 
 		if ( false === get_option( 'friends_main_user_id' ) ) {
 			update_option( 'friends_main_user_id', get_current_user_id() );
@@ -621,7 +656,7 @@ class Friends {
 	 */
 	public function get_avatar_data( $args, $id_or_email ) {
 		if ( is_object( $id_or_email ) ) {
-			if ( $id_or_email instanceof \WP_User ) {
+			if ( $id_or_email instanceof User ) {
 				$id_or_email = $id_or_email->ID;
 			} elseif ( $id_or_email instanceof \WP_Post ) {
 				$id_or_email = $id_or_email->post_author;
@@ -630,8 +665,22 @@ class Friends {
 			}
 		}
 
+		$user = false;
 		if ( is_numeric( $id_or_email ) && $id_or_email > 0 ) {
-			$url = get_user_option( 'friends_user_icon_url', $id_or_email );
+			$user = get_user_by( 'ID', $id_or_email );
+			if ( $user ) {
+				$user = new User( $user );
+			}
+		} elseif ( is_string( $id_or_email ) ) {
+			$user = User::get_by_username( $id_or_email );
+		}
+
+		if ( $user ) {
+			if ( is_wp_error( $user ) ) {
+				return $args;
+			}
+
+			$url = $user->get_avatar_url();
 			if ( $url ) {
 				$args['url']          = $url;
 				$args['found_avatar'] = true;
@@ -712,18 +761,10 @@ class Friends {
 	/**
 	 * Gets the post count by post format.
 	 *
-	 * @param      int $author_id  The author userid.
-	 *
 	 * @return     array  The post count by post format.
 	 */
-	public function get_post_count_by_post_format( $author_id = null ) {
+	public function get_post_count_by_post_format() {
 		$cache_key = 'friends_post_count_by_post_format';
-		if ( is_numeric( $author_id ) && $author_id > 0 ) {
-			$author_id = intval( $author_id );
-			$cache_key .= '_author_' . $author_id;
-		} else {
-			$author_id = null;
-		}
 
 		$counts = get_transient( $cache_key );
 		if ( false === $counts ) {
@@ -733,72 +774,38 @@ class Friends {
 			global $wpdb;
 
 			$counts = array();
-			if ( $author_id ) {
-				$post_format_counts = $wpdb->get_results(
-					$wpdb->prepare(
-						sprintf(
-							"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-							FROM %s AS posts
-							JOIN %s AS relationships
-							JOIN %s AS taxonomy
-							JOIN %s AS terms
 
-							WHERE posts.post_author = %s
-							AND posts.post_status IN ( 'publish', 'private' )
-							AND posts.post_type IN ( %s )
-							AND relationships.object_id = posts.ID
-							AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-							AND taxonomy.taxonomy = 'post_format'
+			$post_format_counts = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+					FROM {$wpdb->posts} AS posts
+					JOIN {$wpdb->term_relationships} AS relationships
+					JOIN {$wpdb->term_taxonomy} AS taxonomy
+					JOIN {$wpdb->terms} AS terms
 
-							AND terms.term_id = taxonomy.term_id
-							GROUP BY terms.slug",
-							$wpdb->posts,
-							$wpdb->term_relationships,
-							$wpdb->term_taxonomy,
-							$wpdb->terms,
-							'%d',
-							implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
-						),
-						array_merge(
-							array( $author_id ),
-							$post_types
-						)
-					)
-				);
-				$counts['standard'] = count_user_posts( $author_id, $post_types );
-			} else {
-				$post_format_counts = $wpdb->get_results(
-					$wpdb->prepare(
-						"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-						FROM {$wpdb->posts} AS posts
-						JOIN {$wpdb->term_relationships} AS relationships
-						JOIN {$wpdb->term_taxonomy} AS taxonomy
-						JOIN {$wpdb->terms} AS terms
+					WHERE posts.post_status IN ( 'publish', 'private' )
+					AND posts.post_type IN ( " . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . " )
+					AND relationships.object_id = posts.ID
+					AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+					AND taxonomy.taxonomy = 'post_format'
 
-						WHERE posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type IN ( " . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . " )
-						AND relationships.object_id = posts.ID
-						AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-						AND taxonomy.taxonomy = 'post_format'
-
-						AND terms.term_id = taxonomy.term_id
-						GROUP BY terms.slug",
-						$post_types
-					)
-				);
-				$post_count = null;
-				foreach ( $post_types as $post_type ) {
-					$count = wp_count_posts( $post_type );
-					if ( is_null( $post_count ) ) {
-						$post_count = $count;
-					} else {
-						foreach ( (array) $count as $post_status => $c ) {
-							$post_count->$post_status = ( isset( $post_count->$post_status ) ? $post_count->$post_status : 0 ) + $c;
-						}
+					AND terms.term_id = taxonomy.term_id
+					GROUP BY terms.slug",
+					$post_types
+				)
+			);
+			$post_count = null;
+			foreach ( $post_types as $post_type ) {
+				$count = wp_count_posts( $post_type );
+				if ( is_null( $post_count ) ) {
+					$post_count = $count;
+				} else {
+					foreach ( (array) $count as $post_status => $c ) {
+						$post_count->$post_status = ( isset( $post_count->$post_status ) ? $post_count->$post_status : 0 ) + $c;
 					}
 				}
-				$counts['standard'] = $post_count->publish + $post_count->private;
 			}
+			$counts['standard'] = $post_count->publish + $post_count->private;
 
 			foreach ( $post_format_counts as $row ) {
 				$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
@@ -840,8 +847,6 @@ class Friends {
 
 		return $days;
 	}
-
-
 
 	/**
 	 * Gets the post stats.
@@ -1075,7 +1080,6 @@ class Friends {
 		return $defaults;
 	}
 
-
 	/**
 	 * Get all of the rel links for the HTML head.
 	 */
@@ -1188,6 +1192,10 @@ class Friends {
 	 * @return false|string URL or false on failure.
 	 */
 	public static function check_url( $url ) {
+		$pre = apply_filters( 'friends_pre_check_url', null );
+		if ( ! is_null( $pre ) ) {
+			return $pre;
+		}
 		$host = parse_url( $url, PHP_URL_HOST );
 
 		$check_url = apply_filters( 'friends_host_is_valid', null, $host );

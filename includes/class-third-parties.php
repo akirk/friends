@@ -65,6 +65,6 @@ class Third_Parties {
 	 * @return array
 	 */
 	public function wp_sweep_excluded_taxonomies( $excluded_taxonomies ) {
-		return array_merge( $excluded_taxonomies, array( User_Feed::TAXONOMY ) );
+		return array_merge( $excluded_taxonomies, array( User_Feed::TAXONOMY, Subscription::TAXONOMY ) );
 	}
 }

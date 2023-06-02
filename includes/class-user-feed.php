@@ -9,6 +9,8 @@
 
 namespace Friends;
 
+use WP_Error;
+
 /**
  * This is the class for the feed URLs part of the Friends Plugin.
  *
@@ -19,6 +21,7 @@ namespace Friends;
  */
 class User_Feed {
 	const TAXONOMY = 'friend-user-feed';
+	const POST_TAXONOMY = 'friend-post-feed';
 	const INTERVAL_BACKTRACK = 600;
 
 	/**
@@ -84,7 +87,7 @@ class User_Feed {
 		$feed_url = $this->get_url();
 		$friend_user = $this->get_friend_user();
 
-		if ( $friend_user->is_friend_url( $feed_url ) && ( friends::has_required_privileges() || wp_doing_cron() ) ) {
+		if ( $friend_user && $friend_user instanceof User && $friend_user->is_friend_url( $feed_url ) && ( friends::has_required_privileges() || wp_doing_cron() ) ) {
 			$friends = Friends::get_instance();
 			$feed_url = $friends->access_control->append_auth( $feed_url, $friend_user, $validity );
 		}
@@ -120,15 +123,34 @@ class User_Feed {
 	 */
 	public function get_friend_user() {
 		if ( empty( $this->friend_user ) ) {
-			$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
-			if ( empty( $user_ids ) ) {
-				return null;
-			}
-			$user_id = reset( $user_ids );
-			$this->friend_user = new User( $user_id );
+			$users = $this->get_all_friend_users();
+			$this->friend_user = reset( $users );
 		}
 
 		return $this->friend_user;
+	}
+
+	/**
+	 * Gets the friend users associated wit the term.
+	 *
+	 * @return array(User) The associated users.
+	 */
+	public function get_all_friend_users() {
+		$users = array();
+		$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
+		foreach ( $user_ids as $user_id ) {
+			$term_id = term_exists( intval( $user_id ), Subscription::TAXONOMY );
+			if ( $term_id ) {
+				$users[] = new Subscription( get_term( $term_id['term_id'], Subscription::TAXONOMY ) );
+			} else {
+				$user = get_userdata( $user_id );
+				if ( $user && ! is_wp_error( $user ) ) {
+					$users[] = new User( $user );
+				}
+			}
+		}
+
+		return $users;
 	}
 
 	/**
@@ -363,6 +385,22 @@ class User_Feed {
 	public static function register_taxonomy() {
 		$args = array(
 			'labels'            => array(
+				'name'          => _x( 'Posts from Feed', 'taxonomy general name', 'friends' ),
+				'singular_name' => _x( 'Post from Feed', 'taxonomy singular name', 'friends' ),
+				'menu_name'     => __( 'Post from Feed', 'friends' ),
+			),
+			'hierarchical'      => false,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => false,
+			'public'            => false,
+		);
+		register_taxonomy( self::POST_TAXONOMY, 'post', $args );
+		register_taxonomy_for_object_type( self::POST_TAXONOMY, 'post' );
+
+		$args = array(
+			'labels'            => array(
 				'name'          => _x( 'Feed URL', 'taxonomy general name', 'friends' ),
 				'singular_name' => _x( 'Feed URL', 'taxonomy singular name', 'friends' ),
 				'menu_name'     => __( 'Feed URL', 'friends' ),
@@ -484,22 +522,11 @@ class User_Feed {
 		do_action( 'friends_user_feed_deactivated', $this );
 	}
 
-
-	/**
-	 * Delete all feeds for a user (when it its being deleted).
-	 *
-	 * @param      integer $user_id  The user id.
-	 */
-	public static function delete_user_terms( $user_id ) {
-		wp_delete_object_term_relationships( $user_id, self::TAXONOMY );
-	}
-
 	/**
 	 * Delete this feed.
 	 */
 	public function delete() {
-		$friend_user = $this->get_friend_user();
-		wp_remove_object_terms( $friend_user->ID, $this->term->term_id, self::TAXONOMY );
+		wp_delete_term( $this->term->term_id, self::TAXONOMY );
 	}
 
 	/**
@@ -554,37 +581,21 @@ class User_Feed {
 	 * @return User_Feed                  A newly created User_Feed.
 	 */
 	public static function save( User $friend_user, $url, $args = array() ) {
-		$all_urls = array();
-		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
-			$all_urls[ $term->name ] = $term->term_id;
+		$all_urls = $friend_user->save_feeds(
+			array(
+				$url => $args,
+			)
+		);
+
+		if ( is_wp_error( $all_urls ) ) {
+			return $all_urls;
 		}
 
-		if ( ! isset( $all_urls[ $url ] ) ) {
-			$all_urls[ $url ] = false;
-
-			$term_ids = wp_set_object_terms( $friend_user->ID, array_keys( $all_urls ), self::TAXONOMY );
-			if ( is_wp_error( $term_ids ) ) {
-				return $term_ids;
-			}
-			foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
-				$all_urls[ $term->name ] = $term->term_id;
-			}
-		}
-
-		if ( ! isset( $all_urls[ $url ] ) ) {
-			return false;
+		if ( ! is_array( $all_urls ) || ! isset( $all_urls[ $url ] ) ) {
+			return new \WP_Error( 'cound-not-save-feed' );
 		}
 
 		$term_id = $all_urls[ $url ];
-		foreach ( $args as $key => $value ) {
-			if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title', 'interval', 'modifier' ) ) ) {
-				if ( metadata_exists( 'term', $term_id, $key ) ) {
-					update_metadata( 'term', $term_id, $key, $value );
-				} else {
-					add_metadata( 'term', $term_id, $key, $value, true );
-				}
-			}
-		}
 
 		$term = get_term( $term_id );
 		if ( is_wp_error( $term ) ) {
@@ -643,31 +654,6 @@ class User_Feed {
 	}
 
 	/**
-	 * Fetch the feeds associated with the User.
-	 *
-	 * @param  \WP_User $friend_user The user we're looking for.
-	 * @return array                    An array of User_Feed objects.
-	 */
-	public static function get_for_user( \WP_User $friend_user ) {
-		if ( ! $friend_user instanceof User ) {
-			return array();
-		}
-
-		$term_query = new \WP_Term_Query(
-			array(
-				'taxonomy'   => self::TAXONOMY,
-				'object_ids' => $friend_user->ID,
-			)
-		);
-		$feeds = array();
-		foreach ( $term_query->get_terms() as $term ) {
-			$feeds[ $term->term_id ] = new self( $term, $friend_user );
-		}
-
-		return $feeds;
-	}
-
-	/**
 	 * Get the feed with the specific id.
 	 *
 	 * @param      int $id     The feed id.
@@ -675,17 +661,12 @@ class User_Feed {
 	 * @return     object|\WP_Error   A User_Feed object.
 	 */
 	public static function get_by_id( $id ) {
-		$term_query = new \WP_Term_Query(
-			array(
-				'taxonomy' => self::TAXONOMY,
-				'include'  => $id,
-			)
-		);
-		foreach ( $term_query->get_terms() as $term ) {
-			return new self( $term );
+		$term = get_term( $id, self::TAXONOMY );
+		if ( is_wp_error( $term ) ) {
+			return $term;
 		}
 
-		return new \WP_Error( 'term_not_found' );
+		return new self( $term );
 	}
 
 	/**
@@ -710,6 +691,42 @@ class User_Feed {
 	}
 
 	/**
+	 * Get the feed with a specific URL.
+	 *
+	 * @param      bool $also_undue     The feed URL.
+	 *
+	 * @return     object|\WP_Error   A User_Feed object.
+	 */
+	public static function get_all_due( $also_undue = false ) {
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy'   => self::TAXONOMY,
+				'meta_key'   => 'active',
+				'meta_value' => true,
+			)
+		);
+
+		$due_feeds = array();
+		foreach ( $term_query->get_terms() as $term ) {
+			$feed = new self( $term );
+			// Explicitly use time() to allow mocking it inside the namespace.
+			if ( $also_undue || gmdate( 'Y-m-d H:i:s', time() ) >= $feed->get_next_poll() ) {
+				$due_feeds[] = $feed;
+			}
+		}
+
+		// Let's poll the oldest feeds first.
+		usort(
+			$due_feeds,
+			function( $a, $b ) {
+				return strcmp( $a->get_next_poll(), $b->get_next_poll() );
+			}
+		);
+
+		return $due_feeds;
+	}
+
+	/**
 	 * Get all feeds for a parser
 	 *
 	 * @param      string $parser     The feed parser.
@@ -730,5 +747,24 @@ class User_Feed {
 		}
 
 		return $feeds;
+	}
+
+	/**
+	 * Get the parser for a post
+	 *
+	 * @param      int $post_id     The post id.
+	 *
+	 * @return     string The feed parser.
+	 */
+	public static function get_parser_for_post_id( $post_id ) {
+		$user_feeds = wp_get_object_terms( $post_id, User_Feed::TAXONOMY );
+		if ( empty( $user_feeds ) ) {
+			// We used to save the parser as post meta.
+			return get_post_meta( $post_id, 'parser', true );
+		}
+
+		$user_feed = reset( $user_feeds );
+		$user_feed = new self( $user_feed );
+		return $user_feed->get_parser();
 	}
 }

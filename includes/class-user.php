@@ -32,6 +32,28 @@ class User extends \WP_User {
 	 */
 	public static $feed_catch_all = array();
 
+	public static function get_by_username( $username ) {
+		$subscription = Subscription::get_by_username( $username );
+		if ( $subscription && ! is_wp_error( $subscription ) ) {
+			return $subscription;
+		}
+
+		$user = get_user_by( 'login', $username );
+		if ( $user && ! is_wp_error( $user ) ) {
+			return new self( $user );
+		}
+		return $user;
+	}
+
+	public static function get_post_author( \WP_Post $post ) {
+		$subscriptions = wp_get_object_terms( $post->ID, Subscription::TAXONOMY );
+		if ( empty( $subscriptions ) ) {
+			return new self( $post->post_author );
+		}
+
+		return new Subscription( reset( $subscriptions ) );
+	}
+
 	/**
 	 * Create a User with a specific Friends-related role
 	 *
@@ -42,12 +64,18 @@ class User extends \WP_User {
 	 * @param      string $url           The site URL for which
 	 *                                   to create the user.
 	 * @param      string $display_name  The user's display name.
-	 * @param      string $icon_url      The user_icon_url URL.
+	 * @param      string $avatar_url      The user_avatar_url URL.
 	 * @param      string $description   A description for the user.
+	 * @param      string $user_registered   When the user was registered.
+	 * @param      bool   $subscription_override  Whether to override the automatic creation of a subscription.
 	 *
 	 * @return     User|\WP_Error  The created user or an error.
 	 */
-	public static function create( $user_login, $role, $url, $display_name = null, $icon_url = null, $description = null ) {
+	public static function create( $user_login, $role, $url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
+		if ( 'subscription' === $role && ! $subscription_override ) {
+			return Subscription::create( $user_login, $role, $url, $display_name, $avatar_url, $description );
+		}
+
 		$role_rank = array_flip(
 			array(
 				'subscription',
@@ -84,7 +112,7 @@ class User extends \WP_User {
 			return $friend_user;
 		}
 
-		$userdata  = array(
+		$userdata = array(
 			'user_login'   => $user_login,
 			'display_name' => $display_name,
 			'first_name'   => $display_name,
@@ -94,11 +122,16 @@ class User extends \WP_User {
 			'user_pass'    => wp_generate_password( 256 ),
 			'role'         => $role,
 		);
+
+		if ( $user_registered ) {
+			$userdata['user_registered'] = $user_registered;
+		}
+
 		$friend_id = wp_insert_user( $userdata );
-		update_user_option( $friend_id, 'friends_new_friend', true );
 
 		$friend_user = new User( $friend_id );
-		$friend_user->update_user_icon_url( $icon_url );
+		$friend_user->update_user_option( 'friends_new_friend', true );
+		$friend_user->update_user_icon_url( $avatar_url );
 
 		do_action( 'friends_after_create_friend_user', $friend_user );
 		return $friend_user;
@@ -115,7 +148,11 @@ class User extends \WP_User {
 	 * @param      \WP_User $user   The user.
 	 */
 	public static function friends_get_user_feeds( $feeds, $user ) {
-		return array_merge( $feeds, User_Feed::get_for_user( $user ) );
+		$user_feeds = $user->get_feeds();
+		if ( is_array( $user_feeds ) ) {
+			$feeds = array_merge( $feeds, $user_feeds );
+		}
+		return $feeds;
 	}
 
 	/**
@@ -181,6 +218,9 @@ class User extends \WP_User {
 		}
 
 		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( ! $host ) {
+			return false;
+		}
 		$path = wp_parse_url( $url, PHP_URL_PATH );
 
 		$site_id = get_blog_id_from_url( $host, trailingslashit( $path ) );
@@ -258,9 +298,11 @@ class User extends \WP_User {
 	public function __get( $key ) {
 		if ( 'user_url' === $key && empty( $this->data->user_url ) && is_multisite() ) {
 			$site = get_active_blog_for_user( $this->ID );
-			// Ensure we're using the same URL protocol.
-			$this->data->user_url = set_url_scheme( $site->siteurl );
-			return $this->data->user_url;
+			if ( $site ) {
+				// Ensure we're using the same URL protocol.
+				$this->data->user_url = set_url_scheme( $site->siteurl );
+				return $this->data->user_url;
+			}
 		}
 
 		return parent::__get( $key );
@@ -276,6 +318,25 @@ class User extends \WP_User {
 	public function send_message( $message, $subject = null ) {
 		$friends = Friends::get_instance();
 		return $friends->messages->send_message( $this, $message, $subject );
+	}
+
+	public function insert_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
+		$current_user = wp_get_current_user();
+
+		// Posts and revisions should be associated with this user.
+		wp_set_current_user( $this->ID );
+
+		$post = wp_insert_post( $postarr, $wp_error, $fire_after_hooks );
+
+		if ( $current_user ) {
+			wp_set_current_user( $current_user->ID );
+		}
+
+		return $post;
+	}
+
+	public function get_object_id() {
+		return $this->ID;
 	}
 
 	/**
@@ -302,27 +363,45 @@ class User extends \WP_User {
 				'title'       => $this->display_name . ' RSS Feed',
 			);
 
-			$feed_options = array();
-			foreach ( $default_options as $key => $value ) {
-				if ( isset( $options[ $key ] ) ) {
-					$feed_options[ $key ] = $options[ $key ];
-				} else {
-					$feed_options[ $key ] = $value;
-				}
-			}
-			$feeds[ $feed_url ] = $feed_options;
+			$feeds[ $feed_url ] = array_merge( $default_options, $options );
 		}
 
-		$user_feeds = User_Feed::save_multiple(
-			$this,
-			$feeds
-		);
+		$all_urls = array();
+		foreach ( wp_get_object_terms( $this->get_object_id(), User_Feed::TAXONOMY ) as $term ) {
+			$all_urls[ $term->name ] = $term->term_id;
+		}
+
+		$user_feeds = wp_set_object_terms( $this->get_object_id(), array_keys( array_merge( $all_urls, $feeds ) ), User_Feed::TAXONOMY );
+		if ( is_wp_error( $user_feeds ) ) {
+			return $user_feeds;
+		}
+
+		foreach ( wp_get_object_terms( $this->get_object_id(), User_Feed::TAXONOMY ) as $term ) {
+			$all_urls[ $term->name ] = $term->term_id;
+		}
+
+		foreach ( $feeds as $url => $feed_options ) {
+			if ( ! isset( $all_urls[ $url ] ) ) {
+				continue;
+			}
+			$term_id = $all_urls[ $url ];
+			foreach ( $feed_options as $key => $value ) {
+				if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title', 'interval', 'modifier' ) ) ) {
+
+					if ( metadata_exists( 'term', $term_id, $key ) ) {
+						update_metadata( 'term', $term_id, $key, $value );
+					} else {
+						add_metadata( 'term', $term_id, $key, $value, true );
+					}
+				}
+			}
+		}
 
 		if ( $errors->has_errors() ) {
 			return $errors;
 		}
 
-		return $user_feeds;
+		return $all_urls;
 	}
 
 	/**
@@ -334,34 +413,25 @@ class User extends \WP_User {
 	 * @return     User_Feed|\WP_Error  $user The new feed or an error object.
 	 */
 	public function save_feed( $feed_url, $options = array() ) {
-		if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
-			return new \WP_Error( 'invalid-url', 'An invalid URL was provided' );
+		$all_urls = $this->save_feeds( array( $feed_url => $options ) );
+
+		if ( is_wp_error( $all_urls ) ) {
+			return $all_urls;
 		}
 
-		$default_options = array(
-			'active'      => false,
-			'parser'      => 'simplepie',
-			'post-format' => 'standard',
-			'mime-type'   => 'application/rss+xml',
-			'title'       => $this->display_name . ' RSS Feed',
-		);
-
-		$feed_options = array();
-		foreach ( $default_options as $key => $value ) {
-			if ( isset( $options[ $key ] ) ) {
-				$feed_options[ $key ] = $options[ $key ];
-			} else {
-				$feed_options[ $key ] = $value;
-			}
+		if ( ! isset( $all_urls[ $feed_url ] ) ) {
+			return new \WP_Error(
+				'error-saving-feed',
+				sprintf(
+					// translators: %s is a URL.
+					__( 'The feed %s could not be saved', 'friends' )
+				)
+			);
 		}
 
-		$user_feed = User_Feed::save(
-			$this,
-			$feed_url,
-			$feed_options
-		);
+		$term = get_term( $all_urls[ $feed_url ], User_Feed::TAXONOMY );
 
-		return $user_feed;
+		return new User_Feed( $term );
 	}
 
 	/**
@@ -408,6 +478,20 @@ class User extends \WP_User {
 		return array_values( array_diff( $new_posts, $deleted_posts ) );
 	}
 
+	public function modify_query_by_author( \WP_Query $query ) {
+		$query->set( 'author', $this->ID );
+		return $query;
+	}
+
+	public function delete() {
+		if ( is_multisite() ) {
+			remove_user_from_blog( $this->ID, get_current_blog_id() );
+		} else {
+			wp_delete_user( $this->ID );
+		}
+		// The content (posts and feeds) will be deleted with the 'delete_user' hook.
+	}
+
 	/**
 	 * Delete posts the user decided to automatically delete.
 	 */
@@ -416,7 +500,6 @@ class User extends \WP_User {
 
 		$args = array(
 			'post_type' => Friends::CPT,
-			'author'    => $this->ID,
 		);
 
 		if ( $this->is_retention_days_enabled() ) {
@@ -430,17 +513,18 @@ class User extends \WP_User {
 		}
 
 		if ( isset( $args['date_query'] ) ) {
-			$query = new \WP_Query( $args );
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+			$query = $this->modify_query_by_author( $query );
 
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				$post_id = get_the_ID();
-
+			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post_id ), '<br/>';
+					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 				}
-				wp_delete_post( $post_id, true );
-				$deleted_posts[] = $post_id;
+				wp_delete_post( $post->ID, true );
+				$deleted_posts[] = $post->ID;
 			}
 		}
 
@@ -449,17 +533,18 @@ class User extends \WP_User {
 		$args['order'] = 'asc';
 		if ( $this->is_retention_number_enabled() ) {
 			$args['offset'] = $this->get_retention_number();
-			$query = new \WP_Query( $args );
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+			$query = $this->modify_query_by_author( $query );
 
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				$post_id = get_the_ID();
-
+			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post_id ), '<br/>';
+					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 				}
-				wp_delete_post( $post_id, true );
-				$deleted_posts[] = $post_id;
+				wp_delete_post( $post->ID, true );
+				$deleted_posts[] = $post->ID;
 			}
 		}
 
@@ -467,39 +552,40 @@ class User extends \WP_User {
 		if ( get_option( 'friends_enable_retention_number' ) ) {
 			unset( $args['author'] );
 			$args['offset'] = Friends::get_retention_number();
-			$query = new \WP_Query( $args );
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+			$query = $this->modify_query_by_author( $query );
 
-			while ( $query->have_posts() ) {
-				$query->the_post();
-				$post_id = get_the_ID();
-
+			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post_id ), '<br/>';
+					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 				}
-				wp_delete_post( $post_id, true );
-				$deleted_posts[] = $post_id;
+				wp_delete_post( $post->ID, true );
+				$deleted_posts[] = $post->ID;
 			}
 		}
 
 		// In any case, don't overflow the trash.
 		$args = array(
 			'post_type'   => Friends::CPT,
-			'author'      => $this->ID,
 			'post_status' => 'trash',
 			'offset'      => 30,
 		);
 
-		$query = new \WP_Query( $args );
+		$query = new \WP_Query();
+		foreach ( $args as $key => $value ) {
+			$query->set( $key, $value );
+		}
+		$query = $this->modify_query_by_author( $query );
 
-		while ( $query->have_posts() ) {
-			$query->the_post();
-			$post_id = get_the_ID();
-
+		foreach ( $query->get_posts() as $post ) {
 			if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-				echo 'Deleting ', esc_html( $post_id ), '<br/>';
+				echo 'Deleting ', esc_html( $post->ID ), '<br/>';
 			}
-			wp_delete_post( $post_id, true );
-			$deleted_posts[ $post_id ] = $post_id;
+			wp_delete_post( $post->ID, true );
+			$deleted_posts[ $post->ID ] = $post->ID;
 		}
 
 		return $deleted_posts;
@@ -621,8 +707,84 @@ class User extends \WP_User {
 	 * @return     array  The post counts.
 	 */
 	public function get_post_count_by_post_format() {
-		$friends = Friends::get_instance();
-		return $friends->get_post_count_by_post_format( $this->ID );
+		$cache_key = 'friends_post_count_by_post_format_author_' . $this->ID;
+
+		$counts = get_transient( $cache_key );
+		if ( true || false === $counts ) {
+			$counts = array();
+			$post_types = apply_filters( 'friends_frontend_post_types', array() );
+			$post_formats_term_ids = array();
+			foreach ( get_post_format_slugs() as $post_format ) {
+				$term = get_term_by( 'slug', 'post-format-' . $post_format, 'post_format' );
+				if ( $term ) {
+					$post_formats_term_ids[ $term->term_id ] = $post_format;
+				}
+			}
+
+			global $wpdb;
+
+			$counts = array();
+			$counts['standard'] = $wpdb->get_var(
+				$wpdb->prepare(
+					sprintf(
+						"SELECT COUNT(DISTINCT posts.ID)
+						FROM %s AS posts
+						JOIN %s AS relationships_post_format
+
+						WHERE posts.post_author = %s
+						AND posts.post_status IN ( 'publish', 'private' )
+						AND posts.post_type IN ( %s )
+						AND relationships_post_format.object_id = posts.ID",
+						$wpdb->posts,
+						$wpdb->term_relationships,
+						'%d',
+						implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
+					),
+					array_merge(
+						array( $this->ID ),
+						$post_types
+					)
+				)
+			);
+
+			$post_format_counts = $wpdb->get_results(
+				$wpdb->prepare(
+					sprintf(
+						"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
+						FROM %s AS posts
+						JOIN %s AS relationships_post_format
+
+						WHERE posts.post_author = %s
+						AND posts.post_status IN ( 'publish', 'private' )
+						AND posts.post_type IN ( %s )
+						AND relationships_post_format.object_id = posts.ID
+						AND relationships_post_format.term_taxonomy_id IN ( %s )
+						GROUP BY relationships_post_format.term_taxonomy_id",
+						$wpdb->posts,
+						$wpdb->term_relationships,
+						'%d',
+						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) )
+					),
+					array_merge(
+						array( $this->ID ),
+						$post_types,
+						array_keys( $post_formats_term_ids )
+					)
+				)
+			);
+
+			foreach ( $post_format_counts as $row ) {
+				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
+				$counts['standard'] -= $row->count;
+			}
+
+			$counts = array_filter( $counts );
+
+			set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
+		}
+
+		return $counts;
 	}
 
 	/**
@@ -678,6 +840,14 @@ class User extends \WP_User {
 		return $post_stats;
 	}
 
+	public function get_all_post_ids() {
+		global $wpdb;
+		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
+
+		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d AND post_type IN ('$post_types_to_delete')", $this->ID ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $post_ids;
+	}
+
 	/**
 	 * Update a friend's avatar URL
 	 *
@@ -690,7 +860,7 @@ class User extends \WP_User {
 		}
 
 		if ( $user_icon_url && Friends::check_url( $user_icon_url ) ) {
-			update_user_option( $this->ID, 'friends_user_icon_url', $user_icon_url );
+			$this->update_user_option( 'friends_user_icon_url', $user_icon_url );
 			return $user_icon_url;
 		}
 
@@ -703,10 +873,21 @@ class User extends \WP_User {
 	 * @return array The rules set by the user for this feed.
 	 */
 	public function get_feed_rules() {
-		$friends = Friends::get_instance();
 		if ( ! isset( self::$feed_rules[ $this->ID ] ) ) {
-			self::$feed_rules[ $this->ID ] = $friends->feed->validate_feed_rules( get_option( 'friends_feed_rules_' . $this->ID ) );
+			$this->set_feed_rules( $this->get_user_option( 'friends_feed_rules' ) );
 		}
+		return self::$feed_rules[ $this->ID ];
+	}
+
+	/**
+	 * Set the rules for this feed.
+	 *
+	 * @param      array $rules  The rules to set for this feed.
+	 * @return array The rules set by the user for this feed.
+	 */
+	public function set_feed_rules( $rules ) {
+		$friends = Friends::get_instance();
+		self::$feed_rules[ $this->ID ] = $friends->feed->validate_feed_rules( $rules );
 		return self::$feed_rules[ $this->ID ];
 	}
 
@@ -717,10 +898,22 @@ class User extends \WP_User {
 	 * @return array The rules set by the user for this feed.
 	 */
 	public function get_feed_catch_all() {
-		$friends = Friends::get_instance();
 		if ( ! isset( self::$feed_catch_all[ $this->ID ] ) ) {
-			self::$feed_catch_all[ $this->ID ] = $friends->feed->validate_feed_catch_all( get_option( 'friends_feed_catch_all_' . $this->ID ) );
+			$this->set_feed_catch_all( $this->get_user_option( 'friends_feed_catch_all' ) );
 		}
+		return self::$feed_catch_all[ $this->ID ];
+	}
+
+
+	/**
+	 * Set the catch_all value for this feed.
+	 *
+	 * @param      array $catchall  The catchall rule to set for this feed.
+	 * @return array The catchall rukle set by the user for this feed.
+	 */
+	public function set_feed_catch_all( $catchall ) {
+			$friends = Friends::get_instance();
+		self::$feed_catch_all[ $this->ID ] = $friends->feed->validate_feed_catch_all( $catchall );
 		return self::$feed_catch_all[ $this->ID ];
 	}
 
@@ -764,7 +957,17 @@ class User extends \WP_User {
 	 * @return array An array of User_Feed items.
 	 */
 	public function get_feeds() {
-		$feeds = User_Feed::get_for_user( $this );
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy'   => User_Feed::TAXONOMY,
+				'object_ids' => $this->get_object_id(),
+			)
+		);
+
+		$feeds = array();
+		foreach ( $term_query->get_terms() as $term ) {
+			$feeds[ $term->term_id ] = new User_Feed( $term, $this );
+		}
 
 		return $feeds;
 	}
@@ -1009,6 +1212,10 @@ class User extends \WP_User {
 			}
 		}
 		return $rest_url;
+	}
+
+	public function get_avatar_url() {
+		return $this->get_user_option( 'friends_user_icon_url' );
 	}
 
 	/**

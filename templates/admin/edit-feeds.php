@@ -8,9 +8,10 @@
 
 $active_feeds = $args['friend']->get_active_feeds();
 $feeds = $args['friend']->get_feeds();
+
 $has_last_log = false;
 ?><form method="post">
-	<?php wp_nonce_field( 'edit-friend-feeds-' . $args['friend']->ID ); ?>
+	<?php wp_nonce_field( 'edit-friend-feeds-' . $args['friend']->user_login ); ?>
 	<table class="form-table">
 		<tbody>
 			<tr>
@@ -104,7 +105,7 @@ $has_last_log = false;
 								<?php endforeach; ?>
 							</select></td>
 							<td><input type="text" name="feeds[new][title]" value="" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
-							<?php do_action( 'friends_feed_table_row', $feed, 'new' ); ?>
+							<?php do_action( 'friends_feed_table_row', isset( $feed ) ? $feed : array(), 'new' ); ?>
 							<td></td>
 						</tr>
 						</tbody>
@@ -124,7 +125,7 @@ $has_last_log = false;
 				<td>
 					<fieldset>
 						<label for="show_on_friends_page">
-							<input name="show_on_friends_page" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $args['friend']->ID, $args['hide_from_friends_page'] ) ); ?>>
+							<input name="show_on_friends_page" type="checkbox" id="show_on_friends_page" value="1" <?php checked( '1', ! in_array( $args['friend']->user_login, $args['hide_from_friends_page'] ) ); ?>>
 							<?php esc_html_e( 'Show posts on your friends page', 'friends' ); ?>
 						</label>
 					</fieldset>
@@ -148,7 +149,7 @@ $has_last_log = false;
 					<p class="description">
 					<?php
 					// translators: %s is a URL.
-					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->ID ) ) );
+					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->user_login ) ) );
 					?>
 					</p>
 				</td>

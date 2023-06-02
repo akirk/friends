@@ -79,7 +79,8 @@ class NotificationTest extends \WP_UnitTestCase {
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
 			(object) array(
-				'url' => $user->user_url . '/feed/',
+				'term_id' => 100,
+				'url'     => $user->user_url . '/feed/',
 			)
 		);
 		$user_feed = new User_Feed( $term, $user );
@@ -117,14 +118,15 @@ class NotificationTest extends \WP_UnitTestCase {
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
 			(object) array(
-				'url' => $user->user_url . '/feed/',
+				'term_id' => 100,
+				'url'     => $user->user_url . '/feed/',
 			)
 		);
 		$user_feed = new User_Feed( $term, $user );
 
 		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
 		$this->assertInstanceOf( 'WP_User', $test_user );
-		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $this->friend_id, true );
+		update_user_option( $test_user->ID, 'friends_no_new_post_notification_' . $user->user_login, true );
 
 		$feed = new \SimplePie();
 		$feed->set_file( $file );
@@ -296,7 +298,8 @@ class NotificationTest extends \WP_UnitTestCase {
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
 			(object) array(
-				'url' => $user->user_url . '/feed/',
+				'term_id' => 100,
+				'url'     => $user->user_url . '/feed/',
 			)
 		);
 		$user_feed = new User_Feed( $term, $user );

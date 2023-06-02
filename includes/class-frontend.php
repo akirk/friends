@@ -90,6 +90,8 @@ class Frontend {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
 		add_action( 'wp_footer', array( $this, 'dequeue_scripts' ) );
+		add_action( 'the_post', array( $this, 'the_post' ), 10, 2 );
+		add_action( 'parse_query', array( $this, 'parse_query' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
@@ -158,10 +160,10 @@ class Frontend {
 	public function modify_page_title( $title ) {
 		if ( is_single() ) {
 			$title['page'] = __( 'Friends', 'friends' );
-			$title['site'] = get_the_author();
-		} elseif ( is_author() ) {
+			$title['site'] = $this->author->display_name;
+		} elseif ( $this->author instanceof User ) {
 			$title['title'] = __( 'Friends', 'friends' );
-			$title['site'] = get_the_author();
+			$title['site'] = $this->author->display_name;
 		} else {
 			$title = array(
 				'site' => __( 'Friends', 'friends' ),
@@ -248,6 +250,14 @@ class Frontend {
 		}
 	}
 
+	public function the_post( $post, $query ) {
+		Subscription::set_authordata_by_query( $query );
+	}
+
+	public function parse_query( $query ) {
+		Subscription::set_authordata_by_query( $query );
+	}
+
 	/**
 	 * Add a CSS class to the body
 	 *
@@ -325,7 +335,7 @@ class Frontend {
 
 		$author = get_post_meta( $post->ID, 'author', true );
 		if ( ! $author ) {
-			$friend = new User( $post->post_author );
+			$friend = User::get_post_author( $post );
 			$author = $friend->display_name;
 		}
 
@@ -489,12 +499,14 @@ class Frontend {
 	public static function have_posts() {
 		$friends = Friends::get_instance();
 		while ( have_posts() ) {
+			global $post;
 			the_post();
 			$args = array(
-				'friends'     => $friends,
-				'friend_user' => new User( get_the_author_meta( 'ID' ) ),
-				'avatar'      => get_post_meta( get_the_ID(), 'gravatar', true ),
+				'friends' => $friends,
+				'avatar'  => get_post_meta( get_the_ID(), 'gravatar', true ),
 			);
+
+			$args['friend_user'] = User::get_post_author( $post );
 
 			$read_time = self::calculate_read_time( get_the_content() );
 			if ( $read_time >= 60 ) {
@@ -697,15 +709,15 @@ class Frontend {
 	}
 
 	public function ajax_star_friend_user() {
-		if ( ! isset( $_POST['friend_id'] ) || ! intval( $_POST['friend_id'] ) ) {
+		if ( ! isset( $_POST['friend_id'] ) || ! $_POST['friend_id'] ) {
 			wp_send_json_error();
 			exit;
 		}
 
-		$friend_id = intval( $_POST['friend_id'] );
+		$friend_id = wp_unslash( $_POST['friend_id'] );
 		check_ajax_referer( "star-$friend_id" );
 
-		$friend_user = new User( $friend_id );
+		$friend_user = User::get_by_username( $friend_id );
 
 		$starred = boolval( $_POST['starred'] );
 		$friend_user->set_starred( $starred );
@@ -753,7 +765,17 @@ class Frontend {
 			$this->friends->feed->retrieve_friend_posts( true );
 		}
 
-		return Friends::template_loader()->get_template_part( 'frontend/index', null, array(), false );
+		global $args;
+		$args = array(
+			'friends'     => $this->friends,
+			'friend_user' => $this->author,
+		);
+
+		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
+			$args['in_reply_to'] = $args['friends']->frontend->get_in_reply_to_metadata( $_GET['in_reply_to'] );
+		}
+
+		return Friends::template_loader()->get_template_part( 'frontend/index', null, $args, false );
 	}
 
 	/**
@@ -1159,15 +1181,14 @@ class Frontend {
 				case 'type':
 					$post_format = array_shift( $pagename_parts );
 					$tax_query = $this->friends->wp_query_get_post_format_tax_query( $tax_query, explode( ',', $post_format ) );
-
 					if ( $tax_query ) {
 						$this->post_format = $post_format;
 					}
 					break;
 
 				default: // Maybe an author.
-					$author = get_user_by( 'login', $current_part );
-					if ( false === $author ) {
+					$author = User::get_by_username( $current_part );
+					if ( false === $author || is_wp_error( $author ) ) {
 						if ( $query->is_feed() ) {
 							status_header( 404 );
 							$query->set_404();
@@ -1177,7 +1198,7 @@ class Frontend {
 						exit;
 					}
 
-					$this->author = new User( $author );
+					$this->author = $author;
 					break;
 			}
 		}
@@ -1213,9 +1234,9 @@ class Frontend {
 			$query->set( 'page_id', $page_id );
 			if ( ! $this->author ) {
 				$post = get_post( $page_id );
-				$author = get_user_by( 'ID', $post->post_author );
+				$author = User::get_post_author( $post );
 				if ( false !== $author ) {
-					$this->author = new User( $author );
+					$this->author = $author;
 				}
 			}
 			$query->is_single = true;
@@ -1225,10 +1246,14 @@ class Frontend {
 		}
 
 		if ( $this->author ) {
-			$authordata = get_userdata( $this->author->ID );
-			$query->set( 'author', $this->author->ID );
-			if ( ! $page_id ) {
-				$query->is_author = true;
+			if ( $this->author instanceof User ) {
+				$authordata = $this->author;
+				$this->author->modify_query_by_author( $query );
+				if ( ! $page_id ) {
+					$query->is_author = true;
+				}
+			} else {
+				$this->author = null;
 			}
 		}
 

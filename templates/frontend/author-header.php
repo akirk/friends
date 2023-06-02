@@ -5,7 +5,7 @@
  * @package Friends
  */
 
-$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, $args['friend_user']->ID );
+$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, $args['friend_user'] );
 $feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
@@ -14,9 +14,9 @@ $hidden_post_count = $args['friend_user']->get_post_in_trash_count();
 ?><div id="author-header" class="mb-2">
 <h2 id="page-title">
 	<?php if ( $args['friend_user']->is_starred() ) : ?>
-		<a href="" class="dashicons dashicons-star-filled starred" data-id="<?php echo esc_attr( $args['friend_user']->ID ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->ID ) ); ?>"></a>
+		<a href="" class="dashicons dashicons-star-filled starred" data-id="<?php echo esc_attr( $args['friend_user']->user_login ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->user_login ) ); ?>"></a>
 	<?php else : ?>
-		<a href="" class="dashicons dashicons-star-empty not-starred" data-id="<?php echo esc_attr( $args['friend_user']->ID ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->ID ) ); ?>"></a>
+		<a href="" class="dashicons dashicons-star-empty not-starred" data-id="<?php echo esc_attr( $args['friend_user']->user_login ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->user_login ) ); ?>"></a>
 	<?php endif; ?>
 	<a href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_url() ); ?>">
 <?php
@@ -26,11 +26,11 @@ if ( $args['friends']->frontend->reaction ) {
 		// translators: %1$s is an emoji reaction, %2$s is a type of feed, e.g. "Main Feed".
 			__( 'My %1$s reactions on %2$s', 'friends' ),
 			$args['friends']->frontend->reaction,
-			get_the_author_meta( 'display_name' )
+			$args['friend_user']->display_name
 		)
 	);
 } else {
-	echo esc_html( get_the_author_meta( 'display_name' ) );
+	echo esc_html( $args['friend_user']->display_name );
 }
 ?>
 </a>
@@ -57,6 +57,10 @@ $args['friends']->frontend->link(
 <?php endif; ?>
 
 <span class="chip"><?php echo esc_html( $args['friend_user']->get_role_name() ); ?></span>
+
+<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
+	<span class="chip"><?php echo esc_html( get_class( $args['friend_user'] ) ); ?></span>
+<?php endif; ?>
 
 <span class="chip"><?php echo /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html( sprintf( /* translators: %s is a localized date (F j, Y) */__( 'Since %s', 'friends' ), date_i18n( __( 'F j, Y' ), strtotime( $args['friend_user']->user_registered ) ) ) ); ?></span>
 
@@ -88,7 +92,7 @@ $args['friends']->frontend->link(
 <?php endforeach; ?>
 
 <?php if ( $edit_user_link ) : ?>
-<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend_user']->ID ) ); ?>">
+<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend_user']->user_login ) ); ?>">
 	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), number_format_i18n( $active_feeds ) ) ); ?>
 
 	<?php if ( $feeds - $active_feeds > 1 ) : ?>
@@ -97,7 +101,7 @@ $args['friends']->frontend->link(
 </a>
 
 	<?php if ( $rules > 0 ) : ?>
-<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend_user']->ID ) ); ?>">
+<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend_user']->user_login ) ); ?>">
 		<?php
 		// translators: %d is the number of rules.
 		echo esc_html( sprintf( _n( '%d rule', '%d rules', $rules, 'friends' ), $rules ) );
@@ -109,7 +113,7 @@ $args['friends']->frontend->link(
 <?php endif; ?>
 
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
-<a class="chip" href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend_user']->ID ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
+<a class="chip" href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend_user']->user_login ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
 <?php endif; ?>
 <?php do_action( 'friends_author_header', $args['friend_user'], $args ); ?>
 </div>

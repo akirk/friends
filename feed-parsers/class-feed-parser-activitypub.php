@@ -22,7 +22,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const NAME = 'ActivityPub';
 	const URL = 'https://www.w3.org/TR/activitypub/';
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
-	const EXTERNAL_MENTIONS_USER_LOGIN = 'external-mentions';
+	const EXTERNAL_MENTIONS_USERNAME = 'external-mentions';
 
 	private $friends_feed;
 
@@ -444,24 +444,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     User  The external mentions user.
 	 */
 	public function get_external_mentions_user() {
-		$external_mentions_user_login = apply_filters( 'friends_external_mentions_user_login', self::EXTERNAL_MENTIONS_USER_LOGIN );
-		$user = get_user_by( 'login', $external_mentions_user_login );
+		$external_mentions_username = apply_filters( 'friends_external_mentions_username', self::EXTERNAL_MENTIONS_USERNAME );
+		$user = get_user_by( 'login', $external_mentions_username );
 		if ( ! $user ) {
-			$display_name = __( 'External Mentions', 'friends' );
-			$user_id = wp_insert_user(
-				array(
-					'user_login'   => $external_mentions_user_login,
-					'display_name' => $display_name,
-					'first_name'   => $display_name,
-					'nickname'     => $display_name,
-					'user_pass'    => wp_generate_password( 256 ),
-					'role'         => 'subscription',
-				)
-			);
-
-			$user = new User( $user_id );
+			$user = Subscription::create( $external_mentions_username, 'subscription', home_url(), __( 'External Mentions', 'friends' ) );
 		} else {
-			$user = new User( $user->ID );
+			$user = User::get_by_username( $external_mentions_username );
 		}
 
 		if ( ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
@@ -1124,7 +1112,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function activitypub_save_settings( User $friend ) {
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-feeds-' . $friend->ID ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-feeds-' . $friend->user_login ) ) {
 
 			if ( isset( $_POST['friends_show_replies'] ) && $_POST['friends_show_replies'] ) {
 				$friend->update_user_option( 'activitypub_friends_show_replies', '1' );
@@ -1261,7 +1249,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	private function get_author_of_post( \WP_Post $post ) {
-		$friend = new User( $post->post_author );
+		$friend = User::get_post_author( $post );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			return $friend;
 		}
@@ -1447,7 +1435,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function friends_reblog_button_label( $button_label ) {
-		if ( get_post_meta( get_the_ID(), 'parser', true ) === 'activitypub' ) {
+		if ( User_Feed::get_parser_for_post_id( get_the_ID() ) === 'activitypub' ) {
 			if ( get_user_option( 'friends_activitypub_dont_reblog' ) ) {
 				$button_label = _x( 'Boost', 'button', 'friends' );
 			} else {
@@ -1495,7 +1483,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $ret;
 		}
 
-		if ( get_post_meta( $post->ID, 'parser', true ) !== 'activitypub' ) {
+		if ( User_Feed::get_parser_for_post_id( $post->ID ) !== 'activitypub' ) {
 			return $ret;
 		}
 
@@ -1508,7 +1496,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $post ) {
 			return $ret;
 		}
-		if ( get_post_meta( $post->ID, 'parser', true ) === 'activitypub' ) {
+		if ( User_Feed::get_parser_for_post_id( $post->ID ) === 'activitypub' ) {
 			$this->queue_announce( $post->guid );
 			\update_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			\update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );

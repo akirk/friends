@@ -100,7 +100,7 @@ jQuery( function ( $ ) {
 
 	const previewRules = function () {
 		const $this = $( 'button#refresh-preview-rules' );
-		let url = friends.ajax_url + '?user=' + $this.data( 'id' );
+		let url = friends.ajax_url + '?user=' + $this.data( 'friend' );
 		if ( $this.data( 'post' ) ) {
 			url += '&post=' + $this.data( 'post' );
 		}
@@ -111,7 +111,7 @@ jQuery( function ( $ ) {
 				.serialize() +
 				'&_ajax_nonce=' +
 				$this.data( 'nonce' ) +
-				'&action=friends_previewRules',
+				'&action=friends_preview_rules',
 			function ( response ) {
 				$( '#preview-rules' ).html( response );
 			}
@@ -323,4 +323,30 @@ jQuery( function ( $ ) {
 		);
 		return false;
 	} );
+
+	setTimeout( function () {
+		if ( $( '#fetch-feeds' ).length ) {
+			$( '#fetch-feeds' ).append( ' <i class="friends-loading"></i>' );
+			$.post(
+				friends.ajax_url,
+				{
+					friend: $( '#fetch-feeds' ).data( 'friend' ),
+					_ajax_nonce: $( '#fetch-feeds' ).data( 'nonce' ),
+					action: 'friends_fetch_feeds',
+				},
+				function ( response ) {
+					if ( response.success ) {
+						$( '#fetch-feeds i' )
+							.removeClass( 'friends-loading' )
+							.addClass( 'dashicons dashicons-saved' );
+					} else {
+						$( '#fetch-feeds i' )
+							.removeClass( 'friends-loading' )
+							.addClass( 'dashicons dashicons-warning' )
+							.prop( 'title', response.data );
+					}
+				}
+			);
+		}
+	}, 500 );
 } );

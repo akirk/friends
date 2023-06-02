@@ -142,11 +142,10 @@ class FeedTest extends \WP_UnitTestCase {
 		}
 		$friends = Friends::get_instance();
 		$friends->feed->register_parser( 'local', new Feed_Parser_Local_File( $friends->feed ) );
-
+		add_filter( 'friends_pre_check_url', '__return_true' );
 		do {
 			if ( ! isset( $feeds[ $file ] ) ) {
-				$feeds[ $file ] = User_Feed::save(
-					$user,
+				$feeds[ $file ] = $user->save_feed(
 					$file,
 					array( 'parser' => 'local' )
 				);
@@ -156,6 +155,7 @@ class FeedTest extends \WP_UnitTestCase {
 			$new_items = $user->retrieve_posts_from_feeds( array( $user_feed ) );
 			$file = ( yield $new_items );
 		} while ( $file );
+		remove_filter( 'friends_pre_check_url', '__return_true' );
 	}
 
 	/**
@@ -330,8 +330,7 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	private function get_user_feed( $user, $url, $interval, $modifier ) {
-		return User_Feed::save(
-			$user,
+		return $user->save_feed(
 			$url,
 			array(
 				'active'   => true,

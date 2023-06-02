@@ -69,7 +69,6 @@ class Feed {
 
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
 		add_action( 'friends_retrieve_user_feeds', array( $this, 'friends_retrieve_user_feeds' ) );
-		add_action( 'set_user_role', array( $this, 'retrieve_new_friends_posts' ), 999, 2 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
@@ -129,9 +128,12 @@ class Feed {
 		}
 
 		foreach ( $friend_user->get_active_feeds() as $feed ) {
-			$this->retrieve_feed( $feed );
-			$feed->was_polled();
-			$feed->get_friend_user()->delete_outdated_posts();
+			$friend_user = $feed->get_friend_user();
+			if ( $friend_user ) {
+				$this->retrieve_feed( $feed );
+				$feed->was_polled();
+				$friend_user->delete_outdated_posts();
+			}
 		}
 	}
 
@@ -254,7 +256,7 @@ class Feed {
 				if ( ! $post ) {
 					$post = get_post( intval( $post_id ) );
 				}
-				do_action( 'notify_new_friend_post', $post );
+				do_action( 'notify_new_friend_post', $post, $user_feed );
 			}
 		}
 	}
@@ -265,38 +267,16 @@ class Feed {
 	 * @param      bool $force  Whether to force retrieval.
 	 */
 	public function retrieve_friend_posts( $force = false ) {
-		$friends = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ) ) );
-		$friends = $friends->get_results();
-
-		if ( empty( $friends ) ) {
-			return;
-		}
-
-		$feeds = array();
-		foreach ( $friends as $friend_user ) {
-			if ( $force ) {
-				$due_feeds = $friend_user->get_active_feeds();
-			} else {
-				// Respect the next poll date.
-				$due_feeds = $friend_user->get_due_feeds();
-			}
-			$feeds = array_merge( $feeds, $due_feeds );
-		}
-
-		// Let's poll the oldest feeds first.
-		usort(
-			$feeds,
-			function( $a, $b ) {
-				return strcmp( $a->get_next_poll(), $b->get_next_poll() );
-			}
-		);
-
-		foreach ( $feeds as $feed ) {
+		foreach ( User_Feed::get_all_due() as $feed ) {
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
-			$feed->get_friend_user()->delete_outdated_posts();
+			$friend_user = $feed->get_friend_user();
+			if ( $friend_user ) {
+				$friend_user->delete_outdated_posts();
+			}
 		}
 	}
+
 	/**
 	 * Apply the feed rules that need to be applied early.
 	 *
@@ -516,6 +496,13 @@ class Feed {
 		return 10;
 	}
 
+	public function dissallowed_html( $allowedposttags, $context ) {
+		if ( 'post' === $context ) {
+			unset( $allowedposttags['article'] );
+		}
+		return $allowedposttags;
+	}
+
 	/**
 	 * Process incoming feed items
 	 *
@@ -524,14 +511,14 @@ class Feed {
 	 * @return array                             The post ids of the new posts.
 	 */
 	public function process_incoming_feed_items( array $items, User_Feed $user_feed ) {
-		$friend_user     = $user_feed->get_friend_user();
+		$friend_user = $user_feed->get_friend_user();
+		if ( ! $friend_user ) {
+			error_log( var_export( $user_feed, true ) );
+			return;
+		}
 		$remote_post_ids = $friend_user->get_remote_post_ids();
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
-
-		$current_user = wp_get_current_user();
-		// Posts and revisions should be associated with this user.
-		wp_set_current_user( $friend_user->ID );
 
 		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
@@ -543,7 +530,13 @@ class Feed {
 			}
 			$item->permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );
 
+			if ( empty( $item->post_content ) ) {
+				$item->post_content = '';
+			}
+
+			add_filter( 'wp_kses_allowed_html', array( $this, 'dissallowed_html' ), 10, 2 );
 			$item->post_content = wp_kses_post( trim( $item->post_content ) );
+			remove_filter( 'wp_kses_allowed_html', array( $this, 'dissallowed_html' ), 10 );
 
 			$item = apply_filters( 'friends_early_modify_feed_item', $item, $user_feed, $friend_user );
 			if ( ! $item || $item->_feed_rule_delete ) {
@@ -576,6 +569,10 @@ class Feed {
 				$updated_date = $item->updated_date;
 			}
 
+			if ( empty( $item->title ) ) {
+				$item->title = '';
+			}
+
 			$post_data = array(
 				'post_title'        => $item->title,
 				'post_content'      => force_balance_tags( $item->post_content ),
@@ -595,6 +592,9 @@ class Feed {
 				$old_post = get_post( $post_id );
 				$modified_post_data = array();
 				foreach ( array( 'post_title', 'post_content', 'post_status' ) as $field ) {
+					if ( empty( $old_post->$field ) || empty( $post_data[ $field ] ) ) {
+						continue;
+					}
 					if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
 						$modified_post_data[ $field ] = $post_data[ $field ];
 						break;
@@ -628,7 +628,7 @@ class Feed {
 				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 				$post_data['meta_input'] = $item->meta;
 
-				$post_id = wp_insert_post( $post_data, true );
+				$post_id = $friend_user->insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
 					continue;
 				}
@@ -672,6 +672,8 @@ class Feed {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
 
+			wp_set_object_terms( $post_id, $user_feed->get_id(), User_Feed::POST_TAXONOMY );
+
 			update_post_meta( $post_id, 'parser', $user_feed->get_parser() );
 			update_post_meta( $post_id, 'feed_url', $user_feed->get_url() );
 
@@ -679,10 +681,6 @@ class Feed {
 			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
 		}
 		remove_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
-
-		if ( $current_user ) {
-			wp_set_current_user( $current_user->ID );
-		}
 
 		$this->notify_about_new_posts( $friend_user, $new_posts, $user_feed );
 
@@ -924,7 +922,7 @@ class Feed {
 			// Backfill titles.
 			if ( empty( $feed['title'] ) ) {
 				$host = wp_parse_url( $link_url, PHP_URL_HOST );
-				if ( trim( $path, '/' ) ) {
+				if ( is_string( $path ) && trim( $path, '/' ) ) {
 					$feed['title'] = trim( preg_replace( '#^www\.#i', '', preg_replace( '#[^a-z0-9.:-]#i', ' ', ucwords( $host . ': ' . $path ) ) ), ': ' );
 				} else {
 					$feed['title'] = strtolower( $host );
@@ -1076,20 +1074,6 @@ class Feed {
 		}
 
 		return $query;
-	}
-
-	/**
-	 * Retrieve new friend's posts after changing roles
-	 *
-	 * @param  int    $user_id   The user id.
-	 * @param  string $new_role  The new role.
-	 */
-	public function retrieve_new_friends_posts( $user_id, $new_role ) {
-		if ( ( 'friend' === $new_role || 'acquaintance' === $new_role ) && apply_filters( 'friends_immediately_fetch_feed', true ) ) {
-			update_user_option( $user_id, 'friends_new_friend', true );
-			$friend = new User( $user_id );
-			$friend->retrieve_posts_from_active_feeds();
-		}
 	}
 
 	/**

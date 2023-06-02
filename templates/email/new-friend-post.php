@@ -60,9 +60,9 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $args
 		// translators: %1$s is a URL, %2$s is a URL, %3$s is a username, %4$s is a URL.
 		__( 'Manage your <a href=%1$s>global notification settings</a>, <a href=%2$s>change notifications for %3$s</a>, or <a href=%4$s>muffle posts like these</a>.', 'friends' ),
 		'"' . esc_url( self_admin_url( 'admin.php?page=friends-settings' ) ) . '"',
-		'"' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['author']->ID ) ) . '"',
+		'"' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $args['author']->user_login ) ) . '"',
 		'<em>' . esc_html( $args['author']->display_name ) . '</em>',
-		'"' . esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['author']->ID . '&post=' . $args['post']->ID ) ) . '"'
+		'"' . esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['author']->user_login . '&post=' . $args['post']->ID ) ) . '"'
 	);
 	?>
 </div>

@@ -85,6 +85,19 @@ add_filter( 'friends_immediately_fetch_feed', '__return_false' );
 // Disable sending e-mails.
 add_filter( 'friends_send_mail', '__return_false' );
 
+// Prevent PHP8 Deprecation notices.
+add_filter(
+	'the_author',
+	function( $display_name ) {
+		if ( is_null( $display_name ) ) {
+			return '';
+		}
+		return $display_name;
+	},
+	1,
+	1
+);
+
 // Output setting of options during debugging.
 if ( defined( 'TESTS_VERBOSE' ) && TESTS_VERBOSE ) {
 	add_filter(

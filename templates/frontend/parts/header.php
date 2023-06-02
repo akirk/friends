@@ -8,7 +8,7 @@
 
 $friend_user = $args['friend_user'];
 $avatar = $args['avatar'];
-$author_name = get_the_author_meta( 'display_name' );
+$author_name = $args['friend_user']->display_name;
 
 /**
  * Allows overriding the authorname for a post.
@@ -32,7 +32,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 	<div class="avatar col-auto mr-2">
 		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
-				<img src="<?php echo esc_url( get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
+				<?php echo get_avatar( $args['friend_user']->user_login, 36 ); ?>
 			</a>
 		<?php else : ?>
 			<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
@@ -44,7 +44,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 		<div class="author">
 			<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
-					<strong><?php the_author(); ?></strong>
+					<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
 					<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
 						– <?php echo esc_html( $override_author_name ); ?>
 					<?php endif; ?>
@@ -98,15 +98,18 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 				<i class="dashicons dashicons-menu-alt2"></i>
 			</a>
 			<ul class="menu" style="min-width: <?php echo esc_attr( intval( _x( '250', 'dropdown-menu-width', 'friends' ) ) ); ?>px">
-				<?php
-				$edit_user_link = $args['friends']->admin->admin_edit_user_link( false, get_the_author_meta( 'ID' ) );
-				if ( $edit_user_link ) :
-					?>
-					<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>"><?php esc_html_e( 'Edit friend', 'friends' ); ?></a></li>
+				<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
+					<?php
+					$edit_user_link = Friends\Admin::admin_edit_user_link( false, $friend_user );
+					if ( $edit_user_link ) :
+						?>
+						<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>"><?php esc_html_e( 'Edit friend', 'friends' ); ?></a></li>
+					<?php endif; ?>
 				<?php endif; ?>
-					<li class="menu-item friends-dropdown">
+					<li class="menu-item">
 						<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/?share=' . hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ) ) . get_the_ID() ) ); ?>"><?php esc_html_e( 'Share link', 'friends' ); ?></a>
 					</li>
+				<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
 					<li class="menu-item friends-dropdown">
 						<select name="post-format" class="friends-change-post-format form-select select-sm" data-change-post-format-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-change-post-format_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" >
 							<option disabled="disabled"><?php esc_html_e( 'Change post format', 'friends' ); ?></option>
@@ -115,6 +118,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 						<?php endforeach; ?>
 						</select>
 					</li>
+				<?php endif; ?>
 				<?php if ( current_user_can( 'edit_post', get_current_user_id(), get_the_ID() ) ) : ?>
 					<li class="menu-item"><?php edit_post_link(); ?></li>
 				<?php endif; ?>
