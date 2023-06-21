@@ -206,11 +206,24 @@ h2#page-title a.dashicons {
 	}
 
 	article {
+		transition: width 1s ease-in-out;
+
 		.card-body {
 			img,
 			video {
 				max-width: 100% !important;
 				height: auto;
+			}
+		}
+		&.format-status {
+			span.teaser {
+				display: none;
+			}
+			border-bottom: 1px solid black;
+			padding-bottom: 2em;
+			margin-bottom: 2em;
+			header {
+				margin-bottom: .5em;
 			}
 		}
 	}
@@ -443,8 +456,40 @@ h2#page-title a.dashicons {
 				margin-bottom: 0;
 			}
 
+			&.format-status {
+				padding-bottom: 0;
+				margin-bottom: .5em;
+				width: 100%;
+				transition: width 1s ease-in-out;
+
+				.overflow {
+					width: calc(100% - 19em);
+					margin-left: 1em;
+				}
+				span.teaser {
+					text-overflow: ellipsis;
+					width: calc(100% - 6em);
+					overflow: hidden;
+					white-space: nowrap;
+					display: inline-block;
+				}
+				header {
+					padding-left: 0;
+					margin-bottom: 0;
+					div.post-meta {
+						max-width: 15em;
+						max-height: 1.5em;
+						overflow: hidden;
+						text-overflow: ellipsis;
+					}
+					div.avatar {
+						display: block;
+					}
+				}
+			}
+
 			footer.entry-meta {
-				margin-top: -2.5em;
+				display: none;
 			}
 		}
 
@@ -546,5 +591,25 @@ h2#page-title a.dashicons {
 			margin: 1em;
 			border-bottom: 1px solid $border-color-light;
 		}
+	}
+
+	/* to support mastodon style tags */
+	.invisible {
+		font-size: 0;
+		line-height: 0;
+		display:inline-block;
+		width: 0;
+		height: 0;
+		position:absolute;
+		img, svg{
+			margin: 0 !important;
+			border: 0 !important;
+			padding: 0 !important;
+			width: 0 !important;
+			height: 0 !important
+		}
+	}
+	.ellipsis::after{
+		content: "…"
 	}
 }

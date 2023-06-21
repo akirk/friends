@@ -51,7 +51,14 @@ $args['friends']->frontend->link(
 <?php if ( $args['friend_user']->description ) : ?>
 	<p>
 	<?php
-	echo wp_kses( $args['friend_user']->description, array( 'a' => array( 'href' => array() ) ) );
+	echo wp_kses(
+		str_replace( '</p>', '<br/>', $args['friend_user']->description ),
+		array(
+			'a'    => array( 'href' => array() ),
+			'span' => array( 'class' => array() ),
+			'br'   => array(),
+		)
+	);
 	?>
 	</p>
 <?php endif; ?>
