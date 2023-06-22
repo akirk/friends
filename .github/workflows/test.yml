@@ -6,19 +6,19 @@ jobs:
     strategy:
       matrix:
         php: [ '5.6', '7.0', '7.1', '7.2', '7.3', '7.4' ]
-        phpunit: [ '6.5.14' ]
+        phpunit: [ '6.3.1' ]
         wordpress: [ 6.0', 'trunk' ]
 
         include:
           - php: '7.2'
-            phpunit: '6.5.14'
-            wordpress: '6.0'
+            phpunit: '6.3.1'
+            wordpress: '5.8'
           - php: '7.2'
-            phpunit: '6.5.14'
+            phpunit: '6.3.1'
             wordpress: 'trunk'
           - php: '7.3'
             phpunit: '7.2.7'
-            wordpress: '6.0'
+            wordpress: '5.8'
           - php: '7.4'
             phpunit: '8.1.6'
             wordpress: 'trunk'
