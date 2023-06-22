@@ -5,20 +5,20 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: [ '5.6', '7.0', '7.1', '7.2', '7.3', '7.4' ]
-        phpunit: [ '6.5.14' ]
-        wordpress: [ '6.0', 'trunk' ]
+        php: ['5.6', '7.0', '7.1', '7.2', '7.3', '7.4']
+        phpunit: ['5.7.21']
+        wordpress: ['6.0', 'trunk']
 
         include:
           - php: '7.2'
-            phpunit: '6.5.14'
-            wordpress: '5.8'
+            phpunit: '6.3.1'
+            wordpress: '6.0'
           - php: '7.2'
-            phpunit: '6.5.14'
+            phpunit: '6.3.1'
             wordpress: 'trunk'
           - php: '7.3'
             phpunit: '7.2.7'
-            wordpress: '5.8'
+            wordpress: '6.0'
           - php: '7.4'
             phpunit: '8.1.6'
             wordpress: 'trunk'
