@@ -7,7 +7,7 @@ jobs:
       matrix:
         php: [ '5.6', '7.0', '7.1', '7.2', '7.3', '7.4' ]
         phpunit: [ '6.3.1' ]
-        wordpress: [ 6.0', 'trunk' ]
+        wordpress: [ 5.8', 'trunk' ]
 
         include:
           - php: '7.2'
