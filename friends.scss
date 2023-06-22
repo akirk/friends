@@ -206,8 +206,6 @@ h2#page-title a.dashicons {
 	}
 
 	article {
-		transition: width 1s ease-in-out;
-
 		.card-body {
 			img,
 			video {
@@ -460,8 +458,6 @@ h2#page-title a.dashicons {
 				padding-bottom: 0;
 				margin-bottom: .5em;
 				width: 100%;
-				transition: width 1s ease-in-out;
-
 				.overflow {
 					width: calc(100% - 19em);
 					margin-left: 1em;

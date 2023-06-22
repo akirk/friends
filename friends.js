@@ -193,7 +193,12 @@
 		return false;
 	} );
 
-	$document.on( 'click', 'a.collapse-post', function () {
+	$document.on( 'click', 'a.collapse-post', function ( e ) {
+		if ( e.metaKey || e.altKey || e.shiftKey ) {
+			$( this ).trigger( 'dblclick' );
+			return;
+		}
+
 		const card = $( this ).closest( 'article' );
 		let collapsed;
 		if ( card.closest( 'section.all-collapsed' ).length ) {
