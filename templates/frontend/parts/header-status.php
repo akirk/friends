@@ -101,7 +101,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 				<i class="dashicons dashicons-menu-alt2"></i>
 			</a>
 			<ul class="menu" style="min-width: <?php echo esc_attr( intval( _x( '250', 'dropdown-menu-width', 'friends' ) ) ); ?>px">
-				<li class="menu-item"><a href="<?php echo esc_url( '?in_reply_to=' . urlencode( get_permalink() ) ); ?>" class="quick-reply" data-url="<?php echo esc_attr( get_permalink() ); ?>"><?php esc_html_e( 'Repy', 'friends' ); ?></a></li>
+				<li class="menu-item"><a href="<?php echo esc_url( '?in_reply_to=' . urlencode( get_permalink() ) ); ?>" class="quick-reply" data-url="<?php echo esc_attr( get_permalink() ); ?>"><?php esc_html_e( 'Reply', 'friends' ); ?></a></li>
 				<?php
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/parts/header-menu',
