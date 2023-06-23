@@ -667,14 +667,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
 					continue;
 				}
-				if ( 'Document' !== $attachment['type'] || strpos( $attachment['mediaType'], 'image/' ) !== 0 ) {
+				if ( 'Document' !== $attachment['type'] ) {
 					continue;
 				}
 
-				$data['content'] .= PHP_EOL;
-				$data['content'] .= '<!-- wp:image -->';
-				$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '" width="' . esc_attr( $attachment['width'] ) . '"  height="' . esc_attr( $attachment['height'] ) . '" class="size-full" /></p>';
-				$data['content'] .= '<!-- /wp:image -->';
+				if ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
+					$data['content'] .= PHP_EOL;
+					$data['content'] .= '<!-- wp:image -->';
+					$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '" width="' . esc_attr( $attachment['width'] ) . '"  height="' . esc_attr( $attachment['height'] ) . '" class="size-full" /></p>';
+					$data['content'] .= '<!-- /wp:image -->';
+				} elseif ( strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
+					$data['content'] .= PHP_EOL;
+					$data['content'] .= '<!-- wp:video -->';
+					$data['content'] .= '<figure class="wp-block-video"><video controls src="' . esc_url( $attachment['url'] ) . '" />';
+					if ( ! empty( $attachment['name'] ) ) {
+						$data['content'] .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
+					}
+					$data['content'] .= '</figure>';
+					$data['content'] .= '<!-- /wp:video -->';
+				}
 			}
 		}
 
