@@ -119,6 +119,10 @@ $args['friends']->frontend->link(
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Edit' ); ?></a>
 <?php endif; ?>
 
+<?php if ( 'status' === $args['friends']->frontend->post_format ) : ?>
+	<a class="chip quick-post-panel-toggle" href="#"><?php esc_html_e( 'Quick Post Panel', 'friends' ); ?></a>
+<?php endif; ?>
+
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
 <a class="chip" href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend_user']->user_login ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
 <?php endif; ?>

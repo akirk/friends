@@ -102,5 +102,10 @@ if ( $args['friends']->frontend->reaction ) {
 
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add New Friend', 'friends' ); ?></a>
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=friends-settings' ) ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Settings' ); ?></a>
+
+<?php if ( 'status' === $args['friends']->frontend->post_format ) : ?>
+	<a class="chip quick-post-panel-toggle" href="#"><?php esc_html_e( 'Quick Post Panel', 'friends' ); ?></a>
+<?php endif; ?>
+
 <?php do_action( 'friends_main_feed_header', $args ); ?>
 </div>

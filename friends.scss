@@ -217,11 +217,18 @@ h2#page-title a.dashicons {
 			span.teaser {
 				display: none;
 			}
-			border-bottom: 1px solid black;
+			border-bottom: 1px solid $dark-color;
 			padding-bottom: 2em;
 			margin-bottom: 2em;
 			header {
-				margin-bottom: .5em;
+				div.overflow, div.post-meta {
+					margin-top: .4em;
+				}
+				div.overflow {
+					.btn {
+						margin-top: -.5em;
+					}
+				}
 			}
 		}
 	}
@@ -331,8 +338,17 @@ h2#page-title a.dashicons {
 		}
 	}
 
-	.friends-post-inline {
+	#quick-post-panel {
+		display: none;
 		margin-bottom: 2em;
+
+		&.open {
+			display: block;
+		}
+		p.description {
+			font-color: $dark-color;
+			font-size: .6rem;
+		}
 	}
 
 	img.avatar {
