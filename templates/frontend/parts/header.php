@@ -89,7 +89,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 		</div>
 	</div>
 	<div class="overflow col-ml-auto">
-		<a class="btn btn-link collapse-post" tabindex="0">
+		<a class="btn btn-link collapse-post" tabindex="0" title="<?php esc_html_e( 'Double or meta/shift/cmd click to toggle all', 'friends' ); ?>">
 			<i class="dashicons dashicons-fullscreen-exit-alt"></i>
 		</a>
 
