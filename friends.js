@@ -193,7 +193,12 @@
 		return false;
 	} );
 
-	$document.on( 'click', 'a.collapse-post', function () {
+	$document.on( 'click', 'a.collapse-post', function ( e ) {
+		if ( e.metaKey || e.altKey || e.shiftKey ) {
+			$( this ).trigger( 'dblclick' );
+			return;
+		}
+
 		const card = $( this ).closest( 'article' );
 		let collapsed;
 		if ( card.closest( 'section.all-collapsed' ).length ) {
@@ -222,6 +227,7 @@
 		// Collapse-toggle all visible.
 		$( this ).closest( 'section' ).toggleClass( 'all-collapsed' );
 		$( this )[ 0 ].scrollIntoView();
+		$( window ).trigger( 'scroll' );
 		return false;
 	} );
 
@@ -502,6 +508,7 @@
 		insertTextInGutenberg( getAcct( $( this ).attr( 'href' ) ) );
 		return false;
 	} );
+
 	$document.on( 'keyup', 'input#friends_in_reply_to', function () {
 		const input = $( this );
 		const url = input.val().trim();
@@ -531,5 +538,20 @@
 				}
 			},
 		} );
+	} );
+
+	$document.on( 'click', '.quick-reply', function () {
+		$( '#quick-post-panel' ).addClass( 'open' );
+		$( '#quick-post-panel input#friends_in_reply_to' )
+			.val( $( this ).data( 'url' ) )
+			.trigger( 'keyup' );
+
+		$( '#quick-post-panel' )[ 0 ].scrollIntoView();
+		return false;
+	} );
+
+	$document.on( 'click', '.quick-post-panel-toggle', function () {
+		$( '#quick-post-panel' ).toggleClass( 'open' );
+		return false;
 	} );
 } )( jQuery, window.wp, window.friends );

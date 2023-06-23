@@ -89,6 +89,9 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 		</div>
 	</div>
 	<div class="overflow col-ml-auto">
+		<span class="teaser">
+			<?php echo wp_kses( str_replace( '/p>', '/p> ', preg_replace( '#<span class="invisible">.*?</span>#', '', get_the_content() ) ), array( 'a' => array( 'href' => array() ) ) ); ?>
+		</span>
 		<a class="btn btn-link collapse-post" tabindex="0" title="<?php esc_html_e( 'Double or meta/shift/cmd click to toggle all', 'friends' ); ?>">
 			<i class="dashicons dashicons-fullscreen-exit-alt"></i>
 		</a>
@@ -98,6 +101,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 				<i class="dashicons dashicons-menu-alt2"></i>
 			</a>
 			<ul class="menu" style="min-width: <?php echo esc_attr( intval( _x( '250', 'dropdown-menu-width', 'friends' ) ) ); ?>px">
+				<li class="menu-item"><a href="<?php echo esc_url( '?in_reply_to=' . urlencode( get_permalink() ) ); ?>" class="quick-reply" data-url="<?php echo esc_attr( get_permalink() ); ?>"><?php esc_html_e( 'Reply', 'friends' ); ?></a></li>
 				<?php
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/parts/header-menu',

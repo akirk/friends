@@ -570,7 +570,7 @@ class Frontend {
 		}
 
 		$html = 'URL: ' . make_clickable( $meta['id'] );
-		$html .= '<div>' . wp_kses_post( $meta['content'] ) . '</div>';
+		$html .= '<blockquote>' . force_balance_tags( wp_kses_post( $meta['content'] ) ) . '</blockquote>';
 
 		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
 		$mention = '';
@@ -821,6 +821,7 @@ class Frontend {
 					'data-token'  => array(),
 					'data-friend' => array(),
 					'data-id'     => array(),
+					'data-url'    => array(),
 				),
 				'span' => array( 'class' => array() ),
 			)
@@ -859,7 +860,7 @@ class Frontend {
 
 		$link = '<a href="' . esc_url( $url ) . '"';
 		foreach ( $html_attributes as $name => $value ) {
-			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'style', 'data-nonce', 'data-cnonce', 'data-token', 'data-friend', 'data-id' ) ) ) {
+			if ( ! in_array( $name, array( 'title', 'target', 'rel', 'class', 'style', 'data-nonce', 'data-cnonce', 'data-token', 'data-friend', 'data-id', 'data-url' ) ) ) {
 				continue;
 			}
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';

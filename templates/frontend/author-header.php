@@ -51,7 +51,14 @@ $args['friends']->frontend->link(
 <?php if ( $args['friend_user']->description ) : ?>
 	<p>
 	<?php
-	echo wp_kses( $args['friend_user']->description, array( 'a' => array( 'href' => array() ) ) );
+	echo wp_kses(
+		str_replace( '</p>', '<br/>', $args['friend_user']->description ),
+		array(
+			'a'    => array( 'href' => array() ),
+			'span' => array( 'class' => array() ),
+			'br'   => array(),
+		)
+	);
 	?>
 	</p>
 <?php endif; ?>
@@ -110,6 +117,10 @@ $args['friends']->frontend->link(
 	<?php endif; ?>
 
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Edit' ); ?></a>
+<?php endif; ?>
+
+<?php if ( 'status' === $args['friends']->frontend->post_format ) : ?>
+	<a class="chip quick-post-panel-toggle" href="#"><?php esc_html_e( 'Quick Post Panel', 'friends' ); ?></a>
 <?php endif; ?>
 
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
