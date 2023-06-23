@@ -88,6 +88,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ### 2.6.0
 - Don't create a user when only following someone ([#215]). This means that if you only want to use the Friends plugin to follow people, it will no longer create a user for each follow.
+- Fix the hardcoded friends url path on the refresh widget ([#223])
+- ActivityOPub: add support incoming video attachments ([#222])
+- Friends Page: Status View improvements ([#220]):  Style the collapsed status view better. Move the Quick post toggle. Add Reply button and dropdown entry.
+- Friends Page: Allow private sharing of a post on your friends page ([#217]). Adds a new "Share" item to the dropdown which gives you a special link that can be viewed by anyone.
+- A number of small PHP 8.1 fixes
 
 ### 2.5.3
 - Add a new Reply To field to the Status post form ([#210]), also see the related update to the Firefox extension at https://addons.mozilla.org/addon/wpfriends/
@@ -211,6 +216,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[#223]: https://github.com/akirk/friends/pull/223
+[#222]: https://github.com/akirk/friends/pull/222
+[#220]: https://github.com/akirk/friends/pull/220
+[#217]: https://github.com/akirk/friends/pull/217
 [#215]: https://github.com/akirk/friends/pull/215
 [#210]: https://github.com/akirk/friends/pull/210
 [#206]: https://github.com/akirk/friends/pull/206
