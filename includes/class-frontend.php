@@ -1153,7 +1153,6 @@ class Frontend {
 		switch_to_locale( get_user_locale() );
 
 		$tax_query = array();
-		$post_formats = get_post_format_slugs();
 		$post_format = null;
 
 		while ( $pagename_parts ) {
@@ -1232,6 +1231,13 @@ class Frontend {
 		$query->is_page = false;
 		$query->is_comments_feed = false;
 		$query->set( 'pagename', null );
+		if ( 'collapsed' === get_option( 'friends_frontend_default_view', 'expanded' ) && get_option( 'posts_per_page' ) < 20 ) {
+			if ( 'status' === $post_format ) {
+				$query->set( 'posts_per_page', 30 );
+			} else {
+				$query->set( 'posts_per_page', 20 );
+			}
+		}
 
 		if ( $page_id ) {
 			$query->set( 'page_id', $page_id );
