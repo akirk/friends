@@ -217,16 +217,17 @@ class Frontend {
 			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) );
 
 			$variables = array(
-				'emojis_json'       => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
-				'ajax_url'          => admin_url( 'admin-ajax.php' ),
-				'text_link_expired' => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
-				'text_undo'         => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				'text_trash_post'   => __( 'Trash this post', 'friends' ),
-				'text_del_convers'  => __( 'Do you really want to delete this conversation?', 'friends' ),
-				'query_vars'        => $query_vars,
-				'qv_sign'           => sha1( wp_salt( 'nonce' ) . $query_vars ),
-				'current_page'      => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-				'max_page'          => $wp_query->max_num_pages,
+				'emojis_json'        => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
+				'ajax_url'           => admin_url( 'admin-ajax.php' ),
+				'text_link_expired'  => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
+				'text_undo'          => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+				'text_trash_post'    => __( 'Trash this post', 'friends' ),
+				'text_del_convers'   => __( 'Do you really want to delete this conversation?', 'friends' ),
+				'text_no_more_posts' => __( 'No more posts available.', 'friends' ),
+				'query_vars'         => $query_vars,
+				'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
+				'current_page'       => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+				'max_page'           => $wp_query->max_num_pages,
 			);
 			wp_localize_script( 'friends', 'friends', $variables );
 
@@ -767,8 +768,9 @@ class Frontend {
 
 		global $args;
 		$args = array(
-			'friends'     => $this->friends,
-			'friend_user' => $this->author,
+			'friends'               => $this->friends,
+			'friend_user'           => $this->author,
+			'frontend_default_view' => get_option( 'friends_frontend_default_view', 'expanded' ),
 		);
 
 		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
@@ -1151,7 +1153,6 @@ class Frontend {
 		switch_to_locale( get_user_locale() );
 
 		$tax_query = array();
-		$post_formats = get_post_format_slugs();
 		$post_format = null;
 
 		while ( $pagename_parts ) {
@@ -1230,6 +1231,13 @@ class Frontend {
 		$query->is_page = false;
 		$query->is_comments_feed = false;
 		$query->set( 'pagename', null );
+		if ( 'collapsed' === get_option( 'friends_frontend_default_view', 'expanded' ) && get_option( 'posts_per_page' ) < 20 ) {
+			if ( 'status' === $post_format ) {
+				$query->set( 'posts_per_page', 30 );
+			} else {
+				$query->set( 'posts_per_page', 20 );
+			}
+		}
 
 		if ( $page_id ) {
 			$query->set( 'page_id', $page_id );

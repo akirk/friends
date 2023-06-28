@@ -629,6 +629,17 @@ class Admin {
 			update_option( 'friends_retention_days', max( 1, intval( $_POST['friends_retention_days'] ) ) );
 		}
 
+		if ( isset( $_POST['frontend_default_view'] ) && in_array(
+			$_POST['frontend_default_view'],
+			array(
+				'collapsed',
+			)
+		) ) {
+			update_option( 'friends_frontend_default_view', $_POST['frontend_default_view'] );
+		} else {
+			delete_option( 'friends_frontend_default_view' );
+		}
+
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
@@ -745,6 +756,7 @@ class Admin {
 					'retention_number'               => Friends::get_retention_number(),
 					'retention_days_enabled'         => get_option( 'friends_enable_retention_days' ),
 					'retention_number_enabled'       => get_option( 'friends_enable_retention_number' ),
+					'frontend_default_view'          => get_option( 'friends_frontend_default_view', 'expanded' ),
 				)
 			)
 		);

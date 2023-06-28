@@ -275,14 +275,22 @@
 	} );
 
 	$( window ).scroll( function () {
-		if ( alreadyLoading ) {
-			return;
-		}
-
 		if (
 			$( document ).scrollTop() <
 			$( document ).height() - bottomOffsetLoadNext
 		) {
+			return;
+		}
+		nextPage();
+	} );
+
+	$( document ).on( 'click', '.nav-previous', function () {
+		nextPage();
+		return false;
+	} );
+
+	function nextPage() {
+		if ( alreadyLoading ) {
 			return;
 		}
 
@@ -311,17 +319,19 @@
 						.find( 'article:last-of-type' )
 						.after( newPosts );
 					if (
-						++friends.current_page <= friends.max_page &&
+						++friends.current_page < friends.max_page &&
 						/<article/.test( newPosts )
 					) {
 						alreadyLoading = false;
 					} else {
-						$( 'section.posts .posts-navigation' ).remove();
+						$( 'section.posts .posts-navigation' ).text(
+							friends.text_no_more_posts
+						);
 					}
 				}
 			},
 		} );
-	} );
+	}
 
 	/* Reactions */
 	$( function () {

@@ -133,8 +133,12 @@ h2#page-title a.dashicons {
 
 	min-height: 100vh;
 
-	a:visited:not(.off-canvas-toggle) {
+	a:visited {
 		color: $link-color-dark;
+	}
+
+	a.off-canvas-toggle:visited {
+		color: $link-color;
 	}
 
 	a,
@@ -214,14 +218,14 @@ h2#page-title a.dashicons {
 			}
 		}
 		&.format-status {
-			span.teaser {
+			div.teaser {
 				display: none;
 			}
 			border-bottom: 1px solid $dark-color;
 			padding-bottom: 2em;
 			margin-bottom: 2em;
 			header {
-				div.overflow, div.post-meta {
+				div.overflow, div.post-meta, div.teaser {
 					margin-top: .4em;
 				}
 				div.overflow {
@@ -475,15 +479,18 @@ h2#page-title a.dashicons {
 				margin-bottom: .5em;
 				width: 100%;
 				.overflow {
-					width: calc(100% - 19em);
+					width: 6em;
 					margin-left: 1em;
 				}
-				span.teaser {
+				div.teaser {
 					text-overflow: ellipsis;
-					width: calc(100% - 6em);
+					width: calc(100% - 7em);
 					overflow: hidden;
 					white-space: nowrap;
 					display: inline-block;
+					@media (min-width: $off-canvas-breakpoint) {
+						width: calc(100% - 25em);
+					}
 				}
 				header {
 					padding-left: 0;
