@@ -1127,11 +1127,15 @@ class Frontend {
 			}
 		}
 		$page_id = get_query_var( 'page' );
-		$share_hash = hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ) ) . $page_id );
 
-		if ( isset( $_GET['share'] ) && $_GET['share'] === $share_hash ) {
-			$viewable = true;
-		} elseif ( ! $viewable || ! Friends::on_frontend() ) {
+		if ( isset( $_GET['share'] ) ) {
+			$share_hash = hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ), $page_id ) . $page_id );
+			if ( $_GET['share'] === $share_hash ) {
+				$viewable = true;
+			}
+		}
+
+		if ( ! $viewable || ! Friends::on_frontend() ) {
 			if ( $query->is_feed() ) {
 				status_header( 404 );
 				$query->set_404();
