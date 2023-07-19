@@ -442,7 +442,7 @@ h2#page-title a.dashicons {
 			opacity: .5;
 		}
 
-		&.all-collapsed article:not(.uncollapsed),
+		&.all-collapsed article:not(.uncollapsed):not(:only-child),
 		article.collapsed {
 			div.card-body {
 				display: none;
