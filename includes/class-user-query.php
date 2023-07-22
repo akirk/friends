@@ -46,6 +46,7 @@ class User_Query extends \WP_User_Query {
 		parent::query();
 		foreach ( parent::get_results() as $k => $user ) {
 			$this->results[ $k ] = new User( $user );
+			$this->total_users += 1;
 		}
 	}
 
