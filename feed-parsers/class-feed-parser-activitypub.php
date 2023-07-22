@@ -580,7 +580,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			case 'delete':
 				return $this->handle_incoming_delete( $object['object'] );
 			case 'announce':
-				return $this->handle_incoming_announce( $object['object'], $user_id );
+				return $this->handle_incoming_announce( $object['object'], $user_id, $object['published'] );
 			case 'unannounce':
 				return $this->handle_incoming_unannounce( $object['object'], $user_feed );
 			case 'like':
@@ -742,10 +742,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * We received an announced URL (boost) for a feed, handle it.
 	 *
-	 * @param      array $url     The announced URL.
-	 * @param      int   $user_id  The user id (for retrieving the keys).
+	 * @param      array  $url     The announced URL.
+	 * @param      int    $user_id  The user id (for retrieving the keys).
+	 * @param      string $published_date  The published date.
 	 */
-	private function handle_incoming_announce( $url, $user_id = null ) {
+	private function handle_incoming_announce( $url, $user_id, $published_date = null ) {
 		if ( ! Friends::check_url( $url ) ) {
 			$this->log( 'Received invalid announce', compact( 'url' ) );
 			return false;
@@ -765,7 +766,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 		$this->log( 'Received response', compact( 'url', 'object' ) );
-		$object['published'] = gmdate( 'Y-m-d H:i:s' );
+		if ( ! $published_date ) {
+			$published_date = 'now';
+		}
+		$object['published'] = gmdate( 'Y-m-d H:i:s', strtotime( $published_date ) );
 		$object['reblog'] = true;
 
 		return $this->handle_incoming_create( $object );
