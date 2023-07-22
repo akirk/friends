@@ -12,19 +12,24 @@ Your own WordPress at the center of your online activity. Follow friends and oth
 
 ## Description
 
+The Friends plugin allows you to follow content from other WordPress sites, and interact with them on your own site. You can follow friends and others via RSS. If you also have the ActivityPub plugin installed, you can follow people on Mastodon and other ActivityPub-compatible social networks.
+
 **Since version 2.6.0, no users will be created for subscriptions.**
 
 **Combine this plugin with the ActivityPub plugin to make your own WordPress your own Mastodon instance. Use the Enable Mastodon Apps to use mobile and desktop Mastodon apps with your own site.**
 
-With the Friends Plugin for WordPress you can now consume content your friends (or other blogs) create, and interact with your friends on their blogs with seamless authentication.
+The Friends Plugin also has a "friend request" function which allows blogs to become friends with each other. This then allows private publishing on your blog while each of their friends has their own blog but will be able to see your privately published posts.
 
-As soon as you become friends, both of you get accounts on each other’s WordPresses that you can then use post comments or read private posts. You’ll use the account on your friend’s server just by clicking on their post on your own Friends page.
+There are many small aspects that make it powerful self-hosted social reader:
 
-You can also use the Friends plugin as a capable self-hosted feed reader. With added parser support through plugins you can subscribe to all sorts of content, also on other social networks, allowing you to see what your friends do across social network borders.
-
-A “friend” in the Friends Plugin doesn’t need to be a real friend, you can also subscribe to any site you like and that provides a viable means for retrieving your content.
-
-You can turn your favorite blog into your personal newsletter by receiving full-post notification e-mails, using feed rules to filter out content you are not interested in.
+You can...
+- Have multiple feeds per person, so you can subscribe to their blog(s) and social media account(s).
+- Categorize incoming content with Post Formats and view all posts of a certain format across your friends.
+- Define rules to filter incoming content (sometimes you’re not interested in everything your friends do).
+- Turn your favorite blog into your personal newsletter by receiving full-post notification e-mails
+- Use feed rules to filter out content you are not interested in.
+- Receive ePubs of your friends' posts to your eReader (via another plugin).
+- Collect posts (from your feeds or around the web) in a collection for later reference (via another plugin).
 
 [![Friends Plugin Demo on Youtube](img/friends-plugin-youtube-thumbnail.png)](https://www.youtube.com/watch?v=4bz6GluXnsk)
 
