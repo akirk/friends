@@ -48,12 +48,21 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		// translators: %s is the number of your friends.
 		$friends_title = sprintf( _n( '%s Friend', '%s Friends', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
 
-		$this->list_friends(
-			$args,
-			$friends_title,
-			$all_friends
-		);
+		if ( $all_friends->get_total() > 0 || ( ! $friend_requests->get_total() && ! $subscriptions->get_total() ) ) {
+			$this->list_friends(
+				$args,
+				$friends_title,
+				$all_friends
+			);
 
+			if ( ! $all_friends->get_total() ) {
+				?>
+				<ul class="menu menu-nav accordion-body">
+					<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>" class="normal"><?php esc_html_e( 'Add your first friend or subscription now!', 'friends' ); ?></a></li>
+				</ul>
+				<?php
+			}
+		}
 		if ( $friend_requests->get_total() > 0 ) {
 			$this->list_friends(
 				$args,
