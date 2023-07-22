@@ -2093,7 +2093,8 @@ class Admin {
 		}
 
 		$args = array(
-			'friend_url' => '',
+			'friend_url'              => '',
+			'add-friends-placeholder' => apply_filters( 'friends_add_friends_input_placeholder', __( 'Enter URL', 'friends' ) ),
 		);
 
 		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {

@@ -38,6 +38,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'init', array( $this, 'include_activitypub_model_comment' ), 2 );
 		\add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
+		\add_filter( 'friends_add_friends_input_placeholder', array( $this, 'friends_add_friends_input_placeholder' ) );
+		\add_action( 'friends_add_friend_form_top', array( $this, 'friends_add_friend_form_top' ) );
 
 		\add_action( 'activitypub_inbox', array( $this, 'handle_received_activity' ), 10, 3 );
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
@@ -154,6 +156,31 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		wp_safe_redirect( add_query_arg( 'updated', 'true', admin_url( 'admin.php?page=friends-activitypub-settings' ) ) );
 		exit;
+	}
+
+	public function friends_add_friends_input_placeholder() {
+		return __( 'Enter URL or @activitypub@handle.domain', 'friends' );
+	}
+
+	public function friends_add_friend_form_top() {
+		?>
+		<p>
+			<?php
+			echo wp_kses(
+				sprintf(
+					// translators: %1$s and %2$s are links to the respective services.
+					__( '<strong>Note:</strong> Because you have the ActivityPub plugin installed, you can also follow people over that protocol, for example <a href=%1$s>Mastodon</a> or <a href=%2$s>Pixelfed</a>.', 'friends' ),
+					'"https://joinmastodon.org/"',
+					'"https://pixelfed.social/"'
+				),
+				array(
+					'a'      => array( 'href' => array() ),
+					'strong' => array(),
+				)
+			);
+			?>
+		</p>
+		<?php
 	}
 
 	public function friends_get_feed_metadata( $meta, $feed ) {
