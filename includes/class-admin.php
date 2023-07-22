@@ -1707,11 +1707,11 @@ class Admin {
 			if ( isset( $vars['friendship'] ) ) {
 				// translators: %s is a Site URL.
 				$message = sprintf( __( 'No friends plugin installed at %s.', 'friends' ), $friend_link );
+				$message .= ' ' . esc_html__( 'We subscribed you to their updates.', 'friends' );
 			} else {
 				// translators: %s is a Site URL.
 				$message = sprintf( __( "You're now subscribed to %s.", 'friends' ), $friend_link );
 			}
-			$message .= ' ' . esc_html__( 'We subscribed you to their updates.', 'friends' );
 		}
 
 		if ( $message ) {
@@ -1865,9 +1865,14 @@ class Admin {
 			unset( $feeds[ $rest_url ] );
 		}
 
-		if ( 1 === count( $feeds ) && isset( $vars['quick-subscribe'] ) ) {
+		if ( isset( $vars['quick-subscribe'] ) ) {
 			$vars['feeds'] = $feeds;
-			$vars['subscribe'] = array_keys( $feeds );
+			$vars['subscribe'] = array();
+			foreach ( $feeds as $feed_url => $details ) {
+				if ( isset( $details['autoselect'] ) && $details['autoselect'] ) {
+					$vars['subscribe'][] = $feed_url;
+				}
+			}
 
 			$friend_user = false;
 			if ( isset( $rest_url ) ) {
