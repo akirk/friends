@@ -98,7 +98,7 @@ $args['friends']->frontend->link(
 </a>
 <?php endforeach; ?>
 
-<?php if ( $edit_user_link ) : ?>
+<?php if ( apply_filters( 'friends_show_author_edit', true, $args['friend_user'] ) ) : ?>
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend_user']->user_login ) ); ?>">
 	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), number_format_i18n( $active_feeds ) ) ); ?>
 

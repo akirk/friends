@@ -33,17 +33,25 @@ class User_Query extends \WP_User_Query {
 	private $results = array();
 
 	/**
+	 * Total number of found users for the current query
+	 *
+	 * @var int
+	 */
+	private $total_users = 0;
+
+	/**
 	 * Execute the query and ensure that we populate User objects
 	 */
 	public function query() {
 		parent::query();
 		foreach ( parent::get_results() as $k => $user ) {
 			$this->results[ $k ] = new User( $user );
+			$this->total_users += 1;
 		}
 	}
 
 	/**
-	 * Return the list of users.
+	 * Return the count users.
 	 *
 	 * @return array Array of results.
 	 */
@@ -51,6 +59,14 @@ class User_Query extends \WP_User_Query {
 		return $this->results;
 	}
 
+	/**
+	 * Returns the total number of users for the current query.
+	 *
+	 * @return int Number of total users.
+	 */
+	public function get_total() {
+		return $this->total_users;
+	}
 	/**
 	 * Gets all friends.
 	 *
@@ -112,6 +128,7 @@ class User_Query extends \WP_User_Query {
 
 		foreach ( $term_query->get_terms() as $term ) {
 			$this->results[] = new Subscription( $term );
+			$this->total_users += 1;
 		}
 
 	}

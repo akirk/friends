@@ -6,6 +6,27 @@
  * @package Friends
  */
 
-esc_html_e( "You haven't added any friends or subscriptions yet.", 'friends' );
-?>
-<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add a friend now', 'friends' ); ?></a>
+Friends\Friends::template_loader()->get_template_part(
+	'admin/welcome',
+	null,
+	array(
+		'plugin-list' => false,
+	)
+);
+
+?><p class="note">
+	<?php
+	echo wp_kses(
+		sprintf(
+			// translators: %s is the URL of the Friends admin menu.
+			__( '<strong>Note:</strong> This box will go away as soon as you have added your first friend or subscription.<br/>It will remain available via the <a href=%s>Friends admin menu</a> for later reference.', 'friends' ),
+			'"' . admin_url( 'admin.php?page=friends' ) . '"'
+		),
+		array(
+			'a'      => array( 'href' => array() ),
+			'br'     => array(),
+			'strong' => array(),
+		)
+	);
+	?>
+</p>

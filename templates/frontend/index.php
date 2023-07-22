@@ -17,7 +17,7 @@ Friends\Friends::template_loader()->get_template_part(
 	<?php
 	if ( ! have_posts() ) {
 		?>
-		<div class="card">
+		<div class="card columns col-12">
 			<div class="card-body">
 			<?php
 			if ( $args['friends']->frontend->post_format ) {

@@ -123,7 +123,7 @@
 					<p class="description">
 					<?php
 					// translators: %s is a URL.
-					printf( __( '<a href=%s>Explicitly refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->user_login ) ) );
+					printf( __( '<a href=%s>Refresh</a> this feed now.', 'friends' ), esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend']->user_login ) ) );
 					?>
 					</p>
 				</td>

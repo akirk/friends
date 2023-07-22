@@ -61,7 +61,7 @@ class Plugin_Installer {
 
 		foreach ( array_keys( (array) $plugins ) as $plugin_slug ) {
 
-			$button_classes = 'install button';
+			$button_classes = 'install button button-primary';
 			$button_text    = __( 'Install Now', 'friends' );
 
 			$api = plugins_api(
@@ -91,13 +91,9 @@ class Plugin_Installer {
 					$api->comment = $additional_plugins[ $plugin_slug ];
 				}
 			}
-
 			if ( ! is_wp_error( $api ) ) {
 				$main_plugin_file = self::get_plugin_file( $plugin_slug );
-				if ( ! $main_plugin_file ) {
-					continue;
-				}
-				if ( self::check_file_extension( $main_plugin_file ) ) {
+				if ( $main_plugin_file && self::check_file_extension( $main_plugin_file ) ) {
 					if ( is_plugin_active( $main_plugin_file ) ) {
 						$button_classes = 'installed button disabled';
 						$button_text    = __( 'Active' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
@@ -255,7 +251,6 @@ class Plugin_Installer {
 			),
 			admin_url( 'update.php' )
 		);
-
 		if ( preg_match( '/\b(install|activate)\b/', $button_classes ) ) {
 			$args['deactivate_button_class'] = 'hidden';
 		}
@@ -476,7 +471,6 @@ class Plugin_Installer {
 		$plugins = get_plugins();
 
 		foreach ( $plugins as $plugin_file => $plugin_info ) {
-
 			$slug = dirname( plugin_basename( $plugin_file ) );
 			if ( $slug ) {
 				if ( $slug === $plugin_slug ) {
@@ -518,7 +512,7 @@ class Plugin_Installer {
 			array(
 				'ajax_url'       => admin_url( 'admin-ajax.php' ),
 				'admin_nonce'    => wp_create_nonce( 'friends_installer_nonce' ),
-				'install_now'    => __( 'Are you sure you want to install this plugin?', 'friends' ),
+				'installing'     => __( 'Installing' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'install_btn'    => __( 'Install Now', 'friends' ),
 				'activate_btn'   => __( 'Activate' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'deactivate_btn' => __( 'Deactivate' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
