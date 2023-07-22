@@ -76,8 +76,5 @@ __( 'Create another user', 'friends' );
 __( 'To save posts from anywhere on the web, use the <a href=%s>bookmarklets</a>.', 'friends' );
 __( 'Bookmarklets', 'friends' );
 __( 'Drag one of these bookmarklets to your bookmarks bar and click it when you\'re on an article you want to save from the web.', 'friends' );
-__( 'Browser Extension', 'friends' );
-__( 'The Friends browser extension also allows to save the currently viewed article.', 'friends' );
-__( 'Firefox Extension', 'friends' );
 _x( 'Share', 'button', 'friends' );
 _x( '250', 'dropdown-menu-width', 'friends' );

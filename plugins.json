@@ -22,7 +22,7 @@
         "version": "0.2",
         "trunk": "https://github.com/akirk/friends-debugger/archive/refs/tags/0.2.zip",
         "download_link": "https://github.com/akirk/friends-debugger/archive/refs/tags/0.2.zip",
-        "last_updated": "2022-11-12",
+        "last_updated": "2023-06-13",
         "sections": {
             "Description": "This plugin outputs some more data and provides tools like a Feed Log."
         }
@@ -63,10 +63,10 @@
         "more_info": "https://github.com/akirk/friends-post-collection",
         "author": "<a href=\"https://github.com/akirk/\">Alex Kirk</a>",
         "slug": "friends-post-collection",
-        "version": "1.1.1",
-        "trunk": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.1.1.zip",
-        "download_link": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.1.1.zip",
-        "last_updated": "2023-01-25",
+        "version": "1.1.2",
+        "trunk": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.1.2.zip",
+        "download_link": "https://github.com/akirk/friends-post-collection/archive/refs/tags/1.1.2.zip",
+        "last_updated": "2023-07-22",
         "sections": {
             "Description": "This plugin provides the facilities to store feed items in a separate post type. These can be used to create your own compliation of posts and re-publish them for friends.",
             "Changelog": "<h4>1.1</h4><br/>\n- Reduce required priviledges, see https://github.com/akirk/friends/pull/121.<br/>\n<h4>1.0</h4><br/>\n- Add a feed option to fetch full content: Make use of Readability to get the contents of posts from the original URL (useful for excerpt feeds), either via a dropdown entry for each feed item, or for new entries in incoming feeds (checkbox in the feeds overview).<br/>\n<h4>0.8</h4><br/>\n- Update for Friends 2.0"
