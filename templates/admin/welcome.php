@@ -44,11 +44,13 @@
 		echo wp_kses( sprintf( __( 'You can <a href=%s>install more plugins</a> that extend the Friends plugin with further functionality.', 'friends' ), '"' . admin_url( 'admin.php?page=friends-plugins' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 		?>
 		</span>
+		<?php if ( ! isset( $args['plugin-list'] ) || $args['plugin-list'] ) : ?>
 		<ul>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'plugin-install.php?tab=plugin-information&plugin=activitypub&TB_iframe=true' ) ); ?>" class="thickbox open-plugin-details-modal install-now" target="_blank"><?php \esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Be part of the Fediverse!', 'friends' ); ?></span> <span><?php esc_html_e( 'People can follow your blog via ActivityPub (e.g. Mastodon) and you can follow people there.', 'friends' ); ?></span> </li>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'plugin-install.php?tab=plugin-information&plugin=enable-mastodon-apps&TB_iframe=true' ) ); ?>" class="thickbox open-plugin-details-modal install-now" target="_blank"><?php \esc_html_e( 'Enable Mastodon Apps Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Enjoy the comfort of Mastodon apps!', 'friends' ); ?></span> <span><?php esc_html_e( 'With this plugin you can use your favorite Mastodon app like Tusky, Ivory, or others to stay up to date and publish new status posts.', 'friends' ); ?></span> </li>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'admin.php?page=friends-plugins' ) ); ?>"><?php \esc_html_e( 'Post Collection Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Collect posts from around the web and create feeds.', 'friends' ); ?></span> </li>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'admin.php?page=friends-plugins' ) ); ?>"><?php \esc_html_e( 'Send to E-Reader Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Send new articles directly to your e-reader via e-mail or download the ePub.', 'friends' ); ?></span> </li>
 		</ul>
+		<?php endif; ?>
 	</li>
 </ul>

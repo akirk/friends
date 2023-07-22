@@ -6,6 +6,10 @@
  * @package Friends
  */
 
-esc_html_e( "You haven't added any friends or subscriptions yet.", 'friends' );
-?>
-<a href="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add a friend now', 'friends' ); ?></a>
+Friends\Friends::template_loader()->get_template_part(
+	'admin/welcome',
+	null,
+	array(
+		'plugin-list' => false,
+	)
+);
