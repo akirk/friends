@@ -12,6 +12,10 @@ Your own WordPress at the center of your online activity. Follow friends and oth
 
 ## Description
 
+**Since version 2.6.0, no users will be created for subscriptions.**
+
+**Combine this plugin with the ActivityPub plugin to make your own WordPress your own Mastodon instance. Use the Enable Mastodon Apps to use mobile and desktop Mastodon apps with your own site.**
+
 With the Friends Plugin for WordPress you can now consume content your friends (or other blogs) create, and interact with your friends on their blogs with seamless authentication.
 
 As soon as you become friends, both of you get accounts on each other’s WordPresses that you can then use post comments or read private posts. You’ll use the account on your friend’s server just by clicking on their post on your own Friends page.
