@@ -3,7 +3,7 @@
 - Contributors: akirk
 - Tags: friends, rss, decentralized, social-network, own-your-data
 - Requires at least: 5.0
-- Tested up to: 6.2
+- Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
 - Stable tag: 2.6.0
@@ -94,6 +94,13 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. You can react to a post or share it using Post Collections.
 
 ## Changelog
+
+### 2.7.0
+- Improve the Onboarding Experience ([#231])
+- Expose the ActivityPub plugin more on the Add Friend screen ([#234])
+- Fixed Quick Subscribe ([#233])
+- Recognize the published date for announces ([#232])
+- Allow setting the Collapsed view as default ([#224]) but don't collapse when there is just a single post ([#229])
 
 ### 2.6.0
 - Don't create a user when only following someone ([#215]). This means that if you only want to use the Friends plugin to follow people, it will no longer create a user for each follow.
@@ -225,6 +232,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[#231]: https://github.com/akirk/friends/pull/231
+[#234]: https://github.com/akirk/friends/pull/234
+[#233]: https://github.com/akirk/friends/pull/233
+[#232]: https://github.com/akirk/friends/pull/232
+[#224]: https://github.com/akirk/friends/pull/224
+[#229]: https://github.com/akirk/friends/pull/229
 [#223]: https://github.com/akirk/friends/pull/223
 [#222]: https://github.com/akirk/friends/pull/222
 [#220]: https://github.com/akirk/friends/pull/220
