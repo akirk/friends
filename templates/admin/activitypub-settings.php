@@ -28,5 +28,20 @@
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 	</p>
+
+	<p class="description">
+	<?php
+	echo wp_kses(
+		sprintf(
+			// translators: %s is the URL of the Friends admin menu.
+			__( 'Find further settings around ActivityPub in the <a href=%s>ActivityPub plugin settings</a>.', 'friends' ),
+			'"' . admin_url( 'options-general.php?page=activitypub&tab=settings' ) . '"'
+		),
+		array(
+			'a' => array( 'href' => array() ),
+		)
+	);
+	?>
+	</p>
 </form>
 <?php
