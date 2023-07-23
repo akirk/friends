@@ -35,7 +35,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$this->friends_feed = $friends_feed;
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
-		\add_action( 'init', array( $this, 'include_activitypub_model_comment' ), 2 );
 		\add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
 		\add_filter( 'friends_add_friends_input_placeholder', array( $this, 'friends_add_friends_input_placeholder' ) );
@@ -1680,7 +1679,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function include_activitypub_model_comment() {
+		if ( ! class_exists( 'Activitypub\Model\Post' ) ) {
+			return false;
+		}
+
 		require_once __DIR__ . '/activitypub/class-comment.php';
+		return true;
 	}
 
 	public function comment_post( $comment_id, $comment_approved, $commentdata ) {
@@ -1699,10 +1703,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			// Don't act on non-local comments.
 			return;
 		}
-		$this->include_activitypub_model_comment();
-		$activitypub_comment = new \Activitypub\Model\Comment( $comment_id );
+		if ( $this->include_activitypub_model_comment() ) {
+			$activitypub_comment = new \Activitypub\Model\Comment( $comment_id );
 
-		\wp_schedule_single_event( \time(), 'activitypub_send_post_activity', array( $activitypub_comment ) );
+			\wp_schedule_single_event( \time(), 'activitypub_send_post_activity', array( $activitypub_comment ) );
+		}
 	}
 
 	public function trashed_comment( $comment_id, $comment ) {
@@ -1722,10 +1727,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$this->include_activitypub_model_comment();
-		$activitypub_comment = new \Activitypub\Model\Comment( $comment );
+		if ( $this->include_activitypub_model_comment() ) {
+			$activitypub_comment = new \Activitypub\Model\Comment( $comment );
 
-		\wp_schedule_single_event( \time(), 'activitypub_send_delete_activity', array( $activitypub_comment ) );
+			\wp_schedule_single_event( \time(), 'activitypub_send_delete_activity', array( $activitypub_comment ) );
+		}
 	}
 
 	/**
