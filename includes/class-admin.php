@@ -1133,7 +1133,7 @@ class Admin {
 			if ( trim( $_POST['user_url'] ) && filter_var( $_POST['user_url'], FILTER_VALIDATE_URL ) ) {
 				$friend->user_url = $_POST['user_url'];
 			}
-			wp_update_user( $friend );
+			$friend->save();
 
 			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 			if ( ! $hide_from_friends_page ) {
