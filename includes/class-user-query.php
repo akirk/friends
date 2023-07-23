@@ -109,7 +109,7 @@ class User_Query extends \WP_User_Query {
 	}
 
 	public function add_virtual_subscriptions( $args = array() ) {
-		if ( isset( $args['meta_key'] ) && str_ends_with( $args['meta_key'], '_starred' ) ) {
+		if ( isset( $args['meta_key'] ) && substr( $args['meta_key'], -9 ) === '_starred' ) {
 			$args['meta_key'] = 'starred';
 		}
 		if ( isset( $args['search'] ) ) {
@@ -233,7 +233,7 @@ class User_Query extends \WP_User_Query {
 		$search = new self(
 			array_merge(
 				array(
-					'role__in'       => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+					'role__in'       => Friends::get_friends_plugin_roles(),
 					'search_columns' => array( 'display_name' ),
 				),
 				$query,
