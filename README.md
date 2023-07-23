@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.6.0
+- Stable tag: 2.7.0
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -83,15 +83,15 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Screenshots
 
-1. You can use it like a Feed Reader
-2. But it is centered around users; you can have multiple feeds per person, even on social networks (parsing capabilities provided by plugins)
-3. Extensible with plugins itself
-4. Use the customizer to adapt it to your liking
-5. Categorize incoming content with Post Formats and view all posts of a certain format across your friends
-6. Use rules to filter incoming content (sometimes you’re not interested in everything your friends do)
-7. Friends users are plain WordPress users with low privileges
-8. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
-9. You can react to a post or share it using Post Collections.
+1. Compact view is like Google Reader
+2. You can use it like a Feed Reader
+3. But it is centered around users; you can have multiple feeds per person, even on social networks (parsing capabilities provided by plugins)
+4. Extensible with plugins itself
+5. Use the customizer to adapt it to your liking
+6. Categorize incoming content with Post Formats and view all posts of a certain format across your friends
+7. Use rules to filter incoming content (sometimes you’re not interested in everything your friends do)
+8. Friends users are plain WordPress users with low privileges
+9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
 
