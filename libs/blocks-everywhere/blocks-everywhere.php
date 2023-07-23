@@ -14,8 +14,9 @@ use Friends\Blocks_Everywhere\Handler;
 require_once __DIR__ . '/classes/class-handler.php';
 require_once __DIR__ . '/classes/class-editor.php';
 
+
 class Blocks_Everywhere {
-	const VERSION = '1.18.0';
+	const VERSION = '1.20.1';
 
 	/**
 	 * Instance variable
@@ -68,6 +69,20 @@ class Blocks_Everywhere {
 	public function load_handlers() {
 		$this->handlers[] = new Handler\Friends_Message();
 		$this->handlers[] = new Handler\Friends_Status_Post();
+	}
+
+	/**
+	 * Get the instantiated handler class for the specified type, or null if it isn't configured or known.
+	 *
+	 * @param 'Comments'|'bbPress'|'BuddyPress' $which The handler type.
+	 * @return Handler\Handler|null object or null it not configured.
+	 */
+	public function get_handler( $which ) {
+		if ( isset( $this->handlers[ $which ] ) ) {
+			return $this->handlers[ $which ];
+		}
+
+		return null;
 	}
 
 	/**
