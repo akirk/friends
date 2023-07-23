@@ -251,6 +251,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return 10;
 		}
 
+		if ( preg_match( '/^https?:\/\/[^\/]+\/+@[a-z0-9-]+$/i', $url ) ) {
+			return 10;
+		}
+
 		if ( 'application/activity+json' === $mime_type ) {
 			return 10;
 		}
@@ -291,6 +295,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		// Disable polling.
 		$feed_details['interval'] = YEAR_IN_SECONDS;
 		$feed_details['next-poll'] = gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS );
+		$feed_details['post-format'] = 'status';
 
 		return $feed_details;
 	}
