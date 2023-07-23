@@ -61,6 +61,18 @@ class Subscription extends User {
 		return $this->get_term_id();
 	}
 
+	public function save() {
+		foreach ( array(
+			'first_name',
+			'display_name',
+			'description',
+			'user_url',
+		) as $key ) {
+			$this->update_user_option( $key, $this->$key );
+		}
+		return $this->get_object_id();
+	}
+
 	/**
 	 * Registers the taxonomy
 	 */

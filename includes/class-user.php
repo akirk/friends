@@ -339,6 +339,10 @@ class User extends \WP_User {
 		return $this->ID;
 	}
 
+	public function save() {
+		return wp_update_user( $this );
+	}
+
 	/**
 	 * Save multiple feeds for a user.
 	 *
