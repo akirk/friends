@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.7.0
+- Stable tag: 2.7.1
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 2.7.1
+- Update Blocks Everywhere for WordPress 6.3 compatbility ([#236])
+- ActivityPub: Also detect standard fediverse urls and assign the post-format status ([#237])
 
 ### 2.7.0
 - Improve the Onboarding Experience ([#231])
@@ -232,6 +236,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[#237]: https://github.com/akirk/friends/pull/237
+[#236]: https://github.com/akirk/friends/pull/236
 [#231]: https://github.com/akirk/friends/pull/231
 [#234]: https://github.com/akirk/friends/pull/234
 [#233]: https://github.com/akirk/friends/pull/233
