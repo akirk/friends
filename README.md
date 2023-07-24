@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.7.2
+- Stable tag: 2.7.3
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 2.7.3
+- Add get_posts args support for virtual users ([#242]), this allows the Enable Mastodon Apps to work with external mentions after [#215]
 
 ### 2.7.2
 - Prepare for Activitypub Update which in its current state could cause a fatal ([#241])
