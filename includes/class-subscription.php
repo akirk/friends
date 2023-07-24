@@ -143,6 +143,25 @@ class Subscription extends User {
 		return $query;
 	}
 
+	public function modify_get_posts_args_by_author( $args ) {
+		if ( isset( $args['author'] ) ) {
+			unset( $args['author'] );
+		}
+		if ( ! isset( $args['tax_query'] ) ) {
+			$args['tax_query'] = array();
+		} else {
+			$args['tax_query']['relation'] = 'AND';
+		}
+		$args['tax_query'][] =
+			array(
+				'taxonomy' => self::TAXONOMY,
+				'field'    => 'term_id',
+				'terms'    => $this->get_term_id(),
+			);
+		return $args;
+	}
+
+
 	public static function set_authordata_by_query( $query ) {
 		global $authordata;
 		if ( $query->get( 'tax_query' ) ) {

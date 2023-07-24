@@ -487,6 +487,11 @@ class User extends \WP_User {
 		return $query;
 	}
 
+	public function modify_get_posts_args_by_author( $args ) {
+		$args['author'] = $this->ID;
+		return $args;
+	}
+
 	public function delete() {
 		if ( is_multisite() ) {
 			remove_user_from_blog( $this->ID, get_current_blog_id() );
