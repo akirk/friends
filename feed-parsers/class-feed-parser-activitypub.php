@@ -250,12 +250,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return 10;
 		}
 
-		if ( preg_match( '/^https?:\/\/[^\/]+\/+@[a-z0-9-]+$/i', $url ) ) {
+		if ( 'application/activity+json' === $mime_type ) {
 			return 10;
 		}
 
-		if ( 'application/activity+json' === $mime_type ) {
-			return 10;
+		if ( preg_match( '#^https?://[^/]+/@[a-z0-9-]+$#i', $url ) ) {
+			return 9;
+		}
+
+		if ( preg_match( '#^https?://[^/]+/(users|author)/[a-z0-9-]+$#i', $url ) ) {
+			return 8;
 		}
 
 		return 0;
