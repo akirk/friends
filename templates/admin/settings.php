@@ -11,7 +11,7 @@ if ( ! $args['comment_registration'] ) {
 }
 
 $codeword_class = '';
-if ( 'friends' === $args['codeword'] || ! $args['friends_require_codeword'] ) {
+if ( 'friends' === $args['codeword'] || ! $args['require_codeword'] ) {
 	$codeword_class = 'hidden';
 }
 
