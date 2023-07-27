@@ -650,7 +650,7 @@ class Frontend {
 		$friend_user = new User( $author_id );
 
 		$comments_url = get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true );
-		if ( $comments_url && empty( $comments ) ) {
+		if ( ! $comments_url && empty( $comments ) ) {
 			wp_send_json_error( __( 'No comments feed available.', 'friends' ) );
 			exit;
 		}
