@@ -6,6 +6,8 @@
  * @package Friends
  */
 
+$available_avatars = apply_filters( 'friends_potential_avatars', array(), $args['friend'] );
+
 ?><form method="post">
 	<?php wp_nonce_field( 'edit-friend-' . $args['friend']->user_login ); ?>
 	<table class="form-table">
@@ -16,6 +18,30 @@
 				<?php echo get_avatar( $args['friend']->user_login ); ?>
 			</td>
 			</tr>
+			<tr>
+				<th><label for="friends_set_avatar"><?php esc_html_e( 'Update Avatar', 'friends' ); ?></label></th>
+				<td id="friend-avatar-setting">
+					<?php
+					foreach ( $available_avatars as $avatar => $title ) {
+						?>
+						<a href="" data-nonce="<?php echo esc_attr( wp_create_nonce( 'set-avatar-' . $args['friend']->ID ) ); ?>" data-id="<?php echo esc_attr( $args['friend']->ID ); ?>" class="set-avatar"><img src="<?php echo esc_url( $avatar ); ?>" alt="<?php echo esc_attr( $title ); ?>" title="<?php echo esc_attr( $title ); ?>" width="32" height="32" /></a>
+						<?php
+					}
+					if ( ! empty( $available_avatars ) ) :
+						?>
+					<p class="description">
+						<?php esc_html_e( 'Click to set as new avatar.', 'friends' ); ?><br/>
+					</p>
+					<?php else : ?>
+						<input type="url" id="new-avatar-url" placeholder="<?php esc_attr_e( 'Enter an image URL', 'friends' ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'set-avatar-' . $args['friend']->ID ) ); ?>" data-id="<?php echo esc_attr( $args['friend']->ID ); ?>" value="<?php echo esc_attr( $args['friend']->get_avatar_url() ); ?>"/>
+						<button id='set-avatar-url'><?php esc_html_e( 'Use this URL', 'friends' ); ?></button>
+						<p class="description">
+							<?php esc_html_e( 'Please specify a square, not too large image URL here.', 'friends' ); ?><br/>
+						</p>
+					<?php endif; ?>
+				</td>
+			</tr>
+
 			<?php do_action( 'friends_edit_friend_after_avatar', $args['friend'] ); ?>
 			<tr>
 				<th><label for="friends_display_name"><?php esc_html_e( 'Display Name', 'friends' ); ?></label></th>

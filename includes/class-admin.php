@@ -1233,7 +1233,7 @@ class Admin {
 	}
 
 	public function ajax_set_avatar() {
-		$user_id = isset( $_POST['user'] ) ? (int) $_POST['user'] : 0;
+		$user_id = isset( $_POST['user'] ) ? $_POST['user'] : 0;
 
 		check_ajax_referer( "set-avatar-$user_id" );
 
@@ -1247,7 +1247,22 @@ class Admin {
 			exit;
 		}
 
-		$friend = new User( $user_id );
+		$friend = User::get_user_by_id( $user_id );
+
+		$image = file_get_contents( $_POST['avatar'] );
+
+		// Use WordPress functions to check the image dimensions.
+		$size = \wp_getimagesize( $_POST['avatar'] );
+		if ( ! $size ) {
+			wp_send_json_error( __( 'Image is in an unknown format.', 'friends' ) );
+			exit;
+		}
+		// Needs to be square and not larger than 512x512.
+		if ( $size[0] !== $size[1] || $size[0] > 512 ) {
+			wp_send_json_error( __( 'Image must be square and not larger than 512x512.', 'friends' ) );
+			exit;
+		}
+
 		$url = $friend->update_user_icon_url( $_POST['avatar'] );
 
 		if ( ! $url || is_wp_error( $url ) ) {

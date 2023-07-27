@@ -303,25 +303,50 @@ jQuery( function ( $ ) {
 	);
 
 	$( document ).on( 'click', 'a.set-avatar', function () {
-		const url = $( this ).find( 'img' ).prop( 'src' );
-		if ( ! url ) {
+		setAvatarUrl(
+			$( this ).find( 'img' ).prop( 'src' ),
+			$( this ).data( 'id' ),
+			$( this ).data( 'nonce' )
+		);
+		return false;
+	} );
+
+	const setAvatarUrl = function ( url, user, nonce ) {
+		if ( ! url || ! url.match( /^https?:\/\// ) ) {
 			return;
 		}
 		$.post(
 			friends.ajax_url,
 			{
-				user: $( this ).data( 'id' ),
+				user,
 				avatar: url,
-				_ajax_nonce: $( this ).data( 'nonce' ),
+				_ajax_nonce: nonce,
 				action: 'friends_set_avatar',
 			},
 			function ( response ) {
 				if ( response.success ) {
 					window.location.reload();
+				} else {
+					$( '#friend-avatar-setting p.description' ).text(
+						'⚠️ ' + response.data
+					);
 				}
 			}
 		);
+	};
+
+	$( document ).on( 'click', 'button#set-avatar-url', function () {
+		const url = $( '#new-avatar-url' );
+		setAvatarUrl( url.val(), url.data( 'id' ), url.data( 'nonce' ) );
 		return false;
+	} );
+
+	$( document ).on( 'keyup', 'input#new-avatar-url', function ( e ) {
+		const url = $( '#new-avatar-url' );
+		if ( e.keyCode === 13 ) {
+			setAvatarUrl( url.val(), url.data( 'id' ), url.data( 'nonce' ) );
+			return false;
+		}
 	} );
 
 	setTimeout( function () {

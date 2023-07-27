@@ -54,7 +54,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_edit_friend_table_end', array( $this, 'activitypub_settings' ), 10 );
 		\add_filter( 'friends_edit_friend_after_form_submit', array( $this, 'activitypub_save_settings' ), 10 );
 		\add_filter( 'friends_modify_feed_item', array( $this, 'modify_incoming_item' ), 9, 3 );
-		\add_filter( 'friends_edit_friend_after_avatar', array( $this, 'admin_show_update_avatar' ) );
+		\add_filter( 'friends_potential_avatars', array( $this, 'friends_potential_avatars' ), 10, 2 );
 		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login' ), 10, 2 );
 
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
@@ -1257,9 +1257,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $item;
 	}
 
-	public function admin_show_update_avatar( User $friend_user ) {
-		$avatars = array();
-		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
+	public function friends_potential_avatars( $avatars, User $friend_user ) {
+		foreach ( $friend_user->get_feeds() as $user_feed ) {
 			if ( 'activitypub' === $user_feed->get_parser() ) {
 				$details = $this->update_feed_details(
 					array(
@@ -1275,27 +1274,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				}
 			}
 		}
-		if ( empty( $avatars ) ) {
-			return;
-		}
-
-		?>
-		<tr>
-				<th><label for="friends_set_avatar"><?php esc_html_e( 'Avatar via ActivityPub', 'friends' ); ?></label></th>
-				<td>
-					<?php
-					foreach ( $avatars as $avatar => $title ) {
-						?>
-						<a href="" data-nonce="<?php echo esc_attr( wp_create_nonce( 'set-avatar-' . $friend_user->ID ) ); ?>" data-id="<?php echo esc_attr( $friend_user->ID ); ?>" class="set-avatar"><img src="<?php echo esc_url( $avatar ); ?>" alt="<?php echo esc_attr( $title ); ?>" title="<?php echo esc_attr( $title ); ?>" width="32" height="32" /></a>
-						<?php
-					}
-					?>
-					<p class="description">
-						<?php esc_html_e( 'Click to set as new avatar.', 'friends' ); ?><br/>
-					</p>
-				</td>
-			</tr>
-		<?php
+		return $avatars;
 	}
 
 	private function get_author_of_post( \WP_Post $post ) {

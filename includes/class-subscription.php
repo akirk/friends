@@ -93,7 +93,6 @@ class Subscription extends User {
 		register_taxonomy( self::TAXONOMY, 'None', $args );
 	}
 
-
 	public static function get_by_username( $username ) {
 		if ( 0 === strpos( $username, 'friends-virtual-user-' ) ) {
 			$term_id = substr( $username, strlen( 'friends-virtual-user-' ) );
@@ -548,6 +547,17 @@ class Subscription extends User {
 		return new self( $term );
 	}
 
+	private function map_option( $option_name ) {
+		$option_map = array(
+			'friends_user_icon_url' => 'avatar_url',
+		);
+		if ( isset( $option_map[ $option_name ] ) ) {
+			$option_name = $option_map[ $option_name ];
+		}
+
+		return $option_name;
+	}
+
 	/**
 	 * Wrap get_user_option
 	 *
@@ -556,7 +566,12 @@ class Subscription extends User {
 	 *                  false on failure.
 	 */
 	function get_user_option( $option_name ) {
-		return get_metadata( 'term', $this->get_term_id(), $option_name, true );
+		$value = get_metadata( 'term', $this->get_term_id(), $option_name, true );
+		if ( false === $value ) {
+			$value = get_metadata( 'term', $this->get_term_id(), $this->map_option( $option_name ), true );
+		}
+
+		return $value;
 	}
 
 	/**
@@ -570,7 +585,7 @@ class Subscription extends User {
 	 *                  false on failure.
 	 */
 	function update_user_option( $option_name, $new_value, $global = false ) {
-		return update_metadata( 'term', $this->get_term_id(), $option_name, $new_value );
+		return update_metadata( 'term', $this->get_term_id(), $this->map_option( $option_name ), $new_value );
 	}
 
 	/**
