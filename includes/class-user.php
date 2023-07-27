@@ -285,6 +285,14 @@ class User extends \WP_User {
 	 * @return User|false The friend user or false.
 	 */
 	public static function get_user_by_id( $user_id ) {
+		if ( 0 === strpos( $user_id, 'friends-virtual-user-' ) ) {
+			$term_id = substr( $user_id, strlen( 'friends-virtual-user-' ) );
+			$term = get_term( intval( $term_id ), Subscription::TAXONOMY );
+			if ( $term ) {
+				return new Subscription( $term );
+			}
+		}
+
 		$user = get_user_by( 'ID', $user_id );
 		if ( $user ) {
 			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
@@ -295,6 +303,7 @@ class User extends \WP_User {
 		}
 		return $user;
 	}
+
 	public function __get( $key ) {
 		if ( 'user_url' === $key && empty( $this->data->user_url ) && is_multisite() ) {
 			$site = get_active_blog_for_user( $this->ID );
