@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.7.3
+- Stable tag: 2.7.4
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 2.7.4
+- Allow specifying a URL as avatar ([#243])
+- Add more mastodon style urls for ActivityPub parsing autodetection (when there is no mime-type in the rel=me)
+- Fixed a bug where comments were not retrieved via the comments RSS feed
+- Fixed the require codeword checkbox
 
 ### 2.7.3
 - Add get_posts args support for virtual users ([#242]), this allows the Enable Mastodon Apps to work with external mentions after [#215]
