@@ -1633,7 +1633,8 @@ class Admin {
 		if ( is_wp_error( $ret ) ) {
 			return $ret;
 		}
-		$friend_user = get_user_by( 'login', $vars['user_login'] );
+
+		$friend_user = User::get_by_username( $vars['user_login'] );
 		if ( ! $friend_user || is_wp_error( $friend_user ) ) {
 			return new \WP_Error( 'friend_not_created', __( 'Friend could not be created.', 'friends' ) );
 		}
