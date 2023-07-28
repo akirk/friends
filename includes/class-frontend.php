@@ -738,7 +738,7 @@ class Frontend {
 	 * @param string $previous_status The status of the post at the point where it was trashed.
 	 */
 	public function untrash_post_status( $new_status, $post_id, $previous_status ) {
-		if ( in_array( get_post_type( $post_id ), apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
+		if ( ! in_array( get_post_type( $post_id ), apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
 			return $new_status;
 		}
 		return 'publish';
