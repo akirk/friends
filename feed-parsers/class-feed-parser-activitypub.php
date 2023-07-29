@@ -487,8 +487,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$user = User::get_by_username( $external_mentions_username );
 		}
 
-		if ( $user instanceof \WP_User && ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
-			add_user_to_blog( get_current_blog_id(), $user->ID, 'subscription' );
+		if ( $user instanceof \WP_User && ! ( $user instanceof Subscription ) && ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
+			\add_user_to_blog( get_current_blog_id(), $user->ID, 'subscription' );
 		}
 
 		return $user;
