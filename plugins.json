@@ -78,13 +78,13 @@
         "more_info": "https://github.com/akirk/friends-send-to-e-reader",
         "author": "<a href=\"https://github.com/akirk/\">Alex Kirk</a>",
         "slug": "friends-send-to-e-reader",
-        "version": "0.7",
-        "trunk": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.7.zip",
-        "download_link": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.7.zip",
-        "last_updated": "2023-01-04",
+        "version": "0.8",
+        "trunk": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.8.zip",
+        "download_link": "https://github.com/akirk/friends-send-to-e-reader/archive/refs/tags/0.8.zip",
+        "last_updated": "2023-08-03",
         "sections": {
             "Description": "See the post <a href=\"https://wpfriends.at/2021/09/20/subscribing-to-rss-feeds-on-your-e-reader/\">Subscribing to RSS Feeds on your E-Reader using your own WordPress blog</a> for more details on how it works.<br/>\nThis plugin is meant to be used with the <a href=\"https://github.com/akirk/friends/\">Friends plugin</a>.",
-            "Changelog": "<h4>0.7</h4><br/>\n- Fix multi-item dialog not popping up.<br/>\n<h4>0.6</h4><br/>\n- Remove MOBI support since Amazon now accepts EPubs by mail.<br/>\n- Introduce Reading Summaries: You can create a new draft posts from your sent articles so that you can easily post about them.<br/>\n- Remember which posts were already sent, enabling a \"Send x new posts to your e-reader\" button in the header.<br/>\n<h4>0.5</h4><br/>\n- Remember which posts were sent and allow sending just the new ones. [WIP display works, actual sending not yet]<br/>\n- Automatically send new posts every week. [WIP setting screen is there, saving setting and cron not yet]<br/>\n- Allow auto-creating of \"reading summary\" draft posts with link plus excerpt and room for your own comments.<br/>\n- New-style setting screen with separate screen for reading summaries.<br/>\n<h4>0.4</h4><br/>\n- Update for Friends 2.0<br/>\n<h4>0.3</h4><br/>\n- Allow downloading the ePub.<br/>\n- Theoretically add support for Tolino. Not functional because Thalia doesn't want to provide OAuth2 credentials."
+            "Changelog": "<h4>0.8</h4><br/>\n- Fix choking on invalid SVGs<br/>\n- Enable unsent posts for any author<br/>\n- Add the ability to download ePub through special URLs ([#5])<br/>\n<h4>0.7</h4><br/>\n- Fix multi-item dialog not popping up.<br/>\n<h4>0.6</h4><br/>\n- Remove MOBI support since Amazon now accepts EPubs by mail.<br/>\n- Introduce Reading Summaries: You can create a new draft posts from your sent articles so that you can easily post about them.<br/>\n- Remember which posts were already sent, enabling a \"Send x new posts to your e-reader\" button in the header.<br/>\n<h4>0.5</h4><br/>\n- Remember which posts were sent and allow sending just the new ones. [WIP display works, actual sending not yet]<br/>\n- Automatically send new posts every week. [WIP setting screen is there, saving setting and cron not yet]<br/>\n- Allow auto-creating of \"reading summary\" draft posts with link plus excerpt and room for your own comments.<br/>\n- New-style setting screen with separate screen for reading summaries.<br/>\n<h4>0.4</h4><br/>\n- Update for Friends 2.0<br/>\n<h4>0.3</h4><br/>\n- Allow downloading the ePub.<br/>\n- Theoretically add support for Tolino. Not functional because Thalia doesn't want to provide OAuth2 credentials.<br/>\n[#5]: https://github.com/akirk/friends-send-to-e-reader/pull/5"
         }
     }
 }
