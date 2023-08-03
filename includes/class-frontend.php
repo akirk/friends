@@ -1231,7 +1231,7 @@ class Frontend {
 		$query->set( 'post_type', $post_types );
 		$query->set( 'tax_query', $tax_query );
 
-		if ( ( isset( $_GET['share'] ) && $_GET['share'] === $share_hash ) || friends::has_required_privileges() ) {
+		if ( ( isset( $_GET['share'] ) && $_GET['share'] === $share_hash ) || $viewable ) {
 			$post_status = array( 'publish', 'private' );
 			if ( isset( $_GET['show-hidden'] ) ) {
 				$post_status[] = 'trash';
