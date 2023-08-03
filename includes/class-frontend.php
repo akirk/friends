@@ -1114,18 +1114,24 @@ class Frontend {
 		}
 
 		// Not available for the general public or friends.
-		$viewable = $this->has_required_priviledges();
+		$viewable = $this->has_required_priviledges() && Friends::on_frontend();
 		if ( $query->is_feed() ) {
 			// Feeds can be viewed through extra authentication.
 			if ( $this->friends->access_control->private_rss_is_authenticated() ) {
 				$viewable = true;
 			} elseif ( isset( $wp_query->query['pagename'] ) ) {
-				$pagename_parts = explode( '/', trim( $wp_query->query['pagename'], '/' ) );
-				if ( apply_filters( 'friends_friend_feed_viewable', false, $pagename_parts[1] ) ) {
+				if ( apply_filters( 'friends_friend_feed_viewable', false, $pagename_parts[0] ) ) {
 					$viewable = true;
 				}
 			}
 		}
+
+		if ( ! $viewable && isset( $wp_query->query['pagename'] ) ) {
+			if ( apply_filters( 'friends_friend_posts_query_viewable', false, $pagename_parts[0] ) ) {
+				$viewable = true;
+			}
+		}
+
 		$page_id = get_query_var( 'page' );
 
 		if ( isset( $_GET['share'] ) ) {
@@ -1135,7 +1141,7 @@ class Frontend {
 			}
 		}
 
-		if ( ! $viewable || ! Friends::on_frontend() ) {
+		if ( ! $viewable ) {
 			if ( $query->is_feed() ) {
 				status_header( 404 );
 				$query->set_404();
