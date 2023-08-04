@@ -771,6 +771,7 @@ class Frontend {
 			'friends'               => $this->friends,
 			'friend_user'           => $this->author,
 			'frontend_default_view' => get_option( 'friends_frontend_default_view', 'expanded' ),
+			'blocks-everywhere'     => get_user_option( 'friends_blocks_everywhere' ),
 		);
 
 		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {

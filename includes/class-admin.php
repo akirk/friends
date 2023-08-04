@@ -556,6 +556,12 @@ class Admin {
 				delete_option( 'comment_registration' );
 			}
 
+			if ( isset( $_POST['blocks_everywhere'] ) && $_POST['blocks_everywhere'] ) {
+				update_user_option( get_current_user_id(), 'friends_blocks_everywhere', 1 );
+			} else {
+				delete_user_option( get_current_user_id(), 'friends_blocks_everywhere' );
+			}
+
 			if ( isset( $_POST['comment_registration_message'] ) && $_POST['comment_registration_message'] ) {
 				update_option( 'friends_comment_registration_message', $_POST['comment_registration_message'] );
 			} else {
@@ -757,6 +763,7 @@ class Admin {
 					'retention_days_enabled'         => get_option( 'friends_enable_retention_days' ),
 					'retention_number_enabled'       => get_option( 'friends_enable_retention_number' ),
 					'frontend_default_view'          => get_option( 'friends_frontend_default_view', 'expanded' ),
+					'blocks_everywhere'              => get_user_option( 'friends_blocks_everywhere' ),
 				)
 			)
 		);

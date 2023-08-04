@@ -54,6 +54,6 @@ class Friends_Status_Post extends Handler {
 	 * Get the HTML that the editor uses on the page
 	 */
 	public function add_to_form() {
-		$this->load_editor( '.friends-status-content', '.blocks-everywhere' );
+		$this->load_editor( '.friends-status-content.blocks-everywhere-enabled', '.blocks-everywhere' );
 	}
 }
