@@ -1120,14 +1120,14 @@ class Frontend {
 			if ( $this->friends->access_control->private_rss_is_authenticated() ) {
 				$viewable = true;
 			} elseif ( isset( $wp_query->query['pagename'] ) ) {
-				if ( apply_filters( 'friends_friend_feed_viewable', false, $pagename_parts[0] ) ) {
+				if ( apply_filters( 'friends_friend_feed_viewable', false, isset( $pagename_parts[0] ) ? $pagename_parts[0] : false ) ) {
 					$viewable = true;
 				}
 			}
 		}
 
 		if ( ! $viewable && isset( $wp_query->query['pagename'] ) ) {
-			if ( apply_filters( 'friends_friend_posts_query_viewable', false, $pagename_parts[0] ) ) {
+			if ( apply_filters( 'friends_friend_posts_query_viewable', false, isset( $pagename_parts[0] ) ? $pagename_parts[0] : false ) ) {
 				$viewable = true;
 			}
 		}
