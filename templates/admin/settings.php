@@ -402,7 +402,7 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
+				<th scope="row" rowspan="2"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
 				<td>
 					<fieldset>
 						<label for="frontend-default-view">
@@ -411,6 +411,16 @@ do_action( 'friends_settings_before_form' );
 								<option value="expanded"<?php selected( $args['frontend_default_view'], 'expanded' ); ?>><?php esc_html_e( 'Expanded', 'friends' ); ?></option>
 								<option value="collapsed"<?php selected( $args['frontend_default_view'], 'collapsed' ); ?>><?php esc_html_e( 'Collapsed', 'friends' ); ?></option>
 							</select>
+						</label>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<fieldset>
+						<label for="blocks_everywhere">
+							<input name="blocks_everywhere" type="checkbox" id="blocks_everywhere" value="1" <?php checked( '1', $args['blocks_everywhere'] ); ?> />
+							<span><?php esc_html_e( 'Enable Gutenberg on the frontend.', 'friends' ); ?></span>
 						</label>
 					</fieldset>
 				</td>

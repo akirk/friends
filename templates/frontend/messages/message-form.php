@@ -35,8 +35,8 @@ if ( ! isset( $args['subject'] ) ) {
 		<div class="col-2 col-sm-12">
 			<label class="form-label" for="friends_message_message"><?php esc_html_e( 'Message', 'friends' ); ?></label>
 		</div>
-		<div class="col-8 col-sm-12 blocks-everywhere iso-editor__loading">
-			<textarea class="form-input friends-message-message" name="friends_message_message" placeholder="" rows="3"></textarea>
+		<div class="col-8 col-sm-12<?php echo esc_attr( $args['blocks-everywhere'] ? ' blocks-everywhere iso-editor__loading' : '' ); ?>">
+			<textarea class="form-input friends-message-message<?php echo esc_attr( $args['blocks-everywhere'] ? ' blocks-everywhere-enabled' : '' ); ?>" name="friends_message_message" placeholder="" rows="3"></textarea>
 		<?php
 		do_action( 'friends_message_form' );
 		?>

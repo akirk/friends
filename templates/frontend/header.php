@@ -89,8 +89,8 @@ if ( isset( $_GET['s'] ) ) {
 				</div>
 				<div id="in_reply_to_preview"><?php echo wp_kses_post( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['html'] : '' ); ?></div>
 				<p class="description">Click the mentions to copy them into your reply.</p>
-				<div class="form-group blocks-everywhere iso-editor__loading">
-					<textarea class="form-input friends-status-content" name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( "What's on your mind, %s?", 'friends' ), wp_get_current_user()->display_name ) ); ?>"><?php echo wp_kses_post( ! empty( $args['in_reply_to'] ) ? '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . $args['in_reply_to']['mention'] . PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL : '' ); ?></textarea><br />
+				<div class="form-group<?php echo esc_attr( $args['blocks-everywhere'] ? ' blocks-everywhere iso-editor__loading' : '' ); ?>">
+					<textarea class="form-input friends-status-content<?php echo esc_attr( $args['blocks-everywhere'] ? ' blocks-everywhere-enabled' : '' ); ?>" name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( "What's on your mind, %s?", 'friends' ), wp_get_current_user()->display_name ) ); ?>"><?php echo wp_kses_post( ! empty( $args['in_reply_to'] ) ? ( $args['blocks-everywhere'] ? '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . $args['in_reply_to']['mention'] . PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL : $args['in_reply_to']['mention'] . ' ' ) : '' ); ?></textarea><br />
 					<?php
 					do_action( 'friends_post_status_form' );
 					?>
