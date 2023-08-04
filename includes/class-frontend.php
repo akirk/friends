@@ -1280,6 +1280,8 @@ class Frontend {
 		if ( ! $query->is_singular && ! $query->is_author ) {
 			// This is the main friends page.
 			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
+			$hide_from_friends_page = array_diff( array_map( 'intval', (array) $hide_from_friends_page ), array( 0 ) );
+
 			if ( $hide_from_friends_page ) {
 				$query->set( 'author__not_in', $hide_from_friends_page );
 			}
