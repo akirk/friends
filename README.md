@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.7.5
+- Stable tag: 2.7.6
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 2.7.6
+- Added an option to enable/disable Gutenberg on the frontend ([#245])
+- Fixed that a faulty "hide from friends page" value could cause missing posts in the main feed
+- Change so that the [Send to E-Reader plugin] can enable downloading the ePub from a special URL
 
 ### 2.7.5
 - Fix following users from Enable Mastodon Apps
@@ -255,6 +260,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#245]: https://github.com/akirk/friends/pull/245
+[#243]: https://github.com/akirk/friends/pull/243
 [#241]: https://github.com/akirk/friends/pull/241
 [#240]: https://github.com/akirk/friends/pull/240
 [#239]: https://github.com/akirk/friends/pull/239
