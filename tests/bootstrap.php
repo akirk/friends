@@ -25,21 +25,21 @@ if ( ! file_exists( "{$_tests_dir}/includes/functions.php" ) ) {
 // Give access to tests_add_filter() function.
 require_once "{$_tests_dir}/includes/functions.php";
 
-require_once dirname( __DIR__, 1 ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
+require_once dirname( __DIR__ ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
 
 /**
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
-	$activitypub_plugin = dirname( __DIR__, 2 ) . '/activitypub/activitypub.php';
-	$activitypub_plugin_alternate = dirname( __DIR__, 2 ) . '/wordpress-activitypub/activitypub.php';
+	$activitypub_plugin = dirname( dirname( __DIR__ ) ) . '/activitypub/activitypub.php'; // phpcs:ignore
+	$activitypub_plugin_alternate = dirname( dirname( __DIR__ ) ) . '/wordpress-activitypub/activitypub.php'; // phpcs:ignore
 	if ( file_exists( $activitypub_plugin ) ) {
 		require $activitypub_plugin;
 	} elseif ( file_exists( $activitypub_plugin_alternate ) ) {
 		require $activitypub_plugin_alternate;
 	}
 
-	require dirname( __DIR__, 1 ) . '/friends.php';
+	require dirname( __DIR__ ) . '/friends.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
