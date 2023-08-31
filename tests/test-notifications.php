@@ -51,7 +51,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$that = $this;
 		add_filter(
 			'notify_user_about_friend_post',
-			function( $do_send ) use ( $that ) {
+			function ( $do_send ) use ( $that ) {
 				$that->assertTrue( $do_send );
 				return $do_send;
 			},
@@ -59,7 +59,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 		add_filter(
 			'friends_send_mail',
-			function( $do_send, $to, $subject ) use ( $that ) {
+			function ( $do_send, $to, $subject ) use ( $that ) {
 				// translators: %1$s is the site name, %2$s is the subject.
 				$that->assertEquals( $subject, sprintf( _x( '[%1$s] %2$s', 'email subject', 'friends' ), 'friend.local', 'First Friend Post' ) );
 				$that->assertEquals( $to, \WP_TESTS_EMAIL );
@@ -74,7 +74,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		update_option( 'home', 'http://me.local' );
 
 		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Feed_Parser_SimplePie;
+		$parser = new Feed_Parser_SimplePie();
 
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
@@ -100,7 +100,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$that = $this;
 		add_filter(
 			'notify_user_about_friend_post',
-			function( $do_send ) use ( $that ) {
+			function ( $do_send ) use ( $that ) {
 				$that->assertFalse( $do_send );
 				return $do_send;
 			},
@@ -108,12 +108,12 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 
 		if ( ! class_exists( 'SimplePie', false ) ) {
-			require_once( ABSPATH . WPINC . '/class-simplepie.php' );
+			require_once ABSPATH . WPINC . '/class-simplepie.php';
 		}
 		update_option( 'home', 'http://me.local' );
 
 		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Feed_Parser_SimplePie;
+		$parser = new Feed_Parser_SimplePie();
 
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
@@ -143,7 +143,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$that = $this;
 		add_filter(
 			'notify_user_about_friend_request',
-			function( $do_send ) use ( $that ) {
+			function ( $do_send ) use ( $that ) {
 				$that->assertFalse( $do_send );
 				return $do_send;
 			},
@@ -172,7 +172,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$that = $this;
 		add_filter(
 			'notify_user_about_friend_request',
-			function( $do_send ) use ( $that ) {
+			function ( $do_send ) use ( $that ) {
 				$that->assertTrue( $do_send );
 				return $do_send;
 			},
@@ -180,7 +180,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 		add_filter(
 			'friends_send_mail',
-			function( $do_send, $to, $subject ) use ( $that ) {
+			function ( $do_send, $to, $subject ) use ( $that ) {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s sent a Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
@@ -211,7 +211,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$that = $this;
 		add_filter(
 			'friends_send_mail',
-			function( $do_send, $to, $subject ) use ( $that ) {
+			function ( $do_send, $to, $subject ) use ( $that ) {
 				// translators: %s is a user display name.
 				$partial_subject = sprintf( __( '%s accepted your Friend Request', 'friends' ), 'me.local' );
 				// translators: %1$s is the site name, %2$s is the subject.
@@ -249,7 +249,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$that = $this;
 		add_filter(
 			'notify_user_about_keyword_post',
-			function( $do_send ) use ( $that ) {
+			function ( $do_send ) use ( $that ) {
 				$that->assertTrue( $do_send );
 				return $do_send;
 			},
@@ -257,7 +257,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 		add_filter(
 			'notify_user_about_friend_post',
-			function( $do_send ) use ( $that ) {
+			function ( $do_send ) use ( $that ) {
 				// This should be never reached because the notification above happened.
 				$that->assertTrue( false );
 				return $do_send;
@@ -267,7 +267,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$keyword = 'private';
 		add_filter(
 			'friends_send_mail',
-			function( $do_send, $to, $subject ) use ( $that, $keyword ) {
+			function ( $do_send, $to, $subject ) use ( $that, $keyword ) {
 				// translators: %s is a keyword string specified by the user.
 				$keyword_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
 				// translators: %1$s is the site name, %2$s is the subject.
@@ -293,7 +293,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 
 		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Feed_Parser_SimplePie;
+		$parser = new Feed_Parser_SimplePie();
 
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(

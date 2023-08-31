@@ -560,7 +560,7 @@ class Frontend {
 	 *
 	 * @return    array|WP_Error  The in reply to metadata.
 	 */
-	function get_in_reply_to_metadata( $url ) {
+	public function get_in_reply_to_metadata( $url ) {
 		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $url );
 		if ( is_wp_error( $meta ) ) {
 			return $meta;
@@ -585,13 +585,12 @@ class Frontend {
 			'author'  => $meta['attributedTo'],
 			'mention' => $mention,
 		);
-
 	}
 
 	/**
 	 * The Ajax function to fill the in-reply-to-preview.
 	 */
-	function ajax_in_reply_to_preview() {
+	public function ajax_in_reply_to_preview() {
 		$url = wp_unslash( $_POST['url'] );
 
 		if ( ! wp_parse_url( $url ) ) {
@@ -610,7 +609,7 @@ class Frontend {
 	/**
 	 * The Ajax function to autocomplete search.
 	 */
-	function ajax_autocomplete() {
+	public function ajax_autocomplete() {
 		$q = wp_unslash( $_POST['q'] );
 		$users = User_Query::search( '*' . $q . '*' );
 		$results = array();
@@ -625,13 +624,12 @@ class Frontend {
 		}
 
 		wp_send_json_success( implode( PHP_EOL, $results ) );
-
 	}
 
 	/**
 	 * The Ajax function to load comments.
 	 */
-	function ajax_load_comments() {
+	public function ajax_load_comments() {
 		if ( ! isset( $_POST['post_id'] ) || ! intval( $_POST['post_id'] ) ) {
 			wp_send_json_error();
 			exit;
@@ -759,7 +757,7 @@ class Frontend {
 			add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 			add_filter(
 				'wp_feed_options',
-				function( $feed ) {
+				public function ( $feed ) {
 					$feed->enable_cache( false );
 				}
 			);
@@ -788,7 +786,7 @@ class Frontend {
 	 *
 	 * @return     string  The modified title.
 	 */
-	function header_widget_title( $title ) {
+	public function header_widget_title( $title ) {
 		$title = '<a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $title ) . '</a>';
 		if ( $this->author ) {
 			$title .= ' &raquo; ' . '<a href="' . esc_url( $this->author->get_local_friends_page_url() ) . '">' . esc_html( $this->author->display_name ) . '</a>';
@@ -808,7 +806,7 @@ class Frontend {
 	 * @param      array  $html_attributes    HTML attributes.
 	 * @param      User   $friend_user  The friend user.
 	 */
-	function link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
+	public function link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
 		echo wp_kses(
 			self::get_link( $url, $text, $html_attributes, $friend_user ),
 			array(
@@ -1086,7 +1084,6 @@ class Frontend {
 		}
 
 		return false;
-
 	}
 
 	/**

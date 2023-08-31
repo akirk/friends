@@ -189,21 +189,21 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $meta;
 	}
 
-	public function friends_activitypub_metadata( $array, $url ) {
+	public function friends_activitypub_metadata( $ret, $url ) {
 		$meta = self::get_metadata( $url );
 		if ( is_null( $meta ) ) {
-			return $array;
+			return $ret;
 		}
 		if ( is_wp_error( $meta ) ) {
-			if ( ! empty( $array ) ) {
-				return $array;
+			if ( ! empty( $ret ) ) {
+				return $ret;
 			}
 			return $meta;
 		}
-		return array_merge( $array, $meta );
+		return array_merge( $ret, $meta );
 	}
 
-	function register_post_meta() {
+	public function register_post_meta() {
 		register_post_meta(
 			Friends::CPT,
 			self::SLUG,
@@ -215,7 +215,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 	}
 
-	function feed_item_allow_set_metadata( $verdict, $key, $value ) {
+	public function feed_item_allow_set_metadata( $verdict, $key, $value ) {
 		if ( self::SLUG === $key && ! empty( $value ) ) {
 			// We don't want to insert empty post meta.
 			return true;
@@ -500,29 +500,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
 	}
 
-	public function activitypub_post_in_reply_to( $array, $post ) {
+	public function activitypub_post_in_reply_to( $ret, $post ) {
 		if ( get_post_meta( $post->ID, 'activitypub_in_reply_to', true ) ) {
-			$array['inReplyTo'] = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
+			$ret['inReplyTo'] = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
 		}
 
-		return $array;
+		return $ret;
 	}
 
 
 	/**
 	 * Handles "Create" requests
 	 *
-	 * @param  array  $object  The activity object.
+	 * @param  array  $activity  The activity object.
 	 * @param  int    $user_id The id of the local blog user.
 	 * @param string $type  The type of the activity.
 	 */
-	public function handle_received_activity( $object, $user_id, $type ) {
+	public function handle_received_activity( $activity, $user_id, $type ) {
 		if ( 'undo' === $type ) {
-			if ( ! isset( $object['object'] ) ) {
+			if ( ! isset( $activity['object'] ) ) {
 				return false;
 			}
-			$object = $object['object'];
-			switch ( strtolower( $object['type'] ) ) {
+			$activity = $activity['object'];
+			switch ( strtolower( $activity['type'] ) ) {
 				case 'like':
 					$type = 'unlike';
 					break;
@@ -548,7 +548,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		) ) {
 			return false;
 		}
-		$actor_url = $object['actor'];
+		$actor_url = $activity['actor'];
 		$user_feed = false;
 		if ( Friends::check_url( $actor_url ) ) {
 			// Let's check if we follow this actor. If not it might be a different URL representation.
@@ -571,9 +571,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
-			if ( isset( $object['object']['tag'] ) && is_array( $object['object']['tag'] ) ) {
+			if ( isset( $activity['object']['tag'] ) && is_array( $activity['object']['tag'] ) ) {
 				$my_activitypub_id = \get_author_posts_url( $user_id );
-				foreach ( $object['object']['tag'] as $tag ) {
+				foreach ( $activity['object']['tag'] as $tag ) {
 					if ( isset( $tag['type'] ) && 'Mention' === $tag['type'] && isset( $tag['href'] ) && $tag['href'] === $my_activitypub_id ) {
 						// It was a mention.
 						$user_feed = $this->get_external_mentions_feed();
@@ -589,7 +589,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 
-		$item = $this->process_incoming_activity( $type, $object, $user_id, $user_feed );
+		$item = $this->process_incoming_activity( $type, $activity, $user_id, $user_feed );
 
 		if ( $item instanceof Feed_Item ) {
 			$this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
@@ -603,25 +603,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * Process an incoming activity.
 	 *
 	 * @param string    $type The type of the activity.
-	 * @param array     $object The activity object.
+	 * @param array     $activity The activity object.
 	 * @param int       $user_id The id of the local user if any.
 	 * @param User_Feed $user_feed The user feed.
 	 * @return Feed_Item|null The feed item or null if it's not a valid activity.
 	 */
-	private function process_incoming_activity( $type, $object, $user_id, $user_feed ) {
+	private function process_incoming_activity( $type, $activity, $user_id, $user_feed ) {
 		switch ( $type ) {
 			case 'create':
-				return $this->handle_incoming_create( $object['object'] );
+				return $this->handle_incoming_create( $activity['object'] );
 			case 'delete':
-				return $this->handle_incoming_delete( $object['object'] );
+				return $this->handle_incoming_delete( $activity['object'] );
 			case 'announce':
-				return $this->handle_incoming_announce( $object['object'], $user_id, $object['published'] );
+				return $this->handle_incoming_announce( $activity['object'], $user_id, $activity['published'] );
 			case 'unannounce':
-				return $this->handle_incoming_unannounce( $object['object'], $user_feed );
+				return $this->handle_incoming_unannounce( $activity['object'], $user_feed );
 			case 'like':
-				return $this->handle_incoming_like( $object, $user_id );
+				return $this->handle_incoming_like( $activity, $user_id );
 			case 'unlike':
-				return $this->handle_incoming_unlike( $object, $user_id );
+				return $this->handle_incoming_unlike( $activity, $user_id );
 		}
 		return null;
 	}
@@ -640,30 +640,30 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * We received a post for a feed, handle it.
 	 *
-	 * @param      array $object     The object from ActivityPub.
+	 * @param      array $activity     The object from ActivityPub.
 	 */
-	private function handle_incoming_create( $object ) {
-		$permalink = $object['id'];
-		if ( isset( $object['url'] ) ) {
-			$permalink = $object['url'];
+	private function handle_incoming_create( $activity ) {
+		$permalink = $activity['id'];
+		if ( isset( $activity['url'] ) ) {
+			$permalink = $activity['url'];
 		}
 
 		$data = array(
 			'permalink'    => $permalink,
-			'content'      => $object['content'],
-			'post_format'  => $this->map_type_to_post_format( $object['type'] ),
-			'date'         => $object['published'],
-			'_external_id' => $object['id'],
+			'content'      => $activity['content'],
+			'post_format'  => $this->map_type_to_post_format( $activity['type'] ),
+			'date'         => $activity['published'],
+			'_external_id' => $activity['id'],
 			self::SLUG     => array(),
 		);
 
-		if ( isset( $object['reblog'] ) && $object['reblog'] ) {
-			$data[ self::SLUG ]['reblog'] = $object['reblog'];
+		if ( isset( $activity['reblog'] ) && $activity['reblog'] ) {
+			$data[ self::SLUG ]['reblog'] = $activity['reblog'];
 		}
 
-		if ( isset( $object['attributedTo'] ) ) {
-			$meta = $this->get_metadata( $object['attributedTo'] );
-			$this->log( 'Attributed to ' . $object['attributedTo'], compact( 'meta' ) );
+		if ( isset( $activity['attributedTo'] ) ) {
+			$meta = $this->get_metadata( $activity['attributedTo'] );
+			$this->log( 'Attributed to ' . $activity['attributedTo'], compact( 'meta' ) );
 
 			if ( $meta && ! is_wp_error( $meta ) ) {
 				if ( isset( $meta['name'] ) ) {
@@ -693,12 +693,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 
-		if ( isset( $object['application'] ) && $object['application'] ) {
-			$data[ self::SLUG ]['application'] = $object['application'];
+		if ( isset( $activity['application'] ) && $activity['application'] ) {
+			$data[ self::SLUG ]['application'] = $activity['application'];
 		}
 
-		if ( ! empty( $object['attachment'] ) ) {
-			foreach ( $object['attachment'] as $attachment ) {
+		if ( ! empty( $activity['attachment'] ) ) {
+			foreach ( $activity['attachment'] as $attachment ) {
 				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
 					continue;
 				}
@@ -738,12 +738,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * We received a delete of a post, handle it.
 	 *
-	 * @param      array $object     The object from ActivityPub.
+	 * @param      array $activity     The object from ActivityPub.
 	 */
-	private function handle_incoming_delete( $object ) {
-		$permalink = $object['id'];
-		if ( isset( $object['url'] ) ) {
-			$permalink = $object['url'];
+	private function handle_incoming_delete( $activity ) {
+		$permalink = $activity['id'];
+		if ( isset( $activity['url'] ) ) {
+			$permalink = $activity['url'];
 		}
 
 		$this->log( 'Received delete for ' . $permalink );
@@ -771,7 +771,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 		return false;
-
 	}
 
 	/**
@@ -844,12 +843,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $display_name;
 	}
 
-	public function handle_incoming_like( $object, $user_id ) {
-		$post_id = Feed::url_to_postid( $object['object'] );
+	public function handle_incoming_like( $activity, $user_id ) {
+		$post_id = Feed::url_to_postid( $activity['object'] );
 		if ( ! $post_id ) {
 			return false;
 		}
-		$taxonomy_username = 'ap-' . crc32( $object['actor'] );
+		$taxonomy_username = 'ap-' . crc32( $activity['actor'] );
 
 		// Allow setting the term with its meta.
 		$taxonomy = Reactions::register_user_taxonomy( $taxonomy_username );
@@ -872,18 +871,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 
-		update_term_meta( $term_id, 'url', $object['actor'] );
+		update_term_meta( $term_id, 'url', $activity['actor'] );
 
 		return $term_id;
 	}
 
-	public function handle_incoming_unlike( $object, $user_id ) {
-		$post_id = Feed::url_to_postid( $object['object'] );
+	public function handle_incoming_unlike( $activity, $user_id ) {
+		$post_id = Feed::url_to_postid( $activity['object'] );
 		if ( ! $post_id ) {
 			return false;
 		}
 
-		$taxonomy_username = 'ap-' . crc32( $object['actor'] );
+		$taxonomy_username = 'ap-' . crc32( $activity['actor'] );
 
 		// Allow removing the term.
 		Reactions::register_user_taxonomy( $taxonomy_username );
@@ -1116,7 +1115,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$protected_tags = array();
 		$the_content = preg_replace_callback(
 			'#<a.*?href=[^>]+>.*?</a>#i',
-			function( $m ) use ( &$protected_tags ) {
+			function ( $m ) use ( &$protected_tags ) {
 				$c = count( $protected_tags );
 				$protect = '!#!#PROTECT' . $c . '#!#!';
 				$protected_tags[ $protect ] = $m[0];
@@ -1724,7 +1723,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param mixed $actor The actor as URL or username.
 	 * @return mixed The potentially added metadata for example domains.
 	 */
-	function disable_webfinger_for_example_domains( $metadata, $actor ) {
+	public function disable_webfinger_for_example_domains( $metadata, $actor ) {
 		if ( ! $metadata ) {
 			$username = null;
 			$domain = null;

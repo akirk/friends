@@ -110,7 +110,7 @@ class FeedTest extends \WP_UnitTestCase {
 	 *
 	 * @throws \Exception Relaying any exception.
 	 */
-	function get_rss2( $url ) {
+	public function get_rss2( $url ) {
 		$display_errors = ini_get( 'display_errors' );
 		ini_set( 'display_errors', 0 );
 
@@ -119,13 +119,13 @@ class FeedTest extends \WP_UnitTestCase {
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
-			require( ABSPATH . 'wp-includes/feed-rss2.php' );
+			require ABSPATH . 'wp-includes/feed-rss2.php';
 			$out = ob_get_clean();
 			ini_set( 'display_errors', $display_errors );
 		} catch ( \Exception $e ) {
 			$out = ob_get_clean();
 			ini_set( 'display_errors', $display_errors );
-			throw($e);
+			throw $e;
 		}
 		return $out;
 	}
@@ -406,7 +406,7 @@ class FeedTest extends \WP_UnitTestCase {
 	public function get_sorted_feeds( $feeds ) {
 		usort(
 			$feeds,
-			function( $a, $b ) {
+			function ( $a, $b ) {
 				$c = strcmp( $a->get_next_poll(), $b->get_next_poll() );
 				if ( 0 !== $c ) {
 					return $c;
@@ -509,7 +509,7 @@ class FeedTest extends \WP_UnitTestCase {
 		}
 	}
 
-	function test_external_comments() {
+	public function test_external_comments() {
 		$zylstra = __DIR__ . '/data/zylstra.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $zylstra );
 
@@ -525,7 +525,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/feed/', get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true ) );
 	}
 
-	function test_global_retention_count() {
+	public function test_global_retention_count() {
 		$this->assertTrue( Friends::get_retention_number() > 10 );
 		$user = new User( $this->friend_id );
 

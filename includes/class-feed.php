@@ -1040,7 +1040,7 @@ class Feed {
 
 		if ( ! $has_self && class_exists( '\DOMXpath' ) ) {
 			// Convert to a DomDocument and silence the errors while doing so.
-			$doc = new \DomDocument;
+			$doc = new \DomDocument();
 			set_error_handler( '__return_null' );
 			$doc->loadHTML( $content );
 			restore_error_handler();

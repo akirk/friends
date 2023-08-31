@@ -121,13 +121,13 @@ class APITest extends Friends_TestCase_Cache_HTTP {
 		// Nasty hack! In the future it would better to leverage do_feed( 'rss2' ).
 		global $post;
 		try {
-			require( ABSPATH . 'wp-includes/feed-rss2.php' );
+			require ABSPATH . 'wp-includes/feed-rss2.php';
 			$out = ob_get_clean();
 			ini_set( 'display_errors', $display_errors );
 		} catch ( \Exception $e ) {
 			$out = ob_get_clean();
 			ini_set( 'display_errors', $display_errors );
-			throw($e);
+			throw $e;
 		}
 		$file->body = $out;
 		return $file;

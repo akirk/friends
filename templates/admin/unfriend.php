@@ -24,7 +24,6 @@ if ( is_multisite() ) {
 		$args['friend']->user_login
 	);
 }
-$numposts = count( $args['friend']->get_all_post_ids() );
 $numfeeds = count( $args['friend']->get_active_feeds() );
 
 ?>
@@ -47,8 +46,8 @@ $numfeeds = count( $args['friend']->get_active_feeds() );
 			echo esc_html(
 				sprintf(
 					/* translators: %s: Number of posts. */
-					_n( '%s post', '%s posts', $numposts ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-					number_format_i18n( $numposts )
+					_n( '%s post', '%s posts', $args['friend_posts'] ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					number_format_i18n( $args['friend_posts'] )
 				)
 			);
 			?>

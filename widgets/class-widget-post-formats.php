@@ -97,7 +97,6 @@ class Widget_Post_Formats extends \WP_Widget {
 		<?php endforeach; ?>
 		</ul></p>
 		<?php
-
 	}
 
 	/**

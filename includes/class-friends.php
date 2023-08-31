@@ -314,7 +314,7 @@ class Friends {
 			'subscription'           => _x( 'Subscription', 'User role', 'friends' ),
 		);
 
-		$roles = new \WP_Roles;
+		$roles = new \WP_Roles();
 
 		foreach ( $default_roles as $type => $name ) {
 			$role = false;
@@ -987,7 +987,7 @@ class Friends {
 		$post_formats = get_post_format_slugs();
 		$filter_by_post_format = array_filter(
 			$filter_by_post_format,
-			function( $post_format ) use ( $post_formats ) {
+			function ( $post_format ) use ( $post_formats ) {
 				return in_array( $post_format, $post_formats, true );
 			}
 		);
@@ -1007,7 +1007,7 @@ class Friends {
 			$post_format_query['operator'] = 'NOT IN';
 			$post_format_query['terms']    = array_values(
 				array_map(
-					function( $post_format ) {
+					function ( $post_format ) {
 						return 'post-format-' . $post_format;
 					},
 					array_diff( $post_formats, $filter_by_post_format )
@@ -1016,7 +1016,7 @@ class Friends {
 		} else {
 			$post_format_query['operator'] = 'IN';
 			$post_format_query['terms']    = array_map(
-				function( $post_format ) {
+				function ( $post_format ) {
 					return 'post-format-' . $post_format;
 				},
 				$filter_by_post_format

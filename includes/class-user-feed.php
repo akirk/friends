@@ -718,7 +718,7 @@ class User_Feed {
 		// Let's poll the oldest feeds first.
 		usort(
 			$due_feeds,
-			function( $a, $b ) {
+			function ( $a, $b ) {
 				return strcmp( $a->get_next_poll(), $b->get_next_poll() );
 			}
 		);

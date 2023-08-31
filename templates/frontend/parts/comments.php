@@ -16,4 +16,3 @@ $args['friends']->frontend->link(
 		'data-cnonce'    => wp_create_nonce( 'comments-' . get_the_ID() ),
 	)
 );
-

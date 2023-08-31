@@ -120,7 +120,6 @@ class Messages {
 				'label_count'               => _n_noop( 'Read (%s)', 'Read (%s)', 'friends' ),
 			)
 		);
-
 	}
 
 	/**

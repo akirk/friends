@@ -164,7 +164,6 @@ class Admin {
 				add_action( 'load-' . $page_type . '_page_unfriend', array( $this, 'process_admin_unfriend' ) );
 			}
 		}
-
 	}
 
 	/**
@@ -205,7 +204,6 @@ class Admin {
 			} );
 		</script>
 		<?php
-
 	}
 
 	/**
@@ -1574,8 +1572,8 @@ class Admin {
 
 		$args = array(
 			'friend'       => $friend,
-			'friend_posts' => $post_stats->post_count,
-			'total_size'   => $post_stats->total_size,
+			'friend_posts' => $post_stats['post_count'],
+			'total_size'   => $post_stats['total_size'],
 		);
 
 		Friends::template_loader()->get_template_part( 'admin/unfriend', null, $args );
@@ -2203,7 +2201,6 @@ class Admin {
 			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
 		}
 		exit;
-
 	}
 
 	/**
@@ -2259,7 +2256,7 @@ class Admin {
 	 * @return     array  The friend roles.
 	 */
 	public function get_friend_roles() {
-		$roles = new \WP_Roles;
+		$roles = new \WP_Roles();
 		$friend_roles = array();
 		foreach ( $roles->roles as $role => $data ) {
 			if ( isset( $data['capabilities']['friend'] ) ) {
@@ -2275,7 +2272,7 @@ class Admin {
 	 * @return     array  The associated roles.
 	 */
 	public static function get_associated_roles() {
-		$roles = new \WP_Roles;
+		$roles = new \WP_Roles();
 		$friend_roles = array();
 		foreach ( $roles->roles as $role => $data ) {
 			if ( isset( $data['capabilities']['friends_plugin'] ) ) {
@@ -2387,7 +2384,7 @@ class Admin {
 			}
 
 			$user->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
-			$accepted++;
+			++$accepted;
 		}
 
 		if ( ! $sendback ) {
@@ -2888,7 +2885,7 @@ class Admin {
 
 	public function get_missing_friends_plugin_roles() {
 		$missing = Friends::get_friends_plugin_roles();
-		$roles = new \WP_Roles;
+		$roles = new \WP_Roles();
 		foreach ( $roles->roles as $role => $data ) {
 			if ( isset( $data['capabilities']['friends_plugin'] ) ) {
 				foreach ( $missing as $k => $cap ) {
@@ -3010,5 +3007,4 @@ class Admin {
 
 		return sprintf( '#%1$d %2$s', $user->ID, $user->user_login );
 	}
-
 }

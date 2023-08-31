@@ -72,7 +72,7 @@ class MessagesTest extends Friends_TestCase_Cache_HTTP {
 
 		add_filter(
 			'user_has_cap',
-			function( $allcaps, $caps, $args, $user ) {
+			function ( $allcaps, $caps, $args, $user ) {
 				if ( $this->user_id === $user->ID && in_array( 'friend', $caps, true ) ) {
 					$allcaps['friend'] = true;
 				}

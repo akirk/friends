@@ -32,5 +32,4 @@ class Feed_Parser_Local_File extends Feed_Parser_SimplePie {
 
 		return $this->process_items( $feed->get_items(), $url );
 	}
-
 }

@@ -27,7 +27,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 		// Emulate HTTP requests to the REST API.
 		add_filter(
 			'pre_http_request',
-			function( $preempt, $request, $url ) {
+			function ( $preempt, $request, $url ) {
 				$p = wp_parse_url( $url );
 
 				$home_url = home_url();
@@ -319,7 +319,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 
 		add_filter(
 			'fake_http_response',
-			function( $response, $home_url, $url, $request ) use ( $my_url, $friend_url ) {
+			function ( $response, $home_url, $url, $request ) use ( $my_url, $friend_url ) {
 				if ( $home_url === $my_url ) {
 					return $response;
 				}
@@ -390,7 +390,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 
 		add_filter(
 			'fake_http_response',
-			function( $response, $home_url, $url, $request ) use ( $my_url, $friend_url ) {
+			function ( $response, $home_url, $url, $request ) use ( $my_url, $friend_url ) {
 				if ( $home_url === $my_url ) {
 					return $response;
 				}
