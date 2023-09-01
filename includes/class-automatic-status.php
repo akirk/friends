@@ -129,7 +129,7 @@ class Automatic_Status {
 	public function validate_drafts() {
 		add_filter(
 			'manage_edit-post_columns',
-			function( $columns ) {
+			function ( $columns ) {
 				unset( $columns['categories'] );
 				unset( $columns['tags'] );
 				unset( $columns['comments'] );
@@ -141,7 +141,7 @@ class Automatic_Status {
 
 		add_filter(
 			'post_row_actions',
-			function( $actions, $post ) {
+			function ( $actions, $post ) {
 				unset( $actions['view'], $actions['inline hide-if-no-js'] );
 				if ( 'publish' === $post->post_status ) {
 					$actions['publish'] = '<em>' . __( 'Published' ) . '</em>'; // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
@@ -271,7 +271,7 @@ class Automatic_Status {
 			);
 			foreach ( $post_ids as $post_id ) {
 				wp_publish_post( $post_id );
-				$done['published']++;
+				++$done['published'];
 			}
 
 			$sendback = add_query_arg( $done, $sendback );
@@ -286,7 +286,7 @@ class Automatic_Status {
 						'post_status' => 'private',
 					)
 				);
-				$done['privately-published']++;
+				++$done['privately-published'];
 			}
 
 			$sendback = add_query_arg( $done, $sendback );

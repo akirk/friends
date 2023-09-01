@@ -115,7 +115,7 @@ foreach ( $files as $file ) {
 }
 uksort(
 	$filters,
-	function( $a, $b ) use ( $filters ) {
+	function ( $a, $b ) use ( $filters ) {
 		if ( $filters[ $a ]['section'] === $filters[ $b ]['section'] ) {
 			return $a < $b ? -1 : 1;
 		}

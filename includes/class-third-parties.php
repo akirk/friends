@@ -48,7 +48,7 @@ class Third_Parties {
 	 *
 	 * @param mixed $value  Value of the option.
 	 */
-	function fx_private_site( $value ) {
+	public function fx_private_site( $value ) {
 		if ( $this->friends->access_control->feed_is_authenticated() ) {
 			$value['enable'] = false;
 		}

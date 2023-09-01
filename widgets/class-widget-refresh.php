@@ -84,4 +84,3 @@ class Widget_Refresh extends \WP_Widget {
 		register_widget( __CLASS__ );
 	}
 }
-

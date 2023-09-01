@@ -120,8 +120,8 @@ class Notifications {
 		ob_end_clean();
 
 		ob_start();
-		Friends::template_loader()->get_template_part( 'email/new-friend-post.text', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		Friends::template_loader()->get_template_part( 'email/new-friend-post-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();
 
@@ -169,8 +169,8 @@ class Notifications {
 		ob_end_clean();
 
 		ob_start();
-		Friends::template_loader()->get_template_part( 'email/keyword-match-post.text', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		Friends::template_loader()->get_template_part( 'email/keyword-match-post-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();
 
@@ -216,8 +216,8 @@ class Notifications {
 		ob_end_clean();
 
 		ob_start();
-		Friends::template_loader()->get_template_part( 'email/new-friend-request.text', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		Friends::template_loader()->get_template_part( 'email/new-friend-request-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();
 
@@ -256,8 +256,8 @@ class Notifications {
 		ob_end_clean();
 
 		ob_start();
-		Friends::template_loader()->get_template_part( 'email/accepted-friend-request.text', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		Friends::template_loader()->get_template_part( 'email/accepted-friend-request-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();
 
@@ -306,8 +306,8 @@ class Notifications {
 		ob_end_clean();
 
 		ob_start();
-		Friends::template_loader()->get_template_part( 'email/friend-message-received.text', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer.text' );
+		Friends::template_loader()->get_template_part( 'email/friend-message-received-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();
 
@@ -365,7 +365,7 @@ class Notifications {
 				}
 
 				$headers[]    = 'Content-type: text/html';
-				$alt_function = function( $mailer ) use ( $plain_text ) {
+				$alt_function = function ( $mailer ) use ( $plain_text ) {
 					$mailer->{'AltBody'} = $plain_text;
 				};
 				add_action(

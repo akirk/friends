@@ -21,7 +21,6 @@ class Virtual_User_Feed extends User_Feed {
 		$this->title = $title;
 	}
 	public function __toString() {
-
 	}
 	public function get_id() {
 		return 'virtual-user-feed-' . $this->friend_user->get_id();
@@ -88,5 +87,4 @@ class Virtual_User_Feed extends User_Feed {
 	}
 	public function update_last_log( $value ) {
 	}
-
 }

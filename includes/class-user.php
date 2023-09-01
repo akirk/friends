@@ -1145,7 +1145,7 @@ class User extends \WP_User {
 	 *
 	 * @return     string      The local friends page url.
 	 */
-	function get_local_friends_page_url( $post_id = null ) {
+	public function get_local_friends_page_url( $post_id = null ) {
 		$path = '/';
 		if ( $post_id ) {
 			$path = '/' . $post_id . '/';
@@ -1160,7 +1160,7 @@ class User extends \WP_User {
 	 *
 	 * @return     string      The local friends page url.
 	 */
-	function get_local_friends_page_post_format_url( $post_format ) {
+	public function get_local_friends_page_post_format_url( $post_format ) {
 		if ( is_array( $post_format ) ) {
 			$post_format = implode( ',', $post_format );
 		}
@@ -1174,7 +1174,7 @@ class User extends \WP_User {
 	 *
 	 * @return     string      The local friends page url.
 	 */
-	function get_local_friends_page_reaction_url( $slug ) {
+	public function get_local_friends_page_reaction_url( $slug ) {
 		return home_url( '/friends/' . $this->user_login . '/reaction' . $slug . '/' );
 	}
 
@@ -1185,7 +1185,7 @@ class User extends \WP_User {
 	 *
 	 * @return     string   The friend auth.
 	 */
-	function get_friend_auth( $validity = 3600 ) {
+	public function get_friend_auth( $validity = 3600 ) {
 		$friends = Friends::get_instance();
 		$friend_auth = $friends->access_control->get_friend_auth( $this, $validity );
 		if ( empty( $friend_auth ) ) {
@@ -1201,7 +1201,7 @@ class User extends \WP_User {
 	 *
 	 * @return     bool    True if the specified url is friend url, False otherwise.
 	 */
-	function is_friend_url( $url ) {
+	public function is_friend_url( $url ) {
 		if ( ! $this->user_url ) {
 			return false;
 		}
@@ -1243,33 +1243,33 @@ class User extends \WP_User {
 	 * @return int|bool User meta ID if the option didn't exist, true on successful update,
 	 *                  false on failure.
 	 */
-	function get_user_option( $option_name ) {
+	public function get_user_option( $option_name ) {
 		return get_user_option( $option_name, $this->ID );
 	}
 
 	/**
 	 * Wrap update_user_option
 	 *
-	 * @param string $option_name User option name.
-	 * @param mixed  $new_value    User option value.
-	 * @param bool   $global      Optional. Whether option name is global or blog specific.
-	 *                            Default false (blog specific).
+	 * @param string $option_name    User option name.
+	 * @param mixed  $new_value      User option value.
+	 * @param bool   $is_global      Optional. Whether option name is global or blog specific.
+	 *                               efault false (blog specific).
 	 * @return int|bool User meta ID if the option didn't exist, true on successful update,
 	 *                  false on failure.
 	 */
-	function update_user_option( $option_name, $new_value, $global = false ) {
-		return update_user_option( $this->ID, $option_name, $new_value, $global );
+	public function update_user_option( $option_name, $new_value, $is_global = false ) {
+		return update_user_option( $this->ID, $option_name, $new_value, $is_global );
 	}
 
 	/**
 	 * Wrap delete_user_option
 	 *
-	 * @param string $option_name User option name.
-	 * @param bool   $global      Optional. Whether option name is global or blog specific.
-	 *                            Default false (blog specific).
+	 * @param string $option_name    User option name.
+	 * @param bool   $is_global      Optional. Whether option name is global or blog specific.
+	 *                               Default false (blog specific).
 	 * @return bool True on success, false on failure.
 	 */
-	function delete_user_option( $option_name, $global = false ) {
-		return delete_user_option( $this->ID, $option_name, $global );
+	public function delete_user_option( $option_name, $is_global = false ) {
+		return delete_user_option( $this->ID, $option_name, $is_global );
 	}
 }

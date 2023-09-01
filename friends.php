@@ -95,34 +95,34 @@ add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Header', 'register' 
 // Register bundled parsers.
 add_action(
 	'friends_load_parsers',
-	function( Feed $friends_feed ) {
+	function ( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-simplepie.php';
-		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie );
+		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie() );
 	},
 	9
 );
 
 add_action(
 	'friends_load_parsers',
-	function( Feed $friends_feed ) {
+	function ( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-microformats.php';
-		$friends_feed->register_parser( Feed_Parser_Microformats::SLUG, new Feed_Parser_Microformats );
+		$friends_feed->register_parser( Feed_Parser_Microformats::SLUG, new Feed_Parser_Microformats() );
 	},
 	9
 );
 
 add_action(
 	'friends_load_parsers',
-	function( Feed $friends_feed ) {
+	function ( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-json-feed.php';
-		$friends_feed->register_parser( Feed_Parser_JSON_Feed::SLUG, new Feed_Parser_JSON_Feed );
+		$friends_feed->register_parser( Feed_Parser_JSON_Feed::SLUG, new Feed_Parser_JSON_Feed() );
 	},
 	9
 );
 
 add_action(
 	'friends_load_parsers',
-	function( \Friends\Feed $friends_feed ) {
+	function ( \Friends\Feed $friends_feed ) {
 		if ( ! class_exists( '\Activitypub\Activitypub' ) ) {
 			// ActivityPub plugin not active.
 			return;

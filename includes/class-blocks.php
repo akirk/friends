@@ -384,7 +384,7 @@ class Blocks {
 		if ( ! empty( $links ) ) {
 			$friends_base_url_endpoints = array_filter(
 				$links,
-				function( $link ) {
+				function ( $link ) {
 					return preg_match( '/rel="friends-base-url"/', $link );
 				}
 			);

@@ -20,20 +20,20 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 
 		// Manually activate the REST server.
 		global $wp_rest_server;
-		$wp_rest_server = new \Spy_REST_Server;
+		$wp_rest_server = new \Spy_REST_Server();
 		$this->server   = $wp_rest_server;
 		do_action( 'rest_api_init' );
 
 		add_filter(
 			'rest_url',
-			function() {
+			function () {
 				return get_option( 'home' ) . '/wp-json/';
 			}
 		);
 
 		add_filter(
 			'get_user_option_friends_rest_url',
-			function() {
+			function () {
 				return get_option( 'home' ) . '/wp-json/' . REST::PREFIX;
 			}
 		);
@@ -50,7 +50,7 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 		parent::tear_down();
 	}
 
-	public static function friends_host_is_valid( $return, $host ) {
+	public static function friends_host_is_valid( $ret, $host ) {
 		if ( in_array(
 			$host,
 			array(
@@ -63,7 +63,7 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 			// Hosts used for test cases.
 			return $host;
 		}
-			return $return;
+		return $ret;
 	}
 
 	public static function get_cache_filename( $url ) {

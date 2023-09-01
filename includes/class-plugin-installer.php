@@ -411,7 +411,6 @@ class Plugin_Installer {
 		);
 
 		wp_send_json( $json );
-
 	}
 
 	/**

@@ -142,13 +142,13 @@ if ( ! class_exists( 'Gamajo_Template_Loader_1_4_0' ) ) {
 		 *
 		 * @param string|array $template_names Template file(s) to search for, in order.
 		 * @param bool         $load           If true the template file will be loaded if it is found.
-		 * @param bool         $require_once   Whether to require_once or require. Default true.
+		 * @param bool         $use_require_once   Whether to require_once or require. Default true.
 		 *                                     Has no effect if $load is false.
 		 * @param array        $args Optional. Variables passed to template. Default empty array.
 		 *
 		 * @return string The template filename if one is located.
 		 */
-		public function locate_template( $template_names, $load = false, $require_once = true, $args = array() ) {
+		public function locate_template( $template_names, $load = false, $use_require_once = true, $args = array() ) {
 
 			// Use $template_names as a cache key - either first element of array or the variable itself if it's a string.
 			$cache_key = is_array( $template_names ) ? $template_names[0] : $template_names;
@@ -185,7 +185,7 @@ if ( ! class_exists( 'Gamajo_Template_Loader_1_4_0' ) ) {
 			if ( $load && $located ) {
 				global $wp_query;
 				$wp_query->query_vars['args'] = $args;
-				load_template( $located, $require_once, $args );
+				load_template( $located, $use_require_once, $args );
 			}
 
 			return $located;

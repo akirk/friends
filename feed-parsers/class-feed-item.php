@@ -183,18 +183,18 @@ class Feed_Item {
 	/**
 	 * Validate a given string.
 	 *
-	 * @param      string $string      The string.
+	 * @param      string $str         The string.
 	 * @param      int    $max_length  The maximum length of the string.
 	 * @param      string $error_code  The error code.
 	 *
 	 * @return     string|\WP_Error  The validated string.
 	 */
-	public function validate_string( $string, $max_length, $error_code ) {
-		if ( ! is_string( $string ) ) {
+	public function validate_string( $str, $max_length, $error_code ) {
+		if ( ! is_string( $str ) ) {
 			return new \WP_Error( $error_code, 'No string was supplied.' );
 		}
 
-		return rtrim( substr( trim( $string ), 0, $max_length ) );
+		return rtrim( substr( trim( $str ), 0, $max_length ) );
 	}
 
 	/**

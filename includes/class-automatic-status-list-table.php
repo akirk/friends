@@ -117,10 +117,10 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	 *
 	 * @param string[] $args  Associative array of URL parameters for the link.
 	 * @param string   $label Link text.
-	 * @param string   $class Optional. Class attribute. Default empty string.
+	 * @param string   $class_attribute Optional. Class attribute. Default empty string.
 	 * @return string The formatted link string.
 	 */
-	protected function get_edit_link( $args, $label, $class = '' ) {
+	protected function get_edit_link( $args, $label, $class_attribute = '' ) {
 		$args = array_merge(
 			array(
 				'post_type'   => 'post',
@@ -135,13 +135,13 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		$class_html   = '';
 		$aria_current = '';
 
-		if ( ! empty( $class ) ) {
+		if ( ! empty( $class_attribute ) ) {
 			$class_html = sprintf(
 				' class="%s"',
-				esc_attr( $class )
+				esc_attr( $class_attribute )
 			);
 
-			if ( 'current' === $class ) {
+			if ( 'current' === $class_attribute ) {
 				$aria_current = ' aria-current="page"';
 			}
 		}
@@ -163,8 +163,6 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	 * @param \WP_Post $post The current \WP_Post object.
 	 */
 	public function column_title( $post ) {
-		global $mode;
-
 		if ( current_user_can( 'read_post', $post->ID ) ) {
 			echo wp_kses(
 				get_the_content(),

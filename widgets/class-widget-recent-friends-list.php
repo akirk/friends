@@ -52,4 +52,3 @@ class Widget_Recent_Friends_List extends Widget_Base_Friends_List {
 		echo $args['after_widget'];
 	}
 }
-

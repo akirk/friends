@@ -56,4 +56,3 @@ class Widget_Starred_Friends_List extends Widget_Base_Friends_List {
 		echo $args['after_widget'];
 	}
 }
-

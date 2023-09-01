@@ -122,7 +122,6 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertEquals( $this->friend_name, get_post_meta( $posts[0]->ID, 'author', true ) );
 
 		delete_user_option( 'activitypub_friends_show_replies', $this->friend_id );
-
 	}
 
 	public function test_incoming_mention_of_others() {
@@ -259,7 +258,6 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		remove_all_filters( 'activitypub_cache_possible_friend_mentions' );
 
 		\wp_trash_post( $post );
-
 	}
 
 	/**
@@ -364,11 +362,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		parent::tear_down();
 	}
 
-	public static function friends_get_activitypub_metadata( $array, $url ) {
+	public static function friends_get_activitypub_metadata( $ret, $url ) {
 		if ( isset( self::$users[ $url ] ) ) {
 			return self::$users[ $url ];
 		}
-		return $array;
+		return $ret;
 	}
 
 	public function invalid_http_response() {

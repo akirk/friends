@@ -130,12 +130,11 @@ class User_Query extends \WP_User_Query {
 			$this->results[] = new Subscription( $term );
 			$this->total_users += 1;
 		}
-
 	}
 	public function sort( $field, $direction ) {
 		usort(
 			$this->results,
-			function( $a, $b ) use ( $field, $direction ) {
+			function ( $a, $b ) use ( $field, $direction ) {
 				$a = $a->$field;
 				$b = $b->$field;
 				if ( $a === $b ) {
@@ -244,7 +243,6 @@ class User_Query extends \WP_User_Query {
 		$search->add_virtual_subscriptions( $query );
 		$search->sort( $sort['orderby'], $sort['order'] );
 		return $search;
-
 	}
 
 	/**
@@ -300,5 +298,4 @@ class User_Query extends \WP_User_Query {
 		}
 		return $all_admin_users;
 	}
-
 }

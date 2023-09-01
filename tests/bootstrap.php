@@ -25,21 +25,21 @@ if ( ! file_exists( "{$_tests_dir}/includes/functions.php" ) ) {
 // Give access to tests_add_filter() function.
 require_once "{$_tests_dir}/includes/functions.php";
 
-require_once dirname( dirname( __FILE__ ) ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
+require_once dirname( __DIR__ ) . '/vendor/yoast/phpunit-polyfills/phpunitpolyfills-autoload.php';
 
 /**
  * Manually load the plugin being tested.
  */
 function _manually_load_plugin() {
-	$activitypub_plugin = dirname( dirname( dirname( __FILE__ ) ) ) . '/activitypub/activitypub.php';
-	$activitypub_plugin_alternate = dirname( dirname( dirname( __FILE__ ) ) ) . '/wordpress-activitypub/activitypub.php';
+	$activitypub_plugin = dirname( dirname( __DIR__ ) ) . '/activitypub/activitypub.php'; // phpcs:ignore
+	$activitypub_plugin_alternate = dirname( dirname( __DIR__ ) ) . '/wordpress-activitypub/activitypub.php'; // phpcs:ignore
 	if ( file_exists( $activitypub_plugin ) ) {
 		require $activitypub_plugin;
 	} elseif ( file_exists( $activitypub_plugin_alternate ) ) {
 		require $activitypub_plugin_alternate;
 	}
 
-	require dirname( dirname( __FILE__ ) ) . '/friends.php';
+	require dirname( __DIR__ ) . '/friends.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );
 
@@ -56,7 +56,7 @@ ob_end_clean();
 // Make sure to be able to query these hosts.
 add_filter(
 	'http_request_host_is_external',
-	function( $in, $host ) {
+	function ( $in, $host ) {
 		if ( in_array( $host, array( 'me.local', 'friend.local', 'mastodon.local' ) ) ) {
 			return true;
 		}
@@ -68,7 +68,7 @@ add_filter(
 
 add_filter(
 	'http_request_args',
-	function( $args, $url ) {
+	function ( $args, $url ) {
 		if ( in_array( parse_url( $url, PHP_URL_HOST ), array( 'me.local', 'friend.local', 'mastodon.local' ) ) ) {
 			$args['reject_unsafe_urls'] = false;
 		}
@@ -88,7 +88,7 @@ add_filter( 'friends_send_mail', '__return_false' );
 // Prevent PHP8 Deprecation notices.
 add_filter(
 	'the_author',
-	function( $display_name ) {
+	function ( $display_name ) {
 		if ( is_null( $display_name ) ) {
 			return '';
 		}
@@ -102,7 +102,7 @@ add_filter(
 if ( defined( 'TESTS_VERBOSE' ) && TESTS_VERBOSE ) {
 	add_filter(
 		'pre_update_option',
-		function( $value, $option ) {
+		function ( $value, $option ) {
 			if ( ! in_array( $option, array( 'rewrite_rules' ) ) ) {
 				echo PHP_EOL, $option, ' => ', $value, PHP_EOL;
 			}
@@ -114,7 +114,7 @@ if ( defined( 'TESTS_VERBOSE' ) && TESTS_VERBOSE ) {
 
 	add_action(
 		'update_user_metadata',
-		function( $meta_id, $object_id, $meta_key, $meta_value ) {
+		function ( $meta_id, $object_id, $meta_key, $meta_value ) {
 			echo PHP_EOL, $meta_key, ' (', $object_id, ') => ';
 			if ( is_numeric( $meta_value ) || is_string( $meta_value ) ) {
 				echo $meta_value, PHP_EOL;

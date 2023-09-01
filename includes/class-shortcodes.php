@@ -133,5 +133,4 @@ class Shortcodes {
 		$friends = User_Query::all_friends();
 		return $friends->get_total();
 	}
-
 }
