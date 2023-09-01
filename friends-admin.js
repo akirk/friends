@@ -140,43 +140,38 @@ jQuery( function ( $ ) {
 	} );
 
 	$( document ).on( 'click', 'a.preview-parser', function () {
+		const url = $( this ).closest( 'tbody' ).find( 'input.url' ).val();
+		if ( ! url ) {
+			return false;
+		}
 		this.href = this.href.replace(
 			/&parser(=[^&$]+)?([&$])/,
 			'&parser=' +
 				encodeURIComponent(
-					$( this ).closest( 'td' ).find( 'select' ).val()
+					$( this ).closest( 'tr' ).find( 'select' ).val()
 				) +
 				'&'
 		);
 		this.href = this.href.replace(
 			/&preview(=[^&$]+)?([&$])/,
-			'&preview=' +
-				encodeURIComponent(
-					$( this ).closest( 'tr' ).find( 'input.url' ).val()
-				) +
-				'&'
+			'&preview=' + encodeURIComponent( url ) + '&'
 		);
 	} );
 
 	$( document ).on( 'click', 'a.show-inactive-feeds', function () {
-		$( 'table.feed-table' )
-			.show()
-			.find( 'tr.inactive' )
-			.toggleClass( 'hidden' );
+		$( 'ul.feeds' ).show().find( 'li.inactive' ).toggleClass( 'hidden' );
 		return false;
 	} );
 
 	$( document ).on( 'click', 'a.show-log-lines', function () {
-		$( 'table.feed-table' )
-			.find( 'tr:visible + tr.lastlog' )
-			.toggleClass( 'hidden' );
+		$( 'ul.feeds li.active p.lastlog' ).toggleClass( 'hidden' );
 		return false;
 	} );
 
 	$( document ).on( 'click', 'a.add-feed', function () {
-		$( 'table.feed-table' )
+		$( 'ul.feeds' )
 			.removeClass( 'hidden' )
-			.find( 'tr.template' )
+			.find( 'li.template' )
 			.removeClass( 'hidden' )
 			.find( 'input:first' )
 			.focus();
