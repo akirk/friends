@@ -115,9 +115,19 @@ tr:hover .row-actions span.friends {
 	display: inline;
 }
 
-table.feed-table.widefat .check-column {
-	min-width: 5em;
-	font-weight: bold;
+ul.feeds li.inactive summary {
+	text-decoration: line-through;
+}
+ul.feeds li.active table {
+	border-left: 2px green solid;
+}
+
+ul.feeds li.inactive table {
+	border-left: 2px red solid;
+}
+
+ul.feeds li th {
+	padding-left: 1em;
 }
 
 table.reader-table .check-column {
@@ -158,7 +168,7 @@ button.friends-auth-link:hover span.dashicons {
 	color: #32c170;
 }
 
-tr.lastlog td {
+p.lastlog {
 	padding: .8em 1em;
 	margin-bottom: 2em;
 }
