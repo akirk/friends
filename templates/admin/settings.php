@@ -415,6 +415,7 @@ do_action( 'friends_settings_before_form' );
 					</fieldset>
 				</td>
 			</tr>
+			<?php if ( ! function_exists( 'classicpress_version' ) ) : ?>
 			<tr>
 				<td>
 					<fieldset>
@@ -425,6 +426,7 @@ do_action( 'friends_settings_before_form' );
 					</fieldset>
 				</td>
 			</tr>
+			<?php endif; ?>
 			<tr>
 				<th scope="row" rowspan="2"><?php esc_html_e( 'Feed Reader', 'friends' ); ?></th>
 				<td>
