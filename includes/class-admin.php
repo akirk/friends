@@ -2079,8 +2079,11 @@ class Admin {
 		$response = null;
 		$postdata = apply_filters( 'friends_add_friend_postdata', $_POST );
 		if ( ! empty( $postdata ) ) {
+			$postdata['multi_friend_url'] = $postdata['friend_url'];
 			if ( ! wp_verify_nonce( $postdata['_wpnonce'], 'add-friend' ) ) {
 				$response = new \WP_Error( 'invalid-nonce', __( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' ) );
+			} elseif ( ! empty( $postdata['multi_friend_url'] ) ) {
+				$response = $this->process_admin_add_friend_multi( $postdata );
 			} else {
 				$response = $this->process_admin_add_friend( $postdata );
 			}
@@ -2116,6 +2119,7 @@ class Admin {
 		$args = array(
 			'friend_url'              => '',
 			'add-friends-placeholder' => apply_filters( 'friends_add_friends_input_placeholder', __( 'Enter URL', 'friends' ) ),
+			'add-friends-multi-placeholder' => apply_filters( 'friends_add_friends_multi_input_placeholder', __( 'Enter URLs, separated by newlines', 'friends' ) ),
 		);
 
 		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {

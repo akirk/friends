@@ -50,5 +50,38 @@ $quick_subscribe = _x( 'Quick Subscribe', 'button', 'friends' );
 			</tr>
 		</tbody>
 	</table>
-
 </form>
+
+<details>
+	<summary>
+		<?php esc_html_e( 'Click here to subscribe to multiple feeds at once.', 'friends' ); ?>
+	</summary>
+
+	<h3><?php esc_html_e( 'Multisubscribe', 'friends' ); ?></h3>
+	<form method="post">
+		<?php wp_nonce_field( 'add-friend' ); ?>
+		<p>
+			<?php esc_html_e( 'To subscribe to multiple feeds at once, please enter the URLs into the textbox spearated by new lines.', 'friends' ); ?>
+		</p>
+		<?php do_action( 'friends_add_friend_multi_form_top', $args ); ?>
+
+		<table class="form-table">
+			<tbody>
+				<tr>
+					<th scope="row"><label for="friend_url"><?php esc_html_e( 'Site', 'friends' ); ?></label></th>
+					<td>
+						<textarea id="multi_friend_url" name="multi_friend_url" cols="60" rows="5" placeholder="<?php echo esc_attr( $args['add-friends-multi-placeholder'] ); ?>"></textarea>
+					</td>
+				</tr>
+				<tr>
+					<th></th>
+					<td>
+						<input type="submit" name="step2" class="button button-primary" value="<?php echo esc_attr_x( 'Multi-Subscribe »', 'button', 'friends' ); ?>" />
+
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+	</form>
+</details>
