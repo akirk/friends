@@ -46,16 +46,20 @@ class Blocks {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		if ( function_exists( 'register_block_type' ) ) {
-			add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
-			add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
-			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_start' ), 9, 2 );
-			add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
-			add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
-			add_filter( 'template_redirect', array( $this, 'handle_follow_me' ), 10, 2 );
-			add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
-			add_action( 'init', array( $this, 'register_blocks' ) );
+		if ( ! function_exists( 'register_block_type' ) ) {
+			return;
 		}
+		if ( function_exists( 'classicpress_version' ) ) {
+			return;
+		}
+		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
+		add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
+		add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_start' ), 9, 2 );
+		add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
+		add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
+		add_filter( 'template_redirect', array( $this, 'handle_follow_me' ), 10, 2 );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
+		add_action( 'init', array( $this, 'register_blocks' ) );
 	}
 
 	/**
