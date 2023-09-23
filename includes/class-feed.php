@@ -167,6 +167,10 @@ class Feed {
 				$items = new \WP_Error( 'empty-feed', __( "This feed doesn't contain any entries. There might be a problem parsing the feed.", 'friends' ) );
 			} else {
 				foreach ( $items as $key => $item ) {
+					if ( is_wp_error( $item ) ) {
+						unset( $items[ $key ] );
+						continue;
+					}
 					$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user, null );
 
 					if ( ! $item || $item->_feed_rule_delete ) {
