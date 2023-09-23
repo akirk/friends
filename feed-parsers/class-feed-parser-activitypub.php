@@ -1660,15 +1660,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $approved;
 	}
 
-	public function include_activitypub_model_comment() {
-		if ( ! class_exists( 'Activitypub\Model\Post' ) ) {
-			return false;
-		}
-
-		require_once __DIR__ . '/activitypub/class-comment.php';
-		return true;
-	}
-
 	public function comment_post( $comment_id, $comment_approved, $commentdata ) {
 		if ( isset( $commentdata['commentmeta']['protocol'] ) && 'activitypub' === $commentdata['commentmeta']['protocol'] ) {
 			// Don't act upon incoming comments via ActivityPub.
@@ -1685,11 +1676,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			// Don't act on non-local comments.
 			return;
 		}
-		if ( $this->include_activitypub_model_comment() ) {
-			$activitypub_comment = new \Activitypub\Model\Comment( $comment_id );
 
-			\wp_schedule_single_event( \time(), 'activitypub_send_post_activity', array( $activitypub_comment ) );
-		}
+		// TODO: in the ActivityPub plugin, we should be able to use the comment_post hook to send out the comment.
 	}
 
 	public function trashed_comment( $comment_id, $comment ) {
@@ -1709,11 +1697,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		if ( $this->include_activitypub_model_comment() ) {
-			$activitypub_comment = new \Activitypub\Model\Comment( $comment );
-
-			\wp_schedule_single_event( \time(), 'activitypub_send_delete_activity', array( $activitypub_comment ) );
-		}
+		// TODO: in the ActivityPub plugin, we should be able to use the trashed_comment hook to send out the comment deletion.
 	}
 
 	/**
