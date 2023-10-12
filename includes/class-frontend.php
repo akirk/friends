@@ -406,7 +406,7 @@ class Frontend {
 		$result = 'empty';
 
 		if ( ! empty( $_POST['in_reply_to'] ) ) {
-			$p['post_meta_input'] = array(
+			$p['meta_input'] = array(
 				'activitypub_in_reply_to' => $_POST['in_reply_to'],
 			);
 		}
