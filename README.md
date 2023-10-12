@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.7.8
+- Stable tag: 2.7.9
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -95,7 +95,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
-### 2.7.7
+### 2.7.9
+- Fix broken replies with version 1.0 of the ActivityPub plugin ([#257])
+
+### 2.7.8
 - Fix some incompatibilities with version 1.0 of the ActivityPub plugin ([#256])
 
 ### 2.7.7
@@ -269,6 +272,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add blog to blog messaging
 
 [Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#257]: https://github.com/akirk/friends/pull/257
 [#256]: https://github.com/akirk/friends/pull/256
 [#255]: https://github.com/akirk/friends/pull/255
 [#252]: https://github.com/akirk/friends/pull/252
