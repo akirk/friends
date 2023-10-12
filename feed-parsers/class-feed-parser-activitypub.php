@@ -503,6 +503,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function activitypub_post_in_reply_to( $ret, $post ) {
 		if ( get_post_meta( $post->ID, 'activitypub_in_reply_to', true ) ) {
 			$ret['inReplyTo'] = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
+			$ret['object']['inReplyTo'] = $ret['inReplyTo'];
 		}
 
 		return $ret;
@@ -584,7 +585,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
-			$this->log( 'We\'re not following ' . $actor_url );
 			// We're not following this user.
 			return false;
 		}
@@ -1573,21 +1573,21 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function activitypub_announce( $url, $user_id ) {
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Announce', false );
-		$activity->set_to( null );
-		$activity->set_cc( null );
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Announce' );
 		$activity->set_actor( $actor );
 		$activity->set_object( $url );
-		$activity->set_id( $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ) );
-		$inboxes = \Activitypub\get_follower_inboxes( $user_id );
 
-		$followers_url = \get_rest_url( null, '/activitypub/1.0/users/' . intval( $user_id ) . '/followers' );
+		$follower_inboxes  = \Activitypub\Collection\Followers::get_inboxes( $user_id );
+		$mentioned_inboxes = \Activitypub\Mention::get_inboxes( $activity->get_cc() );
 
-		foreach ( $inboxes as $inbox => $to ) {
-			$to = array_values( array_unique( $to ) );
-			$activity->set_to( $to );
+		$inboxes = array_merge( $follower_inboxes, $mentioned_inboxes );
+		$inboxes = array_unique( $inboxes );
 
-			\Activitypub\safe_remote_post( $inbox, $activity->to_json(), $user_id );
+		$json = $activity->to_json();
+
+		foreach ( $inboxes as $inbox ) {
+			safe_remote_post( $inbox, $json, $user_id );
 		}
 	}
 
