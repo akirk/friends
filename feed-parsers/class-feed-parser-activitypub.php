@@ -60,7 +60,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
 		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_mentions_user' ) );
-		\add_filter( 'activitypub_activity_object_array', array( $this, 'activitypub_post_in_reply_to' ), 10, 3 );
+		\add_filter( 'activitypub_post', array( $this, 'activitypub_post_in_reply_to' ), 10, 2 );
+		\add_filter( 'activitypub_activity_object_array', array( $this, 'activitypub_activity_object_array_in_reply_to' ), 10, 3 );
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
@@ -500,7 +501,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
 	}
 
-	public function activitypub_post_in_reply_to( $ret, $c, $url ) {
+	public function activitypub_post_in_reply_to( $ret, $post_id ) {
+		if ( get_post_meta( $post_id, 'activitypub_in_reply_to', true ) ) {
+			$ret['inReplyTo'] = get_post_meta( $post_id, 'activitypub_in_reply_to', true );
+			$ret['object']['inReplyTo'] = $ret['inReplyTo'];
+		}
+		return $ret;
+	}
+
+	public function activity_object_array_in_reply_to( $ret, $c, $url ) {
 		$post_id = url_to_postid( $url );
 		if ( get_post_meta( $post_id, 'activitypub_in_reply_to', true ) ) {
 			$ret['inReplyTo'] = get_post_meta( $post_id, 'activitypub_in_reply_to', true );
