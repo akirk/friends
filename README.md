@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.7.7
+- Stable tag: 2.7.8
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,9 +96,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ## Changelog
 
 ### 2.7.7
+- Fix some incompatibilities with version 1.0 of the ActivityPub plugin ([#256])
+
+### 2.7.7
 - No longer send your own comments out via ActivityPub, should be moved into the ActivityPub plugin ([#255])
-- Hide block options for ClassicPress ([#252]) 
-- Change feed table from horizontal to vertical ([#248]) 
+- Hide block options for ClassicPress ([#252])
+- Change feed table from horizontal to vertical ([#248])
 
 ### 2.7.6
 - Added an option to enable/disable Gutenberg on the frontend ([#245])
@@ -159,25 +162,25 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Support for external ActivityPub mentions ([#206])
 
 - ### 2.4.0
-- Reactions: Make it possible to issue reactions from outside ([#201]) 
-- Add Reblogging and Announce support for ActivityPub ([#168]) 
-- Add filters and metadata to make the  Enable Mastodon Apps plugin possible ([#200]) 
-- ActivityPub: Auto-approve comments by people you follow ([#199]) 
+- Reactions: Make it possible to issue reactions from outside ([#201])
+- Add Reblogging and Announce support for ActivityPub ([#168])
+- Add filters and metadata to make the  Enable Mastodon Apps plugin possible ([#200])
+- ActivityPub: Auto-approve comments by people you follow ([#199])
 - Add more explicit plugin recommendations ([#203] and [#202])
 
 ### 2.3.1
 - Remove stale ActivityPub version and use the information from WordPress.org ([#195])
 - Allow mixing of post formats on the frontend
 - Allow filtering notifications by the incoming feed ([#196])
-- Fix friends menu on other site ([#189]) 
-- Added missing space to generated SQL query ([#191]) 
+- Fix friends menu on other site ([#189])
+- Added missing space to generated SQL query ([#191])
 
 ### 2.3.0
-- The Wiki now contains a [Hooks Documentation](https://github.com/akirk/friends/wiki/Hooks) ([#167]) 
-- Frontend: Add CSS rule to fix odd resizing ([#166]) 
-- Frontend: Add a "Show hidden items" in the main feed header ([#172]) 
-- Frontend: Upgrade Blocks Everywhere, hide Quick Post Panel by default ([#180], [#183]) 
-- Frontend: Don't let the Post Kinds plugin interfere with the friends query ([#176]) 
+- The Wiki now contains a [Hooks Documentation](https://github.com/akirk/friends/wiki/Hooks) ([#167])
+- Frontend: Add CSS rule to fix odd resizing ([#166])
+- Frontend: Add a "Show hidden items" in the main feed header ([#172])
+- Frontend: Upgrade Blocks Everywhere, hide Quick Post Panel by default ([#180], [#183])
+- Frontend: Don't let the Post Kinds plugin interfere with the friends query ([#176])
 - Admin: Fix inconsistencies with links to the new friends list link ([#184]) props @pfefferle
 - Admin: Tweak text for "Show Hidden Items" setting, per-feed. ([#173]) props @alecmuffett
 
@@ -266,6 +269,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add blog to blog messaging
 
 [Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#256]: https://github.com/akirk/friends/pull/256
 [#255]: https://github.com/akirk/friends/pull/255
 [#252]: https://github.com/akirk/friends/pull/252
 [#248]: https://github.com/akirk/friends/pull/248
