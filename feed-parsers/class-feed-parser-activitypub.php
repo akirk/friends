@@ -501,9 +501,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
 	}
 
-	public function activitypub_post_in_reply_to( $ret, $post_id ) {
-		if ( get_post_meta( $post_id, 'activitypub_in_reply_to', true ) ) {
-			$ret['inReplyTo'] = get_post_meta( $post_id, 'activitypub_in_reply_to', true );
+	public function activitypub_post_in_reply_to( $ret, $post ) {
+		if ( get_post_meta( $post->ID, 'activitypub_in_reply_to', true ) ) {
+			$ret['inReplyTo'] = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
 			$ret['object']['inReplyTo'] = $ret['inReplyTo'];
 		}
 		return $ret;
