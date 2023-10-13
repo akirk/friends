@@ -322,6 +322,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $url;
 	}
 
+	/**
+	 * Get the inbox URL for an actor
+	 *
+	 * @param string $url The URL of the actor.
+	 * @return string|WP_Error
+	 */
+	public static function get_inbox_by_actor( $url ) {
+		$metadata = self::get_metadata( $url );
+		if ( \is_wp_error( $metadata ) ) {
+			return $metadata;
+		}
+
+		if ( isset( $metadata['endpoints'] ) && isset( $metadata['endpoints']['sharedInbox'] ) ) {
+			return $metadata['endpoints']['sharedInbox'];
+		}
+
+		if ( \array_key_exists( 'inbox', $metadata ) ) {
+			return $metadata['inbox'];
+		}
+
+		return new WP_Error( 'activitypub_no_inbox', \__( 'No "ActivityPub Inbox" found', 'friends' ), $metadata );
+	}
+
 	public static function get_metadata( $url ) {
 		if ( ! is_string( $url ) ) {
 			return array();
@@ -501,6 +524,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
 	}
 
+	/**
+	 * Set the inReplyTo property for the outgoing activity (object).
+	 *
+	 * @param  array   $ret The activity from the ActivityPub plugin.
+	 * @param WP_Post $post The post object.
+	 * @return mixed
+	 */
 	public function activitypub_post_in_reply_to( $ret, $post ) {
 		if ( get_post_meta( $post->ID, 'activitypub_in_reply_to', true ) ) {
 			$ret['inReplyTo'] = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
@@ -509,6 +539,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $ret;
 	}
 
+	/**
+	 * Set the inReplyTo property for the outgoing activity object.
+	 *
+	 * @param  array  $ret The activity object from the ActivityPub plugin.
+	 * @param object $c   The class.
+	 * @param string $url The URL of the post.
+	 * @return array The modified activity object.
+	 */
 	public function activitypub_activity_object_array_in_reply_to( $ret, $c, $url ) {
 		$post_id = url_to_postid( $url );
 		if ( get_post_meta( $post_id, 'activitypub_in_reply_to', true ) ) {
@@ -516,7 +554,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		return $ret;
 	}
-
 
 	/**
 	 * Handles "Create" requests
@@ -979,10 +1016,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $meta;
 		}
 		$to = $meta['id'];
-		$inbox = \Activitypub\get_inbox_by_actor( $to );
+		$inbox = self::get_inbox_by_actor( $to );
+		if ( is_wp_error( $inbox ) ) {
+			return $inbox;
+		}
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Follow', false );
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Follow' );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1052,10 +1093,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $meta;
 		}
 		$to = $meta['id'];
-		$inbox = \Activitypub\get_inbox_by_actor( $to );
+		$inbox = self::get_inbox_by_actor( $to );
+		if ( is_wp_error( $inbox ) ) {
+			return $inbox;
+		}
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Undo', false );
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Undo' );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1359,13 +1404,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param mixed $url The URL of the user.
 	 * @param mixed $external_post_id The post to like.
 	 * @param mixed $user_id The current user id.
-	 * @return void
+	 * @return void|WP_Error
 	 */
 	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
-		$inbox = \Activitypub\get_inbox_by_actor( $url );
+		$inbox = self::get_inbox_by_actor( $url );
+		if ( is_wp_error( $inbox ) ) {
+			return $inbox;
+		}
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Like', false );
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Like' );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1436,13 +1485,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param mixed $url The URL of the user.
 	 * @param mixed $external_post_id The post to like.
 	 * @param mixed $user_id The current user id.
-	 * @return void
+	 * @return void|WP_Error
 	 */
 	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
-		$inbox = \Activitypub\get_inbox_by_actor( $url );
+		$inbox = self::get_inbox_by_actor( $url );
+		if ( is_wp_error( $inbox ) ) {
+			return $inbox;
+		}
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Undo', false );
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Undo' );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1595,7 +1648,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$json = $activity->to_json();
 
 		foreach ( $inboxes as $inbox ) {
-			safe_remote_post( $inbox, $json, $user_id );
+			\Activitypub\safe_remote_post( $inbox, $json, $user_id );
 		}
 	}
 
@@ -1625,7 +1678,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function activitypub_unannounce( $url, $user_id ) {
 		$actor = \get_author_posts_url( $user_id );
 
-		$activity = new \Activitypub\Model\Activity( 'Undo', false );
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Undo' );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1638,15 +1692,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'id'     => $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ),
 			)
 		);
-		$inboxes = \Activitypub\get_follower_inboxes( $user_id );
 
-		$followers_url = \get_rest_url( null, '/activitypub/1.0/users/' . intval( $user_id ) . '/followers' );
+		$follower_inboxes  = \Activitypub\Collection\Followers::get_inboxes( $user_id );
+		$mentioned_inboxes = \Activitypub\Mention::get_inboxes( $activity->get_cc() );
 
-		foreach ( $inboxes as $inbox => $to ) {
-			$to = array_values( array_unique( $to ) );
-			$activity->set_to( $to );
+		$inboxes = array_merge( $follower_inboxes, $mentioned_inboxes );
+		$inboxes = array_unique( $inboxes );
 
-			\Activitypub\safe_remote_post( $inbox, $activity->to_json(), $user_id );
+		$json = $activity->to_json();
+
+		foreach ( $inboxes as $inbox ) {
+			\Activitypub\safe_remote_post( $inbox, $json, $user_id );
 		}
 	}
 
