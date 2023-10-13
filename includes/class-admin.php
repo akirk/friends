@@ -2471,11 +2471,12 @@ class Admin {
 	 * @return     string  The potentially overriden title.
 	 */
 	public function override_post_format_title( $title, $post_id = null ) {
-		if ( empty( $title ) && is_admin() && function_exists( 'get_current_screen' ) ) {
+		if ( $post_id && empty( $title ) && is_admin() && function_exists( 'get_current_screen' ) ) {
 			$screen = get_current_screen();
 			if ( $screen && 'edit-post' === $screen->id ) {
 				if ( 'status' === get_post_format() ) {
-					return get_the_excerpt();
+					$post = get_post( $post_id );
+					return wp_trim_excerpt( wp_strip_all_tags( $post->post_content ) );
 				}
 			}
 		}
