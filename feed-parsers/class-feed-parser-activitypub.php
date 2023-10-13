@@ -509,7 +509,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $ret;
 	}
 
-	public function activity_object_array_in_reply_to( $ret, $c, $url ) {
+	public function activitypub_activity_object_array_in_reply_to( $ret, $c, $url ) {
 		$post_id = url_to_postid( $url );
 		if ( get_post_meta( $post_id, 'activitypub_in_reply_to', true ) ) {
 			$ret['inReplyTo'] = get_post_meta( $post_id, 'activitypub_in_reply_to', true );
