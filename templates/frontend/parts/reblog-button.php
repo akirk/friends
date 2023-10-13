@@ -6,7 +6,7 @@
  * @package Friends
  */
 
-if ( get_the_author_meta( 'ID' ) === get_current_user_id() ) {
+if ( \Friends\User::get_post_author( get_post() )->ID === get_current_user_id() ) {
 	return;
 }
 ?>
