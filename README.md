@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.8.1
+- Stable tag: 2.8.2
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 2.8.2
+- Fix crash when using get_the_excerpt in the admin edit-post screen ([#260])
 
 ### 2.8.1
 - Fix broken outgoing activities with version 1.0 of the ActivityPub plugin ([#258])
@@ -278,6 +281,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add blog to blog messaging
 
 [Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#260]: https://github.com/akirk/friends/pull/260
 [#258]: https://github.com/akirk/friends/pull/258
 [#257]: https://github.com/akirk/friends/pull/257
 [#256]: https://github.com/akirk/friends/pull/256
