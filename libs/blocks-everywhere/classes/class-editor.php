@@ -17,6 +17,9 @@ class Editor {
 	 * Constructor
 	 */
 	public function __construct() {
+		if ( ! class_exists( 'WP_Theme_JSON_Data_Gutenberg' ) ) {
+			return null;
+		}
 		add_action( 'template_redirect', [ $this, 'setup_media' ] );
 		add_filter( 'block_editor_settings_all', [ $this, 'block_editor_settings_all' ] );
 		add_filter( 'should_load_block_editor_scripts_and_styles', '__return_true' );
