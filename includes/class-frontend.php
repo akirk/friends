@@ -47,6 +47,13 @@ class Frontend {
 	public $post_format = false;
 
 	/**
+	 * Whether a tag is being displayed
+	 *
+	 * @var string|false
+	 */
+	public $tag = false;
+
+	/**
 	 * Whether a reaciton is being displayed
 	 *
 	 * @var string|false
@@ -1194,6 +1201,17 @@ class Frontend {
 					if ( $tax_query ) {
 						$this->post_format = $post_format;
 					}
+					break;
+
+				case 'tag':
+					$this->tag = array_shift( $pagename_parts );
+					$tax_query = array(
+						array(
+							'taxonomy' => 'post_tag',
+							'field'    => 'slug',
+							'terms'    => array( $this->tag ),
+						),
+					);
 					break;
 
 				default: // Maybe an author.

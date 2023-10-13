@@ -61,6 +61,7 @@ class Feed {
 		add_filter( 'pre_option_rss_use_excerpt', array( $this, 'feed_use_excerpt' ), 90 );
 		add_filter( 'friends_early_modify_feed_item', array( $this, 'apply_early_feed_rules' ), 10, 3 );
 		add_filter( 'friends_modify_feed_item', array( $this, 'apply_feed_rules' ), 10, 3 );
+		add_filter( 'friends_modify_feed_item', array( $this, 'extract_tags' ) );
 
 		add_action( 'rss_item', array( $this, 'feed_additional_fields' ) );
 		add_action( 'rss2_item', array( $this, 'feed_additional_fields' ) );
@@ -445,6 +446,21 @@ class Feed {
 		return $catch_all;
 	}
 
+	public function extract_tags( $item ) {
+		// (?<!&) avoid to match HTML entities like &#039;.
+		// [\w-] to allow tags with dashes in them.
+		if ( \preg_match_all( '/(?<!&|\w)#([\w-]+)/ui', \wp_strip_all_tags( $item->post_content ), $match ) ) {
+			$tags = \implode( ', ', $match[1] );
+			if ( is_array( $item->tags ) ) {
+				$item->tags = array_merge( $item->tags, $tags );
+			} else {
+				$item->tags = $tags;
+			}
+		}
+
+		return $item;
+	}
+
 	/**
 	 * Gets the notification keywords.
 	 *
@@ -626,11 +642,13 @@ class Feed {
 						$modified_posts[] = $post_id;
 					}
 				}
+				wp_set_post_tags( $post_id, $item->tags );
 			} else {
 				$post_data['post_type']     = Friends::CPT;
 				$post_data['post_date_gmt'] = $item->date;
 				$post_data['post_content'] = str_replace( '\\', '\\\\', $post_data['post_content'] );
 				$post_data['meta_input'] = $item->meta;
+				$post_data['tags_input'] = $item->tags;
 
 				$post_id = $friend_user->insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {

@@ -56,6 +56,15 @@ if ( $args['friends']->frontend->reaction ) {
 			$title
 		)
 	);
+} elseif ( $args['friends']->frontend->tag ) {
+	echo esc_html(
+		sprintf(
+		// translators: %1$s is a hash tag, %2$s is a type of feed, e.g. "Main Feed".
+			_x( '#%1$s on %2$s', '#tag on feed', 'friends' ),
+			$args['friends']->frontend->tag,
+			$title
+		)
+	);
 } else {
 	echo esc_html( $title );
 }
