@@ -2476,7 +2476,7 @@ class Admin {
 			if ( $screen && 'edit-post' === $screen->id ) {
 				if ( 'status' === get_post_format() ) {
 					$post = get_post( $post_id );
-					return wp_trim_excerpt( wp_strip_all_tags( $post->post_content ) );
+					return wp_trim_words( wp_strip_all_tags( $post->post_content ) );
 				}
 			}
 		}
