@@ -755,8 +755,11 @@ class Feed {
 		if ( ! isset( $_GET['add-friend'] ) || isset( $_GET['page'] ) ) {
 			return;
 		}
-
-		wp_safe_redirect( add_query_arg( 'url', $_GET['add-friend'], self_admin_url( 'admin.php?page=add-friend' ) ) );
+		$add_friend = $_GET['add-friend'];
+		if ( 'web+follow' === substr( $add_friend, 0, 10 ) ) {
+			$add_friend = substr( $add_friend, 13 );
+		}
+		wp_safe_redirect( add_query_arg( 'url', $add_friend, self_admin_url( 'admin.php?page=add-friend' ) ) );
 		exit;
 	}
 

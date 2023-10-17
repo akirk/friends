@@ -28,6 +28,7 @@ $author_name = $args['friend_user']->display_name;
  * ```
  */
 $override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, get_the_id() );
+$reblogged_author = apply_filters( 'friends_reblogged_author', false, get_the_id() );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2">
 		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
@@ -49,6 +50,10 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 						– <?php echo esc_html( $override_author_name ); ?>
 					<?php endif; ?>
 				</a>
+				<?php if ( $reblogged_author ) : ?>
+					[<a href="web+follow://<?php echo esc_attr( $reblogged_author ); ?>"><?php esc_html_e( 'Follow', 'friends' ); ?></a>]
+				<?php endif; ?>
+
 			<?php else : ?>
 				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">
 					<strong><?php the_author(); ?></strong>

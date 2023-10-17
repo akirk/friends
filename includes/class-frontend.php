@@ -95,6 +95,7 @@ class Frontend {
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
+		add_filter( 'friends_boosted_author', array( $this, 'boosted_author' ), 10, 2 );
 	}
 
 	/**
