@@ -11,6 +11,7 @@ if ( $args['no_new_post_notification'] ) : ?>
 <?php endif; ?>
 
 <p class="description">
+	<span>
 	<?php
 	if ( $args['active_keywords'] ) {
 		echo esc_html(
@@ -25,6 +26,7 @@ if ( $args['no_new_post_notification'] ) : ?>
 		esc_html_e( 'No notification keywords have been specified.', 'friends' );
 	}
 	?>
+	</span>
 	<a href="<?php echo esc_url( $args['friends_settings_url'] ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( '(Edit)' ); ?></a>
 </p>
 

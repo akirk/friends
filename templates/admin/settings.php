@@ -75,7 +75,7 @@ do_action( 'friends_settings_before_form' );
 
 							<?php endforeach; ?>
 						</select>
-						<p class="description"><?php esc_html_e( 'Since there are multiple users on this site, we need to know which one should be considered the main one.', 'friends' ); ?> <?php esc_html_e( 'They can edit friends-related settings.', 'friends' ); ?> <?php esc_html_e( 'Whenever a friends-related action needs to be associated with a user, this one will be chosen.', 'friends' ); ?></p>
+						<p class="description"><span><?php esc_html_e( 'Since there are multiple users on this site, we need to know which one should be considered the main one.', 'friends' ); ?></span> <span><?php esc_html_e( 'They can edit friends-related settings.', 'friends' ); ?></span> <span><?php esc_html_e( 'Whenever a friends-related action needs to be associated with a user, this one will be chosen.', 'friends' ); ?></span></p>
 							<?php
 					} else {
 						$c = 0;
@@ -114,13 +114,14 @@ do_action( 'friends_settings_before_form' );
 					<fieldset>
 						<label for="require_codeword">
 							<input name="require_codeword" type="checkbox" id="require_codeword" value="1" <?php checked( '', $codeword_class ); ?>>
-							<?php esc_html_e( 'Require a code word to send you friend request', 'friends' ); ?>
+							<span><?php esc_html_e( 'Require a code word to send you friend request', 'friends' ); ?></span>
 						</label>
 					</fieldset>
 					<div id="codeword_options" class="<?php echo esc_attr( $codeword_class ); ?>">
 						<fieldset>
 							<label for="codeword">
-								<?php esc_html_e( 'This code word must be provided to send you a friend request:', 'friends' ); ?> <input name="codeword" type="text" id="codeword" placeholder="friends" value="<?php echo esc_attr( $args['codeword'] ); ?>" />
+								<span><?php esc_html_e( 'This code word must be provided to send you a friend request:', 'friends' ); ?></span>
+								<input name="codeword" type="text" id="codeword" placeholder="friends" value="<?php echo esc_attr( $args['codeword'] ); ?>" />
 							</label>
 							<p class="description">
 								<?php esc_html_e( "You'll need to communicate the code word to potential friends through another medium.", 'friends' ); ?>
@@ -147,12 +148,12 @@ do_action( 'friends_settings_before_form' );
 					<fieldset>
 						<label for="friend_request_notification">
 							<input name="friend_request_notification" type="checkbox" id="friend_request_notification" value="1" <?php checked( '1', ! $args['no_friend_request_notification'] ); ?>>
-							<?php esc_html_e( 'Friend Requests', 'friends' ); ?>
+							<span><?php esc_html_e( 'Friend Requests', 'friends' ); ?></span>
 						</label>
 						<br />
 						<label for="new_post_notification">
 							<input name="new_post_notification" type="checkbox" id="new_post_notification" value="1" <?php checked( '1', ! $args['no_new_post_notification'] ); ?>>
-							<?php esc_html_e( 'New Posts', 'friends' ); ?>
+							<span><?php esc_html_e( 'New Posts', 'friends' ); ?></span>
 						</label>
 					</fieldset>
 					<p class="description"><?php esc_html_e( 'You can also change this setting for each friend separately.', 'friends' ); ?></p>
@@ -196,10 +197,8 @@ do_action( 'friends_settings_before_form' );
 						<?php endforeach; ?>
 					</select>
 					<p class="description">
-					<?php esc_html_e( 'When accepting a friend request, first assign this role.', 'friends' ); ?>
-					<?php
-					esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' );
-					?>
+						<span><?php esc_html_e( 'When accepting a friend request, first assign this role.', 'friends' ); ?></span>
+						<span><?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?></span>
 					</p>
 				</td>
 			</tr>
@@ -211,10 +210,11 @@ do_action( 'friends_settings_before_form' );
 							<input type="checkbox" name="friends_enable_retention_days" id="friends_enable_retention_days" value="1" <?php checked( '1', $args['retention_days_enabled'] ); ?> />
 							<span id="friends_enable_retention_days_line" class="<?php echo esc_attr( $args['retention_days_enabled'] ? '' : 'disabled' ); ?>">
 							<?php
+							echo '<span>';
 							echo wp_kses(
 								sprintf(
 									// translators: %s is an input field that allows specifying a number.
-									__( 'Only keep posts for %s days', 'friends' ),
+									__( 'Only keep posts for %s days.', 'friends' ),
 									'<input type="number" min="1" id="friends_retention_days" name="friends_retention_days" value="' . esc_attr( $args['retention_days'] ) . '"' . ( $args['retention_days_enabled'] ? '' : ' disabled="disabled"' ) . ' size="3">'
 								),
 								array(
@@ -229,7 +229,7 @@ do_action( 'friends_settings_before_form' );
 									),
 								)
 							);
-							echo '. ';
+							echo '</span> <span>';
 							echo esc_html(
 								sprintf(
 								// translators: %s is a date.
@@ -237,6 +237,7 @@ do_action( 'friends_settings_before_form' );
 									/* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ date_i18n( __( 'F j, Y' ), $args['earliest_post_date'] )
 								)
 							);
+							echo '</span>';
 							?>
 							</span>
 						</div>
@@ -244,10 +245,11 @@ do_action( 'friends_settings_before_form' );
 							<input type="checkbox" name="friends_enable_retention_number" id="friends_enable_retention_number" value="1" <?php checked( '1', $args['retention_number_enabled'] ); ?> />
 							<span id="friends_enable_retention_number_line" class="<?php echo esc_attr( $args['retention_number_enabled'] ? '' : 'disabled' ); ?>">
 							<?php
+							echo '<span>';
 							echo wp_kses(
 								sprintf(
 									// translators: %s is an input field that allows specifying a number.
-									__( 'Only keep the last %s posts', 'friends' ),
+									__( 'Only keep the last %s posts.', 'friends' ),
 									'<input type="number" min="1" id="friends_retention_number" name="friends_retention_number" value="' . esc_attr( $args['retention_number'] ) . '"' . ( $args['retention_number_enabled'] ? '' : ' disabled="disabled"' ) . ' size="3">'
 								),
 								array(
@@ -262,7 +264,7 @@ do_action( 'friends_settings_before_form' );
 									),
 								)
 							);
-							echo '. ';
+							echo '</span> <span>';
 							echo esc_html(
 								sprintf(
 								// translators: %s is a date.
@@ -270,6 +272,7 @@ do_action( 'friends_settings_before_form' );
 									number_format_i18n( $args['post_count'] )
 								)
 							);
+							echo '</span>';
 							?>
 							</span>
 						</div>
@@ -286,12 +289,12 @@ do_action( 'friends_settings_before_form' );
 						?>
 					</p>
 					<p class="description">
+						<span><?php esc_html_e( 'If you need to limit the amount of space, choose one of the options above (they can be combined).', 'friends' ); ?></span>
+						<span>
 						<?php
-						echo ' ';
-						esc_html_e( 'If you need to limit the amount of space, choose one of the options above (they can be combined).', 'friends' );
-						echo ' ';
 						esc_html_e( 'The next auto-delete will kick in when refreshing the feeds.', 'friends' );
 						?>
+						</span>
 					</p>
 					<p class="description">
 						<?php
@@ -343,7 +346,7 @@ do_action( 'friends_settings_before_form' );
 
 						<label for="force_enable_post_formats">
 							<input name="force_enable_post_formats" type="checkbox" id="force_enable_post_formats" value="1" <?php checked( '1', $args['force_enable_post_formats'] ); ?>>
-							<?php esc_html_e( 'Always enable Post Formats, regardless of the theme support.', 'friends' ); ?>
+							<span><?php esc_html_e( 'Always enable Post Formats, regardless of the theme support.', 'friends' ); ?></span>
 							<p class="description">
 								<?php
 								echo wp_kses(
@@ -356,21 +359,21 @@ do_action( 'friends_settings_before_form' );
 										),
 									)
 								);
-
-
 								?>
 							</p>
 						</label><br/>
 
 						<label for="expose_post_format_feeds">
 							<?php if ( current_theme_supports( 'post-format-feeds' ) ) : ?>
-								<?php esc_html_e( 'Your theme already supports exposing Post Formats as alternate feeds on your homepage.', 'friends' ); ?>
+								<span><?php esc_html_e( 'Your theme already supports exposing Post Formats as alternate feeds on your homepage.', 'friends' ); ?></span>
 							<?php else : ?>
 							<input name="expose_post_format_feeds" type="checkbox" id="expose_post_format_feeds" value="1" <?php checked( '1', $args['expose_post_format_feeds'] ); ?>>
+								<span>
 								<?php
 								// translators: %s is a HTML snippet.
 								echo wp_kses( sprintf( __( 'Expose Post Formats as alternate feeds on your homepage (as %s).', 'friends' ), '<code>&lt;link rel="alternate"/ &gt;</code>' ), array( 'code' => array() ) );
 								?>
+								</span>
 						<?php endif; ?>
 					</fieldset>
 				</td>
@@ -380,7 +383,7 @@ do_action( 'friends_settings_before_form' );
 				<th scope="row"><?php esc_html_e( 'Reactions', 'friends' ); ?></th>
 				<td>
 					<fieldset>
-						<?php esc_html_e( 'Allow these emojis for reactions:', 'friends' ); ?>
+						<span><?php esc_html_e( 'Allow these emojis for reactions:', 'friends' ); ?></span>
 
 						<ol id="available-emojis">
 						<?php
@@ -451,10 +454,12 @@ do_action( 'friends_settings_before_form' );
 			</tr>
 			<tr>
 				<td>
+					<span>
 					<?php
 					// translators: %s is a URL.
 					echo wp_kses( sprintf( __( 'You can also subscribe to a <a href=%s>compiled RSS feed of friend posts</a>.', 'friends' ), esc_url( home_url( '/friends/feed/?auth=' . $args['private_rss_key'] ) ) ), array( 'a' => array( 'href' => array() ) ) );
 					?>
+					</span>
 					<p class="description">
 					<?php
 					echo __( 'Please be careful what you do with these feeds as they might contain private posts of your friends.', 'friends' );
