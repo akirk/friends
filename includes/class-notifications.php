@@ -73,7 +73,10 @@ class Notifications {
 	 * @return     string  The friends plugin from email address.
 	 */
 	public function get_friends_plugin_from_email_address() {
-		return apply_filters( 'wp_mail_from', 'wordpress@' . preg_replace( '#^www\.#', '', wp_parse_url( network_home_url(), PHP_URL_HOST ) ) );
+		add_filter( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
+		$address = apply_filters( 'wp_mail_from', 'wordpress@' . preg_replace( '#^www\.#', '', wp_parse_url( network_home_url(), PHP_URL_HOST ) ) );
+		remove_filter( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
+		return $address;
 	}
 
 	/**
@@ -379,11 +382,11 @@ class Notifications {
 			}
 		}
 
-		add_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
+		add_filter( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
 
 		$mail = wp_mail( $to, $subject, $message, $headers, $attachments );
 
-		remove_action( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
+		remove_filter( 'wp_mail_from', array( $this, 'use_friends_plugin_from_email_address' ) );
 
 		if ( $alt_function ) {
 			remove_action( 'phpmailer_init', $alt_function );
