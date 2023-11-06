@@ -77,9 +77,9 @@ class User_Query extends \WP_User_Query {
 		if ( ! self::$cache || ! isset( $all_friends[ get_current_blog_id() ] ) ) {
 			$all_friends[ get_current_blog_id() ] = new self(
 				array(
-					'role__in' => array( 'friend', 'acquaintance' ),
-					'order'    => 'ASC',
-					'orderby'  => 'display_name',
+					'capability' => 'friend',
+					'order'      => 'ASC',
+					'orderby'    => 'display_name',
 				)
 			);
 		}
@@ -95,7 +95,7 @@ class User_Query extends \WP_User_Query {
 		static $all = array();
 		if ( ! self::$cache || ! isset( $all[ get_current_blog_id() ] ) ) {
 			$query = array(
-				'role__in' => array_keys( Admin::get_associated_roles() ),
+				'capability__in' => array_keys( Admin::get_associated_roles() ),
 			);
 			$sort = array(
 				'order'   => 'ASC',
@@ -164,7 +164,7 @@ class User_Query extends \WP_User_Query {
 		if ( ! self::$cache || ! isset( $starred_friends_subscriptions[ $cache_key ] ) ) {
 			global $wpdb;
 			$query = array(
-				'role__in' => Friends::get_friends_plugin_roles(),
+				'capability__in' => Friends::get_friends_plugin_roles(),
 			);
 			$meta = array(
 				'meta_key'     => $wpdb->get_blog_prefix() . 'friends_starred',
@@ -194,8 +194,8 @@ class User_Query extends \WP_User_Query {
 		$cache_key = get_current_blog_id() . '_' . $limit;
 		if ( ! self::$cache || ! isset( $recent_friends_subscriptions[ $cache_key ] ) ) {
 			$query = array(
-				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
-				'number'   => $limit,
+				'capability__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+				'number'         => $limit,
 			);
 			$sort = array(
 				'orderby' => 'user_registered',
@@ -232,7 +232,7 @@ class User_Query extends \WP_User_Query {
 		$search = new self(
 			array_merge(
 				array(
-					'role__in'       => Friends::get_friends_plugin_roles(),
+					'capability__in' => Friends::get_friends_plugin_roles(),
 					'search_columns' => array( 'display_name' ),
 				),
 				$query,
@@ -269,7 +269,7 @@ class User_Query extends \WP_User_Query {
 		static $all_subscriptions = array();
 		if ( ! self::$cache || ! isset( $all_subscriptions[ get_current_blog_id() ] ) ) {
 			$query = array(
-				'role__in' => array( 'pending_friend_request', 'subscription' ),
+				'capability__in' => array( 'pending_friend_request', 'subscription' ),
 			);
 			$sort = array(
 				'order'   => 'ASC',
