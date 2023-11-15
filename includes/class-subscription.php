@@ -296,42 +296,44 @@ class Subscription extends User {
 				)
 			);
 
-			$post_format_counts = $wpdb->get_results(
-				$wpdb->prepare(
-					sprintf(
-						"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
-						FROM %s AS posts
-						JOIN %s AS relationships_post_format
-						JOIN %s AS taxonomy_author
-						JOIN %s AS relationships_author
+			if ( ! empty( $post_formats_term_ids ) ) {
+				$post_format_counts = $wpdb->get_results(
+					$wpdb->prepare(
+						sprintf(
+							"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
+							FROM %s AS posts
+							JOIN %s AS relationships_post_format
+							JOIN %s AS taxonomy_author
+							JOIN %s AS relationships_author
 
-						WHERE posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type IN ( %s )
-						AND relationships_post_format.object_id = posts.ID
-						AND relationships_post_format.term_taxonomy_id IN ( %s )
-						AND relationships_author.object_id = posts.ID
-						AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
-						AND taxonomy_author.term_id = %s
-						GROUP BY relationships_post_format.term_taxonomy_id",
-						$wpdb->posts,
-						$wpdb->term_relationships,
-						$wpdb->term_taxonomy,
-						$wpdb->term_relationships,
-						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) ),
-						'%d'
-					),
-					array_merge(
-						$post_types,
-						array_keys( $post_formats_term_ids ),
-						array( $this->get_term_id() )
+							WHERE posts.post_status IN ( 'publish', 'private' )
+							AND posts.post_type IN ( %s )
+							AND relationships_post_format.object_id = posts.ID
+							AND relationships_post_format.term_taxonomy_id IN ( %s )
+							AND relationships_author.object_id = posts.ID
+							AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
+							AND taxonomy_author.term_id = %s
+							GROUP BY relationships_post_format.term_taxonomy_id",
+							$wpdb->posts,
+							$wpdb->term_relationships,
+							$wpdb->term_taxonomy,
+							$wpdb->term_relationships,
+							implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+							implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) ),
+							'%d'
+						),
+						array_merge(
+							$post_types,
+							array_keys( $post_formats_term_ids ),
+							array( $this->get_term_id() )
+						)
 					)
-				)
-			);
+				);
 
-			foreach ( $post_format_counts as $row ) {
-				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
-				$counts['standard'] -= $row->count;
+				foreach ( $post_format_counts as $row ) {
+					$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
+					$counts['standard'] -= $row->count;
+				}
 			}
 
 			$counts = array_filter( $counts );

@@ -402,7 +402,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$discovered_feeds = array();
 
 		$meta = self::get_metadata( $url );
-		if ( $meta && ! is_wp_error( $meta ) ) {
+		if ( $meta && ! is_wp_error( $meta ) && isset( $meta['id'] ) ) {
 			$discovered_feeds[ $meta['id'] ] = array(
 				'type'        => 'application/activity+json',
 				'rel'         => 'self',
