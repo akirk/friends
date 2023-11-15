@@ -765,36 +765,38 @@ class User extends \WP_User {
 				)
 			);
 
-			$post_format_counts = $wpdb->get_results(
-				$wpdb->prepare(
-					sprintf(
-						"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
-						FROM %s AS posts
-						JOIN %s AS relationships_post_format
+			if ( ! empty( $post_formats_term_ids ) ) {
+				$post_format_counts = $wpdb->get_results(
+					$wpdb->prepare(
+						sprintf(
+							"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
+							FROM %s AS posts
+							JOIN %s AS relationships_post_format
 
-						WHERE posts.post_author = %s
-						AND posts.post_status IN ( 'publish', 'private' )
-						AND posts.post_type IN ( %s )
-						AND relationships_post_format.object_id = posts.ID
-						AND relationships_post_format.term_taxonomy_id IN ( %s )
-						GROUP BY relationships_post_format.term_taxonomy_id",
-						$wpdb->posts,
-						$wpdb->term_relationships,
-						'%d',
-						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) )
-					),
-					array_merge(
-						array( $this->ID ),
-						$post_types,
-						array_keys( $post_formats_term_ids )
+							WHERE posts.post_author = %s
+							AND posts.post_status IN ( 'publish', 'private' )
+							AND posts.post_type IN ( %s )
+							AND relationships_post_format.object_id = posts.ID
+							AND relationships_post_format.term_taxonomy_id IN ( %s )
+							GROUP BY relationships_post_format.term_taxonomy_id",
+							$wpdb->posts,
+							$wpdb->term_relationships,
+							'%d',
+							implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+							implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) )
+						),
+						array_merge(
+							array( $this->ID ),
+							$post_types,
+							array_keys( $post_formats_term_ids )
+						)
 					)
-				)
-			);
+				);
 
-			foreach ( $post_format_counts as $row ) {
-				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
-				$counts['standard'] -= $row->count;
+				foreach ( $post_format_counts as $row ) {
+					$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
+					$counts['standard'] -= $row->count;
+				}
 			}
 
 			$counts = array_filter( $counts );
