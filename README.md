@@ -6,7 +6,7 @@
 - Tested up to: 6.3
 - Requires PHP: 5.6
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.8.2
+- Stable tag: 2.8.3
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,18 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 2.8.3
+- Unfortunately we had to disable Gutenberg on the frontend ([#273])
+- Fixed a missing reblog button for virtual users ([#261])
+- Allow segmentation of friends frontpages ([#272]), see this experiment: https://github.com/akirk/friends-mastodon-like-interface
+- Allow double clicking the text to collapse/uncollapse ([#263])
+- Fix that the friends email address was displayed wrong ([#266])
+- Fix external auth on multisite ([#267])
+- Translatability fixes ([#265])
+- Frontend: Allow future post status ([#270])
+- Improve error checking regarding post formats and missing ActivityPub metadata ([#271])
+
 
 ### 2.8.2
 - Fix crash when using get_the_excerpt in the admin edit-post screen ([#260])
@@ -281,6 +293,15 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Add blog to blog messaging
 
 [Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#273]: https://github.com/akirk/friends/pull/273
+[#261]: https://github.com/akirk/friends/pull/261
+[#272]: https://github.com/akirk/friends/pull/272
+[#263]: https://github.com/akirk/friends/pull/263
+[#266]: https://github.com/akirk/friends/pull/266
+[#267]: https://github.com/akirk/friends/pull/267
+[#265]: https://github.com/akirk/friends/pull/265
+[#270]: https://github.com/akirk/friends/pull/270
+[#271]: https://github.com/akirk/friends/pull/271
 [#260]: https://github.com/akirk/friends/pull/260
 [#258]: https://github.com/akirk/friends/pull/258
 [#257]: https://github.com/akirk/friends/pull/257
