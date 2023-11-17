@@ -399,7 +399,7 @@ class Messages {
 			return;
 		}
 
-		$args['blocks-everywhere'] = get_user_option( 'friends_blocks_everywhere' );
+		$args['blocks-everywhere'] = false;
 
 		if ( $args['friend_user']->has_cap( self::get_minimum_cap() ) ) {
 			Friends::template_loader()->get_template_part(

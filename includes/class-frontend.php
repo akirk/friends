@@ -769,7 +769,7 @@ class Frontend {
 			'friends'               => $this->friends,
 			'friend_user'           => $this->author,
 			'frontend_default_view' => get_option( 'friends_frontend_default_view', 'expanded' ),
-			'blocks-everywhere'     => get_user_option( 'friends_blocks_everywhere' ),
+			'blocks-everywhere'     => false,
 			'post_format'           => $this->post_format,
 		);
 
