@@ -159,15 +159,16 @@ class User extends \WP_User {
 	 * Convert a site URL to a username
 	 *
 	 * @param  string $url The site URL in question.
+	 * @param  bool   $multisite_shortname Whether to use the multisite shortname.
 	 * @return string The corresponding username.
 	 */
-	public static function get_user_login_for_url( $url ) {
+	public static function get_user_login_for_url( $url, $multisite_shortname = true ) {
 		$multisite_user = self::get_multisite_user( $url );
-		if ( $multisite_user ) {
+		if ( $multisite_user && $multisite_shortname ) {
 			return $multisite_user->user_login;
 		}
 
-		$user_login = self::sanitize_username( self::get_display_name_for_url( $url ) );
+		$user_login = self::sanitize_username( self::get_display_name_for_url( $url, $multisite_shortname ) );
 		return $user_login;
 	}
 
@@ -175,11 +176,12 @@ class User extends \WP_User {
 	 * Convert a site URL to a display name
 	 *
 	 * @param  string $url The site URL in question.
+	 * @param  bool   $multisite_shortname Whether to use the multisite shortname.
 	 * @return string The corresponding display name.
 	 */
-	public static function get_display_name_for_url( $url ) {
+	public static function get_display_name_for_url( $url, $multisite_shortname = true ) {
 		$multisite_user = self::get_multisite_user( $url );
-		if ( $multisite_user ) {
+		if ( $multisite_user && $multisite_shortname ) {
 			return $multisite_user->display_name;
 		}
 

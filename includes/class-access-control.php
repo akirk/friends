@@ -211,7 +211,7 @@ class Access_Control {
 				$auth = password_hash( $until . $in_token, PASSWORD_DEFAULT );
 
 				$tokens[ $friend_user->ID ] = array(
-					'me'    => User::get_user_login_for_url( home_url() ),
+					'me'    => User::get_user_login_for_url( home_url(), false ),
 					'until' => $until,
 					'auth'  => $auth,
 				);
