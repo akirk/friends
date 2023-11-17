@@ -776,7 +776,7 @@ class Frontend {
 			$args['in_reply_to'] = $args['friends']->frontend->get_in_reply_to_metadata( $_GET['in_reply_to'] );
 		}
 
-		return Friends::template_loader()->get_template_part( 'frontend/index', null, $args, false );
+		return Friends::template_loader()->get_template_part( 'frontend/index', $this->post_format, $args, false );
 	}
 
 	/**
