@@ -1230,7 +1230,7 @@ class Frontend {
 		$query->set( 'tax_query', $tax_query );
 
 		if ( ( isset( $_GET['share'] ) && $_GET['share'] === $share_hash ) || $viewable ) {
-			$post_status = array( 'publish', 'private' );
+			$post_status = array( 'publish', 'private', 'future' );
 			if ( isset( $_GET['show-hidden'] ) ) {
 				$post_status[] = 'trash';
 			}
