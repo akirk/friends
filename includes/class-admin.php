@@ -1182,10 +1182,10 @@ class Admin {
 				'active' => $active . $append,
 				'title'  => $friend->user_login,
 				'menu'   => array(
-					'Friend Settings' => 'edit-friend' . $append,
-					'Feeds'           => 'edit-friend-feeds' . $append,
-					'Notifications'   => 'edit-friend-notifications' . $append,
-					'Rules'           => 'edit-friend-rules' . $append,
+					__( 'Settings' )                 => 'edit-friend' . $append, // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+					__( 'Feeds', 'friends' )         => 'edit-friend-feeds' . $append,
+					__( 'Notifications', 'friends' ) => 'edit-friend-notifications' . $append,
+					__( 'Rules', 'friends' )         => 'edit-friend-rules' . $append,
 				),
 			)
 		);
