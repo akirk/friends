@@ -41,19 +41,19 @@ if ( isset( $_GET['s'] ) ) {
 			if ( $args['friend_user'] && $args['friend_user'] instanceof Friends\User && is_singular() ) {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/single-header',
-					null,
+					$args['post_format'],
 					$args
 				);
 			} elseif ( $args['friend_user'] && $args['friend_user'] instanceof Friends\User ) {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/author-header',
-					null,
+					$args['post_format'],
 					$args
 				);
 			} else {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/main-feed-header',
-					null,
+					$args['post_format'],
 					$args
 				);
 			}

@@ -8,7 +8,7 @@
 
 Friends\Friends::template_loader()->get_template_part(
 	'admin/welcome',
-	null,
+	$args['post_format'],
 	array(
 		'plugin-list' => false,
 	)

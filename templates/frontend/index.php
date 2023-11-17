@@ -8,7 +8,7 @@
 
 Friends\Friends::template_loader()->get_template_part(
 	'frontend/header',
-	null,
+	$args['post_format'],
 	$args
 );
 
@@ -50,9 +50,9 @@ Friends\Friends::template_loader()->get_template_part(
 			} else {
 				$any_friends = Friends\User_Query::all_associated_users();
 				if ( $any_friends->get_total() > 0 ) {
-					Friends\Friends::template_loader()->get_template_part( 'frontend/no-posts' );
+					Friends\Friends::template_loader()->get_template_part( 'frontend/no-posts', $args['post_format'], $args );
 				} else {
-					Friends\Friends::template_loader()->get_template_part( 'frontend/no-friends' );
+					Friends\Friends::template_loader()->get_template_part( 'frontend/no-friends', $args['post_format'], $args );
 				}
 			}
 			?>
@@ -68,6 +68,6 @@ Friends\Friends::template_loader()->get_template_part(
 <?php
 Friends\Friends::template_loader()->get_template_part(
 	'frontend/footer',
-	null,
+	$args['post_format'],
 	$args
 );
