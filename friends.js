@@ -231,6 +231,15 @@
 		return false;
 	} );
 
+	$document.on(
+		'dblclick',
+		'section.all-collapsed article, article.collapsed, article.uncollapsed',
+		function () {
+			$( this ).closest( 'article' ).find( 'a.collapse-post' ).trigger( 'click' );
+			return false;
+		}
+	);
+
 	$document.on( 'click', 'article a.comments', function ( e ) {
 		if ( e.metaKey || e.altKey || e.shiftKey ) {
 			return;
