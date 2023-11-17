@@ -27,7 +27,6 @@ define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __F
 define( 'FRIENDS_VERSION', '2.8.2' );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
-require_once __DIR__ . '/libs/blocks-everywhere/blocks-everywhere.php';
 
 require_once __DIR__ . '/includes/class-user.php';
 require_once __DIR__ . '/includes/class-user-feed.php';

@@ -423,8 +423,8 @@ do_action( 'friends_settings_before_form' );
 				<td>
 					<fieldset>
 						<label for="blocks_everywhere">
-							<input name="blocks_everywhere" type="checkbox" id="blocks_everywhere" value="1" <?php checked( '1', $args['blocks_everywhere'] ); ?> />
-							<span><?php esc_html_e( 'Enable Gutenberg on the frontend.', 'friends' ); ?></span>
+							<input name="blocks_everywhere" type="checkbox" id="blocks_everywhere" value="1" <?php checked( '1', $args['blocks_everywhere'] ); ?> disabled="disabled" />
+							<span><?php esc_html_e( 'Unfortunately, Gutenberg on the frontend is currently unavailable.', 'friends' ); ?></span>
 						</label>
 					</fieldset>
 				</td>
