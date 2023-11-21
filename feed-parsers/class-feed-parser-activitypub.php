@@ -81,6 +81,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_reblog', array( $this, 'reblog' ), 20, 2 );
 		\add_filter( 'friends_unreblog', array( $this, 'unreblog' ), 20, 2 );
 		\add_filter( 'friends_reblog', array( $this, 'maybe_unqueue_friends_reblog_post' ), 9, 2 );
+		\add_filter( 'friends_reblogged_author', array( $this, 'reblogged_author' ), 10, 2 );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 
@@ -1578,6 +1579,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		remove_filter( 'friends_reblog', array( 'Friends\Frontend', 'reblog' ), 10, 2 );
 		return $ret;
+	}
+
+	public function reblogged_author( $url, $post_id ) {
+		if ( User_Feed::get_parser_for_post_id( $post_id ) !== 'activitypub' ) {
+			return $url;
+		}
+
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( isset( $meta['attributedTo']['id'] ) ) {
+			return $meta['attributedTo']['id'];
+		}
+		return $url;
 	}
 
 	public function reblog( $ret, $post ) {

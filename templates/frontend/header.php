@@ -17,6 +17,11 @@ if ( isset( $_GET['s'] ) ) {
 	<meta charset="<?php bloginfo( 'charset' ); ?>">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<?php wp_head(); ?>
+	<script>
+		if (typeof navigator.registerProtocolHandler === "function") {
+			navigator.registerProtocolHandler( 'web+follow', '<?php echo esc_js( add_query_arg( 'add-friend', '%s', home_url() ) ); ?>', 'Follow' );
+		}
+	</script>
 </head>
 
 <body <?php body_class( 'off-canvas off-canvas-sidebar-show' ); ?>>
