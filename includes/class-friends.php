@@ -620,7 +620,7 @@ class Friends {
 	}
 
 	public static function is_main_user() {
-		return get_current_user_id() === self::get_main_friend_user_id();
+		return is_user_logged_in() && get_current_user_id() === self::get_main_friend_user_id();
 	}
 
 	/**
