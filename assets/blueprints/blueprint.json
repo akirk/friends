@@ -1,3 +1,26 @@
 {
 	"landingPage": "/friends/",
+	"steps": [
+		{
+			"step": "login",
+			"username": "admin",
+			"password": "password"
+		},
+		{
+			"step": "setSiteOptions",
+			"options": {
+				"permalink_structure": "/%year%/%monthnum%/%day%/%postname%/"
+			}
+		},
+		{
+			"step": "installPlugin",
+			"pluginZipFile": {
+				"resource": "wordpress.org/plugins",
+				"slug": "friends"
+			},
+			"options": {
+				"activate": true
+			}
+		}
+	]
 }
