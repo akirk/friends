@@ -213,7 +213,7 @@ foreach ( $filters as $hook => $data ) {
 
 	if ( ! empty( $data['param'] ) ) {
 		$doc .= "## Parameters\n";
-		foreach ( $data['param'] as $param ) {
+		foreach ( (array) $data['param'] as $param ) {
 			$p = explode( ' ', $param, 3 );
 			$doc .= "\n- {$p[0]} `{$p[1]}` {$p[2]}";
 		}
