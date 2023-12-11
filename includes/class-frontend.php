@@ -353,15 +353,33 @@ class Frontend {
 			'post_author'  => get_current_user_id(),
 			'post_status'  => 'publish',
 			'post_type'    => 'post',
+			'post_format'  => get_post_format( $post ),
 			'post_content' => $reblog . $post->post_content,
 		);
+		/**
+		 * Allows changing a reblog post before it gets posted.
+		 *
+		 * @param array $new_post A post array to be handed to wp_insert_post.
+		 *
+		 * Additionally, the array contains the post_format which can also be changed.
+		 *
+		 * Example:
+		 * ```php
+		 * add_filter( 'friends_reblog_pre_insert_post', function( $new_post ) {
+		 *     $new_post['post_type'] = 'custom_post_type';
+		 *     $new_post['post_format'] = 'aside'; // always set the post_format to aside, regardless of the original post format.
+		 *     return $new_post;
+		 * } );
+		 * ```
+		 */
+		$new_post = apply_filters( 'friends_reblog_pre_insert_post', $new_post );
 		$new_post_id = wp_insert_post( $new_post );
 
-		set_post_format( $new_post_id, get_post_format( $post ) );
+		set_post_format( $new_post_id, $new_post['post_format'] );
 		update_post_meta( $new_post_id, 'reblog', $post->guid );
 		update_post_meta( $new_post_id, 'reblog_of', $post->ID );
 		update_post_meta( $post->ID, 'reblogged', $new_post_id );
-		update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
+		update_post_meta( $post->ID, 'reblogged_by', $new_post['post_author'] );
 
 		return $new_post_id;
 	}
