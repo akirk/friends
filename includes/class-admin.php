@@ -1426,6 +1426,11 @@ class Admin {
 					$user_feed = $existing_feeds[ $term_id ];
 					unset( $existing_feeds[ $term_id ] );
 
+					$protocol = wp_parse_url( $feed['url'], PHP_URL_SCHEME );
+					if ( ! $protocol ) {
+						$feed['url'] = apply_filters( 'friends_rewrite_incoming_url', 'https://' . $feed['url'], $feed['url'] );
+					}
+
 					if ( $user_feed->get_url() !== $feed['url'] ) {
 						do_action( 'friends_user_feed_deactivated', $user_feed );
 
@@ -1435,7 +1440,9 @@ class Admin {
 
 						if ( $feed['active'] ) {
 							$new_feed = $friend->subscribe( $feed['url'], $feed );
-							do_action( 'friends_user_feed_activated', $new_feed );
+							if ( ! is_wp_error( $new_feed ) ) {
+								do_action( 'friends_user_feed_activated', $new_feed );
+							}
 						} else {
 							$new_feed = $friend->save_feed( $feed['url'], $feed );
 						}
