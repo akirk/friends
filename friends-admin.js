@@ -200,7 +200,7 @@ jQuery( function ( $ ) {
 	$( document ).on( 'click', '.delete-feed', function () {
 		// eslint-disable-next-line no-alert
 		if ( window.confirm( friends.delete_feed_question ) ) {
-			$( this ).closest( 'tr' ).remove();
+			$( this ).closest( 'li' ).remove();
 		}
 		return false;
 	} );
