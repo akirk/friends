@@ -1409,6 +1409,10 @@ class Admin {
 						}
 
 						$feed['active'] = true;
+						$protocol = wp_parse_url( $feed['url'], PHP_URL_SCHEME );
+						if ( ! $protocol ) {
+							$feed['url'] = apply_filters( 'friends_rewrite_incoming_url', 'https://' . $feed['url'], $feed['url'] );
+						}
 						$new_feed = $friend->subscribe( $feed['url'], $feed );
 						if ( is_wp_error( $new_feed ) ) {
 							do_action( 'friends_process_feed_item_submit_error', $new_feed, $feed );
