@@ -4,7 +4,8 @@
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
  * Version: 2.8.4
- *
+ * Requires PHP: 5.6
+
  * Description: A social network between WordPresses. Privacy focused, by itself a self-hosted RSS++ reader with notifications.
  *
  * License: GPL2
