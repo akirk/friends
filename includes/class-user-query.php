@@ -112,23 +112,36 @@ class User_Query extends \WP_User_Query {
 		if ( isset( $args['meta_key'] ) && substr( $args['meta_key'], -9 ) === '_starred' ) {
 			$args['meta_key'] = 'starred';
 		}
+		$searches = array();
+
 		if ( isset( $args['search'] ) ) {
-			$args['search'] = str_replace( '*', '', $args['search'] );
+			// WP_Term_Query will add wildcarts before and after.
+			$args['search'] = trim( $args['search'], '*' );
+			$searches[] = $args;
+			$searches[] = array(
+				'meta_key'     => 'display_name',
+				'meta_value'   => $args['search'],
+				'meta_compare' => 'LIKE',
+			);
+		} else {
+			$searches[] = $args;
 		}
 
-		$term_query = new \WP_Term_Query(
-			array_merge(
-				array(
-					'taxonomy'   => Subscription::TAXONOMY,
-					'hide_empty' => false,
-				),
-				$args
-			)
-		);
+		foreach ( $searches as $args ) {
+			$term_query = new \WP_Term_Query(
+				array_merge(
+					array(
+						'taxonomy'   => Subscription::TAXONOMY,
+						'hide_empty' => false,
+					),
+					$args
+				)
+			);
 
-		foreach ( $term_query->get_terms() as $term ) {
-			$this->results[] = new Subscription( $term );
-			$this->total_users += 1;
+			foreach ( $term_query->get_terms() as $term ) {
+				$this->results[] = new Subscription( $term );
+				$this->total_users += 1;
+			}
 		}
 	}
 	public function sort( $field, $direction ) {
