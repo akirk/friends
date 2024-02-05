@@ -139,8 +139,10 @@ class User_Query extends \WP_User_Query {
 			);
 
 			foreach ( $term_query->get_terms() as $term ) {
-				$this->results[ $term->term_id ] = new Subscription( $term );
-				$this->total_users += 1;
+				if ( ! isset( $this->results[ $term->term_id ] ) ) {
+					$this->results[ $term->term_id ] = new Subscription( $term );
+					$this->total_users += 1;
+				}
 			}
 		}
 	}
