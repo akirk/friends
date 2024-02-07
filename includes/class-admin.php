@@ -1159,6 +1159,8 @@ class Admin {
 			return;
 		}
 
+		do_action( 'friends_edit_friend_after_form_submit', $friend );
+
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( add_query_arg( $arg, $arg_value, wp_get_referer() ) );
 		} else {
@@ -1498,9 +1500,8 @@ class Admin {
 					do_action( 'friends_user_feed_deactivated', $user_feed );
 					$user_feed->delete();
 				}
-
-				do_action( 'friends_edit_friend_after_form_submit', $friend );
 			}
+			do_action( 'friends_edit_feeds_after_form_submit', $friend );
 		} else {
 			return;
 		}
