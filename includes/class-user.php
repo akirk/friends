@@ -439,7 +439,8 @@ class User extends \WP_User {
 				'error-saving-feed',
 				sprintf(
 					// translators: %s is a URL.
-					__( 'The feed %s could not be saved', 'friends' )
+					__( 'The feed %s could not be saved', 'friends' ),
+					$feed_url
 				)
 			);
 		}

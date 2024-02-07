@@ -513,14 +513,19 @@
 	}
 
 	function insertTextInGutenberg( text ) {
-		const element = jQuery( '.is-root-container p' )[ 0 ];
-		const len = element.textContent.length;
-		element.focus();
-		window.getSelection().collapse( element.firstChild, len );
-		document.execCommand( 'insertText', false, text + ' ' );
+		let element, val, regex;
+		if ( jQuery( '.is-root-container p' ).length ) {
+			element = jQuery( '.is-root-container p' )[ 0 ];
+			element.focus();
+			window.getSelection().collapse( element.firstChild, element.textContent.length );
+			document.execCommand( 'insertText', false, text + ' ' );
+		} else {
+			val = text + ' ' + jQuery( '.friends-status-content' ).val();
+			jQuery( '.friends-status-content' ).val( val.replace( /^(@[^@]+@[^ ]+ )+/g, text + ' ' ) );
+		}
 	}
 
-	$document.on( 'click', '#in_reply_to_preview a', function () {
+	$document.on( 'click', '.activitypub_preview a', function () {
 		if ( ! $( this ).hasClass( 'mention' ) ) {
 			return true;
 		}
@@ -528,13 +533,22 @@
 		return false;
 	} );
 
-	$document.on( 'keyup', 'input#friends_in_reply_to', function () {
+	$document.on( 'keyup', 'input.activitypub_preview_url', function () {
 		const input = $( this );
+		const form = input.closest( 'form' );
+		const preview = form.find( '.activitypub_preview' );
 		const url = input.val().trim();
 
 		if ( alreadySearching === url ) {
 			return;
 		}
+
+		preview.html( '<figcaption><a href=""></a></figcaption><blockquote>' );
+		preview.find( 'blockquote' ).text( friends.text_checking_url );
+		preview.find( 'a' ).attr( 'href', url ).text( url );
+		form.find( '.boost-link' ).attr( 'href', '?boost=' + escape( url ) );
+		form.find( '.reply-to-link' ).attr( 'href', '?in_reply_to=' + escape( url ) );
+
 		const searchIndicator = input
 			.closest( '.form-autocomplete-input' )
 			.find( '.form-icon' );
@@ -550,11 +564,18 @@
 			success( results ) {
 				searchIndicator.removeClass( 'loading' );
 				if ( results ) {
-					$( '#in_reply_to_preview' ).html( results.html ).show();
+					preview.find( 'blockquote' ).html( results.html ).show();
+					input.closest( 'form' ).find( 'button' ).prop( 'disabled', false );
 					insertTextInGutenberg( getAcct( results.author ) );
 				} else {
-					$( '#in_reply_to_preview' ).hide();
+					preview.hide();
+					input.closest( 'form' ).find( 'button' ).prop( 'disabled', false );
 				}
+			},
+			error( results ) {
+				searchIndicator.removeClass( 'loading' );
+				input.closest( 'form' ).find( 'button' ).prop( 'disabled', true );
+				preview.find( 'blockquote' ).text( results ).show();
 			},
 		} );
 	} );
