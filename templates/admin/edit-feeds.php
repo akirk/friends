@@ -302,9 +302,9 @@ $has_last_log = false;
 				</td>
 			</tr>
 			<?php endif; ?>
-			<?php do_action( 'friends_edit_friend_table_end', $args['friend'] ); ?>
+			<?php do_action( 'friends_edit_feeds_table_end', $args['friend'] ); ?>
 	</table>
-	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>
+	<?php do_action( 'friends_edit_feeds_after_form', $args['friend'] ); ?>
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
 	</p>

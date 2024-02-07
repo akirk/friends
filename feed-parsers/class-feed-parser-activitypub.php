@@ -51,8 +51,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_feed_parser_activitypub_unannounce', array( $this, 'activitypub_unannounce' ), 10, 2 );
 		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_webfinger_resolve' ), 10, 2 );
 
-		\add_filter( 'friends_edit_friend_table_end', array( $this, 'activitypub_settings' ), 10 );
-		\add_filter( 'friends_edit_friend_after_form_submit', array( $this, 'activitypub_save_settings' ), 10 );
+		\add_filter( 'friends_edit_feeds_table_end', array( $this, 'activitypub_settings' ), 10 );
+		\add_filter( 'friends_edit_feeds_after_form_submit', array( $this, 'activitypub_save_settings' ), 10 );
 		\add_filter( 'friends_modify_feed_item', array( $this, 'modify_incoming_item' ), 9, 3 );
 		\add_filter( 'friends_potential_avatars', array( $this, 'friends_potential_avatars' ), 10, 2 );
 		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login' ), 10, 2 );
