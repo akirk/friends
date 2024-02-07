@@ -13,7 +13,7 @@ Friends\Friends::template_loader()->get_template_part(
 );
 
 ?>
-<section class="posts columns translator-exclude<?php echo 'collapsed' === $args['frontend_default_view'] ? ' all-collapsed' : ''; ?>">
+<section class="posts columns <?php echo 'collapsed' === $args['frontend_default_view'] ? ' all-collapsed' : ''; ?>">
 	<?php
 	if ( ! have_posts() ) {
 		?>
