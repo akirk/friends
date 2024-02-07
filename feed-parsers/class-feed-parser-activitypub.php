@@ -74,6 +74,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'trashed_comment', array( $this, 'trashed_comment' ), 10, 2 );
 
 		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
+		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
+		\add_action( 'friends_after_header', array( $this, 'frontend_reply_form' ) );
+		\add_action( 'friends_after_header', array( $this, 'frontend_boost_form' ) );
+		\add_action( 'wp_ajax_friends-in-reply-to-preview', array( $this, 'ajax_in_reply_to_preview' ) );
 
 		\add_filter( 'friends_reblog', array( $this, 'unqueue_activitypub_create' ), 9 );
 		\add_action( 'mastodon_api_reblog', array( $this, 'mastodon_api_reblog' ) );
@@ -1532,6 +1536,138 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 		return $button_label;
+	}
+
+
+	/**
+	 * Get metadata for in_reply_to_preview.
+	 *
+	 * @param      string $url    The url.
+	 *
+	 * @return    array|WP_Error  The in reply to metadata.
+	 */
+	public function get_activitypub_ajax_metadata( $url ) {
+		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $url );
+		if ( is_wp_error( $meta ) ) {
+			return $meta;
+		}
+
+		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
+			return new \WP_Error( 'no-activitypub', 'No ActivityPub metadata found.' );
+		}
+
+		$html = '<figcaption>' . make_clickable( $meta['id'] ) . '</figcaption>';
+		$html .= '<blockquote>' . force_balance_tags( wp_kses_post( $meta['content'] ) ) . '</blockquote>';
+
+		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
+		$mention = '';
+		if ( $webfinger && ! is_wp_error( $webfinger ) ) {
+			$mention = '@' . $webfinger['preferredUsername'] . '@' . parse_url( $url, PHP_URL_HOST );
+		}
+
+		return array(
+			'url'     => $url,
+			'html'    => $html,
+			'author'  => $meta['attributedTo'],
+			'mention' => $mention,
+		);
+	}
+
+	/**
+	 * The Ajax function to fill the in-reply-to-preview.
+	 */
+	public function ajax_in_reply_to_preview() {
+		$url = wp_unslash( $_POST['url'] );
+
+		if ( ! wp_parse_url( $url ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$meta = $this->get_activitypub_ajax_metadata( $_POST['url'] );
+
+		if ( is_wp_error( $meta ) ) {
+			wp_send_json_error( $meta->get_error_message() );
+			exit;
+		}
+		wp_send_json_success( $meta );
+	}
+
+	public function frontend_reply_form( $args ) {
+		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
+			$args['in_reply_to'] = $this->get_activitypub_ajax_metadata( $_GET['in_reply_to'] );
+			$args['form_class'] = 'open';
+			Friends::template_loader()->get_template_part( 'frontend/activitypub/reply', true, $args );
+		}
+	}
+
+	public function frontend_boost_form( $args ) {
+		if ( isset( $_GET['boost'] ) && wp_parse_url( $_GET['boost'] ) ) {
+			$args['boost'] = $this->get_activitypub_ajax_metadata( $_GET['boost'] );
+			$args['form_class'] = 'open';
+			Friends::template_loader()->get_template_part( 'frontend/activitypub/boost', true, $args );
+		}
+	}
+
+	public function friends_search_autocomplete( $results, $q ) {
+		function url_truncate( $url, $max_length = 30 ) {
+			$p = wp_parse_url( $url );
+			$parts = array( $p['host'] );
+			if ( trim( $p['path'] ) ) {
+				$parts = array_merge( $parts, explode( '/', $p['path'] ) );
+			}
+
+			$url = join( '/', $parts );
+			$reduce = 4;
+			while ( strlen( $url ) > $max_length ) {
+				$last_part = array_pop( $parts );
+				$last_part = substr( $last_part, strlen( $last_part ) - $reduce );
+				foreach ( $parts as $k => $part ) {
+					$parts[ $k ] = substr( $part, 0, strlen( $part ) - $reduce );
+				}
+				$url = join( '../', array_filter( $parts ) ) . '../..' . $last_part;
+				array_push( $parts, $last_part );
+				$reduce = 1;
+
+			}
+
+			return $url;
+		}
+
+		$url = preg_match( '#^(?:https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
+		$url_with_path = isset( $m[1] ) && $m[1];
+
+		if ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
+			$result = '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend&url=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result .= '<span class="ab-icon dashicons dashicons-users"></span>';
+			$result .= 'Follow ';
+			$result .= ' <small>';
+			$result .= esc_html( $q );
+			$result .= '</small></a>';
+			$results[] = $result;
+		}
+
+		if ( $url_with_path ) {
+			$result = '<a href="' . esc_url( home_url( '/friends/type/status/?boost=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result .= '<span class="ab-icon dashicons dashicons-controls-repeat"></span>';
+			$result .= 'Boost ';
+			$result .= ' <small>';
+			$result .= esc_html( url_truncate( $q ) );
+			$result .= '</small></a>';
+			$results[] = $result;
+		}
+
+		if ( $url_with_path ) {
+			$result = '<a href="' . esc_url( home_url( '/friends/type/status/?in_reply_to=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result .= '<span class="ab-icon dashicons dashicons-admin-comments"></span>';
+			$result .= 'Reply to ';
+			$result .= ' <small>';
+			$result .= esc_html( url_truncate( $q ) );
+			$result .= '</small></a>';
+			$results[] = $result;
+		}
+
+		return $results;
 	}
 
 	public function mastodon_api_react( $post_id, $reaction ) {

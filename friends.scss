@@ -362,6 +362,19 @@ h2#page-title a.dashicons {
 			font-color: $dark-color;
 			font-size: .6rem;
 		}
+
+		#in_reply_to_preview {
+			background-color: #f7f8f9;
+			padding: .5em;
+			margin-top: 1em;
+			margin-bottom: 1em;
+			figcaption {
+				float: right;
+				a:any-link {
+					color: #999;
+				}
+			}
+		}
 	}
 
 	img.avatar {

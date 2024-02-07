@@ -79,7 +79,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
-		add_action( 'wp_ajax_friends-in-reply-to-preview', array( $this, 'ajax_in_reply_to_preview' ) );
+		add_action( 'friends_search_autocomplete', array( $this, 'autocomplete_user_search' ), 10, 2 );
 		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
 		add_action( 'wp_ajax_friends-reblog', array( $this, 'wp_ajax_reblog' ) );
@@ -572,76 +572,36 @@ class Frontend {
 	}
 
 	/**
-	 * Get metadata for in_reply_to_preview.
-	 *
-	 * @param      string $url    The url.
-	 *
-	 * @return    array|WP_Error  The in reply to metadata.
-	 */
-	public function get_in_reply_to_metadata( $url ) {
-		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $url );
-		if ( is_wp_error( $meta ) ) {
-			return $meta;
-		}
-
-		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
-			return new \WP_Error( 'no-activitypub', 'No ActivityPub metadata found.' );
-		}
-
-		$html = 'URL: ' . make_clickable( $meta['id'] );
-		$html .= '<blockquote>' . force_balance_tags( wp_kses_post( $meta['content'] ) ) . '</blockquote>';
-
-		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
-		$mention = '';
-		if ( $webfinger && ! is_wp_error( $webfinger ) ) {
-			$mention = '@' . $webfinger['preferredUsername'] . '@' . parse_url( $url, PHP_URL_HOST );
-		}
-
-		return array(
-			'url'     => $url,
-			'html'    => $html,
-			'author'  => $meta['attributedTo'],
-			'mention' => $mention,
-		);
-	}
-
-	/**
-	 * The Ajax function to fill the in-reply-to-preview.
-	 */
-	public function ajax_in_reply_to_preview() {
-		$url = wp_unslash( $_POST['url'] );
-
-		if ( ! wp_parse_url( $url ) ) {
-			wp_send_json_error();
-			exit;
-		}
-
-		$meta = $this->get_in_reply_to_metadata( $_POST['url'] );
-
-		if ( is_wp_error( $meta ) ) {
-			wp_send_json_error( $meta->get_error_message() );
-			exit;
-		}
-		wp_send_json_success( $meta );
-	}
-	/**
 	 * The Ajax function to autocomplete search.
 	 */
 	public function ajax_autocomplete() {
 		$q = wp_unslash( $_POST['q'] );
+		$results = apply_filters( 'friends_search_autocomplete', array(), $q );
+
+		wp_send_json_success( '<li class="menu-item">' . implode( '</li><li class="menu-item">', $results ) . '</li>' );
+	}
+
+	/**
+	 * The Add user search entries to the autocomplete results.
+	 *
+	 * @param      array  $results  The autocomplete results.
+	 * @param      string $q        The query.
+	 *
+	 * @return     array  The autocomplete results.
+	 */
+	public function autocomplete_user_search( $results, $q ) {
 		$users = User_Query::search( '*' . $q . '*' );
-		$results = array();
+
 		foreach ( $users->get_results() as $friend ) {
-			$result = '<li class="menu-item">';
-			$result .= '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
 			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->display_name );
 			$result .= ' <small>';
 			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->user_login );
-			$result .= '</small></a></li>';
+			$result .= '</small></a>';
 			$results[] = $result;
 		}
 
-		wp_send_json_success( implode( PHP_EOL, $results ) );
+		return $results;
 	}
 
 	/**
@@ -790,10 +750,6 @@ class Frontend {
 			'blocks-everywhere'     => false,
 			'post_format'           => $this->post_format,
 		);
-
-		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
-			$args['in_reply_to'] = $args['friends']->frontend->get_in_reply_to_metadata( $_GET['in_reply_to'] );
-		}
 
 		return Friends::template_loader()->get_template_part( 'frontend/index', $this->post_format, $args, false );
 	}
