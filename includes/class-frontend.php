@@ -224,6 +224,7 @@ class Frontend {
 				'text_trash_post'    => __( 'Trash this post', 'friends' ),
 				'text_del_convers'   => __( 'Do you really want to delete this conversation?', 'friends' ),
 				'text_no_more_posts' => __( 'No more posts available.', 'friends' ),
+				'text_checking_url'  => __( 'Checking URL.', 'friends' ),
 				'query_vars'         => $query_vars,
 				'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
 				'current_page'       => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
@@ -288,6 +289,27 @@ class Frontend {
 	public function wp_ajax_reblog() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_send_json_error( 'error' );
+		}
+
+		check_ajax_referer( 'friends-reblog' );
+
+		if ( ! empty( $_POST['boost'] ) ) {
+			if ( ! Friends::check_url( $_POST['boost'] ) ) {
+				wp_send_json_error( 'invalid-url', array( 'url' => $_POST['boost'] ) );
+			}
+
+			do_action( 'friends_activitypub_announce_any_url', $_POST['boost'] );
+
+			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
+				wp_send_json_success(
+					array(
+						'url' => $_POST['boost'],
+					)
+				);
+			} else {
+				wp_safe_redirect( remove_query_arg( 'boost', add_query_arg( 'result', 'success', $_SERVER['HTTP_REFERER'] ) ) );
+			}
+			exit;
 		}
 
 		$post = get_post( $_POST['post_id'] );

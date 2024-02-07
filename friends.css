@@ -2738,16 +2738,16 @@ h2#page-title a.dashicons {
   font-color: #3e396b;
   font-size: 0.6rem;
 }
-.friends-page #quick-post-panel #in_reply_to_preview {
+.friends-page #quick-post-panel .activitypub_preview {
   background-color: #f7f8f9;
   padding: 0.5em;
   margin-top: 1em;
   margin-bottom: 1em;
 }
-.friends-page #quick-post-panel #in_reply_to_preview figcaption {
+.friends-page #quick-post-panel .activitypub_preview figcaption {
   float: right;
 }
-.friends-page #quick-post-panel #in_reply_to_preview figcaption a:any-link {
+.friends-page #quick-post-panel .activitypub_preview figcaption a:any-link {
   color: #999;
 }
 .friends-page img.avatar {

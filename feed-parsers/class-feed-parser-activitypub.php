@@ -82,6 +82,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_reblog', array( $this, 'unqueue_activitypub_create' ), 9 );
 		\add_action( 'mastodon_api_reblog', array( $this, 'mastodon_api_reblog' ) );
 		\add_action( 'mastodon_api_unreblog', array( $this, 'mastodon_api_unreblog' ) );
+		\add_filter( 'friends_activitypub_announce_any_url', array( $this, 'queue_announce' ) );
 		\add_filter( 'friends_reblog', array( $this, 'reblog' ), 20, 2 );
 		\add_filter( 'friends_unreblog', array( $this, 'unreblog' ), 20, 2 );
 		\add_filter( 'friends_reblog', array( $this, 'maybe_unqueue_friends_reblog_post' ), 9, 2 );
@@ -1556,8 +1557,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return new \WP_Error( 'no-activitypub', 'No ActivityPub metadata found.' );
 		}
 
-		$html = '<figcaption>' . make_clickable( $meta['id'] ) . '</figcaption>';
-		$html .= '<blockquote>' . force_balance_tags( wp_kses_post( $meta['content'] ) ) . '</blockquote>';
+		$html = force_balance_tags( wp_kses_post( $meta['content'] ) );
 
 		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
 		$mention = '';
@@ -1596,6 +1596,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function frontend_reply_form( $args ) {
 		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
 			$args['in_reply_to'] = $this->get_activitypub_ajax_metadata( $_GET['in_reply_to'] );
+			$args['in_reply_to']['html'] = '<figcaption>' . make_clickable( $_GET['in_reply_to'] ) . '</figcaption><blockquote>' . $args['in_reply_to']['html'] . '</blockquote>';
 			$args['form_class'] = 'open';
 			Friends::template_loader()->get_template_part( 'frontend/activitypub/reply', true, $args );
 		}
@@ -1604,6 +1605,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function frontend_boost_form( $args ) {
 		if ( isset( $_GET['boost'] ) && wp_parse_url( $_GET['boost'] ) ) {
 			$args['boost'] = $this->get_activitypub_ajax_metadata( $_GET['boost'] );
+			$args['boost']['html'] = '<figcaption>' . make_clickable( $_GET['boost'] ) . '</figcaption><blockquote>' . $args['boost']['html'] . '</blockquote>';
 			$args['form_class'] = 'open';
 			Friends::template_loader()->get_template_part( 'frontend/activitypub/boost', true, $args );
 		}
@@ -1774,6 +1776,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_type( 'Announce' );
 		$activity->set_actor( $actor );
 		$activity->set_object( $url );
+		$activity->set_id( $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ) );
 
 		$follower_inboxes  = \Activitypub\Collection\Followers::get_inboxes( $user_id );
 		$mentioned_inboxes = \Activitypub\Mention::get_inboxes( $activity->get_cc() );

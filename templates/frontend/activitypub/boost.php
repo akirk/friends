@@ -18,16 +18,19 @@
 		sprintf(
 			// translators: %s is a URL.
 			__( 'You could also <a href=%s>reply to</a> this.', 'friends' ),
-			'"?in_reply_to=' . urlencode( ! empty( $args['boost'] ) ? $args['boost']['url'] : '' ) . '"'
+			'"' . ( ! empty( $args['boost'] ) ? ( '?in_reply_to=' . urlencode( $args['boost']['url'] ) ) : '' ) . '" class="reply-to-link"'
 		),
 		array(
-			'a' => array( 'href' => array() ),
+			'a' => array(
+				'href'  => array(),
+				'class' => array(),
+			),
 		)
 	);
 	?>
 	</small>
-	<input class="form-input" type="url" name="boost" placeholder="<?php esc_attr_e( 'In reply to https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['boost'] ) ? $args['boost']['url'] : '' ); ?>" id="friends_boost" autocomplete="off"/>
-	<div id="in_reply_to_preview"><?php echo wp_kses_post( ! empty( $args['boost'] ) ? $args['boost']['html'] : '' ); ?></div>
+	<input class="form-input activitypub_preview_url" type="url" name="boost" placeholder="<?php esc_attr_e( 'Boost https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['boost'] ) ? $args['boost']['url'] : '' ); ?>" autocomplete="off"/>
+	<div class="activitypub_preview"><?php echo wp_kses_post( ! empty( $args['boost'] ) ? $args['boost']['html'] : '' ); ?></div>
 
 	<div class="form-group">
 		<button class="btn"><?php esc_html_e( 'Boost', 'friends' ); ?></button>

@@ -19,16 +19,19 @@
 		sprintf(
 		// translators: %s is a URL.
 			__( 'You could also <a href=%s>boost</a> this.', 'friends' ),
-			'"?boost=' . urlencode( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['url'] : '' ) . '"'
+			'"' . ( ! empty( $args['in_reply_to'] ) ? ( '?boost=' . urlencode( $args['in_reply_to']['url'] ) ) : '' ) . '" class="boost-link"'
 		),
 		array(
-			'a' => array( 'href' => array() ),
+			'a' => array(
+				'href'  => array(),
+				'class' => array(),
+			),
 		)
 	);
 	?>
 	</small>
-	<input class="form-input" type="url" name="in_reply_to" placeholder="<?php esc_attr_e( 'In reply to https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['url'] : '' ); ?>" id="friends_in_reply_to" autocomplete="off"/>
-	<div id="in_reply_to_preview"><?php echo wp_kses_post( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['html'] : '' ); ?></div>
+	<input class="form-input activitypub_preview_url" type="url" name="in_reply_to" placeholder="<?php esc_attr_e( 'In reply to https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['url'] : '' ); ?>" autocomplete="off"/>
+	<div class="activitypub_preview"><?php echo wp_kses_post( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['html'] : '' ); ?></div>
 	<p class="description"><?php esc_html_e( 'Click the mentions to copy them into your reply.', 'friends' ); ?></p>
 	<div class="form-group<?php echo esc_attr( $args['blocks-everywhere'] ? ' blocks-everywhere iso-editor__loading' : '' ); ?>">
 		<label class="form-label" for="content"><?php esc_html_e( 'Text', 'friends' ); ?></label>
