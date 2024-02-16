@@ -796,6 +796,9 @@ class Feed {
 	 * @return array The available feeds.
 	 */
 	public function discover_available_feeds( $url ) {
+		if ( ! Friends::check_url( $url ) ) {
+			return array();
+		}
 		$available_feeds = array();
 		$content = null;
 		$content_type = 'text/html';

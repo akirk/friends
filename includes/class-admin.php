@@ -1865,6 +1865,10 @@ class Admin {
 				return new \WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 			}
 
+			if ( ! Friends::check_url( $friend_url ) ) {
+				return new \WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
+			}
+
 			$friend_user = User::get_user( $friend_user_login );
 			if ( $friend_user && ! is_wp_error( $friend_user ) ) {
 				if ( $friend_user->is_valid_friend() ) {
