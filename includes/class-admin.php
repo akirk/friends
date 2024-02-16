@@ -1256,8 +1256,6 @@ class Admin {
 
 		$friend = User::get_user_by_id( $user_id );
 
-		$image = file_get_contents( $_POST['avatar'] );
-
 		// Use WordPress functions to check the image dimensions.
 		$size = \wp_getimagesize( $_POST['avatar'] );
 		if ( ! $size ) {
