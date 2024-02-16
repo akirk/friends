@@ -496,6 +496,10 @@ class User extends \WP_User {
 
 	public function modify_query_by_author( \WP_Query $query ) {
 		$query->set( 'author', $this->ID );
+		if ( ! user_can( $this->ID, 'friends_plugin' ) || user_can( $this->ID, 'administrator' ) ) {
+			// If the user doesn't belong to the friends plugin, only show their local posts so that subcriptions don't spill in.
+			$query->set( 'post_type', 'post' );
+		}
 		return $query;
 	}
 
