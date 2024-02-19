@@ -331,15 +331,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * Get the inbox URL for an actor
 	 *
 	 * @param string $url The URL of the actor.
+	 * @param string $type The type of the activity.
 	 * @return string|WP_Error
 	 */
-	public static function get_inbox_by_actor( $url ) {
+	public static function get_inbox_by_actor( $url, $type ) {
 		$metadata = self::get_metadata( $url );
 		if ( \is_wp_error( $metadata ) ) {
 			return $metadata;
 		}
 
-		if ( isset( $metadata['endpoints'] ) && isset( $metadata['endpoints']['sharedInbox'] ) ) {
+		if ( ! in_array( $type, array( 'Follow' ) ) && isset( $metadata['endpoints'] ) && isset( $metadata['endpoints']['sharedInbox'] ) ) {
 			return $metadata['endpoints']['sharedInbox'];
 		}
 
@@ -1021,14 +1022,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $meta;
 		}
 		$to = $meta['id'];
-		$inbox = self::get_inbox_by_actor( $to );
+		$type = 'Follow';
+		$inbox = self::get_inbox_by_actor( $to, $type );
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
 		}
 		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
-		$activity->set_type( 'Follow' );
+		$activity->set_type( $type );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1098,7 +1100,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $meta;
 		}
 		$to = $meta['id'];
-		$inbox = self::get_inbox_by_actor( $to );
+		$type = 'Follow';
+		$inbox = self::get_inbox_by_actor( $to, $type );
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
 		}
@@ -1111,7 +1114,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_actor( $actor );
 		$activity->set_object(
 			array(
-				'type'   => 'Follow',
+				'type'   => $type,
 				'actor'  => $actor,
 				'object' => $to,
 				'id'     => $to,
@@ -1412,14 +1415,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return void|WP_Error
 	 */
 	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
-		$inbox = self::get_inbox_by_actor( $url );
+		$type = 'Like';
+		$inbox = self::get_inbox_by_actor( $url, $type );
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
 		}
 		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
-		$activity->set_type( 'Like' );
+		$activity->set_type( $type );
 		$activity->set_to( null );
 		$activity->set_cc( null );
 		$activity->set_actor( $actor );
@@ -1493,7 +1497,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return void|WP_Error
 	 */
 	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
-		$inbox = self::get_inbox_by_actor( $url );
+		$type = 'Like';
+		$inbox = self::get_inbox_by_actor( $url, $type );
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
 		}
@@ -1506,7 +1511,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_actor( $actor );
 		$activity->set_object(
 			array(
-				'type'   => 'Like',
+				'type'   => $type,
 				'actor'  => $actor,
 				'object' => $external_post_id,
 				'id'     => $actor . '#like-' . \preg_replace( '~^https?://~', '', $external_post_id ),
@@ -1612,30 +1617,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function friends_search_autocomplete( $results, $q ) {
-		function url_truncate( $url, $max_length = 30 ) {
-			$p = wp_parse_url( $url );
-			$parts = array( $p['host'] );
-			if ( trim( $p['path'] ) ) {
-				$parts = array_merge( $parts, explode( '/', $p['path'] ) );
-			}
-
-			$url = join( '/', $parts );
-			$reduce = 4;
-			while ( strlen( $url ) > $max_length ) {
-				$last_part = array_pop( $parts );
-				$last_part = substr( $last_part, strlen( $last_part ) - $reduce );
-				foreach ( $parts as $k => $part ) {
-					$parts[ $k ] = substr( $part, 0, strlen( $part ) - $reduce );
-				}
-				$url = join( '../', array_filter( $parts ) ) . '../..' . $last_part;
-				array_push( $parts, $last_part );
-				$reduce = 1;
-
-			}
-
-			return $url;
-		}
-
 		$url = preg_match( '#^(?:https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
 		$url_with_path = isset( $m[1] ) && $m[1];
 
@@ -1654,7 +1635,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$result .= '<span class="ab-icon dashicons dashicons-controls-repeat"></span>';
 			$result .= 'Boost ';
 			$result .= ' <small>';
-			$result .= esc_html( url_truncate( $q ) );
+			$result .= esc_html( Friends::url_truncate( $q ) );
 			$result .= '</small></a>';
 			$results[] = $result;
 		}
@@ -1664,7 +1645,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$result .= '<span class="ab-icon dashicons dashicons-admin-comments"></span>';
 			$result .= 'Reply to ';
 			$result .= ' <small>';
-			$result .= esc_html( url_truncate( $q ) );
+			$result .= esc_html( Friends::url_truncate( $q ) );
 			$result .= '</small></a>';
 			$results[] = $result;
 		}

@@ -1206,6 +1206,30 @@ class Friends {
 		return wp_http_validate_url( $url );
 	}
 
+	public static function url_truncate( $url, $max_length = 50 ) {
+		$p = wp_parse_url( untrailingslashit( $url ) );
+		$parts = array( $p['host'] );
+		if ( trim( $p['path'] ) ) {
+			$parts = array_merge( $parts, explode( '/', $p['path'] ) );
+		}
+
+		$url = join( '/', $parts );
+		$reduce = 4;
+		while ( strlen( $url ) > $max_length ) {
+			$last_part = array_pop( $parts );
+			$last_part = substr( $last_part, strlen( $last_part ) - $reduce );
+			foreach ( $parts as $k => $part ) {
+				$parts[ $k ] = substr( $part, 0, strlen( $part ) - $reduce );
+			}
+			$url = join( '../', array_filter( $parts ) ) . '../..' . $last_part;
+			array_push( $parts, $last_part );
+			$reduce = 1;
+
+		}
+
+		return $url;
+	}
+
 	/**
 	 * Delete all the data the plugin has stored in WordPress
 	 */
