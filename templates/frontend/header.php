@@ -23,6 +23,8 @@ if ( isset( $_GET['s'] ) ) {
 	<div id="friends-sidebar" class="off-canvas-sidebar">
 		<div class="friends-brand">
 			<a class="friends-logo" href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><h2><?php esc_html_e( 'Friends', 'friends' ); ?></h2></a>
+
+			<a class="friends-sidebar-customize" href="https://akirk.blog/wp-admin/customize.php?autofocus[section]=sidebar-widgets-friends-sidebar&url=<?php echo esc_attr( urlencode( home_url( '/friends/' ) ) ); ?>"><?php esc_html_e( 'customize sidebar', 'friends' ); ?></a>
 		</div>
 		<div class="friends-nav accordion-container">
 			<?php dynamic_sidebar( 'friends-sidebar' ); ?>
@@ -60,12 +62,16 @@ if ( isset( $_GET['s'] ) ) {
 			?>
 
 			</section>
-			<?php if ( ! is_singular() ) : ?>
-			<section class="navbar-section">
+
+			<dialog class="search-dialog">
+			</dialog>
+
+
+			<section class="navbar-section search<?php echo esc_attr( is_singular() ? ' d-hide' : '' ); ?>">
 				<form class="input-group input-inline form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 					<div class="form-autocomplete-input form-input">
 						<div class="has-icon-right">
-							<input class="form-input" type="text" tabindex="2" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search' ); ?>" value="<?php echo esc_attr( $search ); ?>" id="master-search" autocomplete="off"/>
+							<input class="form-input" type="text" tabindex="2" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search or paste URL' ); ?>" value="<?php echo esc_attr( $search ); ?>" id="master-search" autocomplete="off"/>
 							<i class="form-icon"></i>
 						</div>
 					</div>
@@ -74,7 +80,6 @@ if ( isset( $_GET['s'] ) ) {
 					<button class="btn btn-primary input-group-btn"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Search' ); ?></button>
 				</form>
 			</section>
-			<?php endif; ?>
 		</header>
 	<?php
 	do_action( 'friends_after_header', $args );

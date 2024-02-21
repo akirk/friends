@@ -121,6 +121,10 @@ h2#page-title a.dashicons {
 	}
 }
 
+::backdrop {
+	background-color: rgba(0, 0, 0, 0.75);
+}
+
 .friends-page {
 	background-color: $body-bg;
 	color: $body-font-color;
@@ -193,12 +197,35 @@ h2#page-title a.dashicons {
 		.menu-item:hover small.label-secondary {
 			display: inline-block;
 		}
+
+
+		.has-icon-left .ab-icon {
+			line-height: 1.2;
+			margin-right: .2em;
+
+			.dashicons.dashicons-plus {
+				color: #32c170;
+				font-size: .5em;
+				margin-left: -1.5em;
+				margin-top: -2.1em;
+			}
+		}
 	}
 
 	button,
 	input {
 		min-height: auto;
 	}
+
+	.d-none {
+		display: none;
+	}
+
+	dialog {
+		border: 0;
+		box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
+	}
+
 
 	header.navbar section.navbar-section.author {
 		flex: 3;
@@ -334,6 +361,13 @@ h2#page-title a.dashicons {
 					margin-top: 1rem;
 				}
 			}
+		}
+		.friends-sidebar-customize {
+			margin-left: 1.5rem;
+			color: #999;
+			font-size: .4rem;
+			line-height: .6rem;
+			display: block;
 		}
 	}
 

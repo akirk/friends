@@ -1621,8 +1621,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$url_with_path = isset( $m[1] ) && $m[1];
 
 		if ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
-			$result = '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend&url=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
-			$result .= '<span class="ab-icon dashicons dashicons-users"></span>';
+			$result = '<a href="' . esc_url( add_query_arg( 'url', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
+			$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
 			$result .= 'Follow ';
 			$result .= ' <small>';
 			$result .= esc_html( $q );
@@ -1631,7 +1631,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( home_url( '/friends/type/status/?boost=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( add_query_arg( 'boost', $q, home_url( '/friends/type/status/' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-controls-repeat"></span>';
 			$result .= 'Boost ';
 			$result .= ' <small>';
@@ -1641,7 +1641,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( home_url( '/friends/type/status/?in_reply_to=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( add_query_arg( 'in_reply_to', $q, home_url( '/friends/type/status/' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-admin-comments"></span>';
 			$result .= 'Reply to ';
 			$result .= ' <small>';
