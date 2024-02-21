@@ -46,6 +46,13 @@ switch ( $args['friends']->frontend->post_format ) {
 		$title = _x( 'Audio feed', 'Post format', 'friends' );
 		break;
 }
+if ( isset( $_GET['s'] ) ) {
+	$title = sprintf(
+		// translators: %s is a search term.
+		__( 'Search for "%s"', 'friends' ),
+		esc_html( $_GET['s'] )
+	);
+}
 
 if ( $args['friends']->frontend->reaction ) {
 	echo esc_html(

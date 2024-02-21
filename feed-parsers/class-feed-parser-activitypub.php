@@ -1617,17 +1617,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function friends_search_autocomplete( $results, $q ) {
-		$url = preg_match( '#^(?:https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
-		$url_with_path = isset( $m[1] ) && $m[1];
+		$url = preg_match( '#^(https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
+		$url_with_path = isset( $m[2] ) && $m[2];
 
-		if ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
-			$result = '<a href="' . esc_url( add_query_arg( 'url', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
-			$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
-			$result .= 'Follow ';
-			$result .= ' <small>';
-			$result .= esc_html( $q );
-			$result .= '</small></a>';
-			$results[] = $result;
+		$already_added = false;
+		foreach ( $results as $result ) {
+			if ( strpos( $result, $q ) !== false ) {
+				$already_added = true;
+			}
+		}
+
+		if ( ! $already_added ) {
+			if ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
+				$result = '<a href="' . esc_url( add_query_arg( 'url', $m[1] ? $q : 'https://' . $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
+				$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
+				$result .= 'Follow ';
+				$result .= ' <small>';
+				$result .= esc_html( $q );
+				$result .= '</small></a>';
+				$results[] = $result;
+			}
 		}
 
 		if ( $url_with_path ) {
