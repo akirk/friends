@@ -601,7 +601,7 @@ class Frontend {
 		$results = array();
 
 		if ( false ) {
-			$result = '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend&name=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( add_query_arg( 'name', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="ab-icon dashicons dashicons-plus"></span></span>';
 			$result .= 'Add friend';
 			$result .= ' <small>';
@@ -611,7 +611,7 @@ class Frontend {
 		}
 		$results = apply_filters( 'friends_search_autocomplete', $results, $q );
 
-		$result = '<a href="' . esc_url( add_query_arg( 'q', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
+		$result = '<a href="' . esc_url( add_query_arg( 's', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
 		$result .= '<span class="ab-icon dashicons dashicons-search"></span>';
 		$result .= 'Search for ';
 		$result .= ' <small>';

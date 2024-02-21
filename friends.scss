@@ -402,6 +402,8 @@ h2#page-title a.dashicons {
 			padding: .5em;
 			margin-top: 1em;
 			margin-bottom: 1em;
+			max-height: 6em;
+			overflow-y: auto;
 			figcaption {
 				float: right;
 				a:any-link {

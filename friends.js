@@ -36,9 +36,13 @@
 				return;
 			}
 
+			searchResultFocused = ( results.length + searchResultFocused ) % results.length;
+
 			const el = results.get( searchResultFocused );
 			if ( el ) {
 				el.focus();
+			} else {
+				searchResultFocused = results.length;
 			}
 			return false;
 		}
