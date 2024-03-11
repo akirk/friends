@@ -444,6 +444,16 @@ class Friends {
 		}
 		$previous_version = get_option( 'friends_plugin_version' );
 
+		if ( version_compare( $previous_version, '2.9.0', '<' ) ) {
+			$users = User_Query::all_associated_users();
+			foreach ( $users->get_results() as $user ) {
+				if ( ! ( $user instanceof Subscription ) ) {
+					// We have a user that is not a virtual user, so the friendship functionality had been used.
+					update_option( 'friends_enable_wp_friendships', 1 );
+					break;
+				}
+			}
+		}
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
 			$users = User_Query::all_associated_users();
 			foreach ( $users->get_results() as $user ) {

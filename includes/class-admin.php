@@ -126,7 +126,13 @@ class Admin {
 		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Settings' ), __( 'Settings' ), $required_role, 'friends-settings', array( $this, 'render_admin_settings' ) );
-		if ( isset( $_GET['page'] ) && in_array( $_GET['page'], apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export' ) ) ) ) {
+		if (
+			isset( $_GET['page'] ) &&
+			in_array(
+				$_GET['page'],
+				apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export' ) )
+			)
+		) {
 			add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), '- ' . __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
 			add_submenu_page( 'friends', __( 'Friendships', 'friends' ), '- ' . __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
 			add_submenu_page( 'friends', __( 'Import/Export', 'friends' ), '- ' . __( 'Import/Export', 'friends' ), $required_role, 'friends-import-export', array( $this, 'render_admin_import_export' ) );
