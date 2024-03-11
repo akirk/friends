@@ -59,6 +59,11 @@
 			</tr>
 		</tbody>
 	</table>
+	<p class="submit">
+		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
+	</p>
+
+	<h2><?php esc_html_e( 'Individual Friend Settings', 'friends' ); ?></h2>
 	<table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-bottom: 2em; margin-right: 1em">
 		<thead>
 			<tr>

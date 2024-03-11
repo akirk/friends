@@ -68,6 +68,7 @@ class Admin {
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
 		add_filter( 'debug_information', array( $this, 'site_health_debug' ) );
 		add_filter( 'friends_create_and_follow', array( $this, 'create_and_follow' ), 10, 4 );
+		add_filter( 'friends_admin_tabs', array( $this, 'maybe_remove_friendship_settings' ) );
 
 		if ( ! get_option( 'permalink_structure' ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
@@ -126,8 +127,10 @@ class Admin {
 		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
 		add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
 		add_action( 'load-' . $page_type . '_page_friends-notification-manager', array( $this, 'process_admin_notification_manager' ) );
-		add_submenu_page( 'friends', __( 'Friendships', 'friends' ), __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
-		add_action( 'load-' . $page_type . '_page_friends-wp-friendships', array( $this, 'process_admin_wp_friendship_settings' ) );
+		if ( get_option( 'friends_enable_wp_friendships' ) ) {
+			add_submenu_page( 'friends', __( 'Friendships', 'friends' ), __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
+			add_action( 'load-' . $page_type . '_page_friends-wp-friendships', array( $this, 'process_admin_wp_friendship_settings' ) );
+		}
 		add_submenu_page( 'friends', __( 'Import/Export', 'friends' ), __( 'Import/Export', 'friends' ), $required_role, 'friends-import-export', array( $this, 'render_admin_import_export' ) );
 		add_action( 'load-' . $page_type . '_page_friends-import-export', array( $this, 'process_admin_import_export' ) );
 		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
@@ -502,7 +505,7 @@ class Admin {
 		}
 
 		$this->check_admin_settings();
-		foreach ( array( 'ignore_incoming_friend_requests' ) as $checkbox ) {
+		foreach ( array( 'ignore_incoming_friend_requests', 'enable_wp_friendships' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
@@ -2182,6 +2185,13 @@ class Admin {
 		);
 
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
+
+	public function maybe_remove_friendship_settings( $items ) {
+		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
+			unset( $items[ __( 'Friendships', 'friends' ) ] );
+		}
+		return $items;
 	}
 
 	public function render_admin_wp_friendship_settings() {
