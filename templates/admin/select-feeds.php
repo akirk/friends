@@ -111,7 +111,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 					</p>
 				</td>
 			</tr>
-			<?php else : ?>
+			<?php elseif ( get_option( 'friends_enable_wp_friendships' ) ) : ?>
 			<tr>
 				<th scope="row"><label for="friendship"><?php esc_html_e( 'Friendship', 'friends' ); ?></label></th>
 				<td>

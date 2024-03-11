@@ -103,6 +103,9 @@ class Access_Control {
 	 * @return     int|bool  The user id or false.
 	 */
 	public function verify_token( $token, $until, $auth ) {
+		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
+			return false;
+		}
 		$user_id = get_option( 'friends_in_token_' . $token );
 		if ( ! $user_id ) {
 			$me = User::get_user( User::get_user_login_for_url( $token ) );
@@ -136,6 +139,9 @@ class Access_Control {
 	 * Log in a friend via URL parameter
 	 */
 	public function remote_login() {
+		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
+			return false;
+		}
 		if ( ! isset( $_GET['friend_auth'] ) ) {
 			return;
 		}

@@ -122,19 +122,22 @@ class Admin {
 		add_menu_page( 'friends', $menu_title, $required_role, 'friends', null, 'dashicons-groups', 3 );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Home' ), __( 'Home' ), $required_role, 'friends', array( $this, 'render_admin_home' ) );
+		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
+		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Settings' ), __( 'Settings' ), $required_role, 'friends-settings', array( $this, 'render_admin_settings' ) );
-		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
-		add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
+		if ( isset( $_GET['page'] ) && in_array( $_GET['page'], apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export' ) ) ) ) {
+			add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), '- ' . __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
+			add_submenu_page( 'friends', __( 'Friendships', 'friends' ), '- ' . __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
+			add_submenu_page( 'friends', __( 'Import/Export', 'friends' ), '- ' . __( 'Import/Export', 'friends' ), $required_role, 'friends-import-export', array( $this, 'render_admin_import_export' ) );
+			do_action( 'friends_admin_menu_settings', $page_type );
+		}
 		add_action( 'load-' . $page_type . '_page_friends-notification-manager', array( $this, 'process_admin_notification_manager' ) );
+		add_action( 'load-' . $page_type . '_page_friends-import-export', array( $this, 'process_admin_import_export' ) );
+		add_action( 'load-' . $page_type . '_page_friends-settings', array( $this, 'process_admin_settings' ) );
 		if ( get_option( 'friends_enable_wp_friendships' ) ) {
-			add_submenu_page( 'friends', __( 'Friendships', 'friends' ), __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
 			add_action( 'load-' . $page_type . '_page_friends-wp-friendships', array( $this, 'process_admin_wp_friendship_settings' ) );
 		}
-		add_submenu_page( 'friends', __( 'Import/Export', 'friends' ), __( 'Import/Export', 'friends' ), $required_role, 'friends-import-export', array( $this, 'render_admin_import_export' ) );
-		add_action( 'load-' . $page_type . '_page_friends-import-export', array( $this, 'process_admin_import_export' ) );
-		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
-		add_action( 'load-' . $page_type . '_page_friends-settings', array( $this, 'process_admin_settings' ) );
 
 		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
 
