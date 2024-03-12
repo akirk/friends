@@ -598,7 +598,26 @@ class Frontend {
 	 */
 	public function ajax_autocomplete() {
 		$q = wp_unslash( $_POST['q'] );
-		$results = apply_filters( 'friends_search_autocomplete', array(), $q );
+		$results = array();
+
+		if ( false ) {
+			$result = '<a href="' . esc_url( add_query_arg( 'name', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
+			$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="ab-icon dashicons dashicons-plus"></span></span>';
+			$result .= 'Add friend';
+			$result .= ' <small>';
+			$result .= esc_html( $q );
+			$result .= '</small></a>';
+			$results[] = $result;
+		}
+		$results = apply_filters( 'friends_search_autocomplete', $results, $q );
+
+		$result = '<a href="' . esc_url( add_query_arg( 's', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
+		$result .= '<span class="ab-icon dashicons dashicons-search"></span>';
+		$result .= 'Search for ';
+		$result .= ' <small>';
+		$result .= esc_html( $q );
+		$result .= '</small></a>';
+		$results[] = $result;
 
 		wp_send_json_success( '<li class="menu-item">' . implode( '</li><li class="menu-item">', $results ) . '</li>' );
 	}
@@ -616,6 +635,7 @@ class Frontend {
 
 		foreach ( $users->get_results() as $friend ) {
 			$result = '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
+			$result .= '<span class="ab-icon dashicons dashicons-businessperson"></span>';
 			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->display_name );
 			$result .= ' <small>';
 			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->user_login );

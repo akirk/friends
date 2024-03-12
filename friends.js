@@ -36,9 +36,13 @@
 				return;
 			}
 
+			searchResultFocused = ( results.length + searchResultFocused ) % results.length;
+
 			const el = results.get( searchResultFocused );
 			if ( el ) {
 				el.focus();
+			} else {
+				searchResultFocused = results.length;
 			}
 			return false;
 		}
@@ -81,6 +85,36 @@
 			},
 		} );
 	} );
+
+	$document.on( 'keydown', function ( e ) {
+		const searchDialog = $( '.search-dialog' );
+		if ( searchDialog.length ) {
+			if (
+				(e.metaKey && 75 === e.keyCode ) // cmd-k.
+				|| ( e.ctrlKey && 75 === e.keyCode ) // ctrl-p.
+			) {
+				// move all the childnodes of section.navbar-section search into the .search-dialog:
+				searchDialog.append( $( '.navbar-section.search' ).children() );
+
+				// create a new dialog
+				if ( searchDialog.is(':visible') ) {
+					searchDialog.hide();
+					$( '.navbar-section.search' ).append( searchDialog.children() );
+				} else {
+					searchDialog.show();
+				}
+
+				$( 'input#master-search' ).focus();
+				return false;
+			}
+
+			if ( 27 === e.keyCode ) {
+				searchDialog.hide();
+				$( '.navbar-section.search' ).append( $( '.search-dialog' ).children() );
+			}
+		}
+	} );
+
 	$document.on(
 		'click',
 		'a.friends-auth-link, button.comments.friends-auth-link',

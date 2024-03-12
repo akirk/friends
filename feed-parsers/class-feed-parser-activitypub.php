@@ -1617,21 +1617,30 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function friends_search_autocomplete( $results, $q ) {
-		$url = preg_match( '#^(?:https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
-		$url_with_path = isset( $m[1] ) && $m[1];
+		$url = preg_match( '#^(https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
+		$url_with_path = isset( $m[2] ) && $m[2];
 
-		if ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
-			$result = '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend&url=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
-			$result .= '<span class="ab-icon dashicons dashicons-users"></span>';
-			$result .= 'Follow ';
-			$result .= ' <small>';
-			$result .= esc_html( $q );
-			$result .= '</small></a>';
-			$results[] = $result;
+		$already_added = false;
+		foreach ( $results as $result ) {
+			if ( strpos( $result, $q ) !== false ) {
+				$already_added = true;
+			}
+		}
+
+		if ( ! $already_added ) {
+			if ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
+				$result = '<a href="' . esc_url( add_query_arg( 'url', $m[1] ? $q : 'https://' . $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
+				$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
+				$result .= 'Follow ';
+				$result .= ' <small>';
+				$result .= esc_html( $q );
+				$result .= '</small></a>';
+				$results[] = $result;
+			}
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( home_url( '/friends/type/status/?boost=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( add_query_arg( 'boost', $q, home_url( '/friends/type/status/' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-controls-repeat"></span>';
 			$result .= 'Boost ';
 			$result .= ' <small>';
@@ -1641,7 +1650,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( home_url( '/friends/type/status/?in_reply_to=' . urlencode( $q ) ) ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( add_query_arg( 'in_reply_to', $q, home_url( '/friends/type/status/' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-admin-comments"></span>';
 			$result .= 'Reply to ';
 			$result .= ' <small>';
