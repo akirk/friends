@@ -39,7 +39,7 @@ class Automatic_Status {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
+		add_action( 'friends_admin_menu_settings', array( $this, 'friends_admin_menu_settings' ), 20 );
 		add_action( 'friends_admin_tabs', array( $this, 'admin_tabs' ), 20 );
 		add_filter( 'handle_bulk_actions-edit-post', array( $this, 'bulk_publish' ), 10, 3 );
 
@@ -53,17 +53,14 @@ class Automatic_Status {
 
 	/**
 	 * Add the admin menu to the sidebar.
+	 *
+	 * @param      string $page_type  The page type.
 	 */
-	public function admin_menu() {
-		$unread_badge = $this->friends->admin->get_unread_badge();
-
-		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
-		$page_type = sanitize_title( $menu_title );
-
+	public function friends_admin_menu_settings( $page_type ) {
 		add_submenu_page(
 			'friends',
 			__( 'Automatic Status', 'friends' ),
-			__( 'Automatic Status', 'friends' ),
+			'- ' . __( 'Automatic Status', 'friends' ),
 			Friends::required_menu_role(),
 			'friends-auto-status',
 			array( $this, 'validate_drafts' )

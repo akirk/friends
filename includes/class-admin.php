@@ -68,6 +68,7 @@ class Admin {
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
 		add_filter( 'debug_information', array( $this, 'site_health_debug' ) );
 		add_filter( 'friends_create_and_follow', array( $this, 'create_and_follow' ), 10, 4 );
+		add_filter( 'friends_admin_tabs', array( $this, 'maybe_remove_friendship_settings' ) );
 
 		if ( ! get_option( 'permalink_structure' ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
@@ -121,13 +122,28 @@ class Admin {
 		add_menu_page( 'friends', $menu_title, $required_role, 'friends', null, 'dashicons-groups', 3 );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Home' ), __( 'Home' ), $required_role, 'friends', array( $this, 'render_admin_home' ) );
+		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
+		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Settings' ), __( 'Settings' ), $required_role, 'friends-settings', array( $this, 'render_admin_settings' ) );
-		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
-		add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
+		if (
+			isset( $_GET['page'] ) &&
+			in_array(
+				$_GET['page'],
+				apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export' ) )
+			)
+		) {
+			add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), '- ' . __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
+			add_submenu_page( 'friends', __( 'Friendships', 'friends' ), '- ' . __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
+			add_submenu_page( 'friends', __( 'Import/Export', 'friends' ), '- ' . __( 'Import/Export', 'friends' ), $required_role, 'friends-import-export', array( $this, 'render_admin_import_export' ) );
+			do_action( 'friends_admin_menu_settings', $page_type );
+		}
 		add_action( 'load-' . $page_type . '_page_friends-notification-manager', array( $this, 'process_admin_notification_manager' ) );
-		add_submenu_page( 'friends', __( 'Add New Friend', 'friends' ), __( 'Add New Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
+		add_action( 'load-' . $page_type . '_page_friends-import-export', array( $this, 'process_admin_import_export' ) );
 		add_action( 'load-' . $page_type . '_page_friends-settings', array( $this, 'process_admin_settings' ) );
+		if ( get_option( 'friends_enable_wp_friendships' ) ) {
+			add_action( 'load-' . $page_type . '_page_friends-wp-friendships', array( $this, 'process_admin_wp_friendship_settings' ) );
+		}
 
 		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
 
@@ -498,7 +514,7 @@ class Admin {
 		}
 
 		$this->check_admin_settings();
-		foreach ( array( 'ignore_incoming_friend_requests' ) as $checkbox ) {
+		foreach ( array( 'ignore_incoming_friend_requests', 'enable_wp_friendships' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
@@ -528,61 +544,11 @@ class Admin {
 			} else {
 				delete_option( 'friends_limit_homepage_post_format' );
 			}
-
-			if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
-				update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
-			} else {
-				$main_user_id = Friends::get_main_friend_user_id();
-				$main_user_id_exists = false;
-				$users = User_Query::all_admin_users();
-				foreach ( $users->get_results() as $user ) {
-					if ( $user->ID === $main_user_id ) {
-						$main_user_id_exists = true;
-						break;
-					}
-				}
-				if ( ! $main_user_id_exists ) {
-					// Reset the main user id.
-					delete_option( 'friends_main_user_id' );
-					Friends::get_main_friend_user_id();
-				}
-			}
-
-			if ( isset( $_POST['comment_registration'] ) && $_POST['comment_registration'] ) {
-				update_option( 'comment_registration', true );
-			} else {
-				delete_option( 'comment_registration' );
-			}
-
 			if ( isset( $_POST['blocks_everywhere'] ) && $_POST['blocks_everywhere'] ) {
 				update_user_option( get_current_user_id(), 'friends_blocks_everywhere', 1 );
 			} else {
 				delete_user_option( get_current_user_id(), 'friends_blocks_everywhere' );
 			}
-
-			if ( isset( $_POST['comment_registration_message'] ) && $_POST['comment_registration_message'] ) {
-				update_option( 'friends_comment_registration_message', $_POST['comment_registration_message'] );
-			} else {
-				delete_option( 'friends_comment_registration_message' );
-			}
-		}
-
-		if ( isset( $_POST['require_codeword'] ) && $_POST['require_codeword'] ) {
-			update_option( 'friends_require_codeword', true );
-		} else {
-			delete_option( 'friends_require_codeword' );
-		}
-
-		if ( isset( $_POST['codeword'] ) && $_POST['codeword'] ) {
-			update_option( 'friends_codeword', $_POST['codeword'] );
-		} else {
-			delete_option( 'friends_codeword' );
-		}
-
-		if ( isset( $_POST['wrong_codeword_message'] ) && $_POST['wrong_codeword_message'] ) {
-			update_option( 'friends_wrong_codeword_message', $_POST['wrong_codeword_message'] );
-		} else {
-			delete_option( 'friends_wrong_codeword_message' );
 		}
 
 		if ( isset( $_POST['available_emojis'] ) && $_POST['available_emojis'] ) {
@@ -596,29 +562,6 @@ class Admin {
 			update_option( 'friends_selected_emojis', $available_emojis );
 		} else {
 			delete_option( 'friends_selected_emojis' );
-		}
-
-		if ( isset( $_POST['notification_keywords'] ) && $_POST['notification_keywords'] ) {
-			$keywords = array();
-			foreach ( $_POST['notification_keywords'] as $i => $keyword ) {
-				if ( trim( $keyword ) ) {
-					$keywords[] = array(
-						'enabled' => isset( $_POST['notification_keywords_enabled'][ $i ] ) && $_POST['notification_keywords_enabled'][ $i ],
-						'keyword' => $keyword,
-					);
-				}
-			}
-			update_option( 'friends_notification_keywords', $keywords );
-		}
-
-		if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'acquaintance' ), true ) ) {
-			update_option( 'friends_default_friend_role', $_POST['default_role'] );
-		}
-
-		if ( isset( $_POST['new_post_notification'] ) && $_POST['new_post_notification'] ) {
-			delete_user_option( get_current_user_id(), 'friends_no_new_post_notification' );
-		} else {
-			update_user_option( get_current_user_id(), 'friends_no_new_post_notification', 1 );
 		}
 
 		// Global retention.
@@ -710,24 +653,6 @@ class Admin {
 			<?php
 		}
 
-		// In order to switch to the frontend locale, we need to first pretend that nothing was loaded yet.
-		global $l10n;
-		$l10n = array();
-
-		switch_to_locale( $this->get_frontend_locale() );
-		// Now while loading the next translations we need to ensure that determine_locale() doesn't return the admin language but the frontend language.
-		add_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
-
-		$wrong_codeword_message = __( 'An invalid codeword was provided.', 'friends' );
-		$comment_registration_message = __( 'Only people in my network can comment.', 'friends' );
-		$my_network = __( 'my network', 'friends' );
-		$comment_registration_default = strip_tags(
-			/* translators: %s: Login URL. */
-			__( 'You must be <a href="%s">logged in</a> to post a comment.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		);
-		// Now let's switch back to the admin language.
-		remove_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
-		restore_previous_locale();
 		$post_stats = Friends::get_post_stats();
 
 		Friends::template_loader()->get_template_part(
@@ -736,32 +661,17 @@ class Admin {
 			array_merge(
 				Friends::get_post_stats(),
 				array(
-					'potential_main_users'           => User_Query::all_admin_users(),
-					'main_user_id'                   => Friends::get_main_friend_user_id(),
-					'friend_roles'                   => $this->get_friend_roles(),
-					'default_role'                   => get_option( 'friends_default_friend_role', 'friend' ),
-					'force_enable_post_formats'      => get_option( 'friends_force_enable_post_formats' ),
-					'post_format_strings'            => get_post_format_strings(),
-					'limit_homepage_post_format'     => get_option( 'friends_limit_homepage_post_format', false ),
-					'expose_post_format_feeds'       => get_option( 'friends_expose_post_format_feeds' ),
-					'private_rss_key'                => get_option( 'friends_private_rss_key' ),
-					'comment_registration'           => get_option( 'comment_registration' ), // WordPress option.
-					'comment_registration_message'   => get_option( 'friends_comment_registration_message', $comment_registration_message ),
-					'comment_registration_default'   => $comment_registration_default,
-					'my_network'                     => $my_network,
-					'public_profile_link'            => home_url( '/friends/' ),
-					'codeword'                       => get_option( 'friends_codeword', 'friends' ),
-					'require_codeword'               => get_option( 'friends_require_codeword' ),
-					'wrong_codeword_message'         => get_option( 'friends_wrong_codeword_message', $wrong_codeword_message ),
-					'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
-					'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
-					'notification_keywords'          => Feed::get_all_notification_keywords(),
-					'retention_days'                 => Friends::get_retention_days(),
-					'retention_number'               => Friends::get_retention_number(),
-					'retention_days_enabled'         => get_option( 'friends_enable_retention_days' ),
-					'retention_number_enabled'       => get_option( 'friends_enable_retention_number' ),
-					'frontend_default_view'          => get_option( 'friends_frontend_default_view', 'expanded' ),
-					'blocks_everywhere'              => get_user_option( 'friends_blocks_everywhere' ),
+					'force_enable_post_formats'  => get_option( 'friends_force_enable_post_formats' ),
+					'post_format_strings'        => get_post_format_strings(),
+					'limit_homepage_post_format' => get_option( 'friends_limit_homepage_post_format', false ),
+					'expose_post_format_feeds'   => get_option( 'friends_expose_post_format_feeds' ),
+					'enable_wp_friendships'      => get_option( 'friends_enable_wp_friendships' ),
+					'retention_days'             => Friends::get_retention_days(),
+					'retention_number'           => Friends::get_retention_number(),
+					'retention_days_enabled'     => get_option( 'friends_enable_retention_days' ),
+					'retention_number_enabled'   => get_option( 'friends_enable_retention_number' ),
+					'frontend_default_view'      => get_option( 'friends_frontend_default_view', 'expanded' ),
+					'blocks_everywhere'          => get_user_option( 'friends_blocks_everywhere' ),
 				)
 			)
 		);
@@ -2185,6 +2095,26 @@ class Admin {
 		}
 
 		$this->check_admin_settings();
+
+		if ( isset( $_POST['notification_keywords'] ) && $_POST['notification_keywords'] ) {
+			$keywords = array();
+			foreach ( $_POST['notification_keywords'] as $i => $keyword ) {
+				if ( trim( $keyword ) ) {
+					$keywords[] = array(
+						'enabled' => isset( $_POST['notification_keywords_enabled'][ $i ] ) && $_POST['notification_keywords_enabled'][ $i ],
+						'keyword' => $keyword,
+					);
+				}
+			}
+			update_option( 'friends_notification_keywords', $keywords );
+		}
+
+		if ( isset( $_POST['new_post_notification'] ) && $_POST['new_post_notification'] ) {
+			delete_user_option( get_current_user_id(), 'friends_no_new_post_notification' );
+		} else {
+			update_user_option( get_current_user_id(), 'friends_no_new_post_notification', 1 );
+		}
+
 		$friend_ids = $_POST['friend_listed'];
 		$current_user_id = get_current_user_id();
 		$hide_from_friends_page = array();
@@ -2194,7 +2124,7 @@ class Admin {
 				$hide_from_friends_page[] = $friend_id;
 			}
 
-			$no_new_post_notification = ! isset( $_POST['new_post_notification'][ $friend_id ] );
+			$no_new_post_notification = ! isset( $_POST['new_friend_post_notification'][ $friend_id ] ) || '0' === $_POST['new_friend_post_notification'][ $friend_id ];
 			if ( get_user_option( 'friends_no_new_post_notification_' . $friend_id ) !== $no_new_post_notification ) {
 				update_user_option( $current_user_id, 'friends_no_new_post_notification_' . $friend_id, $no_new_post_notification );
 			}
@@ -2252,16 +2182,166 @@ class Admin {
 			'admin/notification-manager',
 			null,
 			array(
-				'friend_users'             => $friend_users->get_results(),
-				'friends_settings_url'     => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-				'hide_from_friends_page'   => $hide_from_friends_page,
-				'no_new_post_notification' => get_user_option( 'friends_no_new_post_notification' ),
-				'no_keyword_notification'  => get_user_option( 'friends_no_keyword_notification' ),
-				'active_keywords'          => Feed::get_active_notification_keywords(),
+				'friend_users'                   => $friend_users->get_results(),
+				'friends_settings_url'           => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'hide_from_friends_page'         => $hide_from_friends_page,
+				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
+				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
+				'no_keyword_notification'        => get_user_option( 'friends_no_keyword_notification' ),
+				'notification_keywords'          => Feed::get_all_notification_keywords(),
+				'active_keywords'                => Feed::get_active_notification_keywords(),
 			)
 		);
 
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
+
+	public function maybe_remove_friendship_settings( $items ) {
+		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
+			unset( $items[ __( 'Friendships', 'friends' ) ] );
+		}
+		return $items;
+	}
+
+	public function render_admin_wp_friendship_settings() {
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-wp-friendships',
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
+		$this->check_admin_settings();
+
+		// In order to switch to the frontend locale, we need to first pretend that nothing was loaded yet.
+		global $l10n;
+		$l10n = array();
+
+		switch_to_locale( $this->get_frontend_locale() );
+		// Now while loading the next translations we need to ensure that determine_locale() doesn't return the admin language but the frontend language.
+		add_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
+
+		$wrong_codeword_message = __( 'An invalid codeword was provided.', 'friends' );
+		$comment_registration_message = __( 'Only people in my network can comment.', 'friends' );
+		$my_network = __( 'my network', 'friends' );
+		$comment_registration_default = strip_tags(
+			/* translators: %s: Login URL. */
+			__( 'You must be <a href="%s">logged in</a> to post a comment.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		);
+		// Now let's switch back to the admin language.
+		remove_filter( 'pre_determine_locale', array( $this, 'get_frontend_locale' ) );
+		restore_previous_locale();
+
+		?>
+		<h1><?php esc_html_e( 'Friendships', 'friends' ); ?></h1>
+		<?php
+
+		Friends::template_loader()->get_template_part(
+			'admin/settings-wp-friendships',
+			null,
+			array(
+				'potential_main_users'         => User_Query::all_admin_users(),
+				'main_user_id'                 => Friends::get_main_friend_user_id(),
+				'friend_roles'                 => $this->get_friend_roles(),
+				'default_role'                 => get_option( 'friends_default_friend_role', 'friend' ),
+				'comment_registration'         => get_option( 'comment_registration' ), // WordPress option.
+				'comment_registration_message' => get_option( 'friends_comment_registration_message', $comment_registration_message ),
+				'comment_registration_default' => $comment_registration_default,
+				'my_network'                   => $my_network,
+				'public_profile_link'          => home_url( '/friends/' ),
+				'codeword'                     => get_option( 'friends_codeword', 'friends' ),
+				'require_codeword'             => get_option( 'friends_require_codeword' ),
+				'wrong_codeword_message'       => get_option( 'friends_wrong_codeword_message', $wrong_codeword_message ),
+			)
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
+	public function process_admin_wp_friendship_settings() {
+		if ( current_user_can( 'manage_options' ) ) {
+
+			if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
+				update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
+			} else {
+				$main_user_id = Friends::get_main_friend_user_id();
+				$main_user_id_exists = false;
+				$users = User_Query::all_admin_users();
+				foreach ( $users->get_results() as $user ) {
+					if ( $user->ID === $main_user_id ) {
+						$main_user_id_exists = true;
+						break;
+					}
+				}
+				if ( ! $main_user_id_exists ) {
+					// Reset the main user id.
+					delete_option( 'friends_main_user_id' );
+					Friends::get_main_friend_user_id();
+				}
+			}
+
+			if ( isset( $_POST['require_codeword'] ) && $_POST['require_codeword'] ) {
+				update_option( 'friends_require_codeword', true );
+			} else {
+				delete_option( 'friends_require_codeword' );
+			}
+
+			if ( isset( $_POST['codeword'] ) && $_POST['codeword'] ) {
+				update_option( 'friends_codeword', $_POST['codeword'] );
+			} else {
+				delete_option( 'friends_codeword' );
+			}
+
+			if ( isset( $_POST['wrong_codeword_message'] ) && $_POST['wrong_codeword_message'] ) {
+				update_option( 'friends_wrong_codeword_message', $_POST['wrong_codeword_message'] );
+			} else {
+				delete_option( 'friends_wrong_codeword_message' );
+			}
+
+			if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'acquaintance' ), true ) ) {
+				update_option( 'friends_default_friend_role', $_POST['default_role'] );
+			}
+
+			if ( isset( $_POST['comment_registration'] ) && $_POST['comment_registration'] ) {
+				update_option( 'comment_registration', true );
+			} else {
+				delete_option( 'comment_registration' );
+			}
+
+			if ( isset( $_POST['comment_registration_message'] ) && $_POST['comment_registration_message'] ) {
+				update_option( 'friends_comment_registration_message', $_POST['comment_registration_message'] );
+			} else {
+				delete_option( 'friends_comment_registration_message' );
+			}
+		}
+	}
+	public function render_admin_import_export() {
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-import-export',
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
+		$this->check_admin_settings();
+
+		?>
+		<h1><?php esc_html_e( 'Import/Export', 'friends' ); ?></h1>
+		<?php
+
+		Friends::template_loader()->get_template_part(
+			'admin/import-export',
+			null,
+			array(
+				'private_rss_key' => get_option( 'friends_private_rss_key' ),
+			)
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
+
+	public function process_admin_import_export() {
 	}
 
 	/**

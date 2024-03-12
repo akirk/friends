@@ -37,38 +37,41 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$date = gmdate( \DATE_W3C, $now++ );
 		$id = 'test' . $status_id;
 		$content = 'Test ' . $date . ' ' . wp_rand();
-
-		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
-		$request->set_param( 'type', 'Create' );
-		$request->set_param( 'id', $id );
-		$request->set_param( 'actor', $this->actor );
-
 		$attachment_url = 'https://mastodon.local/files/original/1234.png';
 		$attachment_width = 400;
 		$attachment_height = 600;
-		$request->set_param(
-			'object',
-			array(
-				'type'         => 'Note',
-				'id'           => $id,
-				'attributedTo' => $this->actor,
-				'content'      => $content,
-				'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
-				'published'    => $date,
-				'attachment'   => array(
-					array(
-						'type'      => 'Document',
-						'mediaType' => 'image/png',
-						'url'       => $attachment_url,
-						'name'      => '',
-						'blurhash'  => '',
-						'width'     => $attachment_width,
-						'height'    => $attachment_height,
 
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Create',
+					'id'     => $id,
+					'actor'  => $this->actor,
+					'object' => array(
+						'type'         => 'Note',
+						'id'           => $id,
+						'attributedTo' => $this->actor,
+						'content'      => $content,
+						'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
+						'published'    => $date,
+						'attachment'   => array(
+							array(
+								'type'      => 'Document',
+								'mediaType' => 'image/png',
+								'url'       => $attachment_url,
+								'name'      => '',
+								'blurhash'  => '',
+								'width'     => $attachment_width,
+								'height'    => $attachment_height,
+
+							),
+						),
 					),
-				),
+				)
 			)
 		);
+		$request->set_header( 'Content-type', 'application/json' );
 
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
@@ -91,20 +94,27 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$content = 'Test ' . $date . ' ' . wp_rand();
 
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
-		$request->set_param( 'type', 'Create' );
-		$request->set_param( 'id', $id );
-		$request->set_param( 'actor', 'https://mastodon.local/@akirk' );
-		$request->set_param(
-			'object',
-			array(
-				'type'         => 'Note',
-				'id'           => $id,
-				'attributedTo' => 'https://mastodon.local/@akirk',
-				'content'      => $content,
-				'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
-				'published'    => $date,
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Create',
+					'id'     => $id,
+					'actor'  => 'https://mastodon.local/@akirk',
+
+					'object' =>
+					array(
+						'type'         => 'Note',
+						'id'           => $id,
+						'attributedTo' => 'https://mastodon.local/@akirk',
+						'content'      => $content,
+						'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
+						'published'    => $date,
+					),
+				)
 			)
 		);
+
+		$request->set_header( 'Content-type', 'application/json' );
 
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
@@ -143,21 +153,26 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$content = '<a rel="mention" class="u-url mention" href="https://example.org/users/abc">@<span>abc</span></a> Test ' . $date . ' ' . wp_rand();
 
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
-		$request->set_param( 'type', 'Create' );
-		$request->set_param( 'id', $id );
-		$request->set_param( 'actor', $this->actor );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Create',
+					'id'     => $id,
+					'actor'  => $this->actor,
 
-		$request->set_param(
-			'object',
-			array(
-				'type'         => 'Note',
-				'id'           => $id,
-				'attributedTo' => $this->actor,
-				'content'      => $content,
-				'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
-				'published'    => $date,
+					'object' =>
+					array(
+						'type'         => 'Note',
+						'id'           => $id,
+						'attributedTo' => $this->actor,
+						'content'      => $content,
+						'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
+						'published'    => $date,
+					),
+				)
 			)
 		);
+		$request->set_header( 'Content-type', 'application/json' );
 
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
@@ -200,11 +215,18 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$object = 'https://notiz.blog/2022/11/14/the-at-protocol/';
 
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
-		$request->set_param( 'type', 'Announce' );
-		$request->set_param( 'id', $id );
-		$request->set_param( 'actor', $this->actor );
-		$request->set_param( 'published', $date );
-		$request->set_param( 'object', $object );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'      => 'Announce',
+					'id'        => $id,
+					'actor'     => $this->actor,
+					'published' => $date,
+					'object'    => $object,
+				)
+			)
+		);
+		$request->set_header( 'Content-type', 'application/json' );
 
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
@@ -230,17 +252,15 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 	public function test_friend_mentions() {
 		add_filter( 'activitypub_cache_possible_friend_mentions', '__return_false' );
-		$post = \wp_insert_post(
+		$post_id = \wp_insert_post(
 			array(
 				'post_author'  => 1,
 				'post_content' => '@' . sanitize_title( $this->friend_nicename ) . '  hello',
 			)
 		);
 
-		$activitypub_post = new \Activitypub\Model\Post( $post );
-
-		$activitypub_activity = new \Activitypub\Model\Activity( 'Create' );
-		$activitypub_activity->from_post( $activitypub_post );
+		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
+		$object = $activitypub_post->to_object();
 
 		$this->assertContains(
 			array(
@@ -248,16 +268,16 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'href' => $this->actor,
 				'name' => '@' . $this->friend_nicename,
 			),
-			$activitypub_post->get_tags()
+			$object->get_tag()
 		);
 
-		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $activitypub_activity->get_to() );
-		$this->assertContains( $this->actor, $activitypub_activity->get_cc() );
+		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_to() );
+		$this->assertContains( $this->actor, $object->get_cc() );
 
 		remove_all_filters( 'activitypub_from_post_object' );
 		remove_all_filters( 'activitypub_cache_possible_friend_mentions' );
 
-		\wp_trash_post( $post );
+		\wp_trash_post( $post_id );
 	}
 
 	/**
@@ -304,6 +324,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		}
 		parent::set_up();
 
+		add_filter( 'activitypub_defer_signature_verification', '__return_true' );
 		add_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
 
