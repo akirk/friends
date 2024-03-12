@@ -37,6 +37,7 @@ class MessagesTest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function set_up() {
 		parent::set_up();
+		update_option( 'friends_enable_wp_friendships', true );
 
 		$this->user_id = $this->factory->user->create(
 			array(

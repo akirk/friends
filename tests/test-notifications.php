@@ -24,6 +24,7 @@ class NotificationTest extends \WP_UnitTestCase {
 	 */
 	public function set_up() {
 		parent::set_up();
+		update_option( 'friends_enable_wp_friendships', true );
 
 		$this->factory->post->create(
 			array(
