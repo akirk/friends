@@ -510,11 +510,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function get_external_mentions_user() {
 		$external_mentions_username = apply_filters( 'friends_external_mentions_username', self::EXTERNAL_MENTIONS_USERNAME );
-		$user = get_user_by( 'login', $external_mentions_username );
-		if ( ! $user ) {
+		$user = User::get_by_username( $external_mentions_username );
+		if ( ! $user || is_wp_error( $user ) ) {
 			$user = Subscription::create( $external_mentions_username, 'subscription', home_url(), __( 'External Mentions', 'friends' ) );
-		} else {
-			$user = User::get_by_username( $external_mentions_username );
 		}
 
 		if ( $user instanceof \WP_User && ! ( $user instanceof Subscription ) && ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
@@ -1136,7 +1134,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 	}
 
-	public function get_possible_mentions() {
+	public static function get_possible_mentions() {
 		static $users = null;
 		if ( ! method_exists( '\Friends\User_Feed', 'get_by_parser' ) ) {
 			return array();
@@ -1147,9 +1145,28 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$users = array();
 			foreach ( $feeds as $feed ) {
 				$user = $feed->get_friend_user();
-				$slug = sanitize_title( $user->user_nicename );
+				$slug = $user->user_nicename;
+				if ( ! $slug ) {
+					$slug = $user->user_login;
+				}
+				$slug = sanitize_title( $slug );
 				$users[ '@' . $slug ] = $feed->get_url();
 			}
+
+			$local_users = get_users(
+				array(
+					'fields' => array( 'ID', 'user_nicename', 'user_login' ),
+				)
+			);
+			foreach ( $local_users as $local_user ) {
+				$slug = $local_user->user_nicename;
+				if ( ! $slug ) {
+					$slug = $local_user->user_login;
+				}
+				$slug = sanitize_title( $slug );
+				$users[ '@' . $slug ] = get_author_posts_url( $local_user->ID );
+			}
+			$users[ '@' . sanitize_title( get_bloginfo( 'name' ) ) ] = get_bloginfo( 'url' );
 		}
 		return $users;
 	}
@@ -1162,7 +1179,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return mixed The discovered mentions.
 	 */
 	public function activitypub_extract_mentions( $mentions, $post_content ) {
-		$users = $this->get_possible_mentions();
+		$users = self::get_possible_mentions();
 		preg_match_all( '/@(?:[a-zA-Z0-9_-]+)/', $post_content, $matches );
 		foreach ( $matches[0] as $match ) {
 			if ( isset( $users[ $match ] ) ) {
@@ -1200,7 +1217,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return string The replaced username.
 	 */
 	public function replace_with_links( array $result ) {
-		$users = $this->get_possible_mentions();
+		$users = self::get_possible_mentions();
 		if ( ! isset( $users[ $result[0] ] ) ) {
 			return $result[0];
 		}
@@ -1273,13 +1290,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return Feed_Item The modified feed item.
 	 */
 	public function modify_incoming_item( Feed_Item $item, User_Feed $feed = null, User $friend_user = null ) {
-		if ( ! $feed || 'activitypub' !== $feed->get_parser() ) {
+		if ( ! $feed || 'activitypub' !== $feed->get_parser() || ! $friend_user ) {
 			return $item;
 		}
 
-		if ( ! $friend_user->get_user_option( 'activitypub_friends_show_replies' ) ) {
+		$external_mentions_user = $this->get_external_mentions_user();
+		if (
+			$external_mentions_user->get_object_id() !== $friend_user->get_object_id() && // Don't hide mentions for the external mentions user.
+			! $friend_user->get_user_option( 'activitypub_friends_show_replies' )
+		) {
 			$plain_text_content = \wp_strip_all_tags( $item->post_content );
-			$possible_mentions = $this->get_possible_mentions();
+			$possible_mentions = self::get_possible_mentions();
 
 			$no_known_user_found = true;
 			if ( preg_match( '/^@(?:[a-zA-Z0-9_.-]+)/i', $plain_text_content, $m ) ) {
