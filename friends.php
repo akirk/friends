@@ -83,6 +83,9 @@ add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Recent_Friends_List'
 require_once __DIR__ . '/widgets/class-widget-friend-request.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Request', 'register' ) );
 
+require_once __DIR__ . '/widgets/class-widget-friend-stats.php';
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Stats', 'register' ) );
+
 require_once __DIR__ . '/widgets/class-widget-new-private-post.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_New_Private_Post', 'register' ) );
 

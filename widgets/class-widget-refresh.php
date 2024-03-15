@@ -59,7 +59,7 @@ class Widget_Refresh extends \WP_Widget {
 	 * @return array Sanitized instance settings.
 	 */
 	public function update( $new_instance, $old_instance ) {
-		$instance = $this->defaults;
+		$instance = $this->defaults();
 
 		return $instance;
 	}

@@ -591,6 +591,7 @@ class Friends {
 				'friends-widget-new-private-post' => array(),
 			),
 			'friends-sidebar' => array(
+				'friends-widget-stats'          => array(),
 				'friends-widget-refresh'        => array(),
 				'friends-widget-post-formats'   => array(),
 				'friends-widget-friend-list'    => array(
