@@ -91,6 +91,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_filter( 'friends_get_feed_metadata', array( $this, 'friends_get_feed_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
+
+		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ), 10, 2 );
 	}
 
 	/**
@@ -215,6 +217,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $meta;
 		}
 		return array_merge( $ret, $meta );
+	}
+
+	public function mastodon_api_timelines_args( $args, $request ) {
+		$args['post_type'][] = Friends::CPT;
+		return $args;
 	}
 
 	public function register_post_meta() {
