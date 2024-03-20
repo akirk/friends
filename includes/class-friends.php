@@ -429,31 +429,20 @@ class Friends {
 	 * @param      \WP_Upgrader $upgrader_object  The WP_Upgrader instance.
 	 * @param      array        $options          Array of bulk item update data.
 	 */
-	public static function upgrade_plugin( $upgrader_object, $options ) {
+	public static function upgrade_plugin_trigger( $upgrader_object, $options ) {
 		$upgraded = false;
 		if ( 'update' === $options['action'] && 'plugin' === $options['type'] && isset( $options['plugins'] ) ) {
 			foreach ( $options['plugins'] as $plugin ) {
 				if ( FRIENDS_PLUGIN_BASENAME === $plugin ) {
-					$upgraded = true;
-					break;
+					return self::upgrade_plugin();
 				}
 			}
 		}
-		if ( ! $upgraded ) {
-			return;
-		}
+	}
+
+	public static function upgrade_plugin() {
 		$previous_version = get_option( 'friends_plugin_version' );
 
-		if ( version_compare( $previous_version, '2.8.7', '<' ) ) {
-			$users = User_Query::all_associated_users();
-			foreach ( $users->get_results() as $user ) {
-				if ( ! ( $user instanceof Subscription ) ) {
-					// We have a user that is not a virtual user, so the friendship functionality had been used.
-					update_option( 'friends_enable_wp_friendships', 1 );
-					break;
-				}
-			}
-		}
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
 			$users = User_Query::all_associated_users();
 			foreach ( $users->get_results() as $user ) {
@@ -484,7 +473,18 @@ class Friends {
 			}
 		}
 
-			update_option( 'friends_plugin_version', Friends::VERSION );
+		if ( version_compare( $previous_version, '2.8.7', '<' ) ) {
+			$users = User_Query::all_associated_users();
+			foreach ( $users->get_results() as $user ) {
+				if ( ! ( $user instanceof Subscription ) ) {
+					// We have a user that is not a virtual user, so the friendship functionality had been used.
+					update_option( 'friends_enable_wp_friendships', 1 );
+					break;
+				}
+			}
+		}
+
+		update_option( 'friends_plugin_version', Friends::VERSION );
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 2.8.8
+ * Version: 2.8.9
  * Requires PHP: 5.6
 
  * Description: A social network between WordPresses. Privacy focused, by itself a self-hosted RSS++ reader with notifications.
@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
-define( 'FRIENDS_VERSION', '2.8.8' );
+define( 'FRIENDS_VERSION', '2.8.9' );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 
@@ -58,7 +58,12 @@ require_once __DIR__ . '/includes/class-friends.php';
 
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );
 add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_hooks' ) );
-add_action( 'upgrader_process_complete', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ), 10, 2 );
+
+if ( is_admin() && FRIENDS_VERSION > get_option( 'friends_plugin_version' ) ) {
+	add_action( 'admin_init', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ) );
+}
+
+add_action( 'upgrader_process_complete', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin_trigger' ), 10, 2 );
 register_activation_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'activate_plugin' ) );
 register_deactivation_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'deactivate_plugin' ) );
 register_uninstall_hook( __FILE__, array( __NAMESPACE__ . '\Friends', 'uninstall_plugin' ) );

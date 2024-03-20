@@ -1,3 +1,6 @@
+### 2.8.9
+- One more fix to the update routine for previous version
+
 ### 2.8.8
 - Fix update routine for previous version
 
