@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.5
 - License: [GPLv2 or later](http://www.gnu.org/licenses/gpl-2.0.html)
-- Stable tag: 2.8.7
+- Stable tag: 2.8.8
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -93,6 +93,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 2.8.8
+- Fix update routine for previous version
 
 ### 2.8.7
 - Fix the reblog button ([#299])

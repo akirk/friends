@@ -1,3 +1,6 @@
+### 2.8.8
+- Fix update routine for previous version
+
 ### 2.8.7
 - Fix the reblog button ([#299])
 - Add local users to potential mentions so that it won't be trashed ([#296])
