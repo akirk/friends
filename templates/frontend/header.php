@@ -24,7 +24,7 @@ if ( isset( $_GET['s'] ) ) {
 		<div class="friends-brand">
 			<a class="friends-logo" href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><h2><?php esc_html_e( 'Friends', 'friends' ); ?></h2></a>
 
-			<a class="friends-sidebar-customize" href="https://akirk.blog/wp-admin/customize.php?autofocus[section]=sidebar-widgets-friends-sidebar&url=<?php echo esc_attr( urlencode( home_url( '/friends/' ) ) ); ?>"><?php esc_html_e( 'customize sidebar', 'friends' ); ?></a>
+			<a class="friends-sidebar-customize" href="<?php echo esc_url( admin_url( 'customize.php?autofocus[section]=sidebar-widgets-friends-sidebar&url=' . urlencode( home_url( '/friends/' ) ) ) ); ?>"><?php esc_html_e( 'customize sidebar', 'friends' ); ?></a>
 		</div>
 		<div class="friends-nav accordion-container">
 			<?php dynamic_sidebar( 'friends-sidebar' ); ?>
