@@ -444,7 +444,7 @@ class Friends {
 		}
 		$previous_version = get_option( 'friends_plugin_version' );
 
-		if ( version_compare( $previous_version, '2.9.0', '<' ) ) {
+		if ( version_compare( $previous_version, '2.8.7', '<' ) ) {
 			$users = User_Query::all_associated_users();
 			foreach ( $users->get_results() as $user ) {
 				if ( ! ( $user instanceof Subscription ) ) {
