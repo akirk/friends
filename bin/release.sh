@@ -76,6 +76,21 @@ fi
 echo -ne "\033[32m✔\033[0m "
 echo "Changelog updated in README.md:"
 awk '/^### '$FRIENDS_VERSION'/ { print "  " $0; show = 1; next } /^###/ { show = 0 } { if ( show ) print "  " $0 }' README.md
+svn status | egrep -q "^[?]"
+if [ $? -eq 0 ]; then
+	echo -ne "\033[31m✘\033[0m "
+	echo "Unknown files in svn"
+	echo
+	echo ❯ svn status
+	svn status
+	return
+fi
+echo -ne "\033[32m✔\033[0m "
+echo "No unknown files in svn"
+echo
+
+echo -ne "\033[32m✔\033[0m "
+echo "All looks good, ready to tag and commit!"
 echo -n ❯ git tag $FRIENDS_VERSION
 read
 git tag $FRIENDS_VERSION
