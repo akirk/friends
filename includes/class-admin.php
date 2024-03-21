@@ -154,7 +154,10 @@ class Admin {
 			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friends-list-requests', array( $this, 'render_friends_list' ) );
 		}
 
-		if ( isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page'] ) {
+		if (
+			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'friends-refresh' ) &&
+			isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page']
+		) {
 			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), $required_role, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 		}
 
@@ -1958,7 +1961,7 @@ class Admin {
 				foreach ( $items as $item ) {
 					$title = $item->title;
 					if ( 'status' === $item->post_format ) {
-						$title = strip_tags( $item->content );
+						$title = wp_strip_all_tags( $item->content );
 					}
 					?>
 					<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):
@@ -1991,7 +1994,7 @@ class Admin {
 			$_POST['_wpnonce'] = wp_create_nonce( 'add-friend' );
 			if ( ! empty( $_POST['url'] ) && ! isset( $_POST['friend_url'] ) ) {
 				$_POST['friend_url'] = $_POST['url'];
-				$parsed_url = parse_url( $_POST['friend_url'] );
+				$parsed_url = wp_parse_url( $_POST['friend_url'] );
 				if ( isset( $parsed_url['host'] ) ) {
 					if ( ! isset( $parsed_url['scheme'] ) ) {
 						$_POST['friend_url'] = 'https://' . ltrim( $_POST['friend_url'], '/' );
@@ -2044,7 +2047,7 @@ class Admin {
 
 		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {
 			$friend_url = isset( $_GET['url'] ) ? $_GET['url'] : $_POST['url'];
-			$parsed_url = parse_url( $friend_url );
+			$parsed_url = wp_parse_url( $friend_url );
 			if ( isset( $parsed_url['host'] ) ) {
 				if ( ! isset( $parsed_url['scheme'] ) ) {
 					$args['friend_url'] = apply_filters( 'friends_rewrite_incoming_url', 'https://' . ltrim( $friend_url, '/' ), $friend_url, $parsed_url );
@@ -2225,7 +2228,7 @@ class Admin {
 		$wrong_codeword_message = __( 'An invalid codeword was provided.', 'friends' );
 		$comment_registration_message = __( 'Only people in my network can comment.', 'friends' );
 		$my_network = __( 'my network', 'friends' );
-		$comment_registration_default = strip_tags(
+		$comment_registration_default = wp_strip_all_tags(
 			/* translators: %s: Login URL. */
 			__( 'You must be <a href="%s">logged in</a> to post a comment.' ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		);
@@ -3073,7 +3076,7 @@ class Admin {
 				),
 				'parsers'   => array(
 					'label' => __( 'Registered Parsers', 'friends' ),
-					'value' => strip_tags( implode( ', ', $this->friends->feed->get_registered_parsers() ) ),
+					'value' => wp_strip_all_tags( implode( ', ', $this->friends->feed->get_registered_parsers() ) ),
 				),
 			),
 		);

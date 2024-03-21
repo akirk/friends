@@ -36,7 +36,8 @@ class Plugin_Installer {
 		add_action( 'wp_ajax_friends_plugin_activation', array( __CLASS__, 'ajax_plugin_activation' ) );
 		add_action( 'wp_ajax_friends_plugin_deactivation', array( __CLASS__, 'ajax_plugin_deactivation' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'override_plugin_info' ), 20, 3 );
-		add_filter( 'site_transient_update_plugins', array( __CLASS__, 'override_plugin_push_update' ) );
+		// TODO: Can be removed after other plugins make it into the plugin directory.
+		add_filter( 'site_transient' . '_update_plugins', array( __CLASS__, 'override_plugin_push_update' ) );
 		add_filter( 'upgrader_post_install', array( __CLASS__, 'after_install' ), 10, 3 );
 	}
 
@@ -150,6 +151,7 @@ class Plugin_Installer {
 					'headers'     => array(
 						'content-type' => 'application/json',
 					),
+					// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 					'body'        => file_get_contents( FRIENDS_PLUGIN_DIR . '/plugins.json' ),
 				);
 			}

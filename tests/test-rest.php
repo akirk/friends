@@ -44,6 +44,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 							'headers'  => array(
 								'content-type' => 'application/rss+xml',
 							),
+							// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 							'body'     => file_get_contents( __DIR__ . '/data/friend-feed-1-public-post.rss' ),
 							'response' => array(
 								'code' => 200,
@@ -339,6 +340,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 						'headers'  => array(
 							'content-type' => 'application/rss+xml',
 						),
+						// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 						'body'     => file_get_contents( __DIR__ . '/data/friend-feed-1-private-post.rss' ),
 						'response' => array(
 							'code' => 200,

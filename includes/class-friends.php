@@ -719,7 +719,7 @@ class Friends {
 		if ( ! isset( $wp_query ) || ! isset( $wp_query->query['pagename'] ) ) {
 			// The request has not yet been parsed but we need to know, so this snippet is from wp->parse_request().
 			list( $req_uri ) = explode( '?', $_SERVER['REQUEST_URI'] );
-			$home_path       = parse_url( home_url(), PHP_URL_PATH );
+			$home_path       = wp_parse_url( home_url(), PHP_URL_PATH );
 			$home_path_regex = '';
 			if ( is_string( $home_path ) && '' !== $home_path ) {
 				$home_path       = trim( $home_path, '/' );
@@ -736,6 +736,8 @@ class Friends {
 			$pagename = $wp_query->query['pagename'];
 		}
 
+		// A nonce is not needed here since this is to show the public page.
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['public'] ) ) {
 			return false;
 		}
@@ -1206,7 +1208,7 @@ class Friends {
 		if ( ! is_null( $pre ) ) {
 			return $pre;
 		}
-		$host = parse_url( $url, PHP_URL_HOST );
+		$host = wp_parse_url( $url, PHP_URL_HOST );
 
 		$check_url = apply_filters( 'friends_host_is_valid', null, $host );
 		if ( ! is_null( $check_url ) ) {

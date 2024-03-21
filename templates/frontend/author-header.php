@@ -124,7 +124,7 @@ $args['friends']->frontend->link(
 <?php endif; ?>
 
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
-<a class="chip" href="<?php echo esc_url( self_admin_url( 'admin.php?page=friends-refresh&user=' . $args['friend_user']->user_login ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
+<a class="chip" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend_user']->user_login, self_admin_url( 'admin.php?page=friends-refresh' ) ), 'friends-refresh' ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
 <?php endif; ?>
 <?php do_action( 'friends_author_header', $args['friend_user'], $args ); ?>
 </div>

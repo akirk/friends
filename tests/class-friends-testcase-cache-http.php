@@ -142,7 +142,7 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 		$cache = self::get_cache_filename( $url );
 		if ( ! file_exists( $cache ) ) {
 			$headers = wp_remote_retrieve_headers( $response );
-			file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
+			file_put_contents( // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 				$cache,
 				wp_json_encode(
 					array(

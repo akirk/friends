@@ -239,7 +239,7 @@ class Feed {
 				foreach ( apply_filters( 'friends_keyword_search_fields', array( 'post_title', 'post_content' ) ) as $field ) {
 					$fulltext .= PHP_EOL . $post->$field;
 				}
-				$fulltext = strip_tags( $fulltext );
+				$fulltext = wp_strip_all_tags( $fulltext );
 				foreach ( $keywords as $keyword ) {
 					if ( preg_match( '/' . str_replace( '/', '\\/', $keyword ) . '/ius', $fulltext ) ) {
 						$keyword_match = $keyword;
@@ -599,7 +599,7 @@ class Feed {
 					if ( empty( $old_post->$field ) || empty( $post_data[ $field ] ) ) {
 						continue;
 					}
-					if ( strip_tags( $old_post->$field ) !== strip_tags( $post_data[ $field ] ) ) {
+					if ( wp_strip_all_tags( $old_post->$field ) !== wp_strip_all_tags( $post_data[ $field ] ) ) {
 						$modified_post_data[ $field ] = $post_data[ $field ];
 						break;
 					}
@@ -752,10 +752,11 @@ class Feed {
 	 * Redirect
 	 */
 	public function friends_add_friend_redirect() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_GET['add-friend'] ) || isset( $_GET['page'] ) ) {
 			return;
 		}
-
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		wp_safe_redirect( add_query_arg( 'url', $_GET['add-friend'], self_admin_url( 'admin.php?page=add-friend' ) ) );
 		exit;
 	}
@@ -767,7 +768,10 @@ class Feed {
 	 */
 	public function wp_feed_options( $feed ) {
 		$feed->useragent .= ' Friends/' . FRIENDS_VERSION;
-		if ( isset( $_GET['page'] ) && 'page=friends-refresh' === $_GET['page'] ) {
+		if (
+			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'friends-refresh' ) &&
+			isset( $_GET['page'] ) && 'page=friends-refresh' === $_GET['page']
+		) {
 			$feed->enable_cache( false );
 		} else {
 			$feed->set_cache_duration( 3590 );
