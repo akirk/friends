@@ -1,5 +1,7 @@
-### 2.9.0
+### 2.9.1
 - Fix the reblog title ([#300])
+
+### 2.9.0
 - Fix issues discovered by the plugin check plugin ([#301])
 
 ### 2.8.9

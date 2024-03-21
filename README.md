@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.5
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.0
+- Stable tag: 2.9.1
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,8 +94,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
-### 2.9.0
+### 2.9.1
 - Fix the reblog title ([#300])
+
+### 2.9.0
 - Fix issues discovered by the plugin check plugin ([#301])
 
 ### 2.8.9
