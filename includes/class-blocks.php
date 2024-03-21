@@ -354,7 +354,7 @@ class Blocks {
 		if ( false === strpos( $url, 'https://' ) ) {
 			$url = 'https://' . $url;
 		}
-		$parts = parse_url( $url );
+		$parts = wp_parse_url( $url );
 
 		if ( ! preg_match( '/' . $fqdn_regex . '/', $parts['host'] ) ) {
 			wp_safe_redirect( add_query_arg( 'error', __( 'You specified an invalid URL.', 'friends' ) ) );
