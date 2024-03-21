@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.5
 - License: GPL-2.0-or-later
-- Stable tag: 2.8.9
+- Stable tag: 2.9.0
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.9.0
+- Fix the reblog title ([#300])
+- Fix issues discovered by the plugin check plugin ([#301])
+
 ### 2.8.9
 - One more fix to the update routine for previous version
 
@@ -118,7 +122,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ### 2.8.4
 - Fix adding new feeds with a Mastodon-style notation ([#282])
 
-[Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#301]: https://github.com/akirk/friends/pull/301
+[#300]: https://github.com/akirk/friends/pull/300
 [#299]: https://github.com/akirk/friends/pull/299
 [#296]: https://github.com/akirk/friends/pull/296
 [#294]: https://github.com/akirk/friends/pull/294
