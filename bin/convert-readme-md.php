@@ -6,6 +6,8 @@
  * @package Friends
  */
 
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_read_fwrite
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 // phpcs:disable WordPress.WP.AlternativeFunctions.file_system_read_file_get_contents
