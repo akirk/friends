@@ -91,12 +91,12 @@ echo
 
 echo -ne "\033[32m✔\033[0m "
 echo "All looks good, ready to tag and commit!"
-echo -n ❯ git tag $FRIENDS_VERSION
-read
-git tag $FRIENDS_VERSION
 echo -n ❯ git push
 read
 git push
+echo -n ❯ git tag $FRIENDS_VERSION
+read
+git tag $FRIENDS_VERSION
 echo -n ❯ git push origin $FRIENDS_VERSION
 read
 git push origin $FRIENDS_VERSION
