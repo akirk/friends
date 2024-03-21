@@ -6,6 +6,7 @@
  */
 
 if ( 'cli' !== php_sapi_name() ) {
+	// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite
 	fwrite( STDERR, "Must run from CLI.\n" );
 	exit( 1 );
 }
@@ -13,6 +14,7 @@ if ( 'cli' !== php_sapi_name() ) {
 $pre_selected = array( '👍', '❤️', '😂', '😍', '😭', '😊', '😩', '😁', '👎' );
 $out = array();
 $cache = __DIR__ . '/../emoji-rankings.json';
+// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 $popular = json_decode( file_get_contents( file_exists( $cache ) ? $cache : 'https://api.emojitracker.com/v1/rankings' ) );
 foreach ( $pre_selected as $emoji ) {
 	foreach ( $popular as $data ) {
@@ -37,5 +39,5 @@ foreach ( $popular as $data ) {
 		break;
 	}
 }
-
-file_put_contents( __DIR__ . '/../emojis.json', json_encode( $out, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );
+// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+file_put_contents( __DIR__ . '/../emojis.json', wp_json_encode( $out, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ) );

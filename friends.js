@@ -589,6 +589,7 @@
 
 		wp.ajax.send( 'friends-in-reply-to-preview', {
 			data: {
+				_ajax_nonce: input.data( 'nonce' ),
 				url,
 			},
 			beforeSend() {

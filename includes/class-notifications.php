@@ -364,7 +364,7 @@ class Notifications {
 				if ( isset( $message['text'] ) ) {
 					$plain_text = $message['text'];
 				} else {
-					$plain_text = strip_tags( $message['html'] );
+					$plain_text = wp_strip_all_tags( $message['html'] );
 				}
 
 				$headers[]    = 'Content-type: text/html';

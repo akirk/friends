@@ -5,6 +5,10 @@
  * @package Friends
  */
 
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
+// phpcs:disable WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+
 $ignore_filters = array(
 	'_get_template_part_',
 	'_get_template_part',

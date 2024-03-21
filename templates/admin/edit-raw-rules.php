@@ -30,7 +30,7 @@ echo wp_kses(
 				<tr>
 					<th><label for="field"><?php esc_html_e( 'Rules as JSON', 'friends' ); ?></label></th>
 					<td>
-						<textarea name="rules" style="font-family: monospace" rows="5" cols="80"><?php echo esc_html( json_encode( $args['rules'], JSON_PRETTY_PRINT ) ); ?></textarea>
+						<textarea name="rules" style="font-family: monospace" rows="5" cols="80"><?php echo esc_html( wp_json_encode( $args['rules'], JSON_PRETTY_PRINT ) ); ?></textarea>
 					</td>
 				</tr>
 			</tbody>

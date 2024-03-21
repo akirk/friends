@@ -59,7 +59,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	 * @return     array  An equivalent link array.
 	 */
 	public function rewrite_known_url( $url ) {
-		$host = parse_url( strtolower( $url ), PHP_URL_HOST );
+		$host = wp_parse_url( strtolower( $url ), PHP_URL_HOST );
 
 		switch ( $host ) {
 			case 'www.youtube.com':
@@ -215,7 +215,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		// Use SimplePie which is bundled with WordPress.
 		$feed = $this->get_simplepie();
 
-		$host = parse_url( strtolower( $url ), PHP_URL_HOST );
+		$host = wp_parse_url( strtolower( $url ), PHP_URL_HOST );
 
 		switch ( $host ) {
 			case 'github.com':

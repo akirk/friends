@@ -10,6 +10,7 @@ use DOMNodeList;
 use \Exception;
 use SplObjectStorage;
 use stdClass;
+// phpcs:disable WordPress.WP.AlternativeFunctions.parse_url_parse_url
 
 /**
  * Parse Microformats2

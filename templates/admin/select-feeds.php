@@ -10,7 +10,7 @@ $hidden_feed_count = 0;
 $unsupported_feeds = array();
 $friends_host = false;
 if ( $args['friends_plugin'] ) {
-	$friends_host = parse_url( $args['friends_plugin'], PHP_URL_HOST );
+	$friends_host = wp_parse_url( $args['friends_plugin'], PHP_URL_HOST );
 }
 
 foreach ( $args['feeds'] as $feed_url => $details ) {
@@ -190,7 +190,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 
 								$select = '<select name="feeds[' . esc_attr( $c ) . '][parser]">';
 								foreach ( $args['registered_parsers'] as $slug => $parser_name ) {
-									$select .= '<option value="' . esc_attr( $slug ) . '"' . selected( $details['parser'], $slug, false ) . '>' . esc_html( strip_tags( $parser_name ) ) . '</option>';
+									$select .= '<option value="' . esc_attr( $slug ) . '"' . selected( $details['parser'], $slug, false ) . '>' . esc_html( wp_strip_all_tags( $parser_name ) ) . '</option>';
 								}
 								if ( ! isset( $args['registered_parsers'][ $details['parser'] ] ) ) {
 									// translators: %s is the name of a deleted parser.

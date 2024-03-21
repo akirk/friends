@@ -29,7 +29,7 @@
 	);
 	?>
 	</small>
-	<input class="form-input activitypub_preview_url" type="url" name="boost" placeholder="<?php esc_attr_e( 'Boost https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['boost'] ) ? $args['boost']['url'] : '' ); ?>" autocomplete="off"/>
+	<input class="form-input activitypub_preview_url" type="url" name="boost" placeholder="<?php esc_attr_e( 'Boost https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['boost'] ) ? $args['boost']['url'] : '' ); ?>" autocomplete="off"  data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-in-reply-to-preview' ) ); ?>"/>
 	<div class="activitypub_preview"><?php echo wp_kses_post( ! empty( $args['boost'] ) ? $args['boost']['html'] : '' ); ?></div>
 
 	<div class="form-group">

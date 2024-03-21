@@ -7,7 +7,7 @@
  */
 
 $ensure_linebreaks     = preg_replace( '/\<br(\s*)?\/?\>/i', PHP_EOL, $args['post']->post_content );
-$plain_text            = strip_tags( $ensure_linebreaks );
+$plain_text            = wp_strip_all_tags( $ensure_linebreaks );
 $normalized_whitespace = preg_replace( '/(' . PHP_EOL . '\s*' . PHP_EOL . ')+/m', PHP_EOL . PHP_EOL, $plain_text );
 $quoted_text           = '> ' . str_replace( PHP_EOL, PHP_EOL . '> ', trim( $normalized_whitespace ) );
 

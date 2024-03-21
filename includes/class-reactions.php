@@ -339,6 +339,7 @@ class Reactions {
 	public static function get_all_emojis() {
 		static $emojis;
 		if ( ! $emojis ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 			$emojis = json_decode( file_get_contents( __DIR__ . '/../emojis.json' ) );
 		}
 		return $emojis;
