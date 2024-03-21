@@ -48,7 +48,7 @@ $has_last_log = false;
 												<td>
 													<select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
 													<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
-														<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
+														<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( wp_strip_all_tags( $parser_name ) ); ?></option>
 													<?php endforeach; ?>
 													<?php if ( 'unsupported' === $feed->get_parser() ) : ?>
 														<option value="<?php echo esc_attr( $feed->get_parser() ); ?>" selected="selected">
@@ -120,7 +120,7 @@ $has_last_log = false;
 											<td>
 												<select name="feeds[new][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
 												<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
-													<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( strip_tags( $parser_name ) ); ?></option>
+													<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( wp_strip_all_tags( $parser_name ) ); ?></option>
 												<?php endforeach; ?>
 											</select>
 											<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=&preview=' ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>

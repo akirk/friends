@@ -64,7 +64,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 				'<a href="' . esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/' ) . '" title="' . get_the_time( 'r' ) . '">' .
 				/* translators: %s is a time span */ sprintf( __( '%s ago' ), human_time_diff( get_post_time( 'U', true ) ) ) . // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'</a>',
-				'<a href="' . esc_url( get_the_permalink() ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( parse_url( get_the_permalink(), PHP_URL_HOST ) ) . '</a>'
+				'<a href="' . esc_url( get_the_permalink() ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( wp_parse_url( get_the_permalink(), PHP_URL_HOST ) ) . '</a>'
 			),
 			array(
 				'a' => array(

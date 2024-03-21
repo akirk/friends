@@ -15,7 +15,7 @@ printf( __( 'You have received a new friend request from %s.', 'friends' ), $arg
 echo PHP_EOL . PHP_EOL;
 
 // translators: %s is a URL.
-printf( strip_tags( __( 'Go to your <a href=%s>admin page</a> to review the request and approve or delete it.', 'friends' ) ) );
+printf( wp_strip_all_tags( __( 'Go to your <a href=%s>admin page</a> to review the request and approve or delete it.', 'friends' ) ) );
 echo PHP_EOL . PHP_EOL;
 
 echo self_admin_url( 'users.php?role=friend_request' );

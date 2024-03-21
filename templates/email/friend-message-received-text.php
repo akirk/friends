@@ -7,7 +7,7 @@
  */
 
 $ensure_linebreaks     = preg_replace( '/\<br(\s*)?\/?\>/i', PHP_EOL, $args['message'] );
-$plain_text            = strip_tags( $ensure_linebreaks );
+$plain_text            = wp_strip_all_tags( $ensure_linebreaks );
 $normalized_whitespace = preg_replace( '/(' . PHP_EOL . '\s*' . PHP_EOL . ')+/m', PHP_EOL . PHP_EOL, $plain_text );
 $quoted_text           = '> ' . str_replace( PHP_EOL, PHP_EOL . '> ', trim( $normalized_whitespace ) );
 
@@ -22,7 +22,7 @@ echo PHP_EOL . PHP_EOL;
 echo $quoted_text;
 
 // translators: %s is a URL.
-printf( strip_tags( __( 'Go to your <a href=%s>friends page</a> to respond.', 'friends' ) ) );
+printf( wp_strip_all_tags( __( 'Go to your <a href=%s>friends page</a> to respond.', 'friends' ) ) );
 echo PHP_EOL . PHP_EOL;
 
 echo $args['friend_user']->get_local_friends_page_url();

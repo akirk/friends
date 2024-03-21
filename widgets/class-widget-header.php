@@ -102,7 +102,7 @@ class Widget_Header extends \WP_Widget {
 	 */
 	public function update( $new_instance, $old_instance ) {
 		$instance = array();
-		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
+		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? wp_strip_all_tags( $new_instance['title'] ) : '';
 		$instance['show_post_formats'] = isset( $new_instance['show_post_formats'] ) && $new_instance['show_post_formats'];
 		return $instance;
 	}

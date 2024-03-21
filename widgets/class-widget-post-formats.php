@@ -108,12 +108,12 @@ class Widget_Post_Formats extends \WP_Widget {
 	 */
 	public function update( $new_instance, $old_instance ) {
 		$instance = array();
-		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? strip_tags( $new_instance['title'] ) : '';
+		$instance['title'] = ( ! empty( $new_instance['title'] ) ) ? wp_strip_all_tags( $new_instance['title'] ) : '';
 		$instance['title'] = apply_filters( 'wptexturize', $instance['title'] );
 		$instance['title'] = apply_filters( 'convert_chars', $instance['title'] );
 
 		foreach ( get_post_format_strings() as $slug => $title ) {
-			$instance[ 'post_format_title_' . $slug ] = ( ! empty( $new_instance[ 'post_format_title_' . $slug ] ) ) ? strip_tags( $new_instance[ 'post_format_title_' . $slug ] ) : $title;
+			$instance[ 'post_format_title_' . $slug ] = ( ! empty( $new_instance[ 'post_format_title_' . $slug ] ) ) ? wp_strip_all_tags( $new_instance[ 'post_format_title_' . $slug ] ) : $title;
 			if ( $new_instance[ 'show_post_format_' . $slug ] ) {
 				$instance[ 'show_post_format_' . $slug ] = true;
 			} else {
@@ -137,7 +137,7 @@ class Widget_Post_Formats extends \WP_Widget {
 
 		foreach ( get_post_format_strings() as $slug => $title ) {
 			$t = 'post_format_title_' . $slug;
-			$instance[ $t ] = ( ! empty( $new_instance[ $t ] ) ) ? strip_tags( $new_instance[ $t ] ) : $title;
+			$instance[ $t ] = ( ! empty( $new_instance[ $t ] ) ) ? wp_strip_all_tags( $new_instance[ $t ] ) : $title;
 			$instance[ 'show_post_format_' . $slug ] = in_array( $slug, array( 'standard', 'status', 'image', 'video' ) );
 		}
 

@@ -62,7 +62,7 @@ class Feed_Parser_JSON_Feed extends Feed_Parser_V2 {
 	 * @return     array  An equivalent link array.
 	 */
 	public function rewrite_known_url( $url ) {
-		$host = parse_url( strtolower( $url ), PHP_URL_HOST );
+		$host = wp_parse_url( strtolower( $url ), PHP_URL_HOST );
 
 		switch ( $host ) {
 			case 'micro.blog':
