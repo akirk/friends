@@ -128,11 +128,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			)
 		);
 
-		if ( isset( $_GET['updated'] ) ) {
+		if (
+			// This just displays an info text.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			isset( $_GET['updated'] )
+		) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Settings were updated.', 'friends' ); ?></p></div>
 			<?php
-		} elseif ( isset( $_GET['error'] ) ) {
+		} elseif (
+			// This just displays an info text.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			isset( $_GET['error'] )
+		) {
 			?>
 			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
 			<?php
@@ -886,7 +894,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$url = get_term_meta( $term->term_id, 'url', true );
 		$meta = \Activitypub\get_remote_metadata_by_actor( $url );
 		if ( $meta && ! is_wp_error( $meta ) && ! empty( $meta['preferredUsername'] ) ) {
-			$host = parse_url( $meta['id'], PHP_URL_HOST );
+			$host = wp_parse_url( $meta['id'], PHP_URL_HOST );
 			return '@' . $meta['preferredUsername'] . '@' . $host;
 		}
 		return $display_name;
@@ -1588,7 +1596,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
 		$mention = '';
 		if ( $webfinger && ! is_wp_error( $webfinger ) ) {
-			$mention = '@' . $webfinger['preferredUsername'] . '@' . parse_url( $url, PHP_URL_HOST );
+			$mention = '@' . $webfinger['preferredUsername'] . '@' . wp_parse_url( $url, PHP_URL_HOST );
 		}
 
 		return array(
@@ -1603,6 +1611,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * The Ajax function to fill the in-reply-to-preview.
 	 */
 	public function ajax_in_reply_to_preview() {
+		check_ajax_referer( 'friends-in-reply-to-preview' );
 		$url = wp_unslash( $_POST['url'] );
 
 		if ( ! wp_parse_url( $url ) ) {

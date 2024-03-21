@@ -30,7 +30,7 @@
 	);
 	?>
 	</small>
-	<input class="form-input activitypub_preview_url" type="url" name="in_reply_to" placeholder="<?php esc_attr_e( 'In reply to https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['url'] : '' ); ?>" autocomplete="off"/>
+	<input class="form-input activitypub_preview_url" type="url" name="in_reply_to" placeholder="<?php esc_attr_e( 'In reply to https://...', 'friends' ); ?>" value="<?php echo esc_attr( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['url'] : '' ); ?>" autocomplete="off" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-in-reply-to-preview' ) ); ?>" />
 	<div class="activitypub_preview"><?php echo wp_kses_post( ! empty( $args['in_reply_to'] ) ? $args['in_reply_to']['html'] : '' ); ?></div>
 	<p class="description"><?php esc_html_e( 'Click the mentions to copy them into your reply.', 'friends' ); ?></p>
 	<div class="form-group<?php echo esc_attr( $args['blocks-everywhere'] ? ' blocks-everywhere iso-editor__loading' : '' ); ?>">
