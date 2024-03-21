@@ -369,14 +369,27 @@ class Frontend {
 			'<a href="' . esc_url( $post->guid ) . '">' . esc_html( $author ) . '</a>'
 		);
 
+		$reblog_title = sprintf(
+			// translators: %1$s is the author, %2$s is the post title.
+			__( 'Reblog of %1$s: %2$s', 'friends' ),
+			$author,
+			$post->post_title
+		);
+
 		$reblog .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
+
+		// Wrap the post content in a quote block.
+		$reblog .= '<!-- wp:quote -->' . PHP_EOL . '<blockquote class="wp-block-quote">';
+		$reblog .= $post->post_content;
+		$reblog .= '</blockquote>' . PHP_EOL . '<!-- /wp:quote -->';
+
 		$new_post = array(
-			'post_title'   => $post->title,
+			'post_title'   => $reblog_title,
 			'post_author'  => get_current_user_id(),
 			'post_status'  => 'publish',
 			'post_type'    => 'post',
 			'post_format'  => get_post_format( $post ),
-			'post_content' => $reblog . $post->post_content,
+			'post_content' => $reblog,
 		);
 		/**
 		 * Allows changing a reblog post before it gets posted.
