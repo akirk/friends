@@ -95,6 +95,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ), 10, 2 );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 8, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_handle_external_mentions_user' ), 20, 3 );
 	}
 
 	/**
@@ -297,6 +298,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$status->reblog->account->url            = $meta['attributedTo']['id'];
 			$status->reblog->account->note = $meta['attributedTo']['summary'];
 			$status->reblog->account->avatar        = $meta['attributedTo']['icon'];
+		}
+
+		return $status;
+	}
+
+	public function mastodon_api_status_handle_external_mentions_user( $status, $post_id, $request ) {
+		if ( Friends::CPT !== get_post_type( $post_id ) ) {
+			return $status;
+		}
+
+		$external_user = $this->get_external_mentions_user();
+		$is_external_mention = $external_user && strval( $external_user->ID ) === strval( $status->account->id );
+		if ( ! $is_external_mention ) {
+			return $status;
+		}
+
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( isset( $meta['attributedTo']['id'] ) ) {
+			$status->account->id = $meta['attributedTo']['id'];
 		}
 
 		return $status;
