@@ -93,6 +93,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
 
 		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ), 10, 2 );
+		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 8, 4 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
 	}
 
 	/**
@@ -222,6 +224,82 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function mastodon_api_timelines_args( $args, $request ) {
 		$args['post_type'][] = Friends::CPT;
 		return $args;
+	}
+
+	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request, $post ) {
+		if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+			return $account;
+		}
+
+		if ( null === $post ) {
+			return $account;
+		}
+
+		if ( Friends::CPT !== $post->post_type || ( is_string( $user_id ) && ! is_numeric( $user_id ) ) ) {
+			return $account;
+		}
+
+		$meta = get_post_meta( $post->ID, self::SLUG, true );
+		if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
+			$author = User::get_post_author( $post );
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id             = get_post_meta( $post->ID, 'feed_url', true );
+
+			$p = wp_parse_url( $account->id );
+			if ( $p ) {
+				if ( isset( $p['host'] ) ) {
+					$domain = $p['host'];
+				}
+				if ( isset( $p['path'] ) ) {
+					$path_parts = explode( '/', trim( $p['path'], '/' ) );
+					$username = ltrim( array_pop( $path_parts ), '@' );
+								$account->acct           = $username . '@' . $domain;
+				}
+			}
+
+			$account->username       = $author->user_login;
+			$account->display_name   = $author->display_name;
+			$account->url            = $account->id;
+			$account->note = $author->description;
+			$account->avatar        = $author->get_avatar_url();
+			return $account;
+		}
+
+		if ( isset( $meta['attributedTo']['id'] ) ) {
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id             = $meta['attributedTo']['id'];
+			$account->username       = $meta['attributedTo']['preferredUsername'];
+			$account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
+			$account->display_name   = $meta['attributedTo']['name'];
+			$account->url            = $meta['attributedTo']['id'];
+			$account->note = $meta['attributedTo']['summary'];
+			$account->avatar        = $meta['attributedTo']['icon'];
+			return $account;
+		}
+
+		return $account;
+	}
+
+	public function mastodon_api_status_add_reblogs( $status, $post_id, $request ) {
+		if ( Friends::CPT !== get_post_type( $post_id ) ) {
+			return $status;
+		}
+
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
+			$status->reblog = clone $status;
+			$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
+			$status->reblog->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$status->reblog->account->id             = $meta['attributedTo']['id'];
+			$status->reblog->account->username       = $meta['attributedTo']['preferredUsername'];
+			$status->reblog->account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
+			$status->reblog->account->display_name   = $meta['attributedTo']['name'];
+			$status->reblog->account->url            = $meta['attributedTo']['id'];
+			$status->reblog->account->note = $meta['attributedTo']['summary'];
+			$status->reblog->account->avatar        = $meta['attributedTo']['icon'];
+		}
+
+		return $status;
 	}
 
 	public function register_post_meta() {
