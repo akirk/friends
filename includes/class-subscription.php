@@ -634,4 +634,19 @@ class Subscription extends User {
 		}
 		return $account;
 	}
+
+	public function mastodon_api_get_posts_query_args( $args, $request ) {
+		$args['post_type'][] = Friends::CPT;
+		if ( isset( $args['author'] ) ) {
+			if ( is_string( $args['author'] ) ) {
+				$author = Subscription::get_by_username( $args['author'] );
+				if ( $author instanceof User ) {
+					return $author->modify_get_posts_args_by_author( $args );
+				}
+			}
+			// TODO: Show no posts as the user could not be found.
+		}
+
+		return $args;
+	}
 }
