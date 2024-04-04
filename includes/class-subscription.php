@@ -644,7 +644,7 @@ class Subscription extends User {
 					return $author->modify_get_posts_args_by_author( $args );
 				}
 			}
-			// TODO: Show no posts as the user could not be found.
+			$args = array();
 		}
 
 		return $args;

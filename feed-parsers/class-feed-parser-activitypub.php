@@ -235,16 +235,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( Friends::CPT !== $post->post_type ) {
 			return $account;
 		}
-
 		$placeholder_image = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
 		// $placeholder_image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
-		if ( isset( $meta['attributedTo']['id'] ) ) {
+		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
 				$account = new \Enable_Mastodon_Apps\Entity\Account();
+				$account->id             = $meta['attributedTo']['id'];
+				$account->created_at = new \DateTime( $post->post_date );
 			}
-			$account->id             = $meta['attributedTo']['id'];
 			$account->username       = $meta['attributedTo']['preferredUsername'];
 			$account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
 			$account->display_name   = $meta['attributedTo']['name'];
@@ -258,9 +258,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$account->header = $placeholder_image;
 			}
 			$account->header_static = $account->header;
-			if ( ! isset( $account->created_at ) ) {
-				$account->created_at = new \DateTime( $post->post_date );
-			}
 
 			return $account;
 		}
@@ -285,6 +282,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$status->reblog->account->url            = $meta['attributedTo']['id'];
 			$status->reblog->account->note = $meta['attributedTo']['summary'];
 			$status->reblog->account->avatar        = $meta['attributedTo']['icon'];
+			$status->reblog->account->avatar_static = $status->reblog->account->avatar;
+			if ( isset( $meta['attributedTo']['header'] ) ) {
+				$status->reblog->account->header = $meta['attributedTo']['header'];
+			} else {
+				$status->reblog->account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+			}
+			$status->reblog->account->header_static = $status->reblog->account->header;
+			$status->reblog->account->created_at = $status->reblog->created_at;
 		}
 
 		return $status;
