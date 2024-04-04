@@ -93,7 +93,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
 
 		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ), 10, 2 );
-		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 8, 4 );
+		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_handle_external_mentions_user' ), 20, 3 );
 	}
@@ -228,72 +228,40 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request, $post ) {
-		if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+		if ( ! $post instanceof \WP_Post ) {
 			return $account;
 		}
 
-		if ( null === $post ) {
+		if ( Friends::CPT !== $post->post_type ) {
 			return $account;
 		}
 
-		if ( Friends::CPT !== $post->post_type || ( is_string( $user_id ) && ! is_numeric( $user_id ) ) ) {
-			return $account;
-		}
-		$author = Subscription::get_post_author( $post );
-		if ( $author->ID !== $user_id ) {
-			$account = new \Enable_Mastodon_Apps\Entity\Account();
-			$account->id             = get_author_posts_url( $author->ID );
-			$account->username       = $author->user_login;
-			$account->acct           = $author->user_login . '@' . wp_parse_url( $account->id, PHP_URL_HOST );
-			$account->display_name   = $author->display_name;
-			$account->url            = $account->id;
-			$account->note = $author->description;
-			$account->avatar        = $author->get_avatar_url();
-
-			return $account;
-		}
+		$placeholder_image = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+		// $placeholder_image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
-		if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
-			$author = User::get_post_author( $post );
-			$account = new \Enable_Mastodon_Apps\Entity\Account();
-			$account->id             = get_post_meta( $post->ID, 'feed_url', true );
-
-			$p = wp_parse_url( $account->id );
-			if ( $p ) {
-				if ( isset( $p['host'] ) ) {
-					$domain = $p['host'];
-				}
-				if ( isset( $p['path'] ) ) {
-					$path_parts = explode( '/', trim( $p['path'], '/' ) );
-					$username = ltrim( array_pop( $path_parts ), '@' );
-								$account->acct           = $username . '@' . $domain;
-				}
-			}
-
-			$account->username       = $author->user_login;
-			$account->display_name   = $author->display_name;
-			$account->url            = $account->id;
-			$account->note = $author->description;
-			$account->avatar        = $author->get_avatar_url();
-			$account->avatar_static = $account->avatar;
-
-			$placeholder_image = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
-			// $placeholder_image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-			$account->header        = $placeholder_image;
-			$account->header_static = $placeholder_image;
-			return $account;
-		}
-
 		if ( isset( $meta['attributedTo']['id'] ) ) {
-			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+				$account = new \Enable_Mastodon_Apps\Entity\Account();
+			}
 			$account->id             = $meta['attributedTo']['id'];
 			$account->username       = $meta['attributedTo']['preferredUsername'];
 			$account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
 			$account->display_name   = $meta['attributedTo']['name'];
 			$account->url            = $meta['attributedTo']['id'];
-			$account->note = $meta['attributedTo']['summary'];
-			$account->avatar        = $meta['attributedTo']['icon'];
+			$account->note           = $meta['attributedTo']['summary'];
+			$account->avatar         = $meta['attributedTo']['icon'];
+			$account->avatar_static  = $account->avatar;
+			if ( isset( $meta['attributedTo']['header'] ) ) {
+				$account->header = $meta['attributedTo']['header'];
+			} else {
+				$account->header = $placeholder_image;
+			}
+			$account->header_static = $account->header;
+			if ( ! isset( $account->created_at ) ) {
+				$account->created_at = new \DateTime( $post->post_date );
+			}
+
 			return $account;
 		}
 
