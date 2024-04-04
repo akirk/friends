@@ -263,6 +263,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$account->url            = $account->id;
 			$account->note = $author->description;
 			$account->avatar        = $author->get_avatar_url();
+			$account->avatar_static = $account->avatar;
+
+			$placeholder_image = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+			// $placeholder_image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+			$account->header        = $placeholder_image;
+			$account->header_static = $placeholder_image;
 			return $account;
 		}
 
