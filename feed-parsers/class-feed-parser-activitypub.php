@@ -239,6 +239,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( Friends::CPT !== $post->post_type || ( is_string( $user_id ) && ! is_numeric( $user_id ) ) ) {
 			return $account;
 		}
+		$author = Subscription::get_post_author( $post );
+		if ( $author->ID !== $user_id ) {
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id             = get_author_posts_url( $author->ID );
+			$account->username       = $author->user_login;
+			$account->acct           = $author->user_login . '@' . wp_parse_url( $account->id, PHP_URL_HOST );
+			$account->display_name   = $author->display_name;
+			$account->url            = $account->id;
+			$account->note = $author->description;
+			$account->avatar        = $author->get_avatar_url();
+
+			return $account;
+		}
 
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
 		if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
