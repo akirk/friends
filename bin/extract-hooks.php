@@ -250,10 +250,10 @@ foreach ( $filters as $hook => $data ) {
 		$count = 0;
 		foreach ( (array) $data['param'] as $param ) {
 			$count += 1;
-			$p = explode( ' ', $param, 3 );
+			$p = preg_split( '/ +/', $param, 3 );
 			if ( '\\' === substr( $p[0], 0, 1 ) ) {
 				$p[0] = substr( $p[0], 1 );
-			} elseif ( ! in_array( $p[0], array( 'int', 'string', 'bool', 'array', 'unknown' ) ) && substr( $p[0], 0, 3 ) !== 'WP_' ) {
+			} elseif ( ! in_array( strtok( $p[0], '|' ), array( 'int', 'string', 'bool', 'array', 'unknown' ) ) && substr( $p[0], 0, 3 ) !== 'WP_' ) {
 				$p[0] = 'Friends\\' . $p[0];
 			}
 			if ( ! $first ) {
