@@ -267,7 +267,11 @@ foreach ( $filters as $hook => $data ) {
 				if ( isset( $p[2] ) ) {
 					$doc .= ' ' . $p[2];
 				}
-				$signature .= "\n        {$p[0]} {$p[1]},";
+				if ( substr( $p[0], -5 ) === '|null' ) { // Remove this if, if you don't want to support PHP 7.4 or below.
+					$signature .= "\n        " . substr( $p[0], 0, -5 ) . ' ' . $p[1] . ' = null,';
+				} else {
+					$signature .= "\n        {$p[0]} {$p[1]},";
+				}
 			}
 		}
 		if ( 1 === $count ) {
