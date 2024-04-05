@@ -253,7 +253,7 @@ foreach ( $filters as $hook => $data ) {
 			$p = explode( ' ', $param, 3 );
 			if ( '\\' === substr( $p[0], 0, 1 ) ) {
 				$p[0] = substr( $p[0], 1 );
-			} elseif ( ! in_array( $p[0], array( 'int', 'string', 'bool', 'array', 'unknown' ) ) ) {
+			} elseif ( ! in_array( $p[0], array( 'int', 'string', 'bool', 'array', 'unknown' ) ) && substr( $p[0], 0, 3 ) !== 'WP_' ) {
 				$p[0] = 'Friends\\' . $p[0];
 			}
 			if ( ! $first ) {
