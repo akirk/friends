@@ -636,15 +636,12 @@ class Subscription extends User {
 	}
 
 	public function mastodon_api_get_posts_query_args( $args, $request ) {
-		$args['post_type'][] = Friends::CPT;
-		if ( isset( $args['author'] ) ) {
-			if ( is_string( $args['author'] ) ) {
-				$author = Subscription::get_by_username( $args['author'] );
-				if ( $author instanceof User ) {
-					return $author->modify_get_posts_args_by_author( $args );
-				}
+		if ( isset( $args['author'] ) && is_string( $args['author'] ) ) {
+			$author = Subscription::get_by_username( $args['author'] );
+			if ( $author instanceof User ) {
+				$args['post_type'][] = Friends::CPT;
+				return $author->modify_get_posts_args_by_author( $args );
 			}
-			$args = array();
 		}
 
 		return $args;
