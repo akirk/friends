@@ -1214,6 +1214,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$the_content = str_replace( array_keys( $protected_tags ), array_values( $protected_tags ), $the_content );
 
+		// this should only be done when outputting the content, not when saving it.
+		if ( ! is_feed() && ! is_admin() && ! defined( 'DOING_CRON' ) && ! is_search() && ! is_404() ) {
+			global $post;
+			$reply = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
+			if ( $reply ) {
+				$the_content = '<p><a href="' . esc_url( $reply ) . '">' . sprintf(
+					// translators: %s is the URL of the post being replied to.
+					__( 'In reply to %s', 'friends' ),
+					esc_html( $reply )
+				) . '</a></p>' . $the_content;
+			}
+		}
+
 		return $the_content;
 	}
 
