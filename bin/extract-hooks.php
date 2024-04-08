@@ -21,14 +21,14 @@ INI;
 }
 $ini_file = __DIR__ . '/extract-hooks.ini';
 if ( ! file_exists( $ini_file ) ) {
-	echo 'Please create an extract-hooks.ini file in the same directory as this script. Example: ', PHP_EOL, sample_ini();
+	echo 'Please create an extract-hooks.ini file in the same directory as this script. Example: ', PHP_EOL, esc_attr( sample_ini() );
 	exit( 1 );
 }
 $ini = parse_ini_file( $ini_file );
 
 foreach ( array( 'namespace', 'wiki_directory', 'github_url' ) as $key ) {
 	if ( ! isset( $ini[ $key ] ) ) {
-		echo 'Missing ini entry ', $key, '. Example: ', PHP_EOL, sample_ini();
+		echo 'Missing ini entry ', esc_attr( $key ), '. Example: ', PHP_EOL, esc_attr( sample_ini() );
 		exit( 1 );
 	}
 }
@@ -183,7 +183,7 @@ function extract_vars( $params, $tokens, $i ) {
 					break;
 				case ',':
 					if ( count( $parens ) === 1 ) {
-						$var++;
+						++$var;
 						$vars[ $var ] = '';
 					} else {
 						$vars[ $var ] .= $token;
