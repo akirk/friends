@@ -245,7 +245,7 @@ foreach ( $filters as $hook => $data ) {
 		$signature .= PHP_EOL . '    \'' . $hook . '\',';
 		$signature .= PHP_EOL . '    function (';
 
-		$doc .= "## Parameters\n";
+		$params = "## Parameters\n";
 		$first = false;
 		$count = 0;
 		foreach ( (array) $data['param'] as $param ) {
@@ -260,12 +260,12 @@ foreach ( $filters as $hook => $data ) {
 				$first = $p[1];
 			}
 			if ( 'unknown' === $p[0] ) {
-				$doc .= "\n- `{$p[1]}`";
+				$params .= "\n- `{$p[1]}`";
 				$signature .= "\n        {$p[1]},";
 			} else {
-				$doc .= "\n- *`{$p[0]}`* `{$p[1]}`";
+				$params .= "\n- *`{$p[0]}`* `{$p[1]}`";
 				if ( isset( $p[2] ) ) {
-					$doc .= ' ' . $p[2];
+					$params .= ' ' . $p[2];
 				}
 				if ( substr( $p[0], -5 ) === '|null' ) { // Remove this if, if you don't want to support PHP 7.4 or below.
 					$signature .= "\n        " . substr( $p[0], 0, -5 ) . ' ' . $p[1] . ' = null,';
@@ -292,7 +292,20 @@ foreach ( $filters as $hook => $data ) {
 		}
 		$signature .= PHP_EOL . ');';
 
-		$doc = '```php' . PHP_EOL . $signature . PHP_EOL . '```' . PHP_EOL . $doc;
+		$doc .= '### Generic Example' . PHP_EOL . PHP_EOL . '```php' . PHP_EOL . $signature . PHP_EOL . '```' . PHP_EOL . PHP_EOL;
+		$doc .= $params . PHP_EOL . PHP_EOL;
+	}
+
+	if ( ! empty( $data['return'] ) ) {
+		$doc .= "## Returns\n";
+		$p = preg_split( '/ +/', $data['return'], 2 );
+		if ( '\\' === substr( $p[0], 0, 1 ) ) {
+			$p[0] = substr( $p[0], 1 );
+		} elseif ( ! in_array( strtok( $p[0], '|' ), array( 'int', 'string', 'bool', 'array', 'unknown' ) ) && substr( $p[0], 0, 3 ) !== 'WP_' ) {
+			$p[0] = 'Friends\\' . $p[0];
+		}
+		$doc .= "\n`{$p[0]}` {$p[1]}";
+
 		$doc .= PHP_EOL . PHP_EOL;
 	}
 
