@@ -346,9 +346,11 @@ foreach ( $filters as $hook => $data ) {
 		$index .= PHP_EOL . '## ' . $section . PHP_EOL . PHP_EOL;
 	}
 	$doc = '';
+	$has_example = false;
 	$index .= "- [`$hook`]($hook)";
 	if ( ! empty( $data['comment'] ) ) {
 		$index .= ' ' . strtok( $data['comment'], PHP_EOL );
+		$has_example = preg_match( '/^Example:?$/m', $data['comment'] );
 		$doc .= PHP_EOL . preg_replace( '/^Example:?$/m', '### Example' . PHP_EOL, $data['comment'] ) . PHP_EOL . PHP_EOL;
 	}
 
@@ -464,8 +466,9 @@ foreach ( $filters as $hook => $data ) {
 			$signature .= PHP_EOL . '    ' . $count;
 		}
 		$signature .= PHP_EOL . ');';
-
-		$doc .= '### Auto-generated Example' . PHP_EOL . PHP_EOL . '```php' . PHP_EOL . $signature . PHP_EOL . '```' . PHP_EOL . PHP_EOL;
+		if ( ! $has_example ) {
+			$doc .= '### Auto-generated Example' . PHP_EOL . PHP_EOL . '```php' . PHP_EOL . $signature . PHP_EOL . '```' . PHP_EOL . PHP_EOL;
+		}
 		$doc .= $params . PHP_EOL . PHP_EOL;
 	}
 
