@@ -144,9 +144,6 @@ class Friends {
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
 		add_action( 'init', array( 'Friends\Subscription', 'register_taxonomy' ) );
-		// TODO: move into an integrations file.
-		add_filter( 'mastodon_api_account', array( 'Friends\Subscription', 'mastodon_api_account_for_subscriptions' ), 8, 4 );
-		add_filter( 'mastodon_api_get_posts_query_args', array( 'Friends\Subscription', 'mastodon_api_get_posts_query_args' ), 10, 2 );
 
 		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );

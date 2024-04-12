@@ -150,3 +150,6 @@ add_action(
 	},
 	9
 );
+
+require_once __DIR__ . '/integrations/class-enable-mastodon-apps.php';
+Enable_Mastodon_Apps::init();
