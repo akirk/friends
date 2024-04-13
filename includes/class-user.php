@@ -1297,14 +1297,17 @@ class User extends \WP_User {
 			if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
 				$account = new \Enable_Mastodon_Apps\Entity\Account();
 			}
-
+			$note = $user->description;
+			if ( ! $note ) {
+				$note = '';
+			}
 			$account->id             = $user->user_login;
 			$account->username       = $user->user_login;
 			$account->display_name   = $user->display_name;
 			$account->avatar         = $user->get_avatar_url();
 			$account->avatar_static  = $user->get_avatar_url();
 			$account->acct           = $user->user_login;
-			$account->note           = wpautop( $user->description );
+			$account->note           = wpautop( $note );
 			$account->created_at     = new \DateTime( $user->user_registered );
 			$account->statuses_count = $user->get_post_stats()['post_count'];
 			$account->last_status_at = new \DateTime( $post->post_date_gmt );
@@ -1314,7 +1317,7 @@ class User extends \WP_User {
 				'privacy'   => 'public',
 				'sensitive' => false,
 				'language'  => get_user_locale( $user->ID ),
-				'note'      => $user->description,
+				'note'      => $note,
 				'fields'    => array(),
 			);
 		}

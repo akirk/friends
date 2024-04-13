@@ -250,8 +250,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$account->display_name   = $meta['attributedTo']['name'];
 			$account->url            = $meta['attributedTo']['id'];
 			$account->note           = $meta['attributedTo']['summary'];
-			$account->avatar         = $meta['attributedTo']['icon'];
-			$account->avatar_static  = $account->avatar;
+			if ( ! $account->note ) {
+				$account->note = '';
+			}
+			$account->avatar = $meta['attributedTo']['icon'];
+			if ( ! $account->avatar ) {
+				$account->avatar = '';
+			}
+			$account->avatar_static = $account->avatar;
 			if ( isset( $meta['attributedTo']['header'] ) ) {
 				$account->header = $meta['attributedTo']['header'];
 			} else {
@@ -281,7 +287,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$status->reblog->account->display_name   = $meta['attributedTo']['name'];
 			$status->reblog->account->url            = $meta['attributedTo']['id'];
 			$status->reblog->account->note = $meta['attributedTo']['summary'];
-			$status->reblog->account->avatar        = $meta['attributedTo']['icon'];
+			if ( ! $status->reblog->account->note ) {
+				$status->reblog->account->note = '';
+			}
+
+			$status->reblog->account->avatar = $meta['attributedTo']['icon'];
+			if ( ! $status->reblog->account->avatar ) {
+				$status->reblog->account->avatar = '';
+			}
+
 			$status->reblog->account->avatar_static = $status->reblog->account->avatar;
 			if ( isset( $meta['attributedTo']['header'] ) ) {
 				$status->reblog->account->header = $meta['attributedTo']['header'];
@@ -2028,6 +2042,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return mixed The potentially added metadata for example domains.
 	 */
 	public function disable_webfinger_for_example_domains( $metadata, $actor ) {
+		if ( ! is_string( $actor ) ) {
+			return $metadata;
+		}
 		if ( ! $metadata ) {
 			$username = null;
 			$domain = null;
