@@ -1283,6 +1283,9 @@ class User extends \WP_User {
 	}
 
 	public static function mastodon_api_account( $account, $user_id, $request, $post ) {
+		if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+			return $account;
+		}
 		$user = false;
 		if ( is_string( $user_id ) ) {
 			$user = self::get_by_username( $user_id );
