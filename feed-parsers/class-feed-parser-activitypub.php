@@ -59,9 +59,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
+		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_in_reply_to_mentions' ), 10, 3 );
 		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_mentions_user' ) );
-		\add_filter( 'activitypub_post', array( $this, 'activitypub_post_in_reply_to' ), 10, 2 );
-		\add_filter( 'activitypub_activity_object_array', array( $this, 'activitypub_activity_object_array_in_reply_to' ), 10, 3 );
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
@@ -616,34 +615,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
-	 * Set the inReplyTo property for the outgoing activity (object).
+	 * Set the post author as an implicit mention.
 	 *
-	 * @param  array   $ret The activity from the ActivityPub plugin.
-	 * @param WP_Post $post The post object.
-	 * @return mixed
+	 * @param  array  $mentions The already extracted mentions.
+	 * @param string $comment_content   The comment content.
+	 * @param object $wp_object The object acted upon.
+	 * @return array The extracted mentions.
 	 */
-	public function activitypub_post_in_reply_to( $ret, $post ) {
-		if ( get_post_meta( $post->ID, 'activitypub_in_reply_to', true ) ) {
-			$ret['inReplyTo'] = get_post_meta( $post->ID, 'activitypub_in_reply_to', true );
-			$ret['object']['inReplyTo'] = $ret['inReplyTo'];
+	public function activitypub_extract_in_reply_to_mentions( $mentions, $comment_content, $wp_object ) {
+		if ( 'WP_Comment' !== get_class( $wp_object ) ) {
+			return $mentions;
 		}
-		return $ret;
-	}
+		$post_id = $wp_object->comment_post_ID;
+		$post = get_post( $post_id );
+		if ( Friends::CPT !== $post->post_type ) {
+			return $mentions;
+		}
 
-	/**
-	 * Set the inReplyTo property for the outgoing activity object.
-	 *
-	 * @param  array  $ret The activity object from the ActivityPub plugin.
-	 * @param object $c   The class.
-	 * @param string $url The URL of the post.
-	 * @return array The modified activity object.
-	 */
-	public function activitypub_activity_object_array_in_reply_to( $ret, $c, $url ) {
-		$post_id = url_to_postid( $url );
-		if ( get_post_meta( $post_id, 'activitypub_in_reply_to', true ) ) {
-			$ret['inReplyTo'] = get_post_meta( $post_id, 'activitypub_in_reply_to', true );
+		$meta = get_post_meta( $post->ID, self::SLUG, true );
+		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
+			$mentions[ \Activitypub\Webfinger::uri_to_acct( $meta['attributedTo']['id'] ) ] = $meta['attributedTo']['id'];
 		}
-		return $ret;
+
+		return $mentions;
 	}
 
 	/**
