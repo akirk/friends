@@ -277,7 +277,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
+		if ( isset( $meta['reblog'] ) && $meta['reblog'] && isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			$status->reblog = clone $status;
 			$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
 			$status->reblog->account = new \Enable_Mastodon_Apps\Entity\Account();
@@ -479,42 +479,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( false === strpos( $url, '/' ) && preg_match( '#^https?://#', $url, $m ) ) {
 				$url = substr( $url, strlen( $m[0] ) );
 			}
-			return \Activitypub\get_remote_metadata_by_actor( $url );
 		}
-
-		$transient_key = 'friends_activitypub_' . crc32( $url );
-
-		$response = \get_transient( $transient_key );
-		if ( $response ) {
-			return $response;
-		}
-
-		$response = \wp_remote_get(
-			$url,
-			array(
-				'headers'     => array( 'Accept' => 'application/activity+json' ),
-				'redirection' => 2,
-				'timeout'     => 5,
-			)
-		);
-
-		if ( \is_wp_error( $response ) ) {
-			\set_transient( $transient_key, $response, HOUR_IN_SECONDS ); // Cache the error for a shorter period.
-			return $response;
-		}
-
-		if ( \is_wp_error( $response ) ) {
-			\set_transient( $transient_key, $response, HOUR_IN_SECONDS ); // Cache the error for a shorter period.
-			return $response;
-		}
-
-		$body = \wp_remote_retrieve_body( $response );
-		$body = \json_decode( $body, true );
-
-		\set_transient( $transient_key, $body, HOUR_IN_SECONDS ); // Cache the error for a shorter period.
-
-		return $body;
+		return \Activitypub\get_remote_metadata_by_actor( $url );
 	}
+
 	/**
 	 * Discover the feeds available at the URL specified.
 	 *
@@ -1622,7 +1590,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 
 		if ( $queued ) {
-			$user_feed->update_last_log( __( 'Queued unlike request.', 'friends' ) );
+			$user_feed = User_Feed::get_by_url( $author_url );
+			if ( $user_feed instanceof User_Feed ) {
+				$user_feed->update_last_log( __( 'Queued unlike request.', 'friends' ) );
+			}
 		}
 
 		return $queued;
