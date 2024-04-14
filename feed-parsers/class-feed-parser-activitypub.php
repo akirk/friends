@@ -1769,7 +1769,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( ! $already_added ) {
-			if ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
+			if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
+				$result = '<a href="' . esc_url( add_query_arg( 'url', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
+				$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
+				$result .= 'Follow ';
+				$result .= ' <small>';
+				$result .= esc_html( $q );
+				$result .= '</small></a>';
+				$results[] = $result;
+			} elseif ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
 				$result = '<a href="' . esc_url( add_query_arg( 'url', $m[1] ? $q : 'https://' . $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
 				$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
 				$result .= 'Follow ';
