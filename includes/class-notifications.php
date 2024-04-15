@@ -39,7 +39,8 @@ class Notifications {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_action( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
+		add_filter( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
+		add_filter( 'friends_rewrite_mail_html', array( $this, 'highlight_keywords' ), 10, 2 );
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 2 );
 		add_filter( 'notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
@@ -153,7 +154,7 @@ class Notifications {
 			return $notified;
 		}
 
-		$author = new User( $post->post_author );
+		$author = User::get_post_author( $post );
 		// translators: %s is a keyword string specified by the user.
 		$email_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
 
@@ -330,6 +331,61 @@ class Notifications {
 		$html = preg_replace( '/(' . $img_regex . '.*?)width=[\'"]\d+[\'"]/i', '$1', $html );
 		$html = preg_replace( '/(' . $img_regex . '.*?)height=[\'"]\d+[\'"]/i', '$1', $html );
 		return $html;
+	}
+
+	public function highlight_keywords( $the_content, $args ) {
+		if ( ! isset( $args['keyword'] ) ) {
+			return $the_content;
+		}
+
+		$tag_stack = array();
+		$protected_tags = array(
+			'pre',
+			'code',
+			'textarea',
+			'style',
+		);
+		$new_content = '';
+		$in_protected_tag = false;
+		foreach ( wp_html_split( $the_content ) as $chunk ) {
+			if ( preg_match( '#^<!--[\s\S]*-->$#i', $chunk, $m ) ) {
+				$new_content .= $chunk;
+				continue;
+			}
+
+			if ( preg_match( '#^<(/)?([a-z-]+)\b[^>]*>$#i', $chunk, $m ) ) {
+				$tag = strtolower( $m[2] );
+				if ( '/' === $m[1] ) {
+					// Closing tag.
+					$i = array_search( $tag, $tag_stack );
+					// We can only remove the tag from the stack if it is in the stack.
+					if ( false !== $i ) {
+						$tag_stack = array_slice( $tag_stack, 0, $i );
+					}
+				} else {
+					// Opening tag, add it to the stack.
+					$tag_stack[] = $tag;
+				}
+
+				// If we're in a protected tag, the tag_stack contains at least one protected tag string.
+				// The protected tag state can only change when we encounter a start or end tag.
+				$in_protected_tag = array_intersect( $tag_stack, $protected_tags );
+
+				// Never inspect tags.
+				$new_content .= $chunk;
+				continue;
+			}
+
+			if ( $in_protected_tag ) {
+				// Don't inspect a chunk inside an inspected tag.
+				$new_content .= $chunk;
+				continue;
+			}
+			// Only reachable when there is no protected tag in the stack.
+			$new_content .= preg_replace( '/(' . preg_quote( $args['keyword'], '/' ) . ')/i', '<mark>$1</mark>', $chunk );
+		}
+
+		return $new_content;
 	}
 
 	/**

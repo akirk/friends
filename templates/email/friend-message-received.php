@@ -23,7 +23,7 @@
 
 <blockquote class="message-content">
 <?php
-	echo wp_kses_post( apply_filters( 'friends_rewrite_mail_html', $args['message'] ) );
+	echo wp_kses_post( apply_filters( 'friends_rewrite_mail_html', $args['message'], $args ) );
 ?>
 </blockquote>
 
