@@ -634,7 +634,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
-			$mentions[ \Activitypub\Webfinger::uri_to_acct( $meta['attributedTo']['id'] ) ] = $meta['attributedTo']['id'];
+			$mentions[ $meta['attributedTo']['id'] ] = $meta['attributedTo']['id'];
 		}
 
 		return $mentions;
