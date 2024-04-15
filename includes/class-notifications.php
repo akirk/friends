@@ -153,7 +153,7 @@ class Notifications {
 			return $notified;
 		}
 
-		$author = new User( $post->post_author );
+		$author = User::get_post_author( $post );
 		// translators: %s is a keyword string specified by the user.
 		$email_title = sprintf( __( 'Keyword matched: %s', 'friends' ), $keyword );
 
