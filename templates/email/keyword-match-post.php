@@ -10,15 +10,15 @@
 $override_author_name = apply_filters( 'friends_override_author_name', '', $args['author']->display_name, $args['post']->ID );
 
 ?>
+	<?php
+	echo wp_kses(
+		// translators: %s is a keyword string specified by the user.
+		sprintf( __( 'Keyword matched: %s', 'friends' ), '<strong>' . esc_html( $args['keyword'] ) . '</strong>' ),
+		array( 'strong' => array() )
+	);
+	?>
+<br/><br/>
 <div class="post-meta">
-	<strong>
-		<?php
-		echo esc_html(
-			// translators: %s is a keyword string specified by the user.
-			sprintf( __( 'Keyword matched: %s', 'friends' ), $args['keyword'] )
-		);
-		?>
-	</strong>
 	<a href="<?php echo esc_attr( $args['author']->get_local_friends_page_url() ); ?>" class="author">
 		<strong><?php echo esc_html( $args['author']->display_name ); ?></strong>
 		<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $args['author']->display_name ) ) === $args['author']->display_name ) : ?>
@@ -32,7 +32,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $args
 
 <div class="post-content">
 <?php
-	echo wp_kses_post( apply_filters( 'friends_rewrite_mail_html', $args['post']->post_content ) );
+	echo wp_kses_post( apply_filters( 'friends_rewrite_mail_html', $args['post']->post_content, $args ) );
 ?>
 </div>
 
