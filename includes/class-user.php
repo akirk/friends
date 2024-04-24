@@ -1327,7 +1327,7 @@ class User extends \WP_User {
 		return $account;
 	}
 
-	public function mastodon_api_get_posts_query_args( $args, $request ) {
+	public static function mastodon_api_get_posts_query_args( $args, $request ) {
 		if ( isset( $args['author'] ) && is_string( $args['author'] ) ) {
 			$author = self::get_by_username( $args['author'] );
 			if ( $author instanceof User ) {
