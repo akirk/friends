@@ -1707,7 +1707,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function frontend_reply_form( $args ) {
 		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
 			$args['in_reply_to'] = $this->get_activitypub_ajax_metadata( $_GET['in_reply_to'] );
-			$args['in_reply_to']['html'] = '<figcaption>' . make_clickable( $_GET['in_reply_to'] ) . '</figcaption><blockquote>' . $args['in_reply_to']['html'] . '</blockquote>';
+			if ( ! is_wp_error( $args['in_reply_to'] ) ) {
+				$args['in_reply_to']['html'] = '<figcaption>' . make_clickable( $_GET['in_reply_to'] ) . '</figcaption><blockquote>' . $args['in_reply_to']['html'] . '</blockquote>';
+			} else {
+				$args['in_reply_to'] = array(
+					'html'    => $args['in_reply_to']->get_error_message(),
+					'mention' => '',
+					'url'     => $_GET['in_reply_to'],
+				);
+			}
 			$args['form_class'] = 'open';
 			Friends::template_loader()->get_template_part( 'frontend/activitypub/reply', true, $args );
 		}
