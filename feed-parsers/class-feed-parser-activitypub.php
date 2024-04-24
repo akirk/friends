@@ -22,7 +22,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const NAME = 'ActivityPub';
 	const URL = 'https://www.w3.org/TR/activitypub/';
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
-	const EXTERNAL_MENTIONS_USERNAME = 'external-mentions';
+	const EXTERNAL_USERNAME = 'external';
 
 	private $friends_feed;
 
@@ -57,10 +57,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_potential_avatars', array( $this, 'friends_potential_avatars' ), 10, 2 );
 		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login' ), 10, 2 );
 
+		\add_filter( 'template_redirect', array( $this, 'cache_reply_to_boost' ) );
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_in_reply_to_mentions' ), 10, 3 );
-		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_mentions_user' ) );
+		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_user' ) );
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
@@ -313,7 +314,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $status;
 		}
 
-		$external_user = $this->get_external_mentions_user();
+		$external_user = $this->get_external_user();
 		$is_external_mention = $external_user && strval( $external_user->ID ) === strval( $status->account->id );
 		if ( ! $is_external_mention ) {
 			return $status;
@@ -594,11 +595,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 *
 	 * @return     User  The external mentions user.
 	 */
-	public function get_external_mentions_user() {
-		$external_mentions_username = apply_filters( 'friends_external_mentions_username', self::EXTERNAL_MENTIONS_USERNAME );
-		$user = User::get_by_username( $external_mentions_username );
+	public function get_external_user() {
+		$external_username = apply_filters( 'friends_external_username', self::EXTERNAL_USERNAME );
+		$user = User::get_by_username( $external_username );
 		if ( ! $user || is_wp_error( $user ) ) {
-			$user = Subscription::create( $external_mentions_username, 'subscription', home_url(), __( 'External Mentions', 'friends' ) );
+			$user = Subscription::create( $external_username, 'subscription', home_url(), _x( 'External', 'user name', 'friends' ) );
 		}
 
 		if ( $user instanceof \WP_User && ! ( $user instanceof Subscription ) && ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
@@ -610,7 +611,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	private function get_external_mentions_feed() {
 		require_once __DIR__ . '/activitypub/class-virtual-user-feed.php';
-		$user = $this->get_external_mentions_user();
+		$user = $this->get_external_user();
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
 	}
 
@@ -1270,6 +1271,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $mentions;
 	}
 
+	public function cache_reply_to_boost() {
+
+		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
+		}
+	}
+
 	public function the_content( $the_content ) {
 		$protected_tags = array();
 		$the_content = preg_replace_callback(
@@ -1375,7 +1382,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $item;
 		}
 
-		$external_mentions_user = $this->get_external_mentions_user();
+		$external_mentions_user = $this->get_external_user();
 		if (
 			$external_mentions_user->get_object_id() !== $friend_user->get_object_id() && // Don't hide mentions for the external mentions user.
 			! $friend_user->get_user_option( 'activitypub_friends_show_replies' )
