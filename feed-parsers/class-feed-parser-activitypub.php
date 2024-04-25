@@ -57,7 +57,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_potential_avatars', array( $this, 'friends_potential_avatars' ), 10, 2 );
 		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login' ), 10, 2 );
 
-		\add_filter( 'template_redirect', array( $this, 'cache_reply_to_boost' ) );
+		\add_action( 'template_redirect', array( $this, 'cache_reply_to_boost' ) );
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_in_reply_to_mentions' ), 10, 3 );
@@ -75,8 +75,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
 		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
-		\add_action( 'friends_after_header', array( $this, 'frontend_reply_form' ) );
-		\add_action( 'friends_after_header', array( $this, 'frontend_boost_form' ) );
 		\add_action( 'wp_ajax_friends-in-reply-to-preview', array( $this, 'ajax_in_reply_to_preview' ) );
 
 		\add_filter( 'friends_reblog', array( $this, 'unqueue_activitypub_create' ), 9 );
@@ -1271,10 +1269,85 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $mentions;
 	}
 
-	public function cache_reply_to_boost() {
-
-		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
+	private function show_message_on_frontend( $message, $error = null ) {
+		if ( is_wp_error( $error ) ) {
+			$error = $error->get_error_message();
 		}
+		add_action(
+			'friends_after_header',
+			function () use ( $message, $error ) {
+				Friends::template_loader()->get_template_part(
+					'frontend/error-message',
+					null,
+					array(
+						'message' => $message,
+						'error'   => $error,
+					)
+				);
+			}
+		);
+	}
+
+	public function cache_reply_to_boost() {
+		$url = false;
+		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
+			$url = $_GET['in_reply_to'];
+		} elseif ( isset( $_GET['boost'] ) && wp_parse_url( $_GET['boost'] ) ) {
+			$url = $_GET['boost'];
+		}
+		if ( ! $url ) {
+			return;
+		}
+
+		$post_id = Feed::url_to_postid( $url );
+		if ( ! $post_id ) {
+			$user = $this->get_external_user();
+			$user_feed = $this->get_external_mentions_feed();
+			$response = \Activitypub\safe_remote_get( $url, get_current_user_id() );
+			if ( \is_wp_error( $response ) ) {
+
+				$this->show_message_on_frontend(
+					sprintf(
+						// translators: %s is a URl.
+						__( 'Could not retrieve URL %s', 'friends' ),
+						'<a href="' . esc_attr( $url ) . '">' . Friends::url_truncate( $url ) . '</a>'
+					),
+					$response
+				);
+				return $response;
+			}
+			$json = \wp_remote_retrieve_body( $response );
+			$object = \json_decode( $json, true );
+			if ( ! $object ) {
+				$this->log( 'Received invalid json', compact( 'json' ) );
+				return false;
+			}
+			$this->log( 'Received response', compact( 'url', 'object' ) );
+			$item = $this->handle_incoming_create( $object );
+			if ( $item instanceof Feed_Item ) {
+				$new_posts = $this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
+				if ( 1 === count( $new_posts ) ) {
+					$post_id = reset( $new_posts );
+				} else {
+					$post_id = Feed::url_to_postid( $url );
+				}
+			}
+		}
+
+		if ( ! $post_id ) {
+			$this->show_message_on_frontend(
+				sprintf(
+					// translators: %s is a URl.
+					__( 'Could not retrieve URL %s', 'friends' ),
+					'<a href="' . esc_attr( $url ) . '">' . Friends::url_truncate( $url ) . '</a>'
+				)
+			);
+			return;
+		}
+
+		$user = User::get_post_author( get_post( $post_id ) );
+		wp_safe_redirect( $user->get_local_friends_page_url( $post_id ) );
+		exit;
 	}
 
 	public function the_content( $the_content ) {
@@ -1711,32 +1784,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		wp_send_json_success( $meta );
 	}
 
-	public function frontend_reply_form( $args ) {
-		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
-			$args['in_reply_to'] = $this->get_activitypub_ajax_metadata( $_GET['in_reply_to'] );
-			if ( ! is_wp_error( $args['in_reply_to'] ) ) {
-				$args['in_reply_to']['html'] = '<figcaption>' . make_clickable( $_GET['in_reply_to'] ) . '</figcaption><blockquote>' . $args['in_reply_to']['html'] . '</blockquote>';
-			} else {
-				$args['in_reply_to'] = array(
-					'html'    => $args['in_reply_to']->get_error_message(),
-					'mention' => '',
-					'url'     => $_GET['in_reply_to'],
-				);
-			}
-			$args['form_class'] = 'open';
-			Friends::template_loader()->get_template_part( 'frontend/activitypub/reply', true, $args );
-		}
-	}
-
-	public function frontend_boost_form( $args ) {
-		if ( isset( $_GET['boost'] ) && wp_parse_url( $_GET['boost'] ) ) {
-			$args['boost'] = $this->get_activitypub_ajax_metadata( $_GET['boost'] );
-			$args['boost']['html'] = '<figcaption>' . make_clickable( $_GET['boost'] ) . '</figcaption><blockquote>' . $args['boost']['html'] . '</blockquote>';
-			$args['form_class'] = 'open';
-			Friends::template_loader()->get_template_part( 'frontend/activitypub/boost', true, $args );
-		}
-	}
-
 	public function friends_search_autocomplete( $results, $q ) {
 		$url = preg_match( '#^(https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
 		$url_with_path = isset( $m[2] ) && $m[2];
@@ -1769,7 +1816,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( add_query_arg( 'boost', $q, home_url( '/friends/type/status/' ) ) ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( add_query_arg( 'boost', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-controls-repeat"></span>';
 			$result .= 'Boost ';
 			$result .= ' <small>';
@@ -1779,7 +1826,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( add_query_arg( 'in_reply_to', $q, home_url( '/friends/type/status/' ) ) ) . '" class="has-icon-left">';
+			$result = '<a href="' . esc_url( add_query_arg( 'in_reply_to', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-admin-comments"></span>';
 			$result .= 'Reply to ';
 			$result .= ' <small>';

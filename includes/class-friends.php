@@ -1242,7 +1242,7 @@ class Friends {
 			$parts = array_merge( $parts, explode( '/', $p['path'] ) );
 		}
 
-		$url = join( '/', $parts );
+		$url = join( '/', array_filter( $parts ) );
 		$reduce = 4;
 		while ( strlen( $url ) > $max_length ) {
 			$last_part = array_pop( $parts );
