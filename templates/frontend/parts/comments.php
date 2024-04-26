@@ -8,7 +8,7 @@
 
 $args['friends']->frontend->link(
 	get_comments_link(),
-	get_comments_number(),
+	__( 'Comments' ), // phpcs:ignore
 	array(
 		'class'          => 'comments btn ml-1',
 		'dashicon_front' => 'admin-comments',

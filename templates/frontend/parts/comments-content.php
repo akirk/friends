@@ -6,4 +6,14 @@
  * @package Friends
  */
 
-?><footer class="comments-content card-footer"></footer>
+?><footer class="comments-content card-footer">
+<div class="comments-list"></div>
+<?php
+comment_form(
+	array(
+		'title_reply'  => __( 'Send a reply', 'friends' ),
+		'logged_in_as' => '',
+	)
+);
+?>
+</footer>

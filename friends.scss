@@ -37,6 +37,7 @@ div {
 @import "node_modules/spectre.css/src/utilities/loading";
 @import "node_modules/spectre.css/src/utilities/colors";
 @import "node_modules/spectre.css/src/utilities/divider";
+@import "node_modules/spectre.css/src/utilities/display";
 @import "node_modules/spectre.css/src/utilities/position";
 
 .friends-dropdown {
@@ -238,23 +239,31 @@ h2#page-title a.dashicons {
 
 	article {
 		.card-body {
+
 			img,
 			video {
 				max-width: 100% !important;
 				height: auto;
 			}
 		}
+
 		&.format-status {
 			div.teaser {
 				display: none;
 			}
+
 			border-bottom: 1px solid $dark-color;
 			padding-bottom: 2em;
 			margin-bottom: 2em;
+
 			header {
-				div.overflow, div.post-meta, div.teaser {
+
+				div.overflow,
+				div.post-meta,
+				div.teaser {
 					margin-top: .4em;
 				}
+
 				div.overflow {
 					.btn {
 						margin-top: -.5em;
@@ -362,6 +371,7 @@ h2#page-title a.dashicons {
 				}
 			}
 		}
+
 		.friends-sidebar-customize {
 			margin-left: 1.5rem;
 			color: #999;
@@ -392,6 +402,7 @@ h2#page-title a.dashicons {
 		&.open {
 			display: block;
 		}
+
 		p.description {
 			font-color: $dark-color;
 			font-size: .6rem;
@@ -404,8 +415,10 @@ h2#page-title a.dashicons {
 			margin-bottom: 1em;
 			max-height: 6em;
 			overflow-y: auto;
+
 			figcaption {
 				float: right;
+
 				a:any-link {
 					color: #999;
 				}
@@ -536,29 +549,35 @@ h2#page-title a.dashicons {
 				padding-bottom: 0;
 				margin-bottom: .5em;
 				width: 100%;
+
 				.overflow {
 					width: 6em;
 					margin-left: 1em;
 				}
+
 				div.teaser {
 					text-overflow: ellipsis;
 					width: calc(100% - 7em);
 					overflow: hidden;
 					white-space: nowrap;
 					display: inline-block;
+
 					@media (min-width: $off-canvas-breakpoint) {
 						width: calc(100% - 25em);
 					}
 				}
+
 				header {
 					padding-left: 0;
 					margin-bottom: 0;
+
 					div.post-meta {
 						max-width: 15em;
 						max-height: 1.5em;
 						overflow: hidden;
 						text-overflow: ellipsis;
 					}
+
 					div.avatar {
 						display: block;
 					}
@@ -674,11 +693,13 @@ h2#page-title a.dashicons {
 	.invisible {
 		font-size: 0;
 		line-height: 0;
-		display:inline-block;
+		display: inline-block;
 		width: 0;
 		height: 0;
-		position:absolute;
-		img, svg{
+		position: absolute;
+
+		img,
+		svg {
 			margin: 0 !important;
 			border: 0 !important;
 			padding: 0 !important;
@@ -686,7 +707,8 @@ h2#page-title a.dashicons {
 			height: 0 !important
 		}
 	}
-	.ellipsis::after{
+
+	.ellipsis::after {
 		content: "…"
 	}
 }

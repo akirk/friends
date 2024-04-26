@@ -75,7 +75,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
 		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
-		\add_action( 'wp_ajax_friends-in-reply-to-preview', array( $this, 'ajax_in_reply_to_preview' ) );
 
 		\add_filter( 'friends_reblog', array( $this, 'unqueue_activitypub_create' ), 9 );
 		\add_action( 'mastodon_api_reblog', array( $this, 'mastodon_api_reblog' ) );
@@ -1727,61 +1726,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 		return $button_label;
-	}
-
-
-	/**
-	 * Get metadata for in_reply_to_preview.
-	 *
-	 * @param      string $url    The url.
-	 *
-	 * @return    array|WP_Error  The in reply to metadata.
-	 */
-	public function get_activitypub_ajax_metadata( $url ) {
-		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $url );
-		if ( is_wp_error( $meta ) ) {
-			return $meta;
-		}
-
-		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
-			return new \WP_Error( 'no-activitypub', 'No ActivityPub metadata found.' );
-		}
-
-		$html = force_balance_tags( wp_kses_post( $meta['content'] ) );
-
-		$webfinger = apply_filters( 'friends_get_activitypub_metadata', array(), $meta['attributedTo'] );
-		$mention = '';
-		if ( $webfinger && ! is_wp_error( $webfinger ) ) {
-			$mention = '@' . $webfinger['preferredUsername'] . '@' . wp_parse_url( $url, PHP_URL_HOST );
-		}
-
-		return array(
-			'url'     => $url,
-			'html'    => $html,
-			'author'  => $meta['attributedTo'],
-			'mention' => $mention,
-		);
-	}
-
-	/**
-	 * The Ajax function to fill the in-reply-to-preview.
-	 */
-	public function ajax_in_reply_to_preview() {
-		check_ajax_referer( 'friends-in-reply-to-preview' );
-		$url = wp_unslash( $_POST['url'] );
-
-		if ( ! wp_parse_url( $url ) ) {
-			wp_send_json_error();
-			exit;
-		}
-
-		$meta = $this->get_activitypub_ajax_metadata( $_POST['url'] );
-
-		if ( is_wp_error( $meta ) ) {
-			wp_send_json_error( $meta->get_error_message() );
-			exit;
-		}
-		wp_send_json_success( $meta );
 	}
 
 	public function friends_search_autocomplete( $results, $q ) {
