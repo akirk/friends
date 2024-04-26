@@ -729,11 +729,7 @@ class Frontend {
 			);
 
 		}
-		?>
-		<p>
-		<a href="<?php echo esc_url( get_comments_link( $post_id ) ); ?>"><?php esc_html_e( 'Leave a Comment' );  /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></a>
-		</p>
-		<?php
+
 		$content = ob_get_contents();
 		ob_end_clean();
 

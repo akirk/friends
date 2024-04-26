@@ -11,8 +11,9 @@
 <?php
 comment_form(
 	array(
-		'title_reply'  => __( 'Send a reply', 'friends' ),
-		'logged_in_as' => '',
+		'title_reply'          => __( 'Send a reply', 'friends' ),
+		'logged_in_as'         => '',
+		'comment_notes_before' => '',
 	)
 );
 ?>

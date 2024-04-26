@@ -8,7 +8,7 @@
 
 $args['friends']->frontend->link(
 	get_comments_link(),
-	__( 'Comments' ), // phpcs:ignore
+	__( 'Comments' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 	array(
 		'class'          => 'comments btn ml-1',
 		'dashicon_front' => 'admin-comments',
