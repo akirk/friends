@@ -52,6 +52,7 @@ div {
 		overflow-y: auto;
 		position: absolute;
 		top: 100%;
+		z-index: 300;
 	}
 
 	&.friends-dropdown-right {
