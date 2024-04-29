@@ -683,11 +683,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			// Let's check if we follow this actor. If not it might be a different URL representation.
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
-
 		if ( is_wp_error( $user_feed ) || ! Friends::check_url( $actor_url ) ) {
 			$meta = $this->get_metadata( $actor_url );
 			if ( ! $meta || is_wp_error( $meta ) || ! isset( $meta['url'] ) ) {
-				$this->log( 'Received invalid meta for ' . $actor_url );
+				$this->log( 'Received invalid meta for ' . $actor_url, $meta );
 				return false;
 			}
 
