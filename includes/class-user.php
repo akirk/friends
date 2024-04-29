@@ -1327,7 +1327,7 @@ class User extends \WP_User {
 		return $account;
 	}
 
-	public static function mastodon_api_get_posts_query_args( $args, $request ) {
+	public static function mastodon_api_get_posts_query_args( $args ) {
 		if ( isset( $args['author'] ) && is_string( $args['author'] ) ) {
 			$author = self::get_by_username( $args['author'] );
 			if ( $author instanceof User ) {
@@ -1338,6 +1338,7 @@ class User extends \WP_User {
 
 		return $args;
 	}
+
 	public function mastodon_entity_relationship( $relationship, $user_id ) {
 		$user = self::get_by_username( $user_id );
 		if ( $user instanceof self ) {

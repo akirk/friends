@@ -89,7 +89,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_get_feed_metadata', array( $this, 'friends_get_feed_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
 
-		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ), 10, 2 );
+		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ) );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_handle_external_mentions_user' ), 20, 3 );
@@ -219,7 +219,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return array_merge( $ret, $meta );
 	}
 
-	public function mastodon_api_timelines_args( $args, $request ) {
+	public function mastodon_api_timelines_args( $args ) {
 		$args['post_type'][] = Friends::CPT;
 		return $args;
 	}
@@ -721,7 +721,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( $item instanceof Feed_Item ) {
 			$this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
-			return true;
+			return $item;
 		}
 
 		return false;
@@ -736,7 +736,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param User_Feed $user_feed The user feed.
 	 * @return Feed_Item|null The feed item or null if it's not a valid activity.
 	 */
-	private function process_incoming_activity( $type, $activity, $user_id, $user_feed ) {
+	protected function process_incoming_activity( $type, $activity, $user_id, $user_feed ) {
 		switch ( $type ) {
 			case 'create':
 				return $this->handle_incoming_create( $activity['object'] );
@@ -1289,8 +1289,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function cache_reply_to_boost() {
 		$url = false;
+		$append_to_redirect = '';
 		if ( isset( $_GET['in_reply_to'] ) && wp_parse_url( $_GET['in_reply_to'] ) ) {
 			$url = $_GET['in_reply_to'];
+			$append_to_redirect .= '#comment';
 		} elseif ( isset( $_GET['boost'] ) && wp_parse_url( $_GET['boost'] ) ) {
 			$url = $_GET['boost'];
 		}
@@ -1345,7 +1347,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$user = User::get_post_author( get_post( $post_id ) );
-		wp_safe_redirect( $user->get_local_friends_page_url( $post_id ) );
+		wp_safe_redirect( $user->get_local_friends_page_url( $post_id ) . $append_to_redirect );
 		exit;
 	}
 
@@ -1481,14 +1483,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						$no_known_user_found = false;
 						break;
 					}
-					if ( false !== strpos( $username, $mention_url ) ) {
+					if ( false !== strpos( $item->post_content, $username ) ) {
 						$no_known_user_found = false;
 						break;
 					}
 				}
 			}
 
-			if ( ! $no_known_user_found ) {
+			if ( $no_known_user_found ) {
 				$item->_feed_rule_transform = array(
 					'post_status' => 'trash',
 				);
