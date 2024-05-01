@@ -285,7 +285,6 @@ class Frontend {
 		return array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query' ) ) ) );
 	}
 
-
 	public function wp_ajax_reblog() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_send_json_error( 'error' );
@@ -293,29 +292,16 @@ class Frontend {
 
 		check_ajax_referer( 'friends-reblog' );
 
-		if ( ! empty( $_POST['boost'] ) ) {
-			if ( ! Friends::check_url( $_POST['boost'] ) ) {
-				wp_send_json_error( 'invalid-url', array( 'url' => $_POST['boost'] ) );
-			}
-
-			do_action( 'friends_activitypub_announce_any_url', $_POST['boost'] );
-
-			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
-				wp_send_json_success(
-					array(
-						'url' => $_POST['boost'],
-					)
-				);
-			} else {
-				wp_safe_redirect( remove_query_arg( 'boost', add_query_arg( 'result', 'success', $_SERVER['HTTP_REFERER'] ) ) );
-			}
-			exit;
-		}
-
 		$post = get_post( $_POST['post_id'] );
 		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
 			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
 		}
+
+		if ( get_post_meta( get_the_ID(), 'reblogged', true ) ) {
+			wp_send_json_error( 'already-reblogged', array( 'guid' => $post->guid ) );
+			return;
+		}
+		do_action( 'friends_activitypub_announce_post', $post->guid );
 
 		/**
 		 * Reblogs a post
@@ -671,71 +657,48 @@ class Frontend {
 		$post_id = intval( $_POST['post_id'] );
 		check_ajax_referer( "comments-$post_id" );
 
-		$comments = get_comments(
-			array(
-				'post_id' => $post_id,
-			)
+		$comments = apply_filters(
+			'friends_get_comments',
+			get_comments(
+				array(
+					'post_id' => $post_id,
+					'status'  => 'approve',
+					'order'   => 'ASC',
+				)
+			),
+			$post_id
 		);
 
-		$author_id = get_post_field( 'post_author', $post_id );
-		$friend_user = new User( $author_id );
+		$friend_user = User::get_post_author( get_post( $post_id ) );
+		$user_feed_url = get_post_meta( $post_id, 'feed_url', true );
+		$user_feed = $this->friends->feed->get_user_feed_by_url( $user_feed_url );
 
-		$comments_url = get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true );
-		if ( ! $comments_url && empty( $comments ) ) {
-			wp_send_json_error( __( 'No comments feed available.', 'friends' ) );
-			exit;
+		if ( empty( $comments ) ) {
+			$content = apply_filters( 'friends_no_comments_feed_available', __( 'We tried to load comments remotely but there were no comments.', 'friends' ), $post_id, $friend_user, $user_feed );
+		} else {
+			$template_loader = Friends::template_loader();
+			ob_start();
+			?>
+			<h5><?php esc_html_e( 'Comments' ); /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></h5>
+			<?php
+			foreach ( $comments as $comment ) {
+				$template_loader->get_template_part(
+					'frontend/parts/comment',
+					null,
+					array(
+						'author'       => $comment->comment_author,
+						'date'         => $comment->comment_date,
+						'permalink'    => $comment->guid . '#comment-' . $comment->comment_ID,
+						'post_content' => $comment->comment_content,
+					)
+				);
+			}
+
+			$content = ob_get_contents();
+			ob_end_clean();
 		}
 
-		if ( $friend_user->is_friend_url( $comments_url ) && friends::has_required_privileges() || wp_doing_cron() ) {
-			$comments_url = apply_filters( 'friends_friend_private_feed_url', $comments_url, $friend_user );
-			$comments_url = $this->friends->access_control->append_auth( $comments_url, $friend_user, 300 );
-		}
-
-		$feed_comments = $this->friends->feed->preview( 'simplepie', $comments_url );
-		if ( empty( $comments ) && ( is_wp_error( $feed_comments ) || ! is_array( $feed_comments ) ) ) {
-			wp_send_json_error( '<small>' . __( 'Unfortunately, comments were not available via RSS.', 'friends' ) . '</small>' );
-			exit;
-		} elseif ( is_wp_error( $feed_comments ) ) {
-			$feed_comments = array();
-		}
-
-		$template_loader = Friends::template_loader();
-		ob_start();
-		?>
-		<h5><?php esc_html_e( 'Comments' ); /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></h5>
-		<?php
-		foreach ( $comments as $comment ) {
-			$template_loader->get_template_part(
-				'frontend/parts/comment',
-				null,
-				array(
-					'author'       => $comment->comment_author,
-					'date'         => $comment->comment_date,
-					'permalink'    => $comment->guid . '#comment-' . $comment->comment_ID,
-					'post_content' => $comment->comment_content,
-				)
-			);
-		}
-		foreach ( $feed_comments as $comment ) {
-			$template_loader->get_template_part(
-				'frontend/parts/comment',
-				null,
-				array(
-					'author'       => $comment->author,
-					'date'         => $comment->date,
-					'permalink'    => $comment->permalink,
-					'post_content' => $comment->post_content,
-				)
-			);
-
-		}
-		?>
-		<p>
-		<a href="<?php echo esc_url( get_comments_link( $post_id ) ); ?>"><?php esc_html_e( 'Leave a Comment' );  /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></a>
-		</p>
-		<?php
-		$content = ob_get_contents();
-		ob_end_clean();
+		$content = apply_filters( 'friends_comments_content', $content, $post_id, $friend_user, $user_feed );
 
 		wp_send_json_success( $content );
 	}

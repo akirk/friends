@@ -25,6 +25,8 @@ class NotificationTest extends \WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 		update_option( 'friends_enable_wp_friendships', true );
+		$test_user = get_user_by( 'email', \WP_TESTS_EMAIL );
+		update_option( 'friends_main_user_id', $test_user->ID );
 
 		$this->factory->post->create(
 			array(
@@ -38,7 +40,7 @@ class NotificationTest extends \WP_UnitTestCase {
 		$this->friend_id = $this->factory->user->create(
 			array(
 				'user_login' => 'friend.local',
-				'user_email' => 'friend@friend.local',
+				'email'      => 'friend@friend.local',
 				'role'       => 'friend',
 			)
 		);
@@ -75,22 +77,16 @@ class NotificationTest extends \WP_UnitTestCase {
 		update_option( 'home', 'http://me.local' );
 
 		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Feed_Parser_SimplePie();
+		$friends   = Friends::get_instance();
+		$parser = new Feed_Parser_SimplePie( $friends->feed );
 
 		$user = new User( $this->friend_id );
-		$term = new \WP_Term(
-			(object) array(
-				'term_id' => 100,
-				'url'     => $user->user_url . '/feed/',
-			)
-		);
-		$user_feed = new User_Feed( $term, $user );
+		$user_feed = User_Feed::save( $user, 'http://me.local/feed/' );
 
 		$feed = new \SimplePie();
 		$feed->set_file( $file );
 		$feed->init();
 
-		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
 	}
 
@@ -114,7 +110,8 @@ class NotificationTest extends \WP_UnitTestCase {
 		update_option( 'home', 'http://me.local' );
 
 		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Feed_Parser_SimplePie();
+		$friends   = Friends::get_instance();
+		$parser = new Feed_Parser_SimplePie( $friends->feed );
 
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
@@ -133,7 +130,6 @@ class NotificationTest extends \WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed );
 	}
 
@@ -294,7 +290,8 @@ class NotificationTest extends \WP_UnitTestCase {
 		);
 
 		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
-		$parser = new Feed_Parser_SimplePie();
+		$friends   = Friends::get_instance();
+		$parser = new Feed_Parser_SimplePie( $friends->feed );
 
 		$user = new User( $this->friend_id );
 		$term = new \WP_Term(
@@ -309,7 +306,6 @@ class NotificationTest extends \WP_UnitTestCase {
 		$feed->set_file( $file );
 		$feed->init();
 
-		$friends   = Friends::get_instance();
 		$new_items = $friends->feed->process_incoming_feed_items( $parser->process_items( $feed->get_items(), $user_feed->get_url() ), $user_feed, Friends::CPT );
 	}
 }

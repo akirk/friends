@@ -21,6 +21,21 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	const NAME = 'SimplePie';
 	const URL = 'http://simplepie.org';
 	const SLUG = 'simplepie';
+
+	private $friends_feed;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param      Feed $friends_feed  The friends feed.
+	 */
+	public function __construct( Feed $friends_feed ) {
+		$this->friends_feed = $friends_feed;
+
+		\add_filter( 'friends_get_comments', array( $this, 'get_comments' ), 10, 4 );
+		\add_filter( 'friends_no_comments_feed_available', array( $this, 'no_comments_feed_available' ), 10, 2 );
+	}
+
 	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
@@ -304,5 +319,65 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		}
 
 		return $feed_items;
+	}
+
+	public function no_comments_feed_available( $text, $post_id ) {
+		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+			return $text;
+		}
+
+		$comments_url = get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true );
+		if ( ! $comments_url ) {
+			return __( 'We tried to load comments remotely but there was no comments feed available.', 'friends' );
+		}
+		return $text;
+	}
+
+	/**
+	 * Get comments from a feed.
+	 *
+	 * @param      array     $comments    The comments.
+	 * @param      int       $post_id     The post id.
+	 * @param      User      $friend_user The friend user.
+	 * @param      User_Feed $user_feed   The user feed.
+	 *
+	 * @return     array  The comments.
+	 */
+	public function get_comments( $comments, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+		$comments_url = get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true );
+		if ( ! $comments_url || ! $friend_user || ! $user_feed ) {
+			return $comments;
+		}
+
+		if ( $friend_user->is_friend_url( $comments_url ) && Friends::has_required_privileges() || wp_doing_cron() ) {
+			$comments_url = apply_filters( 'friends_friend_private_feed_url', $comments_url, $friend_user );
+			$comments_url = Friends::get_instance()->access_control->append_auth( $comments_url, $friend_user, 300 );
+		}
+
+		$items = $this->fetch_feed( $comments_url, $user_feed );
+
+		if ( is_wp_error( $items ) ) {
+			return $comments;
+		}
+
+		foreach ( $items as $key => $item ) {
+			if ( is_wp_error( $item ) ) {
+				unset( $items[ $key ] );
+				continue;
+			}
+			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user, null );
+
+			if ( ! $item || $item->_feed_rule_delete ) {
+				unset( $items[ $key ] );
+				continue;
+			}
+			if ( ! empty( $item->_feed_rule_transform ) && is_array( $item->_feed_rule_transform ) ) {
+				if ( isset( $item->_feed_rule_transform['post_content'] ) ) {
+					$items[ $key ]->content = $item->_feed_rule_transform['post_content'];
+				}
+			}
+		}
+
+		return array_merge( $comments, $items );
 	}
 }

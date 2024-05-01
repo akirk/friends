@@ -59,7 +59,7 @@ require_once __DIR__ . '/includes/class-friends.php';
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );
 add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_hooks' ) );
 
-if ( is_admin() && FRIENDS_VERSION > get_option( 'friends_plugin_version' ) ) {
+if ( is_admin() ) { // && FRIENDS_VERSION > get_option( 'friends_plugin_version' ) ) {
 	add_action( 'admin_init', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ) );
 }
 
@@ -102,7 +102,7 @@ add_action(
 	'friends_load_parsers',
 	function ( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-simplepie.php';
-		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie() );
+		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie( $friends_feed ) );
 	},
 	9
 );

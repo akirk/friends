@@ -11,7 +11,7 @@ $avatar = $args['avatar'];
 $author_name = $args['friend_user']->display_name;
 
 /**
- * Allows overriding the authorname for a post.
+ * Allows overriding the authorname for a post. The original author will still be displayed.
  *
  * @param string $override_author_name The author name to override with.
  * @param string $author_name The author name.
@@ -28,6 +28,22 @@ $author_name = $args['friend_user']->display_name;
  * ```
  */
 $override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, get_the_id() );
+
+/**
+ * Allows modifying the avatar for a post.
+ *
+ * @param string $avatar The avatar.
+ * @param string $friend_user The friend user if any.
+ * @param int $post_id The post ID.
+ *
+ * Example:
+ * ```php
+ * add_filter( 'friends_author_avatar_url', function( $avatar, $friend_user, $post_id ) {
+ *     return get_avatar_url( 'mystery-man' );
+ * }, 10, 3 );
+ * ```
+ */
+$avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, get_the_id() );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2 translator-exclude">
 		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>

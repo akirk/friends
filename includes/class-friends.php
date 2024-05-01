@@ -485,6 +485,22 @@ class Friends {
 			}
 		}
 
+		if ( version_compare( $previous_version, '2.9.2', '<' ) ) {
+			// Migrate to the new External user.
+			$user = User::get_by_username( 'external-mentions' );
+			if ( $user && $user instanceof Subscription ) {
+				wp_update_term(
+					$user->get_term_id(),
+					Subscription::TAXONOMY,
+					array(
+						'slug' => Feed_Parser_ActivityPub::EXTERNAL_USERNAME,
+						'name' => _x( 'External', 'user name', 'friends' ),
+					)
+				);
+				$user->update_user_option( 'display_name', _x( 'External', 'user name', 'friends' ) );
+			}
+		}
+
 		update_option( 'friends_plugin_version', Friends::VERSION );
 	}
 
@@ -1226,7 +1242,7 @@ class Friends {
 			$parts = array_merge( $parts, explode( '/', $p['path'] ) );
 		}
 
-		$url = join( '/', $parts );
+		$url = join( '/', array_filter( $parts ) );
 		$reduce = 4;
 		while ( strlen( $url ) > $max_length ) {
 			$last_part = array_pop( $parts );
