@@ -285,7 +285,6 @@ class Frontend {
 		return array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query' ) ) ) );
 	}
 
-
 	public function wp_ajax_reblog() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_send_json_error( 'error' );
@@ -293,29 +292,12 @@ class Frontend {
 
 		check_ajax_referer( 'friends-reblog' );
 
-		if ( ! empty( $_POST['boost'] ) ) {
-			if ( ! Friends::check_url( $_POST['boost'] ) ) {
-				wp_send_json_error( 'invalid-url', array( 'url' => $_POST['boost'] ) );
-			}
-
-			do_action( 'friends_activitypub_announce_any_url', $_POST['boost'] );
-
-			if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
-				wp_send_json_success(
-					array(
-						'url' => $_POST['boost'],
-					)
-				);
-			} else {
-				wp_safe_redirect( remove_query_arg( 'boost', add_query_arg( 'result', 'success', $_SERVER['HTTP_REFERER'] ) ) );
-			}
-			exit;
-		}
-
 		$post = get_post( $_POST['post_id'] );
 		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
 			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
 		}
+
+		do_action( 'friends_activitypub_announce_post', $post->guid );
 
 		/**
 		 * Reblogs a post
