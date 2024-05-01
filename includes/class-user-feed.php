@@ -137,19 +137,22 @@ class User_Feed {
 	 */
 	public function get_all_friend_users() {
 		$users = array();
-		$user_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
-		foreach ( $user_ids as $user_id ) {
-			$term_id = term_exists( intval( $user_id ), Subscription::TAXONOMY );
+		$user_term_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
+		foreach ( $user_term_ids as $user_term_id ) {
+			$term = get_term( $user_term_id, self::TAXONOMY );
+			$term_id = false;
+			if ( $term ) {
+				$term_id = term_exists( $term->term_id, Subscription::TAXONOMY );
+			}
 			if ( $term_id ) {
 				$users[] = new Subscription( get_term( $term_id['term_id'], Subscription::TAXONOMY ) );
 			} else {
-				$user = get_userdata( $user_id );
+				$user = get_userdata( $user_term_id );
 				if ( $user && ! is_wp_error( $user ) ) {
 					$users[] = new User( $user );
 				}
 			}
 		}
-
 		return $users;
 	}
 

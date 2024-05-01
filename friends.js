@@ -294,7 +294,7 @@
 					content.html( comments ).data( 'loaded', true );
 				},
 				error( message ) {
-					content.html( message );
+					content.html( message ).data( 'loaded', true );
 				},
 			} );
 		}
@@ -558,62 +558,6 @@
 			jQuery( '.friends-status-content' ).val( val.replace( /^(@[^@]+@[^ ]+ )+/g, text + ' ' ) );
 		}
 	}
-
-	$document.on( 'click', '.activitypub_preview a', function () {
-		if ( ! $( this ).hasClass( 'mention' ) ) {
-			return true;
-		}
-		insertTextInGutenberg( getAcct( $( this ).attr( 'href' ) ) );
-		return false;
-	} );
-
-	$document.on( 'keyup', 'input.activitypub_preview_url', function () {
-		const input = $( this );
-		const form = input.closest( 'form' );
-		const preview = form.find( '.activitypub_preview' );
-		const url = input.val().trim();
-
-		if ( alreadySearching === url ) {
-			return;
-		}
-
-		preview.html( '<figcaption><a href=""></a></figcaption><blockquote>' );
-		preview.find( 'blockquote' ).text( friends.text_checking_url );
-		preview.find( 'a' ).attr( 'href', url ).text( url );
-		form.find( '.boost-link' ).attr( 'href', '?boost=' + escape( url ) );
-		form.find( '.reply-to-link' ).attr( 'href', '?in_reply_to=' + escape( url ) );
-
-		const searchIndicator = input
-			.closest( '.form-autocomplete-input' )
-			.find( '.form-icon' );
-
-		wp.ajax.send( 'friends-in-reply-to-preview', {
-			data: {
-				_ajax_nonce: input.data( 'nonce' ),
-				url,
-			},
-			beforeSend() {
-				searchIndicator.addClass( 'loading' );
-				alreadySearching = url;
-			},
-			success( results ) {
-				searchIndicator.removeClass( 'loading' );
-				if ( results ) {
-					preview.find( 'blockquote' ).html( results.html ).show();
-					input.closest( 'form' ).find( 'button' ).prop( 'disabled', false );
-					insertTextInGutenberg( getAcct( results.author ) );
-				} else {
-					preview.hide();
-					input.closest( 'form' ).find( 'button' ).prop( 'disabled', false );
-				}
-			},
-			error( results ) {
-				searchIndicator.removeClass( 'loading' );
-				input.closest( 'form' ).find( 'button' ).prop( 'disabled', true );
-				preview.find( 'blockquote' ).text( results ).show();
-			},
-		} );
-	} );
 
 	$document.on( 'click', '.quick-reply', function () {
 		$( '#quick-post-panel' ).addClass( 'open' );

@@ -1,0 +1,32 @@
+{
+    "namespace": "Friends",
+    "wiki_directory": "../friends.wiki",
+    "github_blob_url": "https://github.com/akirk/friends/blob/main/",
+    "section": "dir",
+    "ignore_regex": "/^activitypub_/",
+    "ignore_filter": [
+        "_get_template_part_",
+        "_get_template_part",
+        "_template_paths",
+        "bulk_post_updated_messages",
+        "convert_chars",
+        "friends_debug",
+        "edit_posts_per_page",
+        "fake_http_response",
+        "get_edit_user_link",
+        "get_template_part_",
+        "local_fetch_feed",
+        "rest_api_init",
+        "the_content",
+        "widget_title",
+        "wp_feed_cache_transient_lifetime",
+        "wp_mail_from",
+        "wp_update_comment_count",
+        "wptexturize"
+    ],
+    "exclude_dirs": [
+        "blocks",
+        "libs",
+        "tests"
+    ]
+}

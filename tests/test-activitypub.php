@@ -357,7 +357,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 					'role'         => 'friend',
 				)
 			);
-			User_Feed::save(
+			$user_feed = User_Feed::save(
 				new User( $this->friend_id ),
 				$this->actor,
 				array(

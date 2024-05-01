@@ -144,6 +144,7 @@ class Friends {
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
 		add_action( 'init', array( 'Friends\Subscription', 'register_taxonomy' ) );
+
 		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 
@@ -481,6 +482,22 @@ class Friends {
 					update_option( 'friends_enable_wp_friendships', 1 );
 					break;
 				}
+			}
+		}
+
+		if ( version_compare( $previous_version, '2.9.2', '<' ) ) {
+			// Migrate to the new External user.
+			$user = User::get_by_username( 'external-mentions' );
+			if ( $user && $user instanceof Subscription ) {
+				wp_update_term(
+					$user->get_term_id(),
+					Subscription::TAXONOMY,
+					array(
+						'slug' => Feed_Parser_ActivityPub::EXTERNAL_USERNAME,
+						'name' => _x( 'External', 'user name', 'friends' ),
+					)
+				);
+				$user->update_user_option( 'display_name', _x( 'External', 'user name', 'friends' ) );
 			}
 		}
 
@@ -1225,7 +1242,7 @@ class Friends {
 			$parts = array_merge( $parts, explode( '/', $p['path'] ) );
 		}
 
-		$url = join( '/', $parts );
+		$url = join( '/', array_filter( $parts ) );
 		$reduce = 4;
 		while ( strlen( $url ) > $max_length ) {
 			$last_part = array_pop( $parts );

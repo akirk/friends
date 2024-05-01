@@ -1281,4 +1281,77 @@ class User extends \WP_User {
 	public function delete_user_option( $option_name, $is_global = false ) {
 		return delete_user_option( $this->ID, $option_name, $is_global );
 	}
+
+	public static function mastodon_api_account( $account, $user_id, $request, $post ) {
+		if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+			return $account;
+		}
+		$user = false;
+		if ( is_string( $user_id ) ) {
+			$user = self::get_by_username( $user_id );
+		}
+		if ( ! $user ) {
+			if ( ! $post instanceof \WP_Post ) {
+				return $account;
+			}
+			$user = self::get_post_author( $post );
+		}
+		if ( $user instanceof self ) {
+			if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+				$account = new \Enable_Mastodon_Apps\Entity\Account();
+			}
+			$note = $user->description;
+			if ( ! $note ) {
+				$note = '';
+			}
+			$account->id             = $user->user_login;
+			$account->username       = $user->user_login;
+			$account->display_name   = $user->display_name;
+			$account->avatar         = $user->get_avatar_url();
+			$account->avatar_static  = $user->get_avatar_url();
+			$account->acct           = $user->user_login;
+			$account->note           = wpautop( $note );
+			$account->created_at     = new \DateTime( $user->user_registered );
+			$account->statuses_count = $user->get_post_stats()['post_count'];
+			$account->last_status_at = new \DateTime( $post->post_date_gmt );
+			$account->url            = $user->get_local_friends_page_url();
+
+			$account->source = array(
+				'privacy'   => 'public',
+				'sensitive' => false,
+				'language'  => get_user_locale( $user->ID ),
+				'note'      => $note,
+				'fields'    => array(),
+			);
+		}
+		return $account;
+	}
+
+	public static function mastodon_api_get_posts_query_args( $args ) {
+		if ( isset( $args['author'] ) && is_string( $args['author'] ) ) {
+			$author = self::get_by_username( $args['author'] );
+			if ( $author instanceof User ) {
+				$args['post_type'][] = Friends::CPT;
+				return $author->modify_get_posts_args_by_author( $args );
+			}
+		}
+
+		return $args;
+	}
+
+	public function mastodon_entity_relationship( $relationship, $user_id ) {
+		$user = self::get_by_username( $user_id );
+		if ( $user instanceof self ) {
+			if ( ! $relationship instanceof \Enable_Mastodon_Apps\Entity\Relationship ) {
+				$relationship = new \Enable_Mastodon_Apps\Entity\Relationship();
+			}
+
+			$relationship->id = strval( $user->get_object_id() );
+			$relationship->following = true;
+			if ( $user->has_cap( 'friend' ) ) {
+				$relationship->followed_by = true;
+			}
+		}
+		return $relationship;
+	}
 }
