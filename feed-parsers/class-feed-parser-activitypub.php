@@ -706,6 +706,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					return false;
 			}
 		}
+
 		if ( ! in_array(
 			$type,
 			array(
@@ -728,6 +729,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			// Let's check if we follow this actor. If not it might be a different URL representation.
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
+
 		if ( is_wp_error( $user_feed ) || ! Friends::check_url( $actor_url ) ) {
 			$meta = $this->get_metadata( $actor_url );
 			if ( ! $meta || is_wp_error( $meta ) || ! isset( $meta['url'] ) ) {
@@ -740,9 +742,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$this->log( 'Received invalid meta url for ' . $actor_url );
 				return false;
 			}
+			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
 
-		$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
 			if ( isset( $activity['object']['tag'] ) && is_array( $activity['object']['tag'] ) ) {
 				$my_activitypub_id = \get_author_posts_url( $user_id );
@@ -764,7 +766,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$item = $this->process_incoming_activity( $type, $activity, $user_id, $user_feed );
 
 		if ( $item instanceof Feed_Item ) {
-			$this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
+			$i = $this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
 			return $item;
 		}
 
@@ -1285,7 +1287,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$slug = $user->user_login;
 				}
 				$slug = sanitize_title( $slug );
-				$users[ '@' . $slug ] = $feed->get_url();
+				if ( ! isset( $users[ '@' . $slug ] ) ) {
+					$users[ '@' . $slug ] = $feed->get_url();
+				}
 			}
 
 			$local_users = get_users(
@@ -1299,10 +1303,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$slug = $local_user->user_login;
 				}
 				$slug = sanitize_title( $slug );
-				$users[ '@' . $slug ] = get_author_posts_url( $local_user->ID );
+				if ( ! isset( $users[ '@' . $slug ] ) ) {
+					$users[ '@' . $slug ] = get_author_posts_url( $local_user->ID );
+				}
 			}
 			$users[ '@' . sanitize_title( get_bloginfo( 'name' ) ) ] = get_bloginfo( 'url' );
 		}
+
 		return $users;
 	}
 
@@ -1512,9 +1519,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $item;
 		}
 
-		$external_mentions_user = $this->get_external_user();
+		$external_user = $this->get_external_user();
+		$is_external_user = get_class( $external_user ) === get_class( $friend_user ) && $external_user->get_object_id() === $friend_user->get_object_id();
 		if (
-			$external_mentions_user->get_object_id() !== $friend_user->get_object_id() && // Don't hide mentions for the external mentions user.
+			! $is_external_user &&
+			// Don't hide mentions for the external mentions user.
 			! $friend_user->get_user_option( 'activitypub_friends_show_replies' )
 		) {
 			$plain_text_content = \wp_strip_all_tags( $item->post_content );
@@ -1522,7 +1531,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 			$no_known_user_found = true;
 			if ( preg_match( '/^@(?:[a-zA-Z0-9_.-]+)/i', $plain_text_content, $m ) ) {
-				if ( ! isset( $possible_mentions[ $m[0] ] ) ) {
+				if ( isset( $possible_mentions[ $m[0] ] ) ) {
 					$no_known_user_found = false;
 				}
 			} else {

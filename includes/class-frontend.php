@@ -297,6 +297,10 @@ class Frontend {
 			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
 		}
 
+		if ( get_post_meta( get_the_ID(), 'reblogged', true ) ) {
+			wp_send_json_error( 'already-reblogged', array( 'guid' => $post->guid ) );
+			return;
+		}
 		do_action( 'friends_activitypub_announce_post', $post->guid );
 
 		/**

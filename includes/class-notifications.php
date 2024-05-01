@@ -96,6 +96,9 @@ class Notifications {
 			return;
 		}
 		$user = new User( Friends::get_main_friend_user_id() );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
 		if ( ! $user->user_email ) {
 			return;
 		}
@@ -145,6 +148,9 @@ class Notifications {
 		}
 
 		$user = new User( Friends::get_main_friend_user_id() );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
 		if ( ! $user->user_email ) {
 			return $notified;
 		}
@@ -193,7 +199,9 @@ class Notifications {
 			return;
 		}
 		$user = new User( Friends::get_main_friend_user_id() );
-
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
 		if ( ! $user->user_email ) {
 			return;
 		}
@@ -235,6 +243,9 @@ class Notifications {
 	 */
 	public function notify_accepted_friend_request( User $friend_user ) {
 		$user = new User( Friends::get_main_friend_user_id() );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
 		if ( ! $user->user_email ) {
 			return;
 		}
@@ -283,6 +294,9 @@ class Notifications {
 	 */
 	public function notify_friend_message_received( User $friend_user, $message, $subject ) {
 		$user = new User( Friends::get_main_friend_user_id() );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
 		if ( ! $user->user_email ) {
 			return;
 		}
