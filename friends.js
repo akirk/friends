@@ -280,12 +280,11 @@
 		}
 
 		const $this = $( this );
-		const commentsContent = $this.closest( 'article' ).find( '.comments-content' );
-		const content = commentsContent.find( '.comments-list' );
+		const content = $this.closest( 'article' ).find( '.comments-content' );
 		if ( content.data( 'loaded' ) ) {
-			commentsContent.toggle();
+			content.toggle();
 		} else {
-			commentsContent.show();
+			content.show();
 			wp.ajax.send( 'friends-load-comments', {
 				data: {
 					_ajax_nonce: $this.data( 'cnonce' ),
@@ -295,7 +294,7 @@
 					content.html( comments ).data( 'loaded', true );
 				},
 				error( message ) {
-					content.html( message );
+					content.html( message ).data( 'loaded', true );
 				},
 			} );
 		}

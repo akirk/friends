@@ -102,7 +102,7 @@ add_action(
 	'friends_load_parsers',
 	function ( Feed $friends_feed ) {
 		require_once __DIR__ . '/feed-parsers/class-feed-parser-simplepie.php';
-		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie() );
+		$friends_feed->register_parser( Feed_Parser_SimplePie::SLUG, new Feed_Parser_SimplePie( $friends_feed ) );
 	},
 	9
 );

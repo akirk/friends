@@ -56,6 +56,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_modify_feed_item', array( $this, 'modify_incoming_item' ), 9, 3 );
 		\add_filter( 'friends_potential_avatars', array( $this, 'friends_potential_avatars' ), 10, 2 );
 		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login' ), 10, 2 );
+		\add_filter( 'friends_author_avatar_url', array( $this, 'author_avatar_url' ), 10, 3 );
 
 		\add_action( 'template_redirect', array( $this, 'cache_reply_to_boost' ) );
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
@@ -72,6 +73,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
 		\add_action( 'comment_post', array( $this, 'comment_post' ), 10, 3 );
 		\add_action( 'trashed_comment', array( $this, 'trashed_comment' ), 10, 2 );
+		\add_filter( 'friends_get_comments', array( $this, 'get_remote_comments' ), 10, 4 );
+		\add_filter( 'friends_comments_content', array( $this, 'append_comment_form' ), 10, 4 );
 
 		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
 		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
@@ -970,6 +973,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $display_name;
 	}
 
+	public function author_avatar_url( $avatar_url, $friend_user, $post_id ) {
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( ! $meta ) {
+			return $avatar_url;
+		}
+		if ( isset( $meta['attributedTo']['icon'] ) ) {
+			return $meta['attributedTo']['icon'];
+		}
+		return $avatar_url;
+	}
+
+
 	public function handle_incoming_like( $activity, $user_id ) {
 		$post_id = Feed::url_to_postid( $activity['object'] );
 		if ( ! $post_id ) {
@@ -1468,6 +1483,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				if ( ! isset( $possible_mentions[ $m[0] ] ) ) {
 					$no_known_user_found = false;
 				}
+			} else {
+				// There are no mentions, so leave this post through.
+				return $item;
 			}
 
 			if ( $no_known_user_found ) {
@@ -1957,7 +1975,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
-	 * Approve comments that
+	 * Approve incoming fediverse comments.
 	 *
 	 * @param      bool  $approved     Whether the comment is approved.
 	 * @param      array $commentdata  The commentdata.
@@ -1966,8 +1984,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function pre_comment_approved( $approved, $commentdata ) {
 		if ( ! $approved || is_string( $approved ) && 'activitypub' === $commentdata['comment_meta']['protocol'] ) {
+			// If the author is someone we already follow.
 			$user_feed = User_Feed::get_by_url( $commentdata['comment_author_url'] );
 			if ( $user_feed instanceof User_Feed ) {
+				$approved = true;
+			}
+
+			// If the parent post is a Friends::CPT.
+			$post = get_post( $commentdata['comment_post_ID'] );
+			if ( $post && User_Feed::get_parser_for_post_id( $post->ID ) === 'activitypub' ) {
 				$approved = true;
 			}
 		}
@@ -2012,6 +2037,76 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		// TODO: in the ActivityPub plugin, we should be able to use the trashed_comment hook to send out the comment deletion.
+	}
+
+
+	/**
+	 * Get comments via ActivityPub.
+	 *
+	 * @param      array     $comments    The comments.
+	 * @param      int       $post_id     The post id.
+	 * @param      User      $friend_user The friend user.
+	 * @param      User_Feed $user_feed   The user feed.
+	 *
+	 * @return     array  The comments.
+	 */
+	public function get_remote_comments( $comments, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+			return $comments;
+		}
+
+		$post = get_post( $post_id );
+		if ( Friends::CPT !== $post->post_type ) {
+			return $comments;
+		}
+
+		// Leverage the Enable Mastodon Apps API to get the comments.
+		$context = array(
+			'ancestors'   => array(),
+			'descendants' => array(),
+		);
+		$context = apply_filters( 'mastodon_api_status_context', $context, $post_id, $post->guid );
+		foreach ( $context['descendants'] as $status ) {
+
+			$comments[] = new \WP_Comment(
+				(object) array(
+					'comment_ID'           => $status->id,
+					'comment_post_ID'      => $post_id,
+					'comment_author'       => $status->account->display_name,
+					'comment_author_url'   => $status->account->url,
+					'comment_author_email' => $status->account->acct,
+					'comment_content'      => $status->content,
+					'comment_date'         => $status->created_at->format( 'Y-m-d H:i:s' ),
+					'comment_date_gmt'     => $status->created_at->format( 'Y-m-d H:i:s' ),
+					'comment_approved'     => 1,
+					'comment_type'         => 'activitypub',
+					'comment_parent'       => $status->in_reply_to_id,
+
+				)
+			);
+		}
+		return $comments;
+	}
+
+	public function append_comment_form( $content, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+			return $content;
+		}
+
+		ob_start();
+		\comment_form(
+			array(
+				'title_reply'          => __( 'Send reply via ActivityPub', 'friends' ),
+				'logged_in_as'         => '',
+				'comment_notes_before' => '',
+			),
+			$post_id
+		);
+
+		$comment_form = ob_get_contents();
+		ob_end_clean();
+
+		return $content . $comment_form;
 	}
 
 	/**
