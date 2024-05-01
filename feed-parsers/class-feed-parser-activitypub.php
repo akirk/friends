@@ -24,6 +24,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
 	const EXTERNAL_USERNAME = 'external';
 
+	private $activitypub_already_handled = array();
+
 	private $friends_feed;
 
 	/**
@@ -40,7 +42,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_add_friends_input_placeholder', array( $this, 'friends_add_friends_input_placeholder' ) );
 		\add_action( 'friends_add_friend_form_top', array( $this, 'friends_add_friend_form_top' ) );
 
-		\add_action( 'activitypub_inbox', array( $this, 'handle_received_activity' ), 10, 3 );
+		\add_action( 'activitypub_inbox_create', array( $this, 'handle_received_create' ), 15, 2 );
+		\add_action( 'activitypub_inbox_delete', array( $this, 'handle_received_delete' ), 15, 2 );
+		\add_action( 'activitypub_inbox_announce', array( $this, 'handle_received_announce' ), 15, 2 );
+		\add_action( 'activitypub_inbox_like', array( $this, 'handle_received_like' ), 15, 2 );
+		\add_action( 'activitypub_inbox_undo', array( $this, 'handle_received_undo' ), 15, 2 );
+		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 3 );
+
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
 		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'activitypub_follow_user' ), 10, 2 );
@@ -75,6 +83,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'trashed_comment', array( $this, 'trashed_comment' ), 10, 2 );
 		\add_filter( 'friends_get_comments', array( $this, 'get_remote_comments' ), 10, 4 );
 		\add_filter( 'friends_comments_content', array( $this, 'append_comment_form' ), 10, 4 );
+		add_filter( 'comment_post_redirect', array( $this, 'comment_post_redirect' ), 10, 2 );
 
 		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
 		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
@@ -641,14 +650,46 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $mentions;
 	}
 
+	public function activitypub_handled_create( $activity, $user_id, $state, $reaction ) {
+		$this->log( 'ActivityPub handled create', compact( 'activity', 'user_id', 'state', 'reaction' ) );
+		if ( $reaction ) {
+			$this->activitypub_already_handled[ $activity['object']['id'] ] = $reaction;
+		}
+		return $activity;
+	}
+
+	public function handle_received_create( $activity, $user_id ) {
+		return $this->handle_received_activity( $activity, $user_id, 'create' );
+	}
+
+	public function handle_received_undo( $activity, $user_id ) {
+		return $this->handle_received_activity( $activity, $user_id, 'undo' );
+	}
+
+	public function handle_received_delete( $activity, $user_id ) {
+		return $this->handle_received_activity( $activity, $user_id, 'delete' );
+	}
+
+	public function handle_received_announce( $activity, $user_id ) {
+		return $this->handle_received_activity( $activity, $user_id, 'announce' );
+	}
+
+	public function handle_received_like( $activity, $user_id ) {
+		return $this->handle_received_activity( $activity, $user_id, 'like' );
+	}
+
 	/**
-	 * Handles "Create" requests
+	 * Handles incoming ActivityPub requests.
 	 *
 	 * @param  array  $activity  The activity object.
 	 * @param  int    $user_id The id of the local blog user.
 	 * @param string $type  The type of the activity.
 	 */
 	public function handle_received_activity( $activity, $user_id, $type ) {
+		if ( isset( $activity['object']['id'] ) && isset( $this->activitypub_already_handled[ $activity['object']['id'] ] ) ) {
+			return;
+		}
+
 		if ( 'undo' === $type ) {
 			if ( ! isset( $activity['object'] ) ) {
 				return false;
@@ -680,6 +721,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		) ) {
 			return false;
 		}
+
 		$actor_url = $activity['actor'];
 		$user_feed = false;
 		if ( Friends::check_url( $actor_url ) ) {
@@ -1992,7 +2034,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 			// If the parent post is a Friends::CPT.
 			$post = get_post( $commentdata['comment_post_ID'] );
-			if ( $post && User_Feed::get_parser_for_post_id( $post->ID ) === 'activitypub' ) {
+			if ( $post && Friends::CPT === $post->post_type ) {
+				$approved = true;
+			}
+			if ( $post && self::SLUG === User_Feed::get_parser_for_post_id( $post->ID ) ) {
 				$approved = true;
 			}
 		}
@@ -2000,7 +2045,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function comment_post( $comment_id, $comment_approved, $commentdata ) {
-		if ( isset( $commentdata['commentmeta']['protocol'] ) && 'activitypub' === $commentdata['commentmeta']['protocol'] ) {
+		if ( isset( $commentdata['commentmeta']['protocol'] ) && self::SLUG === $commentdata['commentmeta']['protocol'] ) {
 			// Don't act upon incoming comments via ActivityPub.
 			return;
 		}
@@ -2107,6 +2152,22 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		ob_end_clean();
 
 		return $content . $comment_form;
+	}
+
+	public function comment_post_redirect( $location, $comment ) {
+		if ( get_comment_meta( $comment->comment_ID, 'protocol', true ) === 'activitypub' ) {
+			// Don't act on comments that came via ActivityPub.
+			return $location;
+		}
+
+		if ( empty( $comment->user_id ) ) {
+			// Don't act on other people's comments.
+			return $location;
+		}
+		$post = get_post( $comment->comment_post_ID );
+		$user = User::get_post_author( $post );
+
+		return $user->get_local_friends_page_url( $post->ID );
 	}
 
 	/**
