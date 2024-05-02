@@ -160,7 +160,7 @@ class Friends {
 		add_filter( 'friends_frontend_post_types', array( $this, 'add_frontend_post_types' ) );
 
 		add_filter( 'request', array( $this, 'limit_post_format_request' ), 20 );
-
+		add_filter( 'my_apps_plugins', array( $this, 'register_my_apps' ) );
 		User::register_wrapper_hooks();
 	}
 
@@ -996,6 +996,16 @@ class Friends {
 
 		return $qvs;
 	}
+
+	public function register_my_apps( $apps ) {
+		$apps['friends'] = array(
+			'name'     => __( 'Friends', 'friends' ),
+			'icon_url' => 'https://ps.w.org/friends/assets/icon-256x256.png',
+			'url'      => '/friends/',
+		);
+		return $apps;
+	}
+
 	/**
 	 * Add a post_format filter to a \WP_Query.
 	 *
