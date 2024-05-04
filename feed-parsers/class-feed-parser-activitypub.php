@@ -1282,6 +1282,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$users = array();
 			foreach ( $feeds as $feed ) {
 				$user = $feed->get_friend_user();
+				if ( ! $user ) {
+					continue;
+				}
 				$slug = $user->user_nicename;
 				if ( ! $slug ) {
 					$slug = $user->user_login;

@@ -139,17 +139,20 @@ class User_Feed {
 		$users = array();
 		$user_term_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
 		foreach ( $user_term_ids as $user_term_id ) {
-			$term = get_term( $user_term_id, self::TAXONOMY );
-			$term_id = false;
-			if ( $term ) {
-				$term_id = term_exists( $term->term_id, Subscription::TAXONOMY );
+			$user = User::get_user_by_id( $user_term_id );
+			if ( $user ) {
+				$feeds = $user->get_feeds();
+				if ( isset( $feeds[ $this->term->term_id ] ) ) {
+					$users[] = $user;
+					continue;
+				}
 			}
-			if ( $term_id ) {
-				$users[] = new Subscription( get_term( $term_id['term_id'], Subscription::TAXONOMY ) );
-			} else {
-				$user = get_userdata( $user_term_id );
-				if ( $user && ! is_wp_error( $user ) ) {
-					$users[] = new User( $user );
+			$user = User::get_user_by_id( 'friends-virtual-user-' . $user_term_id );
+			if ( $user ) {
+				$feeds = $user->get_feeds();
+				if ( isset( $feeds[ $this->term->term_id ] ) ) {
+					$users[] = $user;
+					continue;
 				}
 			}
 		}
