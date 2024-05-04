@@ -47,7 +47,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_announce', array( $this, 'handle_received_announce' ), 15, 2 );
 		\add_action( 'activitypub_inbox_like', array( $this, 'handle_received_like' ), 15, 2 );
 		\add_action( 'activitypub_inbox_undo', array( $this, 'handle_received_undo' ), 15, 2 );
-		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 3 );
+		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
