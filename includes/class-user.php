@@ -290,7 +290,7 @@ class User extends \WP_User {
 		if ( 0 === strpos( $user_id, 'friends-virtual-user-' ) ) {
 			$term_id = substr( $user_id, strlen( 'friends-virtual-user-' ) );
 			$term = get_term( intval( $term_id ), Subscription::TAXONOMY );
-			if ( $term ) {
+			if ( $term && ! is_wp_error( $term ) ) {
 				return new Subscription( $term );
 			}
 		}

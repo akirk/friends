@@ -249,7 +249,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$user = $user_feed->get_friend_user();
 				}
 			}
-		} else {
+		} elseif ( ! is_wp_error( $user_id ) ) {
 			$user = User::get_user_by_id( $user_id );
 			if ( ! $user ) {
 				$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
