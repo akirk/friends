@@ -1541,7 +1541,7 @@ class Admin {
 		<?php
 	}
 
-	public function create_and_follow( $user_id, $url, $type, $vars = array() ) {
+	public function create_and_follow( $user_id, $url ) {
 		$vars['friend_url'] = $url;
 
 		$vars['user_login'] = apply_filters( 'friends_suggest_user_login', User::get_user_login_for_url( $url ), $url );

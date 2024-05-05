@@ -187,6 +187,10 @@ class Subscription extends User {
 	 * @return     object  The post stats.
 	 */
 	public function get_post_stats() {
+		static $post_stats = null;
+		if ( ! is_null( $post_stats ) ) {
+			return $post_stats;
+		}
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$post_stats = $wpdb->get_row(
