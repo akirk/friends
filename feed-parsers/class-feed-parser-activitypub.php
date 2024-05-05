@@ -235,6 +235,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 
 	public static function determine_mastodon_api_user( $user_id ) {
+		static $user_id_map = array();
+		if ( isset( $user_id_map[ $user_id ] ) ) {
+			return $user_id_map[ $user_id ];
+		}
 		$user = false;
 		if ( is_string( $user_id ) && ! is_numeric( $user_id ) ) {
 			$user = User::get_by_username( $user_id );
@@ -251,6 +255,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
 			}
 		}
+		$user_id_map[ $user_id ] = $user;
 		return $user;
 	}
 
