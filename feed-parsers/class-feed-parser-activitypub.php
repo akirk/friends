@@ -51,13 +51,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
+		\add_action( 'friends_suggest_display_name', array( $this, 'suggest_display_name' ), 10, 2 );
+		\add_action( 'mastodon_api_account_follow', array( $this, 'mastodon_api_account_follow' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'activitypub_follow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'activitypub_unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'activitypub_like_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'activitypub_unlike_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_announce', array( $this, 'activitypub_announce' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_unannounce', array( $this, 'activitypub_unannounce' ), 10, 2 );
-		\add_filter( 'friends_rewrite_incoming_url', array( $this, 'friends_webfinger_resolve' ), 10, 2 );
+		\add_filter( 'friends_rewrite_incoming_url', array( get_called_class(), 'friends_webfinger_resolve' ), 10, 2 );
 
 		\add_filter( 'friends_edit_feeds_table_end', array( $this, 'activitypub_settings' ), 10 );
 		\add_filter( 'friends_edit_feeds_after_form_submit', array( $this, 'activitypub_save_settings' ), 10 );
@@ -104,7 +106,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ) );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
-		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_handle_external_mentions_user' ), 20, 3 );
+		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 	}
 
 	/**
@@ -231,12 +233,39 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return array_merge( $ret, $meta );
 	}
 
+
+	public static function determine_mastodon_api_user( $user_id ) {
+		static $user_id_map = array();
+		if ( isset( $user_id_map[ $user_id ] ) ) {
+			return $user_id_map[ $user_id ];
+		}
+		$user = false;
+		if ( is_string( $user_id ) && ! is_numeric( $user_id ) ) {
+			$user = User::get_by_username( $user_id );
+			if ( ! $user ) {
+				$url = self::friends_webfinger_resolve( $user_id, $user_id );
+				$user_feed = User_Feed::get_by_url( $url );
+				if ( $user_feed && ! is_wp_error( $user_feed ) ) {
+					$user = $user_feed->get_friend_user();
+				}
+			}
+		} else {
+			$user = User::get_user_by_id( $user_id );
+			if ( ! $user ) {
+				$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
+			}
+		}
+		$user_id_map[ $user_id ] = $user;
+		return $user;
+	}
+
+
 	public function mastodon_api_timelines_args( $args ) {
 		$args['post_type'][] = Friends::CPT;
 		return $args;
 	}
 
-	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request, $post ) {
+	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request = null, $post = null ) {
 		if ( ! $post instanceof \WP_Post ) {
 			return $account;
 		}
@@ -262,9 +291,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! $account->note ) {
 				$account->note = '';
 			}
-			$account->avatar = $meta['attributedTo']['icon'];
-			if ( ! $account->avatar ) {
-				$account->avatar = '';
+			if ( isset( $meta['attributedTo']['icon'] ) ) {
+				$account->avatar = $meta['attributedTo']['icon'];
+			} else {
+				$account->avatar = $placeholder_image;
 			}
 			$account->avatar_static = $account->avatar;
 			if ( isset( $meta['attributedTo']['header'] ) ) {
@@ -286,65 +316,108 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( isset( $meta['reblog'] ) && $meta['reblog'] && isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
-			$status->reblog = clone $status;
-			$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
-			$account = apply_filters( 'mastodon_api_account', null, $meta['attributedTo']['id'], null, null );
-			if ( ! $account ) {
-				$feed_url = get_post_meta( $post_id, 'feed_url', true );
-				$account = apply_filters( 'mastodon_api_account', null, $feed_url, null, null );
+		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
+			if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
+				$status->reblog = clone $status;
+				$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
 			}
-			if ( $account ) {
-				$status->account = $account;
+			$friend_user = User::get_post_author( get_post( $post_id ) );
+			$external_user = $this->get_external_user();
+			$is_external_user = get_class( $external_user ) === get_class( $friend_user ) && $external_user->get_object_id() === $friend_user->get_object_id();
+			if ( $is_external_user ) {
+				$feed_url = get_post_meta( $post_id, 'feed_url', true );
+				if ( $feed_url ) {
+					$actor = self::convert_actor_to_mastodon_handle( $feed_url );
+					$account = new \Enable_Mastodon_Apps\Entity\Account();
+					$account->id             = $feed_url;
+					$account->username       = strtok( $actor, '@' );
+					$account->acct           = $actor;
+					$account->display_name   = $friend_user->display_name;
+					$account->url            = $feed_url;
+					$account->note = $friend_user->description;
+					if ( ! $account->note ) {
+						$account->note = '';
+					}
+
+					$account->avatar = $friend_user->avatar;
+					if ( ! $account->avatar ) {
+						$account->avatar = '';
+					}
+
+					$account->avatar_static = $account->avatar;
+					if ( isset( $meta['attributedTo']['header'] ) ) {
+						$account->header = $meta['attributedTo']['header'];
+					} else {
+						$account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+					}
+					$account->header_static = $account->header;
+					$account->created_at = $status->created_at;
+				}
 			} else {
-				$status->reblog->account = new \Enable_Mastodon_Apps\Entity\Account();
-				$status->reblog->account->id             = $meta['attributedTo']['id'];
-				$status->reblog->account->username       = $meta['attributedTo']['preferredUsername'];
-				$status->reblog->account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
-				$status->reblog->account->display_name   = $meta['attributedTo']['name'];
-				$status->reblog->account->url            = $meta['attributedTo']['id'];
-				$status->reblog->account->note = $meta['attributedTo']['summary'];
-				if ( ! $status->reblog->account->note ) {
-						$status->reblog->account->note = '';
-				}
+				$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID );
+			}
 
-				$status->reblog->account->avatar = $meta['attributedTo']['icon'];
-				if ( ! $status->reblog->account->avatar ) {
-						$status->reblog->account->avatar = '';
+			if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+				$status->account = $account;
+				if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
+					$status->reblog->account->id = $meta['attributedTo']['id'];
 				}
-
-				$status->reblog->account->avatar_static = $status->reblog->account->avatar;
-				if ( isset( $meta['attributedTo']['header'] ) ) {
-						$status->reblog->account->header = $meta['attributedTo']['header'];
-				} else {
-						$status->reblog->account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
-				}
-				$status->reblog->account->header_static = $status->reblog->account->header;
-				$status->reblog->account->created_at = $status->reblog->created_at;
-
 			}
 		}
 
 		return $status;
 	}
 
-	public function mastodon_api_status_handle_external_mentions_user( $status, $post_id, $request ) {
-		if ( Friends::CPT !== get_post_type( $post_id ) ) {
-			return $status;
+	public function suggest_display_name( $display_name, $url ) {
+		$meta = $this->get_metadata( $url );
+		if ( is_wp_error( $meta ) ) {
+			return $display_name;
+		}
+		if ( isset( $meta['name'] ) ) {
+			return $meta['name'];
+		}
+		if ( isset( $meta['preferredUsername'] ) ) {
+			return $meta['preferredUsername'];
+		}
+		return $display_name;
+	}
+
+	public function mastodon_api_account_follow( $user_id, $request ) {
+		return apply_filters( 'friends_create_and_follow', null, $user_id );
+	}
+
+	public function mastodon_api_canonical_user_id( $user_id ) {
+		static $user_id_map = array();
+		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+			$user_feed = User_Feed::get_by_url( $user_id );
+			if ( $user_feed && ! is_wp_error( $user_feed ) ) {
+				$user_id_map[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+			}
+		}
+		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+			if ( is_string( $user_id ) && ! is_numeric( $user_id ) ) {
+				$user = User::get_by_username( $user_id );
+			} else {
+				$user = User::get_user_by_id( $user_id );
+				if ( ! $user ) {
+					$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
+				}
+			}
+			if ( $user ) {
+				foreach ( $user->get_active_feeds() as $user_feed ) {
+					if ( 'activitypub' === $user_feed->get_parser() ) {
+						$user_id_map[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+						break;
+					}
+				}
+			}
 		}
 
-		$external_user = $this->get_external_user();
-		$is_external_mention = $external_user && strval( $external_user->ID ) === strval( $status->account->id );
-		if ( ! $is_external_mention ) {
-			return $status;
+		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+			$user_id_map[ $user_id ] = $user_id;
 		}
 
-		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( isset( $meta['attributedTo']['id'] ) ) {
-			$status->account->id = $meta['attributedTo']['id'];
-		}
-
-		return $status;
+		return $user_id_map[ $user_id ];
 	}
 
 	public function register_post_meta() {
@@ -455,7 +528,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 *
 	 * @return     string  The rewritten URL.
 	 */
-	public function friends_webfinger_resolve( $url, $incoming_url ) {
+	public static function friends_webfinger_resolve( $url, $incoming_url ) {
 		if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $incoming_url ) ) {
 			$resolved_url = \Activitypub\Webfinger::resolve( $incoming_url );
 			if ( ! is_wp_error( $resolved_url ) ) {
@@ -1612,19 +1685,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $meta['attributedTo']['id'];
 		}
 
-		$host = wp_parse_url( $post->guid, PHP_URL_HOST );
-
-		foreach ( $friend->get_active_feeds() as $feed ) {
-			if ( 'activitypub' !== $feed->get_parser() ) {
-				continue;
-			}
-
-			$feed_host = wp_parse_url( $feed->get_url(), PHP_URL_HOST );
-			if ( $feed_host !== $host ) {
-				continue;
-			}
-
-			return $feed->get_url();
+		$feed_url = get_post_meta( $post->ID, 'feed_url', true );
+		if ( $feed_url ) {
+			return $feed_url;
 		}
 
 		return null;
@@ -2190,6 +2253,22 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$user = User::get_post_author( $post );
 
 		return $user->get_local_friends_page_url( $post->ID );
+	}
+
+	private static function convert_actor_to_mastodon_handle( $actor ) {
+		$p = wp_parse_url( $actor );
+		if ( $p ) {
+			if ( isset( $p['host'] ) ) {
+				$domain = $p['host'];
+			}
+			if ( isset( $p['path'] ) ) {
+				$path_parts = explode( '/', trim( $p['path'], '/' ) );
+				$username = ltrim( array_pop( $path_parts ), '@' );
+			}
+			return $username . '@' . $domain;
+		}
+
+		return $actor;
 	}
 
 	/**
