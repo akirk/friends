@@ -1339,7 +1339,7 @@ class User extends \WP_User {
 		return $args;
 	}
 
-	public function mastodon_entity_relationship( $relationship, $user_id ) {
+	public static function mastodon_entity_relationship( $relationship, $user_id ) {
 		$user = self::get_by_username( $user_id );
 		if ( $user instanceof self ) {
 			if ( ! $relationship instanceof \Enable_Mastodon_Apps\Entity\Relationship ) {

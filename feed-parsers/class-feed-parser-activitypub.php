@@ -289,30 +289,40 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( isset( $meta['reblog'] ) && $meta['reblog'] && isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			$status->reblog = clone $status;
 			$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
-			$status->reblog->account = new \Enable_Mastodon_Apps\Entity\Account();
-			$status->reblog->account->id             = $meta['attributedTo']['id'];
-			$status->reblog->account->username       = $meta['attributedTo']['preferredUsername'];
-			$status->reblog->account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
-			$status->reblog->account->display_name   = $meta['attributedTo']['name'];
-			$status->reblog->account->url            = $meta['attributedTo']['id'];
-			$status->reblog->account->note = $meta['attributedTo']['summary'];
-			if ( ! $status->reblog->account->note ) {
-				$status->reblog->account->note = '';
+			$account = apply_filters( 'mastodon_api_account', null, $meta['attributedTo']['id'], null, null );
+			if ( ! $account ) {
+				$feed_url = get_post_meta( $post_id, 'feed_url', true );
+				$account = apply_filters( 'mastodon_api_account', null, $feed_url, null, null );
 			}
-
-			$status->reblog->account->avatar = $meta['attributedTo']['icon'];
-			if ( ! $status->reblog->account->avatar ) {
-				$status->reblog->account->avatar = '';
-			}
-
-			$status->reblog->account->avatar_static = $status->reblog->account->avatar;
-			if ( isset( $meta['attributedTo']['header'] ) ) {
-				$status->reblog->account->header = $meta['attributedTo']['header'];
+			if ( $account ) {
+				$status->account = $account;
 			} else {
-				$status->reblog->account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+				$status->reblog->account = new \Enable_Mastodon_Apps\Entity\Account();
+				$status->reblog->account->id             = $meta['attributedTo']['id'];
+				$status->reblog->account->username       = $meta['attributedTo']['preferredUsername'];
+				$status->reblog->account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
+				$status->reblog->account->display_name   = $meta['attributedTo']['name'];
+				$status->reblog->account->url            = $meta['attributedTo']['id'];
+				$status->reblog->account->note = $meta['attributedTo']['summary'];
+				if ( ! $status->reblog->account->note ) {
+						$status->reblog->account->note = '';
+				}
+
+				$status->reblog->account->avatar = $meta['attributedTo']['icon'];
+				if ( ! $status->reblog->account->avatar ) {
+						$status->reblog->account->avatar = '';
+				}
+
+				$status->reblog->account->avatar_static = $status->reblog->account->avatar;
+				if ( isset( $meta['attributedTo']['header'] ) ) {
+						$status->reblog->account->header = $meta['attributedTo']['header'];
+				} else {
+						$status->reblog->account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+				}
+				$status->reblog->account->header_static = $status->reblog->account->header;
+				$status->reblog->account->created_at = $status->reblog->created_at;
+
 			}
-			$status->reblog->account->header_static = $status->reblog->account->header;
-			$status->reblog->account->created_at = $status->reblog->created_at;
 		}
 
 		return $status;
