@@ -84,7 +84,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
 		add_action( 'wp_ajax_friends-reblog', array( $this, 'wp_ajax_reblog' ) );
 		add_action( 'friends_post_footer_first', array( $this, 'reblog_button' ) );
-		add_filter( 'friends_reblog', array( get_called_class(), 'reblog' ), 10, 2 );
+		add_filter( 'friends_reblog', array( get_called_class(), 'reblog' ), 10, 3 );
 		add_filter( 'friends_unreblog', array( get_called_class(), 'unreblog' ), 10, 2 );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
@@ -296,12 +296,18 @@ class Frontend {
 		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
 			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
 		}
+		$reblog_post_id = get_post_meta( get_the_ID(), 'reblogged', true );
+		if ( $reblog_post_id ) {
+					wp_send_json_success(
+						array(
+							'post_id'  => $reblog_post_id,
+							'redirect' => get_edit_post_link( $reblog_post_id, 'js' ),
+						)
+					);
 
-		if ( get_post_meta( get_the_ID(), 'reblogged', true ) ) {
 			wp_send_json_error( 'already-reblogged', array( 'guid' => $post->guid ) );
 			return;
 		}
-		do_action( 'friends_activitypub_announce_post', $post->guid );
 
 		/**
 		 * Reblogs a post
@@ -309,31 +315,28 @@ class Frontend {
 		 * @param int|null $reblog_post_id The post ID of the reblogged post. Default null.
 		 * @param WP_Post  $post           The post object.
 		 */
-		$reblog_post_id = apply_filters( 'friends_reblog', null, $post );
+		$reblog_post_id = apply_filters( 'friends_reblog', null, $post, 'draft' );
 		if ( ! $reblog_post_id || is_wp_error( $reblog_post_id ) ) {
 			wp_send_json_error( 'error' );
 		}
 
 		wp_send_json_success(
 			array(
-				'post_id' => $reblog_post_id,
+				'post_id'  => $reblog_post_id,
+				'redirect' => get_edit_post_link( $reblog_post_id, 'js' ),
 			)
 		);
 	}
 
 	public function reblog_button() {
-		$button_label = apply_filters( 'friends_reblog_button_label', _x( 'Reblog', 'button', 'friends' ) );
-
 		Friends::template_loader()->get_template_part(
 			'frontend/parts/reblog-button',
 			null,
-			array(
-				'button-label' => $button_label,
-			)
+			array()
 		);
 	}
 
-	public static function reblog( $ret, $post ) {
+	public static function reblog( $ret, $post, $post_status = 'publish' ) {
 		if ( ! $post ) {
 			return $ret;
 		}
@@ -372,7 +375,7 @@ class Frontend {
 		$new_post = array(
 			'post_title'   => $reblog_title,
 			'post_author'  => get_current_user_id(),
-			'post_status'  => 'publish',
+			'post_status'  => $post_status,
 			'post_type'    => 'post',
 			'post_format'  => get_post_format( $post ),
 			'post_content' => $reblog,
