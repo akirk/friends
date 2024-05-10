@@ -59,7 +59,7 @@ require_once __DIR__ . '/includes/class-friends.php';
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );
 add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_hooks' ) );
 
-if ( is_admin() ) { // && FRIENDS_VERSION > get_option( 'friends_plugin_version' ) ) {
+if ( is_admin() && FRIENDS_VERSION > get_option( 'friends_plugin_version' ) ) {
 	add_action( 'admin_init', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ) );
 }
 
