@@ -951,29 +951,29 @@ class User extends \WP_User {
 	 */
 	public function get_remote_post_ids() {
 		$remote_post_ids = array();
-		$existing_posts  = new \WP_Query(
-			array(
-				'post_type'   => Friends::CPT,
-				'post_status' => array( 'publish', 'private', 'trash' ),
-				'author'      => $this->ID,
-				'nopaging'    => true,
-			)
-		);
-
-		if ( $existing_posts->have_posts() ) {
-			while ( $existing_posts->have_posts() ) {
-				$post           = $existing_posts->next_post();
-				$remote_post_id = get_post_meta( $post->ID, 'remote_post_id', true );
-				if ( $remote_post_id ) {
-					$remote_post_ids[ $remote_post_id ] = $post->ID;
-				}
-				$permalink                     = get_permalink( $post );
-				$remote_post_ids[ $permalink ] = $post->ID;
-				$permalink                     = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( $permalink ) );
-				$remote_post_ids[ $permalink ] = $post->ID;
+		$existing_posts = new \WP_Query();
+		foreach ( array(
+			'post_type'   => Friends::CPT,
+			'post_status' => array( 'publish', 'private', 'trash' ),
+			'nopaging'    => true,
+			'fields'      => 'ids',
+		) as $key => $value ) {
+			$existing_posts->set( $key, $value );
+		}
+		$existing_posts = $this->modify_query_by_author( $existing_posts );
+		foreach ( $existing_posts->get_posts() as $post_id ) {
+			$post_id = $existing_posts->next_post();
+			$remote_post_id = get_post_meta( $post_id, 'remote_post_id', true );
+			if ( $remote_post_id ) {
+				$remote_post_ids[ $remote_post_id ] = $post_id;
 			}
+			$permalink                     = get_permalink( $post_id );
+			$remote_post_ids[ $permalink ] = $post_id;
+			$permalink                     = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( $permalink ) );
+			$remote_post_ids[ $permalink ] = $post_id;
 		}
 
+		unset( $existing_posts );
 		do_action( 'friends_remote_post_ids', $remote_post_ids );
 		return $remote_post_ids;
 	}
