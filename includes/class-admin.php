@@ -133,7 +133,7 @@ class Admin {
 				apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export' ) )
 			)
 		) {
-			add_submenu_page( 'friends', __( 'Notification Manager', 'friends' ), '- ' . __( 'Notification Manager', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
+			add_submenu_page( 'friends', __( 'Notifications', 'friends' ), '- ' . __( 'Notifications', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
 			add_submenu_page( 'friends', __( 'Friendships', 'friends' ), '- ' . __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
 			add_submenu_page( 'friends', __( 'Import/Export', 'friends' ), '- ' . __( 'Import/Export', 'friends' ), $required_role, 'friends-import-export', array( $this, 'render_admin_import_export' ) );
 			do_action( 'friends_admin_menu_settings', $page_type );
@@ -2118,6 +2118,11 @@ class Admin {
 			update_user_option( get_current_user_id(), 'friends_no_new_post_notification', 1 );
 		}
 
+		if ( isset( $_POST['friend_request_notification'] ) && $_POST['friend_request_notification'] ) {
+			delete_user_option( get_current_user_id(), 'friends_no_friend_request_notification' );
+		} else {
+			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
+		}
 		$friend_ids = $_POST['friend_listed'];
 		$current_user_id = get_current_user_id();
 		$hide_from_friends_page = array();
@@ -2163,10 +2168,6 @@ class Admin {
 			)
 		);
 		$this->check_admin_settings();
-
-		?>
-		<h1><?php esc_html_e( 'Notification Manager', 'friends' ); ?></h1>
-		<?php
 
 		$friend_users = new User_Query(
 			array(
