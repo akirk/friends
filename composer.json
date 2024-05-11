@@ -36,7 +36,7 @@
 			"@php ./vendor/phpunit/phpunit/phpunit --no-coverage"
 		],
 		"update-wiki": [
-			"test -f ../friends.wiki && php ./vendor/akirk/extract-wp-hooks/extract-wp-hooks.php && cd ../friends.wiki/ && git add . && git commit -m 'Update hooks' && git push"
+			"test -d ../friends.wiki && php ./vendor/akirk/extract-wp-hooks/extract-wp-hooks.php && cd ../friends.wiki/ && git add . && git commit -m 'Update hooks'; git push"
 		]
 	}
 }
