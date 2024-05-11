@@ -153,6 +153,7 @@ class Friends {
 		add_filter( 'login_head', array( $this, 'html_rel_links' ) );
 
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
+		add_filter( 'cron_schedules', array( $this, 'add_five_minutes_interval' ) );
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
 		add_filter( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
@@ -499,6 +500,19 @@ class Friends {
 				);
 				$user->update_user_option( 'display_name', _x( 'External', 'user name', 'friends' ) );
 			}
+
+			// Upgrade cron schedule.
+			$next_scheduled = wp_next_scheduled( 'cron_friends_refresh_feeds' );
+			if ( $next_scheduled ) {
+				$event = wp_get_scheduled_event( 'cron_friends_refresh_feeds' );
+				if ( $event && 'five-minutes' !== $event->schedule ) {
+					wp_unschedule_event( $next_scheduled, 'cron_friends_refresh_feeds' );
+					$next_scheduled = false;
+				}
+			}
+			if ( ! $next_scheduled ) {
+				wp_schedule_event( time(), 'five-minutes', 'cron_friends_refresh_feeds' );
+			}
 		}
 
 		update_option( 'friends_plugin_version', Friends::VERSION );
@@ -582,11 +596,20 @@ class Friends {
 		}
 
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
-			wp_schedule_event( time(), 'hourly', 'cron_friends_refresh_feeds' );
+			wp_schedule_event( time(), 'five-minutes', 'cron_friends_refresh_feeds' );
 		}
 
 		self::add_default_sidebars_widgets();
 		flush_rewrite_rules();
+	}
+
+	public function add_five_minutes_interval( $schedules ) {
+		$schedules['five-minutes'] = array(
+			'interval' => 300,
+			'display'  => __( 'Every 5 Minutes', 'friends' ),
+		);
+
+		return $schedules;
 	}
 
 	/**
