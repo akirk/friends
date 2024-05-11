@@ -411,7 +411,6 @@
 		} );
 	} );
 
-	/* ActivityPub */
 	$( function () {
 		$document.on( 'click', 'a.friends-reblog', function () {
 			const $this = $( this );
@@ -420,10 +419,37 @@
 					_ajax_nonce: $this.data( 'nonce' ),
 					post_id: $this.data( 'id' ),
 				},
-				success() {
+				success( result ) {
+					if ( result.redirect ) {
+						location.href = result.redirect;
+					}
 					$this
 						.find( 'i.friends-reblog-status' )
 						.addClass( 'dashicons dashicons-saved' );
+				},
+			} );
+			return false;
+		} );
+	} );
+
+	$( function () {
+		$document.on( 'click', 'a.friends-boost', function () {
+			const $this = $( this );
+			wp.ajax.send( 'friends-boost', {
+				data: {
+					_ajax_nonce: $this.data( 'nonce' ),
+					post_id: $this.data( 'id' ),
+				},
+				success( result ) {
+					if ( 'boosted' === result.status ) {
+						$this
+							.find( 'i.friends-boost-status' )
+							.addClass( 'dashicons dashicons-saved' );
+					} else {
+						$this
+							.find( 'i.friends-boost-status' )
+							.removeClass( 'dashicons-saved' );
+					}
 				},
 			} );
 			return false;

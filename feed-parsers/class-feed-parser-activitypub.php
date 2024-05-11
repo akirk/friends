@@ -37,7 +37,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$this->friends_feed = $friends_feed;
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
-		\add_action( 'admin_menu', array( $this, 'admin_menu' ), 20 );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
 		\add_filter( 'friends_add_friends_input_placeholder', array( $this, 'friends_add_friends_input_placeholder' ) );
 		\add_action( 'friends_add_friend_form_top', array( $this, 'friends_add_friend_form_top' ) );
@@ -87,16 +86,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_comments_content', array( $this, 'append_comment_form' ), 10, 4 );
 		add_filter( 'comment_post_redirect', array( $this, 'comment_post_redirect' ), 10, 2 );
 
-		\add_filter( 'friends_reblog_button_label', array( $this, 'friends_reblog_button_label' ), 10, 2 );
+		add_action( 'friends_post_footer_first', array( $this, 'boost_button' ) );
 		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
 
-		\add_filter( 'friends_reblog', array( $this, 'unqueue_activitypub_create' ), 9 );
+		add_action( 'wp_ajax_friends-boost', array( $this, 'wp_ajax_boost' ) );
 		\add_action( 'mastodon_api_reblog', array( $this, 'mastodon_api_reblog' ) );
 		\add_action( 'mastodon_api_unreblog', array( $this, 'mastodon_api_unreblog' ) );
-		\add_filter( 'friends_activitypub_announce_any_url', array( $this, 'queue_announce' ) );
-		\add_filter( 'friends_reblog', array( $this, 'reblog' ), 20, 2 );
-		\add_filter( 'friends_unreblog', array( $this, 'unreblog' ), 20, 2 );
-		\add_filter( 'friends_reblog', array( $this, 'maybe_unqueue_friends_reblog_post' ), 9, 2 );
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 
@@ -107,84 +102,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
-	}
-
-	/**
-	 * Add the admin menu to the sidebar.
-	 */
-	public function admin_menu() {
-		$friends = Friends::get_instance();
-		$unread_badge = $friends->admin->get_unread_badge();
-
-		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
-		$page_type = sanitize_title( $menu_title );
-
-		add_submenu_page(
-			'friends',
-			__( 'ActivityPub', 'friends' ),
-			__( 'ActivityPub', 'friends' ),
-			Friends::required_menu_role(),
-			'friends-activitypub-settings',
-			array( $this, 'settings' )
-		);
-
-		add_action( 'load-' . $page_type . '_page_friends-activitypub-settings', array( $this, 'process_settings' ) );
-	}
-
-	public function settings() {
-		Friends::template_loader()->get_template_part(
-			'admin/settings-header',
-			null,
-			array(
-				'menu'   => array(
-					__( 'ActivityPub Settings', 'friends' ) => 'friends-activitypub-settings',
-				),
-				'active' => 'friends-activitypub-settings',
-				'title'  => __( 'Friends', 'friends' ),
-			)
-		);
-
-		if (
-			// This just displays an info text.
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			isset( $_GET['updated'] )
-		) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Settings were updated.', 'friends' ); ?></p></div>
-			<?php
-		} elseif (
-			// This just displays an info text.
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			isset( $_GET['error'] )
-		) {
-			?>
-			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
-			<?php
-		}
-
-		Friends::template_loader()->get_template_part(
-			'admin/activitypub-settings',
-			null,
-			array(
-				'reblog' => ! get_user_option( 'friends_activitypub_dont_reblog' ),
-			)
-		);
-
-		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
-	}
-
-	public function process_settings() {
-		if ( empty( $_POST ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'friends-activitypub-settings' ) ) {
-			return;
-		}
-
-		if ( isset( $_POST['activitypub_reblog'] ) ) {
-			delete_user_option( get_current_user_id(), 'friends_activitypub_dont_reblog' );
-		} else {
-			update_user_option( get_current_user_id(), 'friends_activitypub_dont_reblog', true );
-		}
-		wp_safe_redirect( add_query_arg( 'updated', 'true', admin_url( 'admin.php?page=friends-activitypub-settings' ) ) );
-		exit;
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -1864,15 +1781,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 	}
 
-	public function friends_reblog_button_label( $button_label ) {
-		if ( User_Feed::get_parser_for_post_id( get_the_ID() ) === 'activitypub' ) {
-			if ( get_user_option( 'friends_activitypub_dont_reblog' ) ) {
-				$button_label = _x( 'Boost', 'button', 'friends' );
-			} else {
-				$button_label = _x( 'Reblog & Boost', 'button', 'friends' );
-			}
-		}
-		return $button_label;
+	public function boost_button() {
+		Friends::template_loader()->get_template_part(
+			'frontend/parts/activitypub/boost-button',
+			null,
+			array()
+		);
 	}
 
 	public function friends_search_autocomplete( $results, $q ) {
@@ -1937,12 +1851,34 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		apply_filters( 'friends_unreact', null, $post_id, $reaction );
 	}
 
+
+	public function wp_ajax_boost() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error( 'error' );
+		}
+
+		check_ajax_referer( 'friends-boost' );
+
+		$post = get_post( $_POST['post_id'] );
+		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
+			wp_send_json_error( 'unknown-post', array( 'id' => $post->ID ) );
+		}
+
+		if ( get_post_meta( get_the_ID(), 'boosted', true ) ) {
+			$this->mastodon_api_unreblog( $post->ID );
+			wp_send_json_success( 'unboosted', array( 'id' => $post->ID ) );
+			return;
+		}
+		$this->mastodon_api_reblog( $post->ID );
+
+		wp_send_json_success( 'boosted', array( 'id' => $post->ID ) );
+	}
 	public function mastodon_api_reblog( $post_id ) {
-		apply_filters( 'friends_reblog', null, $post_id );
+		$this->queue_announce( get_permalink( $post_id ) );
 	}
 
 	public function mastodon_api_unreblog( $post_id ) {
-		apply_filters( 'friends_unreblog', null, $post_id );
+		$this->queue_unannounce( get_permalink( $post_id ) );
 	}
 
 	/**
@@ -1959,19 +1895,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( $priority ) {
 			remove_filter( $hook, $filter, $priority );
 		}
-		return $ret;
-	}
-
-	public function maybe_unqueue_friends_reblog_post( $ret, $post ) {
-		if ( ! get_user_option( 'friends_activitypub_dont_reblog' ) ) {
-			return $ret;
-		}
-
-		if ( User_Feed::get_parser_for_post_id( $post->ID ) !== 'activitypub' ) {
-			return $ret;
-		}
-
-		remove_filter( 'friends_reblog', array( 'Friends\Frontend', 'reblog' ), 10, 2 );
 		return $ret;
 	}
 
