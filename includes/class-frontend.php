@@ -351,7 +351,7 @@ class Frontend {
 			$author = $friend->display_name;
 		}
 
-		$reblog  = '<!-- wp:paragraph -->' . PHP_EOL . '<p>';
+		$reblog  = '<!-- wp:paragraph {"className":"friends-reblog"} -->' . PHP_EOL . '<p class="friends-reblog">';
 		$reblog .= sprintf(
 			// translators: %s is a link.
 			__( 'Reblog via %s', 'friends' ),
@@ -368,7 +368,7 @@ class Frontend {
 		$reblog .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
 
 		// Wrap the post content in a quote block.
-		$reblog .= '<!-- wp:quote -->' . PHP_EOL . '<blockquote class="wp-block-quote">';
+		$reblog .= '<!-- wp:quote {"className":"friends-reblog"} -->' . PHP_EOL . '<blockquote class="wp-block-quote friends-reblog">';
 		$reblog .= $post->post_content;
 		$reblog .= '</blockquote>' . PHP_EOL . '<!-- /wp:quote -->';
 
