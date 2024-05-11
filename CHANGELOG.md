@@ -1,3 +1,12 @@
+### 2.9.2
+- Fix Friend Request notification setting saving ([#313])
+- Add a Stats Widget ([#297])
+- Enable Mastodon Apps: Improve virtual user handling ([#310])
+- Increase cron feed polling frequency - this doesn't poll the feeds more often, just increases its reliability ([#312])
+- Add my-apps icon ([#308])
+- Enable Mastodon Apps CloudFest Hackathon Compatibility Updates ([#298])
+- Fix Notification Author and Highlight a Matched Keyword ([#306])
+
 ### 2.9.1
 - Fix the reblog title ([#300])
 
@@ -226,6 +235,15 @@
 - Add blog to blog messaging
 
 [Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#313]: https://github.com/akirk/friends/pull/313
+[#297]: https://github.com/akirk/friends/pull/297
+[#310]: https://github.com/akirk/friends/pull/310
+[#312]: https://github.com/akirk/friends/pull/312
+[#308]: https://github.com/akirk/friends/pull/308
+[#298]: https://github.com/akirk/friends/pull/298
+[#306]: https://github.com/akirk/friends/pull/306
+[#301]: https://github.com/akirk/friends/pull/301
+[#300]: https://github.com/akirk/friends/pull/300
 [#290]: https://github.com/akirk/friends/pull/290
 [#287]: https://github.com/akirk/friends/pull/287
 [#286]: https://github.com/akirk/friends/pull/286

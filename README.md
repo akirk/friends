@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.5
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.1
+- Stable tag: 2.9.2
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,15 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.9.2
+- Fix Friend Request notification setting saving ([#313])
+- Add a Stats Widget ([#297])
+- Enable Mastodon Apps: Improve virtual user handling ([#310])
+- Increase cron feed polling frequency - this doesn't poll the feeds more often, just increases its reliability ([#312])
+- Add my-apps icon ([#308])
+- Enable Mastodon Apps CloudFest Hackathon Compatibility Updates ([#298])
+- Fix Notification Author and Highlight a Matched Keyword ([#306])
+
 ### 2.9.1
 - Fix the reblog title ([#300])
 
@@ -106,33 +115,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ### 2.8.8
 - Fix update routine for previous version
 
-### 2.8.7
-- Fix the reblog button ([#299])
-- Add local users to potential mentions so that it won't be trashed ([#296])
-- Add Option to Disable Friendships ([#294])
-- Improve Omnibox ([#292])
-- Send the ActivityPub follow not to the shared inbox but the individuals inbox ([#291])
-
-### 2.8.6
-- Improve friend URL validation before trying to discover feeds ([#290])
-
-### 2.8.5
-- Add Boosting any URL and improve search field ([#287])
-- Allow translator translation for the welcome box ([#286])
-- Remove dysfunct double setting from Edit User Page ([#289])
-
-### 2.8.4
-- Fix adding new feeds with a Mastodon-style notation ([#282])
-
+[#313]: https://github.com/akirk/friends/pull/313
+[#297]: https://github.com/akirk/friends/pull/297
+[#310]: https://github.com/akirk/friends/pull/310
+[#312]: https://github.com/akirk/friends/pull/312
+[#308]: https://github.com/akirk/friends/pull/308
+[#298]: https://github.com/akirk/friends/pull/298
+[#306]: https://github.com/akirk/friends/pull/306
 [#301]: https://github.com/akirk/friends/pull/301
 [#300]: https://github.com/akirk/friends/pull/300
-[#299]: https://github.com/akirk/friends/pull/299
-[#296]: https://github.com/akirk/friends/pull/296
-[#294]: https://github.com/akirk/friends/pull/294
-[#292]: https://github.com/akirk/friends/pull/292
-[#291]: https://github.com/akirk/friends/pull/291
-[#290]: https://github.com/akirk/friends/pull/290
-[#287]: https://github.com/akirk/friends/pull/287
-[#286]: https://github.com/akirk/friends/pull/286
-[#289]: https://github.com/akirk/friends/pull/289
-[#282]: https://github.com/akirk/friends/pull/282
