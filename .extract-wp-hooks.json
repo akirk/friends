@@ -2,7 +2,7 @@
     "namespace": "Friends",
     "wiki_directory": "../friends.wiki",
     "github_blob_url": "https://github.com/akirk/friends/blob/main/",
-    "section": "dir",
+    "section": "file",
     "ignore_regex": "/^activitypub_/",
     "ignore_filter": [
         "_get_template_part_",
