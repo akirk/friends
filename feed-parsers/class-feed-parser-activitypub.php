@@ -101,7 +101,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ) );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 30, 3 );
-		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_attachments' ), 20, 3 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_image_attachments' ), 20, 3 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_video_attachments' ), 20, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 	}
 
@@ -228,7 +229,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $account;
 	}
 
-	public function mastodon_api_status_add_attachments( $status, $post_id, $request ) {
+	public function mastodon_api_status_add_image_attachments( $status, $post_id, $request ) {
 		if ( Friends::CPT !== get_post_type( $post_id ) ) {
 			return $status;
 		}
@@ -242,16 +243,79 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		foreach ( $matches as $match ) {
 			$status->content = str_replace( $match[0], '', $status->content );
-			if ( ! preg_match( '/<img src="(?P<url>[^"]+)" width="(?P<width>[^"]*)" height="(?P<height>[^"]*)"/', $match[2], $block ) ) {
+			if ( ! preg_match( '/<img\b([^>]+)>/', $match[2], $img ) ) {
+				continue;
+			}
+			$block = array();
+			foreach ( array( 'src', 'width', 'height' ) as $attr ) {
+				if ( preg_match( '/\s' . $attr . '="(?P<' . $attr . '>[^"]+)"/', $img[1], $m ) ) {
+					$block[ $attr ] = $m[ $attr ];
+				}
+			}
+			if ( ! isset( $block['src'] ) ) {
 				continue;
 			}
 
 			$attachment = new \Enable_Mastodon_Apps\Entity\Media_Attachment();
-			$attachment->id = strval( 2e10 + crc32( $block['url'] ) );
+			$attachment->id = strval( 2e10 + crc32( $block['src'] ) );
 			$attachment->type = 'image';
-			$attachment->url = $block['url'];
-			$attachment->preview_url = $block['url'];
-			$attachment->remote_url = $block['url'];
+			$attachment->url = $block['src'];
+			$attachment->preview_url = $block['src'];
+			$attachment->remote_url = $block['src'];
+			if ( isset( $block['width'] ) && $block['width'] > 0 && isset( $block['height'] ) && $block['height'] > 0 ) {
+				$attachment->meta = array(
+					'width'  => intval( $block['width'] ),
+					'height' => intval( $block['height'] ),
+					'size'   => $block['width'] . 'x' . $block['height'],
+					'aspect' => $block['width'] / $block['height'],
+				);
+			} else {
+				$attachment->meta = array(
+					'width'  => 0,
+					'height' => 0,
+					'size'   => 0x0,
+					'aspect' => 1,
+				);
+			}
+			$attachment->description = '';
+			$status->media_attachments[] = $attachment;
+		}
+		return $status;
+	}
+
+	public function mastodon_api_status_add_video_attachments( $status, $post_id, $request ) {
+		if ( Friends::CPT !== get_post_type( $post_id ) ) {
+			return $status;
+		}
+		if ( false === strpos( $status->content, '<video' ) ) {
+			return $status;
+		}
+		preg_match_all( '/<video\b([^>]+)>/', $status->content, $matches, PREG_SET_ORDER );
+		if ( empty( $matches ) ) {
+			return $status;
+		}
+
+		foreach ( $matches as $match ) {
+			$status->content = str_replace( $match[0], '', $status->content );
+			$block = array();
+			foreach ( array( 'src', 'width', 'height', 'poster' ) as $attr ) {
+				if ( preg_match( '/\s' . $attr . '="(?P<' . $attr . '>[^"]+)"/', $match[1], $m ) ) {
+					$block[ $attr ] = $m[ $attr ];
+				}
+			}
+
+			if ( ! isset( $block['src'] ) ) {
+				continue;
+			}
+
+			$attachment = new \Enable_Mastodon_Apps\Entity\Media_Attachment();
+			$attachment->id = strval( 2e10 + crc32( $block['src'] ) );
+			$attachment->type = 'video';
+			$attachment->url = $block['src'];
+			if ( isset( $block['poster'] ) ) {
+				$attachment->preview_url = $block['poster'];
+			}
+			$attachment->remote_url = $block['src'];
 			if ( isset( $block['width'] ) && $block['width'] > 0 && isset( $block['height'] ) && $block['height'] > 0 ) {
 				$attachment->meta = array(
 					'width'  => intval( $block['width'] ),
