@@ -100,7 +100,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ) );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
-		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 30, 3 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_attachments' ), 20, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 	}
 
@@ -225,6 +226,46 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $account;
+	}
+
+	public function mastodon_api_status_add_attachments( $status, $post_id, $request ) {
+		if ( Friends::CPT !== get_post_type( $post_id ) ) {
+			return $status;
+		}
+		if ( false === strpos( $status->content, '<!-- wp:image' ) ) {
+			return $status;
+		}
+		preg_match_all( '/<!-- wp:image(\s\{[^}]+\})? -->(.*?)<!-- \/wp:image -->/s', $status->content, $matches, PREG_SET_ORDER );
+		if ( empty( $matches ) ) {
+			return $status;
+		}
+
+		foreach ( $matches as $match ) {
+			if ( ! preg_match( '/<img src="(?P<url>[^"]+)" width="(?P<width>[^"]*)" height="(?P<height>[^"]*)"/', $match[2], $block ) ) {
+				continue;
+			}
+
+			$attachment = new \Enable_Mastodon_Apps\Entity\Media_Attachment();
+			$attachment->id = strval( 2e10 + crc32( $block['url'] ) );
+			$attachment->type = 'image';
+			$attachment->url = $block['url'];
+			$attachment->preview_url = $block['url'];
+			$attachment->remote_url = $block['url'];
+			if ( isset( $block['width'] ) && $block['width'] > 0 && isset( $block['height'] ) && $block['height'] > 0 ) {
+				$attachment->meta = array(
+					'width'  => intval( $block['width'] ),
+					'height' => intval( $block['height'] ),
+					'size'   => $block['width'] . 'x' . $block['height'],
+					'aspect' => $block['width'] / $block['height'],
+				);
+			} else {
+				continue;
+			}
+			$attachment->description = '';
+			$status->media_attachments[] = $attachment;
+			$status->content = str_replace( $match[0], '', $status->content );
+		}
+		return $status;
 	}
 
 	public function mastodon_api_status_add_reblogs( $status, $post_id, $request ) {
