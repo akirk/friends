@@ -241,6 +241,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		foreach ( $matches as $match ) {
+			$status->content = str_replace( $match[0], '', $status->content );
 			if ( ! preg_match( '/<img src="(?P<url>[^"]+)" width="(?P<width>[^"]*)" height="(?P<height>[^"]*)"/', $match[2], $block ) ) {
 				continue;
 			}
@@ -259,11 +260,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					'aspect' => $block['width'] / $block['height'],
 				);
 			} else {
-				continue;
+				$attachment->meta = array(
+					'width'  => 0,
+					'height' => 0,
+					'size'   => 0x0,
+					'aspect' => 1,
+				);
 			}
 			$attachment->description = '';
 			$status->media_attachments[] = $attachment;
-			$status->content = str_replace( $match[0], '', $status->content );
 		}
 		return $status;
 	}
