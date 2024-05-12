@@ -228,7 +228,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function mastodon_api_account_rewrite_local_account( $account, $user_id, $request = null, $post = null ) {
 		$id = apply_filters( 'mastodon_api_canonical_user_id', $account->id );
 		if ( $id !== $account->id ) {
-			$account = $this->get_mastodon_api_account( $id );
+			$override_account = $this->get_mastodon_api_account( $id );
+			if ( $override_account ) {
+				return $override_account;
+			}
 		}
 		return $account;
 	}
