@@ -211,7 +211,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( isset( $meta['icon']['type'] ) && 'image' === strtolower( $meta['icon']['type'] ) ) {
-			$account->avatar['avatar'] = $meta['icon']['url'];
+			$account->avatar = $meta['icon']['url'];
 		} else {
 			$account->avatar = $placeholder_image;
 		}
@@ -292,7 +292,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					'aspect' => $block['width'] / $block['height'],
 				);
 			} else {
-				continue;
 				$attachment->meta = array(
 					'width'  => 0,
 					'height' => 0,
@@ -300,6 +299,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					'aspect' => 1,
 				);
 			}
+			$original = $attachment->meta;
+			$attachment->meta['original'] = $original;
 			$attachment->description = '';
 			$status->media_attachments[] = $attachment;
 		}
