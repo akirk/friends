@@ -100,6 +100,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ) );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
+		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_rewrite_local_account' ), 15, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 30, 3 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_image_attachments' ), 20, 3 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_video_attachments' ), 20, 3 );
@@ -184,6 +185,54 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $args;
 	}
 
+	public function get_mastodon_api_account( $id ) {
+		$id = apply_filters( 'mastodon_api_canonical_user_id', $id );
+		$meta = apply_filters( 'friends_get_activitypub_metadata', array(), $id );
+		if ( ! $meta || is_wp_error( $meta ) ) {
+			return null;
+		}
+		$placeholder_image = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+		// $placeholder_image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
+		$account = new \Enable_Mastodon_Apps\Entity\Account();
+		$account->id         = $id;
+		if ( $meta['published'] ) {
+			$account->created_at = new \DateTime( $meta['published'] );
+		} else {
+			$account->created_at = new \DateTime( 'now' );
+		}
+		$account->username       = $meta['preferredUsername'];
+		$account->acct           = $meta['preferredUsername'] . '@' . wp_parse_url( $id, PHP_URL_HOST );
+		$account->display_name   = $meta['name'];
+		$account->url            = $id;
+		$account->note           = $meta['summary'];
+		if ( ! $account->note ) {
+			$account->note = '';
+		}
+
+		if ( isset( $meta['icon']['type'] ) && 'image' === strtolower( $meta['icon']['type'] ) ) {
+			$account->avatar['avatar'] = $meta['icon']['url'];
+		} else {
+			$account->avatar = $placeholder_image;
+		}
+		$account->avatar_static = $account->avatar;
+		if ( isset( $meta['header'] ) ) {
+			$account->header = $meta['header'];
+		} else {
+			$account->header = $placeholder_image;
+		}
+		$account->header_static = $account->header;
+
+		return $account;
+	}
+	public function mastodon_api_account_rewrite_local_account( $account, $user_id, $request = null, $post = null ) {
+		$id = apply_filters( 'mastodon_api_canonical_user_id', $account->id );
+		if ( $id !== $account->id ) {
+			$account = $this->get_mastodon_api_account( $id );
+		}
+		return $account;
+	}
+
 	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request = null, $post = null ) {
 		if ( ! $post instanceof \WP_Post ) {
 			return $account;
@@ -192,37 +241,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( Friends::CPT !== $post->post_type ) {
 			return $account;
 		}
-		$placeholder_image = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
-		// $placeholder_image = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
 
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
-			if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
-				$account = new \Enable_Mastodon_Apps\Entity\Account();
-				$account->id             = $meta['attributedTo']['id'];
-				$account->created_at = new \DateTime( $post->post_date );
-			}
-			$account->username       = $meta['attributedTo']['preferredUsername'];
-			$account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
-			$account->display_name   = $meta['attributedTo']['name'];
-			$account->url            = $meta['attributedTo']['id'];
-			$account->note           = $meta['attributedTo']['summary'];
-			if ( ! $account->note ) {
-				$account->note = '';
-			}
-			if ( isset( $meta['attributedTo']['icon'] ) ) {
-				$account->avatar = $meta['attributedTo']['icon'];
-			} else {
-				$account->avatar = $placeholder_image;
-			}
-			$account->avatar_static = $account->avatar;
-			if ( isset( $meta['attributedTo']['header'] ) ) {
-				$account->header = $meta['attributedTo']['header'];
-			} else {
-				$account->header = $placeholder_image;
-			}
-			$account->header_static = $account->header;
-
+			$account = $this->get_mastodon_api_account( $meta['attributedTo']['id'] );
 			return $account;
 		}
 
@@ -270,6 +292,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					'aspect' => $block['width'] / $block['height'],
 				);
 			} else {
+				continue;
 				$attachment->meta = array(
 					'width'  => 0,
 					'height' => 0,
@@ -387,7 +410,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
 				$status->account = $account;
 				if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
-					$status->reblog->account->id = $meta['attributedTo']['id'];
+					$status->reblog->account->id = apply_filters( 'mastodon_api_canonical_user_id', $meta['attributedTo']['id'] );
 				}
 			}
 		}
@@ -396,7 +419,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function suggest_display_name( $display_name, $url ) {
-		$meta = $this->get_metadata( $url );
+		$meta = self::get_metadata( $url );
 		if ( is_wp_error( $meta ) ) {
 			return $display_name;
 		}
@@ -418,7 +441,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! isset( $user_id_map[ $user_id ] ) ) {
 			$user_feed = User_Feed::get_by_url( $user_id );
 			if ( $user_feed && ! is_wp_error( $user_feed ) ) {
-				$user_id_map[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+				$user_id_map[ $user_id ] = $user_feed->get_url();
 			}
 		}
 		if ( ! isset( $user_id_map[ $user_id ] ) ) {
@@ -433,7 +456,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( $user ) {
 				foreach ( $user->get_active_feeds() as $user_feed ) {
 					if ( 'activitypub' === $user_feed->get_parser() ) {
-						$user_id_map[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+						$user_id_map[ $user_id ] = $user_feed->get_url();
 						break;
 					}
 				}
