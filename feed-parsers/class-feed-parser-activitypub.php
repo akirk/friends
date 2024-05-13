@@ -21,7 +21,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const SLUG = 'activitypub';
 	const NAME = 'ActivityPub';
 	const URL = 'https://www.w3.org/TR/activitypub/';
-	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
+	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_.-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
 	const EXTERNAL_USERNAME = 'external';
 
 	private $activitypub_already_handled = array();
