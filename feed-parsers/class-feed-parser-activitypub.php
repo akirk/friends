@@ -25,7 +25,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const EXTERNAL_USERNAME = 'external';
 
 	private $activitypub_already_handled = array();
-
+	private $mapped_usernames = array();
 	private $friends_feed;
 
 	/**
@@ -195,13 +195,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $account;
 		}
 
-		if ( ! preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $account->id ) ) {
+		if ( ! isset( $this->mapped_usernames[ $account->id ] ) ) {
 			return $account;
 		}
 
-		remove_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_update_remapped' ), 30 );
-
-		return apply_filters( 'mastodon_api_account', null, $account->id, null, null );
+		static $updated_accounts = array();
+		if ( ! isset( $updated_accounts[ $account->id ] ) ) {
+			remove_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_update_remapped' ), 30 );
+			$updated_accounts[ $account->id ] = apply_filters( 'mastodon_api_account', null, $account->id, null, null );
+			add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_update_remapped' ), 30, 4 );
+		}
+		return $updated_accounts[ $account->id ];
 	}
 
 	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request = null, $post = null ) {
@@ -322,24 +326,23 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function friends_mastodon_api_username( $user_id ) {
-		static $user_id_map = array();
-		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+		if ( ! isset( $this->mapped_usernames[ $user_id ] ) ) {
 			$user = User::get_user_by_id( $user_id );
 			if ( $user ) {
 				foreach ( $user->get_active_feeds() as $user_feed ) {
 					if ( 'activitypub' === $user_feed->get_parser() ) {
-						$user_id_map[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+						$this->mapped_usernames[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
 						break;
 					}
 				}
 			}
 		}
 
-		if ( ! isset( $user_id_map[ $user_id ] ) ) {
-			$user_id_map[ $user_id ] = $user_id;
+		if ( ! isset( $this->mapped_usernames[ $user_id ] ) ) {
+			$this->mapped_usernames[ $user_id ] = $user_id;
 		}
 
-		return $user_id_map[ $user_id ];
+		return $this->mapped_usernames[ $user_id ];
 	}
 
 	public function mastodon_api_canonical_user_id( $user_id ) {
