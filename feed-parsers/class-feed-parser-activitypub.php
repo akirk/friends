@@ -265,6 +265,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
 				$status->reblog = clone $status;
+				$status->reblog->account = clone $status->account;
 				$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
 			}
 			$friend_user = User::get_post_author( get_post( $post_id ) );
