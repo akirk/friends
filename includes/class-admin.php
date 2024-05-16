@@ -1980,6 +1980,10 @@ class Admin {
 									?>
 								</p>
 							<?php endif; ?>
+							<?php if ( $item->tags ) {
+								echo '<br/>#' . implode( ', #', $item->tags );
+							}
+							?>
 						</li>
 						<?php
 				}
