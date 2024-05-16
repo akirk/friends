@@ -39,6 +39,11 @@ function _manually_load_plugin() {
 		require $activitypub_plugin_alternate;
 	}
 
+	$enable_mastodon_apps_plugin = dirname( dirname( __DIR__ ) ) . '/enable-mastodon-apps/enable-mastodon-apps.php'; // phpcs:ignore
+	if ( file_exists( $enable_mastodon_apps_plugin ) ) {
+		require $enable_mastodon_apps_plugin;
+	}
+
 	require dirname( __DIR__ ) . '/friends.php';
 }
 tests_add_filter( 'muplugins_loaded', '_manually_load_plugin' );

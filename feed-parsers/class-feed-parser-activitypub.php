@@ -25,7 +25,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const EXTERNAL_USERNAME = 'external';
 
 	private $activitypub_already_handled = array();
-
+	private $mapped_usernames = array();
 	private $friends_feed;
 
 	/**
@@ -51,7 +51,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
 		\add_action( 'friends_suggest_display_name', array( $this, 'suggest_display_name' ), 10, 2 );
-		\add_action( 'mastodon_api_account_follow', array( $this, 'mastodon_api_account_follow' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'activitypub_follow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'activitypub_unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'activitypub_like_post' ), 10, 3 );
@@ -98,9 +97,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_get_feed_metadata', array( $this, 'friends_get_feed_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
 
-		add_filter( 'mastodon_api_timelines_args', array( $this, 'mastodon_api_timelines_args' ) );
+		add_filter( 'mastodon_api_mapback_user_id', array( $this, 'mastodon_api_mapback_user_id' ), 30, 4 );
+		add_filter( 'friends_mastodon_api_username', array( $this, 'friends_mastodon_api_username' ) );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
-		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 40, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 	}
 
@@ -177,9 +177,37 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 
-	public function mastodon_api_timelines_args( $args ) {
-		$args['post_type'][] = Friends::CPT;
-		return $args;
+	public function mastodon_api_mapback_user_id( $user_id ) {
+		if ( ! is_string( $user_id ) ) {
+			return $user_id;
+		}
+
+		$user = self::determine_mastodon_api_user( $user_id );
+		if ( $user ) {
+			return $user->ID;
+		}
+		return $user_id;
+	}
+
+	public function mastodon_api_account_update_remapped( $account, $user_id, $request = null, $post = null ) {
+		if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+				return $account;
+		}
+
+		if ( in_array( $account->id, $this->mapped_usernames, true ) ) {
+				return $account;
+		}
+
+			static $updated_accounts = array();
+		if ( ! isset( $updated_accounts[ $account->id ] ) ) {
+				$updated_account = \Activitypub\Integration\Enable_Mastodon_Apps::api_account_external( null, $account->id );
+			if ( ! $updated_account || is_wp_error( $updated_account ) || is_wp_error( $updated_account->acct ) ) {
+					$updated_accounts[ $account->id ] = $account;
+			} else {
+					$updated_accounts[ $account->id ] = $updated_account;
+			}
+		}
+			return $updated_accounts[ $account->id ];
 	}
 
 	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request = null, $post = null ) {
@@ -236,6 +264,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
 				$status->reblog = clone $status;
+				$status->reblog->account = clone $status->account;
 				$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
 			}
 			$friend_user = User::get_post_author( get_post( $post_id ) );
@@ -272,6 +301,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				}
 			} else {
 				$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID );
+
 			}
 
 			if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
@@ -299,13 +329,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $display_name;
 	}
 
-	public function mastodon_api_account_follow( $user_id, $request ) {
-		return apply_filters( 'friends_create_and_follow', null, $user_id );
+	public function friends_mastodon_api_username( $user_id ) {
+		if ( ! isset( $this->mapped_usernames[ $user_id ] ) ) {
+			$user = User::get_user_by_id( $user_id );
+			if ( $user ) {
+				foreach ( $user->get_active_feeds() as $user_feed ) {
+					if ( 'activitypub' === $user_feed->get_parser() ) {
+						$this->mapped_usernames[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+						break;
+					}
+				}
+			}
+		}
+
+		if ( ! isset( $this->mapped_usernames[ $user_id ] ) ) {
+			$this->mapped_usernames[ $user_id ] = $user_id;
+		}
+
+		return $this->mapped_usernames[ $user_id ];
 	}
 
 	public function mastodon_api_canonical_user_id( $user_id ) {
 		static $user_id_map = array();
-		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+		if ( ! isset( $user_id_map[ $user_id ] ) && is_string( $user_id ) ) {
 			$user_feed = User_Feed::get_by_url( $user_id );
 			if ( $user_feed && ! is_wp_error( $user_feed ) ) {
 				$user_id_map[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
@@ -446,9 +492,20 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     string  The rewritten URL.
 	 */
 	public static function friends_webfinger_resolve( $url, $incoming_url ) {
+		$pre = apply_filters( 'pre_friends_webfinger_resolve', false, $url, $incoming_url );
+		if ( $pre ) {
+			return $pre;
+		}
+
+		static $cache = array();
+		if ( isset( $cache[ $incoming_url ] ) ) {
+			return $cache[ $incoming_url ];
+		}
+
 		if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $incoming_url ) ) {
 			$resolved_url = \Activitypub\Webfinger::resolve( $incoming_url );
 			if ( ! is_wp_error( $resolved_url ) ) {
+				$cache[ $incoming_url ] = $resolved_url;
 				return $resolved_url;
 			}
 		}

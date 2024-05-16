@@ -14,10 +14,10 @@ namespace Friends;
  */
 class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	public static $users = array();
-	private $friend_id;
-	private $friend_name;
-	private $friend_nicename;
-	private $actor;
+	protected $friend_id;
+	protected $friend_name;
+	protected $friend_nicename;
+	protected $actor;
 
 	public function test_incoming_post() {
 		update_user_option( 'activitypub_friends_show_replies', '1', $this->friend_id );
@@ -325,6 +325,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$metadata = \ActivityPub\get_remote_metadata_by_actor( $actor );
 		$this->assertEquals( sprintf( 'https://%s/users/%s/', $domain, $username ), $metadata['url'], $actor );
 		$this->assertEquals( $username, $metadata['name'], $actor );
+		remove_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8, 3 );
 	}
 
 	public function set_up() {
@@ -336,6 +337,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		add_filter( 'activitypub_defer_signature_verification', '__return_true' );
 		add_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
+		add_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 2 );
 
 		$user_id = $this->factory->user->create(
 			array(
@@ -349,27 +351,24 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$user_feed = User_Feed::get_by_url( $this->actor );
 		if ( is_wp_error( $user_feed ) ) {
-			$this->friend_id = $this->factory->user->create(
-				array(
-					'user_login'   => 'akirk.blog',
-					'display_name' => $this->friend_name,
-					'nicename'     => $this->friend_nicename,
-					'role'         => 'friend',
-				)
-			);
-			$user_feed = User_Feed::save(
-				new User( $this->friend_id ),
+			$friend = User::create( 'akirk.blog', 'subscription', '', $this->friend_name, null, null, null, true );
+			$friend->save_feed(
 				$this->actor,
 				array(
 					'parser' => 'activitypub',
+					'active' => true,
 				)
 			);
 		} else {
-			$this->friend_id = $user_feed->get_friend_user()->ID;
+			$friend = $user_feed->get_friend_user();
 		}
 
-		$userdata = get_userdata( $this->friend_id );
-		$this->friend_nicename = $userdata->user_nicename;
+		$this->friend_id = $friend->ID;
+		$this->friend_nicename = $friend->user_nicename;
+		if ( ! $this->friend_nicename ) {
+			$this->friend_nicename = $friend->user_login;
+		}
+		$this->friend_nicename = sanitize_title( $this->friend_nicename );
 
 		self::$users[ $this->actor ] = array(
 			'id'   => $this->actor,
@@ -388,6 +387,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	public function tear_down() {
 		remove_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		remove_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
+		remove_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 2 );
 		remove_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8 );
 		parent::tear_down();
 	}
@@ -395,6 +395,16 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	public static function friends_get_activitypub_metadata( $ret, $url ) {
 		if ( isset( self::$users[ $url ] ) ) {
 			return self::$users[ $url ];
+		}
+		return $ret;
+	}
+
+	public static function pre_friends_webfinger_resolve( $ret, $url ) {
+		if ( preg_match( '/^@?' . Feed_Parser_ActivityPub::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $url, $m ) ) {
+			$url = 'https://' . $m[2] . '/@' . $m[1];
+		}
+		if ( isset( self::$users[ $url ] ) ) {
+			return self::$users[ $url ]['url'];
 		}
 		return $ret;
 	}

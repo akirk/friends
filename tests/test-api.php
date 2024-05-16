@@ -8,7 +8,7 @@
 namespace Friends;
 
 /**
- * Test the Notifications
+ * Test the API
  */
 class APITest extends Friends_TestCase_Cache_HTTP {
 	/**

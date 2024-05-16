@@ -1286,7 +1286,12 @@ class User extends \WP_User {
 		if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
 			return $account;
 		}
+		if ( ! class_exists( Feed_Parser_ActivityPub::class ) ) {
+			return $account;
+		}
+
 		$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
+
 		if ( ! $user ) {
 			if ( ! $post instanceof \WP_Post ) {
 				return $account;
@@ -1301,7 +1306,7 @@ class User extends \WP_User {
 			if ( ! $note ) {
 				$note = '';
 			}
-			$account->id             = $user->user_login;
+			$account->id             = apply_filters( 'friends_mastodon_api_username', $user->ID );
 			$account->username       = $user->user_login;
 			$account->display_name   = $user->display_name;
 			$account->avatar         = $user->get_avatar_url();
@@ -1325,6 +1330,7 @@ class User extends \WP_User {
 				'fields'    => array(),
 			);
 		}
+
 		return $account;
 	}
 
