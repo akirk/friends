@@ -1306,7 +1306,7 @@ class User extends \WP_User {
 			if ( ! $note ) {
 				$note = '';
 			}
-			$account->id             = $user->ID;
+			$account->id             = apply_filters( 'friends_mastodon_api_username', $user->ID );
 			$account->username       = $user->user_login;
 			$account->display_name   = $user->display_name;
 			$account->avatar         = $user->get_avatar_url();

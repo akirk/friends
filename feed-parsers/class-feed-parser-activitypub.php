@@ -98,6 +98,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
 
 		add_filter( 'mastodon_api_mapback_user_id', array( $this, 'mastodon_api_mapback_user_id' ), 30, 4 );
+		add_filter( 'friends_mastodon_api_username', array( $this, 'friends_mastodon_api_username' ) );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
@@ -306,6 +307,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $display_name;
 	}
 
+	public function friends_mastodon_api_username( $user_id ) {
+		static $user_id_map = array();
+		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+			$user = User::get_user_by_id( $user_id );
+			if ( $user ) {
+				foreach ( $user->get_active_feeds() as $user_feed ) {
+					if ( 'activitypub' === $user_feed->get_parser() ) {
+						$user_id_map[ $user_id ] = self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+						break;
+					}
+				}
+			}
+		}
+
+		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+			$user_id_map[ $user_id ] = $user_id;
+		}
+
+		return $user_id_map[ $user_id ];
+	}
 
 	public function mastodon_api_canonical_user_id( $user_id ) {
 		static $user_id_map = array();
