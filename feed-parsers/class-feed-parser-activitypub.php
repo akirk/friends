@@ -192,20 +192,23 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function mastodon_api_account_update_remapped( $account, $user_id, $request = null, $post = null ) {
 		if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
-			return $account;
+				return $account;
 		}
 
-		if ( ! isset( $this->mapped_usernames[ $account->id ] ) ) {
-			return $account;
+		if ( ! in_array( $account->id, $this->mapped_usernames, true ) ) {
+				return $account;
 		}
 
-		static $updated_accounts = array();
+			static $updated_accounts = array();
 		if ( ! isset( $updated_accounts[ $account->id ] ) ) {
-			remove_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_update_remapped' ), 30 );
-			$updated_accounts[ $account->id ] = apply_filters( 'mastodon_api_account', null, $account->id, null, null );
-			add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_update_remapped' ), 30, 4 );
+				$updated_account = \Activitypub\Integration\Enable_Mastodon_Apps::api_account_external( null, $account->id );
+			if ( ! $updated_account || is_wp_error( $updated_account ) || is_wp_error( $updated_account->acct ) ) {
+					$updated_accounts[ $account->id ] = $account;
+			} else {
+					$updated_accounts[ $account->id ] = $updated_account;
+			}
 		}
-		return $updated_accounts[ $account->id ];
+			return $updated_accounts[ $account->id ];
 	}
 
 	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request = null, $post = null ) {
