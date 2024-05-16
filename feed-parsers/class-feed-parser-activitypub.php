@@ -99,7 +99,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_filter( 'mastodon_api_mapback_user_id', array( $this, 'mastodon_api_mapback_user_id' ), 30, 4 );
 		add_filter( 'friends_mastodon_api_username', array( $this, 'friends_mastodon_api_username' ) );
-		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_update_remapped' ), 30, 4 );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 20, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
@@ -195,7 +194,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				return $account;
 		}
 
-		if ( ! in_array( $account->id, $this->mapped_usernames, true ) ) {
+		if ( in_array( $account->id, $this->mapped_usernames, true ) ) {
 				return $account;
 		}
 
@@ -302,6 +301,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				}
 			} else {
 				$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID );
+
 			}
 
 			if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {

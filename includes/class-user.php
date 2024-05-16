@@ -1330,6 +1330,7 @@ class User extends \WP_User {
 				'fields'    => array(),
 			);
 		}
+
 		return $account;
 	}
 

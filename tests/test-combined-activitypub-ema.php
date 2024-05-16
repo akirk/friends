@@ -11,12 +11,20 @@ namespace Friends;
  * Test the Enable Mastodon Apps integration
  */
 class Combined_ActivityPub_EnableMastdodonApps_Test extends ActivityPubTest {
+	public static $users = array();
 	private $posts = array();
+
 	public function set_up() {
 		if ( ! class_exists( '\Enable_Mastodon_Apps\Mastodon_API' ) ) {
 			return $this->markTestSkipped( 'The Enable Mastodon Apps plugin is not loaded.' );
 		}
 		parent::set_up();
+
+		self::$users['https://notiz.blog/author/matthias-pfefferle/'] = array(
+			'id'   => 'https://notiz.blog/author/matthias-pfefferle/',
+			'url'  => 'https://notiz.blog/author/matthias-pfefferle/',
+			'name' => 'Matthias Pfefferle',
+		);
 	}
 
 	public function tear_down() {
@@ -102,5 +110,48 @@ class Combined_ActivityPub_EnableMastdodonApps_Test extends ActivityPubTest {
 		$account = $statuses->data[0]->account;
 		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
 		$this->assertEquals( $friend->ID, $re_resolved_account_id );
+	}
+
+	public function test_reblogs() {
+		$user_feed = User_Feed::get_by_url( $this->actor );
+		$friend = $user_feed->get_friend_user();
+		$post_id = $friend->insert_post(
+			array(
+				'post_type'    => Friends::CPT,
+				'post_content' => 'Hello, World!',
+				'post_status'  => 'publish',
+				'meta_input'   => array(
+					'activitypub' => array(
+						'attributedTo' => array(
+							'id'                => 'https://notiz.blog/author/matthias-pfefferle/',
+							'preferredUsername' => 'Matthias',
+							'name'              => 'Matthias Pfefferle',
+							'summary'           => 'Creator of the ActivityPub plugin',
+						),
+						'reblog'       => true,
+					),
+				),
+			)
+		);
+		$this->posts[] = $post_id;
+
+		$request = new \WP_REST_Request( 'GET', '/api/mastodon/timelines/home' );
+		$statuses = apply_filters( 'mastodon_api_timelines', null, $request );
+		$this->assertNotEmpty( $statuses->data );
+		$status = $statuses->data[0];
+		$this->assertEquals( $post_id, $status->id );
+
+		$account = $statuses->data[0]->account;
+		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
+		$this->assertEquals( $friend->ID, $re_resolved_account_id );
+
+		$account = $statuses->data[0]->account;
+		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
+		$this->assertEquals( $friend->ID, $re_resolved_account_id );
+
+		$this->assertNotEmpty( $statuses->data );
+		$this->assertNotEquals( $status->reblog->id, $status->id );
+		$this->assertNotEquals( $status->reblog->account->id, $status->account->id );
+		$this->assertNotEquals( $status->reblog->account->username, $status->account->username );
 	}
 }
