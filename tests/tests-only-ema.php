@@ -81,7 +81,7 @@ class Only_EnableMastdodonApps_Test extends Friends_TestCase_Cache_HTTP {
 				'post_status'   => 'publish',
 			)
 		);
-		$this - posts[] = $post_id;
+		$this->posts[] = $post_id;
 
 		$request = new \WP_REST_Request( 'GET', '/api/mastodon/timelines/home' );
 		$statuses = apply_filters( 'mastodon_api_timelines', null, $request );
