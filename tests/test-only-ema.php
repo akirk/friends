@@ -55,6 +55,16 @@ class Only_EnableMastdodonApps_Test extends Friends_TestCase_Cache_HTTP {
 			wp_delete_post( $post_id, true );
 		}
 		remove_filter( 'pre_http_request', array( $this, 'block_http_requests' ) );
+
+		if ( ! class_exists( '\Enable_Mastodon_Apps\Mastodon_API' ) ) {
+			return;
+		}
+
+		if ( \Enable_Mastodon_Apps\Mastodon_API::get_last_error() ) {
+			$stderr = fopen( 'php://stderr', 'w' );
+			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
+			fclose( $stderr );
+		}
 	}
 
 	public function block_http_requests() {
@@ -162,15 +172,5 @@ class Only_EnableMastdodonApps_Test extends Friends_TestCase_Cache_HTTP {
 		$account = $status->account;
 		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
 		$this->assertEquals( $friend->ID, $re_resolved_account_id );
-	}
-
-
-	public function filter_external_status() {
-
-	}
-
-	public function test_submit_external_status_reply() {
-		add_filter( 'mastodon_api_statuses', array( $this, 'filter_external_status' ), 10, 2 );
-		$this->assertTrue( true );
 	}
 }
