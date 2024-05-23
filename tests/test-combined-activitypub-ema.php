@@ -45,6 +45,10 @@ class Combined_ActivityPub_EnableMastdodonApps_Test extends ActivityPubTest {
 			wp_delete_post( $post_id, true );
 		}
 
+		if ( ! class_exists( '\Enable_Mastodon_Apps\Mastodon_API' ) ) {
+			return;
+		}
+
 		if ( \Enable_Mastodon_Apps\Mastodon_API::get_last_error() ) {
 			$stderr = fopen( 'php://stderr', 'w' );
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );

@@ -55,6 +55,16 @@ class Only_EnableMastdodonApps_Test extends Friends_TestCase_Cache_HTTP {
 			wp_delete_post( $post_id, true );
 		}
 		remove_filter( 'pre_http_request', array( $this, 'block_http_requests' ) );
+
+		if ( ! class_exists( '\Enable_Mastodon_Apps\Mastodon_API' ) ) {
+			return;
+		}
+
+		if ( \Enable_Mastodon_Apps\Mastodon_API::get_last_error() ) {
+			$stderr = fopen( 'php://stderr', 'w' );
+			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
+			fclose( $stderr );
+		}
 	}
 
 	public function block_http_requests() {
