@@ -102,6 +102,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 40, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
+		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_comment_parent_post_id' ), 25 );
+		add_filter( 'friends_cache_url_post_id', array( '\Friends\Feed', 'url_to_postid' ) );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -347,6 +349,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $this->mapped_usernames[ $user_id ];
+	}
+
+	public function mastodon_api_comment_parent_post_id( $in_reply_to_id ) {
+		$in_reply_to_id = \Enable_Mastodon_Apps\Mastodon_API::maybe_get_remapped_url( $in_reply_to_id );
+		if ( ! is_string( $in_reply_to_id ) ) {
+			return $in_reply_to_id;
+		}
+		if ( filter_var( $in_reply_to_id, FILTER_VALIDATE_URL ) ) {
+			$in_reply_to_id = $this->cache_url( $in_reply_to_id );
+		}
+		return $in_reply_to_id;
 	}
 
 	public function mastodon_api_canonical_user_id( $user_id ) {
@@ -1424,7 +1437,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$post_id = Feed::url_to_postid( $url );
+		if ( ! $post_id ) {
+			$this->show_message_on_frontend(
+				sprintf(
+					// translators: %s is a URl.
+					__( 'Could not retrieve URL %s', 'friends' ),
+					'<a href="' . esc_attr( $url ) . '">' . Friends::url_truncate( $url ) . '</a>'
+				)
+			);
+			return;
+		}
+		$post_id = $this->cache_url( $url );
+
+		$user = User::get_post_author( get_post( $post_id ) );
+		wp_safe_redirect( $user->get_local_friends_page_url( $post_id ) . $append_to_redirect );
+		exit;
+	}
+
+	public function cache_url( $url ) {
+		$post_id = apply_filters( 'friends_cache_url_post_id', false, $url );
 		if ( ! $post_id ) {
 			$user = $this->get_external_user();
 			$user_feed = $this->get_external_mentions_feed();
@@ -1458,21 +1489,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				}
 			}
 		}
-
-		if ( ! $post_id ) {
-			$this->show_message_on_frontend(
-				sprintf(
-					// translators: %s is a URl.
-					__( 'Could not retrieve URL %s', 'friends' ),
-					'<a href="' . esc_attr( $url ) . '">' . Friends::url_truncate( $url ) . '</a>'
-				)
-			);
-			return;
-		}
-
-		$user = User::get_post_author( get_post( $post_id ) );
-		wp_safe_redirect( $user->get_local_friends_page_url( $post_id ) . $append_to_redirect );
-		exit;
+		return $post_id;
 	}
 
 	public function the_content( $the_content ) {

@@ -163,14 +163,4 @@ class Only_EnableMastdodonApps_Test extends Friends_TestCase_Cache_HTTP {
 		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
 		$this->assertEquals( $friend->ID, $re_resolved_account_id );
 	}
-
-
-	public function filter_external_status() {
-
-	}
-
-	public function test_submit_external_status_reply() {
-		add_filter( 'mastodon_api_statuses', array( $this, 'filter_external_status' ), 10, 2 );
-		$this->assertTrue( true );
-	}
 }
