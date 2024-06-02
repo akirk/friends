@@ -720,6 +720,23 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $mentions;
 	}
 
+	public static function extract_html_mentions( $content ) {
+		$tags = new \WP_HTML_Tag_Processor( $content );
+		while ( $tags->next_tag(
+			array(
+				'tag_name'   => 'a',
+				'class_name' => 'mention',
+			)
+		) ) {
+				$href = $tags->get_attribute( 'href' );
+			if ( $href ) {
+				$mentions[ $href ] = true;
+			}
+		}
+
+		return $mentions;
+	}
+
 	public function activitypub_handled_create( $activity, $user_id, $state, $reaction ) {
 		$this->log( 'ActivityPub handled create', compact( 'activity', 'user_id', 'state', 'reaction' ) );
 		if ( $reaction ) {
@@ -2216,21 +2233,51 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $comments;
 	}
 
-	public function append_comment_form( $content, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
-		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
-			return $content;
+	public function comment_form( $post_id ) {
+		$post = get_post( $post_id );
+		$mentions = self::extract_html_mentions( $post->post_content );
+		$meta = get_post_meta( $post->ID, self::SLUG, true );
+		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
+			$mentions[ $meta['attributedTo']['id'] ] = $meta['attributedTo']['id'];
 		}
 
-		ob_start();
+		$comment_content = '';
+		if ( $mentions ) {
+			$comment_content = '@' . implode( ' @', array_map( array( self::class, 'convert_actor_to_mastodon_handle' ), array_keys( $mentions ) ) ) . ' ';
+		}
+		$html5 = current_theme_supports( 'html5', 'comment-form' ) ? 'html5' : 'xhtml';
+		$required_attribute = ( $html5 ? ' required' : ' required="required"' );
+		$required_indicator = ' ' . wp_required_field_indicator();
+
 		\comment_form(
 			array(
 				'title_reply'          => __( 'Send reply via ActivityPub', 'friends' ),
 				'logged_in_as'         => '',
 				'comment_notes_before' => '',
+				'comment_field'        => sprintf(
+					'<p class="comment-form-comment">%s %s</p>',
+					sprintf(
+						'<label for="comment">%s%s</label>',
+						_x( 'Comment', 'noun' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						$required_indicator
+					),
+					'<textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525"' . $required_attribute . '>' . esc_html( $comment_content ) . '</textarea>'
+				),
 			),
 			$post_id
 		);
+	}
 
+	public function append_comment_form( $content, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( ! $meta ) {
+			if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+				return $content;
+			}
+		}
+
+		ob_start();
+		self::comment_form( $post_id );
 		$comment_form = ob_get_contents();
 		ob_end_clean();
 

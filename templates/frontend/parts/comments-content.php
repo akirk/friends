@@ -6,4 +6,10 @@
  * @package Friends
  */
 
-?><footer class="comments-content card-footer"></footer>
+?><footer class="comments-content card-footer" style="display: block;">
+<?php
+if ( is_single() ) {
+	\Friends\Feed_Parser_ActivityPub::comment_form( get_the_ID() );
+}
+?>
+</footer>
