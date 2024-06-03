@@ -101,21 +101,26 @@ class Frontend {
 	 * We're asking WordPress to handle the title for us.
 	 */
 	public function add_rewrite_rule() {
-		add_rewrite_rule(
-			'friends/(.*)/(?:feed/)?(feed|rdf|rss|rss2|atom)/?$',
-			'index.php?pagename=friends/$matches[1]&feed=$matches[2]',
-			'top'
+		$existing_rules = get_option( 'rewrite_rules' );
+		$needs_flush = false;
+
+		$rules = array(
+			'^friends/(.*)/(?:feed/)?(feed|rdf|rss|rss2|atom)/?$' => 'index.php?pagename=friends/$matches[1]&feed=$matches[2]',
+			'^friends/(.*)/(\d+)/?$' => 'index.php?pagename=friends/$matches[1]&page=$matches[2]',
+			'^friends/(.*)'          => 'index.php?pagename=friends/$matches[1]',
 		);
-		add_rewrite_rule(
-			'friends/(.*)/(\d+)/?$',
-			'index.php?pagename=friends/$matches[1]&page=$matches[2]',
-			'top'
-		);
-		add_rewrite_rule(
-			'friends/(.*)',
-			'index.php?pagename=friends/$matches[1]',
-			'top'
-		);
+
+		foreach ( $rules as $rule => $rewrite ) {
+			if ( empty( $existing_rules[ $rule ] ) ) {
+				$needs_flush = true;
+			}
+			add_rewrite_rule( $rule, $rewrite, 'top' );
+		}
+
+		if ( $needs_flush ) {
+			global $wp_rewrite;
+			$wp_rewrite->flush_rules();
+		}
 	}
 
 	/**
@@ -1097,12 +1102,15 @@ class Frontend {
 		$pagename = '';
 		if ( isset( $wp_query->query['pagename'] ) ) {
 			$pagename = $wp_query->query['pagename'];
+		} elseif ( isset( $wp_query->query['category_name'] ) ) {
+			$pagename = $wp_query->query['category_name'];
 		} elseif ( isset( $wp_query->query['name'] ) ) {
 			$pagename = $wp_query->query['name'];
 		}
 
 		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
 		$is_friends = array_shift( $pagename_parts );
+
 		if ( 'friends' !== $is_friends ) {
 			return $query;
 		}
@@ -1235,6 +1243,7 @@ class Frontend {
 		$query->is_page = false;
 		$query->is_comments_feed = false;
 		$query->set( 'pagename', null );
+		$query->set( 'category_name', null );
 		if ( 'collapsed' === get_option( 'friends_frontend_default_view', 'expanded' ) && get_option( 'posts_per_page' ) < 20 ) {
 			if ( 'status' === $post_format ) {
 				$query->set( 'posts_per_page', 30 );
