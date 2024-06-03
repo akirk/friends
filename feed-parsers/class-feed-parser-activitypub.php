@@ -2235,7 +2235,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $comments;
 	}
 
-	public function comment_form( $post_id ) {
+	public static function comment_form( $post_id ) {
 		$post = get_post( $post_id );
 		$mentions = self::extract_html_mentions( $post->post_content );
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
