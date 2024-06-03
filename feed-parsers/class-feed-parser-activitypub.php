@@ -1454,6 +1454,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
+		$post_id = $this->cache_url( $url );
+
 		if ( ! $post_id ) {
 			$this->show_message_on_frontend(
 				sprintf(
