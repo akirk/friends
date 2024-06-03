@@ -104,6 +104,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_comment_parent_post_id' ), 25 );
 		add_filter( 'friends_cache_url_post_id', array( '\Friends\Feed', 'url_to_postid' ) );
+
+		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -2254,6 +2256,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\comment_form(
 			array(
 				'title_reply'          => __( 'Send reply via ActivityPub', 'friends' ),
+				'title_reply_before'   => '<h5 id="reply-title" class="comment-reply-title">',
+				'title_reply_after'    => '</h5>',
 				'logged_in_as'         => '',
 				'comment_notes_before' => '',
 				'comment_field'        => sprintf(
