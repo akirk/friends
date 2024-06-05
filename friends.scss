@@ -607,7 +607,47 @@ h2#page-title a.dashicons {
 		}
 
 		footer.comments-content {
-			display: none;
+			&.closed {
+				display: none;
+			}
+
+			.comment-list {
+				padding-left: 0;
+				list-style: none;
+			}
+
+			.comment-list>li {
+				margin-top: var(--global--spacing-vertical);
+				margin-bottom: var(--global--spacing-vertical);
+			}
+
+			.comment-list .children {
+				list-style: none;
+				margin-left: 0;
+				padding-left: 5px;
+				border-left: 3px solid #eee;
+			}
+
+			.comment-list .children>li {
+				margin-top: var(--global--spacing-vertical);
+				margin-bottom: var(--global--spacing-vertical);
+			}
+
+			@media only screen and (min-width: 482px) {
+
+				.comment-list .depth-2,
+				.comment-list .depth-3 {
+					padding-left: calc(4 * var(--global--spacing-horizontal));
+				}
+			}
+
+			.comment-reply-title small {
+				margin-left: 1em;
+			}
+
+			.comment-form-comment label {
+				display: block;
+			}
 		}
 	}
 

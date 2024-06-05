@@ -104,6 +104,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_comment_parent_post_id' ), 25 );
 		add_filter( 'friends_cache_url_post_id', array( '\Friends\Feed', 'url_to_postid' ) );
+
+		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -715,6 +717,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			$mentions[ $meta['attributedTo']['id'] ] = $meta['attributedTo']['id'];
+		}
+
+		return $mentions;
+	}
+
+	public static function extract_html_mentions( $content ) {
+		$tags = new \WP_HTML_Tag_Processor( $content );
+		$mentions = array();
+		while ( $tags->next_tag(
+			array(
+				'tag_name'   => 'a',
+				'class_name' => 'mention',
+			)
+		) ) {
+				$href = $tags->get_attribute( 'href' );
+			if ( $href ) {
+				$mentions[ $href ] = true;
+			}
 		}
 
 		return $mentions;
@@ -1436,6 +1456,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $url ) {
 			return;
 		}
+
+		$post_id = $this->cache_url( $url );
 
 		if ( ! $post_id ) {
 			$this->show_message_on_frontend(
@@ -2216,21 +2238,53 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $comments;
 	}
 
-	public function append_comment_form( $content, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
-		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
-			return $content;
+	public static function comment_form( $post_id ) {
+		$post = get_post( $post_id );
+		$mentions = self::extract_html_mentions( $post->post_content );
+		$meta = get_post_meta( $post->ID, self::SLUG, true );
+		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
+			$mentions[ $meta['attributedTo']['id'] ] = $meta['attributedTo']['id'];
 		}
 
-		ob_start();
+		$comment_content = '';
+		if ( $mentions ) {
+			$comment_content = '@' . implode( ' @', array_map( array( self::class, 'convert_actor_to_mastodon_handle' ), array_keys( $mentions ) ) ) . ' ';
+		}
+		$html5 = current_theme_supports( 'html5', 'comment-form' ) ? 'html5' : 'xhtml';
+		$required_attribute = ( $html5 ? ' required' : ' required="required"' );
+		$required_indicator = ' ' . wp_required_field_indicator();
+
 		\comment_form(
 			array(
 				'title_reply'          => __( 'Send reply via ActivityPub', 'friends' ),
+				'title_reply_before'   => '<h5 id="reply-title" class="comment-reply-title">',
+				'title_reply_after'    => '</h5>',
 				'logged_in_as'         => '',
 				'comment_notes_before' => '',
+				'comment_field'        => sprintf(
+					'<p class="comment-form-comment">%s %s</p>',
+					sprintf(
+						'<label for="comment">%s%s</label>',
+						_x( 'Comment', 'noun' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+						$required_indicator
+					),
+					'<textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525"' . $required_attribute . '>' . esc_html( $comment_content ) . '</textarea>'
+				),
 			),
 			$post_id
 		);
+	}
 
+	public function append_comment_form( $content, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( ! $meta ) {
+			if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+				return $content;
+			}
+		}
+
+		ob_start();
+		self::comment_form( $post_id );
 		$comment_form = ob_get_contents();
 		ob_end_clean();
 
