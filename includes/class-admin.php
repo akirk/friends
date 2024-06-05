@@ -1774,7 +1774,7 @@ class Admin {
 				$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
 			}
 		} else {
-			if ( home_url() === trailingslashit( $friend_url ) ) {
+			if ( str_starts_with( $friend_url, home_url() ) ) {
 				return new \WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 			}
 
