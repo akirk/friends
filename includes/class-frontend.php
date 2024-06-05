@@ -684,24 +684,24 @@ class Frontend {
 		if ( empty( $comments ) ) {
 			$content = apply_filters( 'friends_no_comments_feed_available', __( 'We tried to load comments remotely but there were no comments.', 'friends' ), $post_id, $friend_user, $user_feed );
 		} else {
+			remove_all_filters( 'comment_form_before' );
 			$template_loader = Friends::template_loader();
 			ob_start();
 			?>
 			<h5><?php esc_html_e( 'Comments' ); /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></h5>
+			<ol class="comment-list">
+				<?php
+					wp_list_comments(
+						array(
+							'style'       => 'ol',
+							'short_ping'  => true,
+							'avatar_size' => 24,
+						),
+						$comments
+					);
+				?>
+			</ol><!-- .comment-list -->
 			<?php
-			foreach ( $comments as $comment ) {
-				$template_loader->get_template_part(
-					'frontend/parts/comment',
-					null,
-					array(
-						'author'       => $comment->comment_author,
-						'date'         => $comment->comment_date,
-						'permalink'    => $comment->guid . '#comment-' . $comment->comment_ID,
-						'post_content' => $comment->comment_content,
-					)
-				);
-			}
-
 			$content = ob_get_contents();
 			ob_end_clean();
 		}

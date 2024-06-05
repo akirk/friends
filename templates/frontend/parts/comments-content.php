@@ -29,6 +29,7 @@ if ( is_single() ) {
 	<h5><?php esc_html_e( 'Comments' ); /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></h5>
 		<ol class="comment-list">
 			<?php
+				remove_all_filters( 'comments_template' );
 				wp_list_comments(
 					array(
 						'style'       => 'ol',

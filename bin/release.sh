@@ -6,6 +6,15 @@ echo Friends Release $FRIENDS_VERSION
 echo "====================="
 echo
 
+svn info | grep ^URL: | grep -q plugins.svn.wordpress.org/friends/trunk
+if [ $? -eq 1 ]; then
+	echo -ne "\033[31m✘\033[0m "
+	echo "Not on the SVN path https://plugins.svn.wordpress.org/friends/trunk"
+	return
+fi
+echo -ne "\033[32m✔\033[0m "
+echo "On the SVN path https://plugins.svn.wordpress.org/friends/trunk"
+
 git symbolic-ref --short HEAD | grep -q ^main$
 if [ $? -eq 1 ]; then
 	echo -ne "\033[31m✘\033[0m "

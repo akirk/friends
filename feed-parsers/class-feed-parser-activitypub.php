@@ -724,6 +724,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public static function extract_html_mentions( $content ) {
 		$tags = new \WP_HTML_Tag_Processor( $content );
+		$mentions = array();
 		while ( $tags->next_tag(
 			array(
 				'tag_name'   => 'a',
