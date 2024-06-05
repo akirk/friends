@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.5
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.2
+- Stable tag: 2.9.3
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,13 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.9.3
+- Fix Rewrite for Categories ([#322])
+- Show Comments and the Form on Permalink pages ([#321])
+- Don't allow to follow any local URL to prevent loops ([#320])
+- Enable Mastodon Apps Updates: Cache the post when replying to it ([#318]), Map back the canonical user id to a user ([#317])
+- Allow a dot in the ActivityPub username ([#316])
+
 ### 2.9.2
 - Fix Friend Request notification setting saving ([#313])
 - Add a Stats Widget ([#297])
@@ -109,12 +116,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ### 2.9.0
 - Fix issues discovered by the plugin check plugin ([#301])
 
-### 2.8.9
-- One more fix to the update routine for previous version
-
-### 2.8.8
-- Fix update routine for previous version
-
+[#322]: https://github.com/akirk/friends/pull/322
+[#321]: https://github.com/akirk/friends/pull/321
+[#320]: https://github.com/akirk/friends/pull/320
+[#318]: https://github.com/akirk/friends/pull/318
+[#317]: https://github.com/akirk/friends/pull/317
+[#316]: https://github.com/akirk/friends/pull/316
 [#313]: https://github.com/akirk/friends/pull/313
 [#297]: https://github.com/akirk/friends/pull/297
 [#310]: https://github.com/akirk/friends/pull/310

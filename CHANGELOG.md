@@ -1,3 +1,10 @@
+### 2.9.3
+- Fix Rewrite for Categories ([#322])
+- Show Comments and the Form on Permalink pages ([#321])
+- Don't allow to follow any local URL to prevent loops ([#320])
+- Enable Mastodon Apps Updates: Cache the post when replying to it ([#318]), Map back the canonical user id to a user ([#317])
+- Allow a dot in the ActivityPub username ([#316])
+
 ### 2.9.2
 - Fix Friend Request notification setting saving ([#313])
 - Add a Stats Widget ([#297])
@@ -234,7 +241,12 @@
 - Add Emoji reactions
 - Add blog to blog messaging
 
-[Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+[#322]: https://github.com/akirk/friends/pull/322
+[#321]: https://github.com/akirk/friends/pull/321
+[#320]: https://github.com/akirk/friends/pull/320
+[#318]: https://github.com/akirk/friends/pull/318
+[#317]: https://github.com/akirk/friends/pull/317
+[#316]: https://github.com/akirk/friends/pull/316
 [#313]: https://github.com/akirk/friends/pull/313
 [#297]: https://github.com/akirk/friends/pull/297
 [#310]: https://github.com/akirk/friends/pull/310
@@ -322,3 +334,4 @@
 [#107]: https://github.com/akirk/friends/pull/107
 [activitypub#213]: https://github.com/pfefferle/wordpress-activitypub/pull/213
 [activitypub#172]: https://github.com/pfefferle/wordpress-activitypub/pull/172
+[Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader

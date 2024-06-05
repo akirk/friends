@@ -35,18 +35,6 @@ fi
 echo -ne "\033[32m✔\033[0m "
 echo "svn up to date"
 
-git diff-files --quiet
-if [ $? -eq 1 ]; then
-	echo -ne "\033[31m✘\033[0m "
-	echo "Unstaged changes in git"
-	echo
-	echo ❯ git status
-	git status
-	return
-fi
-echo -ne "\033[32m✔\033[0m "
-echo "No unstaged changes in git"
-
 git tag | egrep -q ^$FRIENDS_VERSION\$
 if [ $? -eq 0 ]; then
 	echo -ne "\033[31m✘\033[0m "
@@ -108,6 +96,18 @@ fi
 echo -ne "\033[32m✔\033[0m "
 echo "No unknown files in svn"
 echo
+
+git diff-files --quiet
+if [ $? -eq 1 ]; then
+	echo -ne "\033[31m✘\033[0m "
+	echo "Unstaged changes in git"
+	echo
+	echo ❯ git status
+	git status
+	return
+fi
+echo -ne "\033[32m✔\033[0m "
+echo "No unstaged changes in git"
 
 echo -ne "\033[32m✔\033[0m "
 echo "All looks good, ready to tag and commit!"
