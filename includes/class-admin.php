@@ -2088,8 +2088,7 @@ class Admin {
 	 * Process the admin notification manager form submission.
 	 */
 	public function process_admin_notification_manager() {
-
-		if ( empty( $_POST ) || empty( $_POST['friend_listed'] ) ) {
+		if ( empty( $_POST ) ) {
 			return;
 		}
 
@@ -2123,6 +2122,11 @@ class Admin {
 		} else {
 			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
 		}
+
+		if ( empty( $_POST['friend_listed'] ) ) {
+			return;
+		}
+
 		$friend_ids = $_POST['friend_listed'];
 		$current_user_id = get_current_user_id();
 		$hide_from_friends_page = array();
