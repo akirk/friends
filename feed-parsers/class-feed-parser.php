@@ -90,7 +90,7 @@ abstract class Feed_Parser {
 			function ( $m ) use ( $url ) {
 				return str_replace( $m[2], Mf2\resolveUrl( $url, $m[2] ), $m[0] );
 			},
-			$html
+			$html ?? ''
 		);
 	}
 }
