@@ -84,6 +84,9 @@ abstract class Feed_Parser {
 	 * @return     string  The HTML with URLs replaced to their absolute represenation.
 	 */
 	public function convert_relative_urls_to_absolute_urls( $html, $url ) {
+		if ( ! $html ) {
+			$html = '';
+		}
 		// For now this only converts links and image srcs.
 		return preg_replace_callback(
 			'~(src|href)=(?:"([^"]+)|\'([^\']+))~i',
