@@ -673,7 +673,7 @@ class Friends {
  	 * Check if the user hast the required priviliges.
    	 */
 	public static function has_required_privileges() {
-		return self::is_main_user() || current_user_can( 'edit_options' );
+		return self::is_main_user() || current_user_can( 'manage_options' );
 	}
 
 	/**
