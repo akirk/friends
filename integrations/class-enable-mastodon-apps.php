@@ -4,7 +4,7 @@ namespace Friends;
 /**
  * Class Enable_Mastodon_Apps
  *
- * This class is used to enable Mastodon Apps to work with ActivityPub
+ * This class is used to enable Mastodon Apps to work with Friends.
  *
  * @see https://github.com/akirk/enable-mastodon-apps
  */

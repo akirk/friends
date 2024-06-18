@@ -4,6 +4,7 @@
 
 	<config name="text_domain" value="friends" />
 
+	<rule ref="WordPress"/>
 	<rule ref="WordPress-Core">
 		<exclude name="Generic.Formatting.MultipleStatementAlignment.NotSameWarning" />
 		<exclude name="WordPress.PHP.StrictInArray.MissingTrueStrict" />

@@ -593,7 +593,7 @@ class Admin {
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
@@ -1062,11 +1062,9 @@ class Admin {
 					$hide_from_friends_page[] = $friend->user_login;
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 				}
-			} else {
-				if ( in_array( $friend->user_login, $hide_from_friends_page ) ) {
+			} elseif ( in_array( $friend->user_login, $hide_from_friends_page ) ) {
 					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->user_login ) ) );
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
-				}
 			}
 		} else {
 			return;
@@ -1279,11 +1277,9 @@ class Admin {
 					$hide_from_friends_page[] = $friend->user_login;
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 				}
-			} else {
-				if ( in_array( $friend->user_login, $hide_from_friends_page ) ) {
+			} elseif ( in_array( $friend->user_login, $hide_from_friends_page ) ) {
 					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->user_login ) ) );
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
-				}
 			}
 
 			if ( $friend->set_retention_number_enabled( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] ) ) {

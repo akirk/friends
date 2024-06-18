@@ -36,8 +36,8 @@ if ( empty( $args['active'] ) ) {
 			<nav class="friends-tabs-wrapper hide-if-no-js" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Secondary menu' ); ?>">
 			<?php
 
-			foreach ( $args['menu'] as $label => $page ) {
-				if ( ! $page ) {
+			foreach ( $args['menu'] as $label => $_page ) {
+				if ( ! $_page ) {
 					?>
 					<span class="friends-tab">
 					<?php echo esc_html( $label ); ?>
@@ -45,8 +45,8 @@ if ( empty( $args['active'] ) ) {
 					<?php
 					continue;
 				}
-				$url = admin_url( 'admin.php?page=' . $page );
-				if ( $page === $args['active'] ) {
+				$url = admin_url( 'admin.php?page=' . $_page );
+				if ( $_page === $args['active'] ) {
 					?>
 					<span class="friends-tab active" aria-current="true">
 					<?php echo esc_html( $label ); ?>

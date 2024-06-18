@@ -7,7 +7,8 @@
  */
 
 $active_feeds = $args['friend']->get_active_feeds();
-$feeds = $args['friend']->get_feeds();
+$_feeds = $args['friend']->get_feeds();
+
 
 $has_last_log = false;
 ?><form method="post">
@@ -22,7 +23,7 @@ $has_last_log = false;
 					<?php endif; ?>
 					<ul class="feeds <?php echo empty( $active_feeds ) ? ' hidden' : ''; ?>">
 						<?php
-						foreach ( $feeds as $term_id => $feed ) :
+						foreach ( $_feeds as $term_id => $feed ) :
 							if ( $feed->get_last_log() ) {
 								$has_last_log = true;
 								$last_log = $feed->get_last_log();
@@ -66,15 +67,15 @@ $has_last_log = false;
 														</option>
 													<?php endif; ?>
 												</select>
-												<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $feed->get_parser() ) . '&feed=' . urlencode( $term_id ) . '&preview=' . urlencode( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
+												<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend&parser=' . esc_url( $feed->get_parser() ) . '&feed=' . esc_url( $term_id ) . '&preview=' . esc_url( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
 											</td>
 										</tr>
 										<tr>
 											<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
 											<td>
 												<select name="feeds[<?php echo esc_attr( $term_id ); ?>][post-format]" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Post Format' ); ?>">
-												<?php foreach ( $args['post_formats'] as $format => $title ) : ?>
-													<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $format, $feed->get_post_format() ); ?>><?php echo esc_html( $title ); ?></option>
+												<?php foreach ( $args['post_formats'] as $format => $_title ) : ?>
+													<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $format, $feed->get_post_format() ); ?>><?php echo esc_html( $_title ); ?></option>
 												<?php endforeach; ?>
 												</select>
 											</td>
@@ -123,15 +124,15 @@ $has_last_log = false;
 													<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( wp_strip_all_tags( $parser_name ) ); ?></option>
 												<?php endforeach; ?>
 											</select>
-											<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=&preview=' ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
+											<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend&parser=&preview=' ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
 										</td>
 									</tr>
 									<tr>
 										<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
 										<td>
 											<select name="feeds[new][post-format]" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Post Format' ); ?>">
-											<?php foreach ( $args['post_formats'] as $format => $title ) : ?>
-												<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( $title ); ?></option>
+											<?php foreach ( $args['post_formats'] as $format => $_title ) : ?>
+												<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( $_title ); ?></option>
 											<?php endforeach; ?>
 											</select>
 										</td>
@@ -146,7 +147,7 @@ $has_last_log = false;
 						</li>
 					</ul>
 
-					<?php if ( count( $active_feeds ) !== count( $feeds ) ) : ?>
+					<?php if ( count( $active_feeds ) !== count( $_feeds ) ) : ?>
 					<a href="" class="show-inactive-feeds"><?php esc_html_e( 'Show inactive feeds', 'friends' ); ?></a> |
 					<?php endif; ?>
 					<?php if ( $has_last_log ) : ?>
