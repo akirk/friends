@@ -663,22 +663,22 @@ class Friends {
 	}
 
 	/**
- 	 * Get the required capability for the menu entries.
-   	 */
+	 * Get the required capability for the menu entries.
+	 */
 	public static function required_menu_role() {
 		return 'edit_private_posts';
 	}
 
 	/**
- 	 * Check if the user hast the required priviliges.
-   	 */
+	 * Check if the user hast the required priviliges.
+	 */
 	public static function has_required_privileges() {
 		return self::is_main_user() || current_user_can( 'manage_options' );
 	}
 
 	/**
- 	 * Check if the current user is the main user.
-   	 */
+	 * Check if the current user is the main user.
+	 */
 	public static function is_main_user() {
 		return is_user_logged_in() && get_current_user_id() === self::get_main_friend_user_id();
 	}
