@@ -194,7 +194,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function mastodon_api_account_update_remapped( $account, $user_id, $request = null, $post = null ) {
-		if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+		if ( ! $account instanceof Entity_Account ) {
 				return $account;
 		}
 
@@ -226,8 +226,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
-			if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
-				$account = new \Enable_Mastodon_Apps\Entity\Account();
+			if ( ! $account instanceof Entity_Account ) {
+				$account = new Entity_Account();
 				$account->id             = $meta['attributedTo']['id'];
 				$account->created_at = new \DateTime( $post->post_date );
 			}
@@ -277,7 +277,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$feed_url = get_post_meta( $post_id, 'feed_url', true );
 				if ( $feed_url ) {
 					$actor = self::convert_actor_to_mastodon_handle( $feed_url );
-					$account = new \Enable_Mastodon_Apps\Entity\Account();
+					$account = new Entity_Account();
 					$account->id             = $feed_url;
 					$account->username       = strtok( $actor, '@' );
 					$account->acct           = $actor;
@@ -307,7 +307,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 			}
 
-			if ( $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
+			if ( $account instanceof Entity_Account ) {
 				$status->account = $account;
 				if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
 					$status->reblog->account->id = $meta['attributedTo']['id'];

@@ -10,10 +10,10 @@
 	<strong><?php esc_html_e( 'Messages', 'friends' ); ?></strong>
 	<?php
 	while ( $args['existing_messages']->have_posts() ) {
-		$post = $args['existing_messages']->next_post();
-		setup_postdata( $post );
+		$_post = $args['existing_messages']->next_post();
+		setup_postdata( $_post );
 		$class = '';
-		if ( get_post_status( $post ) === 'friends_unread' ) {
+		if ( get_post_status( $_post ) === 'friends_unread' ) {
 			$class .= ' unread';
 		}
 		?>
