@@ -153,7 +153,7 @@ class Friends {
 		add_filter( 'login_head', array( $this, 'html_rel_links' ) );
 
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
-		add_filter( 'cron_schedules', array( $this, 'add_five_minutes_interval' ) );
+		add_filter( 'cron_schedules', array( $this, 'add_fifteen_minutes_interval' ) ); // phpcs:ignore WordPressVIPMinimum.Performance.IntervalInSeconds.IntervalInSeconds
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
 		add_filter( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
@@ -505,13 +505,13 @@ class Friends {
 			$next_scheduled = wp_next_scheduled( 'cron_friends_refresh_feeds' );
 			if ( $next_scheduled ) {
 				$event = wp_get_scheduled_event( 'cron_friends_refresh_feeds' );
-				if ( $event && 'five-minutes' !== $event->schedule ) {
+				if ( $event && 'fifteen-minutes' !== $event->schedule ) {
 					wp_unschedule_event( $next_scheduled, 'cron_friends_refresh_feeds' );
 					$next_scheduled = false;
 				}
 			}
 			if ( ! $next_scheduled ) {
-				wp_schedule_event( time(), 'five-minutes', 'cron_friends_refresh_feeds' );
+				wp_schedule_event( time(), 'fifteen-minutes', 'cron_friends_refresh_feeds' );
 			}
 		}
 
@@ -596,17 +596,17 @@ class Friends {
 		}
 
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
-			wp_schedule_event( time(), 'five-minutes', 'cron_friends_refresh_feeds' );
+			wp_schedule_event( time(), 'fifteen-minutes', 'cron_friends_refresh_feeds' );
 		}
 
 		self::add_default_sidebars_widgets();
 		flush_rewrite_rules();
 	}
 
-	public function add_five_minutes_interval( $schedules ) {
-		$schedules['five-minutes'] = array(
-			'interval' => 300,
-			'display'  => __( 'Every 5 Minutes', 'friends' ),
+	public function add_fifteen_minutes_interval( $schedules ) {
+		$schedules['fifteen-minutes'] = array(
+			'interval' => 900,
+			'display'  => __( 'Every 15 Minutes', 'friends' ),
 		);
 
 		return $schedules;
@@ -645,7 +645,7 @@ class Friends {
 			}
 			$sidebars_widgets[ $sidebar_id ] = array();
 			foreach ( $default_widgets as $widget_id => $options ) {
-				$id                               += 1;
+				++$id;
 				$sidebars_widgets[ $sidebar_id ][] = $widget_id . '-' . $id;
 				update_option( 'widget_' . $widget_id, array( $id => $options ) );
 			}
