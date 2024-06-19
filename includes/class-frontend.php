@@ -1160,9 +1160,9 @@ class Frontend {
 
 		$page_id = get_query_var( 'page' );
 
-		if ( isset( $_GET['share'] ) ) {
+		if ( isset( $_GET['share'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$share_hash = hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ), $page_id ) . $page_id );
-			if ( $_GET['share'] === $share_hash ) {
+			if ( $_GET['share'] === $share_hash ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$viewable = true;
 			}
 		}
@@ -1293,7 +1293,7 @@ class Frontend {
 
 		if ( $this->author ) {
 			if ( $this->author instanceof User ) {
-				$authordata = $this->author;
+				$authordata = $this->author; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 				$this->author->modify_query_by_author( $query );
 				if ( ! $page_id ) {
 					$query->is_author = true;
