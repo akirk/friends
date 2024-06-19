@@ -43,7 +43,7 @@ class REST {
 		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
 		add_action( 'wp_trash_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
-		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
+		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 2 );
 	}
 
 	/**
@@ -220,9 +220,7 @@ class REST {
 		$user_login = User::get_user_login_for_url( $url );
 		$friend_user = User::create( $user_login, 'friend_request', $url, $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
 		if ( $friend_user->has_cap( 'friend' ) ) {
-			if ( get_user_option( 'friends_out_token', $friend_user->ID ) && ! get_user_option( 'friends_out_token', $friend_user->ID ) ) {
-				// TODO: trigger an accept friend request right away?
-			}
+			// TODO: trigger an accept friend request right away?
 			$friend_user->set_role( 'friend_request' );
 		}
 		$friend_user->update_user_icon_url( $request->get_param( 'icon_url' ) );
@@ -310,14 +308,16 @@ class REST {
 		);
 	}
 
-	public function rest_embed_friend_post( $request ) {
+	public function rest_embed_friend_post( $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( empty( $_GET['url'] ) ) {
 			return false;
 		}
-		$post_id = $this->friends->feed->url_to_postid( $_GET['url'] );
+		$post_id = $this->friends->feed->url_to_postid( sanitize_text_field( wp_unslash( $_GET['url'] ) ) );
 		if ( empty( $post_id ) ) {
 			return false;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( ! in_array( get_post_type( $post_id ), apply_filters( 'friends_frontend_post_types', array() ) ) ) {
 			return false;
@@ -375,7 +375,7 @@ class REST {
 
 		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
 			$dom = new \DOMDocument();
-			set_error_handler( '__return_null' );
+			set_error_handler( '__return_null' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
 			$dom->loadHTML( wp_remote_retrieve_body( $response ) );
 			restore_error_handler();
 
@@ -400,9 +400,8 @@ class REST {
 	 *
 	 * @param  int    $user_id   The user id.
 	 * @param  string $new_role  The new role.
-	 * @param  string $old_roles The old roles.
 	 */
-	public function notify_remote_friend_request_accepted( $user_id, $new_role, $old_roles ) {
+	public function notify_remote_friend_request_accepted( $user_id, $new_role ) {
 		if ( 'friend' !== $new_role && 'acquaintance' !== $new_role ) {
 			return;
 		}
@@ -451,17 +450,5 @@ class REST {
 		$friend_user->make_friend( $future_out_token, $future_in_token );
 		$friend_user->delete_user_option( 'friends_request_id' );
 		$friend_user->delete_user_option( 'friends_future_out_token' );
-
-		/*
-		TODO
-		if ( isset( $json->user_icon_url ) ) {
-		$this->friends->access_control->update_user_icon_url( $friend_user->ID, $json->user_icon_url );
-		}
-		When their friend request is no longer valid
-		$friend_user->set_role( 'pending_friend_request' );
-		if ( isset( $json->friend_request_pending ) ) {
-		}
-		}
-		*/
 	}
 }
