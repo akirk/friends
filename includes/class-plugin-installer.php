@@ -31,13 +31,14 @@ class Plugin_Installer {
 	 * Register the WordPress hooks
 	 */
 	public static function register_hooks() {
+		$plugins = '_update_plugins';
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'enqueue_scripts' ) );
 		add_action( 'wp_ajax_friends_plugin_installer', array( __CLASS__, 'ajax_plugin_installer' ) );
 		add_action( 'wp_ajax_friends_plugin_activation', array( __CLASS__, 'ajax_plugin_activation' ) );
 		add_action( 'wp_ajax_friends_plugin_deactivation', array( __CLASS__, 'ajax_plugin_deactivation' ) );
 		add_filter( 'plugins_api', array( __CLASS__, 'override_plugin_info' ), 20, 3 );
 		// TODO: Can be removed after other plugins make it into the plugin directory.
-		add_filter( 'site_transient' . '_update_plugins', array( __CLASS__, 'override_plugin_push_update' ) );
+		add_filter( 'site_transient' . $plugins, array( __CLASS__, 'override_plugin_push_update' ) );
 		add_filter( 'upgrader_post_install', array( __CLASS__, 'after_install' ), 10, 3 );
 	}
 
