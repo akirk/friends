@@ -768,7 +768,7 @@ class Friends {
 
 		if ( ! isset( $wp_query ) || ! isset( $wp_query->query['pagename'] ) ) {
 			// The request has not yet been parsed but we need to know, so this snippet is from wp->parse_request().
-			list( $req_uri ) = explode( '?', $_SERVER['REQUEST_URI'] );
+			list( $req_uri ) = explode( '?', remove_query_arg( '' ) );
 			$home_path       = wp_parse_url( home_url(), PHP_URL_PATH );
 			$home_path_regex = '';
 			if ( is_string( $home_path ) && '' !== $home_path ) {
@@ -826,58 +826,66 @@ class Friends {
 	 * @return     array  The post count by post format.
 	 */
 	public function get_post_count_by_post_format() {
-		$cache_key = 'friends_post_count_by_post_format';
+		$cache_key = 'post_count_by_post_format';
+
+		$counts = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $counts ) {
+			return $counts;
+		}
 
 		$counts = get_transient( $cache_key );
-		if ( false === $counts ) {
-			$counts = array();
-			$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		if ( false !== $counts ) {
+			return $counts;
+		}
 
-			global $wpdb;
+		$counts = array();
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
-			$counts = array();
+		global $wpdb;
 
-			$post_format_counts = $wpdb->get_results(
-				$wpdb->prepare(
-					"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
-					FROM {$wpdb->posts} AS posts
-					JOIN {$wpdb->term_relationships} AS relationships
-					JOIN {$wpdb->term_taxonomy} AS taxonomy
-					JOIN {$wpdb->terms} AS terms
+		$counts = array();
 
-					WHERE posts.post_status IN ( 'publish', 'private' )
-					AND posts.post_type IN ( " . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . " )
-					AND relationships.object_id = posts.ID
-					AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
-					AND taxonomy.taxonomy = 'post_format'
+		$post_format_counts = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->prepare(
+				"SELECT terms.slug AS post_format, COUNT(terms.slug) AS count
+				FROM {$wpdb->posts} AS posts
+				JOIN {$wpdb->term_relationships} AS relationships
+				JOIN {$wpdb->term_taxonomy} AS taxonomy
+				JOIN {$wpdb->terms} AS terms
 
-					AND terms.term_id = taxonomy.term_id
-					GROUP BY terms.slug",
-					$post_types
-				)
-			);
-			$post_count = null;
-			foreach ( $post_types as $post_type ) {
-				$count = wp_count_posts( $post_type );
-				if ( is_null( $post_count ) ) {
-					$post_count = $count;
-				} else {
-					foreach ( (array) $count as $post_status => $c ) {
-						$post_count->$post_status = ( isset( $post_count->$post_status ) ? $post_count->$post_status : 0 ) + $c;
-					}
+				WHERE posts.post_status IN ( 'publish', 'private' )
+				AND posts.post_type IN ( " . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . " )
+				AND relationships.object_id = posts.ID
+				AND relationships.term_taxonomy_id = taxonomy.term_taxonomy_id
+				AND taxonomy.taxonomy = 'post_format'
+
+				AND terms.term_id = taxonomy.term_id
+				GROUP BY terms.slug",
+				$post_types
+			)
+		);
+		$post_count = null;
+		foreach ( $post_types as $post_type ) {
+			$count = wp_count_posts( $post_type );
+			if ( is_null( $post_count ) ) {
+				$post_count = $count;
+			} else {
+				foreach ( (array) $count as $post_status => $c ) {
+					$post_count->$post_status = ( isset( $post_count->$post_status ) ? $post_count->$post_status : 0 ) + $c;
 				}
 			}
-			$counts['standard'] = $post_count->publish + $post_count->private;
-
-			foreach ( $post_format_counts as $row ) {
-				$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
-				$counts['standard'] -= $row->count;
-			}
-
-			$counts = array_filter( $counts );
-
-			set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
 		}
+		$counts['standard'] = $post_count->publish + $post_count->private;
+
+		foreach ( $post_format_counts as $row ) {
+			$counts[ str_replace( 'post-format-', '', $row->post_format ) ] = $row->count;
+			$counts['standard'] -= $row->count;
+		}
+
+		$counts = array_filter( $counts );
+
+		set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
+		wp_cache_set( $cache_key, $counts, 'friends', HOUR_IN_SECONDS );
 
 		return $counts;
 	}
@@ -917,8 +925,14 @@ class Friends {
 	 */
 	public static function get_post_stats() {
 		global $wpdb;
+		$cache_key = 'post_stats';
+		$post_stats = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $post_stats ) {
+			return $post_stats;
+		}
+
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
-		$post_stats = $wpdb->get_row(
+		$post_stats = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				'SELECT SUM(
 				LENGTH( ID ) +
@@ -953,7 +967,7 @@ class Friends {
 		);
 		$post_stats['earliest_post_date'] = mysql2date(
 			'U',
-			$wpdb->get_var(
+			$wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$wpdb->prepare(
 					"SELECT MIN(post_date) FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
 					$post_types
@@ -961,6 +975,7 @@ class Friends {
 			)
 		);
 
+		wp_cache_set( $cache_key, $post_stats, 'friends', HOUR_IN_SECONDS );
 		return $post_stats;
 	}
 
@@ -1287,7 +1302,8 @@ class Friends {
 
 		$url = join( '/', array_filter( $parts ) );
 		$reduce = 4;
-		while ( strlen( $url ) > $max_length ) {
+		$url_length = strlen( $url );
+		while ( $url_length > $max_length ) {
 			$last_part = array_pop( $parts );
 			$last_part = substr( $last_part, strlen( $last_part ) - $reduce );
 			foreach ( $parts as $k => $part ) {
@@ -1296,7 +1312,7 @@ class Friends {
 			$url = join( '../', array_filter( $parts ) ) . '../..' . $last_part;
 			array_push( $parts, $last_part );
 			$reduce = 1;
-
+			$url_length = strlen( $url );
 		}
 
 		return $url;
@@ -1342,6 +1358,8 @@ class Friends {
 		// We have to resort to using direct database statements since the taxonomy is not registered because the plugin is deactivated.
 		global $wpdb;
 		foreach ( $taxonomies as $taxonomy ) {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 			$terms = $wpdb->get_results( $wpdb->prepare( "SELECT t.*, tt.* FROM $wpdb->terms AS t INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id WHERE tt.taxonomy = %s ORDER BY t.name ASC", $taxonomy ) );
 
 			if ( $terms ) {
@@ -1353,6 +1371,8 @@ class Friends {
 			}
 
 			$wpdb->delete( $wpdb->term_taxonomy, array( 'taxonomy' => $taxonomy ), array( '%s' ) );
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 		}
 	}
 }

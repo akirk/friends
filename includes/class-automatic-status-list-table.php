@@ -72,9 +72,11 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	 */
 	protected function get_post_status_counts( $post_type ) {
 		global $wpdb;
-		$cache_key = 'friends_get_post_status_counts' . $post_type;
-		if ( false === wp_cache_get( $cache_key ) ) {
-			return wp_cache_get( $cache_key );
+
+		$cache_key = 'get_post_status_counts_' . $post_type;
+		$counts = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $counts ) {
+			return $counts;
 		}
 
 		$counts = array();
@@ -104,7 +106,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			$counts[ $row->post_status ] = $row->count;
 		}
 		$counts = (object) $counts;
-		wp_cache_set( $cache_key, $counts );
+		wp_cache_set( $cache_key, $counts, 'friends' );
 
 		return $counts;
 	}

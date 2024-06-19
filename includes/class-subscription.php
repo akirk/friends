@@ -188,8 +188,8 @@ class Subscription extends User {
 	 */
 	public function get_post_stats() {
 		$cache_key = 'friends_post_stats_author_' . $this->get_term_id();
-		if ( false === wp_cache_get( $cache_key ) ) {
-			return wp_cache_get( $cache_key );
+		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
+			return wp_cache_get( $cache_key, 'friends' );
 		}
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
@@ -237,7 +237,7 @@ class Subscription extends User {
 			)
 		);
 
-		wp_cache_set( $cache_key, $post_stats, '', HOUR_IN_SECONDS );
+		wp_cache_set( $cache_key, $post_stats, 'friends', HOUR_IN_SECONDS );
 		return $post_stats;
 	}
 
@@ -245,8 +245,8 @@ class Subscription extends User {
 		global $wpdb;
 		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
 		$cache_key = 'friends_all_post_ids_author_' . $this->get_term_id() . '_' . $post_types_to_delete;
-		if ( wp_cache_get( $cache_key ) ) {
-			return wp_cache_get( $cache_key );
+		if ( wp_cache_get( $cache_key, 'friends' ) ) {
+			return wp_cache_get( $cache_key, 'friends' );
 		}
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -266,7 +266,7 @@ class Subscription extends User {
 	public function get_post_count_by_post_format() {
 		$cache_key = 'friends_post_count_by_post_format_author_' . $this->ID;
 
-		$counts = wp_cache_get( $cache_key );
+		$counts = wp_cache_get( $cache_key, 'friends' );
 		if ( false !== $counts ) {
 			return $counts;
 		}
@@ -360,7 +360,7 @@ class Subscription extends User {
 		$counts = array_filter( $counts );
 
 		set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
-		wp_cache_set( $cache_key, $counts, '', HOUR_IN_SECONDS );
+		wp_cache_set( $cache_key, $counts, 'friends', HOUR_IN_SECONDS );
 
 		return $counts;
 	}
@@ -375,8 +375,8 @@ class Subscription extends User {
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
 		$cache_key = 'friends_all_post_ids_trash_author_' . $this->get_term_id() . '_' . $post_types;
-		if ( false === wp_cache_get( $cache_key ) ) {
-			return wp_cache_get( $cache_key );
+		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
+			return wp_cache_get( $cache_key, 'friends' );
 		}
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -389,7 +389,7 @@ class Subscription extends User {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		wp_cache_set( $cache_key, $count, '', HOUR_IN_SECONDS - 60 );
+		wp_cache_set( $cache_key, $count, 'friends', HOUR_IN_SECONDS - 60 );
 		return intval( $count );
 	}
 
