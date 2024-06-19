@@ -187,9 +187,10 @@ class Subscription extends User {
 	 * @return     object  The post stats.
 	 */
 	public function get_post_stats() {
-		$cache_key = 'friends_post_stats_author_' . $this->get_term_id();
-		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
-			return wp_cache_get( $cache_key, 'friends' );
+		$cache_key = 'post_stats_author_' . $this->ID;
+		$post_stats = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $post_stats ) {
+			return $post_stats;
 		}
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
@@ -244,16 +245,19 @@ class Subscription extends User {
 	public function get_all_post_ids() {
 		global $wpdb;
 		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
-		$cache_key = 'friends_all_post_ids_author_' . $this->get_term_id() . '_' . $post_types_to_delete;
-		if ( wp_cache_get( $cache_key, 'friends' ) ) {
-			return wp_cache_get( $cache_key, 'friends' );
+
+		$cache_key = 'get_all_post_ids_' . $this->ID . '_' . $post_types_to_delete;
+		$post_ids = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $post_ids ) {
+			return $post_ids;
 		}
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT p.ID FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND p.post_type IN ('$post_types_to_delete')", $this->get_term_id() ) );
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		wp_cache_set( $cache_key, $post_ids, '', HOUR_IN_SECONDS - 60 );
+
+		wp_cache_set( $cache_key, $post_ids, 'friends', HOUR_IN_SECONDS - 60 );
 
 		return $post_ids;
 	}
@@ -264,7 +268,7 @@ class Subscription extends User {
 	 * @return     array  The post counts.
 	 */
 	public function get_post_count_by_post_format() {
-		$cache_key = 'friends_post_count_by_post_format_author_' . $this->ID;
+		$cache_key = 'get_post_count_by_post_format_' . $this->ID;
 
 		$counts = wp_cache_get( $cache_key, 'friends' );
 		if ( false !== $counts ) {
@@ -374,7 +378,7 @@ class Subscription extends User {
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
-		$cache_key = 'friends_all_post_ids_trash_author_' . $this->get_term_id() . '_' . $post_types;
+		$cache_key = 'get_post_in_trash_count_' . $this->get_term_id() . '_' . $post_types;
 		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
 			return wp_cache_get( $cache_key, 'friends' );
 		}
@@ -389,7 +393,7 @@ class Subscription extends User {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		wp_cache_set( $cache_key, $count, 'friends', HOUR_IN_SECONDS - 60 );
+		wp_cache_set( $cache_key, intval( $count ), 'friends', HOUR_IN_SECONDS - 60 );
 		return intval( $count );
 	}
 

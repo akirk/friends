@@ -6,7 +6,7 @@
 
 	<rule ref="WordPress">
 		<properties>
-			<property name="custom_capabilities[]" value="friend,acquaintance,friend_request,pending_friend_request,subscription"/>
+			<property name="custom_capabilities[]" value="friend,acquaintance,friend_request,pending_friend_request,subscription,friends_plugin"/>
 		</properties>
 	</rule>
 	<rule ref="WordPress-Core">

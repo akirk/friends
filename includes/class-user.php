@@ -496,7 +496,7 @@ class User extends \WP_User {
 
 	public function modify_query_by_author( \WP_Query $query ) {
 		$query->set( 'author', $this->ID );
-		if ( ! user_can( $this->ID, 'friends_plugin' ) || user_can( $this->ID, 'administrator' ) ) {
+		if ( ! user_can( $this->ID, 'friends_plugin' ) || user_can( $this->ID, 'manage_options' ) ) {
 			// If the user doesn't belong to the friends plugin, only show their local posts so that subcriptions don't spill in.
 			$query->set( 'post_type', 'post' );
 		}
@@ -704,7 +704,6 @@ class User extends \WP_User {
 	public function set_retention_days( $days ) {
 		$days = max( 1, intval( $days ) );
 		return $this->update_user_option( 'friends_retention_days', $days );
-		return $days;
 	}
 
 	/**
@@ -716,6 +715,12 @@ class User extends \WP_User {
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
+		$cache_key = 'get_post_in_trash_count_' . $this->get_term_id() . '_' . $post_types;
+		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
+			return wp_cache_get( $cache_key, 'friends' );
+		}
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM $wpdb->posts WHERE post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash" AND post_author = %d',
@@ -723,6 +728,10 @@ class User extends \WP_User {
 			)
 		);
 
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		wp_cache_set( $cache_key, intval( $count ), 'friends', HOUR_IN_SECONDS - 60 );
 		return intval( $count );
 	}
 
@@ -732,85 +741,92 @@ class User extends \WP_User {
 	 * @return     array  The post counts.
 	 */
 	public function get_post_count_by_post_format() {
-		$cache_key = 'friends_post_count_by_post_format_author_' . $this->ID;
+		$cache_key = 'get_post_count_by_post_format_' . $this->ID;
 
+		$counts = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $counts ) {
+			return $counts;
+		}
 		$counts = get_transient( $cache_key );
-		if ( true || false === $counts ) {
-			$counts = array();
-			$post_types = apply_filters( 'friends_frontend_post_types', array() );
-			$post_formats_term_ids = array();
-			foreach ( get_post_format_slugs() as $post_format ) {
-				$term = get_term_by( 'slug', 'post-format-' . $post_format, 'post_format' );
-				if ( $term ) {
-					$post_formats_term_ids[ $term->term_id ] = $post_format;
-				}
+		if ( false !== $counts ) {
+			return $counts;
+		}
+		$counts = array();
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_formats_term_ids = array();
+		foreach ( get_post_format_slugs() as $post_format ) {
+			$term = get_term_by( 'slug', 'post-format-' . $post_format, 'post_format' );
+			if ( $term ) {
+				$post_formats_term_ids[ $term->term_id ] = $post_format;
 			}
+		}
 
-			global $wpdb;
+		global $wpdb;
 
-			$counts = array();
-			$counts['standard'] = $wpdb->get_var(
+		$counts = array();
+ 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$counts['standard'] = $wpdb->get_var(
+			$wpdb->prepare(
+				sprintf(
+					"SELECT COUNT(DISTINCT posts.ID)
+					FROM %s AS posts
+					JOIN %s AS relationships_post_format
+
+					WHERE posts.post_author = %s
+					AND posts.post_status IN ( 'publish', 'private' )
+					AND posts.post_type IN ( %s )
+					AND relationships_post_format.object_id = posts.ID",
+					$wpdb->posts,
+					$wpdb->term_relationships,
+					'%d',
+					implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
+				),
+				array_merge(
+					array( $this->ID ),
+					$post_types
+				)
+			)
+		);
+
+		if ( ! empty( $post_formats_term_ids ) ) {
+			$post_format_counts = $wpdb->get_results(
 				$wpdb->prepare(
 					sprintf(
-						"SELECT COUNT(DISTINCT posts.ID)
+						"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
 						FROM %s AS posts
 						JOIN %s AS relationships_post_format
 
 						WHERE posts.post_author = %s
 						AND posts.post_status IN ( 'publish', 'private' )
 						AND posts.post_type IN ( %s )
-						AND relationships_post_format.object_id = posts.ID",
+						AND relationships_post_format.object_id = posts.ID
+						AND relationships_post_format.term_taxonomy_id IN ( %s )
+						GROUP BY relationships_post_format.term_taxonomy_id",
 						$wpdb->posts,
 						$wpdb->term_relationships,
 						'%d',
-						implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
+						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) )
 					),
 					array_merge(
 						array( $this->ID ),
-						$post_types
+						$post_types,
+						array_keys( $post_formats_term_ids )
 					)
 				)
 			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
-			if ( ! empty( $post_formats_term_ids ) ) {
-				$post_format_counts = $wpdb->get_results(
-					$wpdb->prepare(
-						sprintf(
-							"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
-							FROM %s AS posts
-							JOIN %s AS relationships_post_format
-
-							WHERE posts.post_author = %s
-							AND posts.post_status IN ( 'publish', 'private' )
-							AND posts.post_type IN ( %s )
-							AND relationships_post_format.object_id = posts.ID
-							AND relationships_post_format.term_taxonomy_id IN ( %s )
-							GROUP BY relationships_post_format.term_taxonomy_id",
-							$wpdb->posts,
-							$wpdb->term_relationships,
-							'%d',
-							implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-							implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) )
-						),
-						array_merge(
-							array( $this->ID ),
-							$post_types,
-							array_keys( $post_formats_term_ids )
-						)
-					)
-				);
-
-				foreach ( $post_format_counts as $row ) {
-					$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
-					$counts['standard'] -= $row->count;
-				}
+			foreach ( $post_format_counts as $row ) {
+				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
+				$counts['standard'] -= $row->count;
 			}
-
-			$counts = array_filter( $counts );
-
-			set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
 		}
 
+		$counts = array_filter( $counts );
+
+		set_transient( $cache_key, $counts, HOUR_IN_SECONDS - 60 );
+		wp_cache_set( $cache_key, $counts, 'friends', HOUR_IN_SECONDS - 60 );
 		return $counts;
 	}
 
@@ -821,7 +837,13 @@ class User extends \WP_User {
 	 */
 	public function get_post_stats() {
 		global $wpdb;
+		$cache_key = 'post_stats_author_' . $this->ID;
+		$post_stats = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $post_stats ) {
+			return $post_stats;
+		}
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$post_stats = $wpdb->get_row(
 			$wpdb->prepare(
 				'SELECT SUM(
@@ -864,6 +886,9 @@ class User extends \WP_User {
 				)
 			)
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
+		wp_cache_set( $cache_key, $post_stats, 'friends', HOUR_IN_SECONDS );
 		return $post_stats;
 	}
 
@@ -871,7 +896,18 @@ class User extends \WP_User {
 		global $wpdb;
 		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
 
+		$cache_key = 'get_all_post_ids_' . $this->ID . '_' . $post_types_to_delete;
+		$post_ids = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $post_ids ) {
+			return $post_ids;
+		}
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_author = %d AND post_type IN ('$post_types_to_delete')", $this->ID ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		wp_cache_set( $cache_key, $post_ids, 'friends', HOUR_IN_SECONDS - 60 );
 		return $post_ids;
 	}
 
@@ -1090,29 +1126,31 @@ class User extends \WP_User {
 	 * @return     string  The role name.
 	 */
 	public function get_role_name( $group_subscriptions = false, $count = 1 ) {
-		$name = false;
-
-		if ( ! $name && in_array( 'acquaintance', $this->roles ) ) {
+		if ( in_array( 'acquaintance', $this->roles ) ) {
 			return _nx( 'Acquaintance', 'Acquaintances', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && in_array( 'friend', $this->roles ) && $this->is_valid_friend() ) {
+		if ( in_array( 'friend', $this->roles ) && $this->is_valid_friend() ) {
 			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && in_array( 'subscription', $this->roles ) || ( $group_subscriptions && ( in_array( 'friend_request', $this->roles ) || in_array( 'pending_friend_request', $this->roles ) ) ) ) {
+		if ( in_array( 'subscription', $this->roles ) ) {
 			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && in_array( 'friend_request', $this->roles ) ) {
+		if ( $group_subscriptions && ( in_array( 'friend_request', $this->roles ) || in_array( 'pending_friend_request', $this->roles ) ) ) {
+			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
+		}
+
+		if ( in_array( 'friend_request', $this->roles ) ) {
 			return _nx( 'Friend Request', 'Friend Requests', $count, 'User role', 'friends' );
 		}
 
-		if ( ! $name && in_array( 'pending_friend_request', $this->roles ) ) {
+		if ( in_array( 'pending_friend_request', $this->roles ) ) {
 			return _nx( 'Pending Friend Request', 'Pending Friend Requests', $count, 'User role', 'friends' );
 		}
 
-		$name = apply_filters( 'friend_user_role_name', $name, $this );
+		$name = apply_filters( 'friend_user_role_name', false, $this );
 
 		if ( ! $name ) {
 			$name = _x( 'Unknown', 'User role', 'friends' );
