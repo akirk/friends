@@ -83,13 +83,13 @@
 				}
 
 				$sep = '';
-				foreach ( Friends\Admin::user_row_actions( $actions, $friend_user ) as $key => $action ) {
+				foreach ( Friends\Admin::user_row_actions( $actions, $friend_user ) as $key => $_action ) {
 					echo esc_html( $sep );
 					$sep = ' | ';
 					?>
 				<span class="<?php echo esc_attr( $key ); ?>">
 					<?php
-					echo wp_kses_post( $action );
+					echo wp_kses_post( $_action );
 					?>
 				</span>
 					<?php
