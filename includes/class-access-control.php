@@ -173,7 +173,7 @@ class Access_Control {
 		}
 
 		wp_set_auth_cookie( $user_id );
-		wp_safe_redirect( remove_query_arg( 'friend_auth', remove_query_arg( 'me' ) ) );
+		wp_safe_redirect( remove_query_arg( array( 'friend_auth', 'me' ) ) );
 		exit;
 	}
 
