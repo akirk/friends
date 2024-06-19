@@ -20,9 +20,9 @@ echo '<' . '?xml version="1.0" encoding="utf-8"?' . '>';
 	</head>
 	<body>
 <?php
-foreach ( $args['feeds'] as $role => $users ) {
+foreach ( $args['feeds'] as $_role => $users ) {
 	?>
-	<outline text="<?php echo esc_attr( $role ); ?>">
+	<outline text="<?php echo esc_attr( $_role ); ?>">
 	<?php
 	foreach ( $users as $user ) {
 		foreach ( $user['feeds'] as $feed ) {

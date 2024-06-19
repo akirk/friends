@@ -75,9 +75,9 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 					<label><input type="checkbox" id="friendship" name="friendship" value="<?php echo esc_attr( $args['friends_plugin'] ); ?>" checked /> <?php esc_html_e( 'Send request for friendship', 'friends' ); ?></label> —
 					<label><?php esc_html_e( 'Their role will be:', 'friends' ); ?> <select name="role" id="friendship-status">
 						<?php
-						foreach ( $args['friend_roles'] as $role => $title ) :
+						foreach ( $args['friend_roles'] as $_role => $_title ) :
 							?>
-							<option value="<?php echo esc_attr( $role ); ?>"<?php selected( $args['default_role'], $role ); ?>><?php echo esc_html( $title ); ?></option>
+							<option value="<?php echo esc_attr( $_role ); ?>"<?php selected( $args['default_role'], $_role ); ?>><?php echo esc_html( $_title ); ?></option>
 						<?php endforeach; ?>
 					</select></label>
 					<p class="description details hidden"><small>
@@ -130,10 +130,10 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 					<ul>
 					<?php foreach ( $args['feeds'] as $feed_url => $details ) : ?>
 						<?php
-						$c += 1;
+						++$c;
 						$classes = '';
 						if ( $c > 0 && ! $details['autoselect'] ) {
-							$hidden_feed_count += 1;
+							++$hidden_feed_count;
 							$classes .= 'rel-alternate hidden';
 						}
 						?>
@@ -152,8 +152,8 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 									$details['post-format'] = 'standard';
 								}
 								$select = '<select name="feeds[' . esc_attr( $c ) . '][post-format]">';
-								foreach ( $args['post_formats'] as $format => $title ) {
-									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $details['post-format'], $format, false ) . '>' . esc_html( $title ) . '</option>';
+								foreach ( $args['post_formats'] as $format => $_title ) {
+									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $details['post-format'], $format, false ) . '>' . esc_html( $_title ) . '</option>';
 								}
 								$select .= '</select>';
 
@@ -162,7 +162,12 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 									// translators: 1: is a link to a feed with its name as text, 2: url for a preview, 3: a select dropdown with post formats.
 										__( 'Subscribe %1$s (<a href=%2$s>preview</a>) as %3$s', 'friends' ),
 										'<a href="' . esc_attr( $feed_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $details['title'] ) . '</a>',
-										'"' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=add-friend&parser=' . urlencode( $details['parser'] ) . '&preview=' . urlencode( $feed_url ) ) ), 'preview-feed' ) ) . '" target="_blank"',
+										'"' . esc_url(
+											wp_nonce_url(
+												add_query_arg( '_wp_http_referer', add_query_arg( 'parser', $details['parser'], add_query_arg( 'preview', $feed_url, remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend' ) ) ) ),
+												'preview-feed'
+											)
+										) . '" target="_blank"',
 										'</label>' . $select
 									),
 									array(
@@ -252,7 +257,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 							</p>
 							<ul>
 								<?php foreach ( $unsupported_feeds as $feed_url => $details ) : ?>
-									<?php $c += 1; ?>
+									<?php ++$c; ?>
 									<li>
 										<?php foreach ( $details as $key => $value ) : ?>
 											<input type="hidden" name="feeds[<?php echo esc_attr( $c ); ?>][<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $value ); ?>" />

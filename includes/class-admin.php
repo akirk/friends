@@ -109,7 +109,7 @@ class Admin {
 	 * Registers the admin menus
 	 */
 	public function admin_menu() {
-		if ( isset( $_REQUEST['rerun-activate'] ) && isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-settings' ) ) {
+		if ( isset( $_REQUEST['rerun-activate'] ) && isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends-settings' ) ) {
 			Friends::activate_plugin();
 			wp_safe_redirect( add_query_arg( array( 'reran-activation' => 'friends' ), wp_get_referer() ) );
 			exit;
@@ -155,7 +155,7 @@ class Admin {
 		}
 
 		if (
-			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'friends-refresh' ) &&
+			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-refresh' ) && // phpcs:ignore WordPress.Security.ValidateSanitizedInput
 			isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page']
 		) {
 			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), $required_role, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
@@ -164,11 +164,11 @@ class Admin {
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Plugins' ), __( 'Plugins' ), $required_role, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
 
-		if ( isset( $_GET['page'] ) && 0 === strpos( $_GET['page'], 'edit-friend' ) ) {
-			add_submenu_page( 'friends', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), $required_role, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend' ) );
-			add_submenu_page( 'friends', __( 'Edit Feeds', 'friends' ), __( 'Edit Feeds', 'friends' ), $required_role, 'edit-friend-feeds' . ( 'edit-friend-feeds' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_feeds' ) );
-			add_submenu_page( 'friends', __( 'Edit Notifications', 'friends' ), __( 'Edit Notifications', 'friends' ), $required_role, 'edit-friend-notifications' . ( 'edit-friend-notifications' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_notifications' ) );
-			add_submenu_page( 'friends', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), $required_role, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . $_GET['user'] : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
+		if ( isset( $_GET['page'] ) && 0 === strpos( sanitize_key( $_GET['page'] ), 'edit-friend' ) ) {
+			add_submenu_page( 'friends', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), $required_role, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend' ) );
+			add_submenu_page( 'friends', __( 'Edit Feeds', 'friends' ), __( 'Edit Feeds', 'friends' ), $required_role, 'edit-friend-feeds' . ( 'edit-friend-feeds' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend_feeds' ) );
+			add_submenu_page( 'friends', __( 'Edit Notifications', 'friends' ), __( 'Edit Notifications', 'friends' ), $required_role, 'edit-friend-notifications' . ( 'edit-friend-notifications' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend_notifications' ) );
+			add_submenu_page( 'friends', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), $required_role, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-feeds', array( $this, 'process_admin_edit_friend_feeds' ) );
 			add_action( 'load-' . $page_type . '_page_edit-friend-notifications', array( $this, 'process_admin_edit_friend_notifications' ) );
@@ -176,7 +176,7 @@ class Admin {
 		}
 
 		if ( isset( $_GET['page'] ) && 'unfriend' === $_GET['page'] ) {
-			$user = new User( $_GET['user'] );
+			$user = new User( intval( $_GET['user'] ) );
 			if ( $user ) {
 				$title = /* translators: %s is a username. */ sprintf( __( 'Unfriend %s', 'friends' ), $user->user_login );
 				add_submenu_page( 'friends', $title, $title, $required_role, 'unfriend', array( $this, 'render_admin_unfriend' ) );
@@ -275,7 +275,7 @@ class Admin {
 		$handle = 'friends-admin';
 		$file = 'friends-admin.js';
 		$version = Friends::VERSION;
-		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ), true );
 
 		$variables = array(
 			'ajax_url'                        => admin_url( 'admin-ajax.php' ),
@@ -359,7 +359,7 @@ class Admin {
 		);
 
 		if ( isset( $_GET['user'] ) ) {
-			$friend_user = User::get_by_username( $_GET['user'] );
+			$friend_user = User::get_by_username( sanitize_key( $_GET['user'] ) );
 			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
 				wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
@@ -580,12 +580,12 @@ class Admin {
 		}
 
 		if ( isset( $_POST['frontend_default_view'] ) && in_array(
-			$_POST['frontend_default_view'],
+			wp_unslash( $_POST['frontend_default_view'] ),
 			array(
 				'collapsed',
 			)
 		) ) {
-			update_option( 'friends_frontend_default_view', $_POST['frontend_default_view'] );
+			update_option( 'friends_frontend_default_view', wp_unslash( $_POST['frontend_default_view'] ) );
 		} else {
 			delete_option( 'friends_frontend_default_view' );
 		}
