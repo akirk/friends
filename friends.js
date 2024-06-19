@@ -68,6 +68,7 @@
 
 		wp.ajax.send( 'friends-autocomplete', {
 			data: {
+				_ajax_nonce: input.data( 'nonce' ),
 				q: query,
 			},
 			beforeSend() {
