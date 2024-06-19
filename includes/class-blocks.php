@@ -140,7 +140,7 @@ class Blocks {
 		}
 		$count = 0;
 		foreach ( $friends->get_results() as $friend_user ) {
-			$count += 1;
+			++$count;
 			if ( $attributes['users_inline'] ) {
 				if ( ! $first ) {
 					$out .= ', ';
@@ -229,7 +229,7 @@ class Blocks {
 				if ( $remaining <= 0 ) {
 					break 2;
 				}
-				$remaining -= 1;
+				--$remaining;
 
 				$author = $friend_user->display_name;
 				if ( $attributes['author_name'] || $attributes['author_avatar'] || $attributes['author_inline'] ) {
@@ -304,14 +304,16 @@ class Blocks {
 			'friends-block-visibility',
 			plugins_url( 'blocks/block-visibility/build/index.js', FRIENDS_PLUGIN_FILE ),
 			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' ),
-			Friends::VERSION
+			Friends::VERSION,
+			true
 		);
 
 		wp_enqueue_style(
 			'friends-blocks',
 			plugins_url( 'friends-blocks.css', FRIENDS_PLUGIN_FILE ),
 			array(),
-			Friends::VERSION
+			Friends::VERSION,
+			true
 		);
 	}
 
@@ -336,11 +338,11 @@ class Blocks {
 		if ( ! isset( $_REQUEST['friends_friend_request_url'] ) ) {
 			return;
 		}
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_follow_me' ) ) {
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends_follow_me' ) ) {
 			wp_safe_redirect( add_query_arg( 'error', __( 'Unable to verify nonce, please try again.', 'friends' ) ) );
 			exit;
 		}
-		$access_transient_key = 'friends_follow_me_' . crc32( $_SERVER['REMOTE_ADDR'] );
+		$access_transient_key = 'friends_follow_me_' . crc32( sanitize_key( $_SERVER['REMOTE_ADDR'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 		$access_count = get_transient( $access_transient_key );
 		if ( $access_count >= 10 ) {
 			header( 'HTTP/1.0 529 Too Many Requests' );
@@ -348,7 +350,7 @@ class Blocks {
 		}
 		set_transient( $access_transient_key, $access_count + 1, 3600 );
 
-		$url = $_REQUEST['friends_friend_request_url'];
+		$url = sanitize_text_field( wp_unslash( $_REQUEST['friends_friend_request_url'] ) );
 
 		$fqdn_regex = '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)';
 		if ( false === strpos( $url, 'https://' ) ) {
@@ -394,7 +396,7 @@ class Blocks {
 			);
 
 			if ( ! empty( $friends_base_url_endpoints ) ) {
-				header( 'Location: ' . $url . '?add-friend=' . urlencode( home_url() ) );
+				header( 'Location: ' . add_query_arg( 'add-friend', home_url(), $url ) );
 				exit;
 			}
 		}
@@ -426,13 +428,13 @@ class Blocks {
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $link_url => $link ) {
 				if ( in_array( 'friends-base-url', $link['rels'] ) ) {
-					header( 'Location: ' . $link_url . '?add-friend=' . urlencode( home_url() ) );
+					header( 'Location: ' . add_query_arg( 'add-friend', home_url(), $link_url ) );
 					exit;
 				}
 			}
 		}
 
-		header( 'Location: https://wpfriends.at/follow-me?url=' . urlencode( $_REQUEST['friends_friend_request_url'] ) );
+		header( 'Location: ' . add_query_arg( 'url', $url, 'https://wpfriends.at/follow-me' ) );
 		exit;
 	}
 
@@ -444,7 +446,7 @@ class Blocks {
 	 * @param \WP_Block $block      Block instance.
 	 * @return string             The rendered content.
 	 */
-	public function render_follow_me_block( $attributes, $content, $block ) {
+	public function render_follow_me_block( $attributes, $content, $block ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$input = '<input type="text" name="friends_friend_request_url"';
 		$nonce = wp_nonce_field( 'friends_follow_me', '_wpnonce', true, false );
 		return str_replace( $input, $nonce . $input, $content );
