@@ -22,8 +22,8 @@ if ( apply_filters( 'friends_debug', false ) ) : ?>
 	<li class="menu-item friends-dropdown">
 		<select name="post-format" class="friends-change-post-format form-select select-sm" data-change-post-format-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-change-post-format_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" >
 			<option disabled="disabled"><?php esc_html_e( 'Change post format', 'friends' ); ?></option>
-			<?php foreach ( get_post_format_strings() as $format => $title ) : ?>
-			<option value="<?php echo esc_attr( $format ); ?>"<?php selected( get_post_format(), $format ); ?>><?php echo esc_html( $title ); ?></option>
+			<?php foreach ( get_post_format_strings() as $format => $_title ) : ?>
+			<option value="<?php echo esc_attr( $format ); ?>"<?php selected( get_post_format(), $format ); ?>><?php echo esc_html( $_title ); ?></option>
 		<?php endforeach; ?>
 		</select>
 	</li>

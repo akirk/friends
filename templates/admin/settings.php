@@ -212,12 +212,12 @@ do_action( 'friends_settings_before_form' );
 
 						<ol id="available-emojis">
 						<?php
-						foreach ( Friends\Reactions::get_available_emojis() as $id => $data ) {
+						foreach ( Friends\Reactions::get_available_emojis() as $_id => $data ) {
 							Friends\Friends::template_loader()->get_template_part(
 								'admin/add-reaction-li',
 								null,
 								array(
-									'id'    => $id,
+									'id'    => $_id,
 									'emoji' => $data->char,
 								)
 							);
