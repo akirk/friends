@@ -244,7 +244,7 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 					$content = $entry['properties']['content'][0]['html'];
 				}
 				$el_list = array();
-				for ( $j = 0; $j < count( $entry['properties'][ $media ] ); $j++ ) {
+				for ( $j = 0, $l = count( $entry['properties'][ $media ] ); $j < $l; $j++ ) {
 					$el = $entry['properties'][ $media ][ $j ];
 					if ( ! empty( $el ) && strpos( $content, $el ) === false ) {
 						$el_list[] = $el;

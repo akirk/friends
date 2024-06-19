@@ -36,6 +36,6 @@ class SimplePie_File_Accept_Only_RSS extends \WP_SimplePie_File {
 			$headers = array();
 		}
 		$headers['Accept'] = 'application/atom+xml, application/rss+xml, application/rdf+xml;q=0.9';
-		return parent::__construct( $url, $timeout, $redirects, $headers, $useragent, $force_fsockopen );
+		parent::__construct( $url, $timeout, $redirects, $headers, $useragent, $force_fsockopen );
 	}
 }

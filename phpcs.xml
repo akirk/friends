@@ -4,7 +4,11 @@
 
 	<config name="text_domain" value="friends" />
 
-	<rule ref="WordPress"/>
+	<rule ref="WordPress">
+		<properties>
+			<property name="custom_capabilities[]" value="friend,acquaintance,friend_request,pending_friend_request,subscription"/>
+		</properties>
+	</rule>
 	<rule ref="WordPress-Core">
 		<exclude name="Generic.Formatting.MultipleStatementAlignment.NotSameWarning" />
 		<exclude name="WordPress.PHP.StrictInArray.MissingTrueStrict" />

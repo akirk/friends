@@ -147,7 +147,7 @@ class Subscription extends User {
 			unset( $args['author'] );
 		}
 		if ( ! isset( $args['tax_query'] ) ) {
-			$args['tax_query'] = array();
+			$args['tax_query'] = array(); // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 		} else {
 			$args['tax_query']['relation'] = 'AND';
 		}
@@ -173,7 +173,7 @@ class Subscription extends User {
 					if ( is_array( $term_id ) ) {
 						$term_id = reset( $term_id );
 					}
-					$authordata = new Subscription( \get_term( $term_id ) );
+					$authordata = new Subscription( \get_term( $term_id ) ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 					return;
 				}
 			}
@@ -187,13 +187,13 @@ class Subscription extends User {
 	 * @return     object  The post stats.
 	 */
 	public function get_post_stats() {
-		static $post_stats = null;
-		if ( ! is_null( $post_stats ) ) {
-			return $post_stats;
+		$cache_key = 'friends_post_stats_author_' . $this->get_term_id();
+		if ( false === wp_cache_get( $cache_key ) ) {
+			return wp_cache_get( $cache_key );
 		}
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
-		$post_stats = $wpdb->get_row(
+		$post_stats = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				'SELECT SUM(
 					LENGTH( ID ) +
@@ -229,21 +229,32 @@ class Subscription extends User {
 
 		$post_stats['earliest_post_date'] = mysql2date(
 			'U',
-			$wpdb->get_var(
+			$wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$wpdb->prepare(
 					"SELECT MIN(post_date) FROM $wpdb->posts p, $wpdb->term_taxonomy t, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND p.post_status = 'publish' AND p.post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
 					array_merge( array( $this->get_term_id() ), $post_types )
 				)
 			)
 		);
+
+		wp_cache_set( $cache_key, $post_stats, '', HOUR_IN_SECONDS );
 		return $post_stats;
 	}
 
 	public function get_all_post_ids() {
 		global $wpdb;
 		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
+		$cache_key = 'friends_all_post_ids_author_' . $this->get_term_id() . '_' . $post_types_to_delete;
+		if ( wp_cache_get( $cache_key ) ) {
+			return wp_cache_get( $cache_key );
+		}
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT p.ID FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND p.post_type IN ('$post_types_to_delete')", $this->get_term_id() ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		wp_cache_set( $cache_key, $post_ids, '', HOUR_IN_SECONDS - 60 );
 
-		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT p.ID FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND p.post_type IN ('$post_types_to_delete')", $this->get_term_id() ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $post_ids;
 	}
 
@@ -255,26 +266,62 @@ class Subscription extends User {
 	public function get_post_count_by_post_format() {
 		$cache_key = 'friends_post_count_by_post_format_author_' . $this->ID;
 
+		$counts = wp_cache_get( $cache_key );
+		if ( false !== $counts ) {
+			return $counts;
+		}
 		$counts = get_transient( $cache_key );
-		if ( false === $counts ) {
-			$counts = array();
-			$post_types = apply_filters( 'friends_frontend_post_types', array() );
-			$post_formats_term_ids = array();
-			foreach ( get_post_format_slugs() as $post_format ) {
-				$term = get_term_by( 'slug', 'post-format-' . $post_format, 'post_format' );
-				if ( $term ) {
-					$post_formats_term_ids[ $term->term_id ] = $post_format;
-				}
+		if ( false !== $counts ) {
+			return $counts;
+		}
+		$counts = array();
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_formats_term_ids = array();
+		foreach ( get_post_format_slugs() as $post_format ) {
+			$term = get_term_by( 'slug', 'post-format-' . $post_format, 'post_format' );
+			if ( $term ) {
+				$post_formats_term_ids[ $term->term_id ] = $post_format;
 			}
+		}
 
-			global $wpdb;
+		global $wpdb;
 
-			$counts = array();
+		$counts = array();
+ 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$counts['standard'] = $wpdb->get_var(
+			$wpdb->prepare(
+				sprintf(
+					"SELECT COUNT(DISTINCT posts.ID)
+					FROM %s AS posts
+					JOIN %s AS relationships_post_format
+					JOIN %s AS taxonomy_author
+					JOIN %s AS relationships_author
 
-			$counts['standard'] = $wpdb->get_var(
+					WHERE posts.post_status IN ( 'publish', 'private' )
+					AND posts.post_type IN ( %s )
+					AND relationships_post_format.object_id = posts.ID
+					AND relationships_author.object_id = posts.ID
+					AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
+					AND taxonomy_author.term_id = %s",
+					$wpdb->posts,
+					$wpdb->term_relationships,
+					$wpdb->term_taxonomy,
+					$wpdb->term_relationships,
+					implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+					'%d'
+				),
+				array_merge(
+					$post_types,
+					array( $this->get_term_id() )
+				)
+			)
+		);
+
+		if ( ! empty( $post_formats_term_ids ) ) {
+			$post_format_counts = $wpdb->get_results(
 				$wpdb->prepare(
 					sprintf(
-						"SELECT COUNT(DISTINCT posts.ID)
+						"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
 						FROM %s AS posts
 						JOIN %s AS relationships_post_format
 						JOIN %s AS taxonomy_author
@@ -283,67 +330,37 @@ class Subscription extends User {
 						WHERE posts.post_status IN ( 'publish', 'private' )
 						AND posts.post_type IN ( %s )
 						AND relationships_post_format.object_id = posts.ID
+						AND relationships_post_format.term_taxonomy_id IN ( %s )
 						AND relationships_author.object_id = posts.ID
 						AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
-						AND taxonomy_author.term_id = %s",
+						AND taxonomy_author.term_id = %s
+						GROUP BY relationships_post_format.term_taxonomy_id",
 						$wpdb->posts,
 						$wpdb->term_relationships,
 						$wpdb->term_taxonomy,
 						$wpdb->term_relationships,
 						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
+						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) ),
 						'%d'
 					),
 					array_merge(
 						$post_types,
+						array_keys( $post_formats_term_ids ),
 						array( $this->get_term_id() )
 					)
 				)
 			);
-
-			if ( ! empty( $post_formats_term_ids ) ) {
-				$post_format_counts = $wpdb->get_results(
-					$wpdb->prepare(
-						sprintf(
-							"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
-							FROM %s AS posts
-							JOIN %s AS relationships_post_format
-							JOIN %s AS taxonomy_author
-							JOIN %s AS relationships_author
-
-							WHERE posts.post_status IN ( 'publish', 'private' )
-							AND posts.post_type IN ( %s )
-							AND relationships_post_format.object_id = posts.ID
-							AND relationships_post_format.term_taxonomy_id IN ( %s )
-							AND relationships_author.object_id = posts.ID
-							AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
-							AND taxonomy_author.term_id = %s
-							GROUP BY relationships_post_format.term_taxonomy_id",
-							$wpdb->posts,
-							$wpdb->term_relationships,
-							$wpdb->term_taxonomy,
-							$wpdb->term_relationships,
-							implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-							implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) ),
-							'%d'
-						),
-						array_merge(
-							$post_types,
-							array_keys( $post_formats_term_ids ),
-							array( $this->get_term_id() )
-						)
-					)
-				);
-
-				foreach ( $post_format_counts as $row ) {
-					$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
-					$counts['standard'] -= $row->count;
-				}
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			foreach ( $post_format_counts as $row ) {
+				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
+				$counts['standard'] -= $row->count;
 			}
-
-			$counts = array_filter( $counts );
-
-			set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
 		}
+
+		$counts = array_filter( $counts );
+
+		set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
+		wp_cache_set( $cache_key, $counts, '', HOUR_IN_SECONDS );
 
 		return $counts;
 	}
@@ -357,13 +374,22 @@ class Subscription extends User {
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
+		$cache_key = 'friends_all_post_ids_trash_author_' . $this->get_term_id() . '_' . $post_types;
+		if ( false === wp_cache_get( $cache_key ) ) {
+			return wp_cache_get( $cache_key );
+		}
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM $wpdb->posts p, $wpdb->term_taxonomy t, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash"',
 				array_merge( array( $this->get_term_id() ), $post_types )
 			)
 		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
+		wp_cache_set( $cache_key, $count, '', HOUR_IN_SECONDS - 60 );
 		return intval( $count );
 	}
 
@@ -429,7 +455,6 @@ class Subscription extends User {
 		return true;
 	}
 
-
 	public static function convert_from_user( User $user ) {
 		if ( $user instanceof Subscription ) {
 			return $user;
@@ -455,7 +480,12 @@ class Subscription extends User {
 
 		global $wpdb;
 		// Convert feeds.
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $subscription->get_term_id(), $user->ID, User_Feed::TAXONOMY ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
@@ -487,7 +517,11 @@ class Subscription extends User {
 
 		global $wpdb;
 		// Convert feeds.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $user->ID, $subscription->get_term_id(), User_Feed::TAXONOMY ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$user->update_user_option( $option_name, $subscription->get_user_option( $option_name ) );
