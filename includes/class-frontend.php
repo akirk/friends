@@ -1159,10 +1159,10 @@ class Frontend {
 		}
 
 		$page_id = get_query_var( 'page' );
-
-		if ( isset( $_GET['share'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['share'] ) ) {
 			$share_hash = hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ), $page_id ) . $page_id );
-			if ( $_GET['share'] === $share_hash ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( $_GET['share'] === $share_hash ) {
 				$viewable = true;
 			}
 		}
@@ -1214,7 +1214,7 @@ class Frontend {
 
 			switch ( $current_part ) {
 				case 'opml':
-					return $this->render_opml( isset( $_REQUEST['public'] ) );
+					return $this->render_opml( isset( $_REQUEST['public'] ) && boolval( $_REQUEST['public'] ) );
 
 				case 'type':
 					$post_format = array_shift( $pagename_parts );
@@ -1264,6 +1264,7 @@ class Frontend {
 			}
 			$query->set( 'post_status', $post_status );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$query->is_page = false;
 		$query->is_comments_feed = false;
 		$query->set( 'pagename', null );
