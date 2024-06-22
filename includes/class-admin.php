@@ -556,7 +556,7 @@ class Admin {
 
 		if ( isset( $_POST['available_emojis'] ) && is_array( $_POST['available_emojis'] ) ) {
 			$available_emojis = array();
-			foreach ( $_POST['available_emojis'] as $id ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			foreach ( wp_unslash( $_POST['available_emojis'] ) as $id ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 				$id = sanitize_key( $id );
 				$data = Reactions::get_emoji_data( $id );
 				if ( $data ) {
@@ -1283,6 +1283,7 @@ class Admin {
 
 		$this->header_edit_friend( $friend, 'edit-friend-notifications' );
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['updated'] ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Notification Settings were updated.', 'friends' ); ?></p></div>
@@ -1292,6 +1293,7 @@ class Admin {
 			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		Friends::template_loader()->get_template_part(
 			'admin/edit-notifications',
@@ -1315,7 +1317,7 @@ class Admin {
 			if ( ! $hide_from_friends_page ) {
 				$hide_from_friends_page = array();
 			}
-			if ( ! isset( $_POST['show_on_friends_page'] ) || ! $_POST['show_on_friends_page'] ) {
+			if ( ! isset( $_POST['show_on_friends_page'] ) || ! boolval( $_POST['show_on_friends_page'] ) ) {
 				if ( ! in_array( $friend->user_login, $hide_from_friends_page ) ) {
 					$hide_from_friends_page[] = $friend->user_login;
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
@@ -1325,11 +1327,11 @@ class Admin {
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 			}
 
-			if ( $friend->set_retention_number_enabled( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] ) ) {
-				$friend->set_retention_number( $_POST['friends_retention_number'] );
+			if ( $friend->set_retention_number_enabled( isset( $_POST['friends_enable_retention_number'] ) && intval( $_POST['friends_enable_retention_number'] ) ) && isset( $_POST['friends_retention_number'] ) ) {
+				$friend->set_retention_number( intval( $_POST['friends_retention_number'] ) );
 			}
-			if ( $friend->set_retention_days_enabled( isset( $_POST['friends_enable_retention_days'] ) && $_POST['friends_enable_retention_days'] ) ) {
-				$friend->set_retention_days( $_POST['friends_retention_days'] );
+			if ( $friend->set_retention_days_enabled( isset( $_POST['friends_enable_retention_days'] ) && intval( $_POST['friends_enable_retention_days'] ) ) && isset( $_POST['friends_retention_days'] ) ) {
+				$friend->set_retention_days( intval( $_POST['friends_retention_days'] ) );
 			}
 
 			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
@@ -1338,25 +1340,29 @@ class Admin {
 			}
 
 			if ( isset( $_POST['feeds'] ) ) {
+				// Sanitized below.
+				$feeds = wp_unslash( $_POST['feeds'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				$existing_feeds = $friend->get_feeds();
-				if ( '' === trim( $_POST['feeds']['new']['url'] ) ) {
-					unset( $_POST['feeds']['new'] );
-				} else {
-					foreach ( $existing_feeds as $term_id => $user_feed ) {
-						if ( $user_feed->get_url() === trim( $_POST['feeds']['new']['url'] ) ) {
-							if ( isset( $_POST['feeds'][ $term_id ] ) ) {
-								// Let a newly entered feed overrule an existing one.
-								$_POST['feeds'][ $term_id ] = array_merge( $_POST['feeds'][ $term_id ], $_POST['feeds']['new'] );
-								$_POST['feeds'][ $term_id ]['active'] = 1;
+				if ( isset( $feeds['new'] ) ) {
+					if ( ! isset( $feeds['new']['url'] ) || '' === trim( $feeds['new']['url'] ) ) {
+						unset( $feeds['new'] );
+					} else {
+						foreach ( $existing_feeds as $term_id => $user_feed ) {
+							if ( $user_feed->get_url() === trim( $feeds['new']['url'] ) ) {
+								if ( isset( $feeds[ $term_id ] ) ) {
+									// Let a newly entered feed overrule an existing one.
+									$feeds[ $term_id ] = array_merge( $feeds[ $term_id ], $feeds['new'] );
+									$feeds[ $term_id ]['active'] = 1;
+								}
+								unset( $feeds['new'] );
+								break;
 							}
-							unset( $_POST['feeds']['new'] );
-							break;
 						}
 					}
 				}
-				foreach ( $_POST['feeds'] as $term_id => $feed ) {
+				foreach ( $feeds as $term_id => $feed ) {
 					if ( 'new' === $term_id ) {
-						if ( '' === trim( $feed['url'] ) ) {
+						if ( ! isset( $feed['url'] ) || '' === trim( $feed['url'] ) ) {
 							continue;
 						}
 
@@ -1490,6 +1496,7 @@ class Admin {
 		}
 		$this->header_edit_friend( $friend, 'edit-friend-feeds' );
 
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['updated'] ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Feeds were updated.', 'friends' ); ?></p></div>
@@ -1499,6 +1506,7 @@ class Admin {
 			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		Friends::template_loader()->get_template_part( 'admin/edit-feeds', null, $args );
 	}
@@ -1663,7 +1671,7 @@ class Admin {
 			$new_feed = $friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
 			if ( ! is_wp_error( $new_feed ) ) {
 				do_action( 'friends_user_feed_activated', $new_feed );
-				$count += 1;
+				++$count;
 			}
 		}
 
@@ -1935,7 +1943,7 @@ class Admin {
 		}
 
 		if ( ! empty( $_GET['preview'] ) ) {
-			$url = $_GET['preview'];
+			$url = sanitize_text_field( wp_unslash( $_GET['preview'] ) );
 
 			?>
 			<h1>
@@ -1946,15 +1954,17 @@ class Admin {
 			</h1>
 			<?php
 
-			if ( ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'preview-feed' ) ) {
+			if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'preview-feed' ) ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'For security reasons, this preview is not available.', 'friends' ); ?></p>
 				</div>
 				<?php
 				exit;
 			}
-
-			$parser_name = $this->friends->feed->get_registered_parser( $_GET['parser'] );
+			$parser_name = false;
+			if ( isset( $_GET['parser'] ) ) {
+				$parser_name = $this->friends->feed->get_registered_parser( sanitize_text_field( wp_unslash( $_GET['parser'] ) ) );
+			}
 			if ( ! $parser_name ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'An unknown parser name was supplied.', 'friends' ); ?></p>
@@ -1984,8 +1994,11 @@ class Admin {
 			<h3><?php esc_html_e( 'Items in the Feed', 'friends' ); ?></h3>
 
 			<?php
-
-			$items = $this->friends->feed->preview( $_GET['parser'], $url, isset( $_GET['feed'] ) ? intval( $_GET['feed'] ) : null );
+			$feed_id = null;
+			if ( isset( $_GET['feed'] ) ) {
+				$feed_id = intval( $_GET['feed'] );
+			}
+			$items = $this->friends->feed->preview( $parser_name, $url, $feed_id );
 			if ( is_wp_error( $items ) ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $items->get_error_message() ); ?></p>
@@ -2032,13 +2045,14 @@ class Admin {
 			$_POST = $_REQUEST;
 			$_POST['_wpnonce'] = wp_create_nonce( 'add-friend' );
 			if ( ! empty( $_POST['url'] ) && ! isset( $_POST['friend_url'] ) ) {
-				$_POST['friend_url'] = $_POST['url'];
-				$parsed_url = wp_parse_url( $_POST['friend_url'] );
+				$friend_url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
+				$parsed_url = wp_parse_url( $friend_url );
 				if ( isset( $parsed_url['host'] ) ) {
 					if ( ! isset( $parsed_url['scheme'] ) ) {
-						$_POST['friend_url'] = 'https://' . ltrim( $_POST['friend_url'], '/' );
+						$friend_url = 'https://' . ltrim( $friend_url, '/' );
 					}
 				}
+				$_POST['friend_url'] = $friend_url;
 			}
 		}
 
@@ -2084,8 +2098,8 @@ class Admin {
 			'add-friends-placeholder' => apply_filters( 'friends_add_friends_input_placeholder', __( 'Enter URL', 'friends' ) ),
 		);
 
-		if ( ! empty( $_GET['url'] ) || ! empty( $_POST['url'] ) ) {
-			$friend_url = isset( $_GET['url'] ) ? $_GET['url'] : $_POST['url'];
+		if ( ! empty( $_REQUEST['url'] ) ) {
+			$friend_url = sanitize_text_field( wp_unslash( $_REQUEST['url'] ) );
 			$parsed_url = wp_parse_url( $friend_url );
 			if ( isset( $parsed_url['host'] ) ) {
 				if ( ! isset( $parsed_url['scheme'] ) ) {
@@ -2137,26 +2151,26 @@ class Admin {
 
 		$this->check_admin_settings();
 
-		if ( isset( $_POST['notification_keywords'] ) && $_POST['notification_keywords'] ) {
+		if ( ! empty( $_POST['notification_keywords'] ) && is_array( $_POST['notification_keywords'] ) ) {
 			$keywords = array();
-			foreach ( $_POST['notification_keywords'] as $i => $keyword ) {
+			foreach ( wp_unslash( $_POST['notification_keywords'] ) as $i => $keyword ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 				if ( trim( $keyword ) ) {
 					$keywords[] = array(
-						'enabled' => isset( $_POST['notification_keywords_enabled'][ $i ] ) && $_POST['notification_keywords_enabled'][ $i ],
-						'keyword' => $keyword,
+						'enabled' => isset( $_POST['notification_keywords_enabled'][ $i ] ) && boolval( $_POST['notification_keywords_enabled'][ $i ] ),
+						'keyword' => sanitize_text_field( $keyword ),
 					);
 				}
 			}
 			update_option( 'friends_notification_keywords', $keywords );
 		}
 
-		if ( isset( $_POST['new_post_notification'] ) && $_POST['new_post_notification'] ) {
+		if ( isset( $_POST['new_post_notification'] ) && boolval( $_POST['new_post_notification'] ) ) {
 			delete_user_option( get_current_user_id(), 'friends_no_new_post_notification' );
 		} else {
 			update_user_option( get_current_user_id(), 'friends_no_new_post_notification', 1 );
 		}
 
-		if ( isset( $_POST['friend_request_notification'] ) && $_POST['friend_request_notification'] ) {
+		if ( isset( $_POST['friend_request_notification'] ) && boolval( $_POST['friend_request_notification'] ) ) {
 			delete_user_option( get_current_user_id(), 'friends_no_friend_request_notification' );
 		} else {
 			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
@@ -2165,30 +2179,35 @@ class Admin {
 		if ( empty( $_POST['friend_listed'] ) ) {
 			return;
 		}
-
-		$friend_ids = $_POST['friend_listed'];
+		// This is an array, it is checked before use below.
+		$friend_usernames = wp_unslash( $_POST['friend_listed'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$current_user_id = get_current_user_id();
 		$hide_from_friends_page = array();
 
-		foreach ( $friend_ids as $friend_id ) {
-			if ( ! isset( $_POST['show_on_friends_page'][ $friend_id ] ) ) {
-				$hide_from_friends_page[] = $friend_id;
+		foreach ( $friend_usernames as $friend_username ) {
+			$friend_user = User::get_by_username( $friend_username );
+			if ( ! $friend_user ) {
+				continue;
+			}
+			$friend_username = $friend_user->user_login;
+			if ( ! isset( $_POST['show_on_friends_page'][ $friend_username ] ) ) {
+				$hide_from_friends_page[] = $friend_username;
 			}
 
-			$no_new_post_notification = ! isset( $_POST['new_friend_post_notification'][ $friend_id ] ) || '0' === $_POST['new_friend_post_notification'][ $friend_id ];
-			if ( get_user_option( 'friends_no_new_post_notification_' . $friend_id ) !== $no_new_post_notification ) {
-				update_user_option( $current_user_id, 'friends_no_new_post_notification_' . $friend_id, $no_new_post_notification );
+			$no_new_post_notification = ! isset( $_POST['new_friend_post_notification'][ $friend_username ] ) || '0' === $_POST['new_friend_post_notification'][ $friend_username ];
+			if ( get_user_option( 'friends_no_new_post_notification_' . $friend_username ) !== $no_new_post_notification ) {
+				update_user_option( $current_user_id, 'friends_no_new_post_notification_' . $friend_username, $no_new_post_notification );
 			}
 
-			$no_keyword_notification = ! isset( $_POST['keyword_notification'][ $friend_id ] );
-			if ( get_user_option( 'friends_no_keyword_notification_' . $friend_id ) !== $no_keyword_notification ) {
-				update_user_option( $current_user_id, 'friends_no_keyword_notification_' . $friend_id, $no_keyword_notification );
+			$no_keyword_notification = ! isset( $_POST['keyword_notification'][ $friend_username ] );
+			if ( get_user_option( 'friends_no_keyword_notification_' . $friend_username ) !== $no_keyword_notification ) {
+				update_user_option( $current_user_id, 'friends_no_keyword_notification_' . $friend_username, $no_keyword_notification );
 			}
 		}
 
 		update_user_option( $current_user_id, 'friends_hide_from_friends_page', $hide_from_friends_page );
 
-		do_action( 'friends_notification_manager_after_form_submit', $friend_ids );
+		do_action( 'friends_notification_manager_after_form_submit', $friend_usernames );
 
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
@@ -2263,7 +2282,7 @@ class Admin {
 
 		// In order to switch to the frontend locale, we need to first pretend that nothing was loaded yet.
 		global $l10n;
-		$l10n = array();
+		$l10n = array(); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 
 		switch_to_locale( $this->get_frontend_locale() );
 		// Now while loading the next translations we need to ensure that determine_locale() doesn't return the admin language but the frontend language.
@@ -2306,8 +2325,11 @@ class Admin {
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
 	public function process_admin_wp_friendship_settings() {
-		if ( current_user_can( 'manage_options' ) ) {
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends-settings' ) ) {
+			return;
+		}
 
+		if ( current_user_can( 'manage_options' ) ) {
 			if ( isset( $_POST['main_user_id'] ) && is_numeric( $_POST['main_user_id'] ) ) {
 				update_option( 'friends_main_user_id', intval( $_POST['main_user_id'] ) );
 			} else {
@@ -2327,36 +2349,36 @@ class Admin {
 				}
 			}
 
-			if ( isset( $_POST['require_codeword'] ) && $_POST['require_codeword'] ) {
+			if ( isset( $_POST['require_codeword'] ) && boolval( $_POST['require_codeword'] ) ) {
 				update_option( 'friends_require_codeword', true );
 			} else {
 				delete_option( 'friends_require_codeword' );
 			}
 
-			if ( isset( $_POST['codeword'] ) && $_POST['codeword'] ) {
-				update_option( 'friends_codeword', $_POST['codeword'] );
+			if ( isset( $_POST['codeword'] ) && boolval( $_POST['codeword'] ) ) {
+				update_option( 'friends_codeword', sanitize_text_field( wp_unslash( $_POST['codeword'] ) ) );
 			} else {
 				delete_option( 'friends_codeword' );
 			}
 
-			if ( isset( $_POST['wrong_codeword_message'] ) && $_POST['wrong_codeword_message'] ) {
-				update_option( 'friends_wrong_codeword_message', $_POST['wrong_codeword_message'] );
+			if ( isset( $_POST['wrong_codeword_message'] ) && boolval( $_POST['wrong_codeword_message'] ) ) {
+				update_option( 'friends_wrong_codeword_message', sanitize_text_field( wp_unslash( $_POST['wrong_codeword_message'] ) ) );
 			} else {
 				delete_option( 'friends_wrong_codeword_message' );
 			}
 
-			if ( isset( $_POST['default_role'] ) && in_array( $_POST['default_role'], array( 'friend', 'acquaintance' ), true ) ) {
-				update_option( 'friends_default_friend_role', $_POST['default_role'] );
+			if ( isset( $_POST['default_role'] ) && in_array( wp_unslash( $_POST['default_role'] ), array( 'friend', 'acquaintance' ), true ) ) {
+				update_option( 'friends_default_friend_role', wp_unslash( $_POST['default_role'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			}
 
-			if ( isset( $_POST['comment_registration'] ) && $_POST['comment_registration'] ) {
+			if ( isset( $_POST['comment_registration'] ) && boolval( $_POST['comment_registration'] ) ) {
 				update_option( 'comment_registration', true );
 			} else {
 				delete_option( 'comment_registration' );
 			}
 
-			if ( isset( $_POST['comment_registration_message'] ) && $_POST['comment_registration_message'] ) {
-				update_option( 'friends_comment_registration_message', $_POST['comment_registration_message'] );
+			if ( isset( $_POST['comment_registration_message'] ) && boolval( $_POST['comment_registration_message'] ) ) {
+				update_option( 'friends_comment_registration_message', sanitize_text_field( wp_unslash( $_POST['comment_registration_message'] ) ) );
 			} else {
 				delete_option( 'friends_comment_registration_message' );
 			}
