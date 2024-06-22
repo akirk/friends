@@ -1131,7 +1131,7 @@ class Admin {
 				'active' => $active . $append,
 				'title'  => $friend->user_login,
 				'menu'   => array(
-					__( 'Posts' )                    => $friend->get_local_friends_page_url(),
+					__( 'Posts' )                    => $friend->get_local_friends_page_url(), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					__( 'Settings' )                 => 'edit-friend' . $append, // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					__( 'Feeds', 'friends' )         => 'edit-friend-feeds' . $append,
 					__( 'Notifications', 'friends' ) => 'edit-friend-notifications' . $append,
