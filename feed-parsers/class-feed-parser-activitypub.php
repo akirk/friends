@@ -823,7 +823,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( is_wp_error( $user_feed ) || ! Friends::check_url( $actor_url ) ) {
 			$meta = $this->get_metadata( $actor_url );
 			if ( ! $meta || is_wp_error( $meta ) || ! isset( $meta['url'] ) ) {
-				$error = is_wp_error( $meta ) ? $meta->get_error_message() . ' ' . print_r( $meta->get_error_data(), true ) : 'No URL found'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				$error = 'No URL found';
+				if ( is_wp_error( $meta ) ) {
+					$error = $meta->get_error_message();
+					$error .= ' ' . print_r( $meta->get_error_data(), true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
+				}
 				$this->log( 'Received invalid meta for ' . $actor_url . ' ' . $error, $meta );
 				return false;
 			}
@@ -1447,20 +1451,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function cache_reply_to_boost() {
 		$url = false;
 		$append_to_redirect = '';
-		 // phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['in_reply_to'] ) ) {
-			$url = sanitize_text_field( wp_unslash( $_GET['in_reply_to'] ) );
-			if ( ! wp_parse_url( $url ) ) {
-				return;
-			}
+
+		$in_reply_to = filter_input( INPUT_GET, 'in_reply_to', FILTER_SANITIZE_URL );
+		$boost = filter_input( INPUT_GET, 'boost', FILTER_SANITIZE_URL );
+		if ( $in_reply_to ) {
+			$url = $in_reply_to;
 			$append_to_redirect .= '#comment';
-		} elseif ( isset( $_GET['boost'] ) ) {
-			$url = sanitize_text_field( wp_unslash( $_GET['boost'] ) );
-			if ( ! wp_parse_url( $url ) ) {
-				return;
-			}
+		} elseif ( $boost ) {
+			$url = $boost;
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
 		if ( ! $url ) {
 			return;
 		}
@@ -1572,13 +1572,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function activitypub_save_settings( User $friend ) {
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-feeds-' . $friend->user_login ) ) {
+		if ( ! isset( $_POST['_wpnonce'] ) || wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-feeds-' . $friend->user_login ) ) {
+			return;
+		}
 
-			if ( isset( $_POST['friends_show_replies'] ) && intval( $_POST['friends_show_replies'] ) ) {
-				$friend->update_user_option( 'activitypub_friends_show_replies', '1' );
-			} else {
-				$friend->delete_user_option( 'activitypub_friends_show_replies' );
-			}
+		if ( isset( $_POST['friends_show_replies'] ) && boolval( $_POST['friends_show_replies'] ) ) {
+			$friend->update_user_option( 'activitypub_friends_show_replies', '1' );
+		} else {
+			$friend->delete_user_option( 'activitypub_friends_show_replies' );
 		}
 	}
 
@@ -2141,7 +2142,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     bool    Whether the comment is approved.
 	 */
 	public function pre_comment_approved( $approved, $commentdata ) {
-		if ( ! $approved || ( is_string( $approved ) && 'activitypub' === $commentdata['comment_meta']['protocol'] ) ) {
+		if ( is_string( $approved ) && 'activitypub' === $commentdata['comment_meta']['protocol'] ) {
 			// If the author is someone we already follow.
 			$user_feed = User_Feed::get_by_url( $commentdata['comment_author_url'] );
 			if ( $user_feed instanceof User_Feed ) {

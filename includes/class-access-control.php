@@ -86,7 +86,7 @@ class Access_Control {
 	 * @return bool The authentication status of the feed.
 	 */
 	public static function private_rss_is_authenticated() {
-		if ( isset( $_GET['auth'] ) && get_option( 'friends_private_rss_key' ) === $_GET['auth'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( filter_input( INPUT_GET, 'auth' ) === get_option( 'friends_private_rss_key' ) ) {
 			return true;
 		}
 
