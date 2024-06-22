@@ -53,6 +53,7 @@
 			<property name="customSanitizingFunctions" type="array">
 				<element value="validate_feed_catch_all" />
 				<element value="validate_feed_rules" />
+				<element value="check_url" />
 			</property>
 		</properties>
 	</rule>

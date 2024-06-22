@@ -840,9 +840,10 @@ class Admin {
 		if ( ! isset( $_POST['friend'] ) ) {
 			wp_send_json_error( 'missing-parameters' );
 		}
-		check_ajax_referer( 'fetch-feeds-' . $_POST['friend'] );
 
-		$friend_user = User::get_by_username( $_POST['friend'] );
+		check_ajax_referer( 'fetch-feeds-' . sanitize_user( wp_unslash( $_POST['friend'] ) ) );
+
+		$friend_user = User::get_by_username( sanitize_user( wp_unslash( $_POST['friend'] ) ) );
 		if ( ! $friend_user ) {
 			wp_send_json_error( 'unknown-user' );
 		}
@@ -860,14 +861,14 @@ class Admin {
 		if ( ! isset( $_POST['url'] ) || ! isset( $_POST['friend'] ) ) {
 			wp_send_json_error( 'missing-parameters' );
 		}
-		$url = $_POST['url'];
+		$url = sanitize_text_field( wp_unslash( $_POST['url'] ) );
 		check_ajax_referer( 'auth-link-' . $url );
 
 		if ( ! friends::has_required_privileges() ) {
 			wp_send_json_error( 'missing-priviledges' );
 		}
 
-		$friend_user = User::get_user( $_POST['friend'] );
+		$friend_user = User::get_user( sanitize_user( wp_unslash( $_POST['friend'] ) ) );
 		if ( ! $friend_user ) {
 			wp_send_json_error( 'unknown-user' );
 		}
@@ -883,6 +884,8 @@ class Admin {
 	}
 
 	public function render_friends_list() {
+		 // phpcs:disable WordPress.Security.NonceVerification
+		$page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : 'friends';
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
 			null,
@@ -891,12 +894,12 @@ class Admin {
 					__( 'Your Friends & Subscriptions', 'friends' ) => 'friends-list',
 					__( 'Your Friend Requests', 'friends' ) => 'friends-list-requests',
 				),
-				'active' => $_GET['page'],
+				'active' => $page,
 				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 
-		if ( isset( $_GET['page'] ) && 'friends-list-requests' === $_GET['page'] ) {
+		if ( 'friends-list-requests' === $page ) {
 			echo '<p>';
 			echo wp_kses(
 				sprintf(
@@ -925,7 +928,7 @@ class Admin {
 				sprintf(
 				// translators: % s is a username.
 					__( '%s was deleted.', 'friends' ),
-					$_GET['deleted']
+					sanitize_user( wp_unslash( $_GET['deleted'] ) )
 				)
 			);
 			?>
@@ -937,11 +940,12 @@ class Admin {
 			<?php
 			esc_html_e( 'An error occurred.', 'friends' );
 			echo ' ';
-			echo esc_html( $_GET['error'] );
+			echo esc_html( sanitize_text_field( wp_unslash( $_GET['error'] ) ) );
 			?>
 			</p></div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		Friends::template_loader()->get_template_part(
 			'admin/friends-list',
@@ -991,11 +995,11 @@ class Admin {
 			wp_die( esc_html__( 'Sorry, you are not allowed to edit this user.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		}
 
-		if ( ! isset( $_GET['user'] ) ) {
+		if ( ! isset( $_GET['user'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			wp_die( esc_html__( 'Invalid user.', 'friends' ) );
 		}
 
-		$friend = User::get_by_username( $_GET['user'] );
+		$friend = User::get_by_username( sanitize_user( wp_unslash( $_GET['user'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid username.', 'friends' ) );
 		}
@@ -1015,11 +1019,11 @@ class Admin {
 		$arg       = 'updated';
 		$arg_value = 1;
 
-		if ( isset( $_GET['convert-to-user'] ) && wp_verify_nonce( $_GET['convert-to-user'], 'convert-to-user-' . $friend->user_login ) ) {
+		if ( isset( $_GET['convert-to-user'] ) && wp_verify_nonce( sanitize_key( $_GET['convert-to-user'] ), 'convert-to-user-' . $friend->user_login ) ) {
 			if ( $friend instanceof Subscription ) {
 				Subscription::convert_to_user( $friend );
 			}
-		} elseif ( isset( $_GET['convert-from-user'] ) && wp_verify_nonce( $_GET['convert-from-user'], 'convert-from-user-' . $friend->user_login ) ) {
+		} elseif ( isset( $_GET['convert-from-user'] ) && wp_verify_nonce( sanitize_key( $_GET['convert-from-user'] ), 'convert-from-user-' . $friend->user_login ) ) {
 			if ( $friend instanceof User && ! $friend instanceof Subscription ) {
 				if ( $friend->has_cap( 'friends_plugin' ) && ! $friend->has_cap( 'friend' ) && ! $friend->has_cap( 'pending_friend_request' ) && ! $friend->has_cap( 'friend_request' ) ) {
 					Subscription::convert_from_user( $friend );
@@ -1028,12 +1032,12 @@ class Admin {
 					$arg_value = __( 'A friend cannot be converted to a virtual user.', 'friends' );
 				}
 			}
-		} elseif ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( $_GET['accept-friend-request'], 'accept-friend-request-' . $friend->user_login ) ) {
+		} elseif ( isset( $_GET['accept-friend-request'] ) && wp_verify_nonce( sanitize_key( $_GET['accept-friend-request'] ), 'accept-friend-request-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'friend_request' ) ) {
 				$friend->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 				$arg = 'friend';
 			}
-		} elseif ( isset( $_GET['add-friend'] ) && wp_verify_nonce( $_GET['add-friend'], 'add-friend-' . $friend->user_login ) ) {
+		} elseif ( isset( $_GET['add-friend'] ) && wp_verify_nonce( sanitize_key( $_GET['add-friend'] ), 'add-friend-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'pending_friend_request' ) || $friend->has_cap( 'subscription' ) ) {
 				$rest_url = $this->friends->rest->discover_rest_url( $friend->user_url );
 				if ( ! is_wp_error( $rest_url ) ) {
@@ -1058,23 +1062,30 @@ class Admin {
 					}
 				}
 			}
-		} elseif ( isset( $_GET['change-to-restricted-friend'] ) && wp_verify_nonce( $_GET['change-to-restricted-friend'], 'change-to-restricted-friend-' . $friend->user_login ) ) {
+		} elseif ( isset( $_GET['change-to-restricted-friend'] ) && wp_verify_nonce( sanitize_key( $_GET['change-to-restricted-friend'] ), 'change-to-restricted-friend-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'friend' ) ) {
 				$friend->set_role( 'acquaintance' );
 			}
-		} elseif ( isset( $_GET['change-to-friend'] ) && wp_verify_nonce( $_GET['change-to-friend'], 'change-to-friend-' . $friend->user_login ) ) {
+		} elseif ( isset( $_GET['change-to-friend'] ) && wp_verify_nonce( sanitize_key( $_GET['change-to-friend'] ), 'change-to-friend-' . $friend->user_login ) ) {
 			if ( $friend->has_cap( 'acquaintance' ) ) {
 				$friend->set_role( 'friend' );
 			}
-		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-' . $friend->user_login ) ) {
-			if ( trim( $_POST['friends_display_name'] ) ) {
-				$friend->first_name   = trim( $_POST['friends_display_name'] );
-				$friend->display_name = trim( $_POST['friends_display_name'] );
+		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-' . $friend->user_login ) ) {
+			if ( isset( $_POST['friends_display_name'] ) ) {
+				$friends_display_name = trim( sanitize_text_field( wp_unslash( $_POST['friends_display_name'] ) ) );
+				if ( $friends_display_name ) {
+					$friend->first_name   = $friends_display_name;
+					$friend->display_name = $friends_display_name;
+				}
 			}
-
-			$friend->description = trim( $_POST['friends_description'] );
-			if ( trim( $_POST['user_url'] ) && filter_var( $_POST['user_url'], FILTER_VALIDATE_URL ) ) {
-				$friend->user_url = $_POST['user_url'];
+			if ( isset( $_POST['friends_description'] ) ) {
+				$friend->description = trim( sanitize_text_field( wp_unslash( $_POST['friends_description'] ) ) );
+			}
+			if ( isset( $_POST['user_url'] ) ) {
+				$user_url = sanitize_text_field( wp_unslash( $_POST['user_url'] ) );
+				if ( filter_var( $user_url, FILTER_VALIDATE_URL ) ) {
+					$friend->user_url = $user_url;
+				}
 			}
 			$friend->save();
 
@@ -1082,7 +1093,7 @@ class Admin {
 			if ( ! $hide_from_friends_page ) {
 				$hide_from_friends_page = array();
 			}
-			if ( ! isset( $_POST['show_on_friends_page'] ) || ! $_POST['show_on_friends_page'] ) {
+			if ( ! isset( $_POST['show_on_friends_page'] ) || ! boolval( $_POST['show_on_friends_page'] ) ) {
 				if ( ! in_array( $friend->user_login, $hide_from_friends_page ) ) {
 					$hide_from_friends_page[] = $friend->user_login;
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
@@ -1149,7 +1160,7 @@ class Admin {
 		}
 
 		$this->header_edit_friend( $friend, 'edit-friend' );
-
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['updated'] ) ) {
 			?>
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'User was updated.', 'friends' ); ?></p></div>
@@ -1171,29 +1182,36 @@ class Admin {
 			<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'Subscription activated.', 'friends' ); ?></p></div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		Friends::template_loader()->get_template_part( 'admin/edit-friend', null, $args );
 	}
 
 	public function ajax_set_avatar() {
-		$user_id = isset( $_POST['user'] ) ? $_POST['user'] : 0;
+		if ( ! isset( $_POST['user'] ) ) {
+			wp_send_json_error();
+		}
 
-		check_ajax_referer( "set-avatar-$user_id" );
+		check_ajax_referer( 'set-avatar-' . sanitize_user( wp_unslash( $_POST['user'] ) ) );
 
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_send_json_error();
 			exit;
 		}
-
-		if ( empty( $_POST['avatar'] ) || ! Friends::check_url( $_POST['avatar'] ) ) {
+		if ( empty( $_POST['avatar'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+		$avatar = check_url( wp_unslash( $_POST['avatar'] ) );
+		if ( empty( $avatar ) ) {
 			wp_send_json_error();
 			exit;
 		}
 
-		$friend = User::get_user_by_id( $user_id );
+		$friend = User::get_by_username( sanitize_user( wp_unslash( $_POST['user'] ) ) );
 
 		// Use WordPress functions to check the image dimensions.
-		$size = \wp_getimagesize( $_POST['avatar'] );
+		$size = \wp_getimagesize( $avatar );
 		if ( ! $size ) {
 			wp_send_json_error( __( 'Image is in an unknown format.', 'friends' ) );
 			exit;
@@ -1204,7 +1222,7 @@ class Admin {
 			exit;
 		}
 
-		$url = $friend->update_user_icon_url( $_POST['avatar'] );
+		$url = $friend->update_user_icon_url( $avatar );
 
 		if ( ! $url || is_wp_error( $url ) ) {
 			wp_send_json_error( $url );
@@ -1226,9 +1244,9 @@ class Admin {
 		$arg       = 'updated';
 		$arg_value = 1;
 
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-notifications-' . $friend->user_login ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-notifications-' . $friend->user_login ) ) {
 			if ( ! get_user_option( 'friends_no_new_post_notification' ) ) {
-				if ( isset( $_POST['friends_new_post_notification'] ) && $_POST['friends_new_post_notification'] ) {
+				if ( isset( $_POST['friends_new_post_notification'] ) && boolval( $_POST['friends_new_post_notification'] ) ) {
 					delete_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->user_login );
 				} else {
 					update_user_option( get_current_user_id(), 'friends_no_new_post_notification_' . $friend->user_login, 1 );
@@ -1236,7 +1254,7 @@ class Admin {
 			}
 
 			if ( ! get_user_option( 'friends_no_keyword_notification' ) ) {
-				if ( isset( $_POST['friends_keyword_notification'] ) && $_POST['friends_keyword_notification'] ) {
+				if ( isset( $_POST['friends_keyword_notification'] ) && boolval( $_POST['friends_keyword_notification'] ) ) {
 					delete_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->user_login );
 				} else {
 					update_user_option( get_current_user_id(), 'friends_no_keyword_notification_' . $friend->user_login, 1 );
@@ -1292,7 +1310,7 @@ class Admin {
 		$arg       = 'updated';
 		$arg_value = 1;
 
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-feeds-' . $friend->user_login ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-feeds-' . $friend->user_login ) ) {
 			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 			if ( ! $hide_from_friends_page ) {
 				$hide_from_friends_page = array();
@@ -1493,7 +1511,7 @@ class Admin {
 		$arg       = 'deleted';
 		$arg_value = $friend->user_login;
 
-		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'unfriend-' . $friend->user_login ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'unfriend-' . $friend->user_login ) ) {
 			$friend->delete();
 		} else {
 			return;
@@ -1686,7 +1704,7 @@ class Admin {
 				echo wp_kses( $message, array( 'a' => array( 'href' => array() ) ) );
 				// translators: %s is the friends page URL.
 				echo ' ', wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to view their posts.', 'friends' ), '"' . esc_url( $friend_user->get_local_friends_page_url() ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-				echo ' <span id="fetch-feeds" data-nonce="', esc_attr( wp_create_nonce( 'fetch-feeds-' . $friend_user->user_login ) ), '" data-friend=', esc_attr( $friend_user->user_login ), '>', __( 'Fetching feeds...', 'friends' ), '</span>';
+				echo ' <span id="fetch-feeds" data-nonce="', esc_attr( wp_create_nonce( 'fetch-feeds-' . sanitize_user( $friend_user->user_login ) ) ), '" data-friend=', esc_attr( $friend_user->user_login ), '>', __( 'Fetching feeds...', 'friends' ), '</span>';
 				?>
 			</p></div>
 			<?php
@@ -1928,7 +1946,7 @@ class Admin {
 			</h1>
 			<?php
 
-			if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'preview-feed' ) ) {
+			if ( ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'preview-feed' ) ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'For security reasons, this preview is not available.', 'friends' ); ?></p>
 				</div>
@@ -2027,7 +2045,7 @@ class Admin {
 		$response = null;
 		$postdata = apply_filters( 'friends_add_friend_postdata', $_POST );
 		if ( ! empty( $postdata ) ) {
-			if ( ! wp_verify_nonce( $postdata['_wpnonce'], 'add-friend' ) ) {
+			if ( ! wp_verify_nonce( sanitize_key( $postdata['_wpnonce'] ), 'add-friend' ) ) {
 				$response = new \WP_Error( 'invalid-nonce', __( 'For security reasons, please verify the URL and click next if you want to proceed.', 'friends' ) );
 			} else {
 				$response = $this->process_admin_add_friend( $postdata );
@@ -2113,7 +2131,7 @@ class Admin {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'notification-manager' ) ) {
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'notification-manager' ) ) {
 			return;
 		}
 

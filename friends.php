@@ -175,6 +175,16 @@ function validate_feed_rules( $rules ) {
 	return Feed::validate_feed_rules( $rules );
 }
 
+/**
+ * Check whether this is a valid URL
+ *
+ * @param string $url The URL to check.
+ * @return false|string URL or false on failure.
+ */
+function check_url( $url ) {
+	return check_url( $url );
+}
+
 // Integrations.
 
 require_once __DIR__ . '/integrations/class-enable-mastodon-apps.php';
