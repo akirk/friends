@@ -1168,7 +1168,7 @@ class User extends \WP_User {
 
 		$name = apply_filters( 'friend_user_role_name', false, $this );
 
-		if ( ! $name ) {
+		if ( empty( $name ) ) {
 			$name = _x( 'Unknown', 'User role', 'friends' );
 		}
 
