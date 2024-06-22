@@ -699,7 +699,7 @@ class User_Feed {
 	/**
 	 * Get the feed with a specific URL.
 	 *
-	 * @param      bool $also_undue     The feed URL.
+	 * @param      bool $also_undue     Whether to get also undue feeds.
 	 *
 	 * @return     object|\WP_Error   A User_Feed object.
 	 */

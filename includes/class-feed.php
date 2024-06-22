@@ -268,10 +268,10 @@ class Feed {
 	/**
 	 * Retrieve posts from all friends.
 	 *
-	 * @param      bool $force  Whether to force retrieval.
+	 * @param      bool $also_undue     Whether to get also undue feeds.
 	 */
-	public function retrieve_friend_posts( $force = false ) {
-		foreach ( User_Feed::get_all_due() as $feed ) {
+	public function retrieve_friend_posts( $also_undue = false ) {
+		foreach ( User_Feed::get_all_due( $also_undue ) as $feed ) {
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
 			$friend_user = $feed->get_friend_user();
@@ -491,7 +491,7 @@ class Feed {
 	 *
 	 * @return     string  The discovered post format.
 	 */
-	public function post_format_discovery( $item ) {
+	public function post_format_discovery( $item ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		// Not implemented yet.
 		return 'standard';
 	}
@@ -522,7 +522,9 @@ class Feed {
 	public function process_incoming_feed_items( array $items, User_Feed $user_feed ) {
 		$friend_user = $user_feed->get_friend_user();
 		if ( ! $friend_user ) {
-			error_log( var_export( $user_feed, true ) );
+			if ( apply_filters( 'friends_debug', false ) ) {
+				error_log( var_export( $user_feed, true ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
+			}
 			return;
 		}
 		$remote_post_ids = $friend_user->get_remote_post_ids();
@@ -650,7 +652,7 @@ class Feed {
 			if ( is_null( $old_post ) || intval( $old_post->comment_count ) !== intval( $item->comment_count ) ) {
 				// The comment_count needs to be updated manually since it doesn't represent real comments in the database.
 				global $wpdb;
-				$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
+				$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				wp_cache_delete( "comments-{$post_id}", 'counts' );
 				clean_post_cache( $post_id );
 				do_action( 'wp_update_comment_count', $post_id, $item->comment_count, $old_post ? $old_post->comment_count : 0 );
@@ -687,7 +689,7 @@ class Feed {
 			update_post_meta( $post_id, 'feed_url', $user_feed->get_url() );
 
 			global $wpdb;
-			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) );
+			$wpdb->update( $wpdb->posts, array( 'comment_count' => $item->comment_count ), array( 'ID' => $post_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		}
 		remove_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 
@@ -762,7 +764,7 @@ class Feed {
 			return;
 		}
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		wp_safe_redirect( add_query_arg( 'url', $_GET['add-friend'], self_admin_url( 'admin.php?page=add-friend' ) ) );
+		wp_safe_redirect( add_query_arg( 'url', sanitize_text_field( wp_unslash( $_GET['add-friend'] ) ), self_admin_url( 'admin.php?page=add-friend' ) ) );
 		exit;
 	}
 
@@ -774,7 +776,7 @@ class Feed {
 	public function wp_feed_options( $feed ) {
 		$feed->useragent .= ' Friends/' . FRIENDS_VERSION;
 		if (
-			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( $_GET['_wpnonce'], 'friends-refresh' ) &&
+			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-refresh' ) &&
 			isset( $_GET['page'] ) && 'page=friends-refresh' === $_GET['page']
 		) {
 			$feed->enable_cache( false );
@@ -1023,41 +1025,64 @@ class Feed {
 	private function discover_link_rel_feeds( $content, $url, $headers ) {
 		$discovered_feeds = array();
 		$has_self = false;
+		$links = array();
 		$mf = Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
-			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
-				foreach ( array( 'friends-base-url', 'me', 'alternate', 'self' ) as $rel ) {
-					if ( in_array( $rel, $link['rels'] ) ) {
-						$discovered_feeds[ $feed_url ] = array(
-							'rel' => $rel,
-						);
+			$links = array_merge( $links, $mf['rel-urls'] );
+		}
+		foreach ( $headers as $header => $value ) {
+			if ( 'link' === strtolower( $header ) ) {
+				$values = wp_parse_args( $value );
+				if ( isset( $values['href'] ) ) {
+					if ( ! isset( $values['rels'] ) && $values['rel'] ) {
+						$values['rels'] = array( $values['rel'] );
+						unset( $values['rel'] );
+					}
+					if ( isset( $values['rels'] ) ) {
+						if ( isset( $links[ $values['href'] ] ) ) {
+							foreach ( $values['rels'] as $rel ) {
+								$links[ $values['href'] ]['rels'][] = $rel;
+							}
+						} else {
+							$links[ $values['href'] ] = $values;
+						}
 					}
 				}
+			}
+		}
 
-				if ( ! isset( $discovered_feeds[ $feed_url ] ) ) {
-					continue;
+		foreach ( $links as $feed_url => $link ) {
+			foreach ( array( 'friends-base-url', 'me', 'alternate', 'self' ) as $rel ) {
+				if ( in_array( $rel, $link['rels'] ) ) {
+					$discovered_feeds[ $feed_url ] = array(
+						'rel' => $rel,
+					);
 				}
+			}
 
-				if ( 'self' === $rel ) {
-					$has_self = true;
-				}
+			if ( ! isset( $discovered_feeds[ $feed_url ] ) ) {
+				continue;
+			}
 
-				if ( isset( $link['type'] ) ) {
-					$discovered_feeds[ $feed_url ]['type'] = $link['type'];
-				}
+			if ( 'self' === $rel ) {
+				$has_self = true;
+			}
 
-				if ( isset( $link['title'] ) ) {
-					$discovered_feeds[ $feed_url ]['title'] = $link['title'];
-				} elseif ( isset( $link['text'] ) ) {
-					$discovered_feeds[ $feed_url ]['title'] = $link['text'];
-				}
+			if ( isset( $link['type'] ) ) {
+				$discovered_feeds[ $feed_url ]['type'] = $link['type'];
+			}
+
+			if ( isset( $link['title'] ) ) {
+				$discovered_feeds[ $feed_url ]['title'] = $link['title'];
+			} elseif ( isset( $link['text'] ) ) {
+				$discovered_feeds[ $feed_url ]['title'] = $link['text'];
 			}
 		}
 
 		if ( ! $has_self && class_exists( '\DOMXpath' ) ) {
 			// Convert to a DomDocument and silence the errors while doing so.
 			$doc = new \DomDocument();
-			set_error_handler( '__return_null' );
+			set_error_handler( '__return_null' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
 			$doc->loadHTML( $content );
 			restore_error_handler();
 
@@ -1100,6 +1125,11 @@ class Feed {
 	 * @return int Post ID, or 0 on failure.
 	 */
 	public static function url_to_postid( $url, $author_id = false ) {
+		$cache_key = 'friends_url_to_postid_' . md5( $url ) . ( $author_id ? '_' . $author_id : '' );
+		$post_id = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $post_id ) {
+			return $post_id;
+		}
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$args = $post_types;
 
@@ -1118,12 +1148,14 @@ class Feed {
 		$args[] = $url;
 		$args[] = esc_attr( $url );
 
-		$post_id = $wpdb->get_var(
+		$post_id = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				$sql, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 				$args
 			)
 		);
+
+		wp_cache_set( $cache_key, $post_id, 'friends' );
 		return $post_id;
 	}
 

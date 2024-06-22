@@ -1123,7 +1123,7 @@ class Admin {
 	 * @param      string $active  The active menu entry.
 	 */
 	public function header_edit_friend( User $friend, $active ) {
-		$append = '&user=' . $friend->user_login;
+		$append = '&user=' . sanitize_user( $friend->user_login );
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
 			null,
@@ -1564,12 +1564,12 @@ class Admin {
 			<?php
 			$error_data = $errors->get_error_data();
 			if ( isset( $error_data->error ) ) {
-				$error = unserialize( $error_data->error );
+				$error = unserialize( $error_data->error ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
 				if ( is_wp_error( $error ) ) {
 					?>
 					<pre>
 						<?php
-						print_r( $error );
+						print_r( $error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 						?>
 					</pre>
 					<?php
@@ -1899,7 +1899,10 @@ class Admin {
 				'active' => 'add-friend-confirm',
 				'title'  => __( 'Add New Friend', 'friends' ),
 				'menu'   => array(
-					'1. ' . __( 'Enter Details', 'friends' ) => 'add-friend' . ( isset( $friend_url ) ? '&url=' . urlencode( $friend_url ) : '' ),
+					'1. ' . __( 'Enter Details', 'friends' ) => array(
+						'page' => 'add-friend',
+						'url'  => ! empty( $friend_url ) ? $friend_url : false,
+					),
 					'2. ' . __( 'Confirm', 'friends' ) => 'add-friend-confirm',
 				),
 			)
@@ -2119,7 +2122,10 @@ class Admin {
 				'active' => 'add-friend',
 				'title'  => __( 'Add New Friend', 'friends' ),
 				'menu'   => array(
-					'1. ' . __( 'Enter Details', 'friends' ) => 'add-friend' . ( isset( $friend_url ) ? '&url=' . urlencode( $friend_url ) : '' ),
+					'1. ' . __( 'Enter Details', 'friends' ) => array(
+						'page' => 'add-friend',
+						'url'  => ! empty( $friend_url ) ? $friend_url : false,
+					),
 					'2. ' . __( 'Confirm', 'friends' ) => false,
 				),
 			)

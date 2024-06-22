@@ -45,7 +45,14 @@ if ( empty( $args['active'] ) ) {
 					<?php
 					continue;
 				}
-				$url = admin_url( 'admin.php?page=' . $_page );
+				if ( is_array( $_page ) ) {
+					$args = $_page;
+					$_page = $args['page'];
+				} else {
+					$args = array(
+						'page' => $_page,
+					);
+				}
 				if ( $_page === $args['active'] ) {
 					?>
 					<span class="friends-tab active" aria-current="true">
@@ -54,7 +61,7 @@ if ( empty( $args['active'] ) ) {
 					<?php
 				} else {
 					?>
-					<a href="<?php echo esc_attr( $url ); ?>" class="friends-tab">
+					<a href="<?php echo esc_attr( add_query_arg( $args, admin_url( 'admin.php' ) ) ); ?>" class="friends-tab">
 					<?php echo esc_html( $label ); ?>
 					</a>
 					<?php
