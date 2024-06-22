@@ -86,7 +86,7 @@ class Access_Control {
 	 * @return bool The authentication status of the feed.
 	 */
 	public static function private_rss_is_authenticated() {
-		if ( filter_input( INPUT_GET, 'auth' ) === get_option( 'friends_private_rss_key' ) ) {
+		if ( filter_input( INPUT_GET, 'auth' ) === get_option( 'friends_private_rss_key' ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return true;
 		}
 
