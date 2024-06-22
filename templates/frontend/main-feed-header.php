@@ -13,44 +13,44 @@ if ( isset( $data['post_count_by_post_status']->trash ) ) {
 ?><div id="main-header" class="mb-2">
 <h2 id="page-title"><a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 <?php
-$title = __( 'Main Feed', 'friends' );
+$_title = __( 'Main Feed', 'friends' );
 switch ( $args['friends']->frontend->post_format ) {
 	case 'standard':
-		$title = _x( 'Post feed', 'Post format', 'friends' );
+		$_title = _x( 'Post feed', 'Post format', 'friends' );
 		break;
 	case 'aside':
-		$title = _x( 'Aside feed', 'Post format', 'friends' );
+		$_title = _x( 'Aside feed', 'Post format', 'friends' );
 		break;
 	case 'chat':
-		$title = _x( 'Chat feed', 'Post format', 'friends' );
+		$_title = _x( 'Chat feed', 'Post format', 'friends' );
 		break;
 	case 'gallery':
-		$title = _x( 'Gallery feed', 'Post format', 'friends' );
+		$_title = _x( 'Gallery feed', 'Post format', 'friends' );
 		break;
 	case 'link':
-		$title = _x( 'Link feed', 'Post format', 'friends' );
+		$_title = _x( 'Link feed', 'Post format', 'friends' );
 		break;
 	case 'image':
-		$title = _x( 'Image feed', 'Post format', 'friends' );
+		$_title = _x( 'Image feed', 'Post format', 'friends' );
 		break;
 	case 'quote':
-		$title = _x( 'Quote feed', 'Post format', 'friends' );
+		$_title = _x( 'Quote feed', 'Post format', 'friends' );
 		break;
 	case 'status':
-		$title = _x( 'Status feed', 'Post format', 'friends' );
+		$_title = _x( 'Status feed', 'Post format', 'friends' );
 		break;
 	case 'video':
-		$title = _x( 'Video feed', 'Post format', 'friends' );
+		$_title = _x( 'Video feed', 'Post format', 'friends' );
 		break;
 	case 'audio':
-		$title = _x( 'Audio feed', 'Post format', 'friends' );
+		$_title = _x( 'Audio feed', 'Post format', 'friends' );
 		break;
 }
-if ( isset( $_GET['s'] ) ) {
-	$title = sprintf(
+if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$_title = sprintf(
 		// translators: %s is a search term.
 		__( 'Search for "%s"', 'friends' ),
-		esc_html( $_GET['s'] )
+		esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	);
 }
 
@@ -60,11 +60,11 @@ if ( $args['friends']->frontend->reaction ) {
 		// translators: %1$s is an emoji reaction, %2$s is a type of feed, e.g. "Main Feed".
 			__( 'My %1$s reactions on %2$s', 'friends' ),
 			$args['friends']->frontend->reaction,
-			$title
+			$_title
 		)
 	);
 } else {
-	echo esc_html( $title );
+	echo esc_html( $_title );
 }
 
 ?>
@@ -82,7 +82,7 @@ if ( $args['friends']->frontend->reaction ) {
 	<a class="chip" href="<?php echo esc_url( home_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
 
-<?php if ( isset( $_GET['show-hidden'] ) ) : ?>
+<?php if ( isset( $_GET['show-hidden'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 	<a class="chip" href="<?php echo esc_attr( remove_query_arg( 'show-hidden' ) ); ?>">
 		<?php echo esc_html__( 'Hide hidden items', 'friends' ); ?>
 	</a>

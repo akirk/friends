@@ -49,7 +49,7 @@ class Access_Control {
 		add_filter( 'determine_current_user', array( $this, 'authenticate' ), 1 );
 		add_filter( 'option_comment_whitelist', array( $this, 'option_comment_whitelist' ) );
 		add_action( 'set_user_role', array( $this, 'notify_new_friend_request' ), 10, 3 );
-		add_action( 'map_meta_cap', array( $this, 'strict_friend_checking_for_super_admin' ), 10, 4 );
+		add_action( 'map_meta_cap', array( $this, 'strict_friend_checking_for_super_admin' ), 10, 3 );
 		add_action( 'delete_user', array( $this, 'delete_friend_token' ) );
 		add_action( 'init', array( $this, 'remote_login' ) );
 	}
@@ -86,7 +86,7 @@ class Access_Control {
 	 * @return bool The authentication status of the feed.
 	 */
 	public static function private_rss_is_authenticated() {
-		if ( isset( $_GET['auth'] ) && get_option( 'friends_private_rss_key' ) === $_GET['auth'] ) {
+		if ( isset( $_GET['auth'] ) && get_option( 'friends_private_rss_key' ) === $_GET['auth'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			return true;
 		}
 
@@ -142,6 +142,13 @@ class Access_Control {
 		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
 			return false;
 		}
+
+		// The request comes from a rmeote WordPress. so no nonce verification needed.
+		// Also, verifying a token doesn't need unslashing. See https://github.com/WordPress/WordPress-Coding-Standards/issues/869.
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! isset( $_GET['friend_auth'] ) ) {
 			return;
 		}
@@ -153,6 +160,9 @@ class Access_Control {
 		} else {
 			return;
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( ! $user_id ) {
 			return;
@@ -163,7 +173,7 @@ class Access_Control {
 		}
 
 		wp_set_auth_cookie( $user_id );
-		wp_safe_redirect( str_replace( array( '?friend_auth=' . $_GET['friend_auth'], '&friend_auth=' . $_GET['friend_auth'], '?me=' . $_GET['me'], '&me=' . $_GET['me'] ), '', $_SERVER['REQUEST_URI'] ) );
+		wp_safe_redirect( remove_query_arg( array( 'friend_auth', 'me' ) ) );
 		exit;
 	}
 
@@ -178,12 +188,21 @@ class Access_Control {
 			return false;
 		}
 
+		// The request comes from a rmeote WordPress. so no nonce verification needed.
+		// Also, verifying a token doesn't need unslashing. See https://github.com/WordPress/WordPress-Coding-Standards/issues/869.
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$user_id = false;
 		if ( isset( $_GET['friend'] ) && isset( $_GET['until'] ) && isset( $_GET['auth'] ) ) {
 			$user_id = $this->verify_token( $_GET['friend'], $_GET['until'], $_GET['auth'] );
 		} elseif ( isset( $_GET['me'] ) && isset( $_GET['until'] ) && isset( $_GET['auth'] ) ) {
 			$user_id = $this->verify_token( $_GET['me'], $_GET['until'], $_GET['auth'] );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		if ( $user_id ) {
 			$user = new User( $user_id );
@@ -242,11 +261,9 @@ class Access_Control {
 		}
 		$friend_auth = $this->get_friend_auth( $friend_user, $validity );
 		if ( ! empty( $friend_auth ) ) {
-			$sep = false === strpos( $url, '?' ) ? '?' : '&';
-
-			$url .= $sep . 'me=' . urlencode( $friend_auth['me'] );
-			$url .= '&until=' . urlencode( $friend_auth['until'] );
-			$url .= '&auth=' . urlencode( $friend_auth['auth'] );
+			$url = add_query_arg( 'me', $friend_auth['me'], $url );
+			$url = add_query_arg( 'until', $friend_auth['until'], $url );
+			$url = add_query_arg( 'auth', $friend_auth['auth'], $url );
 		}
 
 		return $url;
@@ -294,12 +311,10 @@ class Access_Control {
 	 * @param string[] $caps    Primitive capabilities required of the user.
 	 * @param string   $cap     Capability being checked.
 	 * @param int      $user_id The user ID.
-	 * @param array    $args    Adds context to the capability check, typically
-	 *                          starting with an object ID.
 	 *
 	 * @return     array
 	 */
-	public function strict_friend_checking_for_super_admin( $caps, $cap, $user_id, $args ) {
+	public function strict_friend_checking_for_super_admin( $caps, $cap, $user_id ) {
 		if ( ! in_array( $cap, array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) ) ) {
 			return $caps;
 		}

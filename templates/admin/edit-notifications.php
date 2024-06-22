@@ -15,7 +15,7 @@
 				<th scope="row"><?php esc_html_e( 'New Post Notification', 'friends' ); ?></th>
 				<td>
 					<?php if ( get_user_option( 'friends_no_new_post_notification' ) ) : ?>
-						<span class="description"><?php esc_html_e( 'You have generally disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change this setting', 'friends' ); ?></a></span>
+						<span class="description"><?php esc_html_e( 'You have generally disabled new post notifications for yourself.', 'friends' ); ?> <a href="<?php echo esc_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ) ); ?>"><?php esc_html_e( 'Change this setting', 'friends' ); ?></a></span>
 					<?php else : ?>
 					<fieldset>
 						<label for="friends_new_post_notification">
@@ -37,7 +37,7 @@
 								sprintf(
 									// translators: %s is a URL.
 									__( 'Send me an e-mail for posts of this friend if matches one of <a href="%s">my keywords</a>', 'friends' ),
-									esc_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ) )
+									esc_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ) )
 								)
 							);
 							?>

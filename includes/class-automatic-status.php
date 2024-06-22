@@ -47,7 +47,7 @@ class Automatic_Status {
 			return;
 		}
 		add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ), 10, 2 );
-		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 3 );
+		add_action( 'set_user_role', array( $this, 'new_friend_user' ), 20, 2 );
 		add_action( 'set', array( $this, 'new_friend_user' ), 10, 2 );
 	}
 
@@ -83,7 +83,7 @@ class Automatic_Status {
 	}
 
 	public function redirect_to_post_format_url() {
-		if ( empty( $_GET['post_format'] ) ) {
+		if ( empty( $_GET['post_format'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			wp_safe_redirect(
 				add_query_arg(
 					array(
@@ -103,20 +103,22 @@ class Automatic_Status {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-automatic-status' ) ) {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends-automatic-status' ) ) {
 			return;
 		}
 
-		if ( isset( $_POST['enabled'] ) && $_POST['enabled'] ) {
+		if ( isset( $_POST['enabled'] ) && boolval( $_POST['enabled'] ) ) {
 			delete_option( 'friends_automatic_status_disabled' );
 		} else {
 			update_option( 'friends_automatic_status_disabled', 1 );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 	}
 
@@ -205,6 +207,7 @@ class Automatic_Status {
 		wp_enqueue_script( 'inline-edit-post' );
 		wp_enqueue_script( 'heartbeat' );
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$bulk_counts = array(
 			'updated'   => isset( $_REQUEST['updated'] ) ? absint( $_REQUEST['updated'] ) : 0,
 			'locked'    => isset( $_REQUEST['locked'] ) ? absint( $_REQUEST['locked'] ) : 0,
@@ -248,6 +251,7 @@ class Automatic_Status {
 			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
 			<?php
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		Friends::template_loader()->get_template_part( 'admin/automatic-status-list-table', false, compact( 'wp_list_table', 'post_type' ) );
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
@@ -346,9 +350,8 @@ class Automatic_Status {
 	 *
 	 * @param  int    $user_id   The user id.
 	 * @param  string $new_role  The new role.
-	 * @param  string $old_roles The old roles.
 	 */
-	public function new_friend_user( $user_id, $new_role, $old_roles ) {
+	public function new_friend_user( $user_id, $new_role ) {
 		$friend_user = new User( $user_id );
 		$link = '<a href="' . esc_url( $friend_user->user_url ) . '">' . esc_html( $friend_user->display_name ) . '</a>';
 

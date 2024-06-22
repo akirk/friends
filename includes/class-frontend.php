@@ -86,7 +86,7 @@ class Frontend {
 		add_action( 'friends_post_footer_first', array( $this, 'reblog_button' ) );
 		add_filter( 'friends_reblog', array( get_called_class(), 'reblog' ), 10, 3 );
 		add_filter( 'friends_unreblog', array( get_called_class(), 'unreblog' ), 10, 2 );
-		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 3 );
+		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
 		add_action( 'wp_footer', array( $this, 'dequeue_scripts' ) );
@@ -217,9 +217,9 @@ class Frontend {
 			$handle = 'friends';
 			$file = 'friends.js';
 			$version = Friends::VERSION;
-			wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+			wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ), true );
 
-			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) );
+			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 
 			$variables = array(
 				'emojis_json'        => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
@@ -291,13 +291,13 @@ class Frontend {
 	}
 
 	public function wp_ajax_reblog() {
-		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) || ! isset( $_POST['post_id'] ) ) {
 			wp_send_json_error( 'error' );
 		}
 
 		check_ajax_referer( 'friends-reblog' );
 
-		$post = get_post( $_POST['post_id'] );
+		$post = get_post( intval( $_POST['post_id'] ) );
 		if ( ! $post || ! Friends::check_url( $post->guid ) ) {
 			wp_send_json_error( 'unknown-post', array( 'guid' => $post->guid ) );
 		}
@@ -436,15 +436,15 @@ class Frontend {
 	 * The Ajax function to be called upon posting from /friends
 	 */
 	public function ajax_frontend_publish_post() {
-		if ( ! wp_verify_nonce( $_POST['_wpnonce'], 'friends_publish' ) ) {
+		if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'friends_publish' ) ) {
 			return false;
 		}
 		$p = array(
 			'post_type'    => 'post',
-			'post_title'   => isset( $_POST['title'] ) ? $_POST['title'] : '',
-			'post_content' => isset( $_POST['content'] ) ? $_POST['content'] : '',
-			'post_status'  => isset( $_POST['status'] ) ? $_POST['status'] : '',
-			'post_format'  => isset( $_POST['format'] ) ? $_POST['format'] : '',
+			'post_title'   => isset( $_POST['title'] ) ? sanitize_text_field( wp_unslash( $_POST['title'] ) ) : '',
+			'post_content' => isset( $_POST['content'] ) ? sanitize_textarea_field( wp_unslash( $_POST['content'] ) ) : '',
+			'post_status'  => isset( $_POST['status'] ) ? sanitize_text_field( wp_unslash( $_POST['status'] ) ) : '',
+			'post_format'  => isset( $_POST['format'] ) ? sanitize_text_field( wp_unslash( $_POST['format'] ) ) : '',
 		);
 
 		if ( empty( $p['post_status'] ) ) {
@@ -454,7 +454,7 @@ class Frontend {
 
 		if ( ! empty( $_POST['in_reply_to'] ) ) {
 			$p['meta_input'] = array(
-				'activitypub_in_reply_to' => $_POST['in_reply_to'],
+				'activitypub_in_reply_to' => sanitize_text_field( wp_unslash( $_POST['in_reply_to'] ) ),
 			);
 		}
 
@@ -465,21 +465,24 @@ class Frontend {
 			}
 			$result = is_wp_error( $post_id ) ? 'error' : 'success';
 		}
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
 			echo esc_html( $result );
-			exit;
-		} else {
+		} elseif ( ! empty( $_SERVER['HTTP_REFERER'] ) ) {
 			wp_safe_redirect( remove_query_arg( 'in_reply_to', add_query_arg( 'result', $result, $_SERVER['HTTP_REFERER'] ) ) );
-			exit;
 		}
+		exit;
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 	}
 
 	/**
 	 * The Ajax function to change the post format from the Frontend.
 	 */
 	public function ajax_change_post_format() {
-		$post_id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
-		$post_format = isset( $_POST['format'] ) ? $_POST['format'] : 'standard';
+		$post_id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+		$post_format = isset( $_POST['format'] ) ? sanitize_text_field( wp_unslash( $_POST['format'] ) ) : 'standard';
 
 		check_ajax_referer( "friends-change-post-format_$post_id" );
 
@@ -578,15 +581,26 @@ class Frontend {
 	 * The Ajax function to load more posts for infinite scrolling.
 	 */
 	public function ajax_load_next_page() {
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		if ( ! isset( $_POST['query_vars'] ) || ! isset( $_POST['page'] ) || ! isset( $_POST['qv_sign'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
 		$query_vars = wp_unslash( $_POST['query_vars'] );
+		// We do have a nonce verification here.
 		if ( sha1( wp_salt( 'nonce' ) . $query_vars ) !== $_POST['qv_sign'] ) {
 			wp_send_json_error();
 			exit;
 		}
-		$query_vars = unserialize( $query_vars );
+		// We need to unserialize the query vars to maintain PHP compatibility.
+		$query_vars = unserialize( $query_vars ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
 		$query_vars['paged'] = intval( $_POST['page'] ) + 1;
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
-		query_posts( $query_vars );
+		// We actually want to render the query loop, so we use query_posts.
+		query_posts( $query_vars ); // phpcs:ignore WordPress.WP.DiscouragedFunctions.query_posts_query_posts
 		ob_start();
 		if ( have_posts() ) {
 			self::have_posts();
@@ -604,10 +618,16 @@ class Frontend {
 	 * The Ajax function to autocomplete search.
 	 */
 	public function ajax_autocomplete() {
-		$q = wp_unslash( $_POST['q'] );
+		check_ajax_referer( 'friends-autocomplete' );
+		if ( ! isset( $_POST['q'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$q = sanitize_text_field( wp_unslash( $_POST['q'] ) );
 		$results = array();
 
-		if ( false ) {
+		/**
 			$result = '<a href="' . esc_url( add_query_arg( 'name', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
 			$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="ab-icon dashicons dashicons-plus"></span></span>';
 			$result .= 'Add friend';
@@ -615,7 +635,7 @@ class Frontend {
 			$result .= esc_html( $q );
 			$result .= '</small></a>';
 			$results[] = $result;
-		}
+		*/
 		$results = apply_filters( 'friends_search_autocomplete', $results, $q );
 
 		$result = '<a href="' . esc_url( add_query_arg( 's', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
@@ -657,7 +677,7 @@ class Frontend {
 	 * The Ajax function to load comments.
 	 */
 	public function ajax_load_comments() {
-		if ( ! isset( $_POST['post_id'] ) || ! intval( $_POST['post_id'] ) ) {
+		if ( ! isset( $_POST['post_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Missing
 			wp_send_json_error();
 			exit;
 		}
@@ -712,12 +732,12 @@ class Frontend {
 	}
 
 	public function ajax_star_friend_user() {
-		if ( ! isset( $_POST['friend_id'] ) || ! $_POST['friend_id'] ) {
+		if ( ! isset( $_POST['friend_id'] ) || ! isset( $_POST['starred'] ) ) {
 			wp_send_json_error();
 			exit;
 		}
 
-		$friend_id = wp_unslash( $_POST['friend_id'] );
+		$friend_id = intval( $_POST['friend_id'] );
 		check_ajax_referer( "star-$friend_id" );
 
 		$friend_user = User::get_by_username( $friend_id );
@@ -737,9 +757,8 @@ class Frontend {
 	 *
 	 * @param string $new_status      The new status of the post being restored.
 	 * @param int    $post_id         The ID of the post being restored.
-	 * @param string $previous_status The status of the post at the point where it was trashed.
 	 */
-	public function untrash_post_status( $new_status, $post_id, $previous_status ) {
+	public function untrash_post_status( $new_status, $post_id ) {
 		if ( ! in_array( get_post_type( $post_id ), apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
 			return $new_status;
 		}
@@ -757,7 +776,7 @@ class Frontend {
 			return $template;
 		}
 
-		if ( isset( $_GET['refresh'] ) ) {
+		if ( isset( $_GET['refresh'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 			add_filter(
 				'wp_feed_options',
@@ -790,7 +809,7 @@ class Frontend {
 	public function header_widget_title( $title ) {
 		$title = '<a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $title ) . '</a>';
 		if ( $this->author ) {
-			$title .= ' &raquo; ' . '<a href="' . esc_url( $this->author->get_local_friends_page_url() ) . '">' . esc_html( $this->author->display_name ) . '</a>';
+			$title .= ' &raquo; <a href="' . esc_url( $this->author->get_local_friends_page_url() ) . '">' . esc_html( $this->author->display_name ) . '</a>';
 		}
 		if ( $this->post_format ) {
 			$post_formats = get_post_format_strings();
@@ -1025,7 +1044,12 @@ class Frontend {
 							// Cannot create a public URL.
 							continue;
 						}
-						$xml_url = $feed->get_local_url() . '?auth=' . $_GET['auth'];
+						$xml_url = $feed->get_local_url();
+						// phpcs:disable WordPress.Security.NonceVerification.Recommended
+						if ( isset( $_GET['auth'] ) ) {
+							$xml_url = add_query_arg( 'auth', sanitize_text_field( wp_unslash( $_GET['auth'] ) ), $xml_url );
+							// phpcs:enable WordPress.Security.NonceVerification.Recommended
+						}
 					} else {
 						if ( $only_public ) {
 							$xml_url = $feed->get_url();
@@ -1135,7 +1159,7 @@ class Frontend {
 		}
 
 		$page_id = get_query_var( 'page' );
-
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['share'] ) ) {
 			$share_hash = hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ), $page_id ) . $page_id );
 			if ( $_GET['share'] === $share_hash ) {
@@ -1190,7 +1214,7 @@ class Frontend {
 
 			switch ( $current_part ) {
 				case 'opml':
-					return $this->render_opml( isset( $_REQUEST['public'] ) );
+					return $this->render_opml( isset( $_REQUEST['public'] ) && boolval( $_REQUEST['public'] ) );
 
 				case 'type':
 					$post_format = array_shift( $pagename_parts );
@@ -1240,6 +1264,7 @@ class Frontend {
 			}
 			$query->set( 'post_status', $post_status );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$query->is_page = false;
 		$query->is_comments_feed = false;
 		$query->set( 'pagename', null );
@@ -1269,7 +1294,7 @@ class Frontend {
 
 		if ( $this->author ) {
 			if ( $this->author instanceof User ) {
-				$authordata = $this->author;
+				$authordata = $this->author; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 				$this->author->modify_query_by_author( $query );
 				if ( ! $page_id ) {
 					$query->is_author = true;

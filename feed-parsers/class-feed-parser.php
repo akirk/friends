@@ -23,7 +23,7 @@ abstract class Feed_Parser {
 	 *
 	 * @return     int  Return 0 if unsupported, a positive value representing the confidence for the feed, use 10 if you're reasonably confident.
 	 */
-	public function feed_support_confidence( $url, $mime_type, $title, $content = null ) {
+	public function feed_support_confidence( $url, $mime_type, $title, $content = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		return 0;
 	}
 
@@ -46,7 +46,6 @@ abstract class Feed_Parser {
 	 * @return     array  The (potentially) modified feed details.
 	 */
 	public function update_feed_details( $feed_details ) {
-
 		return $feed_details;
 	}
 
@@ -71,7 +70,7 @@ abstract class Feed_Parser {
 	 *
 	 * @return     array  A list of supported feeds at the URL.
 	 */
-	public function discover_available_feeds( $content, $url ) {
+	public function discover_available_feeds( $content, $url ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		return array();
 	}
 

@@ -125,11 +125,9 @@ class Shortcodes {
 	/**
 	 * Display the number of your friends.
 	 *
-	 * @param  array $atts    Attributes provided by the user.
 	 * @return string The content to be output.
 	 */
-	public function friends_count_shortcode( $atts ) {
-		exit;
+	public function friends_count_shortcode() {
 		$friends = User_Query::all_friends();
 		return $friends->get_total();
 	}

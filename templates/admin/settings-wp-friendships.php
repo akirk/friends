@@ -80,7 +80,7 @@ do_action( 'friends_settings_before_form' );
 					} else {
 						$c = 0;
 						foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) {
-							$c += 1;
+							++$c;
 							if ( $potential_main_user->ID === $args['main_user_id'] ) {
 								?>
 									<span id="main_user_id"><?php echo esc_html( $potential_main_user->display_name ); ?></span>
@@ -143,9 +143,9 @@ do_action( 'friends_settings_before_form' );
 				<td>
 					<select name="default_role">
 						<?php
-						foreach ( $args['friend_roles'] as $role => $title ) :
+						foreach ( $args['friend_roles'] as $_role => $_title ) :
 							?>
-							<option value="<?php echo esc_attr( $role ); ?>" <?php selected( $args['default_role'], $role ); ?>><?php echo esc_html( $title ); ?></option>
+							<option value="<?php echo esc_attr( $_role ); ?>" <?php selected( $args['default_role'], $_role ); ?>><?php echo esc_html( $_title ); ?></option>
 
 						<?php endforeach; ?>
 					</select>

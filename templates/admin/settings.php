@@ -137,9 +137,9 @@ do_action( 'friends_settings_before_form' );
 								<?php
 								$select = '<select name="limit_homepage_post_format" id="limit_homepage_post_format">';
 								$select .= '<option value="0"' . selected( $args['limit_homepage_post_format'], false, false ) . '>' . esc_html( _x( 'All', 'All post-formats', 'friends' ) ) . '</option>';
-								foreach ( $args['post_format_strings'] as $format => $title ) {
+								foreach ( $args['post_format_strings'] as $format => $_title ) {
 									// translators: %s is a post format title.
-									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $args['limit_homepage_post_format'], $format, false ) . '>' . esc_html( sprintf( _x( '%s only', 'post-format only', 'friends' ), $title ) ) . '</option>';
+									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $args['limit_homepage_post_format'], $format, false ) . '>' . esc_html( sprintf( _x( '%s only', 'post-format only', 'friends' ), $_title ) ) . '</option>';
 								}
 								$select .= '</select>';
 
@@ -212,12 +212,12 @@ do_action( 'friends_settings_before_form' );
 
 						<ol id="available-emojis">
 						<?php
-						foreach ( Friends\Reactions::get_available_emojis() as $id => $data ) {
+						foreach ( Friends\Reactions::get_available_emojis() as $_id => $data ) {
 							Friends\Friends::template_loader()->get_template_part(
 								'admin/add-reaction-li',
 								null,
 								array(
-									'id'    => $id,
+									'id'    => $_id,
 									'emoji' => $data->char,
 								)
 							);

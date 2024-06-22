@@ -6,7 +6,7 @@
  */
 
 $edit_user_link = $args['friends']->admin->admin_edit_user_link( false, $args['friend_user'] );
-$feeds = count( $args['friend_user']->get_feeds() );
+$_feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 $hidden_post_count = $args['friend_user']->get_post_in_trash_count();
@@ -74,7 +74,7 @@ $args['friends']->frontend->link(
 <?php foreach ( $args['friend_user']->get_post_count_by_post_format() as $post_format => $count ) : ?>
 	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_post_format_url( $post_format ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
-<?php if ( isset( $_GET['show-hidden'] ) ) : ?>
+<?php if ( isset( $_GET['show-hidden'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 	<a class="chip" href="<?php echo esc_attr( remove_query_arg( 'show-hidden' ) ); ?>">
 		<?php echo esc_html__( 'Hide hidden items', 'friends' ); ?>
 	</a>
@@ -102,8 +102,8 @@ $args['friends']->frontend->link(
 <a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-feeds&user=' . $args['friend_user']->user_login ) ); ?>">
 	<?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '%s feed', '%s feeds', $active_feeds, 'friends' ), number_format_i18n( $active_feeds ) ) ); ?>
 
-	<?php if ( $feeds - $active_feeds > 1 ) : ?>
-	&nbsp;<small><?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '(+%s more)', '(+%s more)', $feeds - $active_feeds, 'friends' ), number_format_i18n( $feeds - $active_feeds ) ) ); ?></small>
+	<?php if ( $_feeds - $active_feeds > 1 ) : ?>
+	&nbsp;<small><?php echo esc_html( sprintf( /* translators: %s is the number of feeds */_n( '(+%s more)', '(+%s more)', $_feeds - $active_feeds, 'friends' ), number_format_i18n( $_feeds - $active_feeds ) ) ); ?></small>
 	<?php endif; ?>
 </a>
 

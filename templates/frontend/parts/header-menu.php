@@ -22,8 +22,8 @@ if ( apply_filters( 'friends_debug', false ) ) : ?>
 	<li class="menu-item friends-dropdown">
 		<select name="post-format" class="friends-change-post-format form-select select-sm" data-change-post-format-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-change-post-format_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" >
 			<option disabled="disabled"><?php esc_html_e( 'Change post format', 'friends' ); ?></option>
-			<?php foreach ( get_post_format_strings() as $format => $title ) : ?>
-			<option value="<?php echo esc_attr( $format ); ?>"<?php selected( get_post_format(), $format ); ?>><?php echo esc_html( $title ); ?></option>
+			<?php foreach ( get_post_format_strings() as $format => $_title ) : ?>
+			<option value="<?php echo esc_attr( $format ); ?>"<?php selected( get_post_format(), $format ); ?>><?php echo esc_html( $_title ); ?></option>
 		<?php endforeach; ?>
 		</select>
 	</li>
@@ -33,7 +33,7 @@ if ( apply_filters( 'friends_debug', false ) ) : ?>
 <?php endif; ?>
 <?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 	<?php if ( apply_filters( 'friends_show_author_edit', true, $args['friend_user'] ) ) : ?>
-	<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . get_the_author_meta( 'ID' ) . '&post=' . get_the_ID() ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
+	<li class="menu-item"><a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend_user']->user_login, add_query_arg( 'post', get_the_ID(), self_admin_url( 'admin.php?page=edit-friend-rules' ) ) ), 'edit-friend-rules-' . $args['friend_user']->user_login ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
 		<?php esc_html_e( 'Muffle posts like these', 'friends' ); ?>
 	</a></li>
 	<?php endif; ?>

@@ -699,7 +699,7 @@ class User_Feed {
 	/**
 	 * Get the feed with a specific URL.
 	 *
-	 * @param      bool $also_undue     The feed URL.
+	 * @param      bool $also_undue     Whether to get also undue feeds.
 	 *
 	 * @return     object|\WP_Error   A User_Feed object.
 	 */
@@ -707,8 +707,8 @@ class User_Feed {
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,
-				'meta_key'   => 'active',
-				'meta_value' => true,
+				'meta_key'   => 'active', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => true, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			)
 		);
 
@@ -743,8 +743,8 @@ class User_Feed {
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,
-				'meta_key'   => 'parser',
-				'meta_value' => $parser,
+				'meta_key'   => 'parser', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => $parser, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 			)
 		);
 		$feeds = array();

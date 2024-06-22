@@ -53,9 +53,8 @@ END;
 						// Invalid byte of the form 11xxxxxx.
 						// Encode as 11000011 10xxxxxx.
 						return "\xC3" . chr( ord( $captures[3] ) - 64 );
-					} else {
-						// Single-byte characters invalid for XML. Ignore.
 					}
+					// Else: ignore a single-byte characters invalid for XML. Ignore.
 				},
 				$data
 			);

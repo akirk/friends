@@ -9,21 +9,21 @@
 ?><footer class="comments-content card-footer <?php echo is_single() ? 'open' : 'closed'; ?>">
 <?php
 if ( is_single() ) {
-	$post_id = get_the_ID();
-	$comments = apply_filters(
+	$_post_id = get_the_ID();
+	$_comments = apply_filters(
 		'friends_get_comments',
 		get_comments(
 			array(
-				'post_id' => $post_id,
+				'post_id' => $_post_id,
 				'status'  => 'approve',
 				'order'   => 'ASC',
 				'orderby' => 'comment_date_gmt',
 			)
 		),
-		$post_id
+		$_post_id
 	);
 
-	if ( ! empty( $comments ) ) {
+	if ( ! empty( $_comments ) ) {
 		$template_loader = Friends\Friends::template_loader();
 		?>
 	<h5><?php esc_html_e( 'Comments' ); /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ ?></h5>
@@ -36,13 +36,13 @@ if ( is_single() ) {
 						'short_ping'  => true,
 						'avatar_size' => 24,
 					),
-					$comments
+					$_comments
 				);
 			?>
 		</ol><!-- .comment-list -->
 		<?php
 	}
-	do_action( 'friends_comments_form', $post_id );
+	do_action( 'friends_comments_form', $_post_id );
 }
 ?>
 </footer>

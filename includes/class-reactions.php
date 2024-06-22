@@ -169,7 +169,7 @@ class Reactions {
 
 			$count = count( $reacting_usernames );
 			if ( false === $exclude_user_id && $user_reacted ) {
-				$count += 1;
+				++$count;
 			}
 
 			$usernames = array_values( $reacting_usernames );
@@ -235,7 +235,8 @@ class Reactions {
 		}
 
 		$post_id = intval( $_POST['post_id'] );
-		$emoji = self::validate_emoji( $_POST['reaction'] );
+		$reaction = sanitize_text_field( wp_unslash( $_POST['reaction'] ) );
+		$emoji = self::validate_emoji( $reaction );
 
 		if ( ! $emoji ) {
 			// This emoji is not defined in emoji.json.
@@ -245,16 +246,16 @@ class Reactions {
 		$taxonomy = 'friend-reaction-' . get_current_user_id();
 		$term = false;
 		foreach ( wp_get_object_terms( $post_id, $taxonomy ) as $t ) {
-			if ( $t->slug === $_POST['reaction'] ) {
+			if ( $t->slug === $reaction ) {
 				$term = $t;
 				break;
 			}
 		}
 
 		if ( ! $term ) {
-			$ret = apply_filters( 'friends_react', null, $post_id, $_POST['reaction'] );
+			$ret = apply_filters( 'friends_react', null, $post_id, $reaction );
 		} else {
-			$ret = apply_filters( 'friends_unreact', null, $post_id, $_POST['reaction'] );
+			$ret = apply_filters( 'friends_unreact', null, $post_id, $reaction );
 		}
 
 		if ( ! $ret || is_wp_error( $ret ) ) {

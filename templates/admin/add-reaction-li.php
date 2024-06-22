@@ -7,16 +7,16 @@
  */
 
 if ( isset( $args['template'] ) && $args['template'] ) {
-	$id = '%1$s';
+	$_id = '%1$s';
 	$emoji = '%2$s';
 	echo '<div id="available-emojis-template">';
 } else {
-	$id = $args['id'];
+	$_id = $args['id'];
 	$emoji = $args['emoji'];
 }
 ?>
-<li id="emoji-<?php echo esc_attr( $id ); ?>">
-	<input type="hidden" name="available_emojis[]" value="<?php echo esc_attr( $id ); ?>">
+<li id="emoji-<?php echo esc_attr( $_id ); ?>">
+	<input type="hidden" name="available_emojis[]" value="<?php echo esc_attr( $_id ); ?>">
 	<?php echo esc_html( $emoji ); ?>
 	<small><a href="" class="delete-emoji"><?php esc_html_e( 'delete', 'friends' ); ?></a></small>
 </li>

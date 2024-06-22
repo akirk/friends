@@ -110,7 +110,7 @@ class User_Query extends \WP_User_Query {
 
 	public function add_virtual_subscriptions( $args = array() ) {
 		if ( isset( $args['meta_key'] ) && substr( $args['meta_key'], -9 ) === '_starred' ) {
-			$args['meta_key'] = 'starred';
+			$args['meta_key'] = 'starred'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		}
 		$searches = array();
 
@@ -119,8 +119,8 @@ class User_Query extends \WP_User_Query {
 			$args['search'] = trim( $args['search'], '*' );
 			$searches[] = $args;
 			$searches[] = array(
-				'meta_key'     => 'display_name',
-				'meta_value'   => $args['search'],
+				'meta_key'     => 'display_name', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value'   => $args['search'], // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				'meta_compare' => 'LIKE',
 			);
 		} else {
@@ -182,7 +182,7 @@ class User_Query extends \WP_User_Query {
 				'capability__in' => Friends::get_friends_plugin_roles(),
 			);
 			$meta = array(
-				'meta_key'     => $wpdb->get_blog_prefix() . 'friends_starred',
+				'meta_key'     => $wpdb->get_blog_prefix() . 'friends_starred', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				// Using a meta_key EXISTS query is not slow, see https://github.com/WordPress/WordPress-Coding-Standards/issues/1871.
 				'meta_compare' => 'EXISTS',
 			);

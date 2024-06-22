@@ -154,5 +154,38 @@ add_action(
 	9
 );
 
+// Global functions, for phpcs.
+/**
+ * Validate feed catch_all
+ *
+ * @param  array $catch_all The catch_all value to.
+ * @return array            A valid catch_all
+ */
+function validate_feed_catch_all( $catch_all ) {
+	return Feed::validate_feed_catch_all( $catch_all );
+}
+
+/**
+ * Validate feed item rules
+ *
+ * @param  array $rules The rules to validate.
+ * @return array        The valid rules.
+ */
+function validate_feed_rules( $rules ) {
+	return Feed::validate_feed_rules( $rules );
+}
+
+/**
+ * Check whether this is a valid URL
+ *
+ * @param string $url The URL to check.
+ * @return false|string URL or false on failure.
+ */
+function check_url( $url ) {
+	return check_url( $url );
+}
+
+// Integrations.
+
 require_once __DIR__ . '/integrations/class-enable-mastodon-apps.php';
 Enable_Mastodon_Apps::init();

@@ -31,6 +31,8 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	 * Prepares the list of items for displaying.
 	 */
 	public function prepare_items() {
+		// phpcs:disable WordPress.WP.GlobalVariablesOverride.Prohibited
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		global $mode, $avail_post_stati, $wp_query, $per_page;
 		$mode = 'excerpt';
 
@@ -42,7 +44,9 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		);
 
 		$avail_post_stati = get_available_post_statuses( $post_data['post_type'] );
-		if ( ! empty( $_REQUEST['post_status'] ) && in_array( $_REQUEST['post_status'], $avail_post_stati ) ) {
+		if ( ! empty( $_REQUEST['post_status'] ) && in_array( $_REQUEST['post_status'], $avail_post_stati, true ) ) {
+			// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+			// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			$post_data['post_status'] = $_REQUEST['post_status'];
 		} elseif ( isset( $_REQUEST['all_posts'] ) ) {
 			unset( $post_data['post_status'] );
@@ -55,7 +59,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 
 		/** This filter is documented in wp-admin/includes/post.php */
 		$per_page = apply_filters( 'edit_posts_per_page', $per_page, $post_type );
-
+		// phpcs:enable
 		$this->is_trash = 'trash' === $post_data['post_status'];
 	}
 
@@ -69,8 +73,14 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 	protected function get_post_status_counts( $post_type ) {
 		global $wpdb;
 
+		$cache_key = 'get_post_status_counts_' . $post_type;
+		$counts = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $counts ) {
+			return $counts;
+		}
+
 		$counts = array();
-		$post_status_counts = $wpdb->get_results(
+		$post_status_counts = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				"SELECT posts.post_status, COUNT(posts.ID) AS count
 				FROM {$wpdb->posts} AS posts
@@ -95,13 +105,17 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		foreach ( $post_status_counts as $row ) {
 			$counts[ $row->post_status ] = $row->count;
 		}
-		return (object) $counts;
+		$counts = (object) $counts;
+		wp_cache_set( $cache_key, $counts, 'friends' );
+
+		return $counts;
 	}
 
 	/**
 	 * The no items text.
 	 */
 	public function no_items() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if (
 			( ! isset( $_REQUEST['post_status'] ) && ! isset( $_REQUEST['all_posts'] ) )
 			|| ( isset( $_REQUEST['post_status'] ) && 'draft' === $_REQUEST['post_status'] )
@@ -110,6 +124,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		} else {
 			esc_html_e( 'No automatically generated statuses found.', 'friends' );
 		}
+		// phpcs:enable
 	}
 
 	/**
@@ -213,7 +228,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			}
 		}
 
-		if ( empty( $class ) && ( $this->is_base_request() || isset( $_REQUEST['all_posts'] ) ) ) {
+		if ( empty( $class ) && ( $this->is_base_request() || isset( $_REQUEST['all_posts'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$class = 'current';
 		}
 
@@ -242,12 +257,13 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			if ( ! in_array( $status_name, $avail_post_stati, true ) || empty( $num_posts->$status_name ) ) {
 				continue;
 			}
-
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended
 			if ( isset( $_REQUEST['post_status'] ) && $status_name === $_REQUEST['post_status'] ) {
 				$class = 'current';
 			} elseif ( ! isset( $_REQUEST['post_status'] ) && ! isset( $_REQUEST['all_posts'] ) && 'draft' === $status_name ) {
 				$class = 'current';
 			}
+			// phpcs:enable
 
 			$status_args = array(
 				'post_status' => $status_name,
@@ -263,7 +279,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 		}
 
 		if ( ! empty( $this->sticky_posts_count ) ) {
-			$class = ! empty( $_REQUEST['show_sticky'] ) ? 'current' : '';
+			$class = ! empty( $_REQUEST['show_sticky'] ) ? 'current' : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 			$sticky_args = array(
 				'post_type'   => $post_type,
