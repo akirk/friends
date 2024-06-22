@@ -378,7 +378,7 @@ class Subscription extends User {
 		global $wpdb;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
-		$cache_key = 'get_post_in_trash_count_' . $this->get_term_id() . '_' . $post_types;
+		$cache_key = 'get_post_in_trash_count_' . $this->get_term_id() . '_' . implode( '_', $post_types );
 		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
 			return wp_cache_get( $cache_key, 'friends' );
 		}

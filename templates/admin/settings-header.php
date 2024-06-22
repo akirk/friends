@@ -46,10 +46,10 @@ if ( empty( $args['active'] ) ) {
 					continue;
 				}
 				if ( is_array( $_page ) ) {
-					$args = $_page;
+					$query = $_page;
 					$_page = $args['page'];
 				} else {
-					$args = array(
+					$query = array(
 						'page' => $_page,
 					);
 				}
@@ -60,8 +60,13 @@ if ( empty( $args['active'] ) ) {
 					</span>
 					<?php
 				} else {
+					if ( filter_var( $query['page'], FILTER_VALIDATE_URL ) ) {
+						$url = $query['page'];
+					} else {
+						$url = add_query_arg( $query, admin_url( 'admin.php' ) );
+					}
 					?>
-					<a href="<?php echo esc_attr( add_query_arg( $args, admin_url( 'admin.php' ) ) ); ?>" class="friends-tab">
+					<a href="<?php echo esc_url( $url ); ?>" class="friends-tab">
 					<?php echo esc_html( $label ); ?>
 					</a>
 					<?php

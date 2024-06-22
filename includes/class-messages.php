@@ -157,7 +157,7 @@ class Messages {
 		}
 
 		$friend_user = new User( $user_id );
-		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
+		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
 			return new \WP_Error(
 				'friends_request_failed',
 				__( 'Could not respond to the request.', 'friends' ),
@@ -347,7 +347,7 @@ class Messages {
 	 * @param      array $args         The arguments.
 	 */
 	public function friends_author_header( User $friend_user, $args ) {
-		if ( $friend_user->has_cap( self::get_minimum_cap() ) ) {
+		if ( $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/author-header',
 				null,
@@ -367,7 +367,7 @@ class Messages {
 			return;
 		}
 
-		if ( $args['friend_user']->has_cap( self::get_minimum_cap() ) ) {
+		if ( $args['friend_user']->has_cap( self::get_minimum_cap( $args['friend_user'] ) ) ) {
 			$args['existing_messages'] = new \WP_Query(
 				array(
 					'post_type'   => self::CPT,
@@ -401,7 +401,7 @@ class Messages {
 
 		$args['blocks-everywhere'] = false;
 
-		if ( $args['friend_user']->has_cap( self::get_minimum_cap() ) ) {
+		if ( $args['friend_user']->has_cap( self::get_minimum_cap( $args['friend_user'] ) ) ) {
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
 				null,
@@ -416,8 +416,8 @@ class Messages {
 	 *
 	 * @return     string  The minimum capability.
 	 */
-	public static function get_minimum_cap() {
-		return apply_filters( 'friends_message_minimum_cap', 'friend' );
+	public static function get_minimum_cap( $friend_user ) {
+		return apply_filters( 'friends_message_minimum_cap', 'friend', $friend_user );
 	}
 
 	/**
@@ -430,7 +430,7 @@ class Messages {
 	 * @return     \WP_Error|int  An error or the message post id.
 	 */
 	public function send_message( User $friend_user, $message, $subject = null ) {
-		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
+		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
 			return new \WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
 		}
 		if ( ! trim( $message ) ) {
@@ -480,7 +480,7 @@ class Messages {
 	 * @return     \WP_Error|\WP_Post|bool  The post or false.
 	 */
 	public function delete_conversation( User $friend_user, $subject ) {
-		if ( ! $friend_user->has_cap( self::get_minimum_cap() ) ) {
+		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
 			return new \WP_Error( 'not-a-friend', __( 'You cannot delete converations.', 'friends' ) );
 		}
 
@@ -513,8 +513,8 @@ class Messages {
 			return $this->handle_conversation_delete();
 		}
 
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_send_message' ) ) {
-			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends_send_message' ) ) {
+			wp_die( esc_html__( 'Invalid nonce.', 'friends' ) );
 		}
 
 		$friend_user = new User( $_REQUEST['friends_message_recipient'] );
