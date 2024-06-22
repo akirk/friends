@@ -1452,8 +1452,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$url = false;
 		$append_to_redirect = '';
 
-		$in_reply_to = filter_input( INPUT_GET, 'in_reply_to', FILTER_SANITIZE_URL );
-		$boost = filter_input( INPUT_GET, 'boost', FILTER_SANITIZE_URL );
+		// The ignores are not necessary now but when https://github.com/WordPress/WordPress-Coding-Standards/issues/2299 comes into effect.
+		$in_reply_to = filter_input( INPUT_GET, 'in_reply_to', FILTER_SANITIZE_URL ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$boost = filter_input( INPUT_GET, 'boost', FILTER_SANITIZE_URL ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( $in_reply_to ) {
 			$url = $in_reply_to;
 			$append_to_redirect .= '#comment';
