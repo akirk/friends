@@ -414,6 +414,7 @@ class Messages {
 	/**
 	 * Gets the minimum capability necessary to use messages.
 	 *
+	 * @param      User $friend_user  The friend user.
 	 * @return     string  The minimum capability.
 	 */
 	public static function get_minimum_cap( $friend_user ) {
@@ -517,10 +518,19 @@ class Messages {
 			wp_die( esc_html__( 'Invalid nonce.', 'friends' ) );
 		}
 
-		$friend_user = new User( $_REQUEST['friends_message_recipient'] );
+		$friend_user = User::get_by_username( sanitize_text_field( wp_unslash( $_REQUEST['friends_message_recipient'] ) ) );
 
-		$subject = wp_unslash( $_REQUEST['friends_message_subject'] );
-		$message = wp_unslash( $_REQUEST['friends_message_message'] );
+		$subject = '';
+		if ( isset( $_REQUEST['friends_message_subject'] ) ) {
+			$subject = sanitize_text_field( wp_unslash( $_REQUEST['friends_message_subject'] ) );
+		}
+		$message = '';
+		if ( isset( $_REQUEST['friends_message_message'] ) ) {
+			$message = sanitize_text_field( wp_unslash( $_REQUEST['friends_message_message'] ) );
+		}
+		if ( ! trim( $message ) ) {
+			wp_die( esc_html__( 'You cannot send an empty message.', 'friends' ) );
+		}
 
 		$error = $this->send_message( $friend_user, $message, $subject );
 
@@ -536,17 +546,23 @@ class Messages {
 	 * Handle the deletion of the conversation.
 	 */
 	public function handle_conversation_delete() {
-		if ( ! isset( $_REQUEST['friends_message_delete_conversation'] ) ) {
+		if ( ! isset( $_REQUEST['friends_message_delete_conversation'] ) || ! isset( $_REQUEST['friends_message_recipient'] ) ) {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends_send_message' ) ) {
-			wp_die( esc_html( __( 'Error - unable to verify nonce, please try again.', 'friends' ) ) );
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends_send_message' ) ) {
+			wp_die( esc_html__( 'Invalid nonce.', 'friends' ) );
 		}
 
-		$friend_user = new User( $_REQUEST['friends_message_recipient'] );
+		$friend_user = User::get_by_username( sanitize_text_field( wp_unslash( $_REQUEST['friends_message_recipient'] ) ) );
 
-		$subject = wp_unslash( $_REQUEST['friends_message_subject'] );
+		$subject = '';
+		if ( isset( $_REQUEST['friends_message_subject'] ) ) {
+			$subject = sanitize_text_field( wp_unslash( $_REQUEST['friends_message_subject'] ) );
+		}
+		if ( ! $subject ) {
+			wp_die( esc_html__( 'You cannot delete a conversation without a subject.', 'friends' ) );
+		}
 		$error = $this->delete_conversation( $friend_user, $subject );
 
 		if ( is_wp_error( $error ) ) {

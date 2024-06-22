@@ -12,7 +12,7 @@ if ( ! isset( $args['subject'] ) ) {
 }
 ?>
 <form method="post" class="form-horizontal">
-	<input type="hidden" name="friends_message_recipient" value="<?php echo esc_attr( $args['friend_user']->ID ); ?>">
+	<input type="hidden" name="friends_message_recipient" value="<?php echo esc_attr( $args['friend_user']->user_login ); ?>">
 	<?php wp_nonce_field( 'friends_send_message' ); ?>
 	<?php if ( isset( $args['subject'] ) ) : ?>
 		<input type="hidden" name="friends_message_subject" value="<?php echo esc_attr( $args['subject'] ); ?>">
