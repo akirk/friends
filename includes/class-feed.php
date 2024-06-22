@@ -378,9 +378,14 @@ class Feed {
 	 * @param  array $rules The rules to validate.
 	 * @return array        The valid rules.
 	 */
-	public function validate_feed_rules( $rules ) {
+	public static function validate_feed_rules( $rules ) {
 		if ( ! is_array( $rules ) ) {
-			return array();
+			$json_rules = json_decode( $rules, true );
+			if ( is_array( $json_rules ) ) {
+				$rules = $json_rules;
+			} else {
+				return array();
+			}
 		}
 
 		if ( isset( $rules['field'] ) && is_array( $rules['field'] ) ) {
@@ -437,7 +442,7 @@ class Feed {
 	 * @param  array $catch_all The catch_all value to.
 	 * @return array            A valid catch_all
 	 */
-	public function validate_feed_catch_all( $catch_all ) {
+	public static function validate_feed_catch_all( $catch_all ) {
 		if ( ! in_array( $catch_all, array( 'accept', 'trash', 'delete' ), true ) ) {
 			return 'accept';
 		}

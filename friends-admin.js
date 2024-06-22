@@ -109,7 +109,7 @@ jQuery( function ( $ ) {
 			$( 'form#edit-rules [name^=rules]' )
 				.add( 'form#edit-rules [name=catch_all]' )
 				.serialize() +
-				'&_ajax_nonce=' +
+				'&_wpnonce=' +
 				$this.data( 'nonce' ) +
 				'&action=friends_preview_rules',
 			function ( response ) {

@@ -358,8 +358,8 @@ class Admin {
 			2
 		);
 
-		if ( isset( $_GET['user'] ) ) {
-			$friend_user = User::get_by_username( sanitize_key( $_GET['user'] ) );
+		if ( isset( $_GET['user'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			$friend_user = User::get_by_username( sanitize_user( wp_unslash( $_GET['user'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
 			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
 				wp_die( esc_html__( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			}
@@ -512,13 +512,13 @@ class Admin {
 			return;
 		}
 
-		if ( ! wp_verify_nonce( $_REQUEST['_wpnonce'], 'friends-settings' ) ) {
+		if ( ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends-settings' ) ) {
 			return;
 		}
 
 		$this->check_admin_settings();
 		foreach ( array( 'ignore_incoming_friend_requests', 'enable_wp_friendships' ) as $checkbox ) {
-			if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
+			if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
 				delete_option( 'friends_' . $checkbox );
@@ -526,7 +526,7 @@ class Admin {
 		}
 
 		foreach ( array( 'friend_request_notification' ) as $negative_user_checkbox ) {
-			if ( isset( $_POST[ $negative_user_checkbox ] ) && $_POST[ $negative_user_checkbox ] ) {
+			if ( isset( $_POST[ $negative_user_checkbox ] ) && boolval( $_POST[ $negative_user_checkbox ] ) ) {
 				delete_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox );
 			} else {
 				update_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox, 1 );
@@ -535,28 +535,29 @@ class Admin {
 
 		if ( current_user_can( 'manage_options' ) ) {
 			foreach ( array( 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
-				if ( isset( $_POST[ $checkbox ] ) && $_POST[ $checkbox ] ) {
+				if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
 					update_option( 'friends_' . $checkbox, true );
 				} else {
 					delete_option( 'friends_' . $checkbox );
 				}
 			}
 
-			if ( isset( $_POST['limit_homepage_post_format'] ) && $_POST['limit_homepage_post_format'] && in_array( $_POST['limit_homepage_post_format'], get_post_format_slugs() ) ) {
-				update_option( 'friends_limit_homepage_post_format', $_POST['limit_homepage_post_format'] );
+			if ( isset( $_POST['limit_homepage_post_format'] ) && in_array( $_POST['limit_homepage_post_format'], get_post_format_slugs() ) ) {
+				update_option( 'friends_limit_homepage_post_format', $_POST['limit_homepage_post_format'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 			} else {
 				delete_option( 'friends_limit_homepage_post_format' );
 			}
-			if ( isset( $_POST['blocks_everywhere'] ) && $_POST['blocks_everywhere'] ) {
+			if ( isset( $_POST['blocks_everywhere'] ) && boolval( $_POST['blocks_everywhere'] ) ) {
 				update_user_option( get_current_user_id(), 'friends_blocks_everywhere', 1 );
 			} else {
 				delete_user_option( get_current_user_id(), 'friends_blocks_everywhere' );
 			}
 		}
 
-		if ( isset( $_POST['available_emojis'] ) && $_POST['available_emojis'] ) {
+		if ( isset( $_POST['available_emojis'] ) && is_array( $_POST['available_emojis'] ) ) {
 			$available_emojis = array();
-			foreach ( $_POST['available_emojis'] as $id ) {
+			foreach ( $_POST['available_emojis'] as $id ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+				$id = sanitize_key( $id );
 				$data = Reactions::get_emoji_data( $id );
 				if ( $data ) {
 					$available_emojis[ $id ] = $data;
@@ -570,12 +571,12 @@ class Admin {
 		// Global retention.
 		$retention_number_enabled = boolval( isset( $_POST['friends_enable_retention_number'] ) && $_POST['friends_enable_retention_number'] );
 		update_option( 'friends_enable_retention_number', $retention_number_enabled );
-		if ( $retention_number_enabled ) {
+		if ( $retention_number_enabled && isset( $_POST['friends_retention_number'] ) ) {
 			update_option( 'friends_retention_number', max( 1, intval( $_POST['friends_retention_number'] ) ) );
 		}
 		$retention_days_enabled = boolval( isset( $_POST['friends_enable_retention_days'] ) && $_POST['friends_enable_retention_days'] );
 		update_option( 'friends_enable_retention_days', $retention_days_enabled );
-		if ( $retention_days_enabled ) {
+		if ( $retention_days_enabled && isset( $_POST['friends_retention_days'] ) ) {
 			update_option( 'friends_retention_days', max( 1, intval( $_POST['friends_retention_days'] ) ) );
 		}
 
@@ -585,7 +586,7 @@ class Admin {
 				'collapsed',
 			)
 		) ) {
-			update_option( 'friends_frontend_default_view', wp_unslash( $_POST['frontend_default_view'] ) );
+			update_option( 'friends_frontend_default_view', wp_unslash( $_POST['frontend_default_view'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		} else {
 			delete_option( 'friends_frontend_default_view' );
 		}
@@ -646,7 +647,7 @@ class Admin {
 		);
 		$this->check_admin_settings();
 
-		if ( isset( $_GET['updated'] ) ) {
+		if ( isset( $_GET['updated'] ) && boolval( $_GET['updated'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			?>
 			<div id="message" class="updated notice is-dismissible"><p>
 				<?php
@@ -694,7 +695,11 @@ class Admin {
 			wp_die( esc_html__( 'Invalid user.', 'friends' ) );
 		}
 
-		$friend = User::get_by_username( $_GET['user'] );
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'edit-friend-rules-' . sanitize_user( wp_unslash( $_GET['user'] ) ) ) ) {
+			wp_die( esc_html__( 'Invalid nonce.', 'friends' ) );
+		}
+
+		$friend = User::get_by_username( sanitize_user( wp_unslash( $_GET['user'] ) ) );
 		if ( ! $friend || is_wp_error( $friend ) ) {
 			wp_die( esc_html__( 'Invalid username.', 'friends' ) );
 		}
@@ -718,16 +723,22 @@ class Admin {
 		$friend    = $this->check_admin_edit_friend_rules();
 		$arg       = 'updated';
 		$arg_value = 1;
-		if ( isset( $_POST['friend-rules-raw'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'friend-rules-raw-' . $friend->user_login ) ) {
-			$rules = $this->friends->feed->validate_feed_rules( json_decode( stripslashes( $_POST['rules'] ), true ) );
+		if ( isset( $_POST['_wpnonce'] ) && ! empty( $_POST['friend-rules-raw'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'friend-rules-raw-' . $friend->user_login ) ) {
+			$rules = validate_feed_rules( wp_unslash( $_POST['friend-rules-raw'] ) );
 			if ( false === $rules ) {
 				$arg = 'error';
 			} else {
 				$friend->update_user_option( 'friends_feed_rules', $rules );
 			}
-		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( $_POST['_wpnonce'], 'edit-friend-rules-' . $friend->user_login ) ) {
-				$friend->update_user_option( 'friends_feed_catch_all', $this->friends->feed->validate_feed_catch_all( $_POST['catch_all'] ) );
-				$friend->update_user_option( 'friends_feed_rules', $this->friends->feed->validate_feed_rules( $_POST['rules'] ) );
+		} elseif ( isset( $_POST['_wpnonce'] ) && ! empty( $_POST['rules'] ) && ! empty( $_POST['catch_all'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-rules-' . sanitize_user( $friend->user_login ) ) ) {
+				$friend->update_user_option(
+					'friends_feed_catch_all',
+					validate_feed_catch_all( wp_unslash( $_POST['catch_all'] ) )
+				);
+				$friend->update_user_option(
+					'friends_feed_rules',
+					validate_feed_rules( wp_unslash( $_POST['rules'] ) )
+				);
 		} else {
 			return;
 		}
@@ -735,7 +746,7 @@ class Admin {
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( '_wp_http_referer' ) ) );
 		}
 		exit;
 	}
@@ -768,10 +779,12 @@ class Admin {
 			'replace' => '',
 		);
 
-		if ( isset( $_GET['post'] ) && intval( $_GET['post'] ) ) {
-			$post = get_post( intval( $_GET['post'] ) );
-		} else {
-			$post = null;
+		if ( isset( $_REQUEST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'edit-friend-rules-' . sanitize_user( $friend->user_login ) ) ) {
+			if ( isset( $_GET['post'] ) && intval( $_GET['post'] ) ) {
+				$post = get_post( intval( $_GET['post'] ) );
+			} else {
+				$post = null;
+			}
 		}
 
 		$args = array(
@@ -797,14 +810,26 @@ class Admin {
 		if ( ! Friends::has_required_privileges() ) {
 			wp_die( -1 );
 		}
+		if ( ! isset( $_GET['user'] ) ) {
+			wp_die( esc_html__( 'Invalid user.', 'friends' ) );
+		}
+
+		check_ajax_referer( 'edit-friend-rules-' . sanitize_user( wp_unslash( $_GET['user'] ) ) );
 
 		if ( isset( $_GET['post'] ) && intval( $_GET['post'] ) ) {
 			$post = get_post( intval( $_GET['post'] ) );
 		} else {
 			$post = null;
 		}
-
-		$this->render_preview_friend_rules( $_POST['rules'], $_POST['catch_all'], $post );
+		$rules = array();
+		if ( isset( $_POST['rules'] ) ) {
+			$rules = validate_feed_rules( wp_unslash( $_POST['rules'] ) );
+		}
+		$catch_all = array();
+		if ( isset( $_POST['catch_all'] ) ) {
+			$catch_all = validate_feed_rules( wp_unslash( $_POST['catch_all'] ) );
+		}
+		$this->render_preview_friend_rules( $rules, $catch_all, $post );
 		wp_die( 1 );
 	}
 
@@ -1075,7 +1100,7 @@ class Admin {
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( add_query_arg( $arg, $arg_value, wp_get_referer() ) );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
@@ -1098,7 +1123,7 @@ class Admin {
 					__( 'Settings' )                 => 'edit-friend' . $append, // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					__( 'Feeds', 'friends' )         => 'edit-friend-feeds' . $append,
 					__( 'Notifications', 'friends' ) => 'edit-friend-notifications' . $append,
-					__( 'Rules', 'friends' )         => 'edit-friend-rules' . $append,
+					__( 'Rules', 'friends' )         => 'edit-friend-rules' . $append . '&_wpnonce=' . wp_create_nonce( 'edit-friend-rules-' . $friend->user_login ),
 				),
 			)
 		);
@@ -1114,7 +1139,7 @@ class Admin {
 			$friend->get_post_stats(),
 			array(
 				'friend'                 => $friend,
-				'friends_settings_url'   => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'friends_settings_url'   => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 				'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
 				'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
 			)
@@ -1226,7 +1251,7 @@ class Admin {
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
@@ -1416,7 +1441,7 @@ class Admin {
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
@@ -1434,7 +1459,7 @@ class Admin {
 				'rules'                           => $friend->get_feed_rules(),
 				'hide_from_friends_page'          => get_user_option( 'friends_hide_from_friends_page' ),
 				'post_formats'                    => array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() ),
-				'friends_settings_url'            => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'friends_settings_url'            => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 				'registered_parsers'              => $this->friends->feed->get_registered_parsers(),
 				'global_retention_days'           => Friends::get_retention_days(),
 				'global_retention_number'         => Friends::get_retention_number(),
@@ -2150,7 +2175,7 @@ class Admin {
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ), wp_unslash( $_SERVER['REQUEST_URI'] ) ) ) );
+			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
@@ -2187,7 +2212,7 @@ class Admin {
 			null,
 			array(
 				'friend_users'                   => $friend_users->get_results(),
-				'friends_settings_url'           => add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'friends_settings_url'           => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 				'hide_from_friends_page'         => $hide_from_friends_page,
 				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
 				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
@@ -2443,7 +2468,7 @@ class Admin {
 		}
 
 		if ( $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'subscription' ) ) {
-			$link = wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $user->user_login ) ), 'add-friend-' . $user->user_login, 'add-friend' );
+			$link = wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $user->user_login ) ), 'add-friend-' . $user->user_login, 'add-friend' );
 			if ( $user->has_cap( 'pending_friend_request' ) ) {
 				$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
 			} elseif ( $user->has_cap( 'subscription' ) ) {
@@ -2777,7 +2802,7 @@ class Admin {
 									get_bloginfo( 'name' )
 								)
 							),
-							'href'   => $my_url . '/?add-friend=' . urlencode( home_url() ),
+							'href'   => add_query_arg( 'add-friend', home_url(), $my_url ),
 						)
 					);
 				}
@@ -3036,7 +3061,7 @@ class Admin {
 				sprintf(
 					// translators: %s is a URL.
 					__( '<strong>To fix this:</strong> <a href="%s">Re-run activation of the Friends plugin</a>.', 'friends' ),
-					esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', urlencode( wp_unslash( $_SERVER['REQUEST_URI'] ) ), self_admin_url( 'admin.php?page=friends-settings&rerun-activate' ) ), 'friends-settings' ) )
+					esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings&rerun-activate' ) ), 'friends-settings' ) )
 				)
 			);
 			$result['description'] .= '</p>';

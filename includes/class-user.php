@@ -949,8 +949,7 @@ class User extends \WP_User {
 	 * @return array The rules set by the user for this feed.
 	 */
 	public function set_feed_rules( $rules ) {
-		$friends = Friends::get_instance();
-		self::$feed_rules[ $this->ID ] = $friends->feed->validate_feed_rules( $rules );
+		self::$feed_rules[ $this->ID ] = Feed::validate_feed_rules( $rules );
 		return self::$feed_rules[ $this->ID ];
 	}
 
@@ -975,8 +974,7 @@ class User extends \WP_User {
 	 * @return array The catchall rukle set by the user for this feed.
 	 */
 	public function set_feed_catch_all( $catchall ) {
-			$friends = Friends::get_instance();
-		self::$feed_catch_all[ $this->ID ] = $friends->feed->validate_feed_catch_all( $catchall );
+		self::$feed_catch_all[ $this->ID ] = Feed::validate_feed_catch_all( $catchall );
 		return self::$feed_catch_all[ $this->ID ];
 	}
 

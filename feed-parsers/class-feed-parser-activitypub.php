@@ -13,7 +13,7 @@
 namespace Friends;
 
 use WP_Error;
-use \Enable_Mastodon_Apps\Entity\Account as Entity_Account;
+use Enable_Mastodon_Apps\Entity\Account as Entity_Account;
 
 /**
  * This is the class for integrating ActivityPub into the Friends Plugin.
