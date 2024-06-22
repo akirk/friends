@@ -6,22 +6,23 @@
  * @package Friends
  */
 
+$friend_name = $args['friend']->display_name . ' (' . $args['friend']->user_login . ')';
 $heading = sprintf(
 	// translators: %s is a username.
 	_x( 'Unfriend %s', 'heading', 'friends' ),
-	$args['friend']->user_login
+	$friend_name
 );
 
 $button_text = sprintf(
 	// translators: %s is a username.
 	_x( 'Delete %s', 'action', 'friends' ),
-	$args['friend']->user_login
+	$friend_name
 );
 if ( is_multisite() ) {
 	$button_text = sprintf(
 	// translators: %s is a username.
 		_x( 'Remove %s', 'action', 'friends' ),
-		$args['friend']->user_login
+		$friend_name
 	);
 }
 $numfeeds = count( $args['friend']->get_active_feeds() );
@@ -31,12 +32,11 @@ $numfeeds = count( $args['friend']->get_active_feeds() );
 <h3><?php echo esc_html( $heading ); ?></h3>
 <form method="post">
 	<?php wp_nonce_field( 'unfriend-' . $args['friend']->user_login ); ?>
-	<p><?php esc_html_e( 'Since friends correspond to WordPress users, unfriending a user means to delete the user.', 'friends' ); ?></p>
-	<h4>
+	<h4 class="unfriend">
 	<?php
 			echo get_avatar( $args['friend']->user_login, 24 );
 			echo ' ';
-			echo esc_html( $args['friend']->user_login );
+			echo esc_html( $friend_name );
 	?>
 	</h4>
 	<ul class="ul-disc">
@@ -69,15 +69,20 @@ $numfeeds = count( $args['friend']->get_active_feeds() );
 	<p class="description">
 	<?php
 	esc_html_e( 'This will delete all cached posts, feeds, and other metadata for this user on this site.', 'friends' );
-	if ( is_multisite() ) {
+	if ( ! $args['friend'] instanceof \Friends\Subscription ) {
 		echo ' ';
-		esc_html_e( 'Since this is a multisite install, the user will only be removed from this site.', 'friends' );
+		if ( is_multisite() ) {
+			esc_html_e( 'Since this is a multisite install, the user will be removed from this site.', 'friends' );
+		} else {
+			esc_html_e( 'Since this friend is a WordPress user, unfriending them means to delete the user.', 'friends' );
+		}
 	}
 	?>
 	</p>
 
 	<p class="submit">
 		<input type="submit" id="submit" class="button button-primary" value="<?php echo esc_html( $button_text ); ?>">
+		<a href="<?php echo esc_url( add_query_arg( 'user', $args['friend']->user_login, self_admin_url( 'admin.php?page=edit-friend' ) ) ); ?>" class="button button-secondary"><?php esc_html_e( 'Cancel', 'friends' ); ?></a>
 	</p>
 
 </form>

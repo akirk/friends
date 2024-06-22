@@ -68,7 +68,7 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 							<span class="info">ID: <?php echo esc_html( $args['friend']->get_term_id() ); ?></span>
 						<?php endif; ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'convert-to-user-' . $args['friend']->user_login, 'convert-to-user' ) ); ?>"><?php esc_html_e( 'Convert to User', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), add_query_arg( 'user', $args['friend']->user_login, self_admin_url( 'admin.php?page=edit-friend' ) ) ), 'convert-to-user-' . $args['friend']->user_login, 'convert-to-user' ) ); ?>"><?php esc_html_e( 'Convert to User', 'friends' ); ?></a>
 						</p>
 					<?php else : ?>
 						<?php esc_html_e( 'User', 'friends' ); ?>
@@ -160,7 +160,7 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 	</table>
 	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>
 	<p class="submit">
+		<div class="button unfriend"><a class="unfriend" href="<?php echo esc_url( Friends\Admin::get_unfriend_link( $args['friend'] ) ); ?>"><?php esc_html_e( 'Unfriend', 'friends' ); ?></a></div>
 		<input type="submit" id="submit" class="button button-primary" value="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Save Changes' ); ?>">
-		<span class="unfriend"><a class="unfriend" href="<?php echo esc_url( Friends\Admin::get_unfriend_link( $args['friend'] ) ); ?>"><?php esc_html_e( 'Unfriend', 'friends' ); ?></a></span>
 	</p>
 </form>
