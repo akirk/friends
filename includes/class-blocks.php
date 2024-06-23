@@ -303,7 +303,7 @@ class Blocks {
 		wp_enqueue_script(
 			'friends-block-visibility',
 			plugins_url( 'blocks/block-visibility/build/index.js', FRIENDS_PLUGIN_FILE ),
-			array( 'wp-blocks', 'wp-element', 'wp-i18n', 'wp-editor' ),
+			array( 'wp-blocks', 'wp-element', 'wp-i18n' ),
 			Friends::VERSION,
 			true
 		);
