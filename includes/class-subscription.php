@@ -196,7 +196,8 @@ class Subscription extends User {
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$post_stats = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
-				'SELECT SUM(
+				sprintf(
+					'SELECT SUM(
 					LENGTH( ID ) +
 					LENGTH( post_author ) +
 					LENGTH( post_date ) +
@@ -222,7 +223,16 @@ class Subscription extends User {
 					LENGTH( comment_count )
 					) AS total_size,
 					COUNT(*) as post_count
-				FROM ' . $wpdb->posts . ' p, ' . $wpdb->term_taxonomy . ' t, ' . $wpdb->term_relationships . ' r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND p.post_type IN ( ' . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+					FROM %s p, %s t, %s r
+					WHERE r.object_id = p.ID
+					AND r.term_taxonomy_id = t.term_taxonomy_id
+					AND t.term_id = %%d
+					AND p.post_type IN ( %s )',
+					$wpdb->posts,
+					$wpdb->term_taxonomy,
+					$wpdb->term_relationships,
+					implode( ', ', array_fill( 0, count( $post_types ), '%s' ) )
+				),
 				array_merge( array( $this->get_term_id() ), $post_types )
 			),
 			ARRAY_A
@@ -232,7 +242,19 @@ class Subscription extends User {
 			'U',
 			$wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$wpdb->prepare(
-					"SELECT MIN(post_date) FROM $wpdb->posts p, $wpdb->term_taxonomy t, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND p.post_status = 'publish' AND p.post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' )',
+					sprintf(
+						'SELECT MIN(post_date)
+						FROM %s p, %s t, %s r
+						WHERE r.object_id = p.ID
+						AND r.term_taxonomy_id = t.term_taxonomy_id
+						AND t.term_id = %%d
+						AND p.post_status = "publish"
+						AND p.post_type IN ( %s )',
+						$wpdb->posts,
+						$wpdb->term_taxonomy,
+						$wpdb->term_relationships,
+						implode( ', ', array_fill( 0, count( $post_types ), '%s' ) )
+					),
 					array_merge( array( $this->get_term_id() ), $post_types )
 				)
 			)
@@ -244,18 +266,32 @@ class Subscription extends User {
 
 	public function get_all_post_ids() {
 		global $wpdb;
-		$post_types_to_delete = implode( "', '", apply_filters( 'friends_frontend_post_types', array() ) );
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
-		$cache_key = 'get_all_post_ids_' . $this->ID . '_' . $post_types_to_delete;
+		$cache_key = 'get_all_post_ids_' . $this->ID . '_' . implode( '_', $post_types );
 		$post_ids = wp_cache_get( $cache_key, 'friends' );
 		if ( false !== $post_ids ) {
 			return $post_ids;
 		}
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$post_ids = $wpdb->get_col( $wpdb->prepare( "SELECT p.ID FROM $wpdb->posts p, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = %d AND p.post_type IN ('$post_types_to_delete')", $this->get_term_id() ) );
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		$post_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$wpdb->prepare(
+				sprintf(
+					'SELECT p.ID
+					FROM %s p, %s r
+					WHERE r.object_id = p.ID
+					AND r.term_taxonomy_id = %%d
+					AND p.post_type IN ( %s )',
+					$wpdb->posts,
+					$wpdb->term_relationships,
+					implode( ', ', array_fill( 0, count( $post_types ), '%s' ) )
+				),
+				array_merge(
+					array( $this->get_term_id() ),
+					$post_types
+				)
+			)
+		);
 
 		wp_cache_set( $cache_key, $post_ids, 'friends', HOUR_IN_SECONDS - 60 );
 
@@ -291,8 +327,7 @@ class Subscription extends User {
 		global $wpdb;
 
 		$counts = array();
- 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$counts['standard'] = $wpdb->get_var(
+		$counts['standard'] = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				sprintf(
 					"SELECT COUNT(DISTINCT posts.ID)
@@ -306,13 +341,12 @@ class Subscription extends User {
 					AND relationships_post_format.object_id = posts.ID
 					AND relationships_author.object_id = posts.ID
 					AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
-					AND taxonomy_author.term_id = %s",
+					AND taxonomy_author.term_id = %%d",
 					$wpdb->posts,
 					$wpdb->term_relationships,
 					$wpdb->term_taxonomy,
 					$wpdb->term_relationships,
-					implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-					'%d'
+					implode( ',', array_fill( 0, count( $post_types ), '%s' ) )
 				),
 				array_merge(
 					$post_types,
@@ -322,7 +356,7 @@ class Subscription extends User {
 		);
 
 		if ( ! empty( $post_formats_term_ids ) ) {
-			$post_format_counts = $wpdb->get_results(
+			$post_format_counts = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 				$wpdb->prepare(
 					sprintf(
 						"SELECT relationships_post_format.term_taxonomy_id AS post_format_id, COUNT(relationships_post_format.term_taxonomy_id) AS count
@@ -337,15 +371,14 @@ class Subscription extends User {
 						AND relationships_post_format.term_taxonomy_id IN ( %s )
 						AND relationships_author.object_id = posts.ID
 						AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
-						AND taxonomy_author.term_id = %s
+						AND taxonomy_author.term_id = %%d
 						GROUP BY relationships_post_format.term_taxonomy_id",
 						$wpdb->posts,
 						$wpdb->term_relationships,
 						$wpdb->term_taxonomy,
 						$wpdb->term_relationships,
 						implode( ',', array_fill( 0, count( $post_types ), '%s' ) ),
-						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) ),
-						'%d'
+						implode( ',', array_fill( 0, count( $post_formats_term_ids ), '%d' ) )
 					),
 					array_merge(
 						$post_types,
@@ -354,7 +387,7 @@ class Subscription extends User {
 					)
 				)
 			);
-			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+
 			foreach ( $post_format_counts as $row ) {
 				$counts[ $post_formats_term_ids[ $row->post_format_id ] ] = $row->count;
 				$counts['standard'] -= $row->count;
@@ -382,16 +415,25 @@ class Subscription extends User {
 		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
 			return wp_cache_get( $cache_key, 'friends' );
 		}
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$count = $wpdb->get_var(
+
+		$count = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $wpdb->posts p, $wpdb->term_taxonomy t, $wpdb->term_relationships r WHERE r.object_id = p.ID AND r.term_taxonomy_id = t.term_taxonomy_id AND t.term_id = %d AND post_type IN ( " . implode( ', ', array_fill( 0, count( $post_types ), '%s' ) ) . ' ) AND post_status = "trash"',
+				sprintf(
+					'SELECT COUNT(*)
+					FROM %s p, %s t, %s r
+					WHERE r.object_id = p.ID
+					AND r.term_taxonomy_id = t.term_taxonomy_id
+					AND t.term_id = %%d
+					AND post_type IN ( %s )
+					AND post_status = "trash"',
+					$wpdb->posts,
+					$wpdb->term_taxonomy,
+					$wpdb->term_relationships,
+					implode( ', ', array_fill( 0, count( $post_types ), '%s' ) )
+				),
 				array_merge( array( $this->get_term_id() ), $post_types )
 			)
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		wp_cache_set( $cache_key, intval( $count ), 'friends', HOUR_IN_SECONDS - 60 );
 		return intval( $count );
@@ -484,12 +526,24 @@ class Subscription extends User {
 
 		global $wpdb;
 		// Convert feeds.
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $subscription->get_term_id(), $user->ID, User_Feed::TAXONOMY ) );
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				'UPDATE %s
+				JOIN %s
+				ON %s.term_taxonomy_id = %s.term_taxonomy_id
+				SET object_id = %d
+				WHERE object_id = %d
+				AND %s.taxonomy = %s',
+				$wpdb->term_relationships,
+				$wpdb->term_taxonomy,
+				$wpdb->term_relationships,
+				$wpdb->term_taxonomy,
+				$subscription->get_term_id(),
+				$user->ID,
+				$wpdb->term_taxonomy,
+				User_Feed::TAXONOMY
+			)
+		);
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
@@ -521,11 +575,24 @@ class Subscription extends User {
 
 		global $wpdb;
 		// Convert feeds.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->query( $wpdb->prepare( "UPDATE $wpdb->term_relationships JOIN $wpdb->term_taxonomy ON $wpdb->term_relationships.term_taxonomy_id = $wpdb->term_taxonomy.term_taxonomy_id SET object_id = %d WHERE object_id = %d AND $wpdb->term_taxonomy.taxonomy = %s", $user->ID, $subscription->get_term_id(), User_Feed::TAXONOMY ) );
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				'UPDATE %s
+				JOIN %s
+				ON %s.term_taxonomy_id = %s.term_taxonomy_id
+				SET object_id = %d
+				WHERE object_id = %d
+				AND %s.taxonomy = %s',
+				$wpdb->term_relationships,
+				$wpdb->term_taxonomy,
+				$wpdb->term_relationships,
+				$wpdb->term_taxonomy,
+				$user->ID,
+				$subscription->get_term_id(),
+				$wpdb->term_taxonomy,
+				User_Feed::TAXONOMY
+			)
+		);
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$user->update_user_option( $option_name, $subscription->get_user_option( $option_name ) );

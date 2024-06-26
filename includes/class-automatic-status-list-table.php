@@ -106,7 +106,7 @@ class Automatic_Status_List_Table extends \WP_Posts_List_Table {
 			$counts[ $row->post_status ] = $row->count;
 		}
 		$counts = (object) $counts;
-		wp_cache_set( $cache_key, $counts, 'friends' );
+		wp_cache_set( $cache_key, $counts, 'friends', HOUR_IN_SECONDS );
 
 		return $counts;
 	}
