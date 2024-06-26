@@ -1021,7 +1021,7 @@ class Friends {
 			return;
 		}
 
-		$tax_query = $this->wp_query_get_post_format_tax_query( array(), get_option( 'friends_limit_homepage_post_format', false ) );
+		$tax_query = $this->wp_query_get_post_format_tax_query( $query->get( 'tax_query' ), get_option( 'friends_limit_homepage_post_format', false ) );
 		if ( $tax_query ) {
 			$query->set( 'tax_query', $tax_query );
 		}

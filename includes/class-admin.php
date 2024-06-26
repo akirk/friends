@@ -74,6 +74,7 @@ class Admin {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
 		}
 		add_filter( 'friends_unread_count', array( $this, 'friends_unread_friend_request_count' ) );
+		add_filter( 'pre_get_posts', array( $this, 'admin_friend_posts_query' ) );
 	}
 
 	/**
@@ -3177,5 +3178,28 @@ class Admin {
 		}
 
 		return sprintf( '#%1$d %2$s', $user->ID, $user->user_login );
+	}
+
+	public function admin_friend_posts_query( $query ) {
+		global $wp_query, $wp, $authordata;
+		if ( $wp_query !== $query || ! is_admin() ) {
+			return $query;
+		}
+		if ( ! isset( $query->query['post_type'] ) || ! in_array( $query->query['post_type'], apply_filters( 'friends_frontend_post_types', array( 'post' ) ), true ) ) {
+			return $query;
+		}
+
+		if ( empty( $query->query['author'] ) ) {
+			return $query;
+		}
+
+		$author = User::get_by_username( $query->query['author'] );
+		if ( ! $author ) {
+			return $query;
+		}
+		$author->modify_query_by_author( $query );
+		$query->query['author'] = '';
+
+		return $query;
 	}
 }
