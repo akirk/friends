@@ -41,6 +41,7 @@ class Automatic_Status {
 	private function register_hooks() {
 		add_action( 'friends_admin_menu_settings', array( $this, 'friends_admin_menu_settings' ), 20 );
 		add_filter( 'friends_admin_settings_slugs', array( $this, 'friends_admin_settings_slugs' ), 20 );
+		add_filter( 'friends_admin_tabs', array( $this, 'friends_admin_tabs' ) );
 		add_filter( 'handle_bulk_actions-edit-post', array( $this, 'bulk_publish' ), 10, 3 );
 
 		if ( ! get_option( 'friends_automatic_status_disabled' ) ) {
@@ -73,6 +74,11 @@ class Automatic_Status {
 	public function friends_admin_settings_slugs( $slugs ) {
 		$slugs[] = 'friends-auto-status';
 		return $slugs;
+	}
+
+	public function friends_admin_tabs( $menu ) {
+		$menu[ __( 'Automatic Status', 'friends' ) ] = 'friends-auto-status';
+		return $menu;
 	}
 
 	/**
