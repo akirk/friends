@@ -277,18 +277,23 @@ class Subscription extends User {
 		$post_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				sprintf(
-					'SELECT p.ID
-					FROM %s p, %s r
-					WHERE r.object_id = p.ID
-					AND r.term_taxonomy_id = %%d
-					AND p.post_type IN ( %s )',
+					'SELECT posts.ID
+						FROM %s AS posts
+						JOIN %s AS taxonomy_author
+						JOIN %s AS relationships_author
+						WHERE posts.post_type IN ( %s )
+						AND relationships_author.object_id = posts.ID
+						AND taxonomy_author.term_taxonomy_id = relationships_author.term_taxonomy_id
+						AND taxonomy_author.term_id = %%d
+					',
 					$wpdb->posts,
+					$wpdb->term_taxonomy,
 					$wpdb->term_relationships,
 					implode( ', ', array_fill( 0, count( $post_types ), '%s' ) )
 				),
 				array_merge(
-					array( $this->get_term_id() ),
-					$post_types
+					$post_types,
+					array( $this->get_term_id() )
 				)
 			)
 		);

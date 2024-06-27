@@ -1109,7 +1109,11 @@ class Friends {
 				$filter_by_post_format
 			);
 		}
-		$tax_query[] = $post_format_query;
+		if ( ! empty( $tax_query ) ) {
+			$tax_query[] = $post_format_query;
+		} else {
+			$tax_query = array( $post_format_query );
+		}
 
 		return $tax_query;
 	}
