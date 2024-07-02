@@ -494,7 +494,7 @@ class Friends {
 					$user->get_term_id(),
 					Subscription::TAXONOMY,
 					array(
-						'slug' => Feed_Parser_ActivityPub::EXTERNAL_USERNAME,
+						'slug' => 'external',
 						'name' => _x( 'External', 'user name', 'friends' ),
 					)
 				);
