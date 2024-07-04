@@ -486,7 +486,7 @@ class Friends {
 			}
 		}
 
-		if ( version_compare( $previous_version, '2.9.2', '<' ) ) {
+		if ( version_compare( $previous_version, '2.9.4', '<' ) ) {
 			// Migrate to the new External user.
 			$user = User::get_by_username( 'external-mentions' );
 			if ( $user && $user instanceof Subscription ) {
