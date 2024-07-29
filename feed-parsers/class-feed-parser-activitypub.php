@@ -104,7 +104,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 40, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_comment_parent_post_id' ), 25 );
-		add_filter( 'friends_cache_url_post_id', array( '\Friends\Feed', 'url_to_postid' ) );
+		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
 
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
 	}
@@ -1492,7 +1492,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$user_feed = $this->get_external_mentions_feed();
 			$response = \Activitypub\safe_remote_get( $url, get_current_user_id() );
 			if ( \is_wp_error( $response ) ) {
-
 				$this->show_message_on_frontend(
 					sprintf(
 						// translators: %s is a URl.
@@ -1519,6 +1518,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$post_id = Feed::url_to_postid( $url );
 				}
 			}
+		}
+		return $post_id;
+	}
+
+	public function check_url_to_postid( $post_id, $url ) {
+		if ( ! $post_id ) {
+			$post_id = \Friends\Feed::url_to_postid( $url );
 		}
 		return $post_id;
 	}
