@@ -731,7 +731,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'class_name' => 'mention',
 			)
 		) ) {
+			$href = false;
+			if ( ! in_array( 'hashtag', explode( ' ', $tags->get_attribute( 'class' ) ) ) ) {
 				$href = $tags->get_attribute( 'href' );
+			}
 			if ( $href ) {
 				$mentions[ $href ] = true;
 			}
