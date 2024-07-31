@@ -1405,7 +1405,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				}
 				$slug = sanitize_title( $slug );
 				if ( ! isset( $users[ '@' . $slug ] ) ) {
-					$users[ '@' . $slug ] = get_author_posts_url( $local_user->ID );
+					$users[ '@' . $slug ] = get_author_posts_url( $local_user->ID, $local_user->user_nicename );
 				}
 			}
 			$users[ '@' . sanitize_title( get_bloginfo( 'name' ) ) ] = get_bloginfo( 'url' );
@@ -1659,7 +1659,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 
 			if ( $no_known_user_found ) {
-				if ( $friend_user && false !== strpos( $item->post_content, \get_author_posts_url( $friend_user->ID ) ) ) {
+				if ( $friend_user && false !== strpos( $item->post_content, \get_author_posts_url( $friend_user->ID, $friend_user->user_nicename ) ) ) {
 					$no_known_user_found = false;
 				}
 			}
