@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.5
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.3
+- Stable tag: 2.9.4
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,17 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.9.4
+- Fix an out of memory error in get_author_posts_url ([#339])
+- Fix ignore notification settings when no `friend_listed` passed by @logicalor in ([#324])
+- Null coalesce `$html` to empty string to avoid deprecation notices by @logicalor in ([#325])
+- Support the WordPress PHPCS ruleset ([#329]), props @apermo
+- Improve PHPCS WordPress compliance ([#330])
+- Post Cache Admin: Only show subscription author ([#333])
+- Add automatic-status menu slug ([#334])
+- Fix the all postids query ([#335])
+- Don't define a wp-editor dependency ([#332])
+
 ### 2.9.3
 - Fix Rewrite for Categories ([#322])
 - Show Comments and the Form on Permalink pages ([#321])
@@ -116,6 +127,15 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 ### 2.9.0
 - Fix issues discovered by the plugin check plugin ([#301])
 
+[#339]: https://github.com/akirk/friends/pull/339
+[#324]: https://github.com/akirk/friends/pull/324
+[#325]: https://github.com/akirk/friends/pull/325
+[#329]: https://github.com/akirk/friends/pull/329
+[#330]: https://github.com/akirk/friends/pull/330
+[#333]: https://github.com/akirk/friends/pull/333
+[#334]: https://github.com/akirk/friends/pull/334
+[#335]: https://github.com/akirk/friends/pull/335
+[#332]: https://github.com/akirk/friends/pull/332
 [#322]: https://github.com/akirk/friends/pull/322
 [#321]: https://github.com/akirk/friends/pull/321
 [#320]: https://github.com/akirk/friends/pull/320
