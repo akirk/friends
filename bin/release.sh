@@ -123,4 +123,6 @@ git push origin $FRIENDS_VERSION
 echo -n '❯ svn ci -m "Friends '$FRIENDS_VERSION'" && svn cp https://plugins.svn.wordpress.org/friends/trunk https://plugins.svn.wordpress.org/friends/tags/'$FRIENDS_VERSION' -m "Release '$FRIENDS_VERSION'"'
 read
 svn ci -m "Friends $FRIENDS_VERSION" && svn cp https://plugins.svn.wordpress.org/friends/trunk https://plugins.svn.wordpress.org/friends/tags/$FRIENDS_VERSION -m "Release $FRIENDS_VERSION"
-echo Now create a new release on GitHub: https://github.com/akirk/friends/releases/new\?tag=$FRIENDS_VERSION
+echo -n '❯ gh release create '$FRIENDS_VERSION' --generate-notes'
+read
+gh release create $FRIENDS_VERSION --generate-notes
