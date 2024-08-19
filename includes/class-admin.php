@@ -2745,7 +2745,7 @@ class Admin {
 				}
 			}
 		} elseif ( Friends::has_required_privileges() ) {
-			$my_url = home_url();
+			$my_url = site_url();
 			$on_my_own_site = true;
 		}
 
