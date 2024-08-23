@@ -1423,7 +1423,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_extract_mentions( $mentions, $post_content ) {
 		$users = self::get_possible_mentions();
-		preg_match_all( '/@(?:[a-zA-Z0-9_-]+)/', $post_content, $matches );
+		preg_match_all( '/@(?:[a-zA-Z0-9_@.-]+)/', $post_content, $matches );
 		foreach ( $matches[0] as $match ) {
 			if ( isset( $users[ $match ] ) ) {
 				$mentions[ $match ] = $users[ $match ];
