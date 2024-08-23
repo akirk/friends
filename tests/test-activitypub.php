@@ -289,6 +289,36 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		\wp_trash_post( $post_id );
 	}
 
+	public function test_dont_override_activitypub_mentions() {
+		add_filter( 'activitypub_cache_possible_friend_mentions', '__return_false' );
+		$post_id = \wp_insert_post(
+			array(
+				'post_author'  => 1,
+				'post_content' => '@' . sanitize_title( $this->friend_nicename ) . '@mastodon.social  hello',
+			)
+		);
+
+		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
+		$object = $activitypub_post->to_object();
+
+		$this->assertNotContains(
+			array(
+				'type' => 'Mention',
+				'href' => $this->actor,
+				'name' => '@' . $this->friend_nicename,
+			),
+			$object->get_tag()
+		);
+
+		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_to() );
+		$this->assertNotContains( $this->actor, $object->get_cc() );
+
+		remove_all_filters( 'activitypub_from_post_object' );
+		remove_all_filters( 'activitypub_cache_possible_friend_mentions' );
+
+		\wp_trash_post( $post_id );
+	}
+
 	/**
 	 * Test whether the example domains are skipped.
 	 */
