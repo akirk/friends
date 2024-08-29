@@ -1,3 +1,9 @@
+### 2.9.5
+- Don't override ActivityPub mentions ([#345])
+- Add a dashboard widget ([#346])
+- Automatically update dashboard widget with new posts ([#347])
+- Account for WordPress installs in a directory ([#348])
+
 ### 2.9.4
 - Fix an out of memory error in get_author_posts_url ([#339])
 - Fix ignore notification settings when no `friend_listed` passed by @logicalor in ([#324])
@@ -252,6 +258,10 @@
 - Add Emoji reactions
 - Add blog to blog messaging
 
+[#345]: https://github.com/akirk/friends/pull/345
+[#346]: https://github.com/akirk/friends/pull/346
+[#347]: https://github.com/akirk/friends/pull/347
+[#348]: https://github.com/akirk/friends/pull/348
 [#339]: https://github.com/akirk/friends/pull/339
 [#324]: https://github.com/akirk/friends/pull/324
 [#325]: https://github.com/akirk/friends/pull/325

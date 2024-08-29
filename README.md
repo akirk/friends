@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.4
+- Stable tag: 2.9.5
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -94,6 +94,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.9.5
+- Don't override ActivityPub mentions ([#345])
+- Add a dashboard widget ([#346])
+- Automatically update dashboard widget with new posts ([#347])
+- Account for WordPress installs in a directory ([#348])
+
 ### 2.9.4
 - Fix an out of memory error in get_author_posts_url ([#339])
 - Fix ignore notification settings when no `friend_listed` passed by @logicalor in ([#324])
@@ -105,28 +111,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix the all postids query ([#335])
 - Don't define a wp-editor dependency ([#332])
 
-### 2.9.3
-- Fix Rewrite for Categories ([#322])
-- Show Comments and the Form on Permalink pages ([#321])
-- Don't allow to follow any local URL to prevent loops ([#320])
-- Enable Mastodon Apps Updates: Cache the post when replying to it ([#318]), Map back the canonical user id to a user ([#317])
-- Allow a dot in the ActivityPub username ([#316])
-
-### 2.9.2
-- Fix Friend Request notification setting saving ([#313])
-- Add a Stats Widget ([#297])
-- Enable Mastodon Apps: Improve virtual user handling ([#310])
-- Increase cron feed polling frequency - this doesn't poll the feeds more often, just increases its reliability ([#312])
-- Add my-apps icon ([#308])
-- Enable Mastodon Apps CloudFest Hackathon Compatibility Updates ([#298])
-- Fix Notification Author and Highlight a Matched Keyword ([#306])
-
-### 2.9.1
-- Fix the reblog title ([#300])
-
-### 2.9.0
-- Fix issues discovered by the plugin check plugin ([#301])
-
+[#345]: https://github.com/akirk/friends/pull/345
+[#346]: https://github.com/akirk/friends/pull/346
+[#347]: https://github.com/akirk/friends/pull/347
+[#348]: https://github.com/akirk/friends/pull/348
 [#339]: https://github.com/akirk/friends/pull/339
 [#324]: https://github.com/akirk/friends/pull/324
 [#325]: https://github.com/akirk/friends/pull/325
@@ -136,18 +124,3 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 [#334]: https://github.com/akirk/friends/pull/334
 [#335]: https://github.com/akirk/friends/pull/335
 [#332]: https://github.com/akirk/friends/pull/332
-[#322]: https://github.com/akirk/friends/pull/322
-[#321]: https://github.com/akirk/friends/pull/321
-[#320]: https://github.com/akirk/friends/pull/320
-[#318]: https://github.com/akirk/friends/pull/318
-[#317]: https://github.com/akirk/friends/pull/317
-[#316]: https://github.com/akirk/friends/pull/316
-[#313]: https://github.com/akirk/friends/pull/313
-[#297]: https://github.com/akirk/friends/pull/297
-[#310]: https://github.com/akirk/friends/pull/310
-[#312]: https://github.com/akirk/friends/pull/312
-[#308]: https://github.com/akirk/friends/pull/308
-[#298]: https://github.com/akirk/friends/pull/298
-[#306]: https://github.com/akirk/friends/pull/306
-[#301]: https://github.com/akirk/friends/pull/301
-[#300]: https://github.com/akirk/friends/pull/300
