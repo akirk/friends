@@ -11,7 +11,7 @@ namespace Friends;
 	<?php
 	foreach ( $args['posts'] as $_post ) :
 		$friend_user = User::get_post_author( $_post );
-		$author_name = $args['friend_user']->display_name;
+		$author_name = $friend_user->display_name;
 		$override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, $_post->ID );
 		$avatar = $friend_user->get_avatar_url();
 		if ( ! $avatar ) {
