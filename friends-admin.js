@@ -345,6 +345,29 @@ jQuery( function ( $ ) {
 	} );
 
 	setTimeout( function () {
+		if ( $( '#friends-dashboard-widget' ).length ) {
+			$( '#friends-dashboard-widget' ).append( ' <i class="friends-loading"></i>' );
+			$.post(
+				friends.ajax_url,
+				{
+					_ajax_nonce: $( '#friends-dashboard-widget' ).data( 'nonce' ),
+					action: 'friends_dashboard',
+				},
+				function ( response ) {
+					if ( response.success ) {
+						$( '#friends-dashboard-widget' ).html( response.data );
+					} else {
+						$( '#friends-dashboard-widget i' )
+							.removeClass( 'friends-loading' )
+							.addClass( 'dashicons dashicons-warning' )
+							.prop( 'title', response.data );
+					}
+				}
+			);
+		}
+	}, 500 );
+
+	setTimeout( function () {
 		if ( $( '#fetch-feeds' ).length ) {
 			$( '#fetch-feeds' ).append( ' <i class="friends-loading"></i>' );
 			$.post(

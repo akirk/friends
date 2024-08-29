@@ -64,6 +64,8 @@ class Admin {
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
+		add_action( 'wp_dashboard_setup', array( $this, 'add_dashboard_widget' ) );
+		add_action( 'wp_ajax_friends_dashboard', array( $this, 'ajax_friends_dashboard' ) );
 		add_filter( 'site_status_tests', array( $this, 'site_status_tests' ) );
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
 		add_filter( 'debug_information', array( $this, 'site_health_debug' ) );
@@ -3045,6 +3047,51 @@ class Admin {
 			$items[] = '<a class="friend-posts" href="' . home_url( '/friends/' ) . '">' . sprintf( _n( '%s Post by Friends', '%s Posts by Friends', $friend_post_count, 'friends' ), $friend_post_count ) . '</a>';
 		}
 		return $items;
+	}
+
+	public function add_dashboard_widget() {
+		wp_add_dashboard_widget( 'friends_dashboard_widget', __( 'Friends: Latest Posts', 'friends' ), array( $this, 'render_dashboard_widget' ), null, 'normal', 'high' );
+	}
+
+	public function render_dashboard_widget() {
+		?>
+		<div id="friends-dashboard-widget" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-dashboard' ) ); ?>">
+		</div>
+		<?php
+	}
+
+	public function ajax_friends_dashboard() {
+		check_ajax_referer( 'friends-dashboard' );
+
+		$any_friends = User_Query::all_associated_users();
+
+		ob_start();
+		if ( 0 === $any_friends->get_total() ) {
+			Friends::template_loader()->get_template_part(
+				'admin/dashboard-widget-welcome',
+				null,
+				array()
+			);
+
+		} else {
+			Friends::template_loader()->get_template_part(
+				'admin/dashboard-widget',
+				null,
+				array(
+					'posts' => get_posts(
+						array(
+							'post_type' => apply_filters( 'friends_frontend_post_types', array( 'post' ) ),
+						)
+					),
+				)
+			);
+		}
+		$data = ob_get_contents();
+		ob_end_clean();
+
+		wp_send_json_success(
+			$data
+		);
 	}
 
 	public function site_status_tests( $tests ) {
