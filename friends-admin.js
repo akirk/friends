@@ -359,7 +359,7 @@ jQuery( function ( $ ) {
 					if ( 0 === $( '#friends-dashboard-widget' ).find( 'li.friends-post' ).length ) {
 						$( '#friends-dashboard-widget' ).html( response.data );
 					} else {
-						$( response.data ).find( 'li.friends-post' ).each( function () {
+						$( response.data ).find( 'li.friends-post' ).reverse().each( function () {
 							if ( ! document.getElementById( $(this).attr('id') ) ) {
 								$( '#friends-dashboard-widget ul' ).prepend( this );
 							}
