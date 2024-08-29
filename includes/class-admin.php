@@ -40,7 +40,7 @@ class Admin {
 	 */
 	private function register_hooks() {
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
-		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_open_friend_request' ), 10, 2 );
+		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_open_friend_request' ), 10, 3 );
 		add_filter( 'users_list_table_query_args', array( $this, 'allow_role_multi_select' ) );
 		add_filter( 'user_row_actions', array( get_called_class(), 'user_row_actions' ), 10, 2 );
 		add_filter( 'handle_bulk_actions-users', array( $this, 'handle_bulk_friend_request_approval' ), 10, 3 );
@@ -2673,8 +2673,9 @@ class Admin {
 	 *
 	 * @param      \WP_Menu $wp_menu  The wp menu.
 	 * @param      string   $my_url   My url.
+	 * @param      string   $my_admin_url   My admin url.
 	 */
-	public function friends_add_menu_open_friend_request( $wp_menu, $my_url ) {
+	public function friends_add_menu_open_friend_request( $wp_menu, $my_url, $my_admin_url ) {
 		$friend_request_count = $this->friends_unread_friend_request_count( 0 );
 		if ( $friend_request_count > 0 ) {
 			$wp_menu->add_menu(
@@ -2683,7 +2684,7 @@ class Admin {
 					'parent' => 'friends-menu',
 					// translators: %s is the number of open friend requests.
 					'title'  => esc_html( sprintf( _n( 'Review %s Friend Request', 'Review %s Friends Request', $friend_request_count, 'friends' ), $friend_request_count ) ),
-					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list-requests',
+					'href'   => $my_admin_url . '/wp-admin/admin.php?page=friends-list-requests',
 				)
 			);
 		}
@@ -2729,6 +2730,7 @@ class Admin {
 			}
 
 			$my_url = $current_user->user_url;
+			$my_admin_url = site_url();
 		} elseif ( is_multisite() ) {
 			$site = get_active_blog_for_user( get_current_user_id() );
 			if ( ! $site ) {
@@ -2736,7 +2738,8 @@ class Admin {
 				return;
 			}
 
-			$my_url = set_url_scheme( $site->siteurl );
+			$my_url = set_url_scheme( $site->home );
+			$my_admin_url = set_url_scheme( $site->siteurl );
 			$my_own_site = $site;
 			$on_my_own_site = get_current_blog_id() === intval( $site->blog_id );
 			if ( is_user_member_of_blog( get_current_user_id(), get_current_blog_id() ) ) {
@@ -2748,6 +2751,7 @@ class Admin {
 			}
 		} elseif ( Friends::has_required_privileges() ) {
 			$my_url = home_url();
+			$my_admin_url = site_url();
 			$on_my_own_site = true;
 		}
 
@@ -2769,14 +2773,14 @@ class Admin {
 		);
 
 		if ( $on_my_own_site ) {
-			do_action( 'friends_own_site_menu_top', $wp_menu, $my_url );
+			do_action( 'friends_own_site_menu_top', $wp_menu, $my_url, $my_admin_url );
 		}
 
 		if ( ! $on_my_own_site && $my_own_site ) {
 			restore_current_blog();
 		}
 
-		do_action( 'friends_current_site_menu_top', $wp_menu, $my_url );
+		do_action( 'friends_current_site_menu_top', $wp_menu, $my_url, $my_admin_url );
 
 		$wp_menu->add_menu(
 			array(
@@ -2799,7 +2803,7 @@ class Admin {
 							get_bloginfo( 'name' )
 						) . '</span>'
 					),
-					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list-requests',
+					'href'   => $my_admin_url . '/wp-admin/admin.php?page=friends-list-requests',
 				)
 			);
 		}
@@ -2818,7 +2822,7 @@ class Admin {
 					'id'     => 'friends-requests',
 					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'My Friends & Requests', 'friends' ),
-					'href'   => $my_url . '/wp-admin/admin.php?page=friends-list',
+					'href'   => $my_admin_url . '/wp-admin/admin.php?page=friends-list',
 				)
 			);
 			$wp_menu->add_menu(
@@ -2826,7 +2830,7 @@ class Admin {
 					'id'     => 'friends',
 					'parent' => 'friends-menu',
 					'title'  => esc_html__( 'Settings' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-					'href'   => $my_url . '/wp-admin/admin.php?page=friends-settings',
+					'href'   => $my_admin_url . '/wp-admin/admin.php?page=friends-settings',
 				)
 			);
 		} else {
@@ -2837,7 +2841,7 @@ class Admin {
 							'id'     => 'add-friend',
 							'parent' => 'friends-menu',
 							'title'  => esc_html__( 'Friendship Already Requested', 'friends' ),
-							'href'   => $my_url . '/wp-admin/' . self::get_users_url(),
+							'href'   => $my_admin_url . '/wp-admin/' . self::get_users_url(),
 						)
 					);
 				} elseif ( ! $they_requested_friendship ) {
