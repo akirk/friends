@@ -3050,7 +3050,7 @@ class Admin {
 	}
 
 	public function add_dashboard_widget() {
-		wp_add_dashboard_widget( 'friends_dashboard_widget', __( 'Friends: Latest Posts', 'friends' ), array( $this, 'render_dashboard_widget' ), null, 'normal', 'high' );
+		wp_add_dashboard_widget( 'friends_dashboard_widget', __( 'Friends: Latest Posts', 'friends' ), array( $this, 'render_dashboard_widget' ) );
 	}
 
 	public function render_dashboard_widget() {
