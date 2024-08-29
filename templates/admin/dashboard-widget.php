@@ -20,7 +20,9 @@ namespace Friends;
 		$avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, $_post->ID );
 
 		?>
-	<li>
+	<li id="friends-dashboard-post-<?php echo esc_attr( $_post->ID ); ?>" class="friends-post">
+		<?php echo esc_html( get_the_date( __( 'H:i', 'friends' ), $_post ) ); ?>:
+
 		<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
 			<img src="<?php echo esc_url( $avatar ); ?>" width="16" height="16" />
 		</a>
