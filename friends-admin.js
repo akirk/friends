@@ -344,28 +344,41 @@ jQuery( function ( $ ) {
 		}
 	} );
 
-	setTimeout( function () {
-		if ( $( '#friends-dashboard-widget' ).length ) {
+	var updateDashboardWidget = function() {
+		if ( 0 === $( '#friends-dashboard-widget' ).find( 'li.friends-post' ).length ) {
 			$( '#friends-dashboard-widget' ).append( ' <i class="friends-loading"></i>' );
-			$.post(
-				friends.ajax_url,
-				{
-					_ajax_nonce: $( '#friends-dashboard-widget' ).data( 'nonce' ),
-					action: 'friends_dashboard',
-				},
-				function ( response ) {
-					if ( response.success ) {
+		}
+		$.post(
+			friends.ajax_url,
+			{
+				_ajax_nonce: $( '#friends-dashboard-widget' ).data( 'nonce' ),
+				action: 'friends_dashboard',
+			},
+			function ( response ) {
+				if ( response.success ) {
+					if ( 0 === $( '#friends-dashboard-widget' ).find( 'li.friends-post' ).length ) {
 						$( '#friends-dashboard-widget' ).html( response.data );
 					} else {
-						$( '#friends-dashboard-widget i' )
-							.removeClass( 'friends-loading' )
-							.addClass( 'dashicons dashicons-warning' )
-							.prop( 'title', response.data );
+						$( response.data ).find( 'li.friends-post' ).reverse().each( function () {
+							if ( ! document.getElementById( $(this).attr('id') ) ) {
+								$( '#friends-dashboard-widget ul' ).prepend( this );
+							}
+						} );
+						$( '#friends-dashboard-widget li.friends-post:gt(49)' ).remove();
 					}
+				} else {
+					$( '#friends-dashboard-widget i' )
+						.removeClass( 'friends-loading' )
+						.addClass( 'dashicons dashicons-warning' )
+						.prop( 'title', response.data );
 				}
-			);
-		}
-	}, 500 );
+			}
+		);
+	};
+	if ( $( '#friends-dashboard-widget' ).length ) {
+		updateDashboardWidget();
+		setInterval( updateDashboardWidget, 60000 );
+	}
 
 	setTimeout( function () {
 		if ( $( '#fetch-feeds' ).length ) {
