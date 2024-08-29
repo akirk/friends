@@ -30,7 +30,7 @@ namespace Friends;
 			– <?php echo esc_html( $override_author_name ); ?>
 		<?php endif; ?>
 		</a>:
-		<a href="<?php echo esc_url( $_post->guid ); ?>">
+		<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url( $_post->ID ) ); ?>">
 			<?php
 			if ( $_post->post_title ) {
 				echo esc_html( $_post->post_title );
@@ -38,6 +38,8 @@ namespace Friends;
 				echo esc_html( wp_trim_words( get_the_excerpt( $_post ), 18 ) );
 			}
 			?>
+		</a>
+		<a href="<?php echo esc_url( $_post->guid ); ?>" class="dashicons dashicons-external">
 		</a>
 	</li>
 		<?php endforeach; ?>
