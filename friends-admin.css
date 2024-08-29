@@ -278,3 +278,7 @@ span#friends_enable_retention_number_line {
 	width: .8rem;
 	z-index: 1;
 }
+
+#friends-dashboard-widget .author-avatar {
+	vertical-align: middle;
+}

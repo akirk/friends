@@ -182,7 +182,7 @@ function validate_feed_rules( $rules ) {
  * @return false|string URL or false on failure.
  */
 function check_url( $url ) {
-	return check_url( $url );
+	return Friends::check_url( $url );
 }
 
 // Integrations.

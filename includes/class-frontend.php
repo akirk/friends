@@ -796,6 +796,10 @@ class Frontend {
 			'post_format'           => $this->post_format,
 		);
 
+		if ( isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$args['show_welcome'] = true;
+		}
+
 		return Friends::template_loader()->get_template_part( 'frontend/index', $this->post_format, $args, false );
 	}
 
@@ -1159,7 +1163,7 @@ class Frontend {
 		}
 
 		$page_id = get_query_var( 'page' );
-// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['share'] ) ) {
 			$share_hash = hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ), $page_id ) . $page_id );
 			if ( $_GET['share'] === $share_hash ) {

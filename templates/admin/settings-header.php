@@ -47,7 +47,7 @@ if ( empty( $args['active'] ) ) {
 				}
 				if ( is_array( $_page ) ) {
 					$query = $_page;
-					$_page = $args['page'];
+					$_page = $_page['page'];
 				} else {
 					$query = array(
 						'page' => $_page,

@@ -12,15 +12,17 @@ Friends\Friends::template_loader()->get_template_part(
 	$args
 );
 
+$show_welcome = isset( $args['show_welcome'] ) && $args['show_welcome'];
+
 ?>
 <section class="posts columns <?php echo 'collapsed' === $args['frontend_default_view'] ? ' all-collapsed' : ''; ?>">
 	<?php
-	if ( ! have_posts() ) {
+	if ( $show_welcome || ! have_posts() ) {
 		?>
 		<div class="card columns col-12">
 			<div class="card-body">
 			<?php
-			if ( $args['friends']->frontend->post_format ) {
+			if ( ! $show_welcome && $args['friends']->frontend->post_format ) {
 				$post_formats = get_post_format_strings();
 
 				if ( $args['friend_user'] ) {
@@ -49,7 +51,7 @@ Friends\Friends::template_loader()->get_template_part(
 				}
 			} else {
 				$any_friends = Friends\User_Query::all_associated_users();
-				if ( $any_friends->get_total() > 0 ) {
+				if ( ! $show_welcome && $any_friends->get_total() > 0 ) {
 					Friends\Friends::template_loader()->get_template_part( 'frontend/no-posts', $args['post_format'], $args );
 				} else {
 					Friends\Friends::template_loader()->get_template_part( 'frontend/no-friends', $args['post_format'], $args );
