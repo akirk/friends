@@ -3189,13 +3189,22 @@ class Admin {
 
 			if ( isset( $post_formats[ $format ] ) ) {
 				$args['post_format'] = $format;
-				$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
-					array(
-						'taxonomy' => 'post_format',
-						'field'    => 'slug',
-						'terms'    => array( 'post-format-' . $format ),
-					),
-				);
+				if ( 'standard' !== $format ) {
+					$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+						array(
+							'taxonomy' => 'post_format',
+							'field'    => 'slug',
+							'terms'    => array( 'post-format-' . $format ),
+						),
+					);
+				} else {
+					$query_args['tax_query'] = array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+						array(
+							'taxonomy' => 'post_format',
+							'operator' => 'NOT EXISTS',
+						),
+					);
+				}
 			}
 		}
 
