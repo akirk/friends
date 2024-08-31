@@ -114,6 +114,11 @@ echo "All looks good, ready to tag and commit!"
 echo -n ❯ git push
 read
 git push
+if [ $? -eq 1 ]; then
+	echo -ne "\033[31m✘\033[0m "
+	echo "Failed to push to git"
+	return
+fi
 echo -n ❯ git tag $FRIENDS_VERSION
 read
 git tag $FRIENDS_VERSION
