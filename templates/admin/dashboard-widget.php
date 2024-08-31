@@ -46,4 +46,15 @@ namespace Friends;
 	</li>
 		<?php endforeach; ?>
 </ul>
-<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+
+<?php if ( empty( $args['posts'] ) ) : ?>
+	<?php esc_html_e( 'No posts yet.', 'friends' ); ?>
+<?php elseif ( isset( $args['friend_user'] ) && isset( $args['format'] ) ) : ?>
+	<a href="<?php echo esc_url( $args['friend_user']->get_local_friends_page_post_format_url( $args['format'] ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php elseif ( isset( $args['friend_user'] ) ) : ?>
+	<a href="<?php echo esc_url( $args['friend_user']->get_local_friends_page_url() ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php elseif ( isset( $args['format'] ) ) : ?>
+	<a href="<?php echo esc_url( home_url( '/friends/type/' . $args['format'] ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php else : ?>
+	<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php endif; ?>
