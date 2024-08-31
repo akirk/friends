@@ -26,12 +26,12 @@ namespace Friends;
 		<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
 			<img src="<?php echo esc_url( $avatar ); ?>" width="16" height="16" />
 		</a>
+		<?php if ( isset( $args['friend_user'] ) ) : ?>
 		<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url() ); ?>">
-		<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
-		<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
+		<strong><?php echo esc_html( $friend_user->display_name ); ?></strong><?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
 			– <?php echo esc_html( $override_author_name ); ?>
+		<?php endif; ?></a>:
 		<?php endif; ?>
-		</a>:
 		<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url( $_post->ID ) ); ?>">
 			<?php
 			if ( $_post->post_title ) {

@@ -3129,7 +3129,7 @@ class Admin {
 			if ( isset( $args['friend'] ) && $args['friend'] === $user->user_login ) {
 				echo ' selected="selected"';
 			}
-			echo '>' . esc_html( $user->display_name ) . '</option>';
+			echo '>' . esc_html( $user->display_name ) . ' (' . esc_html( $user->user_login ) . ')</option>';
 		}
 		echo '</select>';
 		echo '</label>';
