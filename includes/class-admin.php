@@ -3176,7 +3176,7 @@ class Admin {
 		$args = array();
 
 		if ( isset( $_POST['friend'] ) ) {
-			$friend = User::get_by_username( sanitize_title( wp_unslash( $_POST['friend'] ) ) );
+			$friend = User::get_by_username( sanitize_text_field( wp_unslash( $_POST['friend'] ) ) );
 			if ( $friend ) {
 				$args['friend_user'] = $friend;
 				$query_args = $friend->modify_get_posts_args_by_author( $query_args );
@@ -3185,7 +3185,7 @@ class Admin {
 
 		if ( isset( $_POST['format'] ) ) {
 			$post_formats = get_post_format_slugs();
-			$format = sanitize_title( wp_unslash( $_POST['format'] ) );
+			$format = sanitize_text_field( wp_unslash( $_POST['format'] ) );
 
 			if ( isset( $post_formats[ $format ] ) ) {
 				$args['post_format'] = $format;
