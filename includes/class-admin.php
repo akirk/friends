@@ -1192,8 +1192,8 @@ class Admin {
 	}
 
 	public function ajax_set_avatar() {
-		if ( ! isset( $_POST['user'] ) ) {
-			wp_send_json_error();
+		if ( ! isset( $_POST['user'] )||true ) {
+			wp_send_json_error( 'No user specified.' );
 		}
 
 		check_ajax_referer( 'set-avatar-' . sanitize_user( wp_unslash( $_POST['user'] ) ) );

@@ -32,13 +32,12 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 					<p class="description">
 						<?php esc_html_e( 'Click to set as new avatar.', 'friends' ); ?><br/>
 					</p>
-					<?php else : ?>
+					<?php endif; ?>
 						<input type="url" id="new-avatar-url" placeholder="<?php esc_attr_e( 'Enter an image URL', 'friends' ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'set-avatar-' . $args['friend']->ID ) ); ?>" data-id="<?php echo esc_attr( $args['friend']->ID ); ?>" value="<?php echo esc_attr( $args['friend']->get_avatar_url() ); ?>"/>
 						<button id='set-avatar-url'><?php esc_html_e( 'Use this URL', 'friends' ); ?></button>
 						<p class="description">
 							<?php esc_html_e( 'Please specify a square, not too large image URL here.', 'friends' ); ?><br/>
 						</p>
-					<?php endif; ?>
 				</td>
 			</tr>
 

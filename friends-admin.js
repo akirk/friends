@@ -300,7 +300,7 @@ jQuery( function ( $ ) {
 	$( document ).on( 'click', 'a.set-avatar', function () {
 		setAvatarUrl(
 			$( this ).find( 'img' ).prop( 'src' ),
-			$( this ).data( 'id' ),
+			$( this ).data( 'user' ),
 			$( this ).data( 'nonce' )
 		);
 		return false;
@@ -332,14 +332,14 @@ jQuery( function ( $ ) {
 
 	$( document ).on( 'click', 'button#set-avatar-url', function () {
 		const url = $( '#new-avatar-url' );
-		setAvatarUrl( url.val(), url.data( 'id' ), url.data( 'nonce' ) );
+		setAvatarUrl( url.val(), url.data( 'user' ), url.data( 'nonce' ) );
 		return false;
 	} );
 
 	$( document ).on( 'keyup', 'input#new-avatar-url', function ( e ) {
 		const url = $( '#new-avatar-url' );
 		if ( e.keyCode === 13 ) {
-			setAvatarUrl( url.val(), url.data( 'id' ), url.data( 'nonce' ) );
+			setAvatarUrl( url.val(), url.data( 'user' ), url.data( 'nonce' ) );
 			return false;
 		}
 	} );
