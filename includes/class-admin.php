@@ -64,7 +64,7 @@ class Admin {
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
 		add_action( 'tool_box', array( $this, 'toolbox_bookmarklets' ) );
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
-		add_action( 'wp_dashboard_setup', array( $this, 'add_dashboard_widgets' ) );
+		add_action( 'wp_dashboard_setup', array( $this, 'add_dashboard_widgets' ), 8 );
 		add_action( 'wp_ajax_friends_dashboard', array( $this, 'ajax_friends_dashboard' ) );
 		add_filter( 'site_status_tests', array( $this, 'site_status_tests' ) );
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
@@ -3054,9 +3054,11 @@ class Admin {
 	}
 
 	public function add_dashboard_widgets() {
-		$widgets = get_user_option( 'friends_dashboard_widgets', get_current_user_id() );
+		$user_id = get_current_user_id();
+		$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
 		if ( ! $widgets ) {
 			$widgets = array( array() );
+			update_user_option( $user_id, 'friends_dashboard_widgets', $widgets );
 		}
 		foreach ( $widgets as $i => $widget ) {
 			if ( ! is_array( $widget ) ) {
@@ -3076,7 +3078,7 @@ class Admin {
 				__( 'Friends: %s', 'friends' ),
 				$title
 			);
-			wp_add_dashboard_widget( 'friends_dashboard_widget' . $i, $title, array( $this, 'render_dashboard_widget' ), array( $this, 'render_dashboard_widget_controls' ), $widget );
+			wp_add_dashboard_widget( 'friends_dashboard_widget' . $i, $title, array( $this, 'render_dashboard_widget' ), array( $this, 'render_dashboard_widget_controls' ), $widget, 'side', 'high' );
 		}
 	}
 
@@ -3084,7 +3086,8 @@ class Admin {
 		if ( empty( $id ) && $widget ) {
 			$id = intval( str_replace( 'friends_dashboard_widget', '', $widget['id'] ) );
 		}
-		$widgets = get_user_option( 'friends_dashboard_widgets', get_current_user_id() );
+		$user_id = get_current_user_id();
+		$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
 		if ( ! $widgets ) {
 			$widgets = array( array() );
 		}
@@ -3112,7 +3115,7 @@ class Admin {
 			}
 			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
-			update_user_option( get_current_user_id(), 'friends_dashboard_widgets', $widgets );
+			update_user_option( $user_id, 'friends_dashboard_widgets', $widgets );
 		}
 		$args = array();
 		if ( isset( $widgets[ $id ] ) ) {
