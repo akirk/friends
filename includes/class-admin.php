@@ -1193,7 +1193,7 @@ class Admin {
 
 	public function ajax_set_avatar() {
 		if ( ! isset( $_POST['user'] ) ) {
-			wp_send_json_error( 'No user specified.' );
+			wp_send_json_error( __( 'No user specified.', 'friends' ) );
 		}
 
 		check_ajax_referer( 'set-avatar-' . sanitize_user( wp_unslash( $_POST['user'] ) ) );
@@ -1213,6 +1213,10 @@ class Admin {
 		}
 
 		$friend = User::get_by_username( sanitize_user( wp_unslash( $_POST['user'] ) ) );
+		if ( ! $friend || is_wp_error( $friend ) ) {
+			wp_send_json_error( __( 'Invalid user.', 'friends' ) );
+			exit;
+		}
 
 		// Use WordPress functions to check the image dimensions.
 		$size = \wp_getimagesize( $avatar );
