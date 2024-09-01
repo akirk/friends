@@ -1192,7 +1192,7 @@ class Admin {
 	}
 
 	public function ajax_set_avatar() {
-		if ( ! isset( $_POST['user'] )||true ) {
+		if ( ! isset( $_POST['user'] ) ) {
 			wp_send_json_error( 'No user specified.' );
 		}
 
