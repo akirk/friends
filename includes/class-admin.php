@@ -1091,20 +1091,6 @@ class Admin {
 				}
 			}
 			$friend->save();
-
-			$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
-			if ( ! $hide_from_friends_page ) {
-				$hide_from_friends_page = array();
-			}
-			if ( ! isset( $_POST['show_on_friends_page'] ) || ! boolval( $_POST['show_on_friends_page'] ) ) {
-				if ( ! in_array( $friend->user_login, $hide_from_friends_page ) ) {
-					$hide_from_friends_page[] = $friend->user_login;
-					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
-				}
-			} elseif ( in_array( $friend->user_login, $hide_from_friends_page ) ) {
-					$hide_from_friends_page = array_values( array_diff( $hide_from_friends_page, array( $friend->user_login ) ) );
-					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
-			}
 		} else {
 			return;
 		}
@@ -1153,15 +1139,11 @@ class Admin {
 		$args = array_merge(
 			$friend->get_post_stats(),
 			array(
-				'friend'                 => $friend,
-				'friends_settings_url'   => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-				'registered_parsers'     => $this->friends->feed->get_registered_parsers(),
-				'hide_from_friends_page' => get_user_option( 'friends_hide_from_friends_page' ),
+				'friend'               => $friend,
+				'friends_settings_url' => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+				'registered_parsers'   => $this->friends->feed->get_registered_parsers(),
 			)
 		);
-		if ( ! $args['hide_from_friends_page'] ) {
-			$args['hide_from_friends_page'] = array();
-		}
 
 		$this->header_edit_friend( $friend, 'edit-friend' );
 		// phpcs:disable WordPress.Security.NonceVerification
@@ -1343,6 +1325,27 @@ class Admin {
 				$hide_from_friends_page = array();
 			}
 
+			$show_on_dashboard = filter_input( INPUT_POST, 'show_on_dashboard', FILTER_VALIDATE_BOOLEAN );
+			$already_on_dashboard = false;
+			$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
+			if ( ! $widgets ) {
+				$widgets = array();
+			}
+			foreach ( $widgets as $k => $widget ) {
+				if ( $widget['friend'] === $friend->user_login ) {
+					$already_on_dashboard = true;
+					if ( ! $show_on_dashboard ) {
+						unset( $widgets[ $k ] );
+						update_user_option( get_current_user_id(), 'friends_dashboard_widgets', $widgets );
+					}
+					break;
+				}
+			}
+			if ( $show_on_dashboard && ! $already_on_dashboard ) {
+				$widgets[] = array( 'friend' => $friend->user_login );
+				update_user_option( get_current_user_id(), 'friends_dashboard_widgets', $widgets );
+			}
+
 			if ( isset( $_POST['feeds'] ) ) {
 				// Sanitized below.
 				$feeds = wp_unslash( $_POST['feeds'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1480,6 +1483,18 @@ class Admin {
 	public function render_admin_edit_friend_feeds() {
 		$friend = $this->check_admin_edit_friend();
 
+		$already_on_dashboard = false;
+		$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
+		if ( ! $widgets ) {
+			$widgets = array();
+		}
+		foreach ( $widgets as $widget ) {
+			if ( $widget['friend'] === $friend->user_login ) {
+				$already_on_dashboard = true;
+				break;
+			}
+		}
+
 		$args = array_merge(
 			$friend->get_post_stats(),
 			array(
@@ -1493,6 +1508,7 @@ class Admin {
 				'global_retention_number'         => Friends::get_retention_number(),
 				'global_retention_days_enabled'   => get_option( 'friends_enable_retention_days' ),
 				'global_retention_number_enabled' => get_option( 'friends_enable_retention_number' ),
+				'show_on_dashboard'               => $already_on_dashboard,
 			)
 		);
 		if ( ! $args['hide_from_friends_page'] ) {
@@ -3080,6 +3096,23 @@ class Admin {
 			);
 			wp_add_dashboard_widget( 'friends_dashboard_widget' . $i, $title, array( $this, 'render_dashboard_widget' ), array( $this, 'render_dashboard_widget_controls' ), $widget, 'side', 'high' );
 		}
+	}
+
+	public function add_new_dashboard_widget( $friend = null, $format = null ) {
+		$user_id = get_current_user_id();
+		$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
+		if ( ! $widgets ) {
+			$widgets = array();
+		}
+		$widget = array();
+		if ( $friend ) {
+			$widget['friend'] = $friend;
+		}
+		if ( $format ) {
+			$widget['format'] = $format;
+		}
+		$widgets[] = $widget;
+		update_user_option( $user_id, 'friends_dashboard_widgets', $widgets );
 	}
 
 	public function render_dashboard_widget_controls( $id, $widget = false ) {
