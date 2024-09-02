@@ -309,7 +309,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			}
 
 			if ( is_object( $item->get_author() ) ) {
-				$feed_item->author = wp_strip_tags( $item->get_author()->name );
+				$feed_item->author = \wp_strip_tags( $item->get_author()->name );
 			}
 
 			$feed_item->date         = $item->get_gmdate( 'U' );
