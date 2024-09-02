@@ -23,15 +23,15 @@ namespace Friends;
 	<li id="friends-dashboard-post-<?php echo esc_attr( $_post->ID ); ?>" class="friends-post">
 		<?php echo esc_html( get_the_date( __( 'H:i', 'friends' ), $_post ) ); ?>:
 
-		<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
-			<img src="<?php echo esc_url( $avatar ); ?>" width="16" height="16" />
-		</a>
-		<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url() ); ?>">
-		<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
-		<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
-			– <?php echo esc_html( $override_author_name ); ?>
+		<?php if ( ! isset( $args['friend_user'] ) ) : ?>
+			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
+				<img src="<?php echo esc_url( $avatar ); ?>" width="16" height="16" />
+			</a>
+			<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url() ); ?>">
+			<strong><?php echo esc_html( $friend_user->display_name ); ?></strong><?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
+				– <?php echo esc_html( $override_author_name ); ?>
+			<?php endif; ?></a>:
 		<?php endif; ?>
-		</a>:
 		<a href="<?php echo esc_url( $friend_user->get_local_friends_page_url( $_post->ID ) ); ?>">
 			<?php
 			if ( $_post->post_title ) {
@@ -46,4 +46,15 @@ namespace Friends;
 	</li>
 		<?php endforeach; ?>
 </ul>
-<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+
+<?php if ( empty( $args['posts'] ) ) : ?>
+	<?php esc_html_e( 'No posts yet.', 'friends' ); ?>
+<?php elseif ( isset( $args['friend_user'] ) && isset( $args['format'] ) ) : ?>
+	<a href="<?php echo esc_url( $args['friend_user']->get_local_friends_page_post_format_url( $args['format'] ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php elseif ( isset( $args['friend_user'] ) ) : ?>
+	<a href="<?php echo esc_url( $args['friend_user']->get_local_friends_page_url() ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php elseif ( isset( $args['format'] ) ) : ?>
+	<a href="<?php echo esc_url( home_url( '/friends/type/' . $args['format'] ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php else : ?>
+	<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Go to your friends page for all posts', 'friends' ); ?></a>
+<?php endif; ?>

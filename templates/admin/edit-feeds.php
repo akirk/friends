@@ -158,6 +158,15 @@ $has_last_log = false;
 			</tr>
 			<?php if ( $args['friend']->can_refresh_feeds() ) : ?>
 			<tr>
+				<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Dashboard' ); ?></th>
+				<td>
+					<label for="show_on_dashboard">
+						<input type="checkbox" name="show_on_dashboard" id="show_on_dashboard" value="1" <?php checked( $args['show_on_dashboard'] ); ?> />
+						<?php esc_html_e( 'Show a widget for this friend on your wp-admin dashboard', 'friends' ); ?>
+					</label>
+				</td>
+			</tr>
+			<tr>
 				<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Posts' ); ?></th>
 				<td>
 					<fieldset>

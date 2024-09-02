@@ -344,40 +344,52 @@ jQuery( function ( $ ) {
 		}
 	} );
 
-	var updateDashboardWidget = function() {
-		if ( 0 === $( '#friends-dashboard-widget' ).find( 'li.friends-post' ).length ) {
-			$( '#friends-dashboard-widget' ).append( ' <i class="friends-loading"></i>' );
-		}
-		$.post(
-			friends.ajax_url,
-			{
-				_ajax_nonce: $( '#friends-dashboard-widget' ).data( 'nonce' ),
-				action: 'friends_dashboard',
-			},
-			function ( response ) {
-				if ( response.success ) {
-					if ( 0 === $( '#friends-dashboard-widget' ).find( 'li.friends-post' ).length ) {
-						$( '#friends-dashboard-widget' ).html( response.data );
-					} else {
-						$( response.data ).find( 'li.friends-post' ).reverse().each( function () {
-							if ( ! document.getElementById( $(this).attr('id') ) ) {
-								$( '#friends-dashboard-widget ul' ).prepend( this );
-							}
-						} );
-						$( '#friends-dashboard-widget li.friends-post:gt(49)' ).remove();
-					}
-				} else {
-					$( '#friends-dashboard-widget i' )
-						.removeClass( 'friends-loading' )
-						.addClass( 'dashicons dashicons-warning' )
-						.prop( 'title', response.data );
-				}
+	var updateDashboardWidgets = function() {
+		console.log( 'updateDashboardWidgets' );
+		$( '.friends-dashboard-widget' ).each( function() {
+			const $this = $( this );
+			if ( $this.find( 'li.friends-post' ).length ) {
+				$( '#friends-dashboard-widget' ).append( ' <i class="friends-loading"></i>' );
 			}
-		);
+			const data = {
+				_ajax_nonce: $this.data( 'nonce' ),
+				action: 'friends_dashboard',
+			};
+			if ( $this.data( 'friend' ) ) {
+				data.friend = $this.data( 'friend' );
+			}
+			if ( $this.data( 'format' ) ) {
+				data.format = $this.data( 'format' );
+			}
+			console.log( data );
+			$.post(
+				friends.ajax_url,
+				data,
+				function ( response ) {
+					if ( response.success ) {
+						if ( ! $this.find( 'li.friends-post' ).length ) {
+							$this.html( response.data );
+						} else {
+							$( response.data ).find( 'li.friends-post' ).reverse().each( function () {
+								if ( ! document.getElementById( $( this ).attr('id') ) ) {
+									$this.find( 'ul' ).prepend( this );
+								}
+							} );
+							$( '.friends-dashboard-widget li.friends-post:gt(49)' ).remove();
+						}
+					} else {
+						$this.find( 'i' )
+							.removeClass( 'friends-loading' )
+							.addClass( 'dashicons dashicons-warning' )
+							.prop( 'title', response.data );
+					}
+				}
+			);
+		} );
 	};
-	if ( $( '#friends-dashboard-widget' ).length ) {
-		updateDashboardWidget();
-		setInterval( updateDashboardWidget, 60000 );
+	if ( $( '.friends-dashboard-widget' ).length ) {
+		updateDashboardWidgets();
+		setInterval( updateDashboardWidgets, 60000 );
 	}
 
 	setTimeout( function () {
