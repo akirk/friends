@@ -21,7 +21,7 @@ namespace Friends;
 
 		?>
 	<li id="friends-dashboard-post-<?php echo esc_attr( $_post->ID ); ?>" class="friends-post">
-		<?php echo esc_html( get_the_date( __( 'H:i', 'friends' ), $_post ) ); ?>:
+		<?php echo esc_html( get_the_date( get_option( 'time_format', 'H:i' ), $_post ) ); ?>:
 
 		<?php if ( ! isset( $args['friend_user'] ) ) : ?>
 			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
