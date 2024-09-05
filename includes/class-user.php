@@ -764,7 +764,7 @@ class User extends \WP_User {
 		foreach ( get_post_format_slugs() as $post_format ) {
 			$term = get_term_by( 'slug', 'post-format-' . $post_format, 'post_format' );
 			if ( $term ) {
-				$post_formats_term_ids[ $term->term_id ] = $post_format;
+				$post_formats_term_ids[ $term->term_taxonomy_id ] = $post_format;
 			}
 		}
 
