@@ -47,6 +47,13 @@ class Frontend {
 	public $post_format = false;
 
 	/**
+	 * Whether a specific template was selected to load.
+	 *
+	 * @var string|false
+	 */
+	public $template = false;
+
+	/**
 	 * Whether a reaciton is being displayed
 	 *
 	 * @var string|false
@@ -776,6 +783,17 @@ class Frontend {
 			return $template;
 		}
 
+		global $args;
+		$args = array(
+			'friends'     => $this->friends,
+			'friend_user' => $this->author,
+			'post_format' => $this->post_format,
+		);
+
+		if ( $this->template ) {
+			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
+		}
+
 		if ( isset( $_GET['refresh'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 			add_filter(
@@ -787,20 +805,23 @@ class Frontend {
 			$this->friends->feed->retrieve_friend_posts( true );
 		}
 
-		global $args;
-		$args = array(
-			'friends'               => $this->friends,
-			'friend_user'           => $this->author,
-			'frontend_default_view' => get_option( 'friends_frontend_default_view', 'expanded' ),
-			'blocks-everywhere'     => false,
-			'post_format'           => $this->post_format,
-		);
+		$args['frontend_default_view'] = get_option( 'friends_frontend_default_view', 'expanded' );
+		$args['blocks-everywhere']     = false;
 
 		if ( isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$args['show_welcome'] = true;
 		}
 
 		return Friends::template_loader()->get_template_part( 'frontend/index', $this->post_format, $args, false );
+	}
+
+	public function get_static_frontend_template( $path ) {
+		switch ( $path ) {
+			case 'followers':
+				return 'frontend/followers';
+		}
+
+		return 'frontend/index';
 	}
 
 	/**
@@ -1234,6 +1255,12 @@ class Frontend {
 						if ( $query->is_feed() ) {
 							status_header( 404 );
 							$query->set_404();
+							return $query;
+						}
+
+						$template = $this->get_static_frontend_template( $current_part );
+						if ( $template ) {
+							$this->template = $template;
 							return $query;
 						}
 						wp_safe_redirect( home_url( '/friends/' ) );

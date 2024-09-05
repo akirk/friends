@@ -651,6 +651,28 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	section.followers {
+		ul li {
+			list-style: none;
+			.already-following {
+				color: #ccc;
+			}
+			img {
+				vertical-align: middle;
+			}
+			.follower .ab-icon {
+
+
+				.dashicons.dashicons-plus,.dashicons.dashicons-yes {
+					color: #32c170;
+					font-size: .5em;
+					margin-left: -1.5em;
+					margin-top: -2.1em;
+				}
+			}
+		}
+	}
+
 	ul.friend-posts img.avatar {
 		vertical-align: middle;
 		margin-right: .3em;

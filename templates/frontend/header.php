@@ -52,6 +52,14 @@ if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerificatio
 					$args['post_format'],
 					$args
 				);
+			} elseif ( isset( $args['title'] ) ) {
+				?>
+				<div id="main-header" class="mb-2">
+					<h2 id="page-title"><a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
+						<?php echo esc_html( $args['title'] ); ?>
+					</a></h2>
+				</div>
+				<?php
 			} else {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/main-feed-header',
