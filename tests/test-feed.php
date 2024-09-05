@@ -85,7 +85,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$this->alex = $this->factory->user->create(
 			array(
-				'user_login' => 'alexander.kirk.at',
+				'user_login' => 'alex.kirk.at',
 				'user_email' => 'alex@example.org',
 				'role'       => 'subscription',
 			)
@@ -225,6 +225,28 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 0, $new_items );
+	}
+
+	/**
+	 * Test parsing a feed with identical posts after the fold.
+	 */
+	public function test_parse_feed_with_double_encoded_title() {
+		$matt_id = $this->factory->user->create(
+			array(
+				'user_login' => 'ma.tt',
+				'role'       => 'subscription',
+			)
+		);
+		$matt = new User( $matt_id );
+
+		$photomatt_tumblr = __DIR__ . '/data/photomatt-tumblr-com.rss';
+		$feed_parsing_test = $this->feed_parsing_test( $photomatt_tumblr, $matt );
+
+		$new_items = $feed_parsing_test->current();
+		$posts = get_posts(array('author'=>$matt_id, 'post_type'=>Friends::CPT));
+		$this->assertStringContainsString( '’', $posts[0]->post_title );
+		$this->assertStringContainsString( '’', $posts[1]->post_title );
+		$this->assertStringContainsString( '’', $posts[2]->post_title );
 	}
 
 	/**

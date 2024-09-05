@@ -268,7 +268,8 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item->get_permalink(),
-					'title'     => $item->get_title(),
+					/* see https://www.rssboard.org/rss-encoding-examples */
+					'title'     => html_entity_decode( htmlspecialchars_decode( $item->get_title() ) ),
 					'content'   => $this->convert_relative_urls_to_absolute_urls( $item->get_content(), $url ),
 				)
 			);
