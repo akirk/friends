@@ -1534,16 +1534,23 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function the_content( $the_content ) {
 		$protected_tags = array();
-		$the_content = preg_replace_callback(
-			'#<a.*?href=[^>]+>.*?</a>#i',
-			function ( $m ) use ( &$protected_tags ) {
-				$c = count( $protected_tags );
-				$protect = '!#!#PROTECT' . $c . '#!#!';
-				$protected_tags[ $protect ] = $m[0];
-				return $protect;
-			},
-			$the_content
-		);
+		foreach ( array(
+			'#<a.*?href=[^>]+>.*?</a>#i', // leave the inside of links alone.
+			'#<script[^>]*>.*?</script>#i', // leave the inside of scripts alone.
+			'#<style[^>]*>.*?</script>#i', // leave the inside of styles alone.
+			'#<[^>]+>#i', // leave the inside of any tags alone.
+		) as $regex ) {
+			$the_content = preg_replace_callback(
+				$regex,
+				function ( $m ) use ( &$protected_tags ) {
+					$c = count( $protected_tags );
+					$protect = '!#!#PROTECT' . $c . '#!#!';
+					$protected_tags[ $protect ] = $m[0];
+					return $protect;
+				},
+				$the_content
+			);
+		}
 
 		$the_content = \preg_replace_callback( '/@(?:[a-zA-Z0-9_-]+)/', array( $this, 'replace_with_links' ), $the_content );
 
