@@ -9,7 +9,13 @@
 Friends\Friends::template_loader()->get_template_part(
 	'frontend/header',
 	null,
-	array_merge( $args, array( 'title' => __( 'Your Followers', 'friends' ) ) )
+	array_merge(
+		$args,
+		array(
+			'title'            => __( 'Your Followers', 'friends' ),
+			'no-bottom-margin' => true,
+		)
+	)
 );
 
 ?>
@@ -22,6 +28,7 @@ Friends\Friends::template_loader()->get_template_part(
 		foreach ( $follower_data['followers'] as $k => $follower ) {
 			$data = $follower->to_array();
 			$data['url'] = \ActivityPub\object_to_uri( $data['url'] );
+			$data['server'] = wp_parse_url( $data['url'], PHP_URL_HOST );
 			$data['css_class'] = '';
 
 			$following = Friends\User_Feed::get_by_url( $data['url'] );
@@ -51,7 +58,7 @@ Friends\Friends::template_loader()->get_template_part(
 		echo esc_html(
 			sprintf(
 				// translators: %s is the number of followers.
-				_n( "Of these, you're already following %s of them.", "Of these, you're already following %s of them.", $already_downloaded, 'friends' ),
+				_n( "You're following %s of them.", "You're following %s of them.", $already_following, 'friends' ),
 				$already_following
 			)
 		);
@@ -63,7 +70,7 @@ Friends\Friends::template_loader()->get_template_part(
 			<li>
 				<a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
 					<img width="40" height="40" src="<?php echo esc_attr( $follower['icon']['url'] ); ?>" class="avatar activitypub-avatar" />
-					<span class="activitypub-actor"><strong class="activitypub-name"><?php echo esc_html( $follower['name'] ); ?></strong> (<span class="activitypub-handle">@<?php echo esc_html( $follower['preferredUsername'] ); ?></span>)</span></a>
+					<span class="activitypub-actor"><strong class="activitypub-name"><?php echo esc_html( $follower['name'] ); ?></strong> (<span class="activitypub-handle">@<?php echo esc_html( $follower['preferredUsername'] . '@' . $follower['server'] ); ?></span>)</span></a>
 				&nbsp;&nbsp;
 				<span class="since">since <?php echo esc_html( $follower['published'] ); ?></span>
 				&nbsp;&nbsp;

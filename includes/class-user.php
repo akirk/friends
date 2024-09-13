@@ -224,6 +224,9 @@ class User extends \WP_User {
 			return false;
 		}
 		$path = wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! $path ) {
+			$path = '';
+		}
 
 		$site_id = get_blog_id_from_url( $host, trailingslashit( $path ) );
 		if ( ! $site_id ) {

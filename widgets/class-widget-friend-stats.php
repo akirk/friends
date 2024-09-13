@@ -71,21 +71,17 @@ class Widget_Friend_Stats extends \WP_Widget {
 		<ul class="friend-stats menu menu-nav">
 			<?php if ( $show_followers ) : ?>
 				<li class="friend-stats-followers">
+					<a class="followers" href="<?php echo esc_url( home_url( '/friends/followers/' ) ); ?>">
 					<?php
-					echo wp_kses(
+					echo esc_html(
 						sprintf(
 						/* translators: %s: number of followers */
 							_n( '%s Follower', '%s Followers', $follower_count, 'friends' ),
-							'<a class="followers" href="' . esc_url( home_url( '/friends/followers/' ) ) . '">' . $follower_count . '</a>'
-						),
-						array(
-							'a' => array(
-								'class' => array(),
-								'href'  => array(),
-							),
+							$follower_count
 						)
 					);
 					?>
+					</a>
 				</li>
 				<?php endif; ?>
 				<li class="friend-stats-friends">

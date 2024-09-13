@@ -100,6 +100,10 @@ div {
 	margin-bottom: 32px;
 }
 
+.off-canvas .off-canvas-content header.navbar.no-bottom-margin {
+	margin-bottom: 0;
+}
+
 .off-canvas .off-canvas-sidebar {
 	margin-top: 32px;
 	width: 12rem;

@@ -67,7 +67,7 @@ $has_last_log = false;
 														</option>
 													<?php endif; ?>
 												</select>
-												<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend&parser=' . esc_url( $feed->get_parser() ) . '&feed=' . esc_url( $term_id ) . '&preview=' . esc_url( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
+												<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend&parser=' . esc_url( $feed->get_parser() ) . '&feed=' . esc_attr( $term_id ) . '&preview=' . esc_url( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
 											</td>
 										</tr>
 										<tr>
