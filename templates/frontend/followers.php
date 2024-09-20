@@ -27,6 +27,7 @@ Friends\Friends::template_loader()->get_template_part(
 		$already_following = 0;
 		foreach ( $follower_data['followers'] as $k => $follower ) {
 			$data = $follower->to_array();
+
 			$data['url'] = \ActivityPub\object_to_uri( $data['url'] );
 			$data['server'] = wp_parse_url( $data['url'], PHP_URL_HOST );
 			$data['css_class'] = '';
@@ -68,11 +69,12 @@ Friends\Friends::template_loader()->get_template_part(
 		foreach ( $follower_data['followers'] as $follower ) {
 			?>
 			<li>
-				<details data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>"><summary><a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
+				<details data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>" data-following="<?php echo esc_attr( $follower['following'] ); ?>" data-followers="<?php echo esc_attr( $follower['followers'] ); ?>"><summary><a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
 					<img width="40" height="40" src="<?php echo esc_attr( $follower['icon']['url'] ); ?>" class="avatar activitypub-avatar" />
 					<span class="activitypub-actor"><strong class="activitypub-name"><?php echo esc_html( $follower['name'] ); ?></strong> (<span class="activitypub-handle">@<?php echo esc_html( $follower['preferredUsername'] . '@' . $follower['server'] ); ?></span>)</span></a>
-				&nbsp;&nbsp;
 				<span class="since">since <?php echo esc_html( $follower['published'] ); ?></span>
+				<span class="their-followers"></span>
+				<span class="their-following"></span>
 				&nbsp;&nbsp;
 			<?php if ( $follower['friend_user'] ) : ?>
 					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower">

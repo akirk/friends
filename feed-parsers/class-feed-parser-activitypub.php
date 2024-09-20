@@ -2401,7 +2401,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		check_ajax_referer( 'friends-preview' );
 
-		if ( ! isset( $_POST['url'] ) ) {
+		if ( ! isset( $_POST['url'] ) || ! filter_input( INPUT_POST, 'url', FILTER_VALIDATE_URL ) ) {
 			wp_send_json_error( 'missing-url' );
 		}
 
@@ -2410,30 +2410,59 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			wp_send_json_error( $items );
 		}
 
-		$out = '<div class="posts">';
-		foreach ( $items as $item ) {
-			$out .= '<div class="card">';
-			$out .= '<header class="card-header">';
-			$out .= '<div class="post-meta">';
-			$out .= '<div class="permalink">';
-			if ( $item->permalink ) {
-				$out .= '<a href="' . esc_url( $item->permalink ) . '">';
+		$followers = __( '? followers', 'friends' );
+		if ( isset( $_POST['followers'] ) && filter_input( INPUT_POST, 'followers', FILTER_VALIDATE_URL ) ) {
+			$data = \Activitypub\safe_remote_get( sanitize_text_field( wp_unslash( $_POST['followers'] ) ) );
+			if ( ! is_wp_error( $data ) ) {
+				$body = json_decode( wp_remote_retrieve_body( $data ), true );
+				if ( isset( $body['totalItems'] ) ) {
+					$followers = sprintf(
+						// translators: %s is the number of followers.
+						_n( '%s follower', '%s followers', $body['totalItems'], 'friends' ),
+						$body['totalItems']
+					);
+				}
 			}
-			if ( $item->date ) {
-				$out .= esc_html( $item->date );
+		}
+		$following = __( '? following', 'friends' );
+		if ( isset( $_POST['following'] ) && filter_input( INPUT_POST, 'following', FILTER_VALIDATE_URL ) ) {
+			$data = \Activitypub\safe_remote_get( sanitize_text_field( wp_unslash( $_POST['following'] ) ) );
+			if ( ! is_wp_error( $data ) ) {
+				$body = json_decode( wp_remote_retrieve_body( $data ), true );
+				if ( isset( $body['totalItems'] ) ) {
+					$following = sprintf(
+						// translators: %s is the number of followings.
+						_n( '%s following', '%s following', $body['totalItems'], 'friends' ),
+						$body['totalItems']
+					);
+				}
 			}
-			if ( $item->permalink ) {
-				$out .= '</a>';
-			}
-			$out .= '</div>';
-			$out .= '</div>';
-			$out .= '</header>';
-			$out .= '<div class="card-body">';
-			$out .= wp_kses_post( $item->content );
-			$out .= '</div>';
-			$out .= '</div>';
 		}
 
-		wp_send_json_success( $out );
+		$posts = '<div class="posts">';
+		foreach ( $items as $item ) {
+			$posts .= '<div class="card">';
+			$posts .= '<header class="card-header">';
+			$posts .= '<div class="post-meta">';
+			$posts .= '<div class="permalink">';
+			if ( $item->permalink ) {
+				$posts .= '<a href="' . esc_url( $item->permalink ) . '">';
+			}
+			if ( $item->date ) {
+				$posts .= esc_html( $item->date );
+			}
+			if ( $item->permalink ) {
+				$posts .= '</a>';
+			}
+			$posts .= '</div>';
+			$posts .= '</div>';
+			$posts .= '</header>';
+			$posts .= '<div class="card-body">';
+			$posts .= wp_kses_post( $item->content );
+			$posts .= '</div>';
+			$posts .= '</div>';
+		}
+
+		wp_send_json_success( compact( 'posts', 'followers', 'following' ) );
 	}
 }

@@ -791,6 +791,7 @@ class Frontend {
 		);
 
 		if ( $this->template ) {
+			status_header( 200 );
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}
 

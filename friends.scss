@@ -676,6 +676,10 @@ h2#page-title a.dashicons {
 			.form-icon.loading {
 				margin-left: 1em;
 			}
+			details summary span {
+				margin-left: 1em;
+				border-bottom: 1px solid #ccc;
+			}
 		}
 	}
 

@@ -609,10 +609,13 @@
 				data: {
 					_ajax_nonce: $this.data( 'nonce' ),
 					url: $this.find( 'a.follower' ).attr( 'href' ),
+					followers: $this.data('followers' ),
+					following: $this.data('following' ),
 				},
 				success( result ) {
-					console.log( result );
-					$this.find('.loading-posts').hide().after( result );
+					$this.find('.loading-posts').hide().after( result.posts );
+					$this.find('.their-followers').text( result.followers );
+					$this.find('.their-following').text( result.following );
 				},
 				error( result ) {
 					$this.find('.loading-posts').text( result.map(function( error ) { return error.message || error.code; } ).join( ',' ) );
