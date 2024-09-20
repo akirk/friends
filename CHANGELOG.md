@@ -1,3 +1,6 @@
+### 2.9.7
+- Fix boost button ([#353])
+
 ### 2.9.6
 - Allow creating multiple dashboard widgets in ([#349])
 - Add support for double-encoded HTML entities in RSS in ([#352])
@@ -232,6 +235,7 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#353]: https://github.com/akirk/friends/pull/353
 [#349]: https://github.com/akirk/friends/pull/349
 [#352]: https://github.com/akirk/friends/pull/352
 [#351]: https://github.com/akirk/friends/pull/351
