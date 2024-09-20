@@ -100,6 +100,10 @@ div {
 	margin-bottom: 32px;
 }
 
+.off-canvas .off-canvas-content header.navbar.no-bottom-margin {
+	margin-bottom: 0;
+}
+
 .off-canvas .off-canvas-sidebar {
 	margin-top: 32px;
 	width: 12rem;
@@ -647,6 +651,34 @@ h2#page-title a.dashicons {
 
 			.comment-form-comment label {
 				display: block;
+			}
+		}
+	}
+
+	section.followers {
+		ul li {
+			list-style: none;
+			.already-following {
+				color: #ccc;
+			}
+			img {
+				vertical-align: middle;
+			}
+			.follower .ab-icon {
+				.dashicons.dashicons-plus,.dashicons.dashicons-yes {
+					color: #32c170;
+					font-size: .5em;
+					margin-left: -1.5em;
+					margin-top: -2.1em;
+				}
+			}
+
+			.form-icon.loading {
+				margin-left: 1em;
+			}
+			details summary span {
+				margin-left: 1em;
+				border-bottom: 1px solid #ccc;
 			}
 		}
 	}

@@ -34,7 +34,7 @@ if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerificatio
 	<a class="off-canvas-overlay" href="#close"></a>
 
 	<div class="off-canvas-content">
-		<header class="<?php echo is_single() ? '' : 'navbar'; ?>">
+		<header class="<?php echo is_single() ? '' : 'navbar'; ?><?php echo ( isset( $args['no-bottom-margin'] ) && $args['no-bottom-margin'] ) ? ' no-bottom-margin' : ''; ?>">
 			<section class="navbar-section author">
 			<a class="off-canvas-toggle btn btn-primary bt-action" href="#friends-sidebar">
 				<span class="ab-icon dashicons dashicons-menu-alt2"></span>
@@ -52,6 +52,14 @@ if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerificatio
 					$args['post_format'],
 					$args
 				);
+			} elseif ( isset( $args['title'] ) ) {
+				?>
+				<div id="main-header" class="mb-2">
+					<h2 id="page-title"><a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
+						<?php echo esc_html( $args['title'] ); ?>
+					</a></h2>
+				</div>
+				<?php
 			} else {
 				Friends\Friends::template_loader()->get_template_part(
 					'frontend/main-feed-header',

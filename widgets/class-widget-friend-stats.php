@@ -45,7 +45,7 @@ class Widget_Friend_Stats extends \WP_Widget {
 
 		$instance = wp_parse_args( $instance, $this->defaults() );
 		$show_followers = false;
-		if ( class_existS( '\ActivityPub\Collection\Followers' ) ) {
+		if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
 			$follower_count = \ActivityPub\Collection\Followers::count_followers( get_current_user_id() );
 			$show_followers = true;
 		}
@@ -71,16 +71,17 @@ class Widget_Friend_Stats extends \WP_Widget {
 		<ul class="friend-stats menu menu-nav">
 			<?php if ( $show_followers ) : ?>
 				<li class="friend-stats-followers">
+					<a class="followers" href="<?php echo esc_url( home_url( '/friends/followers/' ) ); ?>">
 					<?php
-					echo wp_kses(
+					echo esc_html(
 						sprintf(
 						/* translators: %s: number of followers */
 							_n( '%s Follower', '%s Followers', $follower_count, 'friends' ),
-							'<span class="followers">' . $follower_count . '</span>'
-						),
-						array( 'span' => array( 'class' => array() ) )
+							$follower_count
+						)
 					);
 					?>
+					</a>
 				</li>
 				<?php endif; ?>
 				<li class="friend-stats-friends">

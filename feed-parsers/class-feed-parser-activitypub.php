@@ -89,7 +89,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'friends_post_footer_first', array( $this, 'boost_button' ) );
 		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
 
-		add_action( 'wp_ajax_friends-boost', array( $this, 'wp_ajax_boost' ) );
+		add_action( 'wp_ajax_friends-boost', array( $this, 'ajax_boost' ) );
 		\add_action( 'mastodon_api_reblog', array( $this, 'mastodon_api_reblog' ) );
 		\add_action( 'mastodon_api_unreblog', array( $this, 'mastodon_api_unreblog' ) );
 
@@ -107,6 +107,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
 
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
+		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -1973,8 +1974,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		apply_filters( 'friends_unreact', null, $post_id, $reaction );
 	}
 
-
-	public function wp_ajax_boost() {
+	public function ajax_boost() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_send_json_error( 'error' );
 		}
@@ -1998,6 +1998,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		wp_send_json_success( 'boosted', array( 'id' => $post->ID ) );
 	}
+
 	public function mastodon_api_reblog( $post_id ) {
 		$this->queue_announce( get_permalink( $post_id ) );
 	}
@@ -2398,5 +2399,77 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 		return $metadata;
+	}
+
+	public function ajax_preview() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error( 'error' );
+		}
+
+		check_ajax_referer( 'friends-preview' );
+
+		if ( ! isset( $_POST['url'] ) || ! filter_input( INPUT_POST, 'url', FILTER_VALIDATE_URL ) ) {
+			wp_send_json_error( 'missing-url' );
+		}
+
+		$items = $this->friends_feed->preview( self::SLUG, sanitize_text_field( wp_unslash( $_POST['url'] ) ) );
+		if ( is_wp_error( $items ) ) {
+			wp_send_json_error( $items );
+		}
+
+		$followers = __( '? followers', 'friends' );
+		if ( isset( $_POST['followers'] ) && filter_input( INPUT_POST, 'followers', FILTER_VALIDATE_URL ) ) {
+			$data = \Activitypub\safe_remote_get( sanitize_text_field( wp_unslash( $_POST['followers'] ) ) );
+			if ( ! is_wp_error( $data ) ) {
+				$body = json_decode( wp_remote_retrieve_body( $data ), true );
+				if ( isset( $body['totalItems'] ) ) {
+					$followers = sprintf(
+						// translators: %s is the number of followers.
+						_n( '%s follower', '%s followers', $body['totalItems'], 'friends' ),
+						$body['totalItems']
+					);
+				}
+			}
+		}
+		$following = __( '? following', 'friends' );
+		if ( isset( $_POST['following'] ) && filter_input( INPUT_POST, 'following', FILTER_VALIDATE_URL ) ) {
+			$data = \Activitypub\safe_remote_get( sanitize_text_field( wp_unslash( $_POST['following'] ) ) );
+			if ( ! is_wp_error( $data ) ) {
+				$body = json_decode( wp_remote_retrieve_body( $data ), true );
+				if ( isset( $body['totalItems'] ) ) {
+					$following = sprintf(
+						// translators: %s is the number of followings.
+						_n( '%s following', '%s following', $body['totalItems'], 'friends' ),
+						$body['totalItems']
+					);
+				}
+			}
+		}
+
+		$posts = '<div class="posts">';
+		foreach ( $items as $item ) {
+			$posts .= '<div class="card">';
+			$posts .= '<header class="card-header">';
+			$posts .= '<div class="post-meta">';
+			$posts .= '<div class="permalink">';
+			if ( $item->permalink ) {
+				$posts .= '<a href="' . esc_url( $item->permalink ) . '">';
+			}
+			if ( $item->date ) {
+				$posts .= esc_html( $item->date );
+			}
+			if ( $item->permalink ) {
+				$posts .= '</a>';
+			}
+			$posts .= '</div>';
+			$posts .= '</div>';
+			$posts .= '</header>';
+			$posts .= '<div class="card-body">';
+			$posts .= wp_kses_post( $item->content );
+			$posts .= '</div>';
+			$posts .= '</div>';
+		}
+
+		wp_send_json_success( compact( 'posts', 'followers', 'following' ) );
 	}
 }

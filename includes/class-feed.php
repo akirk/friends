@@ -570,7 +570,7 @@ class Feed {
 			}
 
 			if ( is_null( $post_id ) ) {
-				$post_id = self::url_to_postid( $item->permalink, $friend_user->ID );
+				$post_id = self::url_to_postid( $item->permalink );
 			}
 			$item->_is_new = is_null( $post_id );
 			$item = apply_filters( 'friends_modify_feed_item', $item, $user_feed, $friend_user, $post_id );
