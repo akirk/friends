@@ -1,3 +1,9 @@
+### 2.9.6
+- Allow creating multiple dashboard widgets in ([#349])
+- Add support for double-encoded HTML entities in RSS in ([#352])
+- Expose the list of your followers and make it easy to follow back in ([#351])
+- Fixed a bug that could cause double items on initial feed refresh.
+
 ### 2.9.5
 - Don't override ActivityPub mentions ([#345])
 - Add a dashboard widget ([#346])
@@ -226,38 +232,9 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
-### 1.9.1
-- Fix a fatal error
-
-### 1.9.0
-- New feature: Keyword Matcher (get a notification if an incoming post contains keywords you can specify)
-- New feature: Automatic status posts (automatically create draft status posts for certain events, they need to be published manually)
-- Disable Gutenberg in messages until Gutenberg-Everywhere has been fixed
-
-### 1.8.5
-- Multisite: fix adding user to site instead of requiring a new username
-
-### 1.8.4
-- Fixes for a PHP fatal and some notices
-
-### 1.8.3
-- Improve default feed selection when adding a friend
-- Fix improper plugin directory when a friends plugin installed from Github
-
-### 1.8.2
-- Move plugin updater data to Github
-
-### 1.8.1
-- Fix whitespace missing in feed additions
-
-### 1.8.0
-- Small bugfixes (main query modification, menu conflict, show the friends menu in wp-admin, allow regex to match post length)
-- Use the Gutenberg editor for blog to blog messaging
-
-### 1.7.0
-- Add Emoji reactions
-- Add blog to blog messaging
-
+[#349]: https://github.com/akirk/friends/pull/349
+[#352]: https://github.com/akirk/friends/pull/352
+[#351]: https://github.com/akirk/friends/pull/351
 [#345]: https://github.com/akirk/friends/pull/345
 [#346]: https://github.com/akirk/friends/pull/346
 [#347]: https://github.com/akirk/friends/pull/347

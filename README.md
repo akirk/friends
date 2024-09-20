@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.5
+- Stable tag: 2.9.6
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.9.6
+- Allow creating multiple dashboard widgets in ([#349])
+- Add support for double-encoded HTML entities in RSS in ([#352])
+- Expose the list of your followers and make it easy to follow back in ([#351])
+- Fixed a bug that could cause double items on initial feed refresh.
+
 ### 2.9.5
 - Don't override ActivityPub mentions ([#345])
 - Add a dashboard widget ([#346])
@@ -113,6 +119,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix the all postids query ([#335])
 - Don't define a wp-editor dependency ([#332])
 
+[#349]: https://github.com/akirk/friends/pull/349
+[#352]: https://github.com/akirk/friends/pull/352
+[#351]: https://github.com/akirk/friends/pull/351
 [#345]: https://github.com/akirk/friends/pull/345
 [#346]: https://github.com/akirk/friends/pull/346
 [#347]: https://github.com/akirk/friends/pull/347
