@@ -68,7 +68,7 @@ Friends\Friends::template_loader()->get_template_part(
 		foreach ( $follower_data['followers'] as $follower ) {
 			?>
 			<li>
-				<a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
+				<details data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>"><summary><a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
 					<img width="40" height="40" src="<?php echo esc_attr( $follower['icon']['url'] ); ?>" class="avatar activitypub-avatar" />
 					<span class="activitypub-actor"><strong class="activitypub-name"><?php echo esc_html( $follower['name'] ); ?></strong> (<span class="activitypub-handle">@<?php echo esc_html( $follower['preferredUsername'] . '@' . $follower['server'] ); ?></span>)</span></a>
 				&nbsp;&nbsp;
@@ -84,6 +84,10 @@ Friends\Friends::template_loader()->get_template_part(
 					</a>
 				<?php endif; ?>
 				<p class="description"><?php echo esc_html( $follower['summary'] ); ?></p>
+			</summary><p class="loading-posts">
+				<span><?php esc_html_e( 'Loading posts', 'friends' ); ?></span>
+				<i class="form-icon loading"></i>
+			</p></details>
 			</li>
 			<?php
 		}

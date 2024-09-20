@@ -600,4 +600,25 @@
 		$( '#quick-post-panel' ).toggleClass( 'open' );
 		return false;
 	} );
+
+	// when the ".followers details" html element is expanded
+	$document.on( 'click', '.followers details', function () {
+		const $this = $( this );
+		if ( $this.find( '.loading-posts' ).length ) {
+			wp.ajax.send( 'friends-preview-activitypub', {
+				data: {
+					_ajax_nonce: $this.data( 'nonce' ),
+					url: $this.find( 'a.follower' ).attr( 'href' ),
+				},
+				success( result ) {
+					console.log( result );
+					$this.find('.loading-posts').hide().after( result );
+				},
+				error( result ) {
+					$this.find('.loading-posts').text( result.map(function( error ) { return error.message || error.code; } ).join( ',' ) );
+				}
+			} );
+		}
+	} );
+
 } )( jQuery, window.wp, window.friends );

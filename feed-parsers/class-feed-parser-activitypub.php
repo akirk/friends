@@ -89,7 +89,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'friends_post_footer_first', array( $this, 'boost_button' ) );
 		\add_filter( 'friends_search_autocomplete', array( $this, 'friends_search_autocomplete' ), 10, 2 );
 
-		add_action( 'wp_ajax_friends-boost', array( $this, 'wp_ajax_boost' ) );
+		add_action( 'wp_ajax_friends-boost', array( $this, 'ajax_boost' ) );
 		\add_action( 'mastodon_api_reblog', array( $this, 'mastodon_api_reblog' ) );
 		\add_action( 'mastodon_api_unreblog', array( $this, 'mastodon_api_unreblog' ) );
 
@@ -107,6 +107,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
 
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
+		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -1966,8 +1967,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		apply_filters( 'friends_unreact', null, $post_id, $reaction );
 	}
 
-
-	public function wp_ajax_boost() {
+	public function ajax_boost() {
 		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
 			wp_send_json_error( 'error' );
 		}
@@ -1991,6 +1991,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		wp_send_json_success( 'boosted', array( 'id' => $post->ID ) );
 	}
+
 	public function mastodon_api_reblog( $post_id ) {
 		$this->queue_announce( get_permalink( $post_id ) );
 	}
@@ -2391,5 +2392,48 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 		return $metadata;
+	}
+
+	public function ajax_preview() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error( 'error' );
+		}
+
+		check_ajax_referer( 'friends-preview' );
+
+		if ( ! isset( $_POST['url'] ) ) {
+			wp_send_json_error( 'missing-url' );
+		}
+
+		$items = $this->friends_feed->preview( self::SLUG, sanitize_text_field( wp_unslash( $_POST['url'] ) ) );
+		if ( is_wp_error( $items ) ) {
+			wp_send_json_error( $items );
+		}
+
+		$out = '<div class="posts">';
+		foreach ( $items as $item ) {
+			$out .= '<div class="card">';
+			$out .= '<header class="card-header">';
+			$out .= '<div class="post-meta">';
+			$out .= '<div class="permalink">';
+			if ( $item->permalink ) {
+				$out .= '<a href="' . esc_url( $item->permalink ) . '">';
+			}
+			if ( $item->date ) {
+				$out .= esc_html( $item->date );
+			}
+			if ( $item->permalink ) {
+				$out .= '</a>';
+			}
+			$out .= '</div>';
+			$out .= '</div>';
+			$out .= '</header>';
+			$out .= '<div class="card-body">';
+			$out .= wp_kses_post( $item->content );
+			$out .= '</div>';
+			$out .= '</div>';
+		}
+
+		wp_send_json_success( $out );
 	}
 }
