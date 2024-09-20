@@ -442,13 +442,14 @@
 					post_id: $this.data( 'id' ),
 				},
 				success( result ) {
-					if ( 'boosted' === result.status ) {
+					if ( 'boosted' === result ) {
 						$this
 							.find( 'i.friends-boost-status' )
 							.addClass( 'dashicons dashicons-saved' );
 					} else {
 						$this
 							.find( 'i.friends-boost-status' )
+							.addClass( 'dashicons dashicons-warning' )
 							.removeClass( 'dashicons-saved' );
 					}
 				},
