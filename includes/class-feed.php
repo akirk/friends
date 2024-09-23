@@ -140,15 +140,27 @@ class Feed {
 	/**
 	 * Preview a URL using a parser.
 	 *
-	 * @param      string $parser   The parser slug.
-	 * @param      string $url      The url.
-	 * @param      int    $feed_id  The feed id.
+	 * @param      string|Feed_Parser $parser   The parser or its slug slug.
+	 * @param      string             $url      The url.
+	 * @param      int                $feed_id  The feed id.
 	 *
-	 * @return     array|\WP_error  The feed items.
+	 * @return     array|\WP_Error  The feed items.
 	 */
 	public function preview( $parser, $url, $feed_id = null ) {
-		if ( ! isset( $this->parsers[ $parser ] ) ) {
-			return new \WP_Error( 'unknown-parser', __( 'An unknown parser name was supplied.', 'friends' ) );
+		if ( is_string( $parser ) ) {
+			if ( ! isset( $this->parsers[ $parser ] ) ) {
+				return new \WP_Error(
+					'unknown-parser',
+					sprintf(
+						// translators: %s is a parser name.
+						__( 'An unknown parser name was supplied: %s', 'friends' ),
+						$parser
+					)
+				);
+			}
+			$parser = $this->parsers[ $parser ];
+		} elseif ( ! $parser instanceof Feed_Parser_V2 ) {
+			return new \WP_Error( 'invalid-parser', __( 'An invalid parser was supplied.', 'friends' ) );
 		}
 
 		$user_feed = null;
@@ -160,7 +172,7 @@ class Feed {
 			}
 		}
 
-		$items = $this->parsers[ $parser ]->fetch_feed( $url, $user_feed );
+		$items = $parser->fetch_feed( $url, $user_feed );
 
 		if ( ! is_wp_error( $items ) ) {
 			if ( empty( $items ) ) {

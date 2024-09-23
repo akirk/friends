@@ -1988,11 +1988,12 @@ class Admin {
 				<?php
 				exit;
 			}
-			$parser_name = false;
+			$parser = false;
 			if ( isset( $_GET['parser'] ) ) {
 				$parser_name = $this->friends->feed->get_registered_parser( sanitize_text_field( wp_unslash( $_GET['parser'] ) ) );
+				$parser = $this->friends->feed->get_feed_parser( sanitize_text_field( wp_unslash( $_GET['parser'] ) ) );
 			}
-			if ( ! $parser_name ) {
+			if ( ! $parser ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'An unknown parser name was supplied.', 'friends' ); ?></p>
 				</div>
@@ -2025,7 +2026,7 @@ class Admin {
 			if ( isset( $_GET['feed'] ) ) {
 				$feed_id = intval( $_GET['feed'] );
 			}
-			$items = $this->friends->feed->preview( $parser_name, $url, $feed_id );
+			$items = $this->friends->feed->preview( $parser, $url, $feed_id );
 			if ( is_wp_error( $items ) ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $items->get_error_message() ); ?></p>
