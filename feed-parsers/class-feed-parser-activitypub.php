@@ -64,7 +64,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_edit_feeds_after_form_submit', array( $this, 'activitypub_save_settings' ), 10 );
 		\add_filter( 'friends_modify_feed_item', array( $this, 'modify_incoming_item' ), 9, 3 );
 		\add_filter( 'friends_potential_avatars', array( $this, 'friends_potential_avatars' ), 10, 2 );
-		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login' ), 10, 2 );
+		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login_from_url' ), 10, 2 );
 		\add_filter( 'friends_author_avatar_url', array( $this, 'author_avatar_url' ), 10, 3 );
 
 		\add_action( 'template_redirect', array( $this, 'cache_reply_to_boost' ) );
@@ -496,6 +496,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$feed_details['next-poll'] = gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS );
 		$feed_details['post-format'] = 'status';
 
+		$feed_details['type'] = 'application/activity+json';
+		$feed_details['autoselect'] = true;
+
+		$feed_details['suggested-username'] = str_replace( ' ', '-', sanitize_user( $meta['name'] ) );
+
 		return $feed_details;
 	}
 
@@ -655,7 +660,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $items;
 	}
 
-	public function suggest_user_login( $login, $url ) {
+	public function suggest_user_login_from_url( $login, $url ) {
 		if ( preg_match( '#^https?://([^/]+)/users/([^/]+)#', $url, $m ) ) {
 			return $m[2] . '-' . $m[1];
 		}

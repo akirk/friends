@@ -1871,9 +1871,17 @@ class Admin {
 				return new \WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
 			}
 
+			$better_user_login = User::get_user_login_from_feeds( $feeds );
+			if ( $better_user_login ) {
+				$friend_user_login = $better_user_login;
+			}
+
 			$better_display_name = User::get_display_name_from_feeds( $feeds );
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
+				if ( ! $better_user_login ) {
+					$friend_user_login = str_replace( ' ', '-', sanitize_user( $better_display_name ) );
+				}
 			}
 
 			$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
@@ -2026,7 +2034,7 @@ class Admin {
 			if ( isset( $_GET['feed'] ) ) {
 				$feed_id = intval( $_GET['feed'] );
 			}
-			$items = $this->friends->feed->preview( $parser, $url, $feed_id );
+			$items = $this->friends->feed->preview( $parser_name, $url, $feed_id );
 			if ( is_wp_error( $items ) ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $items->get_error_message() ); ?></p>

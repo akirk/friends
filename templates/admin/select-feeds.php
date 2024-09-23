@@ -187,7 +187,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 									)
 								);
 								?>
-							<p class="description details hidden">
+							<p class="description details">
 								<?php
 								// translators: %s is the type of a feed, for example Atom or RSS.
 								echo esc_html( sprintf( __( 'Type: %s', 'friends' ), $details['type'] ) );
