@@ -193,6 +193,21 @@ class User extends \WP_User {
 	}
 
 	/**
+	 * Discover a user login from feeds
+	 *
+	 * @param  array $feeds A list of feeds.
+	 * @return string The corresponding user login.
+	 */
+	public static function get_user_login_from_feeds( $feeds ) {
+		foreach ( $feeds as $feed ) {
+			if ( isset( $feed['suggested-username'] ) ) {
+				return sanitize_text_field( $feed['suggested-username'] );
+			}
+		}
+
+		return false;
+	}
+	/**
 	 * Discover a display name from feeds
 	 *
 	 * @param  array $feeds A list of feeds.

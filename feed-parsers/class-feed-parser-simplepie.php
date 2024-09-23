@@ -265,11 +265,19 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	public function process_items( $items, $url ) {
 		$feed_items = array();
 		foreach ( $items as $item ) {
+			/* See https://www.rssboard.org/rss-encoding-examples */
+			$title = $item->get_title();
+			if ( $title ) {
+				$title = htmlspecialchars_decode( $title );
+				if ( $title ) {
+					$title = \html_entity_decode( $title, ENT_QUOTES, 'UTF-8' );
+				}
+			}
+
 			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item->get_permalink(),
-					/* see https://www.rssboard.org/rss-encoding-examples */
-					'title'     => html_entity_decode( htmlspecialchars_decode( $item->get_title() ) ),
+					'title'     => $title,
 					'content'   => $this->convert_relative_urls_to_absolute_urls( $item->get_content(), $url ),
 				)
 			);

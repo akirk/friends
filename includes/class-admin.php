@@ -1871,9 +1871,17 @@ class Admin {
 				return new \WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
 			}
 
+			$better_user_login = User::get_user_login_from_feeds( $feeds );
+			if ( $better_user_login ) {
+				$friend_user_login = $better_user_login;
+			}
+
 			$better_display_name = User::get_display_name_from_feeds( $feeds );
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
+				if ( ! $better_user_login ) {
+					$friend_user_login = str_replace( ' ', '-', sanitize_user( $better_display_name ) );
+				}
 			}
 
 			$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
@@ -1988,11 +1996,12 @@ class Admin {
 				<?php
 				exit;
 			}
-			$parser_name = false;
+			$parser = false;
 			if ( isset( $_GET['parser'] ) ) {
 				$parser_name = $this->friends->feed->get_registered_parser( sanitize_text_field( wp_unslash( $_GET['parser'] ) ) );
+				$parser = $this->friends->feed->get_feed_parser( sanitize_text_field( wp_unslash( $_GET['parser'] ) ) );
 			}
-			if ( ! $parser_name ) {
+			if ( ! $parser ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php esc_html_e( 'An unknown parser name was supplied.', 'friends' ); ?></p>
 				</div>
