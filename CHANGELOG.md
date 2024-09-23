@@ -1,3 +1,6 @@
+### 2.9.8
+- Fix ActivityPub preview and use more details when creating the user ([#354])
+
 ### 2.9.7
 - Fix boost button ([#353])
 
@@ -235,6 +238,7 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#354]: https://github.com/akirk/friends/pull/354
 [#353]: https://github.com/akirk/friends/pull/353
 [#349]: https://github.com/akirk/friends/pull/349
 [#352]: https://github.com/akirk/friends/pull/352
