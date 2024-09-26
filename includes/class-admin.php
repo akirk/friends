@@ -2034,7 +2034,7 @@ class Admin {
 			if ( isset( $_GET['feed'] ) ) {
 				$feed_id = intval( $_GET['feed'] );
 			}
-			$items = $this->friends->feed->preview( $parser_name, $url, $feed_id );
+			$items = $this->friends->feed->preview( $parser, $url, $feed_id );
 			if ( is_wp_error( $items ) ) {
 				?>
 				<div id="message" class="updated notice is-dismissible"><p><?php echo esc_html( $items->get_error_message() ); ?></p>
