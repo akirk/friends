@@ -1,3 +1,7 @@
+### 2.9.9
+- Avoid fatal when no user login can be found during boosting ([#355])
+- A small update of a filter for Enable Mastodon Apps 0.9.8
+
 ### 2.9.8
 - Fix ActivityPub preview and use more details when creating the user ([#354])
 
@@ -238,6 +242,7 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#355]: https://github.com/akirk/friends/pull/355
 [#354]: https://github.com/akirk/friends/pull/354
 [#353]: https://github.com/akirk/friends/pull/353
 [#349]: https://github.com/akirk/friends/pull/349

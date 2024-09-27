@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.8
+- Stable tag: 2.9.9
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 2.9.9
+- Avoid fatal when no user login can be found during boosting ([#355])
+- A small update of a filter for Enable Mastodon Apps 0.9.8
+
 ### 2.9.8
 - Fix ActivityPub preview and use more details when creating the user ([#354])
 
@@ -125,6 +129,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix the all postids query ([#335])
 - Don't define a wp-editor dependency ([#332])
 
+[#355]: https://github.com/akirk/friends/pull/355
 [#354]: https://github.com/akirk/friends/pull/354
 [#353]: https://github.com/akirk/friends/pull/353
 [#349]: https://github.com/akirk/friends/pull/349
