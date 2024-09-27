@@ -1231,7 +1231,13 @@ class User extends \WP_User {
 		if ( $post_id ) {
 			$path = '/' . $post_id . '/';
 		}
-		return home_url( '/friends/' . self::get_user_login_for_url( $this->user_login ) . $path );
+
+		$user_login = self::get_user_login_for_url( $this->user_login );
+		if ( ! $user_login || is_wp_error( $user_login ) ) {
+			return home_url( '/friends/' . $path );
+		}
+
+		return home_url( '/friends/' . $user_login . $path );
 	}
 
 	/**
