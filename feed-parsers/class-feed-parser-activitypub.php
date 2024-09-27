@@ -103,7 +103,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 40, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
-		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_comment_parent_post_id' ), 25 );
+		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_in_reply_to_id' ), 25 );
+		add_filter( 'mastodon_api_in_reply_to_id', array( $this, 'mastodon_api_in_reply_to_id' ), 25 );
 		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
 
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
@@ -354,7 +355,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $this->mapped_usernames[ $user_id ];
 	}
 
-	public function mastodon_api_comment_parent_post_id( $in_reply_to_id ) {
+	public function mastodon_api_in_reply_to_id( $in_reply_to_id ) {
 		$in_reply_to_id = \Enable_Mastodon_Apps\Mastodon_API::maybe_get_remapped_url( $in_reply_to_id );
 		if ( ! is_string( $in_reply_to_id ) ) {
 			return $in_reply_to_id;
