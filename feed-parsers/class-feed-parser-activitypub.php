@@ -626,35 +626,41 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$outbox = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( ! isset( $outbox['first'] ) ) {
-			return new \WP_Error( 'activitypub_could_not_find_outbox_first_page', null, compact( 'url', 'meta', 'outbox' ) );
-		}
 
-		$response = \Activitypub\safe_remote_get( $outbox['first'], Friends::get_main_friend_user_id() );
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return new \WP_Error(
-				'activitypub_could_not_get_outbox',
-				null,
-				array(
-					'meta' => $outbox,
-					$url   => $outbox['first'],
-				)
-			);
-		}
-		$outbox_page = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( ! isset( $outbox_page['type'] ) || 'OrderedCollectionPage' !== $outbox_page['type'] ) {
-			return new \WP_Error(
-				'activitypub_outbox_page_invalid_type',
-				null,
-				array(
-					'outbox_page' => $outbox_page,
-					$url          => $outbox['first'],
-				)
-			);
+		if ( ! isset( $outbox['type'] ) || 'OrderedCollection' !== $outbox['type'] ) {
+			if ( ! isset( $outbox['first'] ) ) {
+				return new \WP_Error( 'activitypub_could_not_find_outbox_first_page', null, compact( 'url', 'meta', 'outbox' ) );
+			}
+
+			$response = \Activitypub\safe_remote_get( $outbox_page['first'], Friends::get_main_friend_user_id() );
+			if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+				return new \WP_Error(
+					'activitypub_could_not_get_outbox',
+					null,
+					array(
+						'meta' => $outbox,
+						$url   => $outbox['first'],
+					)
+				);
+			}
+			$outbox_page = json_decode( wp_remote_retrieve_body( $response ), true );
+
+			if ( ! isset( $outbox_page['type'] ) || 'OrderedCollectionPage' !== $outbox_page['type'] ) {
+				return new \WP_Error(
+					'activitypub_outbox_page_invalid_type',
+					null,
+					array(
+						'outbox_page' => $outbox_page,
+						$url          => $outbox['first'],
+					)
+				);
+			}
+
+			$outbox = $outbox_page;
 		}
 
 		$items = array();
-		foreach ( $outbox_page['orderedItems'] as $object ) {
+		foreach ( $outbox['orderedItems'] as $object ) {
 			$type = strtolower( $object['type'] );
 			$items[] = $this->process_incoming_activity( $type, $object, get_current_user_id(), $user_feed );
 		}
