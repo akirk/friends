@@ -679,6 +679,9 @@ h2#page-title a.dashicons {
 			details summary span {
 				margin-left: 1em;
 				border-bottom: 1px solid #ccc;
+				span {
+					margin-left: 0;
+				}
 			}
 		}
 	}

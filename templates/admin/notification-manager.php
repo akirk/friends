@@ -37,11 +37,14 @@ foreach ( $args['feed_parsers'] as $feed_parser => $label ) {
 							<span><?php esc_html_e( 'Friend Requests', 'friends' ); ?></span>
 						</label>
 						<br />
+						<?php if ( isset( $args['no_friend_follower_notification'] ) ) : ?>
 						<label for="friend_follower_notification">
 							<input name="friend_follower_notification" type="checkbox" id="friend_follower_notification" value="1" <?php checked( '1', ! $args['no_friend_follower_notification'] ); ?>>
 							<span><?php esc_html_e( 'New Followers', 'friends' ); ?></span>
+							<span><?php esc_html_e( '(via ActivityPub)', 'friends' ); ?></span>
 						</label>
 						<br />
+						<?php endif; ?>
 						<label for="new_post_notification">
 							<input name="new_post_notification" type="checkbox" id="new_post_notification" value="1" <?php checked( '1', ! $args['no_new_post_notification'] ); ?>>
 							<span><?php esc_html_e( 'New Posts', 'friends' ); ?></span>

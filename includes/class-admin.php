@@ -2311,21 +2311,27 @@ class Admin {
 			$hide_from_friends_page = array();
 		}
 
+		$args = array(
+			'friend_users'                   => $friend_users->get_results(),
+			'friends_settings_url'           => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+			'hide_from_friends_page'         => $hide_from_friends_page,
+			'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
+			'keyword_override_disabled'      => get_user_option( 'friends_keyword_notification_override_disabled' ),
+			'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
+			'no_keyword_notification'        => get_user_option( 'friends_no_keyword_notification' ),
+			'notification_keywords'          => Feed::get_all_notification_keywords(),
+			'active_keywords'                => Feed::get_active_notification_keywords(),
+			'feed_parsers'                   => $this->friends->feed->get_registered_parsers(),
+		);
+
+		if ( class_exists( '\Activitypub\Notification' ) ) {
+			$args['no_friend_follower_notification'] = get_user_option( 'friends_no_friend_follower_notification' );
+		}
+
 		Friends::template_loader()->get_template_part(
 			'admin/notification-manager',
 			null,
-			array(
-				'friend_users'                   => $friend_users->get_results(),
-				'friends_settings_url'           => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-				'hide_from_friends_page'         => $hide_from_friends_page,
-				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
-				'keyword_override_disabled'      => get_user_option( 'friends_keyword_notification_override_disabled' ),
-				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
-				'no_keyword_notification'        => get_user_option( 'friends_no_keyword_notification' ),
-				'notification_keywords'          => Feed::get_all_notification_keywords(),
-				'active_keywords'                => Feed::get_active_notification_keywords(),
-				'feed_parsers'                   => $this->friends->feed->get_registered_parsers(),
-			)
+			$args
 		);
 
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );

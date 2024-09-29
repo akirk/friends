@@ -46,6 +46,9 @@ class Notifications {
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
+		if ( ! get_user_option( 'friends_no_friend_follower_notification' ) ) {
+			add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
+		}
 	}
 
 	/**
@@ -346,6 +349,69 @@ class Notifications {
 
 		ob_start();
 		Friends::template_loader()->get_template_part( 'email/friend-message-received-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
+	}
+
+	/**
+	 * Notify of a follower
+	 *
+	 * @param string                     $actor    The Actor URL.
+	 * @param array                      $activitypub_object   The Activity object.
+	 * @param int                        $user_id  The ID of the WordPress User.
+	 * @param Activitypub\Model\Follower $follower The Follower object.
+	 *
+	 * @return void
+	 */
+	public function activitypub_followers_post_follow( $actor, $activitypub_object, $user_id, $follower ) {
+		$user = new User( $user_id );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
+		if ( ! $user->user_email ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'notify_user_about_new_follower', true, $user, $actor, $activitypub_object, $follower ) ) {
+			return;
+		}
+
+		$url = \ActivityPub\object_to_uri( $follower->get( 'id' ) );
+		$server = wp_parse_url( $url, PHP_URL_HOST );
+		$following = User_Feed::get_by_url( $url );
+		if ( ! $following || is_wp_error( $following ) ) {
+			$following = User_Feed::get_by_url( $follower->get_url() );
+		}
+		if ( $following && ! is_wp_error( $following ) ) {
+			$following = $following->get_friend_user();
+		} else {
+			$following = false;
+		}
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( 'New Follower: %s', 'friends' ), $follower->get_name() . '@' . $server );
+
+		$params = array(
+			'user'      => $user,
+			'url'       => $url,
+			'follower'  => $follower,
+			'server'    => $server,
+			'following' => $following,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/new-follower', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/new-follower-text', null, $params );
 		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();
