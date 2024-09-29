@@ -2215,6 +2215,22 @@ class Admin {
 			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
 		}
 
+		foreach ( get_post_format_slugs() as $post_format ) {
+			if ( isset( $_POST[ 'new_post_format_notification_' . $post_format ] ) && boolval( $_POST[ 'new_post_format_notification_' . $post_format ] ) ) {
+				delete_user_option( get_current_user_id(), 'friends_no_new_post_format_notification_' . $post_format );
+			} else {
+				update_user_option( get_current_user_id(), 'friends_no_new_post_format_notification_' . $post_format, 1 );
+			}
+		}
+
+		foreach ( array_keys( $this->friends->feed->get_registered_parsers() ) as $parser ) {
+			if ( isset( $_POST[ 'new_post_by_parser_notification_' . $parser ] ) && boolval( $_POST[ 'new_post_by_parser_notification_' . $parser ] ) ) {
+				delete_user_option( get_current_user_id(), 'friends_no_new_post_by_parser_notification_' . $parser );
+			} else {
+				update_user_option( get_current_user_id(), 'friends_no_new_post_by_parser_notification_' . $parser, 1 );
+			}
+		}
+
 		if ( empty( $_POST['friend_listed'] ) ) {
 			return;
 		}
@@ -2295,6 +2311,7 @@ class Admin {
 				'no_keyword_notification'        => get_user_option( 'friends_no_keyword_notification' ),
 				'notification_keywords'          => Feed::get_all_notification_keywords(),
 				'active_keywords'                => Feed::get_active_notification_keywords(),
+				'feed_parsers'                   => $this->friends->feed->get_registered_parsers(),
 			)
 		);
 
