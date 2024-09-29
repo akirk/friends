@@ -2221,6 +2221,12 @@ class Admin {
 			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
 		}
 
+		if ( isset( $_POST['friend_follower_notification'] ) && boolval( $_POST['friend_follower_notification'] ) ) {
+			delete_user_option( get_current_user_id(), 'friends_no_friend_follower_notification' );
+		} else {
+			update_user_option( get_current_user_id(), 'friends_no_friend_follower_notification', 1 );
+		}
+
 		foreach ( get_post_format_slugs() as $post_format ) {
 			if ( isset( $_POST[ 'new_post_format_notification_' . $post_format ] ) && boolval( $_POST[ 'new_post_format_notification_' . $post_format ] ) ) {
 				delete_user_option( get_current_user_id(), 'friends_no_new_post_format_notification_' . $post_format );
