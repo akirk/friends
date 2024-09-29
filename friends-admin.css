@@ -282,3 +282,16 @@ span#friends_enable_retention_number_line {
 #friends-dashboard-widget .author-avatar {
 	vertical-align: middle;
 }
+
+.friends-notification-manager details.options {
+	margin-top: 1em;
+}
+.friends-notification-manager details.options fieldset {
+	margin-top: 1em;
+	margin-bottom: 1em;
+	display: flex;
+	flex-wrap: wrap;
+}
+.friends-notification-manager details.options fieldset label {
+	width: 10em;
+}
