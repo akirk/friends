@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<rss version="2.0" xmlns:friends="wordpress-plugin-friends:feed-additions:1">
+	<channel>
+		<title>friend.local</title>
+		<link>http://friend.local</link>
+		<description>My friend's site</description>
+		<item>
+			<title>Standard Post</title>
+			<link>http://friend.local/2023/01/01/standard-post</link>
+			<description>This is the standard post content.</description>
+			<friends:post-format>standard</friends:post-format>
+		</item>
+		<item>
+			<title>Aside Post</title>
+			<link>http://friend.local/2023/01/02/aside-post</link>
+			<description>This is the aside post content.</description>
+			<friends:post-format>aside</friends:post-format>
+		</item>
+		<item>
+			<title>Gallery Post</title>
+			<link>http://friend.local/2023/01/03/gallery-post</link>
+			<description>This is the gallery post content.</description>
+			<friends:post-format>gallery</friends:post-format>
+		</item>
+		<item>
+			<title>Image Post</title>
+			<link>http://friend.local/2023/01/04/image-post</link>
+			<description>This is the image post content.</description>
+			<friends:post-format>image</friends:post-format>
+		</item>
+		<item>
+			<title>Link Post</title>
+			<link>http://friend.local/2023/01/05/link-post</link>
+			<description>This is the link post content.</description>
+			<friends:post-format>link</friends:post-format>
+		</item>
+		<item>
+			<title>Quote Post</title>
+			<link>http://friend.local/2023/01/06/quote-post</link>
+			<description>This is the quote post content.</description>
+			<friends:post-format>quote</friends:post-format>
+		</item>
+		<item>
+			<title>Status Post</title>
+			<link>http://friend.local/2023/01/07/status-post</link>
+			<description>This is the status post content.</description>
+			<friends:post-format>status</friends:post-format>
+		</item>
+		<item>
+			<title>Video Post</title>
+			<link>http://friend.local/2023/01/08/video-post</link>
+			<description>This is the video post content.</description>
+			<friends:post-format>video</friends:post-format>
+		</item>
+		<item>
+			<title>Audio Post</title>
+			<link>http://friend.local/2023/01/09/audio-post</link>
+			<description>This is the audio post content.</description>
+			<friends:post-format>audio</friends:post-format>
+		</item>
+		<item>
+			<title>Chat Post</title>
+			<link>http://friend.local/2023/01/10/chat-post</link>
+			<description>This is the chat post content.</description>
+			<friends:post-format>chat</friends:post-format>
+		</item>
+	</channel>
+</rss>

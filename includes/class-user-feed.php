@@ -608,7 +608,7 @@ class User_Feed {
 			return $term;
 		}
 
-		return new self( $term );
+		return new self( $term, $friend_user );
 	}
 
 	/**

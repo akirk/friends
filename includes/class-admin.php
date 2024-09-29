@@ -2203,6 +2203,12 @@ class Admin {
 			update_option( 'friends_notification_keywords', $keywords );
 		}
 
+		if ( isset( $_POST['keyword_notification_override'] ) && boolval( $_POST['keyword_notification_override'] ) ) {
+			delete_user_option( get_current_user_id(), 'friends_keyword_notification_override_disabled' );
+		} else {
+			update_user_option( get_current_user_id(), 'friends_keyword_notification_override_disabled', 1 );
+		}
+
 		if ( isset( $_POST['new_post_notification'] ) && boolval( $_POST['new_post_notification'] ) ) {
 			delete_user_option( get_current_user_id(), 'friends_no_new_post_notification' );
 		} else {
@@ -2307,6 +2313,7 @@ class Admin {
 				'friends_settings_url'           => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
 				'hide_from_friends_page'         => $hide_from_friends_page,
 				'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
+				'keyword_override_disabled'      => get_user_option( 'friends_keyword_notification_override_disabled' ),
 				'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
 				'no_keyword_notification'        => get_user_option( 'friends_no_keyword_notification' ),
 				'notification_keywords'          => Feed::get_all_notification_keywords(),
