@@ -105,6 +105,11 @@ foreach ( $args['feed_parsers'] as $feed_parser => $label ) {
 				</th>
 				<td>
 					<fieldset>
+						<label>
+							<input name="keyword_notification_override" type="checkbox" id="keyword_notification_override" value="1" <?php checked( ! $args['keyword_override_disabled'] ); ?>>
+							<span><?php esc_html_e( 'Notify about matching keywords even if disabled above', 'friends' ); ?></span>
+						</label>
+						<p class="description"><?php esc_html_e( 'For example, even if you disabled post notifications, you can still get notified about posts containing specific keywords.', 'friends' ); ?></p>
 
 						<ol id="keyword-notifications">
 							<li id="keyword-template" style="display: none">

@@ -41,8 +41,8 @@ class Notifications {
 	private function register_hooks() {
 		add_filter( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
 		add_filter( 'friends_rewrite_mail_html', array( $this, 'highlight_keywords' ), 10, 2 );
-		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 2 );
-		add_filter( 'notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
+		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 3 );
+		add_filter( 'friends_notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
@@ -83,10 +83,11 @@ class Notifications {
 	/**
 	 * Notify the users of this site about a new friend post
 	 *
-	 * @param  \WP_Post  $post The new post by a friend or subscription.
-	 * @param  User_Feed $user_feed The feed where the post came from.
+	 * @param  \WP_Post     $post The new post by a friend or subscription.
+	 * @param  User_Feed    $user_feed The feed where the post came from.
+	 * @param  string|false $keyword If a post matched a keyword, the keyword is specified.
 	 */
-	public function notify_new_friend_post( \WP_Post $post, User_Feed $user_feed ) {
+	public function notify_new_friend_post( \WP_Post $post, User_Feed $user_feed, $keyword ) {
 		if (
 			// Post might be trashed through rules.
 			'trash' === $post->post_status
@@ -104,13 +105,28 @@ class Notifications {
 		}
 		$author = $user_feed->get_friend_user();
 
+		if ( ! get_post_format( $post ) ) {
+			$post_format = 'standard';
+		} else {
+			$post_format = get_post_format( $post );
+		}
+
 		$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
 		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_notification_' . $author->user_login, $user->ID );
+		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_format_notification_' . $post_format, $user->ID );
+		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_by_parser_notification_' . $user_feed->get_parser(), $user->ID );
+
+		// If the post would notify anyway and it was a keyword match, notify that way.
+		if ( $notify_user && $keyword && get_user_option( 'friends_keyword_notification_override_disabled', $user->ID ) ) {
+			add_filter( 'get_user_option_friends_keyword_notification_override_disabled', '__return_false' );
+			$this->notify_keyword_match_post( false, $post, $keyword );
+			remove_filter( 'get_user_option_friends_keyword_notification_override_disabled', '__return_false' );
+			return;
+		}
 
 		if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post, $author ) ) {
 			return;
 		}
-
 		$email_title = $post->post_title;
 
 		$params = array(
@@ -155,6 +171,11 @@ class Notifications {
 			return $notified;
 		}
 		$notify_user = ! get_user_option( 'friends_no_keyword_notification_' . $post->post_author, $user->ID );
+		// If the override was disabled, don't notify. This could be temporarily disabled later.
+
+		if ( $notify_user && get_user_option( 'friends_keyword_notification_override_disabled', $user->ID ) ) {
+			return $notified;
+		}
 
 		if ( ! apply_filters( 'notify_user_about_keyword_post', $notify_user, $user, $post, $keyword ) ) {
 			return $notified;

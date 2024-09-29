@@ -260,19 +260,19 @@ class Feed {
 				}
 
 				if ( $keyword_match ) {
-					$notified = apply_filters( 'notify_keyword_match_post', false, $post, $keyword_match );
+					$notified = apply_filters( 'friends_notify_keyword_match_post', false, $post, $keyword_match );
 					if ( $notified ) {
 						continue;
 					}
 				}
 			}
 
-			$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id, $user_feed );
+			$notify_users = apply_filters( 'notify_about_new_friend_post', true, $friend_user, $post_id, $user_feed, $keyword_match );
 			if ( $notify_users ) {
 				if ( ! $post ) {
 					$post = get_post( intval( $post_id ) );
 				}
-				do_action( 'notify_new_friend_post', $post, $user_feed );
+				do_action( 'notify_new_friend_post', $post, $user_feed, $keyword_match );
 			}
 		}
 	}
