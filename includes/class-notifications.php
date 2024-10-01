@@ -48,6 +48,7 @@ class Notifications {
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
 		if ( ! get_user_option( 'friends_no_friend_follower_notification' ) ) {
 			add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
+			add_action( 'activitypub_followers_pre_remove_follower', array( $this, 'activitypub_followers_pre_remove_follower' ), 10, 3 );
 		}
 	}
 
@@ -412,6 +413,64 @@ class Notifications {
 
 		ob_start();
 		Friends::template_loader()->get_template_part( 'email/new-follower-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
+	}
+
+	/**
+	 * Notify of a lost follower
+	 *
+	 * @param string                     $actor    The Actor URL.
+	 * @param int                        $user_id  The ID of the WordPress User.
+	 * @param Activitypub\Model\Follower $follower The Follower object.
+	 *
+	 * @return void
+	 */
+	public function activitypub_followers_pre_remove_follower( $actor, $user_id, $follower ) {
+		$user = new User( $user_id );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
+		if ( ! $user->user_email ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'notify_user_about_lost_follower', true, $user, $actor, $follower ) ) {
+			return;
+		}
+
+		$url = \ActivityPub\object_to_uri( $follower->get( 'id' ) );
+		$server = wp_parse_url( $url, PHP_URL_HOST );
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( 'Lost Follower: %s', 'friends' ), $follower->get_name() . '@' . $server );
+
+		$params = array(
+			'user'     => $user,
+			'url'      => $url,
+			'follower' => $follower,
+			'server'   => $server,
+			'duration' => human_time_diff( strtotime( $follower->get_published() ) ) . ' (' . sprintf(
+				// translators: %s is a time duration.
+				__( 'since %s', 'friends' ),
+				$follower->get_published()
+			) . ')',
+
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/lost-follower', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/lost-follower-text', null, $params );
 		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();

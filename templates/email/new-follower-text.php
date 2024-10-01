@@ -17,7 +17,7 @@ echo PHP_EOL;
 echo '> ' . wp_strip_all_tags( $args['follower']->get_summary() );
 echo PHP_EOL;
 // translators: %s is a URL.
-echo __( 'You can view their profile at %s', 'friends' ), esc_url( $args['url'] );
+printf( __( 'You can view their profile at %s', 'friends' ), esc_url( $args['url'] ) );
 echo PHP_EOL;
 echo PHP_EOL;
 echo __( 'Maybe you want to follow them back?', 'friends' ), ' ', esc_url( add_query_arg( 'url', $args['url'], admin_url( 'admin.php?page=add-friend' ) ) );

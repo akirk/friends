@@ -16,7 +16,7 @@
 
 <p>
 	<?php
-	echo __( 'You have a new follower:', 'friends' );
+	echo __( 'Sorry to inform you that you lost a follower:', 'friends' );
 	?>
 </p>
 
@@ -43,19 +43,10 @@
 </table>
 
 <p>
-<?php
-if ( $args['following'] ) {
-	echo esc_html__( 'You are already following them!', 'friends' );
-	echo ' ';
-	// translators: %s is a URL.
-	echo wp_kses( sprintf( __( 'Go to their <a href="%s">friends page</a> to see what they recently posted about.', 'friends' ), esc_url( $args['following']->get_local_friends_page_url() ) ), array( 'a' => array( 'href' => array() ) ) );
-} else {
-	// translators: %s is a URL.
-	echo wp_kses( sprintf( __( 'You can view their profile at %s', 'friends' ), '<a href="' . esc_url( $args['follower']->get_url() ) . '">' . esc_url( $args['follower']->get_url() ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
-	echo '</p>';
-	echo '<p>';
-	// translators: %s is a URL.
-	echo wp_kses( sprintf( __( 'Maybe you want to <a href="%s">follow them back</a>?', 'friends' ), esc_url( add_query_arg( 'url', $args['url'], admin_url( 'admin.php?page=add-friend' ) ) ) ), array( 'a' => array( 'href' => array() ) ) );
-}
-?>
+	<?php
+	// translators: %s is a time duration.
+	echo esc_html( sprintf( __( 'They have been following you for: %s', 'friends' ), $args['duration'] ) );
+	?>
 </p>
+
+

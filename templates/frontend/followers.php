@@ -43,6 +43,12 @@ Friends\Friends::template_loader()->get_template_part(
 				$data['friend_user'] = false;
 				$data['action_url'] = add_query_arg( 'url', $data['url'], admin_url( 'admin.php?page=add-friend' ) );
 			}
+			if ( ! isset( $data['followers'] ) ) {
+				$data['followers'] = '';
+			}
+			if ( ! isset( $data['following'] ) ) {
+				$data['following'] = '';
+			}
 			$follower_data['followers'][ $k ] = $data;
 		}
 		?>
