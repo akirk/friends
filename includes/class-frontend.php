@@ -791,6 +791,9 @@ class Frontend {
 		);
 
 		if ( $this->template ) {
+			global $wp_query;
+			$wp_query->is_404 = false;
+
 			status_header( 200 );
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}

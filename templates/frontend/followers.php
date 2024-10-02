@@ -6,17 +6,15 @@
  * @package Friends
  */
 
-Friends\Friends::template_loader()->get_template_part(
-	'frontend/header',
-	null,
-	array_merge(
-		$args,
-		array(
-			'title'            => __( 'Your Followers', 'friends' ),
-			'no-bottom-margin' => true,
-		)
-	)
-);
+$args['title']            = __( 'Your Followers', 'friends' );
+$args['no-bottom-margin'] = true;
+$only_mutual = false;
+if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$only_mutual = true;
+	$args['title'] = __( 'Your Mutual Followers', 'friends' );
+}
+
+Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, $args );
 
 ?>
 <section class="followers">
@@ -51,6 +49,9 @@ Friends\Friends::template_loader()->get_template_part(
 		?>
 		<p>
 		<?php
+		if ( $only_mutual ) {
+			echo ' <a href="?">';
+		}
 		echo esc_html(
 			sprintf(
 				// translators: %s is the number of followers.
@@ -58,14 +59,29 @@ Friends\Friends::template_loader()->get_template_part(
 				$total
 			)
 		);
-		echo ' ';
-		echo esc_html(
-			sprintf(
-				// translators: %s is the number of followers.
-				_n( "You're following %s of them.", "You're following %s of them.", $already_following, 'friends' ),
-				$already_following
-			)
-		);
+		if ( $only_mutual ) {
+			echo '</a> ';
+			$not_yet_following = $total - $already_following;
+
+			echo esc_html(
+				sprintf(
+					// translators: %s is the number of followers.
+					_n( "You're not yet following %s of them.", "You're not yet following %s of them.", $not_yet_following, 'friends' ),
+					$not_yet_following
+				)
+			);
+		} else {
+			echo ' <a href="?mutual">';
+			echo esc_html(
+				sprintf(
+					// translators: %s is the number of followers.
+					_n( "You're following %s of them.", "You're following %s of them.", $already_following, 'friends' ),
+					$already_following
+				)
+			);
+			echo '</a>';
+		}
+
 
 		echo ' <a href="' . esc_attr( admin_url( 'users.php?page=activitypub-followers-list' ) ) . '">';
 		esc_html_e( 'View all followers in wp-admin', 'friends' );
@@ -75,6 +91,10 @@ Friends\Friends::template_loader()->get_template_part(
 		</p><ul>
 		<?php
 		foreach ( $follower_data['followers'] as $follower ) {
+			if ( $only_mutual && ! $follower['friend_user'] ) {
+				continue;
+			}
+
 			?>
 			<li>
 				<details data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>" data-following="<?php echo esc_attr( $follower['following'] ); ?>" data-followers="<?php echo esc_attr( $follower['followers'] ); ?>"><summary><a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
