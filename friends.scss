@@ -671,14 +671,24 @@ h2#page-title a.dashicons {
 					margin-left: -1.5em;
 					margin-top: -2.1em;
 				}
+				.dashicons.dashicons-no {
+					color: #dc1717;
+					font-size: .5em;
+					margin-left: -1.5em;
+					margin-top: -2.1em;
+				}
 			}
 
 			.form-icon.loading {
 				margin-left: 1em;
 			}
 			details summary span {
-				margin-left: 1em;
+				margin-left: .5em;
 				border-bottom: 1px solid #ccc;
+				span {
+					margin-left: 0;
+					border-bottom: 0;
+				}
 			}
 		}
 	}

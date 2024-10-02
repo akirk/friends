@@ -33,6 +33,9 @@ Friends\Friends::template_loader()->get_template_part(
 			$data['css_class'] = '';
 
 			$following = Friends\User_Feed::get_by_url( $data['url'] );
+			if ( ! $following || is_wp_error( $following ) ) {
+				$following = Friends\User_Feed::get_by_url( str_replace( '@', 'users/', $data['url'] ) );
+			}
 			if ( $following && ! is_wp_error( $following ) ) {
 				++$already_following;
 				$data['friend_user'] = $following->get_friend_user();
@@ -63,6 +66,11 @@ Friends\Friends::template_loader()->get_template_part(
 				$already_following
 			)
 		);
+
+		echo ' <a href="' . esc_attr( admin_url( 'users.php?page=activitypub-followers-list' ) ) . '">';
+		esc_html_e( 'View all followers in wp-admin', 'friends' );
+		echo '</a>';
+
 		?>
 		</p><ul>
 		<?php
@@ -77,14 +85,17 @@ Friends\Friends::template_loader()->get_template_part(
 				<span class="their-following"></span>
 				&nbsp;&nbsp;
 			<?php if ( $follower['friend_user'] ) : ?>
-					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower">
+					<span class="follower" title="<?php esc_attr_e( 'Already following', 'friends' ); ?>">
 						<span class="ab-icon dashicons dashicons-businessperson" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-yes"></span></span>
-					</a>
+					</span>
 				<?php else : ?>
-					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower">
+					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower follower-add">
 						<span class="ab-icon dashicons dashicons-businessperson" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-plus"></span></span>
 					</a>
 				<?php endif; ?>
+				<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower follower-delete" title="<?php esc_attr_e( 'Remove follower', 'friends' ); ?>">
+					<span class="ab-icon dashicons dashicons-admin-users" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-no"></span></span>
+				</a>
 				<p class="description"><?php echo esc_html( $follower['summary'] ); ?></p>
 			</summary><p class="loading-posts">
 				<span><?php esc_html_e( 'Loading posts', 'friends' ); ?></span>
@@ -96,6 +107,11 @@ Friends\Friends::template_loader()->get_template_part(
 		?>
 		</ul>
 		<?php
+	} else {
+		?>
+		<p><?php esc_html_e( 'The follower list is currently dependent on the ActivityPub plugin.', 'friends' ); ?></p>
+		<?php
+
 	}
 	?>
 </section>
