@@ -609,7 +609,7 @@
 			wp.ajax.send( 'friends-preview-activitypub', {
 				data: {
 					_ajax_nonce: $this.data( 'nonce' ),
-					url: $this.find( 'a.follower-add' ).attr( 'href' ),
+					url: $this.data( 'id' ),
 					followers: $this.data('followers' ),
 					following: $this.data('following' ),
 				},
