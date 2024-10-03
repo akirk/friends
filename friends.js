@@ -625,4 +625,21 @@
 		}
 	} );
 
+	$document.on( 'click', '.follower-delete', function () {
+		const $this = $( this );
+		if ( ! confirm( friends.text_confirm_delete_follower.replace( /%s/, $this.data( 'handle' )) ) ) {
+			return false;
+		}
+		wp.ajax.send( 'friends-delete-follower', {
+			data: {
+				_ajax_nonce: $this.data( 'nonce' ),
+				id: $this.data( 'id' ),
+			},
+			success() {
+				$this.closest( 'details' ).remove();
+			},
+		} );
+		return false;
+	} );
+
 } )( jQuery, window.wp, window.friends );

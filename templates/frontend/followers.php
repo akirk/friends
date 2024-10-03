@@ -6,13 +6,14 @@
  * @package Friends
  */
 
-$args['title']            = __( 'Your Followers', 'friends' );
-$args['no-bottom-margin'] = true;
+$args['title'] = __( 'Your Followers', 'friends' );
+
 $only_mutual = false;
 if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$only_mutual = true;
 	$args['title'] = __( 'Your Mutual Followers', 'friends' );
 }
+$args['no-bottom-margin'] = true;
 
 Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, $args );
 
@@ -26,6 +27,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 		foreach ( $follower_data['followers'] as $k => $follower ) {
 			$data = $follower->to_array();
 
+			$data['guid'] = $follower->get_id();
 			$data['url'] = \ActivityPub\object_to_uri( $data['url'] );
 			$data['server'] = wp_parse_url( $data['url'], PHP_URL_HOST );
 			$data['css_class'] = '';
@@ -39,11 +41,14 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 				$data['friend_user'] = $following->get_friend_user();
 				$data['action_url'] = $following->get_friend_user()->get_local_friends_page_url();
 				$data['url'] = $following->get_friend_user()->get_local_friends_page_url();
-				$data['css_class'] = ' already-following';
+				if ( ! $only_mutual ) {
+					$data['css_class'] = ' already-following';
+				}
 			} else {
 				$data['friend_user'] = false;
 				$data['action_url'] = add_query_arg( 'url', $data['url'], admin_url( 'admin.php?page=add-friend' ) );
 			}
+			$data['remove_action_url'] = add_query_arg( 's', $data['url'], admin_url( 'users.php?page=activitypub-followers-list' ) );
 			$follower_data['followers'][ $k ] = $data;
 		}
 		?>
@@ -113,7 +118,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 						<span class="ab-icon dashicons dashicons-businessperson" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-plus"></span></span>
 					</a>
 				<?php endif; ?>
-				<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower follower-delete" title="<?php esc_attr_e( 'Remove follower', 'friends' ); ?>">
+				<a href="<?php echo esc_url( $follower['remove_action_url'] ); ?>" class="follower follower-delete" title="<?php esc_attr_e( 'Remove follower', 'friends' ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-followers' ) ); ?>" data-handle="<?php echo esc_attr( $follower['preferredUsername'] . '@' . $follower['server'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>">
 					<span class="ab-icon dashicons dashicons-admin-users" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-no"></span></span>
 				</a>
 				<p class="description"><?php echo esc_html( $follower['summary'] ); ?></p>

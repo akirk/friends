@@ -109,6 +109,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
+		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -2405,6 +2406,22 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 		return $metadata;
+	}
+
+	public function ajax_delete_follower() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error( 'error' );
+		}
+		check_ajax_referer( 'friends-followers' );
+
+		if ( ! isset( $_POST['id'] ) ) {
+			return wp_send_json_error( 'missing-id' );
+		}
+
+		if ( ! \Activitypub\Collection\Followers::remove_follower( get_current_user_id(), sanitize_text_field( wp_unslash( $_POST['id'] ) ) ) ) {
+			return wp_send_json_error( 'Follower not found' );
+		}
+		wp_send_json_success();
 	}
 
 	public function ajax_preview() {
