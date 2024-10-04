@@ -242,6 +242,9 @@ class Frontend {
 				'current_page'       => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
 				'max_page'           => $wp_query->max_num_pages,
 			);
+
+			// translators: %s is a user handle.
+			$variables['text_confirm_delete_follower'] = __( 'Do you really want to delete the follower %s?', 'friends' );
 			wp_localize_script( 'friends', 'friends', $variables );
 
 			$handle = 'friends';
@@ -791,6 +794,9 @@ class Frontend {
 		);
 
 		if ( $this->template ) {
+			global $wp_query;
+			$wp_query->is_404 = false;
+
 			status_header( 200 );
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}

@@ -6,17 +6,16 @@
  * @package Friends
  */
 
-Friends\Friends::template_loader()->get_template_part(
-	'frontend/header',
-	null,
-	array_merge(
-		$args,
-		array(
-			'title'            => __( 'Your Followers', 'friends' ),
-			'no-bottom-margin' => true,
-		)
-	)
-);
+$args['title'] = __( 'Your Followers', 'friends' );
+
+$only_mutual = false;
+if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$only_mutual = true;
+	$args['title'] = __( 'Your Mutual Followers', 'friends' );
+}
+$args['no-bottom-margin'] = true;
+
+Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, $args );
 
 ?>
 <section class="followers">
@@ -33,21 +32,30 @@ Friends\Friends::template_loader()->get_template_part(
 			$data['css_class'] = '';
 
 			$following = Friends\User_Feed::get_by_url( $data['url'] );
+			if ( ! $following || is_wp_error( $following ) ) {
+				$following = Friends\User_Feed::get_by_url( str_replace( '@', 'users/', $data['url'] ) );
+			}
 			if ( $following && ! is_wp_error( $following ) ) {
 				++$already_following;
 				$data['friend_user'] = $following->get_friend_user();
 				$data['action_url'] = $following->get_friend_user()->get_local_friends_page_url();
 				$data['url'] = $following->get_friend_user()->get_local_friends_page_url();
-				$data['css_class'] = ' already-following';
+				if ( ! $only_mutual ) {
+					$data['css_class'] = ' already-following';
+				}
 			} else {
 				$data['friend_user'] = false;
 				$data['action_url'] = add_query_arg( 'url', $data['url'], admin_url( 'admin.php?page=add-friend' ) );
 			}
+			$data['remove_action_url'] = add_query_arg( 's', $data['url'], admin_url( 'users.php?page=activitypub-followers-list' ) );
 			$follower_data['followers'][ $k ] = $data;
 		}
 		?>
 		<p>
 		<?php
+		if ( $only_mutual ) {
+			echo ' <a href="?">';
+		}
 		echo esc_html(
 			sprintf(
 				// translators: %s is the number of followers.
@@ -55,21 +63,45 @@ Friends\Friends::template_loader()->get_template_part(
 				$total
 			)
 		);
-		echo ' ';
-		echo esc_html(
-			sprintf(
-				// translators: %s is the number of followers.
-				_n( "You're following %s of them.", "You're following %s of them.", $already_following, 'friends' ),
-				$already_following
-			)
-		);
+		if ( $only_mutual ) {
+			echo '</a> ';
+			$not_yet_following = $total - $already_following;
+
+			echo esc_html(
+				sprintf(
+					// translators: %s is the number of followers.
+					_n( "You're not yet following %s of them.", "You're not yet following %s of them.", $not_yet_following, 'friends' ),
+					$not_yet_following
+				)
+			);
+		} else {
+			echo ' <a href="?mutual">';
+			echo esc_html(
+				sprintf(
+					// translators: %s is the number of followers.
+					_n( "You're following %s of them.", "You're following %s of them.", $already_following, 'friends' ),
+					$already_following
+				)
+			);
+			echo '</a>';
+		}
+
+
+		echo ' <a href="' . esc_attr( admin_url( 'users.php?page=activitypub-followers-list' ) ) . '">';
+		esc_html_e( 'View all followers in wp-admin', 'friends' );
+		echo '</a>';
+
 		?>
 		</p><ul>
 		<?php
 		foreach ( $follower_data['followers'] as $follower ) {
+			if ( $only_mutual && ! $follower['friend_user'] ) {
+				continue;
+			}
+
 			?>
 			<li>
-				<details data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>" data-following="<?php echo esc_attr( $follower['following'] ); ?>" data-followers="<?php echo esc_attr( $follower['followers'] ); ?>"><summary><a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
+				<details data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>" data-following="<?php echo esc_attr( $follower['following'] ); ?>" data-followers="<?php echo esc_attr( $follower['followers'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>"><summary><a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
 					<img width="40" height="40" src="<?php echo esc_attr( $follower['icon']['url'] ); ?>" class="avatar activitypub-avatar" />
 					<span class="activitypub-actor"><strong class="activitypub-name"><?php echo esc_html( $follower['name'] ); ?></strong> (<span class="activitypub-handle">@<?php echo esc_html( $follower['preferredUsername'] . '@' . $follower['server'] ); ?></span>)</span></a>
 				<span class="since">since <?php echo esc_html( $follower['published'] ); ?></span>
@@ -77,14 +109,17 @@ Friends\Friends::template_loader()->get_template_part(
 				<span class="their-following"></span>
 				&nbsp;&nbsp;
 			<?php if ( $follower['friend_user'] ) : ?>
-					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower">
+					<span class="follower" title="<?php esc_attr_e( 'Already following', 'friends' ); ?>">
 						<span class="ab-icon dashicons dashicons-businessperson" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-yes"></span></span>
-					</a>
+					</span>
 				<?php else : ?>
-					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower">
+					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower follower-add">
 						<span class="ab-icon dashicons dashicons-businessperson" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-plus"></span></span>
 					</a>
 				<?php endif; ?>
+				<a href="<?php echo esc_url( $follower['remove_action_url'] ); ?>" class="follower follower-delete" title="<?php esc_attr_e( 'Remove follower', 'friends' ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-followers' ) ); ?>" data-handle="<?php echo esc_attr( $follower['preferredUsername'] . '@' . $follower['server'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>">
+					<span class="ab-icon dashicons dashicons-admin-users" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-no"></span></span>
+				</a>
 				<p class="description"><?php echo esc_html( $follower['summary'] ); ?></p>
 			</summary><p class="loading-posts">
 				<span><?php esc_html_e( 'Loading posts', 'friends' ); ?></span>
@@ -96,6 +131,11 @@ Friends\Friends::template_loader()->get_template_part(
 		?>
 		</ul>
 		<?php
+	} else {
+		?>
+		<p><?php esc_html_e( 'The follower list is currently dependent on the ActivityPub plugin.', 'friends' ); ?></p>
+		<?php
+
 	}
 	?>
 </section>

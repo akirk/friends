@@ -11,6 +11,16 @@ if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerificatio
 	$_search = sanitize_text_field( wp_unslash( $_GET['s'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 }
 
+add_filter(
+	'document_title_parts',
+	function ( $title ) use ( $args ) {
+		if ( isset( $args['title'] ) ) {
+			$title['title'] = $args['title'];
+		}
+		return $title;
+	}
+);
+
 ?><!DOCTYPE html>
 <html <?php language_attributes(); ?> class="no-js no-svg">
 <head>
