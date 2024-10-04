@@ -479,9 +479,14 @@ class Frontend {
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		if ( ! empty( $_SERVER['HTTP_X_REQUESTED_WITH'] ) && strtolower( $_SERVER['HTTP_X_REQUESTED_WITH'] ) === 'xmlhttprequest' ) {
 			echo esc_html( $result );
-		} elseif ( ! empty( $_SERVER['HTTP_REFERER'] ) ) {
-			wp_safe_redirect( remove_query_arg( 'in_reply_to', add_query_arg( 'result', $result, $_SERVER['HTTP_REFERER'] ) ) );
+			exit;
 		}
+
+		if ( ! empty( $_SERVER['HTTP_REFERER'] ) ) {
+			wp_safe_redirect( remove_query_arg( 'in_reply_to', add_query_arg( 'result', $result, $_SERVER['HTTP_REFERER'] ) ) );
+			exit;
+		}
+		wp_safe_redirect( home_url( '/friends/' ) );
 		exit;
 		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
