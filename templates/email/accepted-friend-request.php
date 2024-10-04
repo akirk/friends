@@ -10,7 +10,7 @@
 <p>
 	<?php
 	// translators: %s is a user display name.
-		printf( __( 'Howdy, %s!', 'friends' ), esc_html( $args['user']->display_name ) );
+		printf( __( 'Hi %s!', 'friends' ), esc_html( $args['user']->display_name ) );
 	?>
 </p>
 
