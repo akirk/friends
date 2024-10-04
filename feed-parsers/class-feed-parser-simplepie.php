@@ -286,7 +286,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 				'gravatar'      => 'gravatar',
 				'comment_count' => 'comments',
 				'status'        => 'post-status',
-				'format'        => 'post-format',
+				'post_format'   => 'post-format',
 				'id'            => 'post-id',
 			) as $key => $lookup_key ) {
 				foreach ( array( Feed::XMLNS, 'com-wordpress:feed-additions:1' ) as $xmlns ) {

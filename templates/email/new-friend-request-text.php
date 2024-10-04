@@ -7,7 +7,7 @@
  */
 
 // translators: %s is a user display name.
-printf( __( 'Howdy, %s!', 'friends' ), $args['user']->display_name );
+printf( __( 'Hi %s!', 'friends' ), $args['user']->display_name );
 echo PHP_EOL;
 
 // translators: %s is a username.
@@ -21,6 +21,3 @@ echo PHP_EOL . PHP_EOL;
 echo self_admin_url( 'users.php?role=friend_request' );
 
 echo PHP_EOL . PHP_EOL;
-
-// translators: %s is a site name.
-printf( __( 'This notification was sent by the Friends plugin on %s.', 'friends' ), get_option( 'blogname' ) );

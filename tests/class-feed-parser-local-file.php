@@ -16,6 +16,7 @@ namespace Friends;
  * This is the class for testing feed parsing.
  */
 class Feed_Parser_Local_File extends Feed_Parser_SimplePie {
+	const SLUG = 'local';
 	/**
 	 * Constructor.
 	 *

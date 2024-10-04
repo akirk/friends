@@ -41,11 +41,15 @@ class Notifications {
 	private function register_hooks() {
 		add_filter( 'friends_rewrite_mail_html', array( $this, 'rewrite_mail_html' ) );
 		add_filter( 'friends_rewrite_mail_html', array( $this, 'highlight_keywords' ), 10, 2 );
-		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 2 );
-		add_filter( 'notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
+		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 3 );
+		add_filter( 'friends_notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
+		if ( ! get_user_option( 'friends_no_friend_follower_notification' ) ) {
+			add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
+			add_action( 'activitypub_followers_pre_remove_follower', array( $this, 'activitypub_followers_pre_remove_follower' ), 10, 3 );
+		}
 	}
 
 	/**
@@ -83,10 +87,11 @@ class Notifications {
 	/**
 	 * Notify the users of this site about a new friend post
 	 *
-	 * @param  \WP_Post  $post The new post by a friend or subscription.
-	 * @param  User_Feed $user_feed The feed where the post came from.
+	 * @param  \WP_Post     $post The new post by a friend or subscription.
+	 * @param  User_Feed    $user_feed The feed where the post came from.
+	 * @param  string|false $keyword If a post matched a keyword, the keyword is specified.
 	 */
-	public function notify_new_friend_post( \WP_Post $post, User_Feed $user_feed ) {
+	public function notify_new_friend_post( \WP_Post $post, User_Feed $user_feed, $keyword ) {
 		if (
 			// Post might be trashed through rules.
 			'trash' === $post->post_status
@@ -104,13 +109,28 @@ class Notifications {
 		}
 		$author = $user_feed->get_friend_user();
 
+		if ( ! get_post_format( $post ) ) {
+			$post_format = 'standard';
+		} else {
+			$post_format = get_post_format( $post );
+		}
+
 		$notify_user = ! get_user_option( 'friends_no_new_post_notification', $user->ID );
 		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_notification_' . $author->user_login, $user->ID );
+		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_format_notification_' . $post_format, $user->ID );
+		$notify_user = $notify_user && ! get_user_option( 'friends_no_new_post_by_parser_notification_' . $user_feed->get_parser(), $user->ID );
+
+		// If the post would notify anyway and it was a keyword match, notify that way.
+		if ( $notify_user && $keyword && get_user_option( 'friends_keyword_notification_override_disabled', $user->ID ) ) {
+			add_filter( 'get_user_option_friends_keyword_notification_override_disabled', '__return_false' );
+			$this->notify_keyword_match_post( false, $post, $keyword );
+			remove_filter( 'get_user_option_friends_keyword_notification_override_disabled', '__return_false' );
+			return;
+		}
 
 		if ( ! apply_filters( 'notify_user_about_friend_post', $notify_user, $user, $post, $author ) ) {
 			return;
 		}
-
 		$email_title = $post->post_title;
 
 		$params = array(
@@ -155,6 +175,11 @@ class Notifications {
 			return $notified;
 		}
 		$notify_user = ! get_user_option( 'friends_no_keyword_notification_' . $post->post_author, $user->ID );
+		// If the override was disabled, don't notify. This could be temporarily disabled later.
+
+		if ( $notify_user && get_user_option( 'friends_keyword_notification_override_disabled', $user->ID ) ) {
+			return $notified;
+		}
 
 		if ( ! apply_filters( 'notify_user_about_keyword_post', $notify_user, $user, $post, $keyword ) ) {
 			return $notified;
@@ -325,6 +350,127 @@ class Notifications {
 
 		ob_start();
 		Friends::template_loader()->get_template_part( 'email/friend-message-received-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
+	}
+
+	/**
+	 * Notify of a follower
+	 *
+	 * @param string                     $actor    The Actor URL.
+	 * @param array                      $activitypub_object   The Activity object.
+	 * @param int                        $user_id  The ID of the WordPress User.
+	 * @param Activitypub\Model\Follower $follower The Follower object.
+	 *
+	 * @return void
+	 */
+	public function activitypub_followers_post_follow( $actor, $activitypub_object, $user_id, $follower ) {
+		$user = new User( $user_id );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
+		if ( ! $user->user_email ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'notify_user_about_new_follower', true, $user, $actor, $activitypub_object, $follower ) ) {
+			return;
+		}
+
+		$url = \ActivityPub\object_to_uri( $follower->get( 'id' ) );
+		$server = wp_parse_url( $url, PHP_URL_HOST );
+		$following = User_Feed::get_by_url( $url );
+		if ( ! $following || is_wp_error( $following ) ) {
+			$following = User_Feed::get_by_url( $follower->get_url() );
+		}
+		if ( $following && ! is_wp_error( $following ) ) {
+			$following = $following->get_friend_user();
+		} else {
+			$following = false;
+		}
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( 'New Follower: %s', 'friends' ), $follower->get_name() . '@' . $server );
+
+		$params = array(
+			'user'      => $user,
+			'url'       => $url,
+			'follower'  => $follower,
+			'server'    => $server,
+			'following' => $following,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/new-follower', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/new-follower-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
+	}
+
+	/**
+	 * Notify of a lost follower
+	 *
+	 * @param string                     $actor    The Actor URL.
+	 * @param int                        $user_id  The ID of the WordPress User.
+	 * @param Activitypub\Model\Follower $follower The Follower object.
+	 *
+	 * @return void
+	 */
+	public function activitypub_followers_pre_remove_follower( $actor, $user_id, $follower ) {
+		$user = new User( $user_id );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
+		if ( ! $user->user_email ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'notify_user_about_lost_follower', true, $user, $actor, $follower ) ) {
+			return;
+		}
+
+		$url = \ActivityPub\object_to_uri( $follower->get( 'id' ) );
+		$server = wp_parse_url( $url, PHP_URL_HOST );
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( 'Lost Follower: %s', 'friends' ), $follower->get_name() . '@' . $server );
+
+		$params = array(
+			'user'     => $user,
+			'url'      => $url,
+			'follower' => $follower,
+			'server'   => $server,
+			'duration' => human_time_diff( strtotime( $follower->get_published() ) ) . ' (' . sprintf(
+				// translators: %s is a time duration.
+				__( 'since %s', 'friends' ),
+				$follower->get_published()
+			) . ')',
+
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/lost-follower', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/lost-follower-text', null, $params );
 		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();

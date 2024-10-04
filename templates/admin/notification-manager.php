@@ -6,8 +6,22 @@
  * @package Friends
  */
 
+$disabled_post_formats = array();
+foreach ( get_post_format_strings() as $post_format => $label ) {
+	if ( get_user_option( 'friends_no_new_post_format_notification_' . $post_format ) ) {
+		$disabled_post_formats[] = $post_format;
+	}
+}
+$disabled_feed_parsers = array();
+foreach ( $args['feed_parsers'] as $feed_parser => $label ) {
+	if ( get_user_option( 'friends_no_new_post_by_parser_notification_' . $feed_parser ) ) {
+		$disabled_feed_parsers[] = $feed_parser;
+	}
+}
+
 ?><form method="post">
 	<?php wp_nonce_field( 'notification-manager' ); ?>
+	<p class="explanation"><?php esc_html_e( 'The settings on this page apply just to you, other users can configure their own settings.', 'friends' ); ?></p>
 	<table class="form-table">
 		<tbody>
 			<tr>
@@ -23,12 +37,72 @@
 							<span><?php esc_html_e( 'Friend Requests', 'friends' ); ?></span>
 						</label>
 						<br />
+						<?php if ( isset( $args['no_friend_follower_notification'] ) ) : ?>
+						<label for="friend_follower_notification">
+							<input name="friend_follower_notification" type="checkbox" id="friend_follower_notification" value="1" <?php checked( '1', ! $args['no_friend_follower_notification'] ); ?>>
+							<span><?php esc_html_e( 'New Followers', 'friends' ); ?></span>
+							<span><?php esc_html_e( '(via ActivityPub)', 'friends' ); ?></span>
+						</label>
+						<br />
+						<?php endif; ?>
 						<label for="new_post_notification">
 							<input name="new_post_notification" type="checkbox" id="new_post_notification" value="1" <?php checked( '1', ! $args['no_new_post_notification'] ); ?>>
 							<span><?php esc_html_e( 'New Posts', 'friends' ); ?></span>
 						</label>
 					</fieldset>
 					<p class="description"><?php esc_html_e( 'When you disable post notifications, their individual configuration is disabled also.', 'friends' ); ?></p>
+
+					<details class="options">
+						<summary>
+							<?php echo esc_html( _x( 'By Post Format', 'e-mail notifications', 'friends' ) ); ?>
+							<?php
+							if ( count( $disabled_post_formats ) > 0 ) {
+								echo esc_html(
+									sprintf(
+										// translators: %d: number of selected post formats.
+										_n( '(%d disabled)', '(%d disabled)', count( $disabled_post_formats ), 'friends' ),
+										count( $disabled_post_formats )
+									)
+								);
+							}
+							?>
+						</summary>
+						<fieldset>
+							<?php foreach ( get_post_format_strings() as $post_format => $label ) : ?>
+								<label>
+									<input name="new_post_format_notification_<?php echo esc_attr( $post_format ); ?>" type="checkbox" id="new_post_format_notification_<?php echo esc_attr( $post_format ); ?>" value="1" <?php checked( ! in_array( $post_format, $disabled_post_formats ) ); ?>>
+									<span><?php echo esc_html( $label ); ?></span>
+								</label>
+							<?php endforeach; ?>
+						</fieldset>
+					</details>
+					<p class="description"><?php esc_html_e( 'You can disable notifications for posts in specific post formats.', 'friends' ); ?></p>
+
+					<details class="options">
+						<summary>
+							<?php echo esc_html( _x( 'By Feed Parser', 'e-mail notifications', 'friends' ) ); ?>
+							<?php
+							if ( count( $disabled_feed_parsers ) > 0 ) {
+								echo esc_html(
+									sprintf(
+										// translators: %d: number of selected feed parsers.
+										_n( '(%d disabled)', '(%d disabled)', count( $disabled_feed_parsers ), 'friends' ),
+										count( $disabled_feed_parsers )
+									)
+								);
+							}
+							?>
+							</summary>
+						<fieldset>
+							<?php foreach ( $args['feed_parsers'] as $feed_parser => $label ) : ?>
+								<label>
+									<input name="new_post_by_parser_notification_<?php echo esc_attr( $feed_parser ); ?>" type="checkbox" id="new_post_by_parser_notification_<?php echo esc_attr( $feed_parser ); ?>" value="1" <?php checked( ! in_array( $feed_parser, $disabled_feed_parsers ) ); ?>>
+									<span><?php echo wp_kses( $label, array() ); ?></span>
+								</label>
+							<?php endforeach; ?>
+						</fieldset>
+					</details>
+					<p class="description"><?php esc_html_e( 'You can disable notifications for posts arriving with specific feed parsers.', 'friends' ); ?></p>
 				</td>
 			</tr>
 			<tr>
@@ -39,6 +113,11 @@
 				</th>
 				<td>
 					<fieldset>
+						<label>
+							<input name="keyword_notification_override" type="checkbox" id="keyword_notification_override" value="1" <?php checked( ! $args['keyword_override_disabled'] ); ?>>
+							<span><?php esc_html_e( 'Notify about matching keywords even if disabled above', 'friends' ); ?></span>
+						</label>
+						<p class="description"><?php esc_html_e( 'For example, even if you disabled post notifications, you can still get notified about posts containing specific keywords.', 'friends' ); ?></p>
 
 						<ol id="keyword-notifications">
 							<li id="keyword-template" style="display: none">
