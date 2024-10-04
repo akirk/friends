@@ -794,7 +794,36 @@ class Friends {
 		}
 
 		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
-		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
+		if ( count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0] ) {
+			return true;
+		}
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( implode( '/', array_slice( $pagename_parts, 0, 2 ) ) === 'wp-admin/customize.php' && isset( $_REQUEST['url'] ) ) {
+			$pagename_parts = explode( '/', trim( str_replace( '://', '', wp_unslash( $_REQUEST['url'] ) ), '/' ) );
+			if ( count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[1] ) {
+				return true;
+			}
+		}
+
+		if ( implode( '/', array_slice( $pagename_parts, 0, 2 ) ) === 'wp-admin/site-editor.php' && isset( $_REQUEST['postId'] ) ) {
+			$pagename_parts = explode( '//', wp_unslash( $_REQUEST['postId'] ) );
+			if ( count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0] ) {
+				return true;
+			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( implode( '/', array_slice( $pagename_parts, 0, 5 ) ) === 'wp-json/wp/v2/templates/friends' ) {
+			return true;
+		}
+
+		if ( implode( '/', array_slice( $pagename_parts, 0, 5 ) ) === 'wp-json/wp/v2/template-parts/friends' ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
