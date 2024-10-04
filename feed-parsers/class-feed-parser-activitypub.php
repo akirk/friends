@@ -627,12 +627,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$outbox = json_decode( wp_remote_retrieve_body( $response ), true );
 
-		if ( ! isset( $outbox['type'] ) || 'OrderedCollection' !== $outbox['type'] ) {
+		if ( ! isset( $outbox['orderedItems'] ) ) {
 			if ( ! isset( $outbox['first'] ) ) {
 				return new \WP_Error( 'activitypub_could_not_find_outbox_first_page', null, compact( 'url', 'meta', 'outbox' ) );
 			}
 
-			$response = \Activitypub\safe_remote_get( $outbox_page['first'], Friends::get_main_friend_user_id() );
+			$response = \Activitypub\safe_remote_get( $outbox['first'], Friends::get_main_friend_user_id() );
 			if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 				return new \WP_Error(
 					'activitypub_could_not_get_outbox',
