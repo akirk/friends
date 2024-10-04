@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 2.9.9
+- Stable tag: 3.0.0
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,13 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.0.0
+- Show Mutual Followers and allow removing of followers ([#359])
+- Add an e-mail notification for new and lost followers ([#358])
+- Add the ability to disable notifications per post format and feed parser ([#357])
+- Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
+- Improve ghost.org ActivityPub compatibility ([#356])
+
 ### 2.9.9
 - Avoid fatal when no user login can be found during boosting ([#355])
 - A small update of a filter for Enable Mastodon Apps 0.9.8
@@ -129,6 +136,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix the all postids query ([#335])
 - Don't define a wp-editor dependency ([#332])
 
+[#359]: https://github.com/akirk/friends/pull/359
+[#358]: https://github.com/akirk/friends/pull/358
+[#357]: https://github.com/akirk/friends/pull/357
+[#361]: https://github.com/akirk/friends/pull/361
+[#356]: https://github.com/akirk/friends/pull/356
 [#355]: https://github.com/akirk/friends/pull/355
 [#354]: https://github.com/akirk/friends/pull/354
 [#353]: https://github.com/akirk/friends/pull/353
