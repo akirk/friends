@@ -19,6 +19,13 @@ namespace Friends;
  */
 class Logging {
 	/**
+	 * The custom post type for logging.
+	 *
+	 * @var string
+	 */
+	const CPT = 'friends_log';
+
+	/**
 	 * Contains a reference to the Friends class.
 	 *
 	 * @var Friends
@@ -36,11 +43,47 @@ class Logging {
 	}
 
 	/**
+	 * Register the custom post type for logging.
+	 */
+	private function register_post_type() {
+		$args = array(
+			'labels'       => array(
+				'name'          => __( 'Friends Logs', 'friends' ),
+				'singular_name' => __( 'Friends Log', 'friends' ),
+			),
+			'public'       => false,
+			'show_ui'      => false,
+			'show_in_menu' => false,
+			'supports'     => array( 'title', 'editor' ),
+		);
+		register_post_type( self::CPT, $args );
+
+		register_post_meta(
+			self::CPT,
+			'type',
+			array(
+				'type'   => 'string',
+				'single' => true,
+			)
+		);
+		register_post_meta(
+			self::CPT,
+			'module',
+			array(
+				'type'   => 'string',
+				'single' => true,
+			)
+		);
+	}
+
+	/**
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
+		add_action( 'init', array( $this, 'register_post_type' ) );
 		add_action( 'friends_retrieved_new_posts', array( $this, 'log_feed_successfully_fetched' ), 10, 3 );
 		add_action( 'friends_retrieve_friends_error', array( $this, 'log_feed_error' ), 10, 2 );
+		add_action( 'friends_log', array( $this, 'log_entry' ), 10, 2 );
 	}
 
 	/**
@@ -71,5 +114,42 @@ class Logging {
 	 */
 	public function log_feed_error( User_Feed $user_feed, $error ) {
 		$user_feed->update_last_log( $error->get_error_message() );
+	}
+
+	/**
+	 * Save a log message.
+	 *
+	 * @param     string $type    The type of log message.
+	 * @param     string $message The message.
+	 * @param     string $details The details of the log message.
+	 * @param     string $module  The module that generated the log message.
+	 * @param     int    $user_id The ID of the user that generated the log message.
+	 * @return    int    The ID of the log post.
+	 */
+	public static function log( $type, $message, $details, $module, $user_id ) {
+		$post_id = wp_insert_post(
+			array(
+				'post_type'    => self::CPT,
+				'post_title'   => $message,
+				'post_content' => $details,
+				'post_author'  => $user_id,
+				'post_status'  => 'publish',
+			)
+		);
+
+		add_post_meta( $post_id, 'type', $type );
+		add_post_meta( $post_id, 'module', $module );
+
+		return $post_id;
+	}
+
+	public static function get_logs() {
+		$logs = get_posts(
+			array(
+				'post_type'      => self::CPT,
+				'posts_per_page' => 100,
+			)
+		);
+		return $logs;
 	}
 }

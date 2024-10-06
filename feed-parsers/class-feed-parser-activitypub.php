@@ -1823,6 +1823,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+		$type = 'like';
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Liked %s', 'friends' ),
+			'<a href="' . esc_url( $external_post_id ) . '">' . $external_post_id . '</a>'
+		);
+		$details = array(
+			'actor'  => $actor,
+			'object' => $external_post_id,
+		);
+
+		Logging::log( 'like', $message, $details, self::SLUG, $user_id );
 	}
 
 	/**
@@ -2108,6 +2120,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		foreach ( $inboxes as $inbox ) {
 			\Activitypub\safe_remote_post( $inbox, $json, $user_id );
 		}
+
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Announced %s', 'friends' ),
+			'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+		);
+
+		$details = array(
+			'url'     => $url,
+			'inboxes' => count( $inboxes ),
+		);
+
+		Logging::log( 'announce', $message, $details, self::SLUG, $user_id );
 	}
 
 	/**
