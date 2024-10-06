@@ -1331,7 +1331,7 @@ class Admin {
 
 			$show_on_dashboard = filter_input( INPUT_POST, 'show_on_dashboard', FILTER_VALIDATE_BOOLEAN );
 			$already_on_dashboard = false;
-			$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
+			$widgets = get_user_option( 'friends_dashboard_widgets', get_current_user_id() );
 			if ( ! $widgets ) {
 				$widgets = array();
 			}
@@ -1488,12 +1488,13 @@ class Admin {
 		$friend = $this->check_admin_edit_friend();
 
 		$already_on_dashboard = false;
-		$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
+		$widgets = get_user_option( 'friends_dashboard_widgets', get_current_user_id() );
+
 		if ( ! $widgets ) {
 			$widgets = array();
 		}
 		foreach ( $widgets as $widget ) {
-			if ( $widget['friend'] === $friend->user_login ) {
+			if ( ! empty( $widget['friend'] ) && $widget['friend'] === $friend->user_login ) {
 				$already_on_dashboard = true;
 				break;
 			}
