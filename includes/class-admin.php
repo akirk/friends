@@ -2687,8 +2687,14 @@ class Admin {
 		if ( 'friends_posts' !== $column_name ) {
 			return $output;
 		}
-		$numposts = count_user_posts( $user_id, apply_filters( 'friends_frontend_post_types', array( 'post' ) ) );
 		$user = User::get_user_by_id( $user_id );
+		if ( ! $user ) {
+			return $output;
+		}
+
+		$post_status_counts = $user->get_post_count_by_post_format();
+		$numposts = array_sum( $post_status_counts );
+
 		return sprintf(
 			'<a href="%s" class="edit"><span aria-hidden="true">%s</span><span class="screen-reader-text">%s</span></a>',
 			$user ? $user->get_local_friends_page_url() : "edit.php?author={$user_id}",
