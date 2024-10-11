@@ -251,7 +251,24 @@ class User_Feed {
 	 * @return string The next poll date.
 	 */
 	public function get_next_poll() {
-		return self::validate_next_poll( get_metadata( 'term', $this->term->term_id, 'next-poll', true ) );
+		return self::validate_poll_date( get_metadata( 'term', $this->term->term_id, 'next-poll', true ) );
+	}
+
+	/**
+	 * Whether the feed poll has been started within the last 60 seconds.
+	 *
+	 * @return bool Is the feed currently being polled?
+	 */
+	public function can_be_polled_now() {
+		$polling_now = get_metadata( 'term', $this->term->term_id, 'last-poll', true ) > gmdate( 'Y-m-d H:i:s', time() - 60 );
+		// Explicitly use time() to allow mocking it inside the namespace.
+		$due = gmdate( 'Y-m-d H:i:s', time() ) >= $this->get_next_poll();
+		return $due && ! $polling_now;
+	}
+
+	public function set_polling_now() {
+		// Explicitly use time() to allow mocking it inside the namespace.
+		$this->update_metadata( 'last-poll', gmdate( 'Y-m-d H:i:s', time() ) );
 	}
 
 	public function was_polled() {
@@ -362,17 +379,17 @@ class User_Feed {
 	}
 
 	/**
-	 * Validates the next poll date.
+	 * Validates a poll date.
 	 *
-	 * @param  string $next_poll The poll date to be validated.
+	 * @param  string $poll_date The poll date to be validated.
 	 * @return string           A validated poll date.
 	 */
-	public static function validate_next_poll( $next_poll ) {
-		if ( ! preg_match( '/^2\d{3}-[01]\d-[0123]\d [012]\d:[0-5]\d:[0-5]\d$/', $next_poll ) ) {
+	public static function validate_poll_date( $poll_date ) {
+		if ( ! preg_match( '/^2\d{3}-[01]\d-[0123]\d [012]\d:[0-5]\d:[0-5]\d$/', $poll_date ) ) {
 			// Explicitly use time() to allow mocking it inside the namespace.
 			return gmdate( 'Y-m-d H:i:s', time() );
 		}
-		return $next_poll;
+		return $poll_date;
 	}
 
 	/**
@@ -507,7 +524,17 @@ class User_Feed {
 			array(
 				'type'              => 'string',
 				'single'            => true,
-				'sanitize_callback' => array( __CLASS__, 'validate_next_poll' ),
+				'sanitize_callback' => array( __CLASS__, 'validate_poll_date' ),
+			)
+		);
+
+		register_term_meta(
+			self::TAXONOMY,
+			'last-poll',
+			array(
+				'type'              => 'string',
+				'single'            => true,
+				'sanitize_callback' => array( __CLASS__, 'validate_last_poll' ),
 			)
 		);
 
@@ -697,13 +724,13 @@ class User_Feed {
 	}
 
 	/**
-	 * Get the feed with a specific URL.
+	 * Get all feeds due.
 	 *
-	 * @param      bool $also_undue     Whether to get also undue feeds.
+	 * @param      bool $ignore_due_date     Whether to get also undue feeds.
 	 *
 	 * @return     object|\WP_Error   A User_Feed object.
 	 */
-	public static function get_all_due( $also_undue = false ) {
+	public static function get_all_due( $ignore_due_date = false ) {
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,
@@ -716,7 +743,7 @@ class User_Feed {
 		foreach ( $term_query->get_terms() as $term ) {
 			$feed = new self( $term );
 			// Explicitly use time() to allow mocking it inside the namespace.
-			if ( $also_undue || gmdate( 'Y-m-d H:i:s', time() ) >= $feed->get_next_poll() ) {
+			if ( $ignore_due_date || gmdate( 'Y-m-d H:i:s', time() ) >= $feed->get_next_poll() ) {
 				$due_feeds[] = $feed;
 			}
 		}

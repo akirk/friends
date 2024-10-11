@@ -67,6 +67,12 @@ class Virtual_User_Feed extends User_Feed {
 	public function was_polled() {
 		return false;
 	}
+	public function can_be_polled_now() {
+		return true;
+	}
+	public function set_polling_now() {
+		return true;
+	}
 	public function activate() {
 		return true;
 	}
