@@ -97,6 +97,11 @@
 			overflow-wrap: break-word;
 		}
 
+		mark {
+			background-color: #ff0;
+			color: #000;
+		}
+
 		hr {
 			border: 0;
 			margin-top: 1.5em;
