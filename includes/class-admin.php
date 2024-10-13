@@ -2827,6 +2827,10 @@ class Admin {
 			$on_my_own_site = true;
 		}
 
+		if ( ! $my_url ) {
+			return;
+		}
+
 		if ( ! $on_my_own_site && $my_own_site ) {
 			switch_to_blog( $my_own_site->blog_id );
 		}
@@ -3126,6 +3130,9 @@ class Admin {
 	}
 
 	public function add_dashboard_widgets() {
+		if ( ! Friends::has_required_privileges() ) {
+			return;
+		}
 		$user_id = get_current_user_id();
 		$widgets = get_user_option( 'friends_dashboard_widgets', $user_id );
 		if ( ! $widgets ) {
