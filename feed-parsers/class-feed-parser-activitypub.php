@@ -1797,10 +1797,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$inbox = self::get_inbox_by_actor( $url, $type );
-		if ( is_wp_error( $inbox ) ) {
-			return $inbox;
-		}
 		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -1810,8 +1806,34 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_actor( $actor );
 		$activity->set_object( $external_post_id );
 		$activity->set_id( $actor . '#like-' . \preg_replace( '~^https?://~', '', $external_post_id ) );
-		$activity = $activity->to_json();
-		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
+		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
+
+		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+		$inboxes = array_unique( $inboxes );
+
+		if ( empty( $inboxes ) ) {
+			$message = sprintf(
+				// translators: %s is the URL of the post.
+				__( 'Like failed for %s', 'friends' ),
+				'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+			);
+
+			$details = array(
+				'url'   => $url,
+				'error' => __( 'No inboxes to send to.', 'friends' ),
+			);
+
+			Logging::log( 'like-failed', $message, $details, self::SLUG, $user_id );
+			return;
+		}
+
+		$json = $activity->to_json();
+
+		$report = array();
+		foreach ( $inboxes as $inbox ) {
+			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
+		}
 
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( $user_feed instanceof User_Feed ) {
@@ -1823,6 +1845,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+		$type = 'like';
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Liked %s', 'friends' ),
+			'<a href="' . esc_url( $external_post_id ) . '">' . $external_post_id . '</a>'
+		);
+		$details = array(
+			'actor'   => $actor,
+			'url'     => $external_post_id,
+			'inboxes' => $report,
+		);
+
+		Logging::log( 'like', $message, $details, self::SLUG, $user_id );
 	}
 
 	/**
@@ -1882,10 +1917,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$inbox = self::get_inbox_by_actor( $url, $type );
-		if ( is_wp_error( $inbox ) ) {
-			return $inbox;
-		}
 		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -1902,8 +1933,33 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			)
 		);
 		$activity->set_id( $actor . '#unlike-' . \preg_replace( '~^https?://~', '', $external_post_id ) );
-		$activity = $activity->to_json();
-		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
+
+		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+		$inboxes = array_unique( $inboxes );
+
+		if ( empty( $inboxes ) ) {
+			$message = sprintf(
+				// translators: %s is the URL of the post.
+				__( 'Unlike failed for %s', 'friends' ),
+				'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+			);
+
+			$details = array(
+				'url'   => $url,
+				'error' => __( 'No inboxes to send to.', 'friends' ),
+			);
+
+			Logging::log( 'unlike-failed', $message, $details, self::SLUG, $user_id );
+			return;
+		}
+
+		$json = $activity->to_json();
+
+		$report = array();
+		foreach ( $inboxes as $inbox ) {
+			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
+		}
 
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( $user_feed instanceof User_Feed ) {
@@ -1915,6 +1971,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+		$type = 'unlike';
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Unliked %s', 'friends' ),
+			'<a href="' . esc_url( $external_post_id ) . '">' . $external_post_id . '</a>'
+		);
+		$details = array(
+			'actor'   => $actor,
+			'url'     => $external_post_id,
+			'inboxes' => $report,
+		);
+
+		Logging::log( 'unlike', $message, $details, self::SLUG, $user_id );
 	}
 
 	public function boost_button() {
@@ -2096,18 +2165,48 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_actor( $actor );
 		$activity->set_object( $url );
 		$activity->set_id( $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$activity->set_to( 'https://www.w3.org/ns/activitystreams#Public' );
+		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
 
-		$follower_inboxes  = \Activitypub\Collection\Followers::get_inboxes( $user_id );
-		$mentioned_inboxes = \Activitypub\Mention::get_inboxes( $activity->get_cc() );
-
-		$inboxes = array_merge( $follower_inboxes, $mentioned_inboxes );
+		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
 		$inboxes = array_unique( $inboxes );
+
+		if ( empty( $inboxes ) ) {
+			$message = sprintf(
+				// translators: %s is the URL of the post.
+				__( 'Announce failed for %s', 'friends' ),
+				'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+			);
+
+			$details = array(
+				'url'   => $url,
+				'error' => __( 'No inboxes to send to.', 'friends' ),
+			);
+
+			Logging::log( 'announce-failed', $message, $details, self::SLUG, $user_id );
+			return;
+		}
 
 		$json = $activity->to_json();
 
+		$report = array();
 		foreach ( $inboxes as $inbox ) {
-			\Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
 		}
+
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Announced %s', 'friends' ),
+			'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+		);
+
+		$details = array(
+			'url'     => $url,
+			'inboxes' => $report,
+		);
+
+		Logging::log( 'announce', $message, $details, self::SLUG, $user_id );
 	}
 
 	/**
@@ -2150,18 +2249,47 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'id'     => $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ),
 			)
 		);
+		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
 
-		$follower_inboxes  = \Activitypub\Collection\Followers::get_inboxes( $user_id );
-		$mentioned_inboxes = \Activitypub\Mention::get_inboxes( $activity->get_cc() );
-
-		$inboxes = array_merge( $follower_inboxes, $mentioned_inboxes );
+		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
 		$inboxes = array_unique( $inboxes );
+
+		if ( empty( $inboxes ) ) {
+			$message = sprintf(
+				// translators: %s is the URL of the post.
+				__( 'Unannounce failed for %s', 'friends' ),
+				'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+			);
+
+			$details = array(
+				'url'   => $url,
+				'error' => __( 'No inboxes to send to.', 'friends' ),
+			);
+
+			Logging::log( 'unannounce-failed', $message, $details, self::SLUG, $user_id );
+			return;
+		}
 
 		$json = $activity->to_json();
 
+		$report = array();
 		foreach ( $inboxes as $inbox ) {
-			\Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
 		}
+
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Unannounced %s', 'friends' ),
+			'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+		);
+
+		$details = array(
+			'url'     => $url,
+			'inboxes' => $report,
+		);
+
+		Logging::log( 'unannounce', $message, $details, self::SLUG, $user_id );
 	}
 
 	/**

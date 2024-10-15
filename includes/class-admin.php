@@ -178,6 +178,12 @@ class Admin {
 			add_action( 'load-' . $page_type . '_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
 		}
 
+		if ( isset( $_GET['page'] ) && 'friends-logs' === $_GET['page'] ) {
+			// translators: as in log file.
+			$title = __( 'Log', 'friends' );
+			add_submenu_page( 'friends', $title, $title, $required_role, 'friends-logs', array( $this, 'render_friends_logs' ) );
+		}
+
 		if ( isset( $_GET['page'] ) && 'unfriend' === $_GET['page'] ) {
 			$user = new User( intval( $_GET['user'] ) );
 			if ( $user ) {
@@ -2489,6 +2495,32 @@ class Admin {
 	}
 
 	public function process_admin_import_export() {
+	}
+
+	public function render_friends_logs() {
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-logs',
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
+		$this->check_admin_settings();
+
+		?>
+		<h1><?php esc_html_e( 'Logs', 'friends' ); ?></h1>
+		<?php
+
+		Friends::template_loader()->get_template_part(
+			'admin/logs',
+			null,
+			array(
+				'logs' => Logging::get_logs(),
+			)
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
 	}
 
 	/**
