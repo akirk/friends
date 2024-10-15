@@ -216,7 +216,7 @@ class User extends \WP_User {
 	public static function get_display_name_from_feeds( $feeds ) {
 		foreach ( $feeds as $feed ) {
 			if ( 'self' === $feed['rel'] && ! empty( $feed['title'] ) ) {
-				$name = preg_replace( '/\s[—|-]\s.$/u', '', $feed['title'] );
+				$name = preg_replace( '/\s[—|-]\s.*$/', '', $feed['title'] );
 				return sanitize_text_field( $name );
 			}
 		}
