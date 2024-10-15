@@ -1883,7 +1883,7 @@ class Admin {
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
 				if ( ! $better_user_login ) {
-					$friend_user_login = str_replace( ' ', '-', sanitize_user( $better_display_name ) );
+					$friend_user_login = strtolower( str_replace( ' ', '-', sanitize_user( $better_display_name ) ) );
 				}
 			}
 

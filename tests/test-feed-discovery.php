@@ -34,6 +34,7 @@ class Feed_Discovery extends Friends_TestCase_Cache_HTTP {
 		$this->assertArrayHasKey( 'https://chriswiegman.com/feed/', $feeds );
 		$this->assertArrayHasKey( 'autoselect', $feeds['https://chriswiegman.com/feed/'] );
 		$this->assertTrue( $feeds['https://chriswiegman.com/feed/']['autoselect'] );
+		$this->assertEquals( 'Chris Wiegman', User::get_display_name_from_feeds( $feeds ) );
 	}
 
 	public function test_blueskyweb() {
@@ -43,4 +44,15 @@ class Feed_Discovery extends Friends_TestCase_Cache_HTTP {
 		$this->assertArrayHasKey( 'autoselect', $feeds['https://blueskyweb.xyz/rss.xml'] );
 		$this->assertTrue( $feeds['https://blueskyweb.xyz/rss.xml']['autoselect'] );
 	}
+
+	public function test_klingerio() {
+		$friends = Friends::get_instance();
+		$feeds = $friends->feed->discover_available_feeds( 'https://klinger.io/' );
+		$this->assertArrayHasKey( 'https://klinger.io/rss.xml', $feeds );
+		$this->assertArrayHasKey( 'autoselect', $feeds['https://klinger.io/rss.xml'] );
+		$this->assertTrue( $feeds['https://klinger.io/rss.xml']['autoselect'] );
+		$this->assertEquals( 'Andreas Klinger', User::get_display_name_from_feeds( $feeds ) );
+		$this->assertEquals( 'https://klinger.io/favicon-32x32.png', $feeds['https://klinger.io/']['avatar'] );
+	}
+
 }

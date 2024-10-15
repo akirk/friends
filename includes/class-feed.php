@@ -916,7 +916,6 @@ class Feed {
 				'title'             => '',
 				'parser'            => 'unsupported',
 				'parser_confidence' => 0,
-
 			);
 
 			foreach ( $this->parsers as $slug => $parser ) {
@@ -1052,6 +1051,7 @@ class Feed {
 		$has_self = false;
 		$links = array();
 		$mf = Mf2\parse( $content, $url );
+
 		if ( isset( $mf['rel-urls'] ) ) {
 			$links = array_merge( $links, $mf['rel-urls'] );
 		}
@@ -1089,7 +1089,7 @@ class Feed {
 				continue;
 			}
 
-			if ( 'self' === $rel ) {
+			if ( 'self' === $discovered_feeds[ $feed_url ]['rel'] ) {
 				$has_self = true;
 			}
 
@@ -1104,19 +1104,25 @@ class Feed {
 			}
 		}
 
-		if ( ! $has_self && class_exists( '\DOMXpath' ) ) {
-			// Convert to a DomDocument and silence the errors while doing so.
-			$doc = new \DomDocument();
-			set_error_handler( '__return_null' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
-			$doc->loadHTML( $content );
-			restore_error_handler();
+		if ( ! $has_self ) {
+			$discovered_feeds[ $url ] = array(
+				'rel' => 'self',
+			);
+		}
+		if ( empty( $discovered_feeds[ $url ]['title'] ) && ! empty( $mf['title'] ) ) {
+			$discovered_feeds[ $url ]['title'] = $mf['title'];
+		}
+		if ( empty( $discovered_feeds[ $url ]['avatar'] ) && ! empty( $mf['rels']['icon'] ) ) {
+			foreach ( $mf['rels']['icon'] as $icon_url ) {
+				if ( ! filter_var( $icon_url, FILTER_VALIDATE_URL ) ) {
+					continue;
+				}
 
-			$xpath = new \DOMXpath( $doc );
-			if ( $xpath ) {
-				$discovered_feeds[ $url ] = array(
-					'rel'   => 'self',
-					'title' => $xpath->query( '//title' )->item( 0 )->textContent,
-				);
+				if ( ! isset( $mf['rel-urls'][ $icon_url ]['type'] ) || 0 !== strpos( $mf['rel-urls'][ $icon_url ]['type'], 'image/' ) ) {
+					continue;
+				}
+
+				$discovered_feeds[ $url ]['avatar'] = $icon_url;
 			}
 		}
 
