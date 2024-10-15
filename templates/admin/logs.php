@@ -20,8 +20,14 @@
 			?>
 			<tr>
 				<td><?php echo esc_html( $log->post_date ); ?></td>
-				<td><?php echo wp_kses_post( $log->post_title ); ?></td>
+				<td>
+					<details>
+						<summary><?php echo wp_kses_post( $log->post_title ); ?></summary>
+						<pre><?php echo wp_kses_post( $log->post_content ); ?></pre>
+					</details>
+				</td>
 				<td><?php echo esc_html( get_the_author_meta( 'display_name', $log->post_author ) ); ?></td>
 			</tr>
 		<?php endforeach; ?>
 	</tbody>
+</table>
