@@ -532,6 +532,32 @@ class FeedTest extends \WP_UnitTestCase {
 		}
 	}
 
+	public function test_double_polling_prevention() {
+		$user = new User( $this->alex );
+
+		// Stop the clock by using our mock function for the first time.
+		time();
+
+		$user_feed = $this->get_user_feed( $user, 'http://example.org/1', 3600, 100 );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
+		$this->assertTrue( $user_feed->can_be_polled_now() );
+		$user_feed->set_polling_now();
+		$this->assertFalse( $user_feed->can_be_polled_now() );
+
+		time( '+5 minutes' );
+		$this->assertTrue( $user_feed->can_be_polled_now() );
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() ), $user_feed->get_next_poll() );
+		$user_feed->was_polled();
+		$this->assertFalse( $user_feed->can_be_polled_now() );
+
+		$this->assertEquals( gmdate( 'Y-m-d H:i:s', time() + 3000 ), $user_feed->get_next_poll() );
+		time( '+20 minutes' );
+		$this->assertFalse( $user_feed->can_be_polled_now() );
+		time( '+30 minutes' );
+		$this->assertTrue( $user_feed->can_be_polled_now() );
+
+	}
+
 	public function test_external_comments() {
 		$zylstra = __DIR__ . '/data/zylstra.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $zylstra );

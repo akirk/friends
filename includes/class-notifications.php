@@ -423,13 +423,13 @@ class Notifications {
 	/**
 	 * Notify of a lost follower
 	 *
-	 * @param string                     $actor    The Actor URL.
-	 * @param int                        $user_id  The ID of the WordPress User.
 	 * @param Activitypub\Model\Follower $follower The Follower object.
+	 * @param int                        $user_id  The ID of the WordPress User.
+	 * @param string                     $actor    The Actor URL.
 	 *
 	 * @return void
 	 */
-	public function activitypub_followers_pre_remove_follower( $actor, $user_id, $follower ) {
+	public function activitypub_followers_pre_remove_follower( $follower, $user_id, $actor ) {
 		$user = new User( $user_id );
 		if ( defined( 'WP_TESTS_EMAIL' ) ) {
 			$user->user_email = WP_TESTS_EMAIL;

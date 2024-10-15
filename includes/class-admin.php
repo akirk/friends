@@ -851,6 +851,8 @@ class Admin {
 			wp_send_json_error( 'unknown-user' );
 		}
 
+		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+
 		$friend_user->retrieve_posts_from_active_feeds();
 
 		wp_send_json_success();
