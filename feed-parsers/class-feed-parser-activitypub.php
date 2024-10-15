@@ -2117,8 +2117,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$json = $activity->to_json();
 
+		$report = array();
 		foreach ( $inboxes as $inbox ) {
-			\Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
+
 		}
 
 		$message = sprintf(
@@ -2129,7 +2132,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$details = array(
 			'url'     => $url,
-			'inboxes' => count( $inboxes ),
+			'inboxes' => $report,
 		);
 
 		Logging::log( 'announce', $message, $details, self::SLUG, $user_id );
