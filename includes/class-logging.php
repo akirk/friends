@@ -121,7 +121,7 @@ class Logging {
 	 *
 	 * @param     string $type    The type of log message.
 	 * @param     string $message The message.
-	 * @param     string $details The details of the log message.
+	 * @param     array  $details The details of the log message.
 	 * @param     string $module  The module that generated the log message.
 	 * @param     int    $user_id The ID of the user that generated the log message.
 	 * @return    int    The ID of the log post.
@@ -131,7 +131,7 @@ class Logging {
 			array(
 				'post_type'    => self::CPT,
 				'post_title'   => $message,
-				'post_content' => $details,
+				'post_content' => wp_json_encode( $details ),
 				'post_author'  => $user_id,
 				'post_status'  => 'publish',
 			)
