@@ -2108,12 +2108,28 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_actor( $actor );
 		$activity->set_object( $url );
 		$activity->set_id( $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$activity->set_to( 'https://www.w3.org/ns/activitystreams#Public' );
+		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
 
-		$follower_inboxes  = \Activitypub\Collection\Followers::get_inboxes( $user_id );
-		$mentioned_inboxes = \Activitypub\Mention::get_inboxes( $activity->get_cc() );
-
-		$inboxes = array_merge( $follower_inboxes, $mentioned_inboxes );
+		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
 		$inboxes = array_unique( $inboxes );
+
+		if ( empty( $inboxes ) ) {
+
+			$message = sprintf(
+				// translators: %s is the URL of the post.
+				__( 'Announce failed for %s', 'friends' ),
+				'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+			);
+
+			$details = array(
+				'url'   => $url,
+				'error' => __( 'No inboxes to send to.', 'friends' ),
+			);
+
+			Logging::log( 'announce-failed', $message, $details, self::SLUG, $user_id );
+			return;
+		}
 
 		$json = $activity->to_json();
 
