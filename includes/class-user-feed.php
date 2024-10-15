@@ -534,7 +534,7 @@ class User_Feed {
 			array(
 				'type'              => 'string',
 				'single'            => true,
-				'sanitize_callback' => array( __CLASS__, 'validate_last_poll' ),
+				'sanitize_callback' => array( __CLASS__, 'validate_poll_date' ),
 			)
 		);
 
