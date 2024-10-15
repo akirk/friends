@@ -43,9 +43,19 @@ class Logging {
 	}
 
 	/**
+	 * Register the WordPress hooks
+	 */
+	private function register_hooks() {
+		add_action( 'init', array( $this, 'register_post_type' ) );
+		add_action( 'friends_retrieved_new_posts', array( $this, 'log_feed_successfully_fetched' ), 10, 3 );
+		add_action( 'friends_retrieve_friends_error', array( $this, 'log_feed_error' ), 10, 2 );
+		add_action( 'friends_log', array( $this, 'log_entry' ), 10, 2 );
+	}
+
+	/**
 	 * Register the custom post type for logging.
 	 */
-	private function register_post_type() {
+	public function register_post_type() {
 		$args = array(
 			'labels'       => array(
 				'name'          => __( 'Friends Logs', 'friends' ),
@@ -74,16 +84,6 @@ class Logging {
 				'single' => true,
 			)
 		);
-	}
-
-	/**
-	 * Register the WordPress hooks
-	 */
-	private function register_hooks() {
-		add_action( 'init', array( $this, 'register_post_type' ) );
-		add_action( 'friends_retrieved_new_posts', array( $this, 'log_feed_successfully_fetched' ), 10, 3 );
-		add_action( 'friends_retrieve_friends_error', array( $this, 'log_feed_error' ), 10, 2 );
-		add_action( 'friends_log', array( $this, 'log_entry' ), 10, 2 );
 	}
 
 	/**
