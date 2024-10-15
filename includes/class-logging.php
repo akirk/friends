@@ -131,7 +131,7 @@ class Logging {
 			array(
 				'post_type'    => self::CPT,
 				'post_title'   => $message,
-				'post_content' => wp_json_encode( $details ),
+				'post_content' => wp_json_encode( $details, JSON_PRETTY_PRINT ),
 				'post_author'  => $user_id,
 				'post_status'  => 'publish',
 			)
