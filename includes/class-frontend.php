@@ -102,6 +102,7 @@ class Frontend {
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
+		add_filter( 'friends_friend_posts_query_viewable', array( $this, 'expose_opml' ), 10, 2 );
 	}
 
 	/**
@@ -1006,13 +1007,26 @@ class Frontend {
 		return $author_name;
 	}
 
+	public function expose_opml( $viewable, $pagename ) {
+		if ( 'opml' === $pagename ) {
+			return true;
+		}
+		return $viewable;
+	}
+
 	/**
 	 * Render the Friends OPML
 	 *
 	 * @param      bool $only_public  Only public feed URLs.
 	 */
 	protected function render_opml( $only_public = false ) {
-		$user = wp_get_current_user();
+		if ( ! \is_user_logged_in() ) {
+			$only_public = true;
+			$user_id = Friends::get_main_friend_user_id();
+			$user = new User( $user_id );
+		} else {
+			$user = wp_get_current_user();
+		}
 
 		// translators: %s is a name.
 		$title = sprintf( __( "%s' Subscriptions", 'friends' ), $user->display_name );
