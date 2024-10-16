@@ -1109,6 +1109,12 @@ class Feed {
 				'rel' => 'self',
 			);
 		}
+		if ( empty( $discovered_feeds[ $url ]['title'] ) && ! empty( $mf['metas']['application-name'][0] ) ) {
+			$discovered_feeds[ $url ]['title'] = $mf['metas']['application-name'][0];
+		}
+		if ( empty( $discovered_feeds[ $url ]['title'] ) && ! empty( $mf['metas']['og:title'][0] ) ) {
+			$discovered_feeds[ $url ]['title'] = $mf['metas']['og:title'][0];
+		}
 		if ( empty( $discovered_feeds[ $url ]['title'] ) && ! empty( $mf['title'] ) ) {
 			$discovered_feeds[ $url ]['title'] = $mf['title'];
 		}
