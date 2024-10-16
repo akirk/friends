@@ -5,6 +5,12 @@
  * @package Friends
  */
 
+$first_friend = array(
+	// translators: %s is Alex Kirk.
+	'display_name' => sprintf( __( 'Add %s, creator of the Friends plugin, as a friend now', 'friends' ), 'Alex Kirk' ),
+	'url'          => 'https://alex.kirk.at/',
+);
+
 ?>
 
 <h1><?php esc_html_e( 'Welcome to the Friends Plugin!', 'friends' ); ?></h1>
@@ -27,6 +33,11 @@
 		// translators: %s is the URL of the user's friends page.
 		echo wp_kses( sprintf( __( 'You can extend your network by <a href=%1$s>subscribing to web sites</a>, <a href=%1$s>sending friend requests</a> or <a href=%2$s>responding to received friend requests</a>.', 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', '"' . admin_url( 'users.php?role=friend_request' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 		?>
+		<ul>
+			<li>
+				<a href="<?php echo \esc_url( \add_query_arg( 'add-friend', $first_friend['url'], \home_url() ) ); ?>" class="btn btn-primary"><?php echo esc_html( $first_friend['display_name'] ); ?></a>
+			</li>
+		</ul>
 	</li>
 	<li>
 		<span><?php esc_html_e( 'A lot of the functionality you might know from other networks is provided by this plugin, just without outside dependencies.', 'friends' ); ?></span>

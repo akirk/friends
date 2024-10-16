@@ -142,20 +142,22 @@ h2#page-title a.dashicons {
 
 	min-height: 100vh;
 
-	a:visited {
-		color: $link-color-dark;
-	}
+	a:not(.btn) {
+		&:visited {
+			color: $link-color-dark;
+		}
 
-	a.off-canvas-toggle:visited {
-		color: $link-color;
-	}
+		&.off-canvas-toggle:visited {
+			color: $link-color;
+		}
 
-	a,
-	a:visited,
-	a:hover,
-	a:focus,
-	a:active {
-		color: $link-color;
+		&,
+		&:visited,
+		&:hover,
+		&:focus,
+		&:active {
+			color: $link-color;
+		}
 	}
 
 	summary.accordion-header {
