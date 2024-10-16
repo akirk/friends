@@ -9,7 +9,7 @@
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
-[![Active Installs](https://img.shields.io/wordpress/plugin/installs/friends?logo=wordpress&logoColor=%23fff&label=Active%20Installs&labelColor=%2323282dA&color=%2323282dA)](https://wordpress.org/plugins/friends/) [![Playground Demo Link](https://img.shields.io/wordpress/plugin/v/friends?logo=wordpress&logoColor=%23fff&label=Playground%20Demo&labelColor=%233858e9&color=%233858e9)](https://wordpress.org/plugins/friends/?preview=1)
+[![Active Installs](https://img.shields.io/wordpress/plugin/installs/friends?logo=wordpress&logoColor=%23fff&label=Active%20Installs&labelColor=%2323282dA&color=%2323282dA)](https://wordpress.org/plugins/friends/) [![Playground Demo Link](https://img.shields.io/wordpress/plugin/v/friends?logo=wordpress&logoColor=%23fff&label=Playground%20Demo&labelColor=%233858e9&color=%233858e9)](https://playground.wordpress.net/?networking=yes&blueprint-url=https://raw.githubusercontent.com/akirk/friends/refs/heads/main/assets/blueprints/blueprint.json) [![Configured Playground Demo Link](https://img.shields.io/wordpress/plugin/v/friends?logo=wordpress&logoColor=%23fff&label=Configured%20Playground%20Demo&labelColor=%23089809&color=%23089809)](https://playground.wordpress.net/?networking=yes&blueprint-url=https://raw.githubusercontent.com/akirk/friends/refs/heads/main/assets/blueprints/blueprint-prefilled.json)
 
 ## Description
 

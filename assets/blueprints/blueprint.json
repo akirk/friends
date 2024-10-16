@@ -1,5 +1,8 @@
 {
 	"landingPage": "/friends/",
+	"features": {
+		"networking": true
+	},
 	"steps": [
 		{
 			"step": "login",
