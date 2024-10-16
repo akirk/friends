@@ -32,7 +32,7 @@
 		{
 			"step": "writeFile",
 			"path": "wordpress/wp-content/mu-plugins/cors-proxy.php",
-			"data": "<?php add_action( 'requests-requests.before_request', function( &$url ) {\n$url = 'https://playground.wordpress.net/cors-proxy.php?' . $url;\nerror_log( print_r( compact( 'url' ), true ) );\n} );"
+			"data": "<?php add_action( 'requests-requests.before_request', function( &$url ) {\n$url = 'https://playground.wordpress.net/cors-proxy.php?' . $url;\n} );"
 		}
 	]
 }
