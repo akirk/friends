@@ -1050,7 +1050,7 @@ class Feed {
 		$discovered_feeds = array();
 		$has_self = false;
 		$links = array();
-		$mf = Mf2\parse( $content, $url );
+		$mf = Mf2\parse( apply_filters( 'friends_fetch_url', $content, $this ), $url );
 
 		if ( isset( $mf['rel-urls'] ) ) {
 			$links = array_merge( $links, $mf['rel-urls'] );

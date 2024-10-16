@@ -118,7 +118,7 @@ class Feed_Parser_JSON_Feed extends Feed_Parser_V2 {
 	 */
 	public function fetch_feed( $url, User_Feed $user_feed = null ) {
 		$args = array();
-		$res = wp_safe_remote_request( $url, $args );
+		$res = wp_safe_remote_request( apply_filters( 'friends_fetch_url', $url, $this ), $args );
 
 		if ( is_wp_error( $res ) ) {
 			return $res;

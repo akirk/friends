@@ -237,8 +237,15 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 				$feed->set_file_class( __NAMESPACE__ . '\SimplePie_File_Accept_Only_RSS' );
 				break;
 		}
-
-		$feed->set_feed_url( $url );
+		/**
+		 * Maybe Rewrite a URL
+		 *
+		 * Allows modifying the URL before fetching it.
+		 *
+		 * @param string $url The URL to fetch.
+		 * @param Feed_Parser_V2 $parser The parser instance.
+		 */
+		$feed->set_feed_url( apply_filters( 'friends_fetch_url', $url, $this ) );
 		$feed->set_cache_duration( apply_filters( 'wp_feed_cache_transient_lifetime', HOUR_IN_SECONDS - 600, $url ) );
 
 		do_action_ref_array( 'wp_feed_options', array( &$feed, $url ) );
