@@ -114,6 +114,7 @@ class Frontend {
 
 		$rules = array(
 			'^friends/(.*)/(?:feed/)?(feed|rdf|rss|rss2|atom)/?$' => 'index.php?pagename=friends/$matches[1]&feed=$matches[2]',
+			'^friends/feed/?$'       => 'index.php?pagename=friends&feed=feed',
 			'^friends/(.*)/(\d+)/?$' => 'index.php?pagename=friends/$matches[1]&page=$matches[2]',
 			'^friends/(.*)'          => 'index.php?pagename=friends/$matches[1]',
 		);
@@ -1323,7 +1324,7 @@ class Frontend {
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$query->is_page = false;
-		$query->is_comments_feed = false;
+		$query->is_comment_feed = false;
 		$query->set( 'pagename', null );
 		$query->set( 'category_name', null );
 		if ( 'collapsed' === get_option( 'friends_frontend_default_view', 'expanded' ) && get_option( 'posts_per_page' ) < 20 ) {
