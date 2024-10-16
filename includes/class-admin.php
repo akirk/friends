@@ -2511,9 +2511,17 @@ class Admin {
 					<?php
 					echo esc_html(
 						sprintf(
-							// translators: %1$d is the number of users imported, %2$d is the number of feeds imported.
-							__( 'Imported %1$d users with %2$d feeds.', 'friends' ),
-							$users_created,
+							// translators: %d is the number of users imported.
+							_n( 'Imported %d user.', 'Imported %d users.', $users_created, 'friends' ),
+							$users_created
+						)
+					);
+					?>
+					<?php
+					echo esc_html(
+						sprintf(
+							// translators: %d is the number of feeds imported.
+							_n( 'They had %d feed.', 'They had %d feeds.', $feeds_imported, 'friends' ),
 							$feeds_imported
 						)
 					);
