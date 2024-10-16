@@ -55,4 +55,14 @@ class Feed_Discovery extends Friends_TestCase_Cache_HTTP {
 		$this->assertEquals( 'https://klinger.io/favicon-32x32.png', $feeds['https://klinger.io/']['avatar'] );
 	}
 
+	public function test_wordpresscom() {
+		$friends = Friends::get_instance();
+		$feeds = $friends->feed->discover_available_feeds( 'https://wordpress.com/' );
+		$this->assertArrayHasKey( 'https://wordpress.com/blog/feed/', $feeds );
+		$this->assertArrayHasKey( 'autoselect', $feeds['https://wordpress.com/blog/feed/'] );
+		$this->assertTrue( $feeds['https://wordpress.com/blog/feed/']['autoselect'] );
+		$this->assertEquals( 'WordPress.com', User::get_display_name_from_feeds( $feeds ) );
+		$this->assertEquals( 'wordpress.com', User::get_user_login_from_feeds( $feeds ) );
+	}
+
 }

@@ -2152,7 +2152,7 @@ class Admin {
 				} else {
 					$args['friend_url'] = $friend_url;
 				}
-			} elseif ( preg_match( '/^@?' . Feed_Parser_ActivityPub::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $friend_url ) ) {
+			} elseif ( class_exists( 'Friends\Feed_Parser_ActivityPub' ) && preg_match( '/^@?' . Feed_Parser_ActivityPub::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $friend_url ) ) {
 				$args['friend_url'] = $friend_url;
 			}
 		}
@@ -2495,6 +2495,47 @@ class Admin {
 	}
 
 	public function process_admin_import_export() {
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends-settings' ) ) {
+			return;
+		}
+
+		if ( ! Friends::has_required_privileges() ) {
+			return;
+		}
+
+		if ( isset( $_FILES['opml']['tmp_name'] ) ) {
+			$opml = file_get_contents( $_FILES['opml']['tmp_name'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$feeds = Import::opml( $opml );
+			$users_created = count( $feeds );
+			$feeds_imported = 0;
+			foreach ( $feeds as $user => $user_feeds ) {
+				$feeds_imported += count( $user_feeds );
+			}
+			?>
+			<div class="friends-notice notice notice-success is-dismissible">
+				<p>
+					<?php
+					echo esc_html(
+						sprintf(
+							// translators: %d is the number of users imported.
+							_n( 'Imported %d user.', 'Imported %d users.', $users_created, 'friends' ),
+							$users_created
+						)
+					);
+					?>
+					<?php
+					echo esc_html(
+						sprintf(
+							// translators: %d is the number of feeds imported.
+							_n( 'They had %d feed.', 'They had %d feeds.', $feeds_imported, 'friends' ),
+							$feeds_imported
+						)
+					);
+					?>
+				</p>
+			</div>
+			<?php
+		}
 	}
 
 	public function render_friends_logs() {

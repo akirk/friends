@@ -23,15 +23,11 @@ echo '<' . '?xml version="1.0" encoding="utf-8"?' . '>';
 foreach ( $args['feeds'] as $_role => $users ) {
 	?>
 	<outline text="<?php echo esc_attr( $_role ); ?>">
-	<?php
-	foreach ( $users as $user ) {
-		foreach ( $user['feeds'] as $feed ) {
-			?>
+<?php foreach ( $users as $user ) : /* phpcs:ignore Generic.WhiteSpace.ScopeIndent.Incorrect */ ?>
+<?php foreach ( $user['feeds'] as $feed ) : /* phpcs:ignore Generic.WhiteSpace.ScopeIndent.Incorrect */ ?>
 		<outline text="<?php echo esc_attr( $user['friend_user']->display_name ); ?>" htmlUrl="<?php echo esc_url( $feed['html_url'] ); ?>" title="<?php echo esc_attr( $feed['title'] ); ?>" type="<?php echo esc_attr( $feed['type'] ); ?>" xmlUrl="<?php echo esc_url( $feed['xml_url'] ); ?>"/>
-			<?php
-		}
-	}
-	?>
+<?php endforeach; ?>
+<?php endforeach; ?>
 	</outline>
 <?php } ?>
 	</body>

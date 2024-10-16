@@ -102,6 +102,7 @@ class Frontend {
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
+		add_filter( 'friends_friend_posts_query_viewable', array( $this, 'expose_opml' ), 10, 2 );
 	}
 
 	/**
@@ -113,6 +114,7 @@ class Frontend {
 
 		$rules = array(
 			'^friends/(.*)/(?:feed/)?(feed|rdf|rss|rss2|atom)/?$' => 'index.php?pagename=friends/$matches[1]&feed=$matches[2]',
+			'^friends/feed/?$'       => 'index.php?pagename=friends&feed=feed',
 			'^friends/(.*)/(\d+)/?$' => 'index.php?pagename=friends/$matches[1]&page=$matches[2]',
 			'^friends/(.*)'          => 'index.php?pagename=friends/$matches[1]',
 		);
@@ -1006,13 +1008,26 @@ class Frontend {
 		return $author_name;
 	}
 
+	public function expose_opml( $viewable, $pagename ) {
+		if ( 'opml' === $pagename ) {
+			return true;
+		}
+		return $viewable;
+	}
+
 	/**
 	 * Render the Friends OPML
 	 *
 	 * @param      bool $only_public  Only public feed URLs.
 	 */
 	protected function render_opml( $only_public = false ) {
-		$user = wp_get_current_user();
+		if ( ! \is_user_logged_in() ) {
+			$only_public = true;
+			$user_id = Friends::get_main_friend_user_id();
+			$user = new User( $user_id );
+		} else {
+			$user = wp_get_current_user();
+		}
 
 		// translators: %s is a name.
 		$title = sprintf( __( "%s' Subscriptions", 'friends' ), $user->display_name );
@@ -1026,7 +1041,7 @@ class Frontend {
 		$feeds = array();
 		$users = array();
 
-		$friend_users = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
+		$friend_users = User_Query::all_associated_users();
 		foreach ( $friend_users->get_results() as $friend_user ) {
 			$role = $friend_user->get_role_name( true, 9 );
 			if ( $only_public ) {
@@ -1046,6 +1061,9 @@ class Frontend {
 				$need_local_feed = false;
 
 				foreach ( $user_feeds as $feed ) {
+					if ( $feed->get_parser() === Feed_Parser_SimplePie::SLUG ) {
+						break;
+					}
 					switch ( $feed->get_mime_type() ) {
 						case 'application/atom+xml':
 						case 'application/atomxml':
@@ -1309,7 +1327,7 @@ class Frontend {
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$query->is_page = false;
-		$query->is_comments_feed = false;
+		$query->is_comment_feed = false;
 		$query->set( 'pagename', null );
 		$query->set( 'category_name', null );
 		if ( 'collapsed' === get_option( 'friends_frontend_default_view', 'expanded' ) && get_option( 'posts_per_page' ) < 20 ) {

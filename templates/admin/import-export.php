@@ -8,7 +8,7 @@
 do_action( 'friends_settings_before_form' );
 
 ?>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
 		<tbody>
@@ -48,6 +48,18 @@ do_action( 'friends_settings_before_form' );
 					?>
 					</p>
 
+				</td>
+			</tr>
+
+			<tr>
+				<th>Import OPML</th>
+				<td>
+					<input type="file" name="opml" id="opml" accept=".opml" />
+					<p class="description">
+					<?php
+					echo __( 'Import an OPML file to import feeds.', 'friends' );
+					?>
+					</p>
 				</td>
 			</tr>
 		</tbody>

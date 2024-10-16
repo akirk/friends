@@ -204,6 +204,10 @@ class User extends \WP_User {
 				return sanitize_text_field( $feed['suggested-username'] );
 			}
 		}
+		$display_name = self::get_display_name_from_feeds( $feeds );
+		if ( $display_name ) {
+			return self::sanitize_username( $display_name );
+		}
 
 		return false;
 	}
@@ -216,7 +220,7 @@ class User extends \WP_User {
 	public static function get_display_name_from_feeds( $feeds ) {
 		foreach ( $feeds as $feed ) {
 			if ( 'self' === $feed['rel'] && ! empty( $feed['title'] ) ) {
-				$name = preg_replace( '/\s[—|-]\s.*$/', '', $feed['title'] );
+				$name = preg_replace( '/(\s[—|-]|:)\s.*$/', '', $feed['title'] );
 				return sanitize_text_field( $name );
 			}
 		}

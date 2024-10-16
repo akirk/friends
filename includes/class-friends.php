@@ -1283,7 +1283,7 @@ class Friends {
 	 * @return false|string URL or false on failure.
 	 */
 	public static function check_url( $url ) {
-		$pre = apply_filters( 'friends_pre_check_url', null );
+		$pre = apply_filters( 'friends_pre_check_url', null, $url );
 		if ( ! is_null( $pre ) ) {
 			return $pre;
 		}

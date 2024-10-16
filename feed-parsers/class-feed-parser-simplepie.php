@@ -149,6 +149,11 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		require_once __DIR__ . '/SimplePie/class-simplepie-misc.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
+		// Workaround for SimplePie assuming that CURL is loaded.
+		if ( ! defined( 'CURLOPT_USERAGENT' ) ) {
+			define( 'CURLOPT_USERAGENT', 10018 );
+		}
+
 		$feed = new \SimplePie();
 
 		$feed->set_sanitize_class( '\WP_SimplePie_Sanitize_KSES' );
@@ -236,8 +241,17 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			case 'github.com':
 				$feed->set_file_class( __NAMESPACE__ . '\SimplePie_File_Accept_Only_RSS' );
 				break;
+			default:
+				$feed->set_file_class( '\WP_SimplePie_File' );
 		}
-
+		/**
+		 * Maybe Rewrite a URL
+		 *
+		 * Allows modifying the URL before fetching it.
+		 *
+		 * @param string $url The URL to fetch.
+		 * @param Feed_Parser_V2 $parser The parser instance.
+		 */
 		$feed->set_feed_url( $url );
 		$feed->set_cache_duration( apply_filters( 'wp_feed_cache_transient_lifetime', HOUR_IN_SECONDS - 600, $url ) );
 
