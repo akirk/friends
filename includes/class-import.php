@@ -54,7 +54,8 @@ class Import {
 				$feed = $friend_user->save_feed(
 					(string) $friend['xmlUrl'],
 					array(
-						'active' => true,
+						'active'    => true,
+						'mime-type' => 'atom' === (string) $friend['type'] ? 'application/atom+xml' : 'application/rss+xml',
 					)
 				);
 				if ( ! $feed instanceof User_Feed ) {

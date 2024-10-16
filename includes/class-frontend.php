@@ -1061,6 +1061,9 @@ class Frontend {
 				$need_local_feed = false;
 
 				foreach ( $user_feeds as $feed ) {
+					if ( $feed->get_parser() === Feed_Parser_SimplePie::SLUG ) {
+						break;
+					}
 					switch ( $feed->get_mime_type() ) {
 						case 'application/atom+xml':
 						case 'application/atomxml':
