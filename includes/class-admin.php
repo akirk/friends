@@ -1848,10 +1848,12 @@ class Admin {
 				return $this->process_admin_add_friend_response( $friend_user, $vars );
 			}
 
-			if ( isset( $vars['friendship'] ) ) {
-				$rest_url = $vars['friendship'];
-			} else {
-				$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
+			if ( get_option( 'friends_enable_wp_friendships' ) ) {
+				if ( isset( $vars['friendship'] ) ) {
+					$rest_url = $vars['friendship'];
+				} else {
+					$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
+				}
 			}
 		} else {
 			if ( str_starts_with( $friend_url, home_url() ) ) {
@@ -1892,8 +1894,9 @@ class Admin {
 					$friend_user_login = strtolower( str_replace( ' ', '-', sanitize_user( $better_display_name ) ) );
 				}
 			}
-
-			$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
+			if ( get_option( 'friends_enable_wp_friendships' ) ) {
+				$rest_url = $this->friends->rest->get_friends_rest_url( $feeds );
+			}
 		}
 
 		if ( $rest_url ) {

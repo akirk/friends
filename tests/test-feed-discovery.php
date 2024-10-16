@@ -18,6 +18,8 @@ class Feed_Discovery extends Friends_TestCase_Cache_HTTP {
 		$this->assertArrayHasKey( 'https://alex.kirk.at/feed/', $feeds );
 		$this->assertArrayHasKey( 'autoselect', $feeds['https://alex.kirk.at/feed/'] );
 		$this->assertTrue( $feeds['https://alex.kirk.at/feed/']['autoselect'] );
+		$this->assertEquals( 'Alex Kirk', User::get_display_name_from_feeds( $feeds ) );
+		$this->assertEquals( 'alex-kirk', User::get_user_login_from_feeds( $feeds ) );
 	}
 
 	public function test_johnblackbourn() {

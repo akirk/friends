@@ -101,7 +101,7 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 			}
 		}
 
-		if ( isset( $mf['items'] ) ) {
+		if ( isset( $mf['items'] ) && ! isset( $discovered_feeds[ $url ] ) ) {
 			$feed_items = $this->parse_hfeed( $mf );
 			if ( count( $feed_items ) > 0 ) {
 				$discovered_feeds[ $url ] = array(
