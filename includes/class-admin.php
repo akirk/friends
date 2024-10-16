@@ -2489,6 +2489,39 @@ class Admin {
 	}
 
 	public function process_admin_import_export() {
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends-settings' ) ) {
+			return;
+		}
+
+		if ( ! Friends::has_required_privileges() ) {
+			return;
+		}
+
+		if ( isset( $_FILES['opml']['tmp_name'] ) ) {
+			$opml = file_get_contents( $_FILES['opml']['tmp_name'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$feeds = Import::opml( $opml );
+			$users_created = count( $feeds );
+			$feeds_imported = 0;
+			foreach ( $feeds as $user => $user_feeds ) {
+				$feeds_imported += count( $user_feeds );
+			}
+			?>
+			<div class="friends-notice notice notice-success is-dismissible">
+				<p>
+					<?php
+					echo esc_html(
+						sprintf(
+							// translators: %1$d is the number of users imported, %2$d is the number of feeds imported.
+							__( 'Imported %1$d users with %2$d feeds.', 'friends' ),
+							$users_created,
+							$feeds_imported
+						)
+					);
+					?>
+				</p>
+			</div>
+			<?php
+		}
 	}
 
 	/**
