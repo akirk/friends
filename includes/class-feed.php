@@ -840,7 +840,7 @@ class Feed {
 		$content_type = 'text/html';
 
 		$response = wp_safe_remote_get(
-			apply_filters( 'friends_fetch_url', $url, $this ),
+			$url,
 			array(
 				'timeout'     => apply_filters( 'friends_http_timeout', 20 ),
 				'redirection' => 1,

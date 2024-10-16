@@ -74,7 +74,7 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 	 */
 	public function discover_available_feeds( $content, $url ) {
 		$discovered_feeds = array();
-		$mf = Mf2\parse( $content, apply_filters( 'friends_fetch_url', $url, $this ) );
+		$mf = Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
 			foreach ( $mf['rel-urls'] as $feed_url => $link ) {
 				foreach ( array( 'me', 'alternate' ) as $rel ) {
@@ -338,7 +338,7 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 	 * @return     array            An array of feed items.
 	 */
 	public function fetch_feed( $url, User_Feed $user_feed = null ) {
-		$mf = Mf2\fetch( apply_filters( 'friends_fetch_url', $url, $this ) );
+		$mf = Mf2\fetch( $url );
 		if ( ! $mf ) {
 			// translators: %s is a URL.
 			return new \WP_Error( 'microformats Parser', sprintf( __( 'Could not parse %s.', 'friends' ), $url ) );
