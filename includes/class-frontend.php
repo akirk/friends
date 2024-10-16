@@ -1041,7 +1041,7 @@ class Frontend {
 		$feeds = array();
 		$users = array();
 
-		$friend_users = new User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'subscription' ) ) );
+		$friend_users = User_Query::all_associated_users();
 		foreach ( $friend_users->get_results() as $friend_user ) {
 			$role = $friend_user->get_role_name( true, 9 );
 			if ( $only_public ) {
