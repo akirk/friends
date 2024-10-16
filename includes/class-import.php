@@ -27,17 +27,44 @@ class Import {
 		$feeds = array();
 		foreach ( $opml->body->outline as $outline ) {
 			$role = (string) $outline['text'];
-			$feeds[ $role ] = array();
 			foreach ( $outline->outline as $friend ) {
-				$user_login = str_replace( ' ', '-', strtolower( sanitize_user( $friend['text'] ) ) );
-				$friend_user = Subscription::create( $user_login, 'subscription', $friend['htmlUrl'], $friend['text'] );
-				$friend_user->save_feed(
-					$friend['xmlUrl'],
+				$user_login = str_replace( ' ', '-', strtolower( sanitize_user( (string) $friend['text'] ) ) );
+				$feed = User_Feed::get_by_url( (string) $friend['xmlUrl'] );
+				if ( $feed instanceof User_Feed ) {
+					$friend_user = $feed->get_friend_user();
+					if ( ! isset( $feeds[ $friend_user->user_login ] ) ) {
+						$feeds[ $friend_user->user_login ] = array();
+					}
+					$feeds[ $friend_user->user_login ][] = $feed;
+					continue;
+				}
+
+				$friend_user = User::get_by_username( $user_login );
+				if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+					$friend_user = Subscription::create(
+						$user_login,
+						'subscription',
+						(string) $friend['htmlUrl'],
+						(string) $friend['text']
+					);
+				}
+				if ( ! $friend_user instanceof User ) {
+					continue;
+				}
+				$feed = $friend_user->save_feed(
+					(string) $friend['xmlUrl'],
 					array(
 						'active' => true,
 					)
 				);
-				$feeds[ $role ][] = $friend_user;
+				if ( ! $feed instanceof User_Feed ) {
+					continue;
+				}
+
+				if ( ! isset( $feeds[ $friend_user->user_login ] ) ) {
+					$feeds[ $friend_user->user_login ] = array();
+				}
+				$feeds[ $friend_user->user_login ][] = $feed;
 			}
 		}
 
