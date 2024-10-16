@@ -45,6 +45,7 @@ require_once __DIR__ . '/includes/class-automatic-status.php';
 require_once __DIR__ . '/includes/class-blocks.php';
 require_once __DIR__ . '/includes/class-feed.php';
 require_once __DIR__ . '/includes/class-frontend.php';
+require_once __DIR__ . '/includes/class-import.php';
 require_once __DIR__ . '/includes/class-logging.php';
 require_once __DIR__ . '/includes/class-messages.php';
 require_once __DIR__ . '/includes/class-notifications.php';
