@@ -870,7 +870,7 @@ class Feed {
 							continue;
 						}
 					}
-					$available_feeds[ $link_url ] = $feed;
+					$available_feeds[ $link_url ] = array_merge( $available_feeds[ $link_url ], $feed );
 					$available_feeds[ $link_url ]['url'] = $link_url;
 				}
 			}
