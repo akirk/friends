@@ -540,6 +540,22 @@ class Parser {
 	}
 
 	/**
+	 * Given an img property, parse its value and/or alt text
+	 * @param DOMElement $el
+	 * @access public
+	 * @return string|array
+	 */
+	public function parseImg(DOMElement $el)
+	{
+		if ( $el->hasAttribute( 'alt' ) ) {
+			return array(
+				'value' => $this->resolveUrl( $el->getAttribute( 'src' ) ),
+				'alt' => $el->getAttribute( 'alt' )
+			);
+		}
+		return $el->getAttribute( 'src' );
+	}
+	/**
 	 * This method parses the language of an element
 	 *
 	 * @param DOMElement $el
