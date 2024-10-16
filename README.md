@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 3.0.0
+- Stable tag: 3.1.0
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,15 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.1.0
+- Add mark tag CSS to emails to ensure highlighting ([#365])
+- Only show the dashboard widgets if the user has enough permissions ([#368])
+- Prevent retrieving the same feed in parallel ([#366])
+- Add Friend: Use more info from the given URL ([#369])
+- Log ActivityPub actions and add the publish date to Announcements ([#364])
+- Improve OPML Support ([#370])
+- Update blueprints for previewing in WordPress Playground ([#371])
+
 ### 3.0.0
 - Show Mutual Followers and allow removing of followers ([#359])
 - Add an e-mail notification for new and lost followers ([#358])
@@ -136,6 +145,13 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix the all postids query ([#335])
 - Don't define a wp-editor dependency ([#332])
 
+[#365]: https://github.com/akirk/friends/pull/365
+[#368]: https://github.com/akirk/friends/pull/368
+[#366]: https://github.com/akirk/friends/pull/366
+[#369]: https://github.com/akirk/friends/pull/369
+[#364]: https://github.com/akirk/friends/pull/364
+[#370]: https://github.com/akirk/friends/pull/370
+[#371]: https://github.com/akirk/friends/pull/371
 [#359]: https://github.com/akirk/friends/pull/359
 [#358]: https://github.com/akirk/friends/pull/358
 [#357]: https://github.com/akirk/friends/pull/357
