@@ -1,3 +1,7 @@
+### 3.1.1
+- Improve Name Detection ([#372])
+- Add a Button to the Welcome page ([#373])
+
 ### 3.1.0
 - Add mark tag CSS to emails to ensure highlighting ([#365])
 - Only show the dashboard widgets if the user has enough permissions ([#368])
@@ -258,6 +262,8 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#372]: https://github.com/akirk/friends/pull/372
+[#373]: https://github.com/akirk/friends/pull/373
 [#365]: https://github.com/akirk/friends/pull/365
 [#368]: https://github.com/akirk/friends/pull/368
 [#366]: https://github.com/akirk/friends/pull/366

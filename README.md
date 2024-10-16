@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 3.1.0
+- Stable tag: 3.1.1
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.1.1
+- Improve Name Detection ([#372])
+- Add a Button to the Welcome page ([#373])
+
 ### 3.1.0
 - Add mark tag CSS to emails to ensure highlighting ([#365])
 - Only show the dashboard widgets if the user has enough permissions ([#368])
@@ -145,6 +149,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix the all postids query ([#335])
 - Don't define a wp-editor dependency ([#332])
 
+[#372]: https://github.com/akirk/friends/pull/372
+[#373]: https://github.com/akirk/friends/pull/373
 [#365]: https://github.com/akirk/friends/pull/365
 [#368]: https://github.com/akirk/friends/pull/368
 [#366]: https://github.com/akirk/friends/pull/366
