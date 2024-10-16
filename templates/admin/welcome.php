@@ -36,7 +36,7 @@ $first_friend = array(
 		<?php wp_nonce_field( 'add-friend' ); ?>
 			<input type="hidden" name="friend_url" value="<?php echo esc_attr( $first_friend['url'] ); ?>" />
 		<div class="form-group">
-			<button class="btn btn-primary btn-sm"><?php echo esc_html( $first_friend['display_name'] ); ?></button>
+			<button class="btn btn-link">→ <?php echo esc_html( $first_friend['display_name'] ); ?></button>
 		</div>
 	</form>
 	</li>
