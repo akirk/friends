@@ -1,0 +1,52 @@
+{
+	"landingPage": "/friends/",
+	"features": {
+		"networking": true
+	},
+	"steps": [
+		{
+			"step": "login",
+			"username": "admin",
+			"password": "password"
+		},
+		{
+			"step": "setSiteOptions",
+			"options": {
+				"permalink_structure": "/%year%/%monthnum%/%day%/%postname%/"
+			}
+		},
+		{
+			"step": "installPlugin",
+			"pluginZipFile": {
+				"resource": "wordpress.org/plugins",
+				"slug": "friends"
+			},
+			"options": {
+				"activate": true
+			}
+		},
+		{
+			"step": "installPlugin",
+			"pluginZipFile": {
+				"resource": "wordpress.org/plugins",
+				"slug": "activitypub"
+			},
+			"options": {
+				"activate": true
+			}
+		},
+		{
+			"step": "mkdir",
+			"path": "wordpress/wp-content/mu-plugins"
+		},
+		{
+			"step": "writeFile",
+			"path": "wordpress/wp-content/mu-plugins/cors-proxy.php",
+			"data": "<?php add_action( 'requests-requests.before_request', function( &$url ) {\n$url = 'https://playground.wordpress.net/cors-proxy.php?' . $url;\n} );"
+		},
+		{
+			"step": "runPHP",
+			"code": "<?php require_once 'wordpress/wp-load.php';\nif ( class_exists('Friends\\Import')) {\nFriends\\Import::opml(\"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\"?><opml version=\\\"2.0\\\"><head><title>Friends Plugin Demo</title><dateCreated>Wed, 16 Oct 2024 05:09:20 +0000</dateCreated><ownerName></ownerName></head><body><outline text=\\\"Feeds\\\"><outline text=\\\"Alex Kirk\\\" htmlUrl=\\\"https://alex.kirk.at/\\\" title=\\\"Alex Kirk\\\" type=\\\"rss\\\" xmlUrl=\\\"https://alex.kirk.at/feed/\\\"/><outline text=\\\"Matthias Pfefferle\\\" htmlUrl=\\\"https://notiz.blog/\\\" title=\\\"Matthias Pfefferle\\\" type=\\\"rss\\\" xmlUrl=\\\"https://notiz.blog/feed/\\\"/></outline></body></opml>\");\ndo_action( 'cron_friends_refresh_feeds' );\n}"
+		}
+	]
+}
