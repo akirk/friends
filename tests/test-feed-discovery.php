@@ -65,4 +65,14 @@ class Feed_Discovery extends Friends_TestCase_Cache_HTTP {
 		$this->assertEquals( 'wordpress.com', User::get_user_login_from_feeds( $feeds ) );
 	}
 
+	public function test_kellyblog() {
+		$friends = Friends::get_instance();
+		$feeds = $friends->feed->discover_available_feeds( 'https://kelly.blog/' );
+		$this->assertArrayHasKey( 'https://kelly.blog/feed/', $feeds );
+		$this->assertArrayHasKey( 'autoselect', $feeds['https://kelly.blog/feed/'] );
+		$this->assertTrue( $feeds['https://kelly.blog/feed/']['autoselect'] );
+		$this->assertEquals( 'kelly.blog', User::get_display_name_from_feeds( $feeds ) );
+		$this->assertEquals( 'kelly.blog', User::get_user_login_from_feeds( $feeds ) );
+	}
+
 }
