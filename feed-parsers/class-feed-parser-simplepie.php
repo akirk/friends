@@ -149,6 +149,11 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		require_once __DIR__ . '/SimplePie/class-simplepie-misc.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
 
+		// Workaround for SimplePie assuming that CURL is loaded.
+		if ( ! defined( 'CURLOPT_USERAGENT' ) ) {
+			define( 'CURLOPT_USERAGENT', 10018 );
+		}
+
 		$feed = new \SimplePie();
 
 		$feed->set_sanitize_class( '\WP_SimplePie_Sanitize_KSES' );
