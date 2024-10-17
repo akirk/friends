@@ -2215,7 +2215,11 @@ function parseUriToComponents($uri) {
 		'fragment' => null
 	);
 
-	$u = @parse_url($uri);
+	if ( ! is_string( $uri ) ) {
+		return $result;
+	}
+
+	$u = parse_url($uri);
 
 	if(array_key_exists('scheme', $u))
 		$result['scheme'] = $u['scheme'];
