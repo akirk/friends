@@ -44,7 +44,7 @@ abstract class Widget_Base_Friends_List extends \WP_Widget {
 	 */
 	public function list_friends( $args, $title, \WP_User_Query $friends ) {
 		?>
-		<details class="accordion" open>
+		<details class="accordion">
 			<summary class="accordion-header">
 		<?php
 		echo $args['before_title'];
