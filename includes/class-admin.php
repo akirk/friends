@@ -1860,6 +1860,17 @@ class Admin {
 				return new \WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 			}
 
+			if ( preg_match( '#https://.*?@threads.net#', $friend_url ) ) {
+				return new \WP_Error(
+					'threads-net',
+					sprintf(
+					// translators: %s is a URL.
+						__( '⚠️ This user has <a href="%s">not enabled Fediverse sharing on their Threads.net account</a>.', 'friends' ),
+						'https://about.fb.com/news/2023/07/introducing-threads-new-app-text-sharing/'
+					)
+				);
+			}
+
 			if ( ! Friends::check_url( $friend_url ) ) {
 				return new \WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 			}
