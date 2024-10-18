@@ -869,6 +869,8 @@ class Feed {
 						if ( isset( $available_feeds[ $link_url ]['parser'] ) || ! isset( $feed['parser'] ) ) {
 							continue;
 						}
+					} else {
+						$available_feeds[ $link_url ] = array();
 					}
 					$available_feeds[ $link_url ] = array_merge( $available_feeds[ $link_url ], $feed );
 					$available_feeds[ $link_url ]['url'] = $link_url;
