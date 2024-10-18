@@ -1403,6 +1403,12 @@ class Parser {
 			$top['alternates'] = $alternates;
 		}
 
+		$top['title'] = '';
+		$x_title = $this->xpath->query( '//title' );
+		if ( $x_title && $x_title->item( 0 ) ) {
+			$top['title'] = $x_title->item( 0 )->textContent;
+		}
+
 		return $top;
 	}
 
