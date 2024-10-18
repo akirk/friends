@@ -51,10 +51,11 @@ class Widget_Friend_Stats extends \WP_Widget {
 		}
 		echo $args['before_widget'];
 		?>
-		<details class="accordion" open>
+		<details class="accordion">
 			<summary class="accordion-header">
 		<?php
 		echo $args['before_title'];
+		echo '<span class="dashicons dashicons-chart-area"></span> ';
 		echo wp_kses(
 			$instance['title'],
 			array(

@@ -49,9 +49,9 @@ class Widget_New_Private_Post extends \WP_Widget {
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="friends-post-inline">
 			<?php wp_nonce_field( 'friends_publish' ); ?>
 			<input type="hidden" name="action" value="friends_publish" />
-			<input type="text" name="title" value="" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ echo esc_attr( __( 'Title' ) ); ?>" /><br />
-			<textarea name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( 'What do you want to post just to your friends, %s?', 'friends' ), wp_get_current_user()->display_name ) ); ?>"></textarea><br />
-			<button><?php _e( 'Post to your friends', 'friends' ); ?></button>
+			<input class="form-input" type="text" name="title" value="" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ echo esc_attr( __( 'Title' ) ); ?>" />
+			<textarea class="form-input"  name="content" rows="5" cols="70" placeholder="<?php echo /* translators: %s is a user display name. */ esc_attr( sprintf( __( 'What do you want to post just to your friends, %s?', 'friends' ), wp_get_current_user()->display_name ) ); ?>"></textarea><br />
+			<button class="btn btn-primary input-group-btn"><?php _e( 'Post to your friends', 'friends' ); ?></button>
 			<small class="description">
 			<?php
 			// translators: %1$s is the menu label "Visibility", %2$s is the menu label "Private".
