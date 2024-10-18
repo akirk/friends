@@ -3144,7 +3144,8 @@ h2#page-title a.dashicons {
     font-size: .7rem;
     text-transform: uppercase;
     font-weight: bold;
-    letter-spacing: 2px
+    letter-spacing: 2px;
+    color: #2e5bec;
 }
 
 .friends-page section.posts .card header.entry-header {
