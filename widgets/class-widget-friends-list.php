@@ -77,7 +77,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 				$args,
 				sprintf(
 					// translators: %s is the number of subscriptions.
-					_n( '%s Subscription', '%s Subscriptions', $subscriptions->get_total(), 'friends' ),
+					_n( '<span class="dashicons dashicons-admin-users"></span> Subscription %s', '<span class="dashicons dashicons-admin-users"></span> Subscriptions %s', $subscriptions->get_total(), 'friends' ),
 					'<span class="subscription-count">' . $subscriptions->get_total() . '</span>'
 				),
 				$subscriptions
