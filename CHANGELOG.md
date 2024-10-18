@@ -1,3 +1,8 @@
+### 3.1.2
+- Fix support for threads.net ([#378])
+- Add a warning if a user has not enabled ActivityPub on their threads.net account ([#377])
+- Upgrade and improve the MF2 library ([#374])
+
 ### 3.1.1
 - Improve Name Detection ([#372])
 - Add a Button to the Welcome page ([#373])
@@ -262,6 +267,9 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#378]: https://github.com/akirk/friends/pull/378
+[#377]: https://github.com/akirk/friends/pull/377
+[#374]: https://github.com/akirk/friends/pull/374
 [#372]: https://github.com/akirk/friends/pull/372
 [#373]: https://github.com/akirk/friends/pull/373
 [#365]: https://github.com/akirk/friends/pull/365

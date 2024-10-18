@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 3.1.1
+- Stable tag: 3.1.2
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.1.2
+- Fix support for threads.net ([#378])
+- Add a warning if a user has not enabled ActivityPub on their threads.net account ([#377])
+- Upgrade and improve the MF2 library ([#374])
+
 ### 3.1.1
 - Improve Name Detection ([#372])
 - Add a Button to the Welcome page ([#373])
@@ -149,6 +154,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix the all postids query ([#335])
 - Don't define a wp-editor dependency ([#332])
 
+[#378]: https://github.com/akirk/friends/pull/378
+[#377]: https://github.com/akirk/friends/pull/377
+[#374]: https://github.com/akirk/friends/pull/374
 [#372]: https://github.com/akirk/friends/pull/372
 [#373]: https://github.com/akirk/friends/pull/373
 [#365]: https://github.com/akirk/friends/pull/365
