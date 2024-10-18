@@ -127,6 +127,9 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Subscription', 'friends' ); ?></th>
 				<td>
+					<?php if ( ! empty( $args['feeds_notice'] ) ) : ?>
+						<strong><?php echo wp_kses( $args['feeds_notice'], array( 'a' => array( 'href' => array() ) ) ); ?></strong>
+					<?php endif; ?>
 					<ul>
 					<?php foreach ( $args['feeds'] as $feed_url => $details ) : ?>
 						<?php

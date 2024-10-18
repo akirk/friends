@@ -1860,6 +1860,17 @@ class Admin {
 				return new \WP_Error( 'friend-yourself', __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
 			}
 
+			if ( preg_match( '#https://.*?@threads.net#', $friend_url ) ) {
+				return new \WP_Error(
+					'threads-net',
+					sprintf(
+					// translators: %s is a URL.
+						__( '⚠️ This user has <a href="%s">not enabled Fediverse sharing on their Threads.net account</a>.', 'friends' ),
+						'https://about.fb.com/news/2023/07/introducing-threads-new-app-text-sharing/'
+					)
+				);
+			}
+
 			if ( ! Friends::check_url( $friend_url ) ) {
 				return new \WP_Error( 'invalid-url', __( 'You entered an invalid URL.', 'friends' ) );
 			}
@@ -1880,6 +1891,29 @@ class Admin {
 			}
 			if ( ! $feeds ) {
 				return new \WP_Error( 'no-feed-found', __( 'No suitable feed was found at the provided address.', 'friends' ) );
+			}
+			$has_subscribable_feeds = false;
+			$has_threads_net = false;
+			foreach ( $feeds as $url => $feed ) {
+				if ( 0 === strpos( $url, 'https://threads.net/' ) ) {
+					$has_threads_net = true;
+				}
+				if ( isset( $feed['autoselect'] ) && $feed['autoselect'] ) {
+					$has_subscribable_feeds = true;
+					break;
+				}
+				if ( 'unsupported' !== $feed['parser'] ) {
+					$has_subscribable_feeds = true;
+					break;
+				}
+			}
+
+			if ( ! $has_subscribable_feeds && $has_threads_net ) {
+				$args['feeds_notice'] = sprintf(
+					// translators: %s is a URL.
+					__( '⚠️ This user has <a href="%s">not enabled Fediverse sharing on their Threads.net account</a>.', 'friends' ),
+					'https://about.fb.com/news/2023/07/introducing-threads-new-app-text-sharing/'
+				);
 			}
 
 			$better_user_login = User::get_user_login_from_feeds( $feeds );
