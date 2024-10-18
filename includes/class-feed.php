@@ -861,20 +861,18 @@ class Feed {
 			$content_type = strtok( $headers['content-type'], ';' );
 		}
 
-		if ( $content ) {
-			foreach ( $this->parsers as $slug => $parser ) {
-				foreach ( $parser->discover_available_feeds( $content, $url ) as $link_url => $feed ) {
-					if ( isset( $available_feeds[ $link_url ] ) ) {
-						// If this parser tells us it can parse it right away, allow it to override.
-						if ( isset( $available_feeds[ $link_url ]['parser'] ) || ! isset( $feed['parser'] ) ) {
-							continue;
-						}
-					} else {
-						$available_feeds[ $link_url ] = array();
+		foreach ( $this->parsers as $slug => $parser ) {
+			foreach ( $parser->discover_available_feeds( $content, $url ) as $link_url => $feed ) {
+				if ( isset( $available_feeds[ $link_url ] ) ) {
+					// If this parser tells us it can parse it right away, allow it to override.
+					if ( isset( $available_feeds[ $link_url ]['parser'] ) || ! isset( $feed['parser'] ) ) {
+						continue;
 					}
-					$available_feeds[ $link_url ] = array_merge( $available_feeds[ $link_url ], $feed );
-					$available_feeds[ $link_url ]['url'] = $link_url;
+				} else {
+					$available_feeds[ $link_url ] = array();
 				}
+				$available_feeds[ $link_url ] = array_merge( $available_feeds[ $link_url ], $feed );
+				$available_feeds[ $link_url ]['url'] = $link_url;
 			}
 		}
 
