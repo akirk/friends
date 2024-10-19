@@ -42,11 +42,11 @@ class Widget_Post_Formats extends \WP_Widget {
 
 		echo wp_kses( $args['before_widget'], 'post' );
 		?>
-		<details class="accordion" open>
+		<details class="accordion">
 			<summary class="accordion-header">
 				<?php
 				if ( ! empty( $instance['title'] ) ) {
-					echo wp_kses( $args['before_title'] . $instance['title'] . $args['after_title'], 'post' );
+					echo wp_kses( $args['before_title'] . '<span class="dashicons dashicons-filter"></span> ' . $instance['title'] . $args['after_title'], 'post' );
 				}
 				?>
 			</summary>
