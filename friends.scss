@@ -397,6 +397,14 @@ h2#page-title a.dashicons {
 		.accordion-header {
 			padding: 0;
 		}
+
+		.subscription-count{
+			background: rgb(22.625, 72.6578947368, 233.875);
+			color: white;
+			padding: 4px 6px 4px 6px;
+			font-size: 10px;
+			border-radius: 20px;
+		}
 	}
 
 	#quick-post-panel {
@@ -464,6 +472,7 @@ h2#page-title a.dashicons {
 		text-transform: uppercase;
 		font-weight: bold;
 		letter-spacing: 2px;
+		color: $primary-color;
 	}
 
 	section.posts {
