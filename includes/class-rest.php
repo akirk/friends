@@ -386,9 +386,9 @@ class REST {
 		$feed_id = $request->get_param( 'id' );
 		$feed = new User_Feed( get_term( intval( $feed_id ) ) );
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-		add_filter(
+		add_action(
 			'wp_feed_options',
-			function ( $feed ) {
+			function ( &$feed ) {
 				$feed->enable_cache( false );
 			}
 		);
@@ -399,10 +399,10 @@ class REST {
 		if ( $friend_user && $feed->can_be_polled_now() ) {
 			$feed->set_polling_now();
 			$new_posts = $this->friends->feed->retrieve_feed( $feed );
+			$feed->was_polled();
 			if ( is_wp_error( $new_posts ) ) {
 				return $new_posts;
 			}
-			$feed->was_polled();
 			$was_polled = true;
 			$friend_user->delete_outdated_posts();
 		}
