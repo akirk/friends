@@ -173,7 +173,7 @@
 				$.ajax( {
 					url: friends.rest_base + 'refresh-feed',
 					method: 'POST',
-					data: { id: feed },
+					data: { id: feed.id },
 					beforeSend: function(xhr){
 						xhr.setRequestHeader( 'X-WP-Nonce', friends.rest_nonce );
 					},

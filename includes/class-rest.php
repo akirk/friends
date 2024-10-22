@@ -396,7 +396,7 @@ class REST {
 
 		$friend_user = $feed->get_friend_user();
 		$was_polled = false;
-		if ( $friend_user ) {
+		if ( $friend_user && $feed->can_be_polled_now() ) {
 			$feed->set_polling_now();
 			$new_posts = $this->friends->feed->retrieve_feed( $feed );
 			$feed->was_polled();
