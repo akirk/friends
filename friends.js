@@ -192,7 +192,7 @@
 	$document.on( 'click', 'a.friends-refresh', refresh_feeds_now );
 
 	if ( 'true' === friends.refresh_now ) {
-		refresh_feeds_now();
+		refresh_feeds_now.apply( $( 'a.friends-refresh' ) );
 	}
 
 	$document.on(
