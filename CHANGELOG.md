@@ -1,3 +1,7 @@
+### 3.1.3
+- Add AJAX refreshing of feeds ([#382])
+- Fix Fatal in the MF2 library ([#381])
+
 ### 3.1.2
 - Fix support for threads.net ([#378])
 - Add a warning if a user has not enabled ActivityPub on their threads.net account ([#377])
@@ -267,6 +271,8 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#382]: https://github.com/akirk/friends/pull/382
+[#381]: https://github.com/akirk/friends/pull/381
 [#378]: https://github.com/akirk/friends/pull/378
 [#377]: https://github.com/akirk/friends/pull/377
 [#374]: https://github.com/akirk/friends/pull/374

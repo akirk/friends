@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.6
 - License: GPL-2.0-or-later
-- Stable tag: 3.1.2
+- Stable tag: 3.1.3
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.1.3
+- Add AJAX refreshing of feeds ([#382])
+- Fix Fatal in the MF2 library ([#381])
+
 ### 3.1.2
 - Fix support for threads.net ([#378])
 - Add a warning if a user has not enabled ActivityPub on their threads.net account ([#377])
@@ -121,39 +125,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
 - Improve ghost.org ActivityPub compatibility ([#356])
 
-### 2.9.9
-- Avoid fatal when no user login can be found during boosting ([#355])
-- A small update of a filter for Enable Mastodon Apps 0.9.8
-
-### 2.9.8
-- Fix ActivityPub preview and use more details when creating the user ([#354])
-
-### 2.9.7
-- Fix boost button ([#353])
-
-### 2.9.6
-- Allow creating multiple dashboard widgets in ([#349])
-- Add support for double-encoded HTML entities in RSS in ([#352])
-- Expose the list of your followers and make it easy to follow back in ([#351])
-- Fixed a bug that could cause double items on initial feed refresh.
-
-### 2.9.5
-- Don't override ActivityPub mentions ([#345])
-- Add a dashboard widget ([#346])
-- Automatically update dashboard widget with new posts ([#347])
-- Account for WordPress installs in a directory ([#348])
-
-### 2.9.4
-- Fix an out of memory error in get_author_posts_url ([#339])
-- Fix ignore notification settings when no `friend_listed` passed by @logicalor in ([#324])
-- Null coalesce `$html` to empty string to avoid deprecation notices by @logicalor in ([#325])
-- Support the WordPress PHPCS ruleset ([#329]), props @apermo
-- Improve PHPCS WordPress compliance ([#330])
-- Post Cache Admin: Only show subscription author ([#333])
-- Add automatic-status menu slug ([#334])
-- Fix the all postids query ([#335])
-- Don't define a wp-editor dependency ([#332])
-
+[#382]: https://github.com/akirk/friends/pull/382
+[#381]: https://github.com/akirk/friends/pull/381
 [#378]: https://github.com/akirk/friends/pull/378
 [#377]: https://github.com/akirk/friends/pull/377
 [#374]: https://github.com/akirk/friends/pull/374
@@ -171,22 +144,3 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 [#357]: https://github.com/akirk/friends/pull/357
 [#361]: https://github.com/akirk/friends/pull/361
 [#356]: https://github.com/akirk/friends/pull/356
-[#355]: https://github.com/akirk/friends/pull/355
-[#354]: https://github.com/akirk/friends/pull/354
-[#353]: https://github.com/akirk/friends/pull/353
-[#349]: https://github.com/akirk/friends/pull/349
-[#352]: https://github.com/akirk/friends/pull/352
-[#351]: https://github.com/akirk/friends/pull/351
-[#345]: https://github.com/akirk/friends/pull/345
-[#346]: https://github.com/akirk/friends/pull/346
-[#347]: https://github.com/akirk/friends/pull/347
-[#348]: https://github.com/akirk/friends/pull/348
-[#339]: https://github.com/akirk/friends/pull/339
-[#324]: https://github.com/akirk/friends/pull/324
-[#325]: https://github.com/akirk/friends/pull/325
-[#329]: https://github.com/akirk/friends/pull/329
-[#330]: https://github.com/akirk/friends/pull/330
-[#333]: https://github.com/akirk/friends/pull/333
-[#334]: https://github.com/akirk/friends/pull/334
-[#335]: https://github.com/akirk/friends/pull/335
-[#332]: https://github.com/akirk/friends/pull/332
