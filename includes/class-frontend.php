@@ -233,12 +233,17 @@ class Frontend {
 			$variables = array(
 				'emojis_json'        => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
 				'ajax_url'           => admin_url( 'admin-ajax.php' ),
+				'rest_base'          => rest_url( 'friends/v1/' ),
+				'rest_nonce'         => wp_create_nonce( 'wp_rest' ),
 				'text_link_expired'  => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
 				'text_undo'          => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 				'text_trash_post'    => __( 'Trash this post', 'friends' ),
 				'text_del_convers'   => __( 'Do you really want to delete this conversation?', 'friends' ),
 				'text_no_more_posts' => __( 'No more posts available.', 'friends' ),
 				'text_checking_url'  => __( 'Checking URL.', 'friends' ),
+				'text_refreshed'     => __( 'Refreshed', 'friends' ),
+				'text_refreshing'    => __( 'Refreshing', 'friends' ),
+				'refresh_now'        => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				'query_vars'         => $query_vars,
 				'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
 				'current_page'       => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
@@ -806,17 +811,6 @@ class Frontend {
 
 			status_header( 200 );
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
-		}
-
-		if ( isset( $_GET['refresh'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-			add_filter(
-				'wp_feed_options',
-				function ( $feed ) {
-					$feed->enable_cache( false );
-				}
-			);
-			$this->friends->feed->retrieve_friend_posts( true );
 		}
 
 		$args['frontend_default_view'] = get_option( 'friends_frontend_default_view', 'expanded' );
