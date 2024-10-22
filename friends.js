@@ -130,6 +130,7 @@
 			$this.find( 'span' ).text( t );
 		}
 		set_status( friends.text_refreshing );
+
 		$.ajax( {
 			url: friends.rest_base + 'get-feeds',
 			beforeSend: function(xhr){
@@ -140,11 +141,39 @@
 			const missing = feeds.reduce( ( acc, feed ) => {
 				acc[ feed.id ] = feed;
 				return acc;
-			}
-			, {} );
+			}, {} );
 
 			let alreadyLoading = false;
 			for ( const feed of feeds ) {
+				function update_status( feed ) {
+					return function( data ) {
+						delete missing[ feed.id ];
+						const finished_count = feeds.length - Object.keys( missing ).length;
+						set_status( finished_count + ' / ' + feeds.length );
+						if ( finished_count === feeds.length ) {
+							$this.html( friends.text_refreshed + '<i class="dashicons dashicons-yes">' );
+							alreadyLoading = false;
+						}
+						if ( data.new_posts && ! alreadyLoading ) {
+							wp.ajax.send( 'friends-load-next-page', {
+								data: {
+									query_vars: friends.query_vars,
+									page: friends.current_page - 1,
+									qv_sign: friends.qv_sign,
+								},
+								beforeSend() {
+									alreadyLoading = true;
+								},
+								success( newPosts ) {
+									if ( newPosts ) {
+										$( 'section.posts' )
+										.html( newPosts );
+									}
+								},
+							} );
+						}
+					};
+				}
 				$.ajax( {
 					url: friends.rest_base + 'refresh-feed',
 					method: 'POST',
@@ -152,34 +181,7 @@
 					beforeSend: function(xhr){
 						xhr.setRequestHeader( 'X-WP-Nonce', friends.rest_nonce );
 					},
-				} ).done( function( data ) {
-					delete missing[ feed.id ];
-					const finished_count = feeds.length - Object.keys( missing ).length;
-					set_status( finished_count + ' / ' + feeds.length );
-					console.log( missing );
-					if ( finished_count === feeds.length ) {
-						$this.html( friends.text_refreshed + '<i class="dashicons dashicons-yes">' );
-						alreadyLoading = false;
-					}
-					if ( data.new_posts && ! alreadyLoading ) {
-						wp.ajax.send( 'friends-load-next-page', {
-							data: {
-								query_vars: friends.query_vars,
-								page: friends.current_page - 1,
-								qv_sign: friends.qv_sign,
-							},
-							beforeSend() {
-								alreadyLoading = true;
-							},
-							success( newPosts ) {
-								if ( newPosts ) {
-									$( 'section.posts' )
-									.html( newPosts );
-								}
-							},
-						} );
-					}
-				} );
+				} ).done( update_status( feed ) ).fail( update_status( feed ) );
 			}
 		} );
 		return false;
