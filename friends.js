@@ -138,51 +138,54 @@
 			},
 		}
 		).done( function( feeds ) {
-			const missing = feeds.reduce( ( acc, feed ) => {
-				acc[ feed.id ] = feed;
-				return acc;
-			}, {} );
-
+			const feed_count = feeds.length;
 			let alreadyLoading = false;
-			for ( const feed of feeds ) {
-				function update_status( feed ) {
-					return function( data ) {
-						delete missing[ feed.id ];
-						const finished_count = feeds.length - Object.keys( missing ).length;
-						set_status( finished_count + ' / ' + feeds.length );
-						if ( finished_count === feeds.length ) {
-							$this.html( friends.text_refreshed + '<i class="dashicons dashicons-yes">' );
-							alreadyLoading = false;
-						}
-						if ( data.new_posts && ! alreadyLoading ) {
-							wp.ajax.send( 'friends-load-next-page', {
-								data: {
-									query_vars: friends.query_vars,
-									page: friends.current_page - 1,
-									qv_sign: friends.qv_sign,
-								},
-								beforeSend() {
-									alreadyLoading = true;
-								},
-								success( newPosts ) {
-									if ( newPosts ) {
-										$( 'section.posts' )
-										.html( newPosts );
-									}
-								},
-							} );
-						}
-					};
+			function update_page() {
+				if ( alreadyLoading ) {
+					return;
 				}
+				wp.ajax.send( 'friends-load-next-page', {
+					data: {
+						query_vars: friends.query_vars,
+						page: friends.current_page - 1,
+						qv_sign: friends.qv_sign,
+					},
+					beforeSend() {
+						alreadyLoading = true;
+					},
+					success( newPosts ) {
+						alreadyLoading = false;
+						if ( newPosts ) {
+							$( 'section.posts' )
+							.html( newPosts );
+						}
+					},
+				} );
+			}
+			function fetch_next() {
+				if ( ! feeds.length ) {
+					$this.html( friends.text_refreshed + '<i class="dashicons dashicons-yes">' );
+					alreadyLoading = false;
+					update_page();
+					return;
+				}
+				const feed = feeds.shift();
 				$.ajax( {
 					url: friends.rest_base + 'refresh-feed',
 					method: 'POST',
-					data: { id: feed.id },
+					data: { id: feed },
 					beforeSend: function(xhr){
 						xhr.setRequestHeader( 'X-WP-Nonce', friends.rest_nonce );
 					},
-				} ).done( update_status( feed ) ).fail( update_status( feed ) );
+				} ).always( function( data ) {
+					set_status( ( feed_count - feeds.length ) + ' / ' + feed_count );
+					if ( data.new_posts ) {
+						update_page();
+					}
+					setTimeout( fetch_next, 1 );
+				} );
 			}
+			fetch_next();
 		} );
 		return false;
 	};
