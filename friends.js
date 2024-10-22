@@ -98,7 +98,7 @@
 				searchDialog.append( $( '.navbar-section.search' ).children() );
 
 				// create a new dialog
-				if ( searchDialog.is(':visible') ) {
+				if ( searchDialog.is( ':visible' ) ) {
 					searchDialog.hide();
 					$( '.navbar-section.search' ).append( searchDialog.children() );
 				} else {
@@ -115,6 +115,56 @@
 			}
 		}
 	} );
+
+	const refresh_feeds_now = function() {
+		let $this = $( this );
+		function set_status( t ) {
+			if ( ! $this.length ) {
+				$this = $( 'a.friends-refresh' );
+			}
+			if ( ! $this.find( 'span' ).length ) {
+				$this.html( '<span></span> <i class="loading"></i> ' );
+				$this.find( 'i' ).css( 'margin-left', '1em' );
+				$this.find( 'i' ).css( 'margin-right', '1em' );
+			}
+			$this.find( 'span' ).text( t );
+		}
+		set_status( friends.text_refreshing );
+		$.ajax( {
+			url: friends.rest_base + 'get-feeds',
+			beforeSend: function(xhr){
+				xhr.setRequestHeader( 'X-WP-Nonce', friends.rest_nonce );
+			},
+		}
+		).done( function( feeds ) {
+			let finished = 0;
+			for ( const feed of feeds ) {
+				$.ajax( {
+					url: friends.rest_base + 'refresh-feed',
+					method: 'POST',
+					data: { id: feed.id },
+					beforeSend: function(xhr){
+						xhr.setRequestHeader( 'X-WP-Nonce', friends.rest_nonce );
+					},
+				} ).done( function( data ) {
+					finished++;
+					set_status( finished + ' / ' + feeds.length );
+					if ( data.new_posts ) {
+						// TODO: refresh post list.
+					}
+					if ( finished === feeds.length ) {
+						$this.html( friends.text_refreshed + '<i class="dashicons dashicons-yes">' );
+					}
+				} );
+			}
+		} );
+		return false;
+	};
+	$document.on( 'click', 'a.friends-refresh', refresh_feeds_now );
+
+	if ( 'true' === friends.refresh_now ) {
+		refresh_feeds_now();
+	}
 
 	$document.on(
 		'click',
@@ -610,16 +660,16 @@
 				data: {
 					_ajax_nonce: $this.data( 'nonce' ),
 					url: $this.data( 'id' ),
-					followers: $this.data('followers' ),
-					following: $this.data('following' ),
+					followers: $this.data( 'followers' ),
+					following: $this.data( 'following' ),
 				},
 				success( result ) {
-					$this.find('.loading-posts').hide().after( result.posts );
-					$this.find('.their-followers').text( result.followers );
-					$this.find('.their-following').text( result.following );
+					$this.find( '.loading-posts' ).hide().after( result.posts );
+					$this.find( '.their-followers' ).text( result.followers );
+					$this.find( '.their-following' ).text( result.following );
 				},
 				error( result ) {
-					$this.find('.loading-posts').text( result.map(function( error ) { return error.message || error.code; } ).join( ',' ) );
+					$this.find( '.loading-posts' ).text( result.map(function( error ) { return error.message || error.code; } ).join( ',' ) );
 				}
 			} );
 		}
