@@ -395,6 +395,7 @@ class REST {
 		$new_posts = array();
 
 		$friend_user = $feed->get_friend_user();
+		$was_polled = false;
 		if ( $friend_user && $feed->can_be_polled_now() ) {
 			$feed->set_polling_now();
 			$new_posts = $this->friends->feed->retrieve_feed( $feed );
@@ -402,11 +403,14 @@ class REST {
 				return $new_posts;
 			}
 			$feed->was_polled();
+			$was_polled = true;
 			$friend_user->delete_outdated_posts();
 		}
 
 		return array(
-			'new_posts' => count( $new_posts ),
+			'new_posts'  => count( $new_posts ),
+			'url'        => $feed->get_url(),
+			'was_polled' => $was_polled,
 		);
 	}
 
