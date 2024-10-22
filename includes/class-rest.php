@@ -392,16 +392,21 @@ class REST {
 				$feed->enable_cache( false );
 			}
 		);
+		$new_posts = array();
+
 		$friend_user = $feed->get_friend_user();
 		if ( $friend_user && $feed->can_be_polled_now() ) {
 			$feed->set_polling_now();
-			$new_posts = $this->retrieve_feed( $feed );
+			$new_posts = $this->friends->feed->retrieve_feed( $feed );
+			if ( is_wp_error( $new_posts ) ) {
+				return $new_posts;
+			}
 			$feed->was_polled();
 			$friend_user->delete_outdated_posts();
 		}
 
 		return array(
-			'new_posts' => $new_posts,
+			'new_posts' => count( $new_posts ),
 		);
 	}
 
