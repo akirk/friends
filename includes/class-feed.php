@@ -229,6 +229,7 @@ class Feed {
 			return $error;
 		}
 		try {
+			error_log($user_feed->get_private_url());
 			$items = $this->parsers[ $parser ]->fetch_feed( $user_feed->get_private_url(), $user_feed );
 		} catch ( \Exception $e ) {
 			$items = new \WP_Error( $parser . '-failed', $e->getMessage() );
