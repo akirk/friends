@@ -45,7 +45,7 @@ class Widget_Refresh extends \WP_Widget {
 			echo $args['before_title'] . $title . $args['after_title'];
 		}
 
-		echo '<h5><span class="dashicons dashicons-admin-comments"></span> <a href="' . esc_url( home_url( '/friends/?refresh' ) ) . '">' . esc_html__( 'Refresh', 'friends' ) . '</a></h5>';
+		echo '<h5><span class="dashicons dashicons-update"></span> <a href="' . esc_url( home_url( '/friends/?refresh' ) ) . '">' . esc_html__( 'Refresh', 'friends' ) . '</a></h5>';
 
 		echo $args['after_widget'];
 	}
