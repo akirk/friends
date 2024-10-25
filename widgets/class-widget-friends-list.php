@@ -46,7 +46,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		$subscriptions   = User_Query::all_subscriptions();
 
 		// translators: %s is the number of your friends.
-		$friends_title = sprintf( _n( '%s Friend', '%s Friends', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
+		$friends_title = sprintf( _n( '<span class="dashicons dashicons-insert-after"></span> Friend %s', '<span class="dashicons dashicons-plus-alt"></span> Friends %s', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
 
 		if ( $all_friends->get_total() > 0 || ( ! $friend_requests->get_total() && ! $subscriptions->get_total() ) ) {
 			$this->list_friends(
@@ -67,7 +67,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 			$this->list_friends(
 				$args,
 				// translators: %1$s is the string "%s Friend", %2$s is a URL, %3$s is the number of open friend requests.
-				sprintf( _n( '%1$s <a href=%2$s>(%3$s request)</a>', '%1$s <a href=%2$s>(%3$s requests)</a>', $friend_requests->get_total(), 'friends' ), $friends_title, '"' . esc_attr( self_admin_url( 'users.php?role=friend_request' ) ) . '" class="open-requests"', '<span class="friend-count">' . $friend_requests->get_total() . '</span>' ),
+				sprintf( _n( '%1$s <a href=%2$s>(%3$s request)</a>', '%1$s <a href=%2$s>(%3$s requests)</a>', $friend_requests->get_total(), 'friends' ), $friends_title, '"' . esc_attr( self_admin_url( 'users.php?role=friend_request' ) ) . '" class="open-requests"', $friend_requests->get_total() ),
 				$friend_requests
 			);
 		}
