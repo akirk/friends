@@ -46,7 +46,7 @@ class Widget_Header extends \WP_Widget {
 
 		echo $args['before_widget'];
 		if ( ! empty( $title ) ) {
-			echo $args['before_title'] . $title . $args['after_title'];
+			echo $args['before_title'] . '<span class="dashicons dashicons-feedback"></span> ' . $title . $args['after_title'];
 		}
 
 		if ( $friends->frontend->author ) {
