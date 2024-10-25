@@ -2226,6 +2226,9 @@ function parseUriToComponents($uri) {
 	}
 
 	$u = parse_url($uri);
+	if ( ! $u ) {
+		return $result;
+	}
 
 	if(array_key_exists('scheme', $u))
 		$result['scheme'] = $u['scheme'];

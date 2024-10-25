@@ -561,7 +561,7 @@ class Feed {
 		$new_posts = array();
 		$modified_posts = array();
 		foreach ( $items as $item ) {
-			if ( ! $item->permalink ) {
+			if ( ! isset( $item->permalink ) || ! $item->permalink ) {
 				continue;
 			}
 			$item->permalink = str_replace( array( '&#38;', '&#038;' ), '&', ent2ncr( wp_kses_normalize_entities( $item->permalink ) ) );

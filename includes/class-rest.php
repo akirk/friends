@@ -86,6 +86,36 @@ class REST {
 				'permission_callback' => '__return_true',
 			)
 		);
+
+		register_rest_route(
+			self::PREFIX,
+			'get-feeds',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'rest_get_feeds' ),
+				'permission_callback' => function () {
+					return current_user_can( Friends::REQUIRED_ROLE );
+				},
+			)
+		);
+
+		register_rest_route(
+			self::PREFIX,
+			'refresh-feed',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_refresh_feed' ),
+				'params'              => array(
+					'id' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+				'permission_callback' => function () {
+					return current_user_can( Friends::REQUIRED_ROLE );
+				},
+			)
+		);
 	}
 
 	/**
@@ -333,6 +363,59 @@ class REST {
 		Friends::template_loader()->get_template_part( 'embed/embed-content', null, $args );
 		exit;
 	}
+
+	public function rest_get_feeds( $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		$feeds = User_Feed::get_all_due( true );
+		$feeds = array_map(
+			function ( $feed ) {
+				return array(
+					'id'        => $feed->get_id(),
+					'url'       => $feed->get_url(),
+					'parser'    => $feed->get_parser(),
+					'last_log'  => $feed->get_last_log(),
+					'next_poll' => $feed->get_next_poll(),
+				);
+			},
+			$feeds
+		);
+
+		return $feeds;
+	}
+
+	public function rest_refresh_feed( $request ) {
+		$feed_id = $request->get_param( 'id' );
+		$feed = new User_Feed( get_term( intval( $feed_id ) ) );
+		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+		add_action(
+			'wp_feed_options',
+			function ( &$feed ) {
+				$feed->enable_cache( false );
+			}
+		);
+		$new_posts = array();
+
+		$friend_user = $feed->get_friend_user();
+		$was_polled = false;
+		if ( $friend_user && $feed->can_be_polled_now() ) {
+			$feed->set_polling_now();
+			$new_posts = $this->friends->feed->retrieve_feed( $feed );
+			$feed->was_polled();
+			if ( is_wp_error( $new_posts ) ) {
+				return $new_posts;
+			}
+			$was_polled = true;
+			$friend_user->delete_outdated_posts();
+		}
+
+		return array(
+			'new_posts'  => count( $new_posts ),
+			'url'        => $feed->get_url(),
+			'was_polled' => $was_polled,
+		);
+	}
+
+
+
 
 	/**
 	 * Discover the REST URL for a friend site
