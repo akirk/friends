@@ -34,6 +34,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 
 		\add_filter( 'friends_get_comments', array( $this, 'get_comments' ), 10, 4 );
 		\add_filter( 'friends_no_comments_feed_available', array( $this, 'no_comments_feed_available' ), 10, 2 );
+		\add_filter( 'friends_modify_feed_item', array( $this, 'podcast_support' ), 10, 4 );
 	}
 
 	/**
@@ -331,6 +332,18 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 				}
 			}
 
+			foreach ( $item->get_enclosures() as $enclosure ) {
+				if ( ! isset( $enclosure->link ) ) {
+					continue;
+				}
+
+				$feed_item->enclosure = array_filter( array(
+					'url'    => $enclosure->get_link(),
+					'type'   => $enclosure->get_type(),
+					'length' => $enclosure->get_length(),
+				) );
+			}
+
 			if ( is_object( $item->get_author() ) ) {
 				$feed_item->author = \wp_strip_all_tags( $item->get_author()->name );
 			}
@@ -402,5 +415,10 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		}
 
 		return array_merge( $comments, $items );
+	}
+
+	public function podcast_support( $item, $user_feed, $friend_user, $post_id ) {
+		var_dump( $item );
+		return $item;
 	}
 }
