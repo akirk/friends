@@ -267,6 +267,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $status;
 		}
 
+		$account = false;
 		$meta = get_post_meta( $post_id, self::SLUG, true );
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
