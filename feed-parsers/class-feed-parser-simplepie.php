@@ -337,11 +337,13 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 					continue;
 				}
 
-				$feed_item->enclosure = array_filter( array(
-					'url'    => $enclosure->get_link(),
-					'type'   => $enclosure->get_type(),
-					'length' => $enclosure->get_length(),
-				) );
+				$feed_item->enclosure = array_filter(
+					array(
+						'url'    => $enclosure->get_link(),
+						'type'   => $enclosure->get_type(),
+						'length' => $enclosure->get_length(),
+					)
+				);
 			}
 
 			if ( is_object( $item->get_author() ) ) {
@@ -418,7 +420,24 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	}
 
 	public function podcast_support( $item, $user_feed, $friend_user, $post_id ) {
-		var_dump( $item );
+		if (
+			$item->enclosure
+			&& isset( $item->enclosure['url'] )
+			&& false === strpos( $item->post_content, '<!-- wp:audio -->' )
+		) {
+			$audio_block  = '<!-- wp:audio -->';
+			$audio_block .= PHP_EOL;
+			$audio_block .= '<figure class="wp-block-audio"><audio controls src="';
+			$audio_block .= esc_url( $item->enclosure['url'] );
+			$audio_block .= '"></audio></figure>';
+			$audio_block .= PHP_EOL;
+			$audio_block .= '<!-- /wp:audio -->';
+			$audio_block .= PHP_EOL;
+			$audio_block .= PHP_EOL;
+
+			$item->post_content = $audio_block . $item->post_content;
+
+		}
 		return $item;
 	}
 }

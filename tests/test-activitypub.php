@@ -283,7 +283,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			$object->get_tag()
 		);
 
-		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_to() );
+		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_cc() );
 		$this->assertContains( $this->actor, $object->get_cc() );
 
 		remove_all_filters( 'activitypub_from_post_object' );
@@ -313,7 +313,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			$object->get_tag()
 		);
 
-		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_to() );
+		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_cc() );
 		$this->assertNotContains( $this->actor, $object->get_cc() );
 
 		remove_all_filters( 'activitypub_from_post_object' );
