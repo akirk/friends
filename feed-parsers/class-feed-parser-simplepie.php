@@ -429,6 +429,14 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			$audio_block .= PHP_EOL;
 			$audio_block .= '<figure class="wp-block-audio"><audio controls src="';
 			$audio_block .= esc_url( $item->enclosure['url'] );
+			if ( isset( $item->enclosure['type'] ) ) {
+				$audio_block .= '" type="';
+				$audio_block .= esc_attr( $item->enclosure['type'] );
+			}
+			if ( isset( $item->enclosure['length'] ) ) {
+				$audio_block .= '" length="';
+				$audio_block .= esc_attr( $item->enclosure['length'] );
+			}
 			$audio_block .= '"></audio></figure>';
 			$audio_block .= PHP_EOL;
 			$audio_block .= '<!-- /wp:audio -->';
