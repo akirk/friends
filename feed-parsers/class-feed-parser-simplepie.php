@@ -421,9 +421,9 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 
 	public function podcast_support( $item, $user_feed, $friend_user, $post_id ) {
 		if (
-			$item->enclosure
-			&& isset( $item->enclosure['url'] )
-			&& false === strpos( $item->post_content, '<!-- wp:audio -->' )
+			isset( $item->enclosure['url'] )
+			&& false === stripos( $item->post_content, '<audio' )
+			&& false === stripos( $item->post_content, $item->enclosure['url'] )
 		) {
 			$audio_block  = '<!-- wp:audio -->';
 			$audio_block .= PHP_EOL;
