@@ -11,26 +11,25 @@
 	<?php
 	while ( $args['existing_messages']->have_posts() ) {
 		$_post = $args['existing_messages']->next_post();
-		setup_postdata( $_post );
 		$class = '';
 		if ( get_post_status( $_post ) === 'friends_unread' ) {
 			$class .= ' unread';
 		}
 		?>
-		<div class="friend-message" id="message-<?php echo esc_attr( get_the_ID() ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
-		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r' ) ); ?>">
+		<div class="friend-message" id="message-<?php echo esc_attr( get_the_ID( $_post ) ); ?>" data-id="<?php echo esc_attr( get_the_ID( $_post ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
+		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r', true, $_post ) ); ?>">
 			<?php
 			// translators: %s is a time span.
-			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( get_post_modified_time( 'U', true ) ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( get_post_modified_time( 'U', true, $_post ) ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			echo ': ';
-			the_title();
+			echo esc_html( get_the_title( $_post ) );
 			?>
 		</a>
 		<div style="display: none" class="conversation">
 			<div class="messages">
 			<?php
 
-			$content = get_the_content();
+			$content = make_clickable( get_the_content( null, false, $_post ) );
 			preg_match_all( '/<span class="date">([^<]+)</', $content, $matches );
 			if ( $matches ) {
 				$replace = array();
@@ -47,8 +46,7 @@
 				$content = str_replace( array_keys( $replace ), array_values( $replace ), $content );
 			}
 
-			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- This was handled upon post insert.
-			echo apply_filters( 'the_content', $content );
+			echo wp_kses_post( apply_filters( 'the_content', $content ) );
 			?>
 			</div>
 			<?php
@@ -58,7 +56,7 @@
 				array_merge(
 					$args,
 					array(
-						'subject' => get_the_title(),
+						'subject' => get_the_title( $_post ),
 					)
 				)
 			);
