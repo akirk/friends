@@ -16,7 +16,7 @@
 			$class .= ' unread';
 		}
 		?>
-		<div class="friend-message" id="message-<?php echo esc_attr( get_the_ID( $_post ) ); ?>" data-id="<?php echo esc_attr( get_the_ID( $_post ) ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
+		<div class="friend-message" id="message-<?php echo esc_attr( $_post->ID ); ?>" data-id="<?php echo esc_attr( $_post->ID ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
 		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r', true, $_post ) ); ?>">
 			<?php
 			// translators: %s is a time span.
