@@ -148,6 +148,18 @@ class Feed_Item {
 				$value = $this->validate_date( $value, 'invalid-updated-date' );
 				break;
 
+			case 'enclosure':
+				if ( ! is_array( $value ) ) {
+					return new \WP_Error( 'invalid-enclosure', 'This value cannot be stored in a enclosure.' );
+				}
+
+				if ( ! isset( $value['url'] ) || ! $this->validate_url( $value['url'], 'invalid-enclosure-url' ) ) {
+					return new \WP_Error( 'invalid-enclosure-url', 'The enclosure URL is invalid.' );
+				}
+
+				$this->data['meta']['enclosure'] = $value;
+				break;
+
 			// Internal.
 			case '_feed_rule_delete':
 				$value = boolval( $value );

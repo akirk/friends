@@ -664,4 +664,18 @@ class FeedTest extends \WP_UnitTestCase {
 		$count = wp_count_posts( Friends::CPT );
 		$this->assertEquals( 5, $count->publish );
 	}
+
+	public function test_podcast() {
+		$podcast = __DIR__ . '/data/podcast-feed.rss';
+		$feed_parsing_test = $this->feed_parsing_test( $podcast );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 1, $new_items );
+		$post_id = $new_items[0];
+
+		$post = get_post( $post_id );
+
+		$this->assertEquals( 'https://podcast.local/2022/10/episode-1/', $post->guid );
+		$this->assertStringContainsString( 'first-episode.mp3', $post->post_content );
+	}
 }
