@@ -312,6 +312,14 @@ class Messages {
 		}
 
 		$post_id = intval( $_POST['post_id'] );
+		if ( get_post_status( $post_id ) === 'friends_read' ) {
+			wp_send_json_success(
+				array(
+					'result' => true,
+				)
+			);
+		}
+
 		wp_update_post(
 			array(
 				'ID'          => $post_id,
