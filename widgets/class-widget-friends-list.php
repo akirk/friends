@@ -89,7 +89,6 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		}
 
 		do_action( 'friends_widget_friend_list_after', $this, $args );
-
 	}
 }
 

@@ -399,9 +399,9 @@ h2#page-title a.dashicons {
 		}
 
 		.subscription-count, .friend-count{
-			background: rgb(22.625, 72.6578947368, 233.875);
-			color: white;
-			padding: 4px 6px 4px 6px;
+			background: $primary-color;
+			color: $light-color;
+			padding: 4px 4px 4px 6px;
 			font-size: 10px;
 			border-radius: 20px;
 		}
