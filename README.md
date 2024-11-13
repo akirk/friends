@@ -3,9 +3,9 @@
 - Contributors: akirk
 - Tags: friends, rss, decentralized, social-network, own-your-data
 - Requires at least: 5.0
-- Tested up to: 6.6
+- Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.1.3
+- Stable tag: 3.1.4
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.1.4
+- Fix Warning:  Undefined variable $account ([#385])
+- Fixes for Friend Messages ([#387])
+- Add Podcast Support ([#386])
+
 ### 3.1.3
 - Add AJAX refreshing of feeds ([#382])
 - Fix Fatal in the MF2 library ([#381])
@@ -125,6 +130,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
 - Improve ghost.org ActivityPub compatibility ([#356])
 
+[#385]: https://github.com/akirk/friends/pull/385
+[#387]: https://github.com/akirk/friends/pull/387
+[#386]: https://github.com/akirk/friends/pull/386
 [#382]: https://github.com/akirk/friends/pull/382
 [#381]: https://github.com/akirk/friends/pull/381
 [#378]: https://github.com/akirk/friends/pull/378

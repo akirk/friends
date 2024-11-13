@@ -1,3 +1,8 @@
+### 3.1.4
+- Fix Warning:  Undefined variable $account ([#385])
+- Fixes for Friend Messages ([#387])
+- Add Podcast Support ([#386])
+
 ### 3.1.3
 - Add AJAX refreshing of feeds ([#382])
 - Fix Fatal in the MF2 library ([#381])
@@ -271,6 +276,9 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#385]: https://github.com/akirk/friends/pull/385
+[#387]: https://github.com/akirk/friends/pull/387
+[#386]: https://github.com/akirk/friends/pull/386
 [#382]: https://github.com/akirk/friends/pull/382
 [#381]: https://github.com/akirk/friends/pull/381
 [#378]: https://github.com/akirk/friends/pull/378
