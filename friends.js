@@ -438,9 +438,7 @@
 					'section.posts .posts-navigation .nav-previous'
 				).removeClass( 'loading' );
 				if ( newPosts ) {
-					$( 'section.posts' )
-						.find( 'article:last-of-type' )
-						.after( newPosts );
+					$( 'section.posts > article' ).last().after( newPosts );
 					if (
 						++friends.current_page < friends.max_page &&
 						/<article/.test( newPosts )
