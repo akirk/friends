@@ -843,7 +843,7 @@ class Feed {
 			$url,
 			array(
 				'timeout'     => apply_filters( 'friends_http_timeout', 20 ),
-				'redirection' => 1,
+				'redirection' => 2,
 			)
 		);
 
