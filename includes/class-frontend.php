@@ -86,6 +86,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
+		add_action( 'wp_ajax_friends-set-widget-open-state', array( $this, 'ajax_set_widget_open_state' ) );
 		add_action( 'friends_search_autocomplete', array( $this, 'autocomplete_user_search' ), 10, 2 );
 		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
@@ -930,6 +931,38 @@ class Frontend {
 		$link .= '</a>';
 
 		return $link;
+	}
+
+	public static function get_widget_open_state( $widget ) {
+		static $state = null;
+		if ( is_null( $state ) ) {
+			$state = get_user_meta( get_current_user_id(), 'friends_widget_state', true );
+			if ( ! is_array( $state ) ) {
+				$state = array();
+			}
+		}
+		return isset( $state[ $widget ] ) && is_string( $state[ $widget ] ) ? $state[ $widget ] : 'open';
+	}
+
+	public function ajax_set_widget_open_state() {
+		if ( ! isset( $_POST['widget'] ) || ! isset( $_POST['state'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		check_ajax_referer( 'friends_widget_state' );
+
+		$widget = sanitize_text_field( wp_unslash( $_POST['widget'] ) );
+		$open_state = sanitize_text_field( wp_unslash( $_POST['state'] ) );
+
+		$state = get_user_meta( get_current_user_id(), 'friends_widget_state', true );
+		if ( ! is_array( $state ) ) {
+			$state = array();
+		}
+		$state[ $widget ] = $open_state;
+		update_user_meta( get_current_user_id(), 'friends_widget_state', $state );
+
+		wp_send_json_success();
 	}
 
 	/**

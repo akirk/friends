@@ -49,7 +49,12 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		if ( $all_friends->get_total() > 0 || ( ! $friend_requests->get_total() && ! $subscriptions->get_total() ) ) {
 			echo $args['before_widget'];
 			$this->list_friends(
-				$args,
+				array_merge(
+					array(
+						'widget_id' => $args['widget_id'] . '-all',
+					),
+					$args
+				),
 				$friends_title,
 				$all_friends
 			);
@@ -66,7 +71,12 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		if ( $friend_requests->get_total() > 0 ) {
 			echo $args['before_widget'];
 			$this->list_friends(
-				$args,
+				array_merge(
+					array(
+						'widget_id' => $args['widget_id'] . '-requests',
+					),
+					$args
+				),
 				// translators: %1$s is the string "%s Friend", %2$s is a URL, %3$s is the number of open friend requests.
 				sprintf( _n( '%1$s <a href=%2$s>(%3$s request)</a>', '%1$s <a href=%2$s>(%3$s requests)</a>', $friend_requests->get_total(), 'friends' ), $friends_title, '"' . esc_attr( self_admin_url( 'users.php?role=friend_request' ) ) . '" class="open-requests"', $friend_requests->get_total() ),
 				$friend_requests
@@ -77,7 +87,12 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		if ( 0 !== $subscriptions->get_total() ) {
 			echo $args['before_widget'];
 			$this->list_friends(
-				$args,
+				array_merge(
+					array(
+						'widget_id' => $args['widget_id'] . '-subscriptions',
+					),
+					$args
+				),
 				'<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
 					// translators: %s is the number of subscriptions.
 					_n( 'Subscription %s', 'Subscriptions %s', $subscriptions->get_total(), 'friends' ),
