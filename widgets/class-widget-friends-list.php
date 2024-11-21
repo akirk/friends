@@ -44,7 +44,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		$subscriptions   = User_Query::all_subscriptions();
 
 		// translators: %s is the number of your friends.
-		$friends_title = '<span class="dashicons dashicons-insert-after"></span> ' . sprintf( _n( 'Friend %s', 'Friends %s', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
+		$friends_title = '<span class="dashicons dashicons-plus-alt"></span> ' . sprintf( _n( 'Friend %s', 'Friends %s', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
 
 		if ( $all_friends->get_total() > 0 || ( ! $friend_requests->get_total() && ! $subscriptions->get_total() ) ) {
 			echo $args['before_widget'];
