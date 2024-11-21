@@ -42,7 +42,7 @@ class Widget_Recent_Friends_List extends Widget_Base_Friends_List {
 		echo $args['before_widget'];
 		$this->list_friends(
 			$args,
-			__( '<span class="dashicons dashicons-admin-users"></span> Recent Friends', 'friends' ),
+			'<span class="dashicons dashicons-admin-users"></span> ' . __( 'Recent Friends', 'friends' ),
 			User_Query::recent_friends_subscriptions( 5 )
 		);
 

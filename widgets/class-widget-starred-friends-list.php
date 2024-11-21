@@ -47,7 +47,7 @@ class Widget_Starred_Friends_List extends Widget_Base_Friends_List {
 
 		$this->list_friends(
 			$args,
-			_x( 'Starred', 'Starred Friends', 'friends' ),
+			'<span class="dashicons dashicons-star-filled"></span> ' . _x( 'Starred', 'Starred Friends', 'friends' ),
 			$friends
 		);
 

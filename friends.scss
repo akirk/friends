@@ -163,6 +163,9 @@ h2#page-title a.dashicons {
 		cursor: pointer;
 		white-space: nowrap;
 		text-overflow: ellipsis;
+		.dashicons {
+  			vertical-align: bottom;
+		}
 	}
 
 	.accordion[open] .accordion-body {
@@ -399,8 +402,8 @@ h2#page-title a.dashicons {
 		}
 
 		.subscription-count, .friend-count{
-			background: $primary-color;
-			color: $light-color;
+			border: 1px solid $primary-color;
+			color: $primary-color;
 			padding: 4px 4px 4px 6px;
 			font-size: 10px;
 			border-radius: 20px;

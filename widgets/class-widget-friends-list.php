@@ -44,7 +44,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		$subscriptions   = User_Query::all_subscriptions();
 
 		// translators: %s is the number of your friends.
-		$friends_title = sprintf( _n( '<span class="dashicons dashicons-insert-after"></span> Friend %s', '<span class="dashicons dashicons-plus-alt"></span> Friends %s', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
+		$friends_title = '<span class="dashicons dashicons-insert-after"></span> ' . sprintf( _n( 'Friend %s', 'Friends %s', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
 
 		if ( $all_friends->get_total() > 0 || ( ! $friend_requests->get_total() && ! $subscriptions->get_total() ) ) {
 			echo $args['before_widget'];
@@ -78,9 +78,9 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 			echo $args['before_widget'];
 			$this->list_friends(
 				$args,
-				sprintf(
+				'<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
 					// translators: %s is the number of subscriptions.
-					_n( '<span class="dashicons dashicons-admin-users"></span> Subscription %s', '<span class="dashicons dashicons-admin-users"></span> Subscriptions %s', $subscriptions->get_total(), 'friends' ),
+					_n( 'Subscription %s', 'Subscriptions %s', $subscriptions->get_total(), 'friends' ),
 					'<span class="subscription-count">' . $subscriptions->get_total() . '</span>'
 				),
 				$subscriptions
