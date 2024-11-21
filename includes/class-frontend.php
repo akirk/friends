@@ -759,7 +759,7 @@ class Frontend {
 			exit;
 		}
 
-		$friend_id = intval( $_POST['friend_id'] );
+		$friend_id = sanitize_text_field( wp_unslash( $_POST['friend_id'] ) );
 		check_ajax_referer( "star-$friend_id" );
 
 		$friend_user = User::get_by_username( $friend_id );
