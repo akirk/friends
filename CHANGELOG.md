@@ -1,3 +1,8 @@
+### 3.1.6
+- Site Health: Check if the cron job is enabled ([#391])
+- Fix starring of a friend ([#392])
+- Layout improvements props @liviagouvea in ([#384])
+
 ### 3.1.5
 - Fix next page articles attached in the wrong place ([#388])
 - Allow an extra redirect when discovering feeds ([#389])
@@ -280,11 +285,14 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#392]: https://github.com/akirk/friends/pull/392
+[#391]: https://github.com/akirk/friends/pull/391
 [#389]: https://github.com/akirk/friends/pull/389
 [#388]: https://github.com/akirk/friends/pull/388
 [#387]: https://github.com/akirk/friends/pull/387
 [#386]: https://github.com/akirk/friends/pull/386
 [#385]: https://github.com/akirk/friends/pull/385
+[#384]: https://github.com/akirk/friends/pull/384
 [#382]: https://github.com/akirk/friends/pull/382
 [#381]: https://github.com/akirk/friends/pull/381
 [#378]: https://github.com/akirk/friends/pull/378
