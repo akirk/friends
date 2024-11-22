@@ -597,7 +597,7 @@ class Admin {
 		) ) {
 			update_user_option( get_current_user_id(), 'friends_frontend_default_view', wp_unslash( $_POST['frontend_default_view'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
 		} else {
-			delete_option( get_current_user_id(), 'friends_frontend_default_view' );
+			delete_user_option( get_current_user_id(), 'friends_frontend_default_view' );
 		}
 
 		foreach ( array_merge( array( '' ), get_post_format_slugs() ) as $post_type ) {
@@ -704,7 +704,7 @@ class Admin {
 					'retention_number'           => Friends::get_retention_number(),
 					'retention_days_enabled'     => get_option( 'friends_enable_retention_days' ),
 					'retention_number_enabled'   => get_option( 'friends_enable_retention_number' ),
-					'frontend_default_view'      => get_user_option( 'friends_frontend_default_view', 'expanded' ),
+					'frontend_default_view'      => get_user_option( 'friends_frontend_default_view', get_current_user_id() ),
 					'frontend_theme'             => get_user_option( 'friends_frontend_theme' ),
 					'blocks_everywhere'          => get_user_option( 'friends_blocks_everywhere' ),
 				)
