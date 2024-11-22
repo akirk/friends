@@ -40,10 +40,9 @@ class Widget_Recent_Friends_List extends Widget_Base_Friends_List {
 		$instance = wp_parse_args( $instance, $this->defaults() );
 
 		echo $args['before_widget'];
-
 		$this->list_friends(
 			$args,
-			__( 'Recent Friends', 'friends' ),
+			'<span class="dashicons dashicons-admin-users"></span> ' . __( 'Recent Friends', 'friends' ),
 			User_Query::recent_friends_subscriptions( 5 )
 		);
 

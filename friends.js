@@ -719,4 +719,17 @@
 		return false;
 	} );
 
+	$document.on( 'click', '.friends-widget summary', function () {
+		const $this = $( this ).closest( 'details' );
+		const previously_open = $this.prop( 'open' );
+		wp.ajax.send( 'friends-set-widget-open-state', {
+			data: {
+				_ajax_nonce: $this.data( 'nonce' ),
+				widget: $this.data( 'id' ),
+				state: previously_open ? 'closed' : 'open',
+			},
+			success() {},
+		} );
+	} );
+
 } )( jQuery, window.wp, window.friends );

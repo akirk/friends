@@ -50,11 +50,14 @@ class Widget_Friend_Stats extends \WP_Widget {
 			$show_followers = true;
 		}
 		echo $args['before_widget'];
+
+		$open = Frontend::get_widget_open_state( $args['widget_id'] );
 		?>
-		<details class="accordion" open>
+		<details class="accordion" <?php echo esc_attr( $open ); ?> data-id="<?php echo esc_attr( $args['widget_id'] ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_widget_state' ) ); ?>">
 			<summary class="accordion-header">
 		<?php
 		echo $args['before_title'];
+		echo '<span class="dashicons dashicons-chart-area"></span> ';
 		echo wp_kses(
 			$instance['title'],
 			array(

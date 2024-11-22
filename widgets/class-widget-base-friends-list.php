@@ -43,8 +43,9 @@ abstract class Widget_Base_Friends_List extends \WP_Widget {
 	 * @param \WP_User_Query $friends The friends to list.
 	 */
 	public function list_friends( $args, $title, \WP_User_Query $friends ) {
+		$open = Frontend::get_widget_open_state( $args['widget_id'] );
 		?>
-		<details class="accordion" open>
+		<details class="accordion" <?php echo esc_attr( $open ); ?> data-id="<?php echo esc_attr( $args['widget_id'] ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_widget_state' ) ); ?>">
 			<summary class="accordion-header">
 		<?php
 		echo $args['before_title'];
