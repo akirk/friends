@@ -1832,7 +1832,7 @@ class Admin {
 		$rest_url = false;
 
 		if ( ( isset( $vars['step2'] ) && isset( $vars['feeds'] ) && is_array( $vars['feeds'] ) ) || isset( $vars['step3'] ) ) {
-			$friend_user_login = str_replace( ' ', '-', sanitize_user( $vars['user_login'] ) );
+			$friend_user_login = trim( str_replace( ' ', '-', sanitize_user( $vars['user_login'] ) ), '-' );
 			$friend_display_name = sanitize_text_field( $vars['display_name'] );
 			if ( ! $friend_user_login ) {
 				// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
@@ -1940,14 +1940,14 @@ class Admin {
 
 			$better_user_login = User::get_user_login_from_feeds( $feeds );
 			if ( $better_user_login ) {
-				$friend_user_login = $better_user_login;
+				$friend_user_login = trim( $better_user_login, '-' );
 			}
 
 			$better_display_name = User::get_display_name_from_feeds( $feeds );
 			if ( $better_display_name ) {
 				$friend_display_name = $better_display_name;
 				if ( ! $better_user_login ) {
-					$friend_user_login = strtolower( str_replace( ' ', '-', sanitize_user( $better_display_name ) ) );
+					$friend_user_login = trim( strtolower( str_replace( ' ', '-', sanitize_user( $better_display_name ) ) ), '-' );
 				}
 			}
 			if ( get_option( 'friends_enable_wp_friendships' ) ) {
