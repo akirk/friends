@@ -825,9 +825,36 @@ class Frontend {
 	}
 
 	public function get_static_frontend_template( $path ) {
+		global $friends_args;
 		switch ( $path ) {
 			case 'followers':
-				return 'frontend/followers';
+				if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
+					$friends_args = array();
+					if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						$friends_args['only_mutual'] = true;
+						$friends_args['title'] = __( 'Your Mutual Followers', 'friends' );
+					} else {
+						$friends_args['only_mutual'] = false;
+						$friends_args['title'] = __( 'Your Followers', 'friends' );
+					}
+					$friends_args['user_id'] = get_current_user_id();
+					return 'frontend/followers';
+				}
+				break;
+			case 'blog-followers':
+				$friends_args = array();
+				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
+					if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						$friends_args['only_mutual'] = true;
+						$friends_args['title'] = __( 'Your Mutual Blog Followers', 'friends' );
+					} else {
+						$friends_args['only_mutual'] = false;
+						$friends_args['title'] = __( 'Your Blog Followers', 'friends' );
+					}
+					$friends_args['user_id'] = \Activitypub\Collection\Actors::BLOG_USER_ID;
+					return 'frontend/followers';
+				}
+				break;
 		}
 
 		return 'frontend/index';
