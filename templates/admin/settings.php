@@ -263,7 +263,7 @@ do_action( 'friends_settings_before_form' );
 										<select name="friends_frontend_theme_<?php echo esc_attr( $post_type_slug ); ?>" id="frontend-theme-<?php echo esc_attr( $post_type_slug ); ?>">
 											<option value=""><?php esc_html_e( 'Main Theme', 'friends' ); ?></option>
 											<?php foreach ( Friends\Frontend::get_themes() as $theme => $theme_name ) : ?>
-												<option value="<?php echo esc_attr( $theme ); ?>"<?php selected( $args[ 'frontend_theme_' . $post_type ], $theme ); ?>><?php echo esc_html( $theme_name ); ?></option>
+												<option value="<?php echo esc_attr( $theme ); ?>"<?php selected( $args[ 'frontend_theme_' . $post_type_slug ], $theme ); ?>><?php echo esc_html( $theme_name ); ?></option>
 											<?php endforeach; ?>
 											</select>
 										</td>

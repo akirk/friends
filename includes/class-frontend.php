@@ -111,7 +111,7 @@ class Frontend {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
 		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
-		add_action( 'friends_activate_theme_default', array( $this, 'default_theme' ) );
+		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
 		add_action( 'wp_footer', array( $this, 'dequeue_scripts' ) );
@@ -253,17 +253,17 @@ class Frontend {
 				$theme = $post_type_theme;
 			}
 		}
-		if ( ! has_action( 'friends_activate_theme_' . $theme ) ) {
+		if ( ! has_action( 'friends_load_theme_' . $theme ) ) {
 			$theme = 'default';
 		}
 		$this->theme = $theme;
-		do_action( 'friends_activate_theme_' . $theme );
+		do_action( 'friends_load_theme_' . $theme );
 	}
 
 	public function friends_template_paths( $file_paths ) {
 		$backup_file_paths = $file_paths;
-		if ( has_filter( 'friends_theme_template_paths_' . $this->theme ) ) {
-			$file_paths = apply_filters( 'friends_theme_template_paths_' . $this->theme, $file_paths );
+		if ( has_filter( 'friends_template_paths_theme_' . $this->theme ) ) {
+			$file_paths = apply_filters( 'friends_template_paths_theme_' . $this->theme, $file_paths );
 		}
 		if ( empty( $file_paths ) ) {
 			return $backup_file_paths;
