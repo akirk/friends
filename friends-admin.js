@@ -28,6 +28,16 @@ jQuery( function ( $ ) {
 		return false;
 	} );
 
+	$( document ).on( 'keyup', 'input#display_name', function ( e ) {
+		const login = $( '#user_login' );
+		if ( this.value && login.data( 'original' ) === login.val() ) {
+			const generated_login = this.value.toLowerCase().replace( /[^a-z0-9]+/g, '-' ).replace( /-$/, '' ).replace( /^-/, '' );
+			login.val( generated_login );
+			login.data( 'original', generated_login );
+		}
+	} );
+
+
 	$( document ).on( 'click', 'a#show-details', function () {
 		$( '.details' ).toggleClass( 'hidden' ).focus();
 		return false;
