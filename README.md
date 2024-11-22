@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.1.7
+- Stable tag: 3.1.8
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,9 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.1.8
+- Fix missing JavaScript on the frontend ([#396])
+
 ### 3.1.7
 - Add a theme selector ([#393])
 - Followers: Add Support for ActivityPub plugins blog profile ([#394])
@@ -144,6 +147,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
 - Improve ghost.org ActivityPub compatibility ([#356])
 
+[#396]: https://github.com/akirk/friends/pull/396
 [#395]: https://github.com/akirk/friends/pull/395
 [#394]: https://github.com/akirk/friends/pull/394
 [#393]: https://github.com/akirk/friends/pull/393

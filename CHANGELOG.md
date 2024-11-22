@@ -1,3 +1,6 @@
+### 3.1.8
+- Fix missing JavaScript on the frontend ([#396])
+
 ### 3.1.7
 - Add a theme selector ([#393])
 - Followers: Add Support for ActivityPub plugins blog profile ([#394])
@@ -290,6 +293,7 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#396]: https://github.com/akirk/friends/pull/396
 [#395]: https://github.com/akirk/friends/pull/395
 [#394]: https://github.com/akirk/friends/pull/394
 [#393]: https://github.com/akirk/friends/pull/393
