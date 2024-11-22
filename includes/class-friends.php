@@ -561,7 +561,7 @@ class Friends {
 			}
 		}
 
-		if ( version_compare( $previous_version, '3.1.5', '<' ) ) {
+		if ( version_compare( $previous_version, '3.1.8', '<' ) ) {
 			// Migrate the option friends_frontend_default_view to a user option.
 			$users = User_Query::all_admin_users();
 			foreach ( $users->get_results() as $user ) {

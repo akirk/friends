@@ -283,7 +283,7 @@ class Frontend {
 	 * Reference our script for the /friends page
 	 */
 	public function enqueue_scripts() {
-		if ( ! is_user_logged_in() || Friends::on_frontend() ) {
+		if ( ! is_user_logged_in() || ! Friends::on_frontend() ) {
 			return;
 		}
 		global $wp_query;
@@ -886,7 +886,7 @@ class Frontend {
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}
 
-		$args['frontend_default_view'] = get_option( 'friends_frontend_default_view', 'expanded' );
+		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
 		$args['blocks-everywhere']     = false;
 
 		if ( isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -1456,11 +1456,10 @@ class Frontend {
 		$query->is_comment_feed = false;
 		$query->set( 'pagename', null );
 		$query->set( 'category_name', null );
-		if ( 'collapsed' === get_option( 'friends_frontend_default_view', 'expanded' ) && get_option( 'posts_per_page' ) < 20 ) {
-			if ( 'status' === $post_format ) {
+		if ( get_option( 'posts_per_page' ) < 20 ) {
+			$query->set( 'posts_per_page', 20 );
+			if ( 'collapsed' === get_user_option( 'friends_frontend_default_view', get_current_user_id() ) && 'status' === $post_format ) {
 				$query->set( 'posts_per_page', 30 );
-			} else {
-				$query->set( 'posts_per_page', 20 );
 			}
 		}
 
