@@ -54,11 +54,24 @@ class Frontend {
 	public $template = false;
 
 	/**
-	 * Whether a reaciton is being displayed
+	 * Whether a reaction is being displayed.
 	 *
 	 * @var string|false
 	 */
 	public $reaction = false;
+
+	/**
+	 * The current theme.
+	 *
+	 * @var string
+	 */
+	private $theme = 'default';
+	/**
+	 * Available themes.
+	 *
+	 * @var array
+	 */
+	private static $themes = array();
 
 	/**
 	 * Constructor
@@ -96,6 +109,10 @@ class Frontend {
 		add_filter( 'friends_unreblog', array( get_called_class(), 'unreblog' ), 10, 2 );
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'template_redirect', array( $this, 'load_theme' ) );
+		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
+		add_action( 'friends_activate_theme_default', array( $this, 'default_theme' ) );
+		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
 		add_action( 'wp_footer', array( $this, 'dequeue_scripts' ) );
 		add_action( 'the_post', array( $this, 'the_post' ), 10, 2 );
@@ -217,49 +234,90 @@ class Frontend {
 		}
 	}
 
+	public function ensure_widget_editing( $components ) {
+		if ( ! is_array( $components ) ) {
+			$components = array();
+		}
+		$components[] = 'widgets';
+		return $components;
+	}
+
+	public function load_theme() {
+		if ( ! is_user_logged_in() || ! Friends::on_frontend() ) {
+			return;
+		}
+		$theme = get_user_option( 'friends_frontend_theme', 'default' );
+		if ( $this->post_format ) {
+			$post_type_theme = get_user_option( 'friends_frontend_theme_' . $this->post_format, get_current_user_id() );
+			if ( $post_type_theme ) {
+				$theme = $post_type_theme;
+			}
+		}
+		if ( ! has_action( 'friends_activate_theme_' . $theme ) ) {
+			$theme = 'default';
+		}
+		$this->theme = $theme;
+		do_action( 'friends_activate_theme_' . $theme );
+	}
+
+	public function friends_template_paths( $file_paths ) {
+		$backup_file_paths = $file_paths;
+		if ( has_filter( 'friends_theme_template_paths_' . $this->theme ) ) {
+			$file_paths = apply_filters( 'friends_theme_template_paths_' . $this->theme, $file_paths );
+		}
+		if ( empty( $file_paths ) ) {
+			return $backup_file_paths;
+		}
+
+		return $file_paths;
+	}
+
+	public function default_theme() {
+		$handle = 'friends';
+		$file = 'friends.css';
+		$version = Friends::VERSION;
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+	}
+
 	/**
 	 * Reference our script for the /friends page
 	 */
 	public function enqueue_scripts() {
+		if ( ! is_user_logged_in() || Friends::on_frontend() ) {
+			return;
+		}
 		global $wp_query;
 
-		if ( is_user_logged_in() && Friends::on_frontend() ) {
-			$handle = 'friends';
-			$file = 'friends.js';
-			$version = Friends::VERSION;
-			wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ), true );
+		$handle = 'friends';
+		$file = 'friends.js';
+		$version = Friends::VERSION;
+		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ), true );
 
-			$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+		$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 
-			$variables = array(
-				'emojis_json'        => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
-				'ajax_url'           => admin_url( 'admin-ajax.php' ),
-				'rest_base'          => rest_url( 'friends/v1/' ),
-				'rest_nonce'         => wp_create_nonce( 'wp_rest' ),
-				'text_link_expired'  => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
-				'text_undo'          => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				'text_trash_post'    => __( 'Trash this post', 'friends' ),
-				'text_del_convers'   => __( 'Do you really want to delete this conversation?', 'friends' ),
-				'text_no_more_posts' => __( 'No more posts available.', 'friends' ),
-				'text_checking_url'  => __( 'Checking URL.', 'friends' ),
-				'text_refreshed'     => __( 'Refreshed', 'friends' ),
-				'text_refreshing'    => __( 'Refreshing', 'friends' ),
-				'refresh_now'        => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				'query_vars'         => $query_vars,
-				'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
-				'current_page'       => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-				'max_page'           => $wp_query->max_num_pages,
-			);
+		$variables = array(
+			'emojis_json'        => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
+			'ajax_url'           => admin_url( 'admin-ajax.php' ),
+			'rest_base'          => rest_url( 'friends/v1/' ),
+			'rest_nonce'         => wp_create_nonce( 'wp_rest' ),
+			'text_link_expired'  => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
+			'text_undo'          => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			'text_trash_post'    => __( 'Trash this post', 'friends' ),
+			'text_del_convers'   => __( 'Do you really want to delete this conversation?', 'friends' ),
+			'text_no_more_posts' => __( 'No more posts available.', 'friends' ),
+			'text_checking_url'  => __( 'Checking URL.', 'friends' ),
+			'text_refreshed'     => __( 'Refreshed', 'friends' ),
+			'text_refreshing'    => __( 'Refreshing', 'friends' ),
+			'refresh_now'        => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'query_vars'         => $query_vars,
+			'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
+			'current_page'       => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+			'max_page'           => $wp_query->max_num_pages,
+		);
 
-			// translators: %s is a user handle.
-			$variables['text_confirm_delete_follower'] = __( 'Do you really want to delete the follower %s?', 'friends' );
-			wp_localize_script( 'friends', 'friends', $variables );
-
-			$handle = 'friends';
-			$file = 'friends.css';
-			$version = Friends::VERSION;
-			wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
-		}
+		// translators: %s is a user handle.
+		$variables['text_confirm_delete_follower'] = __( 'Do you really want to delete the follower %s?', 'friends' );
+		wp_localize_script( 'friends', 'friends', $variables );
 	}
 
 	public function dequeue_scripts() {
@@ -567,6 +625,20 @@ class Frontend {
 		return count( $words_array ) / $words_per_minute * 60 + $additional_time;
 	}
 
+	public function register_theme( $name, $slug ) {
+		self::$themes[ $slug ] = $name;
+	}
+
+	public static function get_themes() {
+		$themes = array_merge(
+			array(
+				'default' => __( 'Friends Default Theme', 'friends' ),
+			),
+			self::$themes
+		);
+
+		return $themes;
+	}
 	/**
 	 * Handles the post loop on the Friends page.
 	 */

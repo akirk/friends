@@ -134,8 +134,54 @@ class Friends {
 		new Automatic_Status( $this );
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
+
+		/**
+		 * Friends has loaded.
+		 *
+		 * @param Friends $friends The friends object.
+		 *
+		 * You can now assume that all the Friends hooks and objects are available.
+		 *
+		 * Example:
+		 * ```php
+		 * add_action( 'friends_loaded', function( Friends $friends ) {
+		 *      add_action( 'init', 'initialize_my_plugin' );
+		 * } );
+		 * ```
+		 */
 		do_action( 'friends_loaded', $this );
+
+		/**
+		 * Time to register your parser.
+		 *
+		 * @param Feed $feed The feed object.
+		 *
+		 * You'll receive the feed object on which you need to call `register_parser()`.
+		 *
+		 * Example:
+		 * ```php
+		 * add_action( 'friends_load_parsers', function( Friends\Feed $friends_feed ) {
+		 *     $friends_feed->register_parser( 'simplepie', new Feed_Parser_SimplePie( $friends_feed ) );
+		 * } );
+		 * ```
+		 */
 		do_action( 'friends_load_parsers', $this->feed );
+
+		/**
+		 * Time to register your theme.
+		 *
+		 * @param Frontend $frontend The frontend object.
+		 *
+		 * You'll receive the frontend object on which you need to call `register_theme()`.
+		 *
+		 * Example:
+		 * ```php
+		 * add_action( 'friends_load_themes', function( Friends\Frontend $friends_frontend ) {
+		 *     $friends_frontend->register_theme( 'Mastodon', 'mastodon' );
+		 * } );
+		 * ```
+		 */
+		do_action( 'friends_load_themes', $this->frontend );
 	}
 
 	/**
@@ -512,6 +558,17 @@ class Friends {
 			}
 			if ( ! $next_scheduled ) {
 				wp_schedule_event( time(), 'fifteen-minutes', 'cron_friends_refresh_feeds' );
+			}
+		}
+
+		if ( version_compare( $previous_version, '3.1.5', '<' ) ) {
+			// Migrate the option friends_frontend_default_view to a user option.
+			$users = User_Query::all_admin_users();
+			foreach ( $users->get_results() as $user ) {
+				$default_view = get_option( 'friends_frontend_default_view' );
+				if ( $default_view ) {
+					$user->update_user_option( 'friends_frontend_default_view', $default_view );
+				}
 			}
 		}
 
