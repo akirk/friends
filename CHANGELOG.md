@@ -1,3 +1,8 @@
+### 3.1.7
+- Add a theme selector ([#393])
+- Followers: Add Support for ActivityPub plugins blog profile ([#394])
+- Generate the suggested user login from the display name ([#395])
+
 ### 3.1.6
 - Site Health: Check if the cron job is enabled ([#391])
 - Fix starring of a friend ([#392])
@@ -285,6 +290,9 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#395]: https://github.com/akirk/friends/pull/395
+[#394]: https://github.com/akirk/friends/pull/394
+[#393]: https://github.com/akirk/friends/pull/393
 [#392]: https://github.com/akirk/friends/pull/392
 [#391]: https://github.com/akirk/friends/pull/391
 [#389]: https://github.com/akirk/friends/pull/389
