@@ -147,7 +147,18 @@ if ( $blog_followers ) {
 				<a href="<?php echo esc_url( $follower['remove_action_url'] ); ?>" class="follower follower-delete" title="<?php esc_attr_e( 'Remove follower', 'friends' ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-followers' ) ); ?>" data-handle="<?php echo esc_attr( $follower['preferredUsername'] . '@' . $follower['server'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>">
 					<span class="ab-icon dashicons dashicons-admin-users" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-no"></span></span>
 				</a>
-				<p class="description"><?php echo esc_html( $follower['summary'] ); ?></p>
+				<p class="description">
+					<?php
+					echo wp_kses(
+						$follower['summary'],
+						array(
+							'a' => array(
+								'href' => array(),
+							),
+						)
+					);
+					?>
+				</p>
 			</summary><p class="loading-posts">
 				<span><?php esc_html_e( 'Loading posts', 'friends' ); ?></span>
 				<i class="form-icon loading"></i>
