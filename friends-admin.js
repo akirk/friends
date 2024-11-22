@@ -31,7 +31,7 @@ jQuery( function ( $ ) {
 	$( document ).on( 'keyup', 'input#display_name', function ( e ) {
 		const login = $( '#user_login' );
 		if ( this.value && login.data( 'original' ) === login.val() ) {
-			const generated_login = this.value.toLowerCase().replace( /[^a-z0-9]+/g, '-' ).replace( /-$/, '' ).replace( /^-/, '' );
+			const generated_login = this.value.toLowerCase().replace( /[^a-z0-9.]+/g, '-' ).replace( /-$/, '' ).replace( /^-/, '' );
 			login.val( generated_login );
 			login.data( 'original', generated_login );
 		}
