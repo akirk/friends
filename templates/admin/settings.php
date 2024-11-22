@@ -272,6 +272,18 @@ do_action( 'friends_settings_before_form' );
 							</table>
 						</details>
 					</fieldset>
+					<p>
+					<?php
+					echo wp_kses_post(
+						sprintf(
+							// translators: %1$s is a link, %2$s is a link.
+							__( 'Check out the <a href=%1$s>available themes</a>, or <a href=%2$s>write your own</a>.', 'friends' ),
+							'"https://github.com/akirk/friends/blob/main/THEMES.md"',
+							'"https://github.com/akirk/friends/wiki/Writing-Themes"'
+						)
+					);
+					?>
+						</p>
 				</td>
 			</tr>
 			<?php if ( ! function_exists( 'classicpress_version' ) ) : ?>
