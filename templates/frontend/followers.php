@@ -6,22 +6,35 @@
  * @package Friends
  */
 
+$args = array_merge( $friends_args, $args );
+$blog_followers = class_exists( '\ActivityPub\Collection\Actors' ) && \ActivityPub\Collection\Actors::BLOG_USER_ID === $args['user_id'];
 $args['title'] = __( 'Your Followers', 'friends' );
+if ( $blog_followers ) {
+	$args['title'] = __( 'Your Blog Followers', 'friends' );
+}
 
 $only_mutual = false;
 if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$only_mutual = true;
-	$args['title'] = __( 'Your Mutual Followers', 'friends' );
+	$friends_args['title'] = __( 'Your Mutual Followers', 'friends' );
+	if ( $blog_followers ) {
+		$args['title'] = __( 'Your Mutual Blog Followers', 'friends' );
+	}
 }
+
 $args['no-bottom-margin'] = true;
 
 Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, $args );
 
+$followers_list_page = 'users.php?page=activitypub-followers-list';
+if ( $blog_followers ) {
+	$followers_list_page = 'options-general.php?page=activitypub&tab=followers';
+}
 ?>
 <section class="followers">
 	<?php
 	if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
-		$follower_data = \ActivityPub\Collection\Followers::get_followers_with_count( get_current_user_id() );
+		$follower_data = \ActivityPub\Collection\Followers::get_followers_with_count( $args['user_id'] );
 		$total = $follower_data['total'];
 		$already_following = 0;
 		foreach ( $follower_data['followers'] as $k => $follower ) {
@@ -47,7 +60,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 				$data['friend_user'] = false;
 				$data['action_url'] = add_query_arg( 'url', $data['url'], admin_url( 'admin.php?page=add-friend' ) );
 			}
-			$data['remove_action_url'] = add_query_arg( 's', $data['url'], admin_url( 'users.php?page=activitypub-followers-list' ) );
+			$data['remove_action_url'] = add_query_arg( 's', $data['url'], admin_url( $followers_list_page ) );
 			$follower_data['followers'][ $k ] = $data;
 		}
 		?>
@@ -56,13 +69,23 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 		if ( $only_mutual ) {
 			echo ' <a href="?">';
 		}
-		echo esc_html(
-			sprintf(
-				// translators: %s is the number of followers.
-				_n( 'You have %s follower.', 'You have %s followers.', $total, 'friends' ),
-				$total
-			)
-		);
+		if ( $blog_followers ) {
+			echo esc_html(
+				sprintf(
+					// translators: %s is the number of followers.
+					_n( 'You have %s blog follower.', 'You have %s blog followers.', $total, 'friends' ),
+					$total
+				)
+			);
+		} else {
+			echo esc_html(
+				sprintf(
+					// translators: %s is the number of followers.
+					_n( 'You have %s follower.', 'You have %s followers.', $total, 'friends' ),
+					$total
+				)
+			);
+		}
 		if ( $only_mutual ) {
 			echo '</a> ';
 			$not_yet_following = $total - $already_following;
@@ -87,8 +110,12 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 		}
 
 
-		echo ' <a href="' . esc_attr( admin_url( 'users.php?page=activitypub-followers-list' ) ) . '">';
-		esc_html_e( 'View all followers in wp-admin', 'friends' );
+		echo ' <a href="' . esc_attr( admin_url( $followers_list_page ) ) . '">';
+		if ( $blog_followers ) {
+			esc_html_e( 'View all blog followers in wp-admin', 'friends' );
+		} else {
+			esc_html_e( 'View all followers in wp-admin', 'friends' );
+		}
 		echo '</a>';
 
 		?>

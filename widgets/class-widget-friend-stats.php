@@ -43,11 +43,22 @@ class Widget_Friend_Stats extends \WP_Widget {
 		$subscriptions = User_Query::all_subscriptions();
 		$subscriptions_count = $subscriptions->get_total();
 
+		$follower_count = 0;
+		$blog_follower_count = 0;
+
 		$instance = wp_parse_args( $instance, $this->defaults() );
 		$show_followers = false;
+		$show_blog_followers = false;
 		if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
-			$follower_count = \ActivityPub\Collection\Followers::count_followers( get_current_user_id() );
-			$show_followers = true;
+			$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', ACTIVITYPUB_ACTOR_MODE );
+			if ( ACTIVITYPUB_ACTOR_MODE === $activitypub_actor_mode || ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
+				$follower_count = \ActivityPub\Collection\Followers::count_followers( get_current_user_id() );
+				$show_followers = true;
+			}
+			if ( ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode || ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
+				$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
+				$show_blog_followers = true;
+			}
 		}
 		echo $args['before_widget'];
 
@@ -80,6 +91,21 @@ class Widget_Friend_Stats extends \WP_Widget {
 						sprintf(
 						/* translators: %s: number of followers */
 							_n( '%s Follower', '%s Followers', $follower_count, 'friends' ),
+							$follower_count
+						)
+					);
+					?>
+					</a>
+				</li>
+				<?php endif; ?>
+			<?php if ( $show_blog_followers ) : ?>
+				<li class="friend-stats-followers">
+					<a class="followers" href="<?php echo esc_url( home_url( '/friends/blog-followers/' ) ); ?>">
+					<?php
+					echo esc_html(
+						sprintf(
+						/* translators: %s: number of followers */
+							_n( '%s Blog Follower', '%s Blog Followers', $follower_count, 'friends' ),
 							$follower_count
 						)
 					);
