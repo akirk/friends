@@ -230,7 +230,7 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<tr>
-				<th scope="row" rowspan="2"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
+				<th scope="row" rowspan="3"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
 				<td>
 					<fieldset>
 						<label for="frontend-default-view">
@@ -241,6 +241,49 @@ do_action( 'friends_settings_before_form' );
 							</select>
 						</label>
 					</fieldset>
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<fieldset>
+						<label for="frontend-theme">
+							<span><?php esc_html_e( 'Main Theme:', 'friends' ); ?></span>
+							<select name="friends_frontend_theme" id="frontend-theme">
+								<?php foreach ( Friends\Frontend::get_themes() as $theme => $theme_name ) : ?>
+									<option value="<?php echo esc_attr( $theme ); ?>"<?php selected( $args['frontend_theme'], $theme ); ?>><?php echo esc_html( $theme_name ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+						<details><summary>Post Type Themes</summary>
+							<table>
+							<?php foreach ( $args['post_format_strings'] as $post_type_slug => $post_type_title ) : ?>
+								<tr>
+									<td><label for="frontend-theme-<?php echo esc_attr( $post_type_slug ); ?>"><?php echo esc_html( $post_type_title ); ?></label></td>
+									<td>
+										<select name="friends_frontend_theme_<?php echo esc_attr( $post_type_slug ); ?>" id="frontend-theme-<?php echo esc_attr( $post_type_slug ); ?>">
+											<option value=""><?php esc_html_e( 'Main Theme', 'friends' ); ?></option>
+											<?php foreach ( Friends\Frontend::get_themes() as $theme => $theme_name ) : ?>
+												<option value="<?php echo esc_attr( $theme ); ?>"<?php selected( $args[ 'frontend_theme_' . $post_type_slug ], $theme ); ?>><?php echo esc_html( $theme_name ); ?></option>
+											<?php endforeach; ?>
+											</select>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+							</table>
+						</details>
+					</fieldset>
+					<p>
+					<?php
+					echo wp_kses_post(
+						sprintf(
+							// translators: %1$s is a link, %2$s is a link.
+							__( 'Check out the <a href=%1$s>available themes</a>, or <a href=%2$s>write your own</a>.', 'friends' ),
+							'"https://github.com/akirk/friends/blob/main/THEMES.md"',
+							'"https://github.com/akirk/friends/wiki/Writing-Themes"'
+						)
+					);
+					?>
+						</p>
 				</td>
 			</tr>
 			<?php if ( ! function_exists( 'classicpress_version' ) ) : ?>
