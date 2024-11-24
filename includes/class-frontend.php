@@ -246,7 +246,11 @@ class Frontend {
 		if ( ! is_user_logged_in() || ! Friends::on_frontend() ) {
 			return;
 		}
-		$theme = get_user_option( 'friends_frontend_theme', 'default' );
+		$theme = 'default';
+		$default_theme = get_user_option( 'friends_frontend_theme', get_current_user_id() );
+		if ( $default_theme ) {
+			$theme = $default_theme;
+		}
 		if ( $this->post_format ) {
 			$post_type_theme = get_user_option( 'friends_frontend_theme_' . $this->post_format, get_current_user_id() );
 			if ( $post_type_theme ) {
