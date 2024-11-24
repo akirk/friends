@@ -1,3 +1,6 @@
+### 3.1.9
+- Fix bug with loading the main theme ([#398])
+
 ### 3.1.8
 - Fix missing JavaScript on the frontend ([#396])
 
@@ -293,6 +296,7 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#398]: https://github.com/akirk/friends/pull/398
 [#396]: https://github.com/akirk/friends/pull/396
 [#395]: https://github.com/akirk/friends/pull/395
 [#394]: https://github.com/akirk/friends/pull/394
