@@ -30,8 +30,11 @@ __( 'Edit Post Collection', 'friends' );
 __( 'Show post in the feed', 'friends' );
 __( 'Hide post from the feed', 'friends' );
 // translators: %s is the name of a post collection.
+_x( 'Copy to %s', 'post-collection', 'friends' );
+// translators: %s is the name of a post collection.
 _x( 'Move to %s', 'post-collection', 'friends' );
 __( 'Fetch full content', 'friends' );
+__( 'Download external images', 'friends' );
 __( 'This is not a user related to this plugin.', 'friends' );
 __( 'User was updated.', 'friends' );
 __( 'An error occurred.', 'friends' );
@@ -47,7 +50,6 @@ __( 'This plugin is uses information of the open source project <a href=%s>FTR S
 __( 'Sending the article to your blog...', 'friends' );
 __( 'Do you want to send the article on this page to your blog?', 'friends' );
 __( 'You entered an invalid URL.', 'friends' );
-__( 'No content was extracted.', 'friends' );
 __( 'Could not download the URL.', 'friends' );
 // translators: $s is an error message.
 __( 'Error processing HTML: %s', 'friends' );
@@ -56,9 +58,12 @@ _x( 'Post Collections', 'widget-header', 'friends' );
 __( 'Fetch Full Content', 'friends' );
 __( 'Make post public', 'friends' );
 __( 'Make post private', 'friends' );
+__( 'No content was extracted.', 'friends' );
 __( 'Display Name', 'friends' );
 __( 'Username', 'friends' );
 __( 'Description', 'friends' );
+__( 'Display in Dropdown', 'friends' );
+__( 'Hide', 'friends' );
 // translators: %d is the number of posts.
 _n( 'View %d post', 'View %d posts', 1, 'friends' );
 __( 'Syndicate Posts', 'friends' );
@@ -68,8 +73,16 @@ __( 'Bookmarklet', 'friends' );
 // translators: %s is the name of a Post Collection user.
 __( 'Save to %s', 'friends' );
 __( 'Save articles from the web to this Post Collection using this bookmarklet. Drag it to your browser bar.', 'friends' );
+__( 'Other tools', 'friends' );
+__( 'Copy to clipboard', 'friends' );
+// translators: %1$s is a URL, %2$s is a URL.
+__( 'In other tools such as <a href="%1$s">Alfred</a> or <a href="%2$s">URL Forwarder</a> you\'ll need a URL like this.', 'friends' );
+__( 'Back to the Post Collection overview', 'friends' );
 __( 'Post Collection Name', 'friends' );
+__( 'Dropdown', 'friends' );
 __( 'External feed', 'friends' );
+__( 'Copy to', 'friends' );
+__( 'Move to', 'friends' );
 __( 'disabled', 'friends' );
 __( 'Create another user', 'friends' );
 // translators: %s is a URL.

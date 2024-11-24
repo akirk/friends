@@ -18,21 +18,23 @@ __( 'Connect account (broken)', 'friends' );
 // translators: %s is a the name of a Tolino vendor.
 __( 'Connected to %s', 'friends' );
 __( 'Select your Tolino seller', 'friends' );
+__( 'Untitled', 'friends' );
 // translators: %s is a post title. This is a title to be used when multiple posts are compiled to an ePub.
 __( '%s & more', 'friends' );
 __( 'Table of Contents', 'friends' );
+__( 'E-Reader', 'friends' );
 __( 'Friend Post', 'friends' );
 __( 'E-Readers', 'friends' );
 __( 'E-Reader Settings', 'friends' );
 __( 'Friends', 'friends' );
 __( 'About', 'friends' );
 __( 'Send to E-Reader', 'friends' );
-__( 'E-Reader', 'friends' );
 // translators: %s is a date.
 __( 'E-Reader: Sent on %s', 'friends' );
 // translators: %s is an E-Reader name.
 _x( 'Send to %s', 'e-reader', 'friends' );
 __( 'Include all posts above', 'friends' );
+__( 'Mark as new', 'friends' );
 __( 'E-Reader not configured', 'friends' );
 __( 'No posts could be found.', 'friends' );
 // translators: %1$s is a month, %2$s is a year.
@@ -71,6 +73,14 @@ __( 'Reading Summary', 'friends' );
 __( 'Automatically create a draft post when sending to E-Reader.', 'friends' );
 __( 'Summary Draft Title', 'friends' );
 __( 'This title for the draft post will be used. You can use the following variables: <tt>$date</tt> <tt>$day</tt> <tt>$month</tt> <tt>$year</tt> <tt>$author</tt>', 'friends' );
+__( 'Download Password', 'friends' );
+__( 'Only latin characters and digits allowed', 'friends' );
+__( 'This enables you to download an ePub from your E-Reader by appending either of these to any of your Friends URLs:', 'friends' );
+__( 'All posts from this friend:', 'friends' );
+__( 'The last 10 posts from this friend:', 'friends' );
+__( 'Posts not yet sent from this friend:', 'friends' );
+__( 'List last for manual selection from this friend:', 'friends' );
+__( 'Preview URL for a friend', 'friends' );
 // translators: %s is an E-Reader name.
 _n( 'Send %1$d new post to %2$s', 'Send %1$d new posts to %2$s', 1, 'friends' );
 __( 'Close', 'friends' );
