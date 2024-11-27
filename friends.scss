@@ -168,6 +168,10 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	.btn-arrow:before {
+		content: "→ ";
+	}
+
 	.accordion[open] .accordion-body {
 		max-height: 100rem;
 	}
