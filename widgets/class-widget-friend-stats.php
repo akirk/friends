@@ -105,8 +105,8 @@ class Widget_Friend_Stats extends \WP_Widget {
 					echo esc_html(
 						sprintf(
 						/* translators: %s: number of followers */
-							_n( '%s Blog Follower', '%s Blog Followers', $follower_count, 'friends' ),
-							$follower_count
+							_n( '%s Blog Follower', '%s Blog Followers', $blog_follower_count, 'friends' ),
+							$blog_follower_count
 						)
 					);
 					?>
