@@ -15,11 +15,17 @@ Friends\Friends::template_loader()->get_template_part(
 );
 
 ?><p class="note">
+	<span>
+	<?php
+	esc_html_e( '<strong>Note:</strong> This box will go away as soon as you have added your first friend or subscription.', 'friends' );
+	?>
+	</span>
+	<span>
 	<?php
 	echo wp_kses(
 		sprintf(
 			// translators: %s is the URL of the Friends admin menu.
-			__( '<strong>Note:</strong> This box will go away as soon as you have added your first friend or subscription.<br/>It will remain available via the <a href=%s>Friends admin menu</a> for later reference.', 'friends' ),
+			__( 'It will remain available via the <a href=%s>Friends admin menu</a> for later reference.', 'friends' ),
 			'"' . admin_url( 'admin.php?page=friends' ) . '"'
 		),
 		array(
@@ -29,4 +35,5 @@ Friends\Friends::template_loader()->get_template_part(
 		)
 	);
 	?>
+	</span>
 </p>
