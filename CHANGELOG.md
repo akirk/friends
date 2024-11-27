@@ -1,3 +1,6 @@
+### 3.2.0
+- Improve Translate Live compatibility ([#401])
+- Fix blog follower count in sidebar ([#400])
 ### 3.1.9
 - Fix bug with loading the main theme ([#398])
 
@@ -296,6 +299,8 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#401]: https://github.com/akirk/friends/pull/401
+[#400]: https://github.com/akirk/friends/pull/400
 [#398]: https://github.com/akirk/friends/pull/398
 [#396]: https://github.com/akirk/friends/pull/396
 [#395]: https://github.com/akirk/friends/pull/395

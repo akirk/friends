@@ -5,7 +5,7 @@
 - Requires at least: 5.0
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.1.9
+- Stable tag: 3.2.0
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.2.0
+- Improve Translate Live compatibility ([#401])
+- Fix blog follower count in sidebar ([#400])
+
 ### 3.1.9
 - Fix bug with loading the main theme ([#398])
 
@@ -150,6 +154,8 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
 - Improve ghost.org ActivityPub compatibility ([#356])
 
+[#401]: https://github.com/akirk/friends/pull/401
+[#400]: https://github.com/akirk/friends/pull/400
 [#398]: https://github.com/akirk/friends/pull/398
 [#396]: https://github.com/akirk/friends/pull/396
 [#395]: https://github.com/akirk/friends/pull/395
