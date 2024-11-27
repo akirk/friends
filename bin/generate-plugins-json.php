@@ -91,7 +91,7 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 	}
 	$json[ $slug ] = $data;
 }
-file_put_contents( __DIR__ . '/../plugins.json', wp_json_encode( $json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+file_put_contents( __DIR__ . '/../plugins.json', json_encode( $json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 echo 'plugins.json was created.', PHP_EOL;
 
 /**
