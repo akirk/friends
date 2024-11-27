@@ -28,15 +28,18 @@ $first_friend = array(
 		?>
 	</li>
 	<li>
+		<span>
 		<?php
 		// translators: %s is the URL of the user's friends page.
 		echo wp_kses( sprintf( __( 'You can extend your network by <a href=%1$s>subscribing to web sites</a>, <a href=%1$s>sending friend requests</a> or <a href=%2$s>responding to received friend requests</a>.', 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', '"' . admin_url( 'users.php?role=friend_request' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
 		?>
+
+		</span>
 		<form action="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>" method="post" class="form-horizontal">
 		<?php wp_nonce_field( 'add-friend' ); ?>
 			<input type="hidden" name="friend_url" value="<?php echo esc_attr( $first_friend['url'] ); ?>" />
 		<div class="form-group">
-			<button class="btn btn-link">→ <?php echo esc_html( $first_friend['display_name'] ); ?></button>
+			<button class="btn btn-link btn-arrow"><?php echo esc_html( $first_friend['display_name'] ); ?></button>
 		</div>
 	</form>
 	</li>
