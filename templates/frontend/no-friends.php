@@ -20,6 +20,7 @@ Friends\Friends::template_loader()->get_template_part(
 	esc_html_e( '<strong>Note:</strong> This box will go away as soon as you have added your first friend or subscription.', 'friends' );
 	?>
 	</span>
+	<br>
 	<span>
 	<?php
 	echo wp_kses(
