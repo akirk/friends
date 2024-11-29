@@ -2,7 +2,7 @@
 
 - Contributors: akirk
 - Tags: friends, rss, decentralized, social-network, own-your-data
-- Requires at least: 5.0
+- Requires PHP: 7.2
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
 - Stable tag: 3.2.1
