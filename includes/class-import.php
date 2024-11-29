@@ -34,7 +34,7 @@ class Import {
 			$username = preg_replace( '/^https?:\/\//', '', $username );
 		}
 		if ( ! $username ) {
-			$username = (string) $friend['xmlUrl'];
+			$username = (string) $xml_url;
 			$username = preg_replace( '/^https?:\/\//', '', $username );
 		}
 
@@ -67,6 +67,10 @@ class Import {
 		);
 
 		if ( ! $feed instanceof User_Feed ) {
+			if ( is_wp_error( $feed ) && apply_filters( 'friends_debug', false ) ) {
+				wp_trigger_error( __FUNCTION__, $feed->get_error_message() );
+
+			}
 			return null;
 		}
 

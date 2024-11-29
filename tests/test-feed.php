@@ -680,6 +680,8 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	public function test_import_feedland_opml() {
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
 		$opml = file_get_contents( __DIR__ . '/data/feedland.opml' );
 		$feeds = Import::opml( $opml );
 		$users_created = count( $feeds );
@@ -692,6 +694,8 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	public function test_import_friends_opml() {
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
 		$opml = file_get_contents( __DIR__ . '/data/friends.opml' );
 		$feeds = Import::opml( $opml );
 		$users_created = count( $feeds );
@@ -699,7 +703,7 @@ class FeedTest extends \WP_UnitTestCase {
 		foreach ( $feeds as $user => $user_feeds ) {
 			$feeds_imported += count( $user_feeds );
 		}
-		$this->assertEquals( 19, $users_created );
-		$this->assertEquals( 20, $feeds_imported );
+		$this->assertEquals( 22, $users_created );
+		$this->assertEquals( 24, $feeds_imported );
 	}
 }
