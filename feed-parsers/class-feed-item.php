@@ -59,6 +59,28 @@ class Feed_Item {
 			case 'updated_date':
 			case 'date':
 				return gmdate( 'Y-m-d H:i:s', $this->data[ $key ] );
+			case 'meta':
+				$meta = $this->data['meta'];
+				if ( isset( $meta['enclosure'] ) ) {
+					if ( isset( $meta['enclosure']['url'] ) ) {
+						$url = $meta['enclosure']['url'];
+						$len = '';
+						if ( isset( $meta['enclosure']['length'] ) ) {
+							$len = $meta['enclosure']['length'];
+						}
+						$mime = '';
+						if ( isset( $meta['enclosure']['mime'] ) ) {
+							$mime = $meta['enclosure']['mime'];
+						}
+
+						$meta['enclosure'] = "$url\n$len\n$mime\n";
+					} else {
+						// An enclosure only makes sense if it has a URL.
+						unset( $meta['enclosure'] );
+					}
+				}
+
+				return $meta;
 		}
 
 		return $this->data[ $key ];
