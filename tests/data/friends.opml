@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?><opml version="2.0">
+	<head>
+		<title>My Friends</title>
+		<dateCreated>Fri, 29 Nov 2024 06:47:29 +0000</dateCreated>
+		<ownerName>adm</ownerName>
+	</head>
+	<body>
+	<outline text="Friends">
+		<outline text="alex" htmlUrl="https://akirk.blog/friends/alex.mu.blog/" title="alex" type="rss" xmlUrl="https://alex.mu.blog/feed/?me=akirk.blog&#038;until=1764398848&#038;auth=$2y$12$H6eft9cdHzvnNopyVzC4C.TS.yuNGL1Qox3nu/qREMI1HqamMTQ7u"/>
+		<outline text="alex" htmlUrl="https://akirk.blog/friends/alex.mu.blog/" title="alex" type="rss" xmlUrl="https://mastodon.local/@alex"/>
+		<outline text="Matt on Not-WordPress" htmlUrl="https://akirk.blog/friends/matt.blog/" title="Matt on Not-WordPress" type="rss" xmlUrl="https://matt.blog/feed/?me=akirk.blog&#038;until=1764398848&#038;auth=$2y$12$hwATj8IIKltWpk3GJVPCnOEsgK8vbmk7mgReOzCaO8yh1kPWryaxa"/>
+	</outline>
+	<outline text="Subscriptions">
+		<outline text="Aaron Jorbin" htmlUrl="https://akirk.blog/friends/aaron-jorbin/" title="Aaron Jorbin" type="rss" xmlUrl="https://aaron.jorb.in/feed/"/>
+		<outline text="Adam Zielinski" htmlUrl="https://akirk.blog/friends/adam-zielinski/" title="Adam Zielinski" type="rss" xmlUrl="https://adamadam.blog/feed/"/>
+		<outline text="alex" htmlUrl="https://akirk.blog/friends/mastodon.local-users-alex/" title="alex" type="rss" xmlUrl="https://wpfriends.at/feed/"/>
+		<outline text="Alex Kirk" htmlUrl="https://akirk.blog/friends/alex-kirk/" title="Alex Kirk" type="rss" xmlUrl="https://alex.kirk.at/feed/"/>
+		<outline text="Andreas Klinger" htmlUrl="https://akirk.blog/friends/andreas-klinger/" title="Andreas Klinger" type="rss" xmlUrl="https://klinger.io/rss.xml"/>
+		<outline text="Barnaby Walters" htmlUrl="https://akirk.blog/friends/barnaby-walters/" title="Barnaby Walters" type="rss" xmlUrl="https://akirk.blog/friends/barnaby-walters/feed/"/>
+		<outline text="bengreeley.com" htmlUrl="https://akirk.blog/friends/bengreeley.com/" title="bengreeley.com" type="rss" xmlUrl="https://www.bengreeley.com/feed/"/>
+		<outline text="Chris Coyier" htmlUrl="https://akirk.blog/friends/chriscoyier.net/" title="Chris Coyier" type="rss" xmlUrl="https://chriscoyier.net/feed/"/>
+		<outline text="David Bisset" htmlUrl="https://akirk.blog/friends/davidbisset-phpc.social/" title="David Bisset" type="rss" xmlUrl="https://phpc.social/@davidbisset"/>
+		<outline text="Ingrid Brodnig" htmlUrl="https://akirk.blog/friends/mastodon.social-users-brodnig/" title="Ingrid Brodnig" type="rss" xmlUrl="https://mastodon.social/users/brodnig.rss"/>
+		<outline text="Jim Nielsen" htmlUrl="https://akirk.blog/friends/jim-nielsen.com/" title="Jim Nielsen" type="rss" xmlUrl="https://blog.jim-nielsen.com/feed.xml"/>
+		<outline text="Matt Mullenweg" htmlUrl="https://akirk.blog/friends/ma.tt/" title="Matt Mullenweg" type="rss" xmlUrl="https://ma.tt/feed/"/>
+		<outline text="mkln.org" htmlUrl="https://akirk.blog/friends/mkln.org/" title="mkln.org" type="rss" xmlUrl="https://mkln.org/feed"/>
+		<outline text="notiz.blog" htmlUrl="https://akirk.blog/friends/notiz.blog/" title="notiz.blog" type="rss" xmlUrl="https://notiz.blog/feed/"/>
+		<outline text="paolo.blog" htmlUrl="https://akirk.blog/friends/paolo.blog/" title="paolo.blog" type="rss" xmlUrl="https://paolo.blog/feed/"/>
+		<outline text="pfefferle" htmlUrl="https://akirk.blog/friends/pfefferle-mastodon-social/" title="pfefferle" type="rss" xmlUrl="https://mastodon-social/@pfefferle"/>
+		<outline text="restofworld.org" htmlUrl="https://akirk.blog/friends/restofworld.org/" title="restofworld.org" type="rss" xmlUrl="https://restofworld.org/feed/latest"/>
+		<outline text="simonwillison.net" htmlUrl="https://akirk.blog/friends/simonwillison.net/" title="simonwillison.net" type="atom" xmlUrl="https://simonwillison.net/atom/everything/"/>
+		<outline text="stratechery.com" htmlUrl="https://akirk.blog/friends/stratechery.com/" title="stratechery.com" type="rss" xmlUrl="https://stratechery.com/feed/"/>
+		<outline text="wptavern.com" htmlUrl="https://akirk.blog/friends/wptavern.com/" title="wptavern.com" type="rss" xmlUrl="https://wptavern.com/feed/"/>
+		<outline text="xkcd" htmlUrl="https://akirk.blog/friends/xkcd/" title="xkcd" type="rss" xmlUrl="https://xkcd.com/rss.xml"/>
+	</outline>
+	</body>
+</opml>

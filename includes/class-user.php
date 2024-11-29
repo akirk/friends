@@ -388,7 +388,7 @@ class User extends \WP_User {
 		$errors = new \WP_Error();
 		foreach ( $feeds as $feed_url => $options ) {
 			if ( ! is_string( $feed_url ) || ! Friends::check_url( $feed_url ) ) {
-				$errors->add( 'invalid-url', 'An invalid URL was provided' );
+				$errors->add( 'invalid-url', 'An invalid URL was provided', $feed_url );
 				unset( $feeds[ $feed_url ] );
 				continue;
 			}
@@ -406,7 +406,8 @@ class User extends \WP_User {
 
 		$all_urls = array();
 		foreach ( wp_get_object_terms( $this->get_object_id(), User_Feed::TAXONOMY ) as $term ) {
-			$all_urls[ $term->name ] = $term->term_id;
+			$url = str_replace( '&amp;', '&', $term->name );
+			$all_urls[ $url ] = $term->term_id;
 		}
 
 		$user_feeds = wp_set_object_terms( $this->get_object_id(), array_keys( array_merge( $all_urls, $feeds ) ), User_Feed::TAXONOMY );
@@ -415,7 +416,8 @@ class User extends \WP_User {
 		}
 
 		foreach ( wp_get_object_terms( $this->get_object_id(), User_Feed::TAXONOMY ) as $term ) {
-			$all_urls[ $term->name ] = $term->term_id;
+			$url = str_replace( '&amp;', '&', $term->name );
+			$all_urls[ $url ] = $term->term_id;
 		}
 
 		foreach ( $feeds as $url => $feed_options ) {
