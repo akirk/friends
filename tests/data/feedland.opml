@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="2.0">
+	<head>
+		<title>bph/wordpress</title>
+		<description>bph's subscription list, wordpress category. List created by feedlandDatabase v0.7.55.</description>
+		<dateModified>Thu, 28 Nov 2024 16:14:43 GMT</dateModified>
+		</head>
+	<body>
+		<outline type="rss" text="WP Mayor" xmlUrl="https://wpmayor.com/feed/" htmlUrl="https://wpmayor.com/" category="wordpress"/>
+		<outline type="rss" text="Block themes — WordPress.org" xmlUrl="https://wordpress.org/themes/tags/full-site-editing/feed/" htmlUrl="https://wordpress.org/themes" category="wordpress"/>
+		<outline type="rss" text="All themes — WordPress.org" xmlUrl="https://wordpress.org/themes/feed/" htmlUrl="https://wordpress.org/themes" category="wordpress"/>
+		<outline type="rss" text="WP BizDev" xmlUrl="https://wpbiz.dev/feed/" htmlUrl="https://wpbiz.dev/" category="wordpress"/>
+		<outline type="rss" text="WordPress Guides, Tutorials &amp; Tips - Kinsta® Blog" xmlUrl="https://kinsta.com/blog/feed/" htmlUrl="https://kinsta.com/blog/" category="wordpress"/>
+		<outline type="rss" text="WebTNG" xmlUrl="https://www.webtng.com/feed/" htmlUrl="https://www.webtng.com/" category="wordpress"/>
+		<outline type="rss" text="Automattic Design" xmlUrl="https://automattic.design/feed/" htmlUrl="https://automattic.design/" category="wordpress"/>
+		<outline type="rss" text="WP-CONTENT.CO" xmlUrl="https://wp-content.co/feed" htmlUrl="https://wp-content.co/" category="wordpress"/>
+		<outline type="rss" text="Brian Coords" xmlUrl="https://www.briancoords.com/feed" htmlUrl="https://www.briancoords.com/" category="wordpress"/>
+		<outline type="rss" text="WP Plugins RSS" xmlUrl="https://wp-plugins-rss.edavis.workers.dev/feed/" htmlUrl="https://wordpress.org/plugins/browse/new/" category="wordpress"/>
+		<outline type="rss" text="editortips" xmlUrl="https://editortips.com/feed/" htmlUrl="https://editortips.com/" category="wordpress"/>
+		<outline type="rss" text="The WooCommerce Developer Blog" xmlUrl="https://developer.woo.com/feed/" htmlUrl="https://developer.woocommerce.com/" category="wordpress"/>
+		<outline type="rss" text="DevotePress" xmlUrl="https://devotepress.com/feed/" htmlUrl="https://devotepress.com/" category="wordpress"/>
+		<outline type="rss" text="Rich Tabor" xmlUrl="https://richtabor.com/feed/" htmlUrl="https://rich.blog/" category="wordpress"/>
+		<outline type="rss" text="Post Status" xmlUrl="https://poststatus.com/feed/" htmlUrl="https://poststatus.com/" category="wordpress"/>
+		<outline type="rss" text="WPShout" xmlUrl="https://www.codeinwp.com/feed/" htmlUrl="https://wpshout.com/" category="wordpress"/>
+		<outline type="rss" text="Matt Mullenweg" xmlUrl="https://ma.tt/feed/" htmlUrl="https://ma.tt/" category="wordpress"/>
+		<outline type="rss" text="WordPress News" xmlUrl="https://wordpress.org/news/feed/" htmlUrl="https://wordpress.org/news" category="wordpress"/>
+		<outline type="rss" text="Human Made Blog" xmlUrl="https://humanmade.com/blog/feed/" htmlUrl="https://humanmade.com/blog/" category="wordpress"/>
+		<outline type="rss" text="Builders" xmlUrl="https://wpengine.com/builders/feed/" htmlUrl="https://wpengine.com/builders/" category="wordpress"/>
+		<outline type="rss" text="Tom McFarlin" xmlUrl="https://tommcfarlin.com/feed/" htmlUrl="https://tommcfarlin.com/" category="wordpress"/>
+		<outline type="rss" text="Tutorials | Learn WordPress" xmlUrl="https://learn.wordpress.org/tutorials/feed/" htmlUrl="https://learn.wordpress.org/" category="wordpress"/>
+		<outline type="rss" text="Full Site Editing" xmlUrl="https://fullsiteediting.com/feed/" htmlUrl="https://fullsiteediting.com/" category="wordpress"/>
+		<outline type="rss" text="Blog – WP Fieldwork" xmlUrl="https://wpfieldwork.com/blog/feed/" htmlUrl="https://wpfieldwork.com/" category="wordpress"/>
+		<outline type="rss" text="Gutenberg Hub" xmlUrl="https://gutenberghub.com/feed" htmlUrl="https://gutenberghub.com/" category="wordpress"/>
+		<outline type="rss" text="The WP Minute" xmlUrl="https://thewpminute.com/feed/" htmlUrl="https://thewpminute.com/" category="wordpress"/>
+		<outline type="rss" text="WordPress Developer Blog" xmlUrl="https://developer.wordpress.org/news/feed/" htmlUrl="https://developer.wordpress.org/news" category="wordpress"/>
+		<outline type="rss" text="Ollie WordPress Block Theme" xmlUrl="https://olliewp.com/feed/" htmlUrl="https://olliewp.com/" category="wordpress"/>
+		<outline type="rss" text="WordPress.tv" xmlUrl="https://wordpress.tv/feed/" htmlUrl="https://wordpress.tv/" category="wordpress"/>
+		<outline type="rss" text="Torque" xmlUrl="https://torquemag.io/feed/" htmlUrl="https://torquemag.io/" category="wordpress"/>
+		<outline type="rss" text="WordPress – CSS-Tricks" xmlUrl="https://css-tricks.com/tag/wordpress/feed/" htmlUrl="https://css-tricks.com/" category="wordpress"/>
+		<outline type="rss" text="Blog - Bill Erickson" xmlUrl="https://www.billerickson.net/blog/feed/" htmlUrl="https://www.billerickson.net/blog/" category="wordpress"/>
+		<outline type="rss" text="WP Builds" xmlUrl="https://wpbuilds.com/feed/podcast/" htmlUrl="https://wpbuilds.com/series/wp-builds/" category="wordpress"/>
+		<outline type="rss" text="WP Tavern" xmlUrl="https://wptavern.com/feed" htmlUrl="https://wptavern.com/" category="wordpress"/>
+		</body>
+	</opml>

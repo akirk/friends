@@ -678,4 +678,28 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( 'https://podcast.local/2022/10/episode-1/', $post->guid );
 		$this->assertStringContainsString( 'first-episode.mp3', $post->post_content );
 	}
+
+	public function test_import_feedland_opml() {
+		$opml = file_get_contents( __DIR__ . '/data/feedland.opml' );
+		$feeds = Import::opml( $opml );
+		$users_created = count( $feeds );
+		$feeds_imported = 0;
+		foreach ( $feeds as $user => $user_feeds ) {
+			$feeds_imported += count( $user_feeds );
+		}
+		$this->assertEquals( 34, $users_created );
+		$this->assertEquals( 34, $feeds_imported );
+	}
+
+	public function test_import_friends_opml() {
+		$opml = file_get_contents( __DIR__ . '/data/friends.opml' );
+		$feeds = Import::opml( $opml );
+		$users_created = count( $feeds );
+		$feeds_imported = 0;
+		foreach ( $feeds as $user => $user_feeds ) {
+			$feeds_imported += count( $user_feeds );
+		}
+		$this->assertEquals( 19, $users_created );
+		$this->assertEquals( 20, $feeds_imported );
+	}
 }
