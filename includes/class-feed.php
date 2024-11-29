@@ -314,7 +314,7 @@ class Feed {
 	 * @param      User      $friend_user  The friend user.
 	 * @return Feed_Item The modified feed item.
 	 */
-	public function apply_early_feed_rules( $item, User_Feed $feed = null, User $friend_user = null ) {
+	public function apply_early_feed_rules( $item, ?User_Feed $feed = null, ?User $friend_user = null ) {
 		$updated_item = $this->apply_feed_rules( $item, $feed, $friend_user );
 		if ( $updated_item->_feed_rule_delete ) {
 			return $updated_item;
@@ -330,7 +330,7 @@ class Feed {
 	 * @param  User      $friend_user The friend user.
 	 * @return Feed_Item The modified feed item.
 	 */
-	public function apply_feed_rules( $item, User_Feed $feed = null, User $friend_user = null ) {
+	public function apply_feed_rules( $item, ?User_Feed $feed = null, ?User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
 			return $item;
 		}
