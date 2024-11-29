@@ -963,7 +963,7 @@ class Frontend {
 	 * @param      array  $html_attributes    HTML attributes.
 	 * @param      User   $friend_user  The friend user.
 	 */
-	public function link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
+	public function link( $url, $text, array $html_attributes = array(), ?User $friend_user = null ) {
 		echo wp_kses(
 			self::get_link( $url, $text, $html_attributes, $friend_user ),
 			array(
@@ -996,7 +996,7 @@ class Frontend {
 	 *
 	 * @return     string       The link.
 	 */
-	public static function get_link( $url, $text, array $html_attributes = array(), User $friend_user = null ) {
+	public static function get_link( $url, $text, array $html_attributes = array(), ?User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
 			$friend_user = new User( get_the_author_meta( 'ID' ) );
 		}

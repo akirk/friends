@@ -5,14 +5,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['7.2', '7.3', '7.4']
-        phpunit: ['6.3.1']
-        wordpress: ['6.0', 'trunk']
-
         include:
-          - php: '5.6'
-            phpunit: '5.7.21'
-            wordpress: '6.0'
           - php: '7.2'
             phpunit: '6.3.1'
             wordpress: '6.0'
@@ -29,10 +22,16 @@ jobs:
             phpunit: '8.5.16'
             wordpress: 'trunk'
           - php: '8.1'
-            phpunit: '9.5.27'
+            phpunit: '9.6.21'
             wordpress: 'trunk'
           - php: '8.2'
-            phpunit: '9.5.27'
+            phpunit: '9.6.21'
+            wordpress: 'trunk'
+          - php: '8.3'
+            phpunit: '9.6.21'
+            wordpress: 'trunk'
+          - php: '8.4'
+            phpunit: '9.6.21'
             wordpress: 'trunk'
 
     services:
@@ -83,18 +82,6 @@ jobs:
         uses: "ramsey/composer-install@v2"
         with:
           composer-options: --ignore-platform-reqs
-
-      - name: "Lint PHP files against parse errors - PHP < 7.0"
-        if: ${{ matrix.phpunit == 'auto' && matrix.php < 7.0 }}
-        run: composer lint-lt70
-
-      - name: "Lint PHP files against parse errors - PHP 7.x"
-        if: ${{ matrix.phpunit == 'auto' && startsWith( matrix.php, '7' ) }}
-        run: composer lint7
-
-      - name: "Lint PHP files against parse errors - PHP >= 8.0"
-        if: ${{ matrix.phpunit == 'auto' && matrix.php >= 8.0 }}
-        run: composer lint-gte80
 
       # Scan the logs for failing tests and surface that information by creating annotations and log file decorations.
       - name: Setup problem matcher to provide annotations for PHPUnit test errors and failures

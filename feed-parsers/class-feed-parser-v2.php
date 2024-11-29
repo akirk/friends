@@ -39,7 +39,7 @@ abstract class Feed_Parser_V2 extends Feed_Parser {
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url, User_Feed $user_feed = null ) {
+	public function fetch_feed( $url, ?User_Feed $user_feed = null ) {
 		return array();
 	}
 }

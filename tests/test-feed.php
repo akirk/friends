@@ -137,7 +137,7 @@ class FeedTest extends \WP_UnitTestCase {
 	 * @param      string $file  A SimplePie File.
 	 * @param      User   $user   The optional user, otherwise the friend_id will be used.
 	 */
-	private function feed_parsing_test( $file, User $user = null ) {
+	private function feed_parsing_test( $file, ?User $user = null ) {
 		if ( is_null( $user ) ) {
 			$user = new User( $this->friend_id );
 		}

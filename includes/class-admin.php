@@ -998,7 +998,7 @@ class Admin {
 	 * @param  string   $catch_all The catch all behavior.
 	 * @param  \WP_Post $post       The post.
 	 */
-	public function render_preview_friend_rules( $rules, $catch_all, \WP_Post $post = null ) {
+	public function render_preview_friend_rules( $rules, $catch_all, ?\WP_Post $post = null ) {
 		$friend = $this->check_admin_edit_friend_rules();
 		$friend_posts = new \WP_Query();
 

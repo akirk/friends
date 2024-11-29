@@ -232,7 +232,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url, User_Feed $user_feed = null ) {
+	public function fetch_feed( $url, ?User_Feed $user_feed = null ) {
 		// Use SimplePie which is bundled with WordPress.
 		$feed = $this->get_simplepie();
 
@@ -381,7 +381,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	 *
 	 * @return     array  The comments.
 	 */
-	public function get_comments( $comments, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+	public function get_comments( $comments, $post_id, ?User $friend_user = null, ?User_Feed $user_feed = null ) {
 		$comments_url = get_post_meta( $post_id, Feed::COMMENTS_FEED_META, true );
 		if ( ! $comments_url || ! $friend_user || ! $user_feed ) {
 			return $comments;

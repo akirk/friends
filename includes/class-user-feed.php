@@ -44,7 +44,7 @@ class User_Feed {
 	 * @param \WP_Term  $term        The WordPress term of the feed taxonomy.
 	 * @param User|null $friend_user Optionally the associated User, if available.
 	 */
-	public function __construct( \WP_Term $term, User $friend_user = null ) {
+	public function __construct( \WP_Term $term, ?User $friend_user = null ) {
 		$this->term = $term;
 		$this->friend_user = $friend_user;
 	}

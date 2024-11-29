@@ -337,7 +337,7 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url, User_Feed $user_feed = null ) {
+	public function fetch_feed( $url, ?User_Feed $user_feed = null ) {
 		$mf = Mf2\fetch( $url );
 		if ( ! $mf ) {
 			// translators: %s is a URL.

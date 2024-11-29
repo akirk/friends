@@ -116,7 +116,7 @@ class Feed_Parser_JSON_Feed extends Feed_Parser_V2 {
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url, User_Feed $user_feed = null ) {
+	public function fetch_feed( $url, ?User_Feed $user_feed = null ) {
 		$args = array();
 		$res = wp_safe_remote_request( $url, $args );
 

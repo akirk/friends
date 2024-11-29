@@ -25,7 +25,7 @@ class Feed_Parser_Local_File extends Feed_Parser_SimplePie {
 	public function __construct( Feed $friends_feed ) {
 	}
 
-	public function fetch_feed( $url, User_Feed $user_feed = null ) {
+	public function fetch_feed( $url, ?User_Feed $user_feed = null ) {
 		$file = new \SimplePie_File( $url );
 		$feed = new \SimplePie();
 		$feed->set_file( $file );
