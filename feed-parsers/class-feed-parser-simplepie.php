@@ -283,9 +283,9 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			/* See https://www.rssboard.org/rss-encoding-examples */
 			$title = $item->get_title();
 			if ( $title ) {
-				$title = htmlspecialchars_decode( $title );
+				$title = htmlspecialchars_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 				if ( $title ) {
-					$title = \html_entity_decode( $title, ENT_QUOTES, 'UTF-8' );
+					$title = \html_entity_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8' );
 				}
 			}
 

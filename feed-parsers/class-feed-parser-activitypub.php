@@ -606,7 +606,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 *
 	 * @return     array            An array of feed items.
 	 */
-	public function fetch_feed( $url, User_Feed $user_feed = null ) {
+	public function fetch_feed( $url, ?User_Feed $user_feed = null ) {
 		if ( $user_feed ) {
 			$this->disable_polling( $user_feed );
 		}
@@ -1655,7 +1655,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param  User      $friend_user The friend user.
 	 * @return Feed_Item The modified feed item.
 	 */
-	public function modify_incoming_item( Feed_Item $item, User_Feed $feed = null, User $friend_user = null ) {
+	public function modify_incoming_item( Feed_Item $item, ?User_Feed $feed = null, ?User $friend_user = null ) {
 		if ( ! $feed || 'activitypub' !== $feed->get_parser() || ! $friend_user ) {
 			return $item;
 		}
@@ -2372,7 +2372,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 *
 	 * @return     array  The comments.
 	 */
-	public function get_remote_comments( $comments, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+	public function get_remote_comments( $comments, $post_id, ?User $friend_user = null, ?User_Feed $user_feed = null ) {
 		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
 			return $comments;
 		}
@@ -2447,7 +2447,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 	}
 
-	public function append_comment_form( $content, $post_id, User $friend_user = null, User_Feed $user_feed = null ) {
+	public function append_comment_form( $content, $post_id, ?User $friend_user = null, ?User_Feed $user_feed = null ) {
 		$meta = get_post_meta( $post_id, self::SLUG, true );
 		if ( ! $meta ) {
 			if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {

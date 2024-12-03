@@ -1255,7 +1255,7 @@ class Friends {
 	 * @return     string  The text in ASCII only.
 	 */
 	private static function strip_non_ascii( $text ) {
-		$text = html_entity_decode( $text );
+		$text = html_entity_decode( $text, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 		$text = str_replace( '»', '>', $text );
 		$text = strtr( $text, '"', '' );
 		return filter_var( $text, FILTER_DEFAULT, FILTER_FLAG_STRIP_HIGH | FILTER_FLAG_NO_ENCODE_QUOTES );

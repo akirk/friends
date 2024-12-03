@@ -1347,10 +1347,10 @@ class Admin {
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 			}
 
-			if ( $friend->set_retention_number_enabled( filter_input( INPUT_POST, 'friends_enable_retention_number', FILTER_VALIDATE_BOOL ) ) && isset( $_POST['friends_retention_number'] ) ) {
+			if ( $friend->set_retention_number_enabled( boolval( filter_input( INPUT_POST, 'friends_enable_retention_number', FILTER_SANITIZE_NUMBER_INT ) ) ) && isset( $_POST['friends_retention_number'] ) ) {
 				$friend->set_retention_number( filter_input( INPUT_POST, 'friends_retention_number', FILTER_SANITIZE_NUMBER_INT ) );
 			}
-			if ( $friend->set_retention_days_enabled( filter_input( INPUT_POST, 'friends_enable_retention_days', FILTER_VALIDATE_BOOL ) ) && isset( $_POST['friends_retention_days'] ) ) {
+			if ( $friend->set_retention_days_enabled( boolval( filter_input( INPUT_POST, 'friends_enable_retention_days', FILTER_SANITIZE_NUMBER_INT ) ) ) && isset( $_POST['friends_retention_days'] ) ) {
 				$friend->set_retention_days( filter_input( INPUT_POST, 'friends_retention_days', FILTER_SANITIZE_NUMBER_INT ) );
 			}
 
