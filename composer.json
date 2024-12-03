@@ -4,12 +4,12 @@
 	"license": "GPL-2.0-or-later",
 	"require-dev": {
 		"phpcompatibility/php-compatibility": "dev-develop as 9.99.99",
+		"phpcompatibility/phpcompatibility-wp": "*",
 		"wp-coding-standards/wpcs": "*",
 		"yoast/phpunit-polyfills": "*",
 		"php-parallel-lint/php-parallel-lint": "^1.3",
 		"phpunit/phpunit": "*",
-		"akirk/extract-wp-hooks": "*",
-		"phpcompatibility/phpcompatibility-wp": "*"
+		"akirk/extract-wp-hooks": "*"
 	},
 	"config": {
 		"allow-plugins": {
