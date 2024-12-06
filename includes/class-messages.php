@@ -132,9 +132,40 @@ class Messages {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'rest_receive_message' ),
-				'permission_callback' => Friends::authenticated_for_posts(),
+				'permission_callback' => array( $this, 'permission_check_receive_message' ),
 			)
 		);
+	}
+
+	public function permission_check_receive_message( \WP_REST_Request $request ) {
+		if ( Friends::authenticated_for_posts() ) {
+			return true;
+		}
+
+		$tokens = explode( '-', $request->get_param( 'auth' ) );
+		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
+		if ( ! $user_id ) {
+			return new \WP_Error(
+				'friends_request_failed',
+				__( 'Could not respond to the request.', 'friends' ),
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
+		$friend_user = new User( $user_id );
+		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
+			return new \WP_Error(
+				'friends_request_failed',
+				__( 'Could not respond to the request.', 'friends' ),
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
+		return true;
 	}
 
 	/**

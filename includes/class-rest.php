@@ -56,7 +56,7 @@ class REST {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'rest_friend_request' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'permission_check_friend_request' ),
 				'args'                => array(
 					'url'      => array(
 						'type'     => 'string',
@@ -96,7 +96,7 @@ class REST {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'rest_friendship_requested' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => '__return_true', // Unauthenticated is ok.
 				'args'                => array(
 					'url' => array(
 						'type'     => 'string',
@@ -112,7 +112,7 @@ class REST {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'rest_accept_friend_request' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'permssion_check_accept_friend_request' ),
 				'args'                => array(
 					'url'      => array(
 						'type'     => 'string',
@@ -144,7 +144,7 @@ class REST {
 			array(
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'rest_friend_post_deleted' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => array( $this, 'permission_check_friends_only' ),
 			)
 		);
 		register_rest_route(
@@ -153,7 +153,9 @@ class REST {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( $this, 'rest_embed_friend_post' ),
-				'permission_callback' => '__return_true',
+				'permission_callback' => function () {
+					return current_user_can( Friends::REQUIRED_ROLE );
+				},
 			)
 		);
 
@@ -188,6 +190,58 @@ class REST {
 		);
 	}
 
+	public function permssion_check_accept_friend_request( \WP_REST_Request $request ) {
+		$url = $request->get_param( 'url' );
+
+		$friend_user = false;
+		$pending_friend_requests = User_Query::all_pending_friend_requests();
+		foreach ( $pending_friend_requests->get_results() as $pending_friend_request ) {
+			if ( $pending_friend_request->user_url === $url ) {
+				$friend_user = $pending_friend_request;
+				break;
+			}
+		}
+
+		if ( ! $friend_user ) {
+			// Maybe they are already friends from the other side.
+			$potential_friends = User_Query::all_friends();
+			foreach ( $potential_friends->get_results() as $potential_friend ) {
+				if ( $potential_friend->user_url === $url ) {
+					$friend_user = $potential_friend;
+					break;
+				}
+			}
+
+			if ( ! $friend_user ) {
+				return new \WP_Error(
+					'friends_invalid_parameters',
+					'Not all necessary parameters were provided.',
+					array(
+						'status' => 403,
+					)
+				);
+			}
+		}
+
+		$their_key = $request->get_param( 'key' );
+		$our_key = $request->get_param( 'your_key' );
+
+		if (
+			$friend_user->get_user_option( 'friends_out_token' ) !== $our_key
+			|| $friend_user->get_user_option( 'friends_in_token' ) !== $their_key
+		) {
+			return new \WP_Error(
+				'friends_invalid_parameters',
+				'Not all necessary parameters were provided.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+		return true;
+	}
+
+
 	/**
 	 * Receive a notification via REST that a friend request was accepted
 	 *
@@ -219,7 +273,7 @@ class REST {
 			if ( ! $friend_user ) {
 				return new \WP_Error(
 					'friends_invalid_parameters',
-					'Not all necessary parameters were provided1.',
+					'Not all necessary parameters were provided.',
 					array(
 						'status' => 403,
 					)
@@ -236,7 +290,7 @@ class REST {
 		) {
 			return new \WP_Error(
 				'friends_invalid_parameters',
-				'Not all necessary parameters were provided2.',
+				'Not all necessary parameters were provided.',
 				array(
 					'status' => 403,
 				)
@@ -341,13 +395,7 @@ class REST {
 		);
 	}
 
-	/**
-	 * Receive a friend request via REST
-	 *
-	 * @param  \WP_REST_Request $request The incoming request.
-	 * @return array The array to be returned via the REST API.
-	 */
-	public function rest_friend_request( \WP_REST_Request $request ) {
+	public function permission_check_friend_request( \WP_REST_Request $request ) {
 		$version = $request->get_param( 'version' );
 		if ( 3 !== intval( $version ) ) {
 			return new \WP_Error(
@@ -401,6 +449,18 @@ class REST {
 			);
 		}
 
+		return true;
+	}
+
+	/**
+	 * Receive a friend request via REST
+	 *
+	 * @param  \WP_REST_Request $request The incoming request.
+	 * @return array The array to be returned via the REST API.
+	 */
+	public function rest_friend_request( \WP_REST_Request $request ) {
+		$url = $request->get_param( 'url' );
+
 		$user_login = User::get_user_login_for_url( $url );
 		$friend_user = User::create( $user_login, 'friend_request', $url, $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
 		if ( $friend_user->has_cap( 'friend' ) ) {
@@ -420,6 +480,37 @@ class REST {
 		return array(
 			'key' => $our_key,
 		);
+	}
+
+	public function permission_check_friends_only( \WP_REST_Request $request ) {
+		if ( Friends::authenticated_for_posts() ) {
+			return true;
+		}
+
+		$tokens = explode( '-', $request->get_param( 'auth' ) );
+		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
+		if ( ! $user_id ) {
+			return new \WP_Error(
+				'friends_request_failed',
+				__( 'Could not respond to the request.', 'friends' ),
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
+		$friend_user = new User( $user_id );
+		if ( ! $friend_user->has_cap( 'friend' ) ) {
+			return new \WP_Error(
+				'friends_request_failed',
+				__( 'Could not respond to the request.', 'friends' ),
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
+		return true;
 	}
 
 	/**
