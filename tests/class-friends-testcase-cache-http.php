@@ -38,6 +38,8 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 			}
 		);
 
+		wp_get_current_user()->display_name = 'Alex';
+
 		add_filter( 'friends_host_is_valid', array( get_called_class(), 'friends_host_is_valid' ), 10, 2 );
 		add_filter( 'pre_http_request', array( get_called_class(), 'pre_http_request' ), 10, 3 );
 		add_filter( 'http_response', array( get_called_class(), 'http_response' ), 10, 3 );

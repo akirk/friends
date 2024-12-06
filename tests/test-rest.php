@@ -23,6 +23,9 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function set_up() {
 		parent::set_up();
+		update_option( 'friends_enable_wp_friendships', true );
+
+		User_Query::$cache = false;
 
 		// Emulate HTTP requests to the REST API.
 		add_filter(
@@ -74,6 +77,37 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 						$url,
 						$request
 					);
+				} elseif ( 0 === strpos( $url, $rest_prefix ) ) {
+					$rest_path = substr( $p['path'], strlen( '/wp-json' ) );
+					$rest_request = new \WP_REST_Request( $request['method'], $rest_path );
+
+					if ( ! empty( $request['body'] ) ) {
+						$rest_request->set_body_params( $request['body'] );
+					}
+					if ( isset( $p['query'] ) ) {
+						parse_str( $p['query'], $query );
+						$rest_request->set_query_params( $query );
+					}
+					$rest_request->set_headers( $request['headers'] );
+					$response = $this->server->dispatch( $rest_request );
+
+					// Restore the old home_url.
+					update_option( 'home', $home_url );
+					return apply_filters(
+						'fake_http_response',
+						array(
+							'headers'  => array(
+								'content-type' => 'application/json',
+							),
+							'body'     => wp_json_encode( $response->data ),
+							'response' => array(
+								'code' => 200,
+							),
+						),
+						$p['scheme'] . '://' . $p['host'],
+						$url,
+						$request
+					);
 				}
 				return $preempt;
 			},
@@ -99,72 +133,6 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Test a friend request on the REST level.
-	 */
-	public function test_friend_request() {
-		$my_url     = 'http://me.local';
-		$friend_url = 'http://friend.local';
-		update_option( 'home', $my_url );
-
-		$future_in_token = 'future_in_token';
-		$future_out_token = 'future_out_token';
-
-		// Prepare a signature that $my_url generates before sending the friend request.
-		$friend_request_token = wp_generate_password( 128, false );
-		update_option( 'friends_request_token_' . sha1( $friend_url . '/wp-json/' . REST::PREFIX ), $friend_request_token );
-
-		// Let's send a friend request to $friend_url.
-		update_option( 'home', $friend_url );
-		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/friend-request' );
-		$request->set_param( 'url', $my_url );
-		$request->set_param( 'key', $future_in_token );
-		$request->set_param( 'version', 2 );
-
-		$friend_request_response = $this->server->dispatch( $request );
-		$this->assertArrayHasKey( 'request', $friend_request_response->data );
-
-		// Verify that the user case created at remote.
-		$my_username_at_friend = User::get_user_login_for_url( $my_url );
-		$my_user_at_friend = User::get_user( $my_username_at_friend );
-
-		$this->assertInstanceOf( __NAMESPACE__ . '\User', $my_user_at_friend );
-		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
-		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
-
-		$this->assertEquals( get_user_option( 'friends_request_id', $my_user_at_friend->ID ), $friend_request_response->data['request'] );
-
-		// We're just testing the REST api, so we need to create the user ourselves.
-		$friend_username = User::get_user_login_for_url( $friend_url );
-		$friend_user = User::create( $friend_username, 'pending_friend_request', $friend_url );
-		$this->assertInstanceOf( __NAMESPACE__ . '\User', $friend_user );
-		$friend_user = User::create( $friend_username, 'pending_friend_request', $friend_url );
-
-		update_option( 'friends_request_' . sha1( $friend_request_response->data['request'] ), $friend_user->ID );
-		$friend_user->update_user_option( 'friends_future_in_token_' . sha1( $friend_request_response->data['request'] ), $future_in_token );
-
-		// Now let's accept the friend request.
-		update_option( 'home', $my_url );
-		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/accept-friend-request' );
-		$request->set_param( 'request', $friend_request_response->data['request'] );
-		$request->set_param( 'key', $future_out_token );
-		$request->set_param( 'proof', sha1( $future_in_token . $friend_request_response->data['request'] ) );
-
-		$friend_accept_response = $this->server->dispatch( $request );
-		$this->assertArrayHasKey( 'signature', $friend_accept_response->data );
-		delete_user_option( $my_user_at_friend->ID, 'friends_request_token' );
-
-		$my_user_at_friend->make_friend( $future_in_token, $future_out_token );
-
-		// Check the token.
-		$this->assertEquals( $friend_user->get_user_option( 'friends_in_token' ), $future_in_token );
-		$this->assertEquals( $friend_user->get_user_option( 'friends_out_token' ), $future_out_token );
-		$this->assertTrue( boolval( $my_user_at_friend->get_user_option( 'friends_in_token' ) ) );
-		$this->assertTrue( boolval( $my_user_at_friend->get_user_option( 'friends_out_token' ) ) );
-		$this->assertEquals( $friend_user->get_user_option( 'friends_out_token' ), $my_user_at_friend->get_user_option( 'friends_in_token' ) );
-		$this->assertEquals( $friend_user->get_user_option( 'friends_in_token' ), $my_user_at_friend->get_user_option( 'friends_out_token' ) );
 	}
 
 	/**
@@ -217,20 +185,36 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function test_friend_request_with_admin() {
 		$my_url     = 'http://me.local';
+		$my_username_at_friend = 'me-at-friend';
 		$friend_url = 'http://friend.local';
 		update_option( 'home', $my_url );
 		$friends = Friends::get_instance();
 		$friend_username = User::get_user_login_for_url( $friend_url );
 
-		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
+		$me_username = function ( $false, $url )  use ( $my_url, $my_username_at_friend ) {
+			if ( $url === $my_url ) {
+				return $my_username_at_friend;
+			}
+			return $false;
+		};
+
+		add_filter( 'friends_pre_get_user_login_for_url', $me_username, 10, 2 );
+		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', 'my-friend', $friend_url, $friend_username );
+		remove_filter( 'friends_pre_get_user_login_for_url', $me_username, 10, 2 );
+
 		$this->assertInstanceOf( __NAMESPACE__ . '\User', $friend_user );
 		$this->assertEquals( $friend_user->user_url, $friend_url );
 		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
 		$this->assertFalse( $friend_user->has_cap( 'friend' ) );
 
+		update_option( 'home', $friend_url );
+		$request = new \WP_REST_Request( 'GET', '/' . REST::PREFIX . '/friendship-requested' );
+		$request->set_param( 'url', $my_url );
+		$friend_request_response = $this->server->dispatch( $request );
+		$this->assertArrayHasKey( 'date', $friend_request_response->data );
+
 		// Verify that the user was created at remote.
-		$my_username_at_friend = User::get_user_login_for_url( $my_url );
 		$my_user_at_friend = User::get_user( $my_username_at_friend );
 
 		$this->assertInstanceOf( __NAMESPACE__ . '\User', $my_user_at_friend );
@@ -253,6 +237,8 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 		// We could now access the remote feed with this token.
 		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $friend_user->ID ) ) );
 		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $friend_user->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_in_token', $my_user_at_friend->ID ) ) );
+		$this->assertTrue( boolval( get_user_option( 'friends_out_token', $my_user_at_friend->ID ) ) );
 		$this->assertEquals( get_user_option( 'friends_in_token', $friend_user->ID ), get_user_option( 'friends_out_token', $my_user_at_friend->ID ) );
 		$this->assertEquals( get_user_option( 'friends_out_token', $friend_user->ID ), get_user_option( 'friends_in_token', $my_user_at_friend->ID ) );
 	}
@@ -412,5 +398,59 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
 		$this->assertInstanceOf( '\WP_Error', $friend_user );
 		$this->assertEquals( 'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $friend_user->get_error_message() );
+	}
+
+	/**
+	 * Test a friend request when they are disabled on the other side.
+	 */
+	public function test_friend_request_with_disabled_other_side() {
+		$my_url     = 'http://me.local';
+		$friend_url = 'http://friend.local';
+		update_option( 'friends_enable_wp_friendships', false );
+		update_option( 'home', $my_url );
+		$friends = Friends::get_instance();
+		$friend_username = User::get_user_login_for_url( $friend_url );
+
+		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
+		$this->assertInstanceOf( 'WP_Error', $friend_user );
+
+		// Verify that user was not created on remote
+		$my_username_at_friend = User::get_user_login_for_url( $my_url );
+		$my_user_at_friend = User::get_user( $my_username_at_friend );
+		$this->assertFalse( $my_user_at_friend );
+	}
+
+	/**
+	 * Test a friend request when they are disabled on the other side.
+	 */
+	public function test_friend_request_and_send_message() {
+		$my_url     = 'http://me.local';
+		$friend_url = 'http://friend.local';
+		update_option( 'home', $my_url );
+		$friends = Friends::get_instance();
+		$friend_username = User::get_user_login_for_url( $friend_url );
+
+		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
+		$this->assertInstanceOf( __NAMESPACE__ . '\User', $friend_user );
+		$this->assertEquals( $friend_user->user_url, $friend_url );
+		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
+		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
+		$this->assertFalse( $friend_user->has_cap( 'friend' ) );
+
+		// Verify that the user was created at remote.
+		$my_username_at_friend = User::get_user_login_for_url( $my_url );
+		$my_user_at_friend = User::get_user( $my_username_at_friend );
+
+		$this->assertInstanceOf( __NAMESPACE__ . '\User', $my_user_at_friend );
+		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
+		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
+		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
+		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
+
+		$message_id = $friend_user->send_message( 'test' );
+		$this->assertInstanceOf( 'WP_Error', $message_id );
+
+		$message_id = $my_user_at_friend->send_message( 'test' );
+		$this->assertInstanceOf( 'WP_Error', $message_id );
 	}
 }

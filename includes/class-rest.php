@@ -43,7 +43,7 @@ class REST {
 		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
 		add_action( 'wp_trash_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
-		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 2 );
+		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
 	}
 
 	/**
@@ -57,6 +57,53 @@ class REST {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'rest_friend_request' ),
 				'permission_callback' => '__return_true',
+				'args'                => array(
+					'url'      => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'key'      => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'name'     => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+					'icon_url' => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+					'message'  => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+					'codeword' => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+					'version'  => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::PREFIX,
+			'friendship-requested',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( $this, 'rest_friendship_requested' ),
+				'permission_callback' => '__return_true',
+				'args'                => array(
+					'url' => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+				),
+
 			)
 		);
 		register_rest_route(
@@ -66,6 +113,29 @@ class REST {
 				'methods'             => 'POST',
 				'callback'            => array( $this, 'rest_accept_friend_request' ),
 				'permission_callback' => '__return_true',
+				'args'                => array(
+					'url'      => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'key'      => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'your_key' => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'name'     => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+					'icon_url' => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+				),
+
 			)
 		);
 		register_rest_route(
@@ -125,57 +195,55 @@ class REST {
 	 * @return array The array to be returned via the REST API.
 	 */
 	public function rest_accept_friend_request( \WP_REST_Request $request ) {
-		$request_id     = $request->get_param( 'request' );
-		$friend_user_id = get_option( 'friends_request_' . sha1( $request_id ) );
-		$friend_user    = false;
-		if ( $friend_user_id ) {
-			$friend_user = new User( $friend_user_id );
+		$url = $request->get_param( 'url' );
+
+		$friend_user = false;
+		$pending_friend_requests = User_Query::all_pending_friend_requests();
+		foreach ( $pending_friend_requests->get_results() as $pending_friend_request ) {
+			if ( $pending_friend_request->user_url === $url ) {
+				$friend_user = $pending_friend_request;
+				break;
+			}
 		}
 
-		if ( ! $request_id || ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->user_url ) {
+		if ( ! $friend_user ) {
+			// Maybe they are already friends from the other side.
+			$potential_friends = User_Query::all_friends();
+			foreach ( $potential_friends->get_results() as $potential_friend ) {
+				if ( $potential_friend->user_url === $url ) {
+					$friend_user = $potential_friend;
+					break;
+				}
+			}
+
+			if ( ! $friend_user ) {
+				return new \WP_Error(
+					'friends_invalid_parameters',
+					'Not all necessary parameters were provided1.',
+					array(
+						'status' => 403,
+					)
+				);
+			}
+		}
+
+		$their_key = $request->get_param( 'key' );
+		$our_key = $request->get_param( 'your_key' );
+
+		if (
+			$friend_user->get_user_option( 'friends_out_token' ) !== $our_key
+			|| $friend_user->get_user_option( 'friends_in_token' ) !== $their_key
+		) {
 			return new \WP_Error(
 				'friends_invalid_parameters',
-				'Not all necessary parameters were provided.',
+				'Not all necessary parameters were provided2.',
 				array(
 					'status' => 403,
 				)
 			);
 		}
 
-		$future_in_token = get_user_option( 'friends_future_in_token_' . sha1( $request_id ), $friend_user_id );
-		$proof            = $request->get_param( 'proof' );
-		if ( ! $proof || sha1( $future_in_token . $request_id ) !== $proof ) {
-			return new \WP_Error(
-				'friends_invalid_proof',
-				'An invalid proof was provided.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		$friend_user_login = User::get_user_login_for_url( $friend_user->user_url );
-		if ( ! $friend_user->has_cap( 'pending_friend_request' ) ) {
-			return new \WP_Error(
-				'friends_offer_no_longer_valid',
-				'The friendship offer is no longer valid.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		$future_out_token = $request->get_param( 'key' );
-		if ( ! is_string( $future_out_token ) || empty( $future_out_token ) ) {
-			return new \WP_Error(
-				'friends_invalid_key',
-				'The key must be a non-empty string.',
-				array(
-					'status' => 403,
-				)
-			);
-		}
-		$friend_user->make_friend( $future_out_token, $future_in_token );
+		$friend_user->make_friend();
 
 		$friend_user->update_user_icon_url( $request->get_param( 'icon_url' ) );
 		if ( $request->get_param( 'name' ) ) {
@@ -189,11 +257,87 @@ class REST {
 			);
 		}
 
-		delete_user_option( $friend_user_id, 'friends_future_in_token_' . sha1( $request_id ) );
-
 		do_action( 'notify_accepted_friend_request', $friend_user );
+
 		return array(
-			'signature' => sha1( $future_out_token . $future_in_token ),
+			'ok' => true,
+		);
+	}
+
+	public function check_remote_did_send_request( $url ) {
+		$rest_url = $this->discover_rest_url( $url );
+		if ( ! $rest_url || is_wp_error( $rest_url ) ) {
+			return false;
+		}
+
+		$rest_url .= '/friendship-requested';
+		$check_url = add_query_arg( 'url', home_url(), $rest_url );
+		$response = wp_safe_remote_get(
+			$check_url,
+			array(
+				'timeout'     => 20,
+				'redirection' => 0,
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return false;
+		}
+
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return false;
+		}
+
+		$body = wp_remote_retrieve_body( $response );
+		$body = json_decode( $body, true );
+		if ( ! isset( $body['date'] ) ) {
+			return false;
+		}
+
+		try {
+			$friendship_requested = new \DateTime( $body['date'] );
+		} catch ( \Exception $e ) {
+			// Invalid date.
+			return false;
+		}
+
+		// It can't be older than 1 year but not newer than now.
+		$year_ago = new \DateTime( '1 year ago' );
+		if ( $friendship_requested < $year_ago || $friendship_requested > new \DateTime() ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public function rest_friendship_requested( \WP_REST_Request $request ) {
+		$url = $request->get_param( 'url' );
+
+		if ( ! Friends::check_url( $url ) ) {
+			return new \WP_Error(
+				'friends_invalid_url',
+				'An invalid URL was provided.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
+		$pending_friend_requests = User_Query::all_pending_friend_requests();
+		foreach ( $pending_friend_requests->get_results() as $pending_friend_request ) {
+			if ( $pending_friend_request->user_url === $url ) {
+				return array(
+					'date' => gmdate( 'c', strtotime( $pending_friend_request->user_registered ) ),
+				);
+			}
+		}
+
+		return new \WP_Error(
+			'friends_no_request',
+			'No request was found.',
+			array(
+				'status' => 404,
+			)
 		);
 	}
 
@@ -205,7 +349,7 @@ class REST {
 	 */
 	public function rest_friend_request( \WP_REST_Request $request ) {
 		$version = $request->get_param( 'version' );
-		if ( 2 !== intval( $version ) ) {
+		if ( 3 !== intval( $version ) ) {
 			return new \WP_Error(
 				'friends_unsupported_protocol_version',
 				'Incompatible Friends protocol version.',
@@ -237,16 +381,26 @@ class REST {
 			);
 		}
 
-		$future_out_token = $request->get_param( 'key' );
-		if ( ! is_string( $future_out_token ) || empty( $future_out_token ) ) {
+		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
 			return new \WP_Error(
-				'friends_invalid_key',
-				'The key must be a non-empty string.',
+				'friends_invalid_site',
+				'An invalid site was provided.',
 				array(
 					'status' => 403,
 				)
 			);
 		}
+
+		if ( ! $this->check_remote_did_send_request( $url ) ) {
+			return new \WP_Error(
+				'friends_invalid_site',
+				'An invalid site was provided.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
 		$user_login = User::get_user_login_for_url( $url );
 		$friend_user = User::create( $user_login, 'friend_request', $url, $request->get_param( 'name' ), $request->get_param( 'icon_url' ) );
 		if ( $friend_user->has_cap( 'friend' ) ) {
@@ -254,17 +408,17 @@ class REST {
 			$friend_user->set_role( 'friend_request' );
 		}
 		$friend_user->update_user_icon_url( $request->get_param( 'icon_url' ) );
-		$friend_user->update_user_option( 'friends_future_out_token', $request->get_param( 'key' ) );
+		$friend_user->update_user_option( 'friends_out_token', $request->get_param( 'key' ) );
+		$our_key = wp_generate_password( 128, false );
+		$friend_user->update_user_option( 'friends_in_token', $our_key );
+
 		$message = $request->get_param( 'message' );
 		if ( is_string( $message ) ) {
 			$friend_user->update_user_option( 'friends_request_message', mb_substr( $message, 0, 2000 ) );
 		}
 
-		$request_id = wp_generate_password( 128, false );
-		$friend_user->update_user_option( 'friends_request_id', $request_id );
-
 		return array(
-			'request' => $request_id,
+			'key' => $our_key,
 		);
 	}
 
@@ -483,36 +637,32 @@ class REST {
 	 *
 	 * @param  int    $user_id   The user id.
 	 * @param  string $new_role  The new role.
+	 * @param  string $old_role  The old role.
 	 */
-	public function notify_remote_friend_request_accepted( $user_id, $new_role ) {
+	public function notify_remote_friend_request_accepted( $user_id, $new_role, $old_role ) {
 		if ( 'friend' !== $new_role && 'acquaintance' !== $new_role ) {
 			return;
 		}
 
-		$request_token = get_user_option( 'friends_request_id', $user_id );
-		if ( ! $request_token ) {
-			// We were accepted, so no need to notify the other.
+		if ( ! in_array( 'friend_request', $old_role, true ) ) {
 			return;
 		}
 
 		$friend_user = new User( $user_id );
 
 		$friend_rest_url  = $friend_user->get_rest_url();
-		$request_id       = $friend_user->get_user_option( 'friends_request_id' );
-		$future_out_token = $friend_user->get_user_option( 'friends_future_out_token' );
-		$future_in_token  = wp_generate_password( 128, false );
-
 		$current_user = wp_get_current_user();
+		$body = array(
+			'url'      => home_url(),
+			'key'      => $friend_user->get_user_option( 'friends_out_token' ),
+			'your_key' => $friend_user->get_user_option( 'friends_in_token' ),
+			'name'     => $current_user->display_name,
+			'icon_url' => get_avatar_url( $current_user->ID ),
+		);
 		$response     = wp_safe_remote_post(
 			$friend_rest_url . '/accept-friend-request',
 			array(
-				'body'        => array(
-					'request'  => $request_id,
-					'proof'    => sha1( $future_out_token . $request_id ),
-					'key'      => $future_in_token,
-					'name'     => $current_user->display_name,
-					'icon_url' => get_avatar_url( $current_user->ID ),
-				),
+				'body'        => $body,
 				'timeout'     => 20,
 				'redirection' => 5,
 			)
@@ -524,14 +674,12 @@ class REST {
 		}
 
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
-		if ( ! isset( $json->signature ) || sha1( $future_in_token . $future_out_token ) !== $json->signature ) {
+		if ( ! isset( $json->ok ) ) {
 			$friend_user->set_role( 'friend_request' );
 			// TODO find a way to message the user.
 			return;
 		}
 
-		$friend_user->make_friend( $future_out_token, $future_in_token );
-		$friend_user->delete_user_option( 'friends_request_id' );
-		$friend_user->delete_user_option( 'friends_future_out_token' );
+		$friend_user->make_friend();
 	}
 }

@@ -278,6 +278,24 @@ class User_Query extends \WP_User_Query {
 	}
 
 	/**
+	 * Gets all friend requests.
+	 */
+	public static function all_pending_friend_requests() {
+		static $all_pending_friend_requests = array();
+		if ( ! self::$cache || ! isset( $all_pending_friend_requests[ get_current_blog_id() ] ) ) {
+
+			$all_pending_friend_requests[ get_current_blog_id() ] = new self(
+				array(
+					'capability__in' => array( 'pending_friend_request', 'friend_request' ),
+					'order'          => 'ASC',
+					'orderby'        => 'display_name',
+				)
+			);
+		}
+		return $all_pending_friend_requests[ get_current_blog_id() ];
+	}
+
+	/**
 	 * Gets all subscriptions.
 	 */
 	public static function all_subscriptions() {
