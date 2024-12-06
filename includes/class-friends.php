@@ -201,7 +201,7 @@ class Friends {
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'cron_schedules', array( $this, 'add_fifteen_minutes_interval' ) ); // phpcs:ignore WordPressVIPMinimum.Performance.IntervalInSeconds.IntervalInSeconds
 		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
-		add_filter( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
+		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
 		add_filter( 'friends_frontend_post_types', array( $this, 'add_frontend_post_types' ) );

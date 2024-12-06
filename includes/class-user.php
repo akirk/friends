@@ -98,7 +98,6 @@ class User extends \WP_User {
 
 		$friend_user = self::get_user( $user_login );
 		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
-
 			foreach ( $role_rank as $_role => $rank ) {
 				if ( $rank > $role_rank[ $role ] ) {
 					break;
@@ -163,6 +162,11 @@ class User extends \WP_User {
 	 * @return string The corresponding username.
 	 */
 	public static function get_user_login_for_url( $url, $multisite_shortname = true ) {
+		$pre_user_login = apply_filters( 'friends_pre_get_user_login_for_url', false, $url );
+		if ( $pre_user_login ) {
+			return $pre_user_login;
+		}
+
 		$multisite_user = self::get_multisite_user( $url );
 		if ( $multisite_user && $multisite_shortname ) {
 			return $multisite_user->user_login;
@@ -1121,15 +1125,8 @@ class User extends \WP_User {
 
 	/**
 	 * Convert a user to a friend
-	 *
-	 * @param  string $out_token The token to authenticate against the remote.
-	 * @param  string $in_token The token the remote needs to use to authenticate to us.
 	 */
-	public function make_friend( $out_token, $in_token ) {
-		$this->update_user_option( 'friends_out_token', $out_token );
-		if ( $this->update_user_option( 'friends_in_token', $in_token ) ) {
-			update_option( 'friends_in_token_' . $in_token, $this->ID );
-		}
+	public function make_friend() {
 		$this->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
 	}
 
