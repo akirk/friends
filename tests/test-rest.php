@@ -135,75 +135,9 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	/**
-	 * Test a friend request on the REST level.
-	 */
-	public function xtest_friend_request() {
-		$my_url     = 'http://me.local';
-		$friend_url = 'http://friend.local';
-		update_option( 'home', $my_url );
-
-		$future_in_token = 'future_in_token';
-		$future_out_token = 'future_out_token';
-
-		// Prepare a signature that $my_url generates before sending the friend request.
-		$friend_request_token = wp_generate_password( 128, false );
-		update_option( 'friends_request_token_' . sha1( $friend_url . '/wp-json/' . REST::PREFIX ), $friend_request_token );
-
-		// Let's send a friend request to $friend_url.
-		update_option( 'home', $friend_url );
-		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/friend-request' );
-		$request->set_param( 'url', $my_url );
-		$request->set_param( 'key', $future_in_token );
-		$request->set_param( 'version', 2 );
-
-		$friend_request_response = $this->server->dispatch( $request );
-		$this->assertArrayHasKey( 'request', $friend_request_response->data );
-
-		// Verify that the user case created at remote.
-		$my_username_at_friend = User::get_user_login_for_url( $my_url );
-		$my_user_at_friend = User::get_user( $my_username_at_friend );
-
-		$this->assertInstanceOf( __NAMESPACE__ . '\User', $my_user_at_friend );
-		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
-		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
-
-		$this->assertEquals( get_user_option( 'friends_request_id', $my_user_at_friend->ID ), $friend_request_response->data['request'] );
-
-		// We're just testing the REST api, so we need to create the user ourselves.
-		$friend_username = User::get_user_login_for_url( $friend_url );
-		$friend_user = User::create( $friend_username, 'pending_friend_request', $friend_url );
-		$this->assertInstanceOf( __NAMESPACE__ . '\User', $friend_user );
-		$friend_user = User::create( $friend_username, 'pending_friend_request', $friend_url );
-
-		update_option( 'friends_request_' . sha1( $friend_request_response->data['request'] ), $friend_user->ID );
-		$friend_user->update_user_option( 'friends_future_in_token_' . sha1( $friend_request_response->data['request'] ), $future_in_token );
-
-		// Now let's accept the friend request.
-		update_option( 'home', $my_url );
-		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/accept-friend-request' );
-		$request->set_param( 'request', $friend_request_response->data['request'] );
-		$request->set_param( 'key', $future_out_token );
-		$request->set_param( 'proof', sha1( $future_in_token . $friend_request_response->data['request'] ) );
-
-		$friend_accept_response = $this->server->dispatch( $request );
-		$this->assertArrayHasKey( 'signature', $friend_accept_response->data );
-		delete_user_option( $my_user_at_friend->ID, 'friends_request_token' );
-
-		$my_user_at_friend->make_friend( $future_in_token, $future_out_token );
-
-		// Check the token.
-		$this->assertEquals( $friend_user->get_user_option( 'friends_in_token' ), $future_in_token );
-		$this->assertEquals( $friend_user->get_user_option( 'friends_out_token' ), $future_out_token );
-		$this->assertTrue( boolval( $my_user_at_friend->get_user_option( 'friends_in_token' ) ) );
-		$this->assertTrue( boolval( $my_user_at_friend->get_user_option( 'friends_out_token' ) ) );
-		$this->assertEquals( $friend_user->get_user_option( 'friends_out_token' ), $my_user_at_friend->get_user_option( 'friends_in_token' ) );
-		$this->assertEquals( $friend_user->get_user_option( 'friends_in_token' ), $my_user_at_friend->get_user_option( 'friends_out_token' ) );
-	}
-
-	/**
 	 * Test a friend request using admin functions and accepting on mobile.
 	 */
-	public function xtest_friend_request_with_admin_and_accept_on_mobile() {
+	public function test_friend_request_with_admin_and_accept_on_mobile() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 		update_option( 'home', $my_url );
@@ -311,7 +245,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 	/**
 	 * Test a friend request with the local user not having metadata for whatever reason.
 	 */
-	public function xtest_friend_request_with_local_user_without_metadata() {
+	public function test_friend_request_with_local_user_without_metadata() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 		update_option( 'home', $my_url );
@@ -365,7 +299,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 	/**
 	 * The friend doesn't have the plugin installed, so we should subscribe.
 	 */
-	public function xtest_friend_request_with_no_plugin_on_other_side() {
+	public function test_friend_request_with_no_plugin_on_other_side() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 
@@ -437,7 +371,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 	/**
 	 * We can't connect to the friend (for example because of incompatibel SSL configurations).
 	 */
-	public function xtest_friend_request_unable_to_connect() {
+	public function test_friend_request_unable_to_connect() {
 		$my_url     = 'http://me.local';
 		$friend_url = 'http://friend.local';
 
