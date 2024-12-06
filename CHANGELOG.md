@@ -1,3 +1,7 @@
+### 3.2.2
+- Add more checks around friendships ([#407])
+- Hoping that this hardening will bring back the plugin to the WordPress.org directory. In my opinion [the issue](https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-plugins/friends/friends-321-missing-authorization) was vastly exaggerated and didn't qualify to get the plugin taken down. Also it was not reported in a way that it could be patched in time. If you have a security issue to report, please follow the instructions on https://github.com/akirk/friends/blob/main/SECURITY.md and/or report through https://github.com/akirk/friends/security.
+
 ### 3.2.1
 - OPML Import: Support OPMLs without nesting ([#403])
 
@@ -303,6 +307,7 @@
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#407]: https://github.com/akirk/friends/pull/407
 [#403]: https://github.com/akirk/friends/pull/403
 [#401]: https://github.com/akirk/friends/pull/401
 [#400]: https://github.com/akirk/friends/pull/400
