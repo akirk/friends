@@ -23,6 +23,7 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function set_up() {
 		parent::set_up();
+		update_option( 'friends_enable_wp_friendships', true );
 
 		User_Query::$cache = false;
 
@@ -397,5 +398,59 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
 		$this->assertInstanceOf( '\WP_Error', $friend_user );
 		$this->assertEquals( 'cURL error 35: error:14077410:SSL routines:SSL23_GET_SERVER_HELLO:sslv3 alert handshake failure', $friend_user->get_error_message() );
+	}
+
+	/**
+	 * Test a friend request when they are disabled on the other side.
+	 */
+	public function test_friend_request_with_disabled_other_side() {
+		$my_url     = 'http://me.local';
+		$friend_url = 'http://friend.local';
+		update_option( 'friends_enable_wp_friendships', false );
+		update_option( 'home', $my_url );
+		$friends = Friends::get_instance();
+		$friend_username = User::get_user_login_for_url( $friend_url );
+
+		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
+		$this->assertInstanceOf( 'WP_Error', $friend_user );
+
+		// Verify that user was not created on remote
+		$my_username_at_friend = User::get_user_login_for_url( $my_url );
+		$my_user_at_friend = User::get_user( $my_username_at_friend );
+		$this->assertFalse( $my_user_at_friend );
+	}
+
+	/**
+	 * Test a friend request when they are disabled on the other side.
+	 */
+	public function test_friend_request_and_send_message() {
+		$my_url     = 'http://me.local';
+		$friend_url = 'http://friend.local';
+		update_option( 'home', $my_url );
+		$friends = Friends::get_instance();
+		$friend_username = User::get_user_login_for_url( $friend_url );
+
+		$friend_user = $friends->admin->send_friend_request( $friend_url . '/wp-json/friends/v1', $friend_username, $friend_url, $friend_username );
+		$this->assertInstanceOf( __NAMESPACE__ . '\User', $friend_user );
+		$this->assertEquals( $friend_user->user_url, $friend_url );
+		$this->assertTrue( $friend_user->has_cap( 'pending_friend_request' ) );
+		$this->assertFalse( $friend_user->has_cap( 'friend_request' ) );
+		$this->assertFalse( $friend_user->has_cap( 'friend' ) );
+
+		// Verify that the user was created at remote.
+		$my_username_at_friend = User::get_user_login_for_url( $my_url );
+		$my_user_at_friend = User::get_user( $my_username_at_friend );
+
+		$this->assertInstanceOf( __NAMESPACE__ . '\User', $my_user_at_friend );
+		$this->assertEquals( $my_user_at_friend->user_url, $my_url );
+		$this->assertFalse( $my_user_at_friend->has_cap( 'pending_friend_request' ) );
+		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
+		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
+
+		$message_id = $friend_user->send_message( 'test' );
+		$this->assertInstanceOf( 'WP_Error', $message_id );
+
+		$message_id = $my_user_at_friend->send_message( 'test' );
+		$this->assertInstanceOf( 'WP_Error', $message_id );
 	}
 }

@@ -121,15 +121,12 @@ class Access_Control {
 			}
 		}
 
-		// Allow for some grace period by skipping the auth check for older versions.
-		if ( ! is_null( $until ) && ! is_null( $auth ) ) {
-			if ( ! password_verify( $until . get_user_option( 'friends_out_token', $user_id ), $auth ) ) {
-				return false;
-			}
+		if ( ! password_verify( $until . get_user_option( 'friends_out_token', $user_id ), $auth ) ) {
+			return false;
+		}
 
-			if ( time() > $until ) {
-				return false;
-			}
+		if ( time() > $until ) {
+			return false;
 		}
 
 		return $user_id;

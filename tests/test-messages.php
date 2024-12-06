@@ -56,6 +56,7 @@ class MessagesTest extends Friends_TestCase_Cache_HTTP {
 				'user_url'   => 'https://friend.local',
 			)
 		);
+
 		$friends                = Friends::get_instance();
 		update_option( 'home', 'http://me.local' );
 
@@ -96,4 +97,14 @@ class MessagesTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertStringContainsString( '"sender":' . $this->user_id, $post->post_content );
 		$this->assertStringContainsString( '<p>test</p>', $post->post_content );
 	}
+
+	public function test_cannot_send_message_when_not_friends() {
+		wp_set_current_user( $this->user_id );
+		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/message' );
+		$friend_user = new User( $this->friend_id );
+		$request->set_param( 'auth', $friend_user->user_url );
+		$friend_request_response = $this->server->dispatch( $request );
+		$this->assertEquals( 403, $friend_request_response->status );
+	}
+
 }

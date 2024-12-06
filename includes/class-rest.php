@@ -381,6 +381,16 @@ class REST {
 			);
 		}
 
+		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
+			return new \WP_Error(
+				'friends_invalid_site',
+				'An invalid site was provided.',
+				array(
+					'status' => 403,
+				)
+			);
+		}
+
 		if ( ! $this->check_remote_did_send_request( $url ) ) {
 			return new \WP_Error(
 				'friends_invalid_site',
