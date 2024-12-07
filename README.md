@@ -100,7 +100,7 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 - Move permissions checks into a dedicated permission_callback ([#408])
 - Add more checks around friendships ([#407])
 
-Hoping that this hardening will bring back the plugin to the WordPress.org directory after [this issue](https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-plugins/friends/friends-321-missing-authorization) was was reported. While I am unsure it qualified to get the plugin taken down, I've done some hardening and bugfixing in the above pull requests. Unfortunately it was not reported in a way that it could be patched in time. If you have a security issue to report, please follow the instructions on https://github.com/akirk/friends/blob/main/SECURITY.md and/or report through https://github.com/akirk/friends/security.
+Hoping that this hardening will bring back the plugin to the WordPress.org directory after [this issue](https://www.wordfence.com/threat-intel/vulnerabilities/wordpress-plugins/friends/friends-321-missing-authorization) was reported. While I am unsure it qualified to get the plugin taken down, I've done some hardening and bugfixing in the above pull requests. Unfortunately it was not reported in a way that it could be patched in time. If you have a security issue to report, please follow the instructions on [https://github.com/akirk/friends/blob/main/SECURITY.md](https://github.com/akirk/friends/blob/main/SECURITY.md) and/or report through [https://github.com/akirk/friends/security](https://github.com/akirk/friends/security).
 
 ### 3.2.1
 - OPML Import: Support OPMLs without nesting ([#403])
