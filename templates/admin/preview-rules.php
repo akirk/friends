@@ -41,7 +41,6 @@ function preview_row( $_post, $args ) {
 				<?php
 			}
 			?>
-			</td>
 		</td>
 	</tr>
 	<?php
@@ -80,7 +79,7 @@ if ( $args['post'] ) :
 <table class="wp-list-table widefat fixed striped" style="margin-top: 2em; margin-bottom: 2em; margin-right: 1em">
 	<tbody>
 		<tr>
-			<th class="column-primary column-title"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Title', 'friends' ); ?></th>
+			<th class="column-primary column-title"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Title' ); ?></th>
 			<th class="column-author"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Author' ); ?></th>
 			<th class="column-date"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Date' ); ?></th>
 			<th class="column-action"><?php esc_html_e( 'Action', 'friends' ); ?></th>
