@@ -167,18 +167,18 @@ class Admin {
 		add_submenu_page( 'friends', __( 'Plugins' ), __( 'Plugins' ), $required_role, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
 
 		$friend_submenu_items = array(
-			'edit-friend' => __( 'Edit User', 'friends' ),
-			'edit-friend-feeds' => __( 'Edit Feeds', 'friends' ),
+			'edit-friend'               => __( 'Edit User', 'friends' ),
+			'edit-friend-feeds'         => __( 'Edit Feeds', 'friends' ),
 			'edit-friend-notifications' => __( 'Edit Notifications', 'friends' ),
-			'edit-friend-rules' => __( 'Edit Rules', 'friends' ),
-			'duplicate-remover' => __( 'Duplicates', 'friends' )
+			'edit-friend-rules'         => __( 'Edit Rules', 'friends' ),
+			'duplicate-remover'         => __( 'Duplicates', 'friends' ),
 		);
 		if ( isset( $friend_submenu_items[ $current_page ] ) ) {
-			foreach ($friend_submenu_items as $slug => $title) {
+			foreach ( $friend_submenu_items as $slug => $title ) {
 				$user_param = '';
-				if ( isset($_GET['user'] ) ) {
-					$username = sanitize_user(wp_unslash($_GET['user']));
-					$user_param = '&user=' . $username . '&_wpnonce=' . wp_create_nonce( $slug . '-' .  $username );
+				if ( isset( $_GET['user'] ) ) {
+					$username = sanitize_user( wp_unslash( $_GET['user'] ) );
+					$user_param = '&user=' . $username . '&_wpnonce=' . wp_create_nonce( $slug . '-' . $username );
 				}
 				$slug_ = strtr( $slug, '-', '_' );
 
@@ -188,12 +188,12 @@ class Admin {
 					$title,
 					$required_role,
 					$slug . ( $slug === $current_page ? '' : $user_param ),
-					array($this, 'render_admin_' . $slug_ )
+					array( $this, 'render_admin_' . $slug_ )
 				);
 
 				add_action(
 					'load-' . $page_type . '_page_' . $slug,
-					array($this, 'process_admin_' . $slug_ )
+					array( $this, 'process_admin_' . $slug_ )
 				);
 			}
 		}
@@ -2655,12 +2655,21 @@ class Admin {
 
 		$friend_posts->set( 'post_type', Friends::CPT );
 		$friend_posts->set( 'post_status', array( 'publish', 'private', 'trash' ) );
-		$friend_posts->set( 'posts_per_page', 25 );
+		$friend_posts->set( 'posts_per_page', 100 );
 		$friend_posts = $friend->modify_query_by_author( $friend_posts );
+
+		$uniques = array();
+		foreach ( $friend_posts->get_posts() as $_post ) {
+			$permalink = get_permalink( $_post );
+			if ( ! isset( $uniques[ $permalink ] ) ) {
+				$uniques[ $permalink ] = $_post->ID;
+			}
+		}
 
 		$args = array(
 			'friend'       => $friend,
 			'friend_posts' => $friend_posts,
+			'uniques'      => array_flip( $uniques ),
 			'feed'         => $this->friends->feed,
 		);
 
