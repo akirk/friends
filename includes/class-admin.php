@@ -2616,6 +2616,34 @@ class Admin {
 	}
 
 	public function process_admin_duplicate_remover() {
+		$friend = $this->check_admin_duplicate_remover();
+
+		// Nonce verification done in check_admin_duplicate_remover.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+
+		// We iterate over this array and then we sanitize _id.
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( empty( $_POST['deleteduplicate'] ) || ! is_array( $_POST['deleteduplicate'] ) ) {
+			return;
+		}
+
+		$deleted = 0;
+		foreach ( array_keys( wp_unslash( $_POST['deleteduplicate'] ) ) as $_id ) {
+			if ( ! is_numeric( $_id ) ) {
+				continue;
+			}
+
+			if ( wp_delete_post( intval( $_id ) ) ) {
+				++$deleted;
+			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( $deleted ) {
+			wp_safe_redirect( add_query_arg( 'deleted', $deleted ) );
+			exit;
+		}
 	}
 	public function check_admin_duplicate_remover() {
 		if ( ! Friends::is_main_user() ) {
@@ -2650,7 +2678,28 @@ class Admin {
 	 * Render the duplicates remover
 	 */
 	public function render_admin_duplicate_remover() {
-		$friend    = $this->check_admin_duplicate_remover();
+		$friend = $this->check_admin_duplicate_remover();
+
+		$this->header_edit_friend( $friend, 'duplicate-remover' );
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_GET['deleted'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p>
+				<?php
+				$deleted = intval( $_GET['deleted'] );
+				echo esc_html(
+					sprintf(
+						// translators: %d is the number of duplicates deleted.
+						_n( 'Deleted %d selected duplicate.', 'Deleted %d selected duplicates.', $deleted, 'friends' ),
+						$deleted
+					)
+				);
+				?>
+			</p></div>
+			<?php
+		}
+		// phpcs:enable WordPress.Security.NonceVerification
+
 		$friend_posts = new \WP_Query();
 
 		$friend_posts->set( 'post_type', Friends::CPT );
@@ -3423,10 +3472,10 @@ class Admin {
 			if ( isset( $_POST['delete'] ) ) {
 				unset( $widgets[ $id ] );
 			}
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 			update_user_option( $user_id, 'friends_dashboard_widgets', $widgets );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		$args = array();
 		if ( isset( $widgets[ $id ] ) ) {
 			$args = $widgets[ $id ];

@@ -9,22 +9,22 @@ namespace Friends;
 
 ?>
 <h2><?php esc_html_e( 'Duplicates', 'friends' ); ?></h2>
-<form>
+<form method="post">
 	<p>
 		<?php
 
 		$duplicate_count = 0;
 		foreach ( $args['friend_posts']->get_posts() as $_post ) {
 			if ( ! isset( $args['uniques'][ $_post->ID ] ) ) {
-				$duplicate_count++;
+				++$duplicate_count;
 			}
 		}
 
 		echo esc_html(
 			sprintf(
 			// translators: %d is the number of duplicates.
-			_n( '%d post was identified as aduplicate.', '%d posts were identified as duplicate.', $duplicate_count, 'friends' ),
-			$duplicate_count
+				_n( '%d post was identified as aduplicate.', '%d posts were identified as duplicate.', $duplicate_count, 'friends' ),
+				$duplicate_count
 			)
 		);
 		echo ' ';
@@ -51,14 +51,14 @@ namespace Friends;
 
 			?>
 	<tr>
-		<td class="duplicate"><input type="checkbox" <?php checked( ! isset( $args['uniques'][ $_post->ID ] ) ); ?>></td>
+		<td class="duplicate"><input type="checkbox" name="deleteduplicate[<?php echo esc_attr( $_post->ID ); ?>]" <?php checked( ! isset( $args['uniques'][ $_post->ID ] ) ); ?>></td>
 		<td class="title column-title column-primary" data-colname="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Title' ); ?>">
 			<?php
 			// show the post format as a label.
 			$post_format = get_post_format( $_post );
 			if ( ! empty( $post_format ) ) {
 				?>
-				<span class="post-format-icon post-format-<?php echo esc_attr( $post_format ); ?>" title="<?php echo esc_attr( get_post_format_string( $post_format ) );  ?>"></span>
+				<span class="post-format-icon post-format-<?php echo esc_attr( $post_format ); ?>" title="<?php echo esc_attr( get_post_format_string( $post_format ) ); ?>"></span>
 				<?php
 			}
 			?>
