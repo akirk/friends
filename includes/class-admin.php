@@ -3451,7 +3451,7 @@ class Admin {
 			$widgets = array( array() );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['widget_id'] ) ) {
 
 			$id = intval( str_replace( 'friends_dashboard_widget', '', sanitize_text_field( wp_unslash( $_POST['widget_id'] ) ) ) );
@@ -3475,7 +3475,7 @@ class Admin {
 
 			update_user_option( $user_id, 'friends_dashboard_widgets', $widgets );
 		}
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification
 		$args = array();
 		if ( isset( $widgets[ $id ] ) ) {
 			$args = $widgets[ $id ];
