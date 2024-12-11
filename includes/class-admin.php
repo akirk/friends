@@ -122,6 +122,7 @@ class Admin {
 
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
 		$page_type = sanitize_title( $menu_title );
+		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
 		add_menu_page( 'friends', $menu_title, $required_role, 'friends', null, 'dashicons-groups', 3 );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Home' ), __( 'Home' ), $required_role, 'friends', array( $this, 'render_admin_home' ) );
@@ -130,9 +131,8 @@ class Admin {
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Settings' ), __( 'Settings' ), $required_role, 'friends-settings', array( $this, 'render_admin_settings' ) );
 		if (
-			isset( $_GET['page'] ) &&
 			in_array(
-				$_GET['page'],
+				$current_page,
 				apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export' ) )
 			)
 		) {
@@ -152,14 +152,13 @@ class Admin {
 
 		if ( $this->friends_unread_friend_request_count( 0 ) > 0 ) {
 			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friends-list-requests', array( $this, 'render_friends_list' ) );
-		} elseif ( isset( $_GET['page'] ) && 'friends-list-requests' === $_GET['page'] ) {
+		} elseif ( 'friends-list-requests' === $current_page ) {
 			// Don't show a no permission page but redirect to the friends list.
 			add_submenu_page( 'friends', __( 'Friend Requests', 'friends' ), __( 'Friend Requests', 'friends' ) . $unread_badge, $required_role, 'friends-list-requests', array( $this, 'render_friends_list' ) );
 		}
 
 		if (
-			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-refresh' ) && // phpcs:ignore WordPress.Security.ValidateSanitizedInput
-			isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page']
+			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-refresh' ) && 'friends-refresh' === $current_page
 		) {
 			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), $required_role, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 		}
@@ -167,15 +166,36 @@ class Admin {
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Plugins' ), __( 'Plugins' ), $required_role, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
 
-		if ( isset( $_GET['page'] ) && 0 === strpos( sanitize_key( $_GET['page'] ), 'edit-friend' ) ) {
-			add_submenu_page( 'friends', __( 'Edit User', 'friends' ), __( 'Edit User', 'friends' ), $required_role, 'edit-friend' . ( 'edit-friend' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend' ) );
-			add_submenu_page( 'friends', __( 'Edit Feeds', 'friends' ), __( 'Edit Feeds', 'friends' ), $required_role, 'edit-friend-feeds' . ( 'edit-friend-feeds' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend_feeds' ) );
-			add_submenu_page( 'friends', __( 'Edit Notifications', 'friends' ), __( 'Edit Notifications', 'friends' ), $required_role, 'edit-friend-notifications' . ( 'edit-friend-notifications' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend_notifications' ) );
-			add_submenu_page( 'friends', __( 'Edit Rules', 'friends' ), __( 'Edit Rules', 'friends' ), $required_role, 'edit-friend-rules' . ( 'edit-friend-rules' !== $_GET['page'] && isset( $_GET['user'] ) ? '&user=' . intval( $_GET['user'] ) : '' ), array( $this, 'render_admin_edit_friend_rules' ) );
-			add_action( 'load-' . $page_type . '_page_edit-friend', array( $this, 'process_admin_edit_friend' ) );
-			add_action( 'load-' . $page_type . '_page_edit-friend-feeds', array( $this, 'process_admin_edit_friend_feeds' ) );
-			add_action( 'load-' . $page_type . '_page_edit-friend-notifications', array( $this, 'process_admin_edit_friend_notifications' ) );
-			add_action( 'load-' . $page_type . '_page_edit-friend-rules', array( $this, 'process_admin_edit_friend_rules' ) );
+		$friend_submenu_items = array(
+			'edit-friend'               => __( 'Edit User', 'friends' ),
+			'edit-friend-feeds'         => __( 'Edit Feeds', 'friends' ),
+			'edit-friend-notifications' => __( 'Edit Notifications', 'friends' ),
+			'edit-friend-rules'         => __( 'Edit Rules', 'friends' ),
+			'duplicate-remover'         => __( 'Duplicates', 'friends' ),
+		);
+		if ( isset( $friend_submenu_items[ $current_page ] ) ) {
+			foreach ( $friend_submenu_items as $slug => $title ) {
+				$user_param = '';
+				if ( isset( $_GET['user'] ) ) {
+					$username = sanitize_user( wp_unslash( $_GET['user'] ) );
+					$user_param = '&user=' . $username . '&_wpnonce=' . wp_create_nonce( $slug . '-' . $username );
+				}
+				$slug_ = strtr( $slug, '-', '_' );
+
+				add_submenu_page(
+					'friends',
+					$title,
+					$title,
+					$required_role,
+					$slug . ( $slug === $current_page ? '' : $user_param ),
+					array( $this, 'render_admin_' . $slug_ )
+				);
+
+				add_action(
+					'load-' . $page_type . '_page_' . $slug,
+					array( $this, 'process_admin_' . $slug_ )
+				);
+			}
 		}
 
 		if ( isset( $_GET['page'] ) && 'friends-logs' === $_GET['page'] ) {
@@ -2595,6 +2615,117 @@ class Admin {
 		}
 	}
 
+	public function process_admin_duplicate_remover() {
+		$friend = $this->check_admin_duplicate_remover();
+
+		// Nonce verification done in check_admin_duplicate_remover.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+
+		// We iterate over this array and then we sanitize _id.
+		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( empty( $_POST['deleteduplicate'] ) || ! is_array( $_POST['deleteduplicate'] ) ) {
+			return;
+		}
+
+		$deleted = 0;
+		foreach ( array_keys( wp_unslash( $_POST['deleteduplicate'] ) ) as $_id ) {
+			if ( ! is_numeric( $_id ) ) {
+				continue;
+			}
+
+			if ( wp_delete_post( intval( $_id ) ) ) {
+				++$deleted;
+			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( $deleted ) {
+			wp_safe_redirect( add_query_arg( 'deleted', $deleted ) );
+			exit;
+		}
+	}
+	public function check_admin_duplicate_remover() {
+		if ( ! Friends::is_main_user() ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to edit the rules.', 'friends' ) );
+		}
+
+		if ( ! isset( $_GET['user'] ) ) {
+			wp_die( esc_html__( 'Invalid user.', 'friends' ) );
+		}
+
+		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'duplicate-remover-' . sanitize_user( wp_unslash( $_GET['user'] ) ) ) ) {
+			wp_die( esc_html__( 'Invalid nonce.', 'friends' ) );
+		}
+
+		$friend = User::get_by_username( sanitize_user( wp_unslash( $_GET['user'] ) ) );
+		if ( ! $friend || is_wp_error( $friend ) ) {
+			wp_die( esc_html__( 'Invalid username.', 'friends' ) );
+		}
+
+		if (
+			! $friend->has_cap( 'friend_request' ) &&
+			! $friend->has_cap( 'pending_friend_request' ) &&
+			! $friend->has_cap( 'friend' ) &&
+			! $friend->has_cap( 'subscription' )
+		) {
+			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
+		}
+
+		return $friend;
+	}
+	/**
+	 * Render the duplicates remover
+	 */
+	public function render_admin_duplicate_remover() {
+		$friend = $this->check_admin_duplicate_remover();
+
+		$this->header_edit_friend( $friend, 'duplicate-remover' );
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_GET['deleted'] ) ) {
+			?>
+			<div id="message" class="updated notice is-dismissible"><p>
+				<?php
+				$deleted = intval( $_GET['deleted'] );
+				echo esc_html(
+					sprintf(
+						// translators: %d is the number of duplicates deleted.
+						_n( 'Deleted %d selected duplicate.', 'Deleted %d selected duplicates.', $deleted, 'friends' ),
+						$deleted
+					)
+				);
+				?>
+			</p></div>
+			<?php
+		}
+		// phpcs:enable WordPress.Security.NonceVerification
+
+		$friend_posts = new \WP_Query();
+
+		$friend_posts->set( 'post_type', Friends::CPT );
+		$friend_posts->set( 'post_status', array( 'publish', 'private', 'trash' ) );
+		$friend_posts->set( 'posts_per_page', 100 );
+		$friend_posts = $friend->modify_query_by_author( $friend_posts );
+
+		$uniques = array();
+		foreach ( $friend_posts->get_posts() as $_post ) {
+			$permalink = get_permalink( $_post );
+			if ( ! isset( $uniques[ $permalink ] ) ) {
+				$uniques[ $permalink ] = $_post->ID;
+			}
+		}
+
+		$args = array(
+			'friend'       => $friend,
+			'friend_posts' => $friend_posts,
+			'uniques'      => array_flip( $uniques ),
+			'feed'         => $this->friends->feed,
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/duplicates', null, $args );
+	}
+
+
 	public function render_friends_logs() {
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
@@ -3320,7 +3451,7 @@ class Admin {
 			$widgets = array( array() );
 		}
 
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' === $_SERVER['REQUEST_METHOD'] && isset( $_POST['widget_id'] ) ) {
 
 			$id = intval( str_replace( 'friends_dashboard_widget', '', sanitize_text_field( wp_unslash( $_POST['widget_id'] ) ) ) );
@@ -3341,10 +3472,10 @@ class Admin {
 			if ( isset( $_POST['delete'] ) ) {
 				unset( $widgets[ $id ] );
 			}
-			// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 			update_user_option( $user_id, 'friends_dashboard_widgets', $widgets );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification
 		$args = array();
 		if ( isset( $widgets[ $id ] ) ) {
 			$args = $widgets[ $id ];
