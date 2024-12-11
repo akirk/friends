@@ -686,6 +686,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$user_feed->update_metadata( 'next-poll', gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS ) );
 	}
 
+	public function get_activitypub_actor_userid( $user_id ) {
+		if ( null === $user_id ) {
+			$user_id = Friends::get_main_friend_user_id();
+			if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
+				$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', ACTIVITYPUB_ACTOR_MODE );
+				if ( ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode ) {
+					$user_id = \Activitypub\Collection\Actors::BLOG_USER_ID;
+				}
+			}
+		}
+		return $user_id;
+	}
+
 	/**
 	 * Gets the external mentions user.
 	 *
@@ -1073,9 +1086,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 		$this->log( 'Received announce for ' . $url );
-		if ( null === $user_id ) {
-			$user_id = Friends::get_main_friend_user_id();
-		}
+		$user_id = $this->get_activitypub_actor_userid( $user_id );
 		$response = \Activitypub\safe_remote_get( $url, $user_id );
 		if ( \is_wp_error( $response ) ) {
 			return $response;
@@ -1251,10 +1262,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_follow_user( $url, $user_id = null ) {
-		if ( null === $user_id ) {
-			$user_id = Friends::get_main_friend_user_id();
-		}
-
+		$user_id = $this->get_activitypub_actor_userid( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( is_wp_error( $meta ) ) {
@@ -1330,9 +1338,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_unfollow_user( $url, $user_id = null ) {
-		if ( null === $user_id ) {
-			$user_id = Friends::get_main_friend_user_id();
-		}
+		$user_id = $this->get_activitypub_actor_userid( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( is_wp_error( $meta ) ) {
