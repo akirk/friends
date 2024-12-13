@@ -210,11 +210,6 @@ class REST {
 	 * @return array The error messages.
 	 */
 	public static function get_error_messages() {
-		static $messages;
-		if ( isset( $messages ) ) {
-			return $messages;
-		}
-		$messages = array();
 		$english = function () {
 			return 'en_US';
 		};

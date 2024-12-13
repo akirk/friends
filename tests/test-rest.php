@@ -477,6 +477,8 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertEquals( 'Eine ungültige URL wurde angegeben.', Rest::translate_error_message( $response->data['message'] ) );
 
+		remove_filter( 'gettext', $translate, 10, 3 );
+
 		restore_previous_locale();
 	}
 }
