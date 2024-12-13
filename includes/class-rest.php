@@ -244,8 +244,8 @@ class REST {
 	 * Standardize the error message texts
 	 *
 	 * @param string $code    The error code.
-	 * @param string                 $message The message to return, if not provided the default message will be used.
-	 * @param int                    $status  The status code to return.
+	 * @param string $message The message to return, if not provided the default message will be used.
+	 * @param int    $status  The status code to return.
 	 *
 	 * @return \WP_Error The error object.
 	 */
