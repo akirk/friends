@@ -93,17 +93,17 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 						</p>
 					<?php elseif ( $args['friend']->has_cap( 'pending_friend_request' ) ) : ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'add-friend-' . $args['friend']->user_login, 'add-friend' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'add-friend-' . $args['friend']->user_login, 'add-friend' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
 						</p>
 					<?php elseif ( $args['friend']->has_cap( 'subscription' ) ) : ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'add-friend-' . $args['friend']->user_login, 'add-friend' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'add-friend-' . $args['friend']->user_login, 'add-friend' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
 						</p>
 					<?php elseif ( $args['friend']->has_cap( 'acquaintance' ) ) : ?>
 						<p class="description">
 							<?php
 							// translators: %s is a friend role.
-							echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'change-to-friend-' . $args['friend']->user_login, 'change-to-friend' ) ) . '">' . __( 'Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+							echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'change-to-friend-' . $args['friend']->user_login, 'change-to-friend' ) ) . '">' . __( 'Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 							?>
 							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
 						</p>
@@ -111,7 +111,7 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 						<p class="description">
 						<?php
 							// translators: %s is a friend role.
-						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'change-to-restricted-friend-' . $args['friend']->user_login, 'change-to-restricted-friend' ) ) . '">' . __( 'Acquaintance', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'change-to-restricted-friend-' . $args['friend']->user_login, 'change-to-restricted-friend' ) ) . '">' . __( 'Acquaintance', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
 						?>
 							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
 						</p>

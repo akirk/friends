@@ -190,6 +190,70 @@ class REST {
 		);
 	}
 
+	public static function translate_rest_error_message( $message ) {
+		$messages = self::get_error_messages( true );
+		if ( isset( $messages[ $message ] ) ) {
+			return $messages[ $message ];
+		}
+		return $message;
+	}
+
+	public static function get_error_messages( $translated ) {
+		$english = function () {
+			return 'en_US';
+		};
+
+		// In the first pass never translate these messages.
+		add_filter( 'locale', $english );
+
+		$messages = array(
+			'friends_invalid_parameters'           => __( 'Not all necessary parameters were provided.', 'friends' ),
+			'friends_invalid_url'                  => __( 'An invalid URL was provided.', 'friends' ),
+			'friends_no_request'                   => __( 'No request was found.', 'friends' ),
+			'friends_unsupported_protocol_version' => __( 'Incompatible Friends protocol version.', 'friends' ),
+			'friends_invalid_codeword'             => __( 'An invalid codeword was provided.', 'friends' ),
+			'friends_invalid_site'                 => __( 'An invalid site was provided.', 'friends' ),
+			'friends_disabled_friendship'          => __( 'This site doesn\'t accept friend requests.', 'friends' ),
+			'friends_not_requested'                => __( 'No friendship request was made.', 'friends' ),
+			'friends_request_failed'               => __( 'Could not respond to the request.', 'friends' ),
+			'invalid_url_given'                    => __( 'An invalid URL was given.', 'friends' ),
+			'unknown'                              => __( 'An unknown error occurred.', 'friends' ),
+		);
+
+		remove_filter( 'locale', $english );
+
+		if ( ! $translated ) {
+			return $messages;
+		}
+
+		// Add mapping for English text to translations.
+		foreach ( $messages as $key => $message ) {
+			$messages[ $message ] = __( $message, 'friends' ); // phpcs:ignore WordPress.WP.I18n.NonSingularStringLiteralText
+		}
+
+		return $messages;
+	}
+
+	public static function error( $code, $message = false, $status = 403 ) {
+		if ( ! $message ) {
+			// Return English error messages.
+			$messages = self::get_error_messages( false );
+			if ( isset( $messages[ $code ] ) ) {
+				$message = $messages[ $code ];
+			} else {
+				$message = $messages['unknown'];
+			}
+		}
+
+		return new \WP_Error(
+			$code,
+			$message,
+			array(
+				'status' => $status,
+			)
+		);
+	}
+
 	public function permssion_check_accept_friend_request( \WP_REST_Request $request ) {
 		$url = $request->get_param( 'url' );
 
@@ -213,13 +277,7 @@ class REST {
 			}
 
 			if ( ! $friend_user ) {
-				return new \WP_Error(
-					'friends_invalid_parameters',
-					'Not all necessary parameters were provided.',
-					array(
-						'status' => 403,
-					)
-				);
+				return self::error( 'friends_invalid_parameters' );
 			}
 		}
 
@@ -230,13 +288,7 @@ class REST {
 			$friend_user->get_user_option( 'friends_out_token' ) !== $our_key
 			|| $friend_user->get_user_option( 'friends_in_token' ) !== $their_key
 		) {
-			return new \WP_Error(
-				'friends_invalid_parameters',
-				'Not all necessary parameters were provided.',
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_invalid_parameters' );
 		}
 		return true;
 	}
@@ -271,13 +323,7 @@ class REST {
 			}
 
 			if ( ! $friend_user ) {
-				return new \WP_Error(
-					'friends_invalid_parameters',
-					'Not all necessary parameters were provided.',
-					array(
-						'status' => 403,
-					)
-				);
+				return self::error( 'friends_invalid_parameters' );
 			}
 		}
 
@@ -288,13 +334,7 @@ class REST {
 			$friend_user->get_user_option( 'friends_out_token' ) !== $our_key
 			|| $friend_user->get_user_option( 'friends_in_token' ) !== $their_key
 		) {
-			return new \WP_Error(
-				'friends_invalid_parameters',
-				'Not all necessary parameters were provided.',
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_invalid_parameters' );
 		}
 
 		$friend_user->make_friend();
@@ -368,13 +408,7 @@ class REST {
 		$url = $request->get_param( 'url' );
 
 		if ( ! Friends::check_url( $url ) ) {
-			return new \WP_Error(
-				'friends_invalid_url',
-				'An invalid URL was provided.',
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_invalid_url' );
 		}
 
 		$pending_friend_requests = User_Query::all_pending_friend_requests();
@@ -386,67 +420,31 @@ class REST {
 			}
 		}
 
-		return new \WP_Error(
-			'friends_no_request',
-			'No request was found.',
-			array(
-				'status' => 404,
-			)
-		);
+		return self::error( 'friends_no_request' );
 	}
 
 	public function permission_check_friend_request( \WP_REST_Request $request ) {
 		$version = $request->get_param( 'version' );
 		if ( 3 !== intval( $version ) ) {
-			return new \WP_Error(
-				'friends_unsupported_protocol_version',
-				'Incompatible Friends protocol version.',
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_unsupported_protocol_version' );
 		}
 
 		$codeword = $request->get_param( 'codeword' );
 		if ( get_option( 'friends_require_codeword' ) && get_option( 'friends_codeword', 'friends' ) !== $codeword ) {
-			return new \WP_Error(
-				'friends_invalid_codeword',
-				get_option( 'friends_wrong_codeword_message', 'An invalid codeword was provided.' ),
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_invalid_codeword', get_option( 'friends_wrong_codeword_message' ) );
 		}
 
 		$url = trim( $request->get_param( 'url' ) );
 		if ( ! is_string( $url ) || ! Friends::check_url( $url ) || 0 === strcasecmp( home_url(), $url ) ) {
-			return new \WP_Error(
-				'friends_invalid_site',
-				'An invalid site was provided.',
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_invalid_site' );
 		}
 
 		if ( ! get_option( 'friends_enable_wp_friendships' ) ) {
-			return new \WP_Error(
-				'friends_invalid_site',
-				'An invalid site was provided.',
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_disabled_friendship' );
 		}
 
 		if ( ! $this->check_remote_did_send_request( $url ) ) {
-			return new \WP_Error(
-				'friends_invalid_site',
-				'An invalid site was provided.',
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_not_requested' );
 		}
 
 		return true;
@@ -490,24 +488,12 @@ class REST {
 		$tokens = explode( '-', $request->get_param( 'auth' ) );
 		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
 		if ( ! $user_id ) {
-			return new \WP_Error(
-				'friends_request_failed',
-				__( 'Could not respond to the request.', 'friends' ),
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_request_failed' );
 		}
 
 		$friend_user = new User( $user_id );
 		if ( ! $friend_user->has_cap( 'friend' ) ) {
-			return new \WP_Error(
-				'friends_request_failed',
-				__( 'Could not respond to the request.', 'friends' ),
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_request_failed' );
 		}
 
 		return true;
@@ -554,13 +540,7 @@ class REST {
 		$tokens = explode( '-', $request->get_param( 'auth' ) );
 		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
 		if ( ! $user_id ) {
-			return new \WP_Error(
-				'friends_request_failed',
-				__( 'Could not respond to the request.', 'friends' ),
-				array(
-					'status' => 403,
-				)
-			);
+			return self::error( 'friends_request_failed' );
 		}
 		$friend_user     = new User( $user_id );
 		$remote_post_id  = $request->get_param( 'post_id' );
@@ -686,7 +666,7 @@ class REST {
 	 */
 	public function discover_rest_url( $url ) {
 		if ( ! is_string( $url ) || ! Friends::check_url( $url ) ) {
-			return new \WP_Error( 'invalid-url-given', 'An invalid URL was given.' );
+			return self::error( 'invalid_url_given' );
 		}
 
 		$response = wp_safe_remote_get(
