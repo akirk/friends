@@ -621,7 +621,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return array();
 		}
 
-		$response = \Activitypub\safe_remote_get( $meta['outbox'], Friends::get_main_friend_user_id() );
+		$response = \Activitypub\safe_remote_get( $meta['outbox'] );
 		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 			return new \WP_Error( 'activitypub_could_not_get_outbox_meta', null, compact( 'meta', 'url' ) );
 		}
@@ -633,7 +633,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				return new \WP_Error( 'activitypub_could_not_find_outbox_first_page', null, compact( 'url', 'meta', 'outbox' ) );
 			}
 
-			$response = \Activitypub\safe_remote_get( $outbox['first'], Friends::get_main_friend_user_id() );
+			$response = \Activitypub\safe_remote_get( $outbox['first'] );
 			if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
 				return new \WP_Error(
 					'activitypub_could_not_get_outbox',
@@ -684,6 +684,21 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private function disable_polling( User_Feed $user_feed ) {
 		$user_feed->update_metadata( 'interval', YEAR_IN_SECONDS );
 		$user_feed->update_metadata( 'next-poll', gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS ) );
+	}
+
+	public function get_activitypub_actor( $user_id ) {
+		if ( null === $user_id ) {
+			$user_id = Friends::get_main_friend_user_id();
+			if ( \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
+				$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', ACTIVITYPUB_ACTOR_MODE );
+				if ( ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode ) {
+					$user_id = \Activitypub\Collection\Actors::BLOG_USER_ID;
+				}
+			}
+		}
+
+		$actor = \Activitypub\Collection\Actors::get_by_id( $user_id );
+		return $actor;
 	}
 
 	/**
@@ -1073,10 +1088,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 		$this->log( 'Received announce for ' . $url );
-		if ( null === $user_id ) {
-			$user_id = Friends::get_main_friend_user_id();
-		}
-		$response = \Activitypub\safe_remote_get( $url, $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
+		$response = \Activitypub\safe_remote_get( $url );
 		if ( \is_wp_error( $response ) ) {
 			return $response;
 		}
@@ -1251,10 +1264,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_follow_user( $url, $user_id = null ) {
-		if ( null === $user_id ) {
-			$user_id = Friends::get_main_friend_user_id();
-		}
-
+		$actor = $this->get_activitypub_actor( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( is_wp_error( $meta ) ) {
@@ -1275,7 +1285,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
 		}
-		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( $type );
@@ -1330,9 +1339,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_unfollow_user( $url, $user_id = null ) {
-		if ( null === $user_id ) {
-			$user_id = Friends::get_main_friend_user_id();
-		}
+		$actor = $this->get_activitypub_actor( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( is_wp_error( $meta ) ) {
@@ -1353,7 +1360,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
 		}
-		$actor = \get_author_posts_url( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Undo' );
@@ -1363,7 +1369,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_object(
 			array(
 				'type'   => $type,
-				'actor'  => $actor,
+				'actor'  => $actor->get_url(),
 				'object' => $to,
 				'id'     => $to,
 			)
@@ -1508,7 +1514,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $post_id ) {
 			$user = $this->get_external_user();
 			$user_feed = $this->get_external_mentions_feed();
-			$response = \Activitypub\safe_remote_get( $url, get_current_user_id() );
+			$response = \Activitypub\safe_remote_get( $url );
 			if ( \is_wp_error( $response ) ) {
 				$this->show_message_on_frontend(
 					sprintf(
