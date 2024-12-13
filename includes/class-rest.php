@@ -190,7 +190,13 @@ class REST {
 		);
 	}
 
-	public static function translate_rest_error_message( $message ) {
+	/**
+	 * Translate a REST error message
+	 *
+	 * @param  string $message The message to translate.
+	 * @return string The translated message.
+	 */
+	public static function translate_error_message( $message ) {
 		$messages = self::get_error_messages( true );
 		if ( isset( $messages[ $message ] ) ) {
 			return $messages[ $message ];
@@ -198,7 +204,17 @@ class REST {
 		return $message;
 	}
 
-	public static function get_error_messages( $translated ) {
+	/**
+	 * Get the error messages for REST
+	 *
+	 * @return array The error messages.
+	 */
+	public static function get_error_messages() {
+		static $messages;
+		if ( isset( $messages ) ) {
+			return $messages;
+		}
+		$messages = array();
 		$english = function () {
 			return 'en_US';
 		};
@@ -216,15 +232,10 @@ class REST {
 			'friends_disabled_friendship'          => __( 'This site doesn\'t accept friend requests.', 'friends' ),
 			'friends_not_requested'                => __( 'No friendship request was made.', 'friends' ),
 			'friends_request_failed'               => __( 'Could not respond to the request.', 'friends' ),
-			'invalid_url_given'                    => __( 'An invalid URL was given.', 'friends' ),
 			'unknown'                              => __( 'An unknown error occurred.', 'friends' ),
 		);
 
 		remove_filter( 'locale', $english );
-
-		if ( ! $translated ) {
-			return $messages;
-		}
 
 		// Add mapping for English text to translations.
 		foreach ( $messages as $key => $message ) {
@@ -237,7 +248,7 @@ class REST {
 	public static function error( $code, $message = false, $status = 403 ) {
 		if ( ! $message ) {
 			// Return English error messages.
-			$messages = self::get_error_messages( false );
+			$messages = self::get_error_messages();
 			if ( isset( $messages[ $code ] ) ) {
 				$message = $messages[ $code ];
 			} else {
@@ -666,7 +677,7 @@ class REST {
 	 */
 	public function discover_rest_url( $url ) {
 		if ( ! is_string( $url ) || ! Friends::check_url( $url ) ) {
-			return self::error( 'invalid_url_given' );
+			return self::error( 'friends_invalid_url' );
 		}
 
 		$response = wp_safe_remote_get(

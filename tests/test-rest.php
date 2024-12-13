@@ -453,4 +453,30 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 		$message_id = $my_user_at_friend->send_message( 'test' );
 		$this->assertInstanceOf( 'WP_Error', $message_id );
 	}
+
+	public function test_error_messages() {
+		switch_to_locale( 'de_DE' );
+		$translate = function( $translated, $text, $domain ) {
+			if ( 'friends' === $domain && 'de_DE' === get_locale() ) {
+				if ( 'An invalid URL was provided.' === $text ) {
+					return 'Eine ungültige URL wurde angegeben.';
+				}
+			}
+			return $translated;
+
+		};
+		add_filter( 'gettext', $translate, 10, 3 );
+
+		$request = new \WP_REST_Request( 'GET', '/' . REST::PREFIX . '/friendship-requested' );
+		$request->set_param( 'url', 'abc' );
+		$response = $this->server->dispatch( $request );
+
+		$this->assertArrayHasKey( 'code', $response->data );
+		$this->assertEquals( 'friends_invalid_url', $response->data['code'] );
+		$this->assertEquals( 'An invalid URL was provided.', $response->data['message'] );
+
+		$this->assertEquals( 'Eine ungültige URL wurde angegeben.', Rest::translate_error_message( $response->data['message'] ) );
+
+		restore_previous_locale();
+	}
 }

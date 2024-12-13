@@ -455,7 +455,7 @@ class Admin {
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 			// translators: %s is the message from the other server.
-			return new \WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), Rest::translate_rest_error_message( $json->message ) ), $json->data );
+			return new \WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), Rest::translate_error_message( $json->message ) ), $json->data );
 		}
 
 		if ( ! $json || ! is_object( $json ) ) {
@@ -1211,7 +1211,7 @@ class Admin {
 			if ( 1 === intval( $_GET['error'] ) ) {
 				esc_html_e( 'An error occurred.', 'friends' );
 			} else {
-				echo esc_html( Rest::translate_rest_error_message( sanitize_text_field( wp_unslash( $_GET['error'] ) ) ) );
+				echo esc_html( Rest::translate_error_message( sanitize_text_field( wp_unslash( $_GET['error'] ) ) ) );
 			}
 			?>
 			</p></div>
