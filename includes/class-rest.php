@@ -240,7 +240,16 @@ class REST {
 		return $messages;
 	}
 
-	public static function error( $code, $message = false, $status = 403 ) {
+	/**
+	 * Standardize the error message texts
+	 *
+	 * @param string $code    The error code.
+	 * @param string                 $message The message to return, if not provided the default message will be used.
+	 * @param int                    $status  The status code to return.
+	 *
+	 * @return \WP_Error The error object.
+	 */
+	public static function error( $code, $message = '', $status = 403 ) {
 		if ( ! $message ) {
 			// Return English error messages.
 			$messages = self::get_error_messages();
