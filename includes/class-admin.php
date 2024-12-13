@@ -455,7 +455,7 @@ class Admin {
 		$json = json_decode( wp_remote_retrieve_body( $response ) );
 		if ( $json && isset( $json->code ) && isset( $json->message ) ) {
 			// translators: %s is the message from the other server.
-			return new \WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), $json->message ), $json->data );
+			return new \WP_Error( $json->code, sprintf( __( 'The other side responded: %s', 'friends' ), Rest::translate_error_message( $json->message ) ), $json->data );
 		}
 
 		if ( ! $json || ! is_object( $json ) ) {
@@ -1094,11 +1094,12 @@ class Admin {
 				if ( ! is_wp_error( $rest_url ) ) {
 					$response = $this->send_friend_request( $rest_url, $friend->user_login, $friend->user_url, $friend->display_name );
 				} else {
+					// pass on the error to below.
 					$response = $rest_url;
 				}
-
 				if ( is_wp_error( $response ) ) {
 					$arg = 'error';
+					$arg_value = $response->get_error_message();
 				} elseif ( $response instanceof User ) {
 					if ( $response->has_cap( 'pending_friend_request' ) ) {
 						$arg = 'sent-request';
@@ -1146,9 +1147,9 @@ class Admin {
 		do_action( 'friends_edit_friend_after_form_submit', $friend );
 
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, wp_get_referer() ) );
+			wp_safe_redirect( add_query_arg( $arg, rawurlencode( $arg_value ), wp_get_referer() ) );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
+			wp_safe_redirect( add_query_arg( $arg, rawurlencode( $arg_value ), remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
@@ -1205,7 +1206,15 @@ class Admin {
 			<?php
 		} elseif ( isset( $_GET['error'] ) ) {
 			?>
-			<div id="message" class="updated error is-dismissible"><p><?php esc_html_e( 'An error occurred.', 'friends' ); ?></p></div>
+			<div id="message" class="updated error is-dismissible"><p>
+			<?php
+			if ( 1 === intval( $_GET['error'] ) ) {
+				esc_html_e( 'An error occurred.', 'friends' );
+			} else {
+				echo esc_html( Rest::translate_error_message( sanitize_text_field( wp_unslash( $_GET['error'] ) ) ) );
+			}
+			?>
+			</p></div>
 			<?php
 		} elseif ( isset( $_GET['sent-request'] ) ) {
 			?>

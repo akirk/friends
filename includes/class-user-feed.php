@@ -728,7 +728,7 @@ class User_Feed {
 	 *
 	 * @param      bool $ignore_due_date     Whether to get also undue feeds.
 	 *
-	 * @return     object|\WP_Error   A User_Feed object.
+	 * @return     array   An array of User_Feed objects.
 	 */
 	public static function get_all_due( $ignore_due_date = false ) {
 		$term_query = new \WP_Term_Query(
