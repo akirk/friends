@@ -1385,6 +1385,8 @@ class Friends {
 	public static function uninstall_plugin() {
 		$taxonomies = array(
 			User_Feed::TAXONOMY,
+			User_Feed::POST_TAXONOMY,
+			Subscription::TAXONOMY,
 		);
 
 		$affected_users = new \WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
