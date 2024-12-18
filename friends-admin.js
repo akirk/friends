@@ -37,7 +37,6 @@ jQuery( function ( $ ) {
 		}
 	} );
 
-
 	$( document ).on( 'click', 'a#show-details', function () {
 		$( '.details' ).toggleClass( 'hidden' ).focus();
 		return false;
@@ -427,4 +426,13 @@ jQuery( function ( $ ) {
 			);
 		}
 	}, 500 );
+
+	$( document ).on( 'click', 'a.friends-ask-why-deactivate', function() {
+		const dialog = document.getElementById( 'friends-why-deactivate-dialog' );
+		console.log( dialog );
+		if ( dialog ) {
+			dialog.showModal();
+			return false;
+		}
+	});
 } );
