@@ -1409,6 +1409,11 @@ class Frontend {
 					}
 					break;
 
+				case 'tag':
+					$post_tag = array_shift( $pagename_parts );
+					$tax_query = $this->friends->wp_query_get_post_tag_tax_query( $tax_query, $post_tag );
+					break;
+
 				default: // Maybe an author.
 					$author = User::get_by_username( $current_part );
 					if ( false === $author || is_wp_error( $author ) ) {
