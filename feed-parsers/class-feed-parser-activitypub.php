@@ -47,6 +47,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_announce', array( $this, 'handle_received_announce' ), 15, 2 );
 		\add_action( 'activitypub_inbox_like', array( $this, 'handle_received_like' ), 15, 2 );
 		\add_action( 'activitypub_inbox_undo', array( $this, 'handle_received_undo' ), 15, 2 );
+		\add_action( 'activitypub_inbox_move', array( $this, 'handle_received_move' ), 15, 2 );
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
@@ -789,6 +790,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $this->handle_received_activity( $activity, $user_id, 'undo' );
 	}
 
+	public function handle_received_move( $activity, $user_id ) {
+		return $this->handle_received_activity( $activity, $user_id, 'move' );
+	}
+
 	public function handle_received_delete( $activity, $user_id ) {
 		return $this->handle_received_activity( $activity, $user_id, 'delete' );
 	}
@@ -840,6 +845,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'unannounce',
 				'like',
 				'unlike',
+				'move',
 			),
 			true
 		) ) {
@@ -924,6 +930,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				return $this->handle_incoming_like( $activity, $user_id );
 			case 'unlike':
 				return $this->handle_incoming_unlike( $activity, $user_id );
+			case 'move':
+				return $this->handle_incoming_move( $activity, $user_feed );
 		}
 		return null;
 	}
@@ -1204,6 +1212,62 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$ret = apply_filters( 'friends_unreact', null, $post_id, '2b50', $taxonomy_username );
 		if ( ! $ret || is_wp_error( $ret ) ) {
 			return false;
+		}
+
+		return true;
+	}
+
+	public function handle_incoming_move( $activity, User_Feed $user_feed ) {
+		$old_url = $activity['object'];
+		if ( $user_feed->get_url() !== $old_url ) {
+			$this->log( 'Could not determine the right feed to be moved. Looking for ' . $old_url . ', got ' . $user_feed->get_url() );
+			return false;
+		}
+
+		$feed = array(
+			'url'         => $activity['target'],
+			'mime-type'   => $user_feed->get_mime_type(),
+			'title'       => $user_feed->get_title(),
+			'parser'      => $user_feed->get_parser(),
+			'post-format' => $user_feed->get_post_format(),
+			'active'      => $user_feed->is_active(),
+		);
+
+		// Similar as in process_admin_edit_friend_feeds.
+		if ( $user_feed->get_url() !== $feed['url'] ) {
+			$friend = $user_feed->get_friend_user();
+			do_action( 'friends_user_feed_deactivated', $user_feed );
+
+			if ( ! isset( $feed['mime-type'] ) ) {
+				$feed['mime-type'] = $user_feed->get_mime_type();
+			}
+
+			if ( $feed['active'] ) {
+				$new_feed = $friend->subscribe( $feed['url'], $feed );
+				if ( ! is_wp_error( $new_feed ) ) {
+					do_action( 'friends_user_feed_activated', $new_feed );
+				}
+			} else {
+				$new_feed = $friend->save_feed( $feed['url'], $feed );
+			}
+
+			// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.
+			$user_feed->delete();
+
+			if ( is_wp_error( $new_feed ) ) {
+				do_action( 'friends_process_feed_item_submit_error', $new_feed, $feed );
+				return $new_feed;
+			}
+
+			do_action( 'friends_process_feed_item_submit', $new_feed, $feed );
+			$new_feed->update_last_log(
+				sprintf(
+					// translators: %s is the old URL.
+					__( 'Moved from old URL: %s', 'friends' ),
+					$user_feed->get_url()
+				)
+			);
+			return $new_feed;
 		}
 
 		return true;
