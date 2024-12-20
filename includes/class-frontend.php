@@ -125,6 +125,7 @@ class Frontend {
 		add_action( 'the_post', array( $this, 'the_post' ), 10, 2 );
 		add_action( 'parse_query', array( $this, 'parse_query' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
+		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
 		add_filter( 'friends_friend_posts_query_viewable', array( $this, 'expose_opml' ), 10, 2 );
@@ -365,6 +366,16 @@ class Frontend {
 
 		return $classes;
 	}
+
+	public function tag_row_actions( $actions, $tag ) {
+		$actions['view-friends'] = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( home_url( '/friends/tag/' . $tag->name ) ),
+			__( 'View on your Friends page', 'friends' )
+		);
+		return $actions;
+	}
+
 
 	/**
 	 * Gets the minimal query variables.
