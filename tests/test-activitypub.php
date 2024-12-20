@@ -463,4 +463,31 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		return $actors;
 	}
+
+	public function test_incoming_move() {
+		$new_url = 'https://example.com/new_url';
+
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Move',
+					'id'     => $this->actor . '/move',
+					'actor'  => $this->actor,
+					'object'  => $this->actor,
+					'target' => $new_url,
+				)
+			)
+		);
+		$request->set_header( 'Content-type', 'application/json' );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 202, $response->get_status() );
+
+		$old_user_feed = User_Feed::get_by_url( $this->actor );
+		$this->assertTrue( is_wp_error( $old_user_feed ) );
+
+		$new_user_feed = User_Feed::get_by_url( $new_url );
+		$this->assertInstanceof( 'Friends\User_Feed', $new_user_feed );
+	}
 }

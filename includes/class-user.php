@@ -388,7 +388,7 @@ class User extends \WP_User {
 	/**
 	 * Save multiple feeds for a user.
 	 *
-	 * @param      string $feeds  The feed URLs to subscribe to.
+	 * @param      array $feeds  The feed URLs to subscribe to.
 	 *
 	 * @return     array(\WP_Term)|\WP_error  $user The new associated user or an error object.
 	 */
