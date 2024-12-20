@@ -1583,15 +1583,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! $processor->get_attribute( 'href' ) ) {
 				continue;
 			}
-			if ( ! $processor->get_attribute( 'class' ) || false === strpos( $processor->get_attribute( 'class' ), 'hashtag' ) ) {
+			if ( ! $processor->get_attribute( 'class' ) || false === strpos( $processor->get_attribute( 'class' ), 'tag' ) ) {
 				// Also consider URLs that contain the word hashtag like https://twitter.com/hashtag/WordPress.
 				if ( false === strpos( $processor->get_attribute( 'href' ), '/hashtag/' ) ) {
 					continue;
 				}
 			}
-			$path_parts = explode( '/', wp_parse_url( $processor->get_attribute( 'href' ), PHP_URL_PATH ) );
+			$href = $processor->get_attribute( 'href' );
+			$path_parts = explode( '/', rtrim( wp_parse_url( $href, PHP_URL_PATH ), '/' ) );
 			$tag = array_pop( $path_parts );
 			$processor->set_attribute( 'href', '/friends/tag/' . sanitize_title_with_dashes( $tag ) . '/' );
+			$processor->set_attribute( 'original-href', $href );
 		}
 
 		$the_content = $processor->get_updated_html();
