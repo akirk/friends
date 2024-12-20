@@ -48,6 +48,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_like', array( $this, 'handle_received_like' ), 15, 2 );
 		\add_action( 'activitypub_inbox_undo', array( $this, 'handle_received_undo' ), 15, 2 );
 		\add_action( 'activitypub_inbox_move', array( $this, 'handle_received_move' ), 15, 2 );
+		\add_action( 'activitypub_inbox_update', array( $this, 'handle_received_update' ), 15, 2 );
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
@@ -794,6 +795,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $this->handle_received_activity( $activity, $user_id, 'move' );
 	}
 
+	public function handle_received_update( $activity, $user_id ) {
+		return $this->handle_received_activity( $activity, $user_id, 'update' );
+	}
+
 	public function handle_received_delete( $activity, $user_id ) {
 		return $this->handle_received_activity( $activity, $user_id, 'delete' );
 	}
@@ -846,6 +851,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'like',
 				'unlike',
 				'move',
+				'update',
 			),
 			true
 		) ) {
@@ -919,6 +925,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	protected function process_incoming_activity( $type, $activity, $user_id, $user_feed ) {
 		switch ( $type ) {
 			case 'create':
+				return $this->handle_incoming_create( $activity['object'] );
+			case 'update':
+				if ( isset( $activity['object']['type'] ) && 'Person' === $activity['object']['type'] ) {
+					return $this->handle_incoming_update_person( $activity['object'], $user_feed );
+				}
 				return $this->handle_incoming_create( $activity['object'] );
 			case 'delete':
 				return $this->handle_incoming_delete( $activity['object'] );
@@ -1044,7 +1055,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return new Feed_Item( $data );
 	}
 
+	/**
+	 * We received a update of a person, handle it.
+	 *
+	 * @param      array     $activity     The object from ActivityPub.
+	 * @param User_Feed $user_feed The user feed.
+	 */
+	private function handle_incoming_update_person( $activity, User_Feed $user_feed ) {
+		$friend_user = $user_feed->get_friend_user();
+		$this->log( 'Received person update for ' . $friend_user->user_login, compact( 'activity' ) );
 
+		if ( ! empty( $activity['summary'] ) ) {
+			$friend_user->description = $activity['summary'];
+		}
+		if ( ! empty( $activity['icon']['url'] ) ) {
+			$friend_user->update_user_icon_url( $activity['icon']['url'] );
+		}
+		$friend_user->save();
+		return null; // No feed item to submit.
+	}
 	/**
 	 * We received a delete of a post, handle it.
 	 *
