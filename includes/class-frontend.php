@@ -40,6 +40,13 @@ class Frontend {
 	public $author = false;
 
 	/**
+	 * Whether an tag is being displayed
+	 *
+	 * @var object|false
+	 */
+	public $tag = false;
+
+	/**
 	 * Whether a post-format is being displayed
 	 *
 	 * @var string|false
@@ -1410,8 +1417,14 @@ class Frontend {
 					break;
 
 				case 'tag':
-					$post_tag = array_shift( $pagename_parts );
-					$tax_query = $this->friends->wp_query_get_post_tag_tax_query( $tax_query, $post_tag );
+					if ( empty( $pagename_parts ) && $page_id ) {
+						// Support numeric tags.
+						$this->tag = strval( $page_id );
+						$page_id = false;
+					} else {
+						$this->tag = array_shift( $pagename_parts );
+					}
+					$tax_query = $this->friends->wp_query_get_post_tag_tax_query( $tax_query, $this->tag );
 					break;
 
 				default: // Maybe an author.
@@ -1476,9 +1489,12 @@ class Frontend {
 			$query->set( 'page_id', $page_id );
 			if ( ! $this->author ) {
 				$post = get_post( $page_id );
-				$author = User::get_post_author( $post );
-				if ( false !== $author ) {
-					$this->author = $author;
+
+				if ( $post ) {
+					$author = User::get_post_author( $post );
+					if ( false !== $author ) {
+						$this->author = $author;
+					}
 				}
 			}
 			$query->is_single = true;
