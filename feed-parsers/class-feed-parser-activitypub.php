@@ -1065,13 +1065,32 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$friend_user = $user_feed->get_friend_user();
 		$this->log( 'Received person update for ' . $friend_user->user_login, compact( 'activity' ) );
 
+		$message = sprintf(
+			// translators: %s is the user login.
+			__( 'Received person update for %s', 'friends' ),
+			'<a href="' . esc_url( $friend_user->get_local_friends_page_url() ) . '">' . esc_html( $friend_user->display_name ) . '</a>'
+		);
+
+		$details = array();
+
 		if ( ! empty( $activity['summary'] ) ) {
+			$details['old-summary'] = $friend_user->description;
+			$details['new-summary'] = $activity['summary'];
+
 			$friend_user->description = $activity['summary'];
+			$message .= __( 'Updated description.', 'friends' );
 		}
 		if ( ! empty( $activity['icon']['url'] ) ) {
+			$details['old-summary'] = '<img src="' . esc_url( $friend_user->get_avatar_url() ) . '" style="max-height: 32px; max-width: 32px" />';
+			$details['new-summary'] = '<img src="' . esc_url( $activity['icon']['url'] ) . '" style="max-height: 32px; max-width: 32px" />';
 			$friend_user->update_user_icon_url( $activity['icon']['url'] );
 		}
 		$friend_user->save();
+
+		$details['object'] = $activity;
+
+		Logging::log( 'user-update', $message, $details, self::SLUG, 0, $friend_user->ID );
+
 		return null; // No feed item to submit.
 	}
 	/**
@@ -1261,6 +1280,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'post-format' => $user_feed->get_post_format(),
 			'active'      => $user_feed->is_active(),
 		);
+		$this->log( 'Received Move from ' . $old_url . ' to ' . $feed['url'] );
 
 		// Similar as in process_admin_edit_friend_feeds.
 		if ( $user_feed->get_url() !== $feed['url'] ) {
@@ -1296,7 +1316,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$user_feed->get_url()
 				)
 			);
+
+			$message = sprintf(
+				// translators: %s is the new URL.
+				__( '%1$s moved to a new URL: %2$s', 'friends' ),
+				'<a href="' . esc_url( $old_url ) . '">' . esc_html( $feed['title'] ) . '</a>',
+				'<a href="' . esc_url( $new_feed->get_url() ) . '">' . esc_html( $new_feed->get_title() ) . '</a>'
+			);
+
+			Logging::log( 'feed-move', $message, $activity, self::SLUG, 0, $friend->ID );
+
 			return $new_feed;
+		} else {
+			$this->log( 'Move URL didn\'t change, old: ' . $old_url . ', new: ' . $feed['url'] );
 		}
 
 		return true;
