@@ -30,6 +30,11 @@ if ( $args['friends']->frontend->reaction ) {
 		)
 	);
 } else {
+	if ( $args['friend_user']->get_avatar_url() ) {
+		?>
+		<img src="<?php echo esc_attr( $args['friend_user']->get_avatar_url() ); ?>" alt="<?php echo esc_attr( $args['friend_user']->display_name ); ?>" class="avatar" width="36" height="36" style="vertical-align: middle;" />
+		<?php
+	}
 	echo esc_html( $args['friend_user']->display_name );
 }
 ?>
