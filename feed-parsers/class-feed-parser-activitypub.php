@@ -930,7 +930,31 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				if ( isset( $activity['object']['type'] ) && 'Person' === $activity['object']['type'] ) {
 					return $this->handle_incoming_update_person( $activity['object'], $user_feed );
 				}
-				return $this->handle_incoming_create( $activity['object'] );
+				$item = $this->handle_incoming_create( $activity['object'] );
+				if ( isset( $activity['object']['type'] ) && 'Note' === $activity['object']['type'] ) {
+					$friend_user = $user_feed->get_friend_user();
+					$message = sprintf(
+						// translators: %s is the user login.
+						__( 'Received post update for %s', 'friends' ),
+						'<a href="' . esc_url( $friend_user->get_local_friends_page_url() ) . '">' . esc_html( $friend_user->display_name ) . '</a>'
+					);
+					$details = array();
+					$post_id = Feed::url_to_postid( $item->permalink );
+					if ( $post_id ) {
+						$_post = get_post( $post_id );
+						if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
+							require ABSPATH . WPINC . '/wp-diff.php';
+						}
+						$diff = new \Text_Diff( explode( ' ', $item->content ), explode( ' ', $post->post_content ) );
+						$renderer = new \WP_Text_Diff_Renderer_inline();
+						$details['content'] = $renderer->render( $diff );
+					}
+					$details['post_id'] = $post_id;
+					$details['activity'] = $activity;
+
+					Logging::log( 'post-update', $message, $details, self::SLUG, 0, $friend_user->ID );
+				}
+				return $item;
 			case 'delete':
 				return $this->handle_incoming_delete( $activity['object'] );
 			case 'announce':
@@ -1073,17 +1097,21 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$details = array();
 
-		if ( ! empty( $activity['summary'] ) ) {
-			$details['old-summary'] = $friend_user->description;
-			$details['new-summary'] = $activity['summary'];
-
+		if ( ! empty( $activity['summary'] ) && $friend_user->description !== $activity['summary'] ) {
+			if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
+				require ABSPATH . WPINC . '/wp-diff.php';
+			}
+			$diff = new \Text_Diff( explode( ' ', $friend_user->description ), explode( ' ', $activity['summary'] ) );
+			$renderer = new \WP_Text_Diff_Renderer_inline();
+			$details['summary'] = $renderer->render( $diff );
 			$friend_user->description = $activity['summary'];
-			$message .= __( 'Updated description.', 'friends' );
+			$message .= ' ' . __( 'Updated description.', 'friends' );
 		}
-		if ( ! empty( $activity['icon']['url'] ) ) {
-			$details['old-summary'] = '<img src="' . esc_url( $friend_user->get_avatar_url() ) . '" style="max-height: 32px; max-width: 32px" />';
-			$details['new-summary'] = '<img src="' . esc_url( $activity['icon']['url'] ) . '" style="max-height: 32px; max-width: 32px" />';
+		if ( ! empty( $activity['icon']['url'] ) && $friend_user->get_avatar_url() !== $activity['icon']['url'] ) {
+			$details['old-icon'] = '<img src="' . esc_url( $friend_user->get_avatar_url() ) . '" style="max-height: 32px; max-width: 32px" />';
+			$details['new-icon'] = '<img src="' . esc_url( $activity['icon']['url'] ) . '" style="max-height: 32px; max-width: 32px" />';
 			$friend_user->update_user_icon_url( $activity['icon']['url'] );
+			$message .= ' ' . __( 'Updated icon.', 'friends' );
 		}
 		$friend_user->save();
 
