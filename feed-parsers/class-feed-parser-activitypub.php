@@ -1101,10 +1101,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
 				require ABSPATH . WPINC . '/wp-diff.php';
 			}
-			$diff = new \Text_Diff( explode( ' ', $friend_user->description ), explode( ' ', $activity['summary'] ) );
+			$summary = wp_encode_emoji( $activity['summary'] );
+			$diff = new \Text_Diff( explode( ' ', $friend_user->description ), explode( ' ', $summary ) );
 			$renderer = new \WP_Text_Diff_Renderer_inline();
 			$details['summary'] = $renderer->render( $diff );
-			$friend_user->description = $activity['summary'];
+			$friend_user->description = $summary;
 			$message .= ' ' . __( 'Updated description.', 'friends' );
 		}
 		if ( ! empty( $activity['icon']['url'] ) && $friend_user->get_avatar_url() !== $activity['icon']['url'] ) {
