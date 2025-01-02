@@ -78,19 +78,34 @@ abstract class Feed_Parser {
 	 * Convert relative URLs to absolute ones in incoming content.
 	 *
 	 * @param      string $html   The html.
-	 * @param      string $url    The url of the feed.
+	 * @param      string $permalink  The permalink of the feed.
 	 *
 	 * @return     string  The HTML with URLs replaced to their absolute represenation.
 	 */
-	public function convert_relative_urls_to_absolute_urls( $html, $url ) {
+	public function convert_relative_urls_to_absolute_urls( $html, $permalink ) {
 		if ( ! $html ) {
 			$html = '';
 		}
+
+		// Strip off the hash.
+		$permalink = strtok( $permalink, '#' );
+
 		// For now this only converts links and image srcs.
 		return preg_replace_callback(
 			'~(src|href)=(?:"([^"]+)|\'([^\']+))~i',
-			function ( $m ) use ( $url ) {
-				return str_replace( $m[2], Mf2\resolveUrl( $url, $m[2] ), $m[0] );
+			function ( $m ) use ( $permalink ) {
+				if ( str_starts_with( $m[2], '#' ) ) {
+					// Don't update hash-only links.
+					return $m[0];
+				}
+
+				if ( str_starts_with( $m[2], $permalink . '#' ) ) {
+					// Remove absolute URL from hashes.
+					return str_replace( $permalink, '', $m[0] );
+				}
+
+				// Convert relative URLs to absolute ones.
+				return str_replace( $m[2], Mf2\resolveUrl( $permalink, $m[2] ), $m[0] );
 			},
 			$html
 		);
