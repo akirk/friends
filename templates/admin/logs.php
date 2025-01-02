@@ -6,6 +6,17 @@
  */
 
 ?>
+<style>
+	del {
+		background-color: #ffabaf;
+		text-decoration: none;
+	}
+
+	ins {
+		background-color: #68de7c;
+		text-decoration: none;
+	}
+</style>
 <table class="widefat">
 	<thead>
 		<tr>

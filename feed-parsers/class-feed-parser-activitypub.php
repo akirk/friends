@@ -945,14 +945,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
 							require ABSPATH . WPINC . '/wp-diff.php';
 						}
-						$diff = new \Text_Diff( explode( ' ', $item->content ), explode( ' ', $post->post_content ) );
+						$diff = new \Text_Diff( explode( 'PHP_EOL', wp_strip_all_tags( $item->content ) ), explode( 'PHP_EOL', wp_strip_all_tags( $_post->post_content ) ) );
 						$renderer = new \WP_Text_Diff_Renderer_inline();
 						$details['content'] = $renderer->render( $diff );
+						if ( empty( $details['content'] ) ) {
+							unset( $details['content'] );
+						}
 					}
-					$details['post_id'] = $post_id;
-					$details['activity'] = $activity;
 
-					Logging::log( 'post-update', $message, $details, self::SLUG, 0, $friend_user->ID );
+					if ( ! empty( $details ) ) {
+						$details['post_id'] = $post_id;
+						$details['activity'] = $activity;
+						Logging::log( 'post-update', $message, $details, self::SLUG, 0, $friend_user->ID );
+					}
 				}
 				return $item;
 			case 'delete':
@@ -1102,7 +1107,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				require ABSPATH . WPINC . '/wp-diff.php';
 			}
 			$summary = wp_encode_emoji( $activity['summary'] );
-			$diff = new \Text_Diff( explode( ' ', $friend_user->description ), explode( ' ', $summary ) );
+			$diff = new \Text_Diff( explode( PHP_EOL, $friend_user->description ), explode( PHP_EOL, $summary ) );
 			$renderer = new \WP_Text_Diff_Renderer_inline();
 			$details['summary'] = $renderer->render( $diff );
 			$friend_user->description = $summary;
@@ -1116,9 +1121,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		$friend_user->save();
 
-		$details['object'] = $activity;
-
-		Logging::log( 'user-update', $message, $details, self::SLUG, 0, $friend_user->ID );
+		if ( ! empty( $details ) ) {
+			$details['object'] = $activity;
+			Logging::log( 'user-update', $message, $details, self::SLUG, 0, $friend_user->ID );
+		}
 
 		return null; // No feed item to submit.
 	}
