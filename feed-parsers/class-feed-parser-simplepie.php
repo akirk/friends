@@ -293,7 +293,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 				array(
 					'permalink' => $item->get_permalink(),
 					'title'     => $title,
-					'content'   => $this->convert_relative_urls_to_absolute_urls( $item->get_content(), $url, $item->get_permalink() ),
+					'content'   => $this->convert_relative_urls_to_absolute_urls( $item->get_content(), $item->get_permalink() ),
 				)
 			);
 
