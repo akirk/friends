@@ -1110,8 +1110,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$diff = new \Text_Diff( explode( PHP_EOL, $friend_user->description ), explode( PHP_EOL, $summary ) );
 			$renderer = new \WP_Text_Diff_Renderer_inline();
 			$details['summary'] = $renderer->render( $diff );
+			if ( empty( $details['summary'] ) ) {
+				unset( $details['summary'] );
+			} else {
+				$message .= ' ' . __( 'Updated description.', 'friends' );
+			}
+
 			$friend_user->description = $summary;
-			$message .= ' ' . __( 'Updated description.', 'friends' );
 		}
 		if ( ! empty( $activity['icon']['url'] ) && $friend_user->get_avatar_url() !== $activity['icon']['url'] ) {
 			$details['old-icon'] = '<img src="' . esc_url( $friend_user->get_avatar_url() ) . '" style="max-height: 32px; max-width: 32px" />';

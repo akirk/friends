@@ -34,7 +34,17 @@
 				<td>
 					<details>
 						<summary><?php echo wp_kses_post( $log->post_title ); ?></summary>
-						<pre><?php echo wp_kses_post( $log->post_content ); ?></pre>
+						<pre>
+						<?php
+						echo wp_kses(
+							str_replace( array( '&lt;del&gt;', '&lt;/del&gt;', '&lt;ins&gt;', '&lt;/ins&gt;' ), array( '<del>', '</del>', '<ins>', '</ins>' ), esc_html( $log->post_content ) ),
+							array(
+								'ins' => array(),
+								'del' => array(),
+							)
+						);
+						?>
+								</pre>
 					</details>
 				</td>
 				<td><?php echo esc_html( get_the_author_meta( 'display_name', $log->post_author ) ); ?></td>
