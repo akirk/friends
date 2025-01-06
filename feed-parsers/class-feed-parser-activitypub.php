@@ -933,13 +933,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$item = $this->handle_incoming_create( $activity['object'] );
 				if ( isset( $activity['object']['type'] ) && 'Note' === $activity['object']['type'] ) {
 					$friend_user = $user_feed->get_friend_user();
+					$post_id = Feed::url_to_postid( $item->permalink );
 					$message = sprintf(
-						// translators: %s is the user login.
-						__( 'Received post update for %s', 'friends' ),
+						// translators: %1$s is the post URL, %2$s is the linked user display name.
+						__( 'Received <a href="%1$s">post update</a> for %2$s', 'friends' ),
+						$friend_user->get_local_friends_page_url( $post_id ),
 						'<a href="' . esc_url( $friend_user->get_local_friends_page_url() ) . '">' . esc_html( $friend_user->display_name ) . '</a>'
 					);
 					$details = array();
-					$post_id = Feed::url_to_postid( $item->permalink );
 					if ( $post_id ) {
 						$_post = get_post( $post_id );
 						if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
