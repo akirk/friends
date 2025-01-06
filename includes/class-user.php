@@ -1236,7 +1236,7 @@ class User extends \WP_User {
 	 */
 	public function get_local_friends_page_url( $post_id = null ) {
 		$path = '/';
-		if ( $post_id ) {
+		if ( $post_id && ! is_wp_error( $post_id ) ) {
 			$path = '/' . $post_id . '/';
 		}
 

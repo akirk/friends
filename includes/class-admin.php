@@ -204,6 +204,11 @@ class Admin {
 			add_submenu_page( 'friends', $title, $title, $required_role, 'friends-logs', array( $this, 'render_friends_logs' ) );
 		}
 
+		if ( isset( $_GET['page'] ) && 'friends-browser-extension' === $_GET['page'] ) {
+			$title = __( 'Browser Extension', 'friends' );
+			add_submenu_page( 'friends', $title, $title, $required_role, 'friends-browser-extension', array( $this, 'render_browser_extension' ) );
+		}
+
 		if ( isset( $_GET['page'] ) && 'unfriend' === $_GET['page'] ) {
 			$user = new User( intval( $_GET['user'] ) );
 			if ( $user ) {
@@ -310,6 +315,8 @@ class Admin {
 			'ajax_url'                        => admin_url( 'admin-ajax.php' ),
 			'add_friend_url'                  => self_admin_url( 'admin.php?page=add-friend' ),
 			'add_friend_text'                 => __( 'Add a Friend', 'friends' ),
+			'copy_text'                       => __( 'Copy', 'friends' ),
+			'copied_text'                     => __( 'Copied!', 'friends' ),
 			'delete_feed_question'            => __( 'Delete the feed? You need to click "Save Changes" to really delete it.', 'friends' ),
 			'role_friend'                     => __( 'Friend', 'friends' ),
 			'role_acquaintance'               => __( 'Acquaintance', 'friends' ),
@@ -667,7 +674,6 @@ class Admin {
 			null,
 			array(
 				'active' => 'friends',
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 
@@ -685,7 +691,6 @@ class Admin {
 			null,
 			array(
 				'active' => 'friends-settings',
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 		$this->check_admin_settings();
@@ -946,7 +951,6 @@ class Admin {
 					__( 'Your Friend Requests', 'friends' ) => 'friends-list-requests',
 				),
 				'active' => $page,
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 
@@ -2734,21 +2738,63 @@ class Admin {
 		Friends::template_loader()->get_template_part( 'admin/duplicates', null, $args );
 	}
 
+	public function render_browser_extension() {
+		add_filter(
+			'friends_admin_tabs',
+			function ( $menu ) {
+				$menu[ __( 'Browser Extension', 'friends' ) ] = 'friends-browser-extension';
+				return $menu;
+			}
+		);
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-browser-extension',
+			)
+		);
+		$this->check_admin_settings();
+		$browser_api_key = get_option( 'friends_browser_api_key' );
+
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'friends-browser-extension' ) ) {
+			if ( isset( $_POST['revoke-api-key'] ) ) {
+				$browser_api_key = false;
+			}
+		}
+
+		if ( ! $browser_api_key ) {
+			$browser_api_key = wp_generate_password( 32, false );
+			update_option( 'friends_browser_api_key', $browser_api_key );
+		}
+
+		Friends::template_loader()->get_template_part(
+			'admin/browser-extension',
+			null,
+			array(
+				'browser-api-key' => $browser_api_key,
+			)
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
 
 	public function render_friends_logs() {
+		add_filter(
+			'friends_admin_tabs',
+			function ( $menu ) {
+				$menu[ __( 'Logs', 'friends' ) ] = 'friends-logs';
+				return $menu;
+			}
+		);
+
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
 			null,
 			array(
 				'active' => 'friends-logs',
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 		$this->check_admin_settings();
-
-		?>
-		<h1><?php esc_html_e( 'Logs', 'friends' ); ?></h1>
-		<?php
 
 		Friends::template_loader()->get_template_part(
 			'admin/logs',

@@ -188,6 +188,12 @@ div.button.unfriend {
 	border-color: #b00;
 }
 
+.button.button-destructive {
+	border-color: #b00;
+	color: #a00;
+	text-decoration: none;
+}
+
 div.button.unfriend:hover {
 	border-color: #a00;
 }

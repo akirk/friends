@@ -402,6 +402,18 @@ jQuery( function ( $ ) {
 		setInterval( updateDashboardWidgets, 60000 );
 	}
 
+	$( document ).on( 'click', '#copy-api-key', function ( e ) {
+		e.preventDefault();
+		const $this = $( this );
+		const $input = $( '#api-key' );
+		navigator.clipboard.writeText( $input.val() );
+		$this.text( friends.copied_text );
+		setTimeout( function () {
+			$this.text( friends.copy_text );
+		}, 2000 );
+		return false;
+	} );
+
 	setTimeout( function () {
 		if ( $( '#fetch-feeds' ).length ) {
 			$( '#fetch-feeds' ).append( ' <i class="friends-loading"></i>' );

@@ -22,6 +22,10 @@ if ( empty( $args['active'] ) ) {
 	$args['active'] = false;
 }
 
+if ( empty( $args['title'] ) ) {
+	$args['title'] = __( 'Friends', 'friends' );
+}
+
 ?>
 <div class="wrap">
 	<div class="friends-header">
