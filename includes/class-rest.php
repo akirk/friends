@@ -188,6 +188,22 @@ class REST {
 				},
 			)
 		);
+
+		register_rest_route(
+			self::PREFIX,
+			'extension',
+			array(
+				'methods'             => array( 'GET', 'POST' ),
+				'callback'            => array( $this, 'rest_extension' ),
+				'permission_callback' => '__return_true', // Public.
+				'params'              => array(
+					'key' => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -654,7 +670,23 @@ class REST {
 		);
 	}
 
+	public function rest_extension( $request ) {
+		$return = array(
+			'version'      => Friends::VERSION,
+			'friends_url'  => home_url( '/friends/' ),
+			'settings_url' => admin_url( 'admin.php?page=friends-browser-extension' ),
+		);
 
+		if ( 'POST' === $request->get_method() && $request->get_param( 'key' ) ) {
+			if ( $request->get_param( 'key' ) === get_option( 'friends_browser_api_key' ) ) {
+				$return = apply_filters( 'friends_browser_extension_rest_info', $return );
+			} else {
+				$return['error'] = 'Invalid API key';
+			}
+		}
+
+		return $return;
+	}
 
 
 	/**
