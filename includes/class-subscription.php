@@ -46,10 +46,10 @@ class Subscription extends User {
 		$this->data = (object) array(
 			'ID'              => $this->ID,
 			'user_login'      => $term->name,
-			'display_name'    => get_metadata( 'term', $term->term_id, 'display_name', true ),
-			'user_url'        => get_metadata( 'term', $term->term_id, 'user_url', true ),
-			'description'     => get_metadata( 'term', $term->term_id, 'description', true ),
-			'user_registered' => get_metadata( 'term', $term->term_id, 'created', true ),
+			'display_name'    => $this->get_user_option( 'display_name' ),
+			'user_url'        => $this->get_user_option( 'user_url' ),
+			'description'     => $this->get_user_option( 'description' ),
+			'user_registered' => $this->get_user_option( 'created' ),
 		);
 	}
 

@@ -905,6 +905,10 @@ class Frontend {
 			$wp_query->is_404 = false;
 
 			status_header( 200 );
+			if ( 'frontend/index' === $this->template ) {
+				$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
+
+			}
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}
 

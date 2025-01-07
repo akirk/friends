@@ -1890,7 +1890,7 @@ class Admin {
 						$avatar = $feed_details['avatar'];
 					}
 					if ( ! $description && ! empty( $feed_details['description'] ) ) {
-						$description = $feed_details['description'];
+						$description = wp_encode_emoji( $feed_details['description'] );
 					}
 				}
 
