@@ -678,7 +678,7 @@ class REST {
 		);
 
 		if ( 'POST' === $request->get_method() && $request->get_param( 'key' ) ) {
-			if ( $request->get_param( 'key' ) === get_option( 'friends_browser_api_key' ) ) {
+			if ( Access_Control::check_browser_api_key( $request->get_param( 'key' ) ) ) {
 				$return = apply_filters( 'friends_browser_extension_rest_info', $return );
 			} else {
 				$return['error'] = 'Invalid API key';
