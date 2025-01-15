@@ -2754,17 +2754,13 @@ class Admin {
 			)
 		);
 		$this->check_admin_settings();
-		$browser_api_key = get_option( 'friends_browser_api_key' );
+		$browser_api_key = Access_Control::get_browser_api_key();
 
 		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'friends-browser-extension' ) ) {
 			if ( isset( $_POST['revoke-api-key'] ) ) {
-				$browser_api_key = false;
+				Access_Control::revoke_browser_api_key();
+				$browser_api_key = Access_Control::get_browser_api_key();
 			}
-		}
-
-		if ( ! $browser_api_key ) {
-			$browser_api_key = wp_generate_password( 32, false );
-			update_option( 'friends_browser_api_key', $browser_api_key );
 		}
 
 		Friends::template_loader()->get_template_part(

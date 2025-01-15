@@ -349,4 +349,45 @@ class Access_Control {
 		}
 		return $value;
 	}
+
+	public static function check_browser_api_key( $key ) {
+		$parts = explode( '-', $key, 3 );
+		if ( 3 !== count( $parts ) ) {
+			return false;
+		}
+
+		$user_id = (int) $parts[1];
+		if ( ! $user_id ) {
+			return false;
+		}
+
+		$desired_key = self::get_browser_api_key( $user_id );
+		if ( ! $desired_key ) {
+			return false;
+		}
+
+		return $key === $desired_key;
+	}
+
+	public static function revoke_browser_api_key( $user_id = false ) {
+		if ( ! $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
+		delete_user_option( $user_id, 'friends_browser_api_key' );
+	}
+
+	public static function get_browser_api_key( $user_id = false ) {
+		if ( ! $user_id ) {
+			$user_id = get_current_user_id();
+		}
+
+		$key = get_user_option( 'friends_browser_api_key', $user_id );
+		if ( ! $key ) {
+			$key = 'friends-' . $user_id . '-' . wp_generate_password( 32, false );
+			update_user_option( $user_id, 'friends_browser_api_key', $key );
+		}
+
+		return $key;
+	}
 }
