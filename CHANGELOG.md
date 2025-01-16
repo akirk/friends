@@ -1,3 +1,15 @@
+### 3.3.0
+- Styling Overhaul! ([#431])
+- Add the FediPress theme ([#433])
+- Incoming Feed Items: Fix in-article hash links ([#426])
+- Add more functions for a browser extension ([#427])
+- Browser Extension: API Key per user ([#429])
+- Fix parsing Pixelfed's Image attachments ([#430])
+- Add the friend's avatar to the page header ([#422])
+- Add inline follow link ([#432])
+- Log the newly supported ActivityPub events to the Friends Log ([#423])
+- Augment the ActivityPub New Follower E-Mail ([#434])
+
 ### 3.2.3
 - ActivityPub: Support update of posts and people ([#421])
 - Add support for ActivityPub Move activity ([#420])
@@ -318,6 +330,16 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#426]: https://github.com/akirk/friends/pull/426
+[#427]: https://github.com/akirk/friends/pull/427
+[#429]: https://github.com/akirk/friends/pull/429
+[#430]: https://github.com/akirk/friends/pull/430
+[#431]: https://github.com/akirk/friends/pull/431
+[#422]: https://github.com/akirk/friends/pull/422
+[#432]: https://github.com/akirk/friends/pull/432
+[#433]: https://github.com/akirk/friends/pull/433
+[#423]: https://github.com/akirk/friends/pull/423
+[#434]: https://github.com/akirk/friends/pull/434
 [#421]: https://github.com/akirk/friends/pull/421
 [#420]: https://github.com/akirk/friends/pull/420
 [#419]: https://github.com/akirk/friends/pull/419
