@@ -404,7 +404,8 @@ class Plugin_Installer {
 
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-		deactivate_plugins( $plugin . '/' . $plugin . '.php' );
+		$main_plugin_file = self::get_plugin_file( $plugin );
+		deactivate_plugins( $main_plugin_file );
 
 		$msg = $plugin . ' successfully deactivated.';
 
@@ -474,8 +475,9 @@ class Plugin_Installer {
 
 		foreach ( $plugins as $plugin_file => $plugin_info ) {
 			$slug = dirname( plugin_basename( $plugin_file ) );
-			if ( $slug ) {
-				if ( $slug === $plugin_slug ) {
+			if ( '.' !== $slug ) {
+				// Github hosted plugins have a -hex appended.
+				if ( $slug === $plugin_slug || preg_match( '/^' . preg_quote( $plugin_slug, '/' ) . '-[0-9a-f]+$/', $slug ) ) {
 					return $plugin_file;
 				}
 			}
