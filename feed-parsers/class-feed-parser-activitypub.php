@@ -2548,7 +2548,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\comment_form(
 			array(
-				'title_reply'          => __( 'Send reply via ActivityPub', 'friends' ),
+				'title_reply'          => __( 'Send a Reply via ActivityPub', 'friends' ),
 				'title_reply_before'   => '<h5 id="reply-title" class="comment-reply-title">',
 				'title_reply_after'    => '</h5>',
 				'logged_in_as'         => '',

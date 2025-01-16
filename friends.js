@@ -307,12 +307,7 @@
 		return false;
 	} );
 
-	$document.on( 'click', 'a.collapse-post', function ( e ) {
-		if ( e.metaKey || e.altKey || e.shiftKey ) {
-			$( this ).trigger( 'dblclick' );
-			return;
-		}
-
+	$document.on( 'click', 'a.collapse-post, .collapsed.card, .all-collapsed .card:not(.uncollapsed)', function ( e ) {
 		const card = $( this ).closest( 'article' );
 		let collapsed;
 		if ( card.closest( 'section.all-collapsed' ).length ) {
@@ -324,23 +319,27 @@
 		}
 		if ( collapsed ) {
 			$( this )
-				.find( 'i' )
+				.find( 'i.dashicons-fullscreen-exit-alt' )
 				.removeClass( 'dashicons-fullscreen-exit-alt' )
 				.addClass( 'dashicons-fullscreen-alt' );
 		} else {
 			$( this )
-				.find( 'i' )
-				.removeClass( 'dashicons-fullscreen-exit-alt' )
-				.addClass( 'dashicons-fullscreen-alt' );
+				.find( 'i.dashicons-fullscreen-alt' )
+				.removeClass( 'dashicons-fullscreen-alt' )
+				.addClass( 'dashicons-fullscreen-exit-alt' );
 		}
 
 		return false;
 	} );
 
-	$document.on( 'dblclick', 'a.collapse-post', function () {
+	$document.on( 'click', 'a.toggle-compact', function () {
 		// Collapse-toggle all visible.
-		$( this ).closest( 'section' ).toggleClass( 'all-collapsed' );
-		$( this )[ 0 ].scrollIntoView();
+		$( 'section.posts' ).toggleClass( 'all-collapsed' );
+		if ( $( 'section.posts' ).is( '.all-collapsed' ) ) {
+			$( 'a.toggle-compact').text( friends.text_expanded_mode );
+		} else {
+			$( 'a.toggle-compact').text( friends.text_compact_mode );
+		}
 		$( window ).trigger( 'scroll' );
 		return false;
 	} );

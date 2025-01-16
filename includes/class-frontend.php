@@ -320,6 +320,8 @@ class Frontend {
 			'text_checking_url'  => __( 'Checking URL.', 'friends' ),
 			'text_refreshed'     => __( 'Refreshed', 'friends' ),
 			'text_refreshing'    => __( 'Refreshing', 'friends' ),
+			'text_compact_mode'  => __( 'Compact mode', 'friends' ),
+			'text_expanded_mode' => __( 'Expanded mode', 'friends' ),
 			'refresh_now'        => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'query_vars'         => $query_vars,
 			'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
@@ -818,10 +820,11 @@ class Frontend {
 		$user_feed_url = get_post_meta( $post_id, 'feed_url', true );
 		$user_feed = $this->friends->feed->get_user_feed_by_url( $user_feed_url );
 
+		remove_all_filters( 'comment_form_before' );
+		remove_all_filters( 'comment_form_after' );
 		if ( empty( $comments ) ) {
 			$content = apply_filters( 'friends_no_comments_feed_available', __( 'We tried to load comments remotely but there were no comments.', 'friends' ), $post_id, $friend_user, $user_feed );
 		} else {
-			remove_all_filters( 'comment_form_before' );
 			$template_loader = Friends::template_loader();
 			ob_start();
 			?>
@@ -1041,11 +1044,11 @@ class Frontend {
 			}
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';
 		}
-		$link .= '>';
+		$link .= ' title="' . esc_attr( $text ) . '">';
 		if ( isset( $html_attributes['dashicon_front'] ) ) {
 			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon_front'] ) . '"></span>';
 		}
-		$link .= esc_html( $text );
+		$link .= '<span class="text">' . esc_html( $text ) . '</span>';
 		if ( isset( $html_attributes['dashicon_back'] ) ) {
 			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon_back'] ) . '"></span>';
 		}
