@@ -1,3 +1,5 @@
+$body-bg: #f7f8f9;
+
 $primary-color: #2e5bec;
 $dark-color: #3e396b;
 $border-color-light: #eee;
@@ -41,7 +43,7 @@ div {
 @import "node_modules/spectre.css/src/utilities/position";
 
 .friends-dropdown {
-	display: inline-block;
+	display: none;
 	position: relative;
 
 	.menu {
@@ -94,6 +96,7 @@ div {
 .off-canvas .off-canvas-toggle {
 	top: 3rem;
 	left: 1rem;
+	color: #fff;
 }
 
 .off-canvas .off-canvas-content header.navbar {
@@ -105,9 +108,9 @@ div {
 }
 
 .off-canvas .off-canvas-sidebar {
+	background-color: $body-bg;
 	margin-top: 32px;
 	width: 12rem;
-	background: #f7f8f9;
 }
 
 .off-canvas .off-canvas-content header.navbar #page-title {
@@ -147,7 +150,7 @@ h2#page-title a.dashicons {
 	}
 
 	a.off-canvas-toggle:visited {
-		color: $link-color;
+		color: #fff;
 	}
 
 	a,
@@ -241,6 +244,7 @@ h2#page-title a.dashicons {
 
 	header.navbar section.navbar-section.author {
 		flex: 3;
+		min-width: 20em;
 	}
 
 	summary.quick-status-panel-opener {
@@ -249,6 +253,10 @@ h2#page-title a.dashicons {
 	}
 
 	article {
+		margin-bottom: 2em;
+		.card-title {
+			padding-left: .8rem;
+		}
 		.card-body {
 
 			img,
@@ -257,41 +265,45 @@ h2#page-title a.dashicons {
 				height: auto;
 			}
 		}
+		.overflow {
+			height: .5em;
+		}
 
 		&.format-status {
 			div.teaser {
 				display: none;
 			}
 
-			border-bottom: 1px solid $dark-color;
-			padding-bottom: 2em;
-			margin-bottom: 2em;
+			.card-title {
+				padding-left: 0;
+			}
+		}
 
-			header {
+		&.format-image {
+			a.collapse-post {
+				display: none;
+			}
+			.card-footer {
+				padding-top: 0;
+				padding-bottom: 1rem;
+			}
 
-				div.overflow,
-				div.post-meta,
-				div.teaser {
-					margin-top: .4em;
-				}
-
-				div.overflow {
-					.btn {
-						margin-top: -.5em;
-					}
-				}
+			.card-footer a .text {
+				display: block;
+				font-size: 10px;
+				line-height: 8px;
 			}
 		}
 	}
 
 	.card {
 		height: 100%;
-		box-shadow: none;
+		box-shadow: 0 0 2px rgba(48, 55, 66, .15);
 		padding: 0;
 		border: 0;
+		border-radius: 10px;
 
 		.card-body {
-			padding: 0;
 
 			ul,
 			ol {
@@ -328,26 +340,42 @@ h2#page-title a.dashicons {
 			}
 		}
 
-		border-bottom: 1px solid #eee;
-		padding: 0 0 1em 0;
-		margin: 0 0 1em 0;
+		margin-bottom: 1em;
 
-		@media (min-width: $off-canvas-breakpoint) {
+		@media (max-width: $off-canvas-breakpoint) {
 			& {
-				border: 0;
-				box-shadow: 0 .25rem 1rem rgba(48, 55, 66, .15);
-				border-bottom: 1px solid #87a6bc;
-				padding: 0 0 1em 0;
-				margin: 0 0 1em 0;
+				width: 100%;
+				margin-left: 0;
+				margin-right: 0;
 
 				.card-body {
 					padding: 1rem;
 				}
 
+				.overflow {
+					display: none;
+				}
+
 				.card-title {
 					padding-left: 1rem;
 				}
+				textarea {
+					width: 100%;
+				}
 
+				.card-footer {
+					padding-top: 0;
+					padding-bottom: 1rem;
+					div.friends-dropdown {
+						display: inline-block;
+					}
+				}
+
+				.card-footer a .text {
+					display: block;
+					font-size: 10px;
+					line-height: 8px;
+				}
 			}
 		}
 	}
@@ -448,7 +476,7 @@ h2#page-title a.dashicons {
 	}
 
 	img.avatar {
-		border-radius: 100%;
+		border-radius: 5px;
 	}
 
 	div.friends-widget {
@@ -492,16 +520,25 @@ h2#page-title a.dashicons {
 				line-height: 1.4;
 				max-width: 100%;
 				margin: auto -0.4rem;
-				padding: .5rem;
+				padding: 1rem;
 				padding-bottom: 1.5em;
 
 				div.avatar {
 					margin-right: .5em;
 				}
 
+				div.author {
+					max-width: 19em;
+				}
+
 				@media (min-width: $off-canvas-breakpoint) {
-					padding: .8rem;
-					padding-bottom: 1.5em;
+					padding-top: .5rem;
+					padding-right: 1rem;
+					padding-left: 1rem;
+				}
+
+				div.friends-dropdown {
+					display: inline-block;
 				}
 			}
 
@@ -535,13 +572,17 @@ h2#page-title a.dashicons {
 			opacity: .5;
 		}
 
+		article.card.column.post_format-post-format-status.format-status header.entry-header div.post-meta {
+			width: calc(100% - 12em);
+		}
+
 		&.all-collapsed article:not(.uncollapsed):not(:only-child),
 		article.collapsed {
 			div.card-body {
 				display: none;
 			}
 
-			header {
+			header.entry-header {
 				padding-left: 1rem;
 
 				div.avatar {
@@ -564,7 +605,7 @@ h2#page-title a.dashicons {
 			}
 
 			h4.card-title {
-				margin-bottom: 0;
+				padding-left: .5rem;
 			}
 
 			&.format-status {
@@ -572,21 +613,14 @@ h2#page-title a.dashicons {
 				margin-bottom: .5em;
 				width: 100%;
 
-				.overflow {
-					width: 6em;
-					margin-left: 1em;
-				}
-
 				div.teaser {
 					text-overflow: ellipsis;
-					width: calc(100% - 7em);
+					width: calc(100% - 1em);
 					overflow: hidden;
 					white-space: nowrap;
 					display: inline-block;
-
-					@media (min-width: $off-canvas-breakpoint) {
-						width: calc(100% - 25em);
-					}
+					margin-left: .5em;
+					margin-right: .5em;
 				}
 
 				header {
@@ -594,7 +628,7 @@ h2#page-title a.dashicons {
 					margin-bottom: 0;
 
 					div.post-meta {
-						max-width: 15em;
+						width: calc(100% - 5em);
 						max-height: 1.5em;
 						overflow: hidden;
 						text-overflow: ellipsis;
@@ -602,6 +636,7 @@ h2#page-title a.dashicons {
 
 					div.avatar {
 						display: block;
+						margin-left: 1em;
 					}
 				}
 			}
@@ -621,6 +656,7 @@ h2#page-title a.dashicons {
 				.dashicons {
 					vertical-align: middle;
 				}
+
 			}
 
 			.btn:hover {
@@ -629,6 +665,7 @@ h2#page-title a.dashicons {
 		}
 
 		footer.comments-content {
+			border-top: 1px solid $border-color-light;
 			&.closed {
 				display: none;
 			}
@@ -661,6 +698,10 @@ h2#page-title a.dashicons {
 				.comment-list .depth-3 {
 					padding-left: calc(4 * var(--global--spacing-horizontal));
 				}
+			}
+
+			.comment-reply-title {
+				margin-top: 1em;
 			}
 
 			.comment-reply-title small {
@@ -787,6 +828,10 @@ h2#page-title a.dashicons {
 			margin: 1em;
 			border-bottom: 1px solid $border-color-light;
 		}
+	}
+
+	.chip {
+		background-color: #fff;
 	}
 
 	/* to support mastodon style tags */
