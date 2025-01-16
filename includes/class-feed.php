@@ -631,6 +631,11 @@ class Feed {
 					if ( empty( $old_post->$field ) || empty( $post_data[ $field ] ) ) {
 						continue;
 					}
+					if ( 'post_content' === $field && $old_post->$field !== $post_data[ $field ] ) {
+						$modified_post_data[ $field ] = $post_data[ $field ];
+						break;
+					}
+
 					if ( wp_strip_all_tags( $old_post->$field ) !== wp_strip_all_tags( $post_data[ $field ] ) ) {
 						$modified_post_data[ $field ] = $post_data[ $field ];
 						break;
@@ -654,6 +659,7 @@ class Feed {
 						if ( intval( $old_post->comment_count ) !== intval( $item->comment_count ) ) {
 							$modified_post_data['comment_count'] = $item->comment_count;
 						}
+
 						wp_update_post( $modified_post_data );
 						$modified_posts[] = $post_id;
 					}
