@@ -96,13 +96,15 @@ foreach ( array(
 	'alquimidia/fedipress',
 ) as $repo ) {
 	$repo_info = json_decode( file_get_contents( "https://api.github.com/repos/$repo" ) );
+	$slug = strtok( $repo_info->full_name, '/', '-' );
+
 	$latest_release = json_decode( file_get_contents( "https://api.github.com/repos/$repo/releases/latest" ) );
 	$data = array(
-		'name'              => $repo_info->name,
+		'name'              => preg_replace( '/(\w)press/', '$1Press', ucfirst( $repo_info->name ) ),
 		'short_description' => $repo_info->description,
 		'more_info'         => $repo_info->html_url,
 		'author'            => '<a href="' . $repo_info->owner->html_url . '">' . $repo_info->owner->login . '</a>',
-		'slug'              => $repo_info->name,
+		'slug'              => $slug,
 		'version'           => $latest_release->tag_name,
 		'trunk'             => $latest_release->zipball_url,
 		'download_link'     => $latest_release->zipball_url,
@@ -116,7 +118,7 @@ foreach ( array(
 		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ) );
 	}
 
-	$json[ $repo_info->full_name ] = $data;
+	$json[ $slug ] = $data;
 }
 
 file_put_contents( __DIR__ . '/../plugins.json', json_encode( $json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
