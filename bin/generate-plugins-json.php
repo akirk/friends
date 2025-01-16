@@ -91,6 +91,34 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 	}
 	$json[ $slug ] = $data;
 }
+
+foreach ( array(
+	'alquimidia/fedipress',
+) as $repo ) {
+	$repo_info = json_decode( file_get_contents( "https://api.github.com/repos/$repo" ) );
+	$latest_release = json_decode( file_get_contents( "https://api.github.com/repos/$repo/releases/latest" ) );
+	$data = array(
+		'name'              => $repo_info->name,
+		'short_description' => $repo_info->description,
+		'more_info'         => $repo_info->html_url,
+		'author'            => '<a href="' . $repo_info->owner->html_url . '">' . $repo_info->owner->login . '</a>',
+		'slug'              => $repo_info->name,
+		'version'           => $latest_release->tag_name,
+		'trunk'             => $latest_release->zipball_url,
+		'download_link'     => $latest_release->zipball_url,
+		'last_updated'      => substr( $latest_release->published_at, 0, 10 ),
+		'sections'          => array(),
+	);
+
+	$readme_md = '## Overview' . PHP_EOL . file_get_contents( "https://raw.githubusercontent.com/$repo/master/README.md" );
+	foreach ( explode( PHP_EOL . '## ', $readme_md ) as $i => $section ) {
+		$title = strtok( $section, PHP_EOL );
+		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ) );
+	}
+
+	$json[ $repo_info->full_name ] = $data;
+}
+
 file_put_contents( __DIR__ . '/../plugins.json', json_encode( $json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 echo 'plugins.json was created.', PHP_EOL;
 
