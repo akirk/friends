@@ -479,6 +479,13 @@ h2#page-title a.dashicons {
 		border-radius: 5px;
 	}
 
+	img.avatar.avatar-overlay {
+		position: absolute;
+		margin-left: -16px;
+		margin-top: 24px;
+		border-radius: 100%;
+	}
+
 	div.friends-widget {
 		margin-bottom: 2em;
 	}
@@ -527,14 +534,16 @@ h2#page-title a.dashicons {
 					margin-right: .5em;
 				}
 
-				div.author {
-					max-width: 19em;
-				}
-
 				@media (min-width: $off-canvas-breakpoint) {
 					padding-top: .5rem;
 					padding-right: 1rem;
 					padding-left: 1rem;
+				}
+
+				@media (max-width: $off-canvas-breakpoint) {
+					div.author {
+						max-width: 19em;
+					}
 				}
 
 				div.friends-dropdown {
