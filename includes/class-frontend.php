@@ -673,10 +673,10 @@ class Frontend {
 			the_post();
 			$args = array(
 				'friends' => $friends,
-				'avatar'  => get_post_meta( get_the_ID(), 'gravatar', true ),
 			);
 
 			$args['friend_user'] = User::get_post_author( $post );
+			$args['avatar'] = $args['friend_user']->get_avatar_url();
 
 			$read_time = self::calculate_read_time( get_the_content() );
 			if ( $read_time >= 60 ) {

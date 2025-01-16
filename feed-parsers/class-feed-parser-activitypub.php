@@ -109,6 +109,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_in_reply_to_id', array( $this, 'mastodon_api_in_reply_to_id' ), 25 );
 		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
 
+		add_action( 'friends_post_author_meta', array( self::class, 'friends_post_author_meta' ) );
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
@@ -2528,6 +2529,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			);
 		}
 		return $comments;
+	}
+
+	public static function friends_post_author_meta( $friend_user ) {
+		$meta = get_post_meta( get_the_ID(), self::SLUG, true );
+		if ( ! isset( $meta['reblog'] ) || ! $meta['reblog'] ) {
+			return;
+		}
+
+		if ( ! isset( $meta['attributedTo']['id'] ) ) {
+			return;
+		}
+
+		Friends::template_loader()->get_template_part(
+			'frontend/parts/activitypub/follow-link',
+			null,
+			array(
+				'url'     => $meta['attributedTo']['id'],
+				'name'    => $meta['attributedTo']['name'],
+				'summary' => wp_strip_all_tags( $meta['attributedTo']['summary'] ),
+			)
+		);
 	}
 
 	public static function comment_form( $post_id ) {
