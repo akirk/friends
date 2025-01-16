@@ -57,7 +57,7 @@ $args['friends']->frontend->link(
 	<p>
 	<?php
 	echo wp_kses(
-		str_replace( '</p>', '<br/>', $args['friend_user']->description ),
+		make_clickable( str_replace( '</p>', '<br/>', $args['friend_user']->description ) ),
 		array(
 			'a'    => array( 'href' => array() ),
 			'span' => array( 'class' => array() ),

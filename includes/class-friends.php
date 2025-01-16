@@ -9,8 +9,6 @@
 
 namespace Friends;
 
-use stdClass;
-
 /**
  * This is the class for the Friends Plugin.
  *
