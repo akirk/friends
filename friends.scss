@@ -621,10 +621,6 @@ h2#page-title a.dashicons {
 					display: inline-block;
 					margin-left: .5em;
 					margin-right: .5em;
-
-					@media (min-width: $off-canvas-breakpoint) {
-						width: calc(100% - 35em);
-					}
 				}
 
 				header {
