@@ -1023,7 +1023,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
 					continue;
 				}
-				if ( 'Document' !== $attachment['type'] ) {
+				if ( ! in_array( $attachment['type'], array( 'Document', 'Image' ), true ) ) {
 					continue;
 				}
 
