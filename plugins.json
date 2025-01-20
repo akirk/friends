@@ -99,15 +99,15 @@
             "Changelog": "<h4>0.8.4</h4><br/>\n- Allow creating books via bulk edit ([#13])<br/>\n- Fixed a bug where a non-existant image could cause the rest of the document to be a link<br/>\n- Enable the URL GET parameter on any page<br/>\n- One more fix for empty titles in posts<br/>\n<h4>0.8.3</h4><br/>\n- Try harder to ensure the title is not empty ([#12])<br/>\n<h4>0.8.2</h4><br/>\n- Ensure the title is not empty ([#11])<br/>\n- Improve the Reading Summary function ([#9])<br/>\n<h4>0.8.1</h4><br/>\n- Add a Download URL previewer ([#7])<br/>\n- Add the ability to mark an article as new ([#6])<br/>\n<h4>0.8.0</h4><br/>\n- Fix choking on invalid SVGs<br/>\n- Enable unsent posts for any author<br/>\n- Add the ability to download ePub through special URLs ([#5])<br/>\n<h4>0.7</h4><br/>\n- Fix multi-item dialog not popping up.<br/>\n<h4>0.6</h4><br/>\n- Remove MOBI support since Amazon now accepts EPubs by mail.<br/>\n- Introduce Reading Summaries: You can create a new draft posts from your sent articles so that you can easily post about them.<br/>\n- Remember which posts were already sent, enabling a \"Send x new posts to your e-reader\" button in the header.<br/>\n<h4>0.5</h4><br/>\n- Remember which posts were sent and allow sending just the new ones. [WIP display works, actual sending not yet]<br/>\n- Automatically send new posts every week. [WIP setting screen is there, saving setting and cron not yet]<br/>\n- Allow auto-creating of \"reading summary\" draft posts with link plus excerpt and room for your own comments.<br/>\n- New-style setting screen with separate screen for reading summaries.<br/>\n<h4>0.4</h4><br/>\n- Update for Friends 2.0<br/>\n<h4>0.3</h4><br/>\n- Allow downloading the ePub.<br/>\n- Theoretically add support for Tolino. Not functional because Thalia doesn't want to provide OAuth2 credentials.<br/>\n[#12]: https://github.com/akirk/friends-send-to-e-reader/pull/12<br/>\n[#11]: https://github.com/akirk/friends-send-to-e-reader/pull/11<br/>\n[#9]: https://github.com/akirk/friends-send-to-e-reader/pull/9<br/>\n[#7]: https://github.com/akirk/friends-send-to-e-reader/pull/7<br/>\n[#6]: https://github.com/akirk/friends-send-to-e-reader/pull/6<br/>\n[#5]: https://github.com/akirk/friends-send-to-e-reader/pull/5"
         }
     },
-    "alquimidia": {
+    "fedipress": {
         "name": "FediPress",
         "short_description": "Plugin Wordpress para customizar plugin Friends",
         "more_info": "https://github.com/alquimidia/fedipress",
         "author": "<a href=\"https://github.com/alquimidia\">alquimidia</a>",
-        "slug": "alquimidia",
+        "slug": "fedipress",
         "version": "v1.0.0",
-        "trunk": "https://api.github.com/repos/alquimidia/fedipress/zipball/v1.0.0",
-        "download_link": "https://api.github.com/repos/alquimidia/fedipress/zipball/v1.0.0",
+        "trunk": "https://github.com/alquimidia/fedipress/archive/refs/tags/v1.0.0.zip",
+        "download_link": "https://github.com/alquimidia/fedipress/archive/refs/tags/v1.0.0.zip",
         "last_updated": "2024-12-26",
         "sections": {
             "## Overview": "<h2>FediPress</h2><br/>\nWordpress Plugin to customize <a href=\"https://github.com/akirk/friends\">Friends Plugin</a> feed.<br/>\n- Tested in WordPress up to: 6.7<br/>\n- License: GPL-3<br/>\nFediPress sets some sidebar widgets fixed and publishes made in form are public by default.<br/>\n!<a href=\"img/sidebar.png\">alt text</a>",
