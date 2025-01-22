@@ -6,33 +6,33 @@ jobs:
     strategy:
       matrix:
         include:
-          - php: '7.2'
-            phpunit: '6.3.1'
-            wordpress: '6.0'
-          - php: '7.2'
-            phpunit: '6.3.1'
-            wordpress: 'trunk'
-          - php: '7.3'
-            phpunit: '7.2.7'
-            wordpress: '6.0'
-          - php: '7.4'
-            phpunit: '8.1.6'
-            wordpress: 'trunk'
-          - php: '8.0'
-            phpunit: '8.5.16'
-            wordpress: 'trunk'
-          - php: '8.1'
-            phpunit: '9.6.21'
-            wordpress: 'trunk'
-          - php: '8.2'
-            phpunit: '9.6.21'
-            wordpress: 'trunk'
-          - php: '8.3'
-            phpunit: '9.6.21'
-            wordpress: 'trunk'
-          - php: '8.4'
-            phpunit: '9.6.21'
-            wordpress: 'trunk'
+          - php: "7.2"
+            phpunit: "6.3.1"
+            wordpress: "6.0"
+          - php: "7.2"
+            phpunit: "6.3.1"
+            wordpress: "trunk"
+          - php: "7.3"
+            phpunit: "7.2.7"
+            wordpress: "6.0"
+          - php: "7.4"
+            phpunit: "8.1.6"
+            wordpress: "trunk"
+          - php: "8.0"
+            phpunit: "8.5.16"
+            wordpress: "trunk"
+          - php: "8.1"
+            phpunit: "9.6.21"
+            wordpress: "trunk"
+          - php: "8.2"
+            phpunit: "9.6.21"
+            wordpress: "trunk"
+          - php: "8.3"
+            phpunit: "9.6.21"
+            wordpress: "trunk"
+          - php: "8.4"
+            phpunit: "9.6.21"
+            wordpress: "trunk"
 
     services:
       mariadb:
@@ -57,6 +57,9 @@ jobs:
           ini-values: error_reporting=E_ALL, display_errors=On
           coverage: none
 
+      - name: Install svn
+        run: sudo apt install subversion
+
       - name: Shutdown default MySQL service
         run: sudo service mysql stop
 
@@ -66,7 +69,7 @@ jobs:
             sleep 1
           done
 
-      - name: 'Composer: set PHPUnit version for tests'
+      - name: "Composer: set PHPUnit version for tests"
         if: ${{ matrix.phpunit != 'auto' }}
         run: composer require --dev --no-update phpunit/phpunit:"${{ matrix.phpunit }}"
 
