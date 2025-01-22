@@ -96,7 +96,7 @@ foreach ( array(
 	'alquimidia/fedipress',
 ) as $repo ) {
 	$repo_info = json_decode( file_get_contents( "https://api.github.com/repos/$repo" ) );
-	$slug = strtok( $repo_info->full_name, '/', '-' );
+	$slug = strtr( $repo_info->full_name, '/', '-' );
 
 	$latest_release = json_decode( file_get_contents( "https://api.github.com/repos/$repo/releases/latest" ) );
 	$data = array(
