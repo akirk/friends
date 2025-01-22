@@ -58,7 +58,7 @@ jobs:
           coverage: none
 
       - name: Install svn
-        run: sudo apt install subversion
+        run: sudo apt-get install subversion
 
       - name: Shutdown default MySQL service
         run: sudo service mysql stop
