@@ -43,7 +43,6 @@ div {
 @import "node_modules/spectre.css/src/utilities/position";
 
 .friends-dropdown {
-	display: none;
 	position: relative;
 
 	.menu {
@@ -57,6 +56,7 @@ div {
 	}
 
 	&.friends-dropdown-right {
+		display: none;
 		.menu {
 			left: auto;
 			right: 0;
@@ -526,8 +526,8 @@ h2#page-title a.dashicons {
 				font-size: 88%;
 				line-height: 1.4;
 				max-width: 100%;
-				margin: auto -0.4rem;
-				padding: 1rem;
+				margin: 0;
+				padding: .8rem;
 				padding-bottom: 1.5em;
 
 				div.avatar {
@@ -548,6 +548,7 @@ h2#page-title a.dashicons {
 
 				div.friends-dropdown {
 					display: inline-block;
+					margin-right: -.4rem;
 				}
 			}
 
@@ -614,7 +615,7 @@ h2#page-title a.dashicons {
 			}
 
 			h4.card-title {
-				padding-left: .5rem;
+				padding-left: 1rem;
 			}
 
 			&.format-status {
@@ -624,12 +625,13 @@ h2#page-title a.dashicons {
 
 				div.teaser {
 					text-overflow: ellipsis;
-					width: calc(100% - 1em);
 					overflow: hidden;
 					white-space: nowrap;
 					display: inline-block;
-					margin-left: .5em;
-					margin-right: .5em;
+					margin-left: 60px;
+					margin-right: 2em;
+					margin-top: -1em;
+					margin-bottom: 0.6em;
 				}
 
 				header {
