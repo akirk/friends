@@ -1,3 +1,7 @@
+### 3.3.1
+- Fix some styling issues ([#437])
+- Fix FediPress installation ([#435])
+
 ### 3.3.0
 - Styling Overhaul! ([#431])
 - Add the FediPress theme ([#433])
@@ -330,6 +334,8 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#437]: https://github.com/akirk/friends/pull/437
+[#435]: https://github.com/akirk/friends/pull/435
 [#426]: https://github.com/akirk/friends/pull/426
 [#427]: https://github.com/akirk/friends/pull/427
 [#429]: https://github.com/akirk/friends/pull/429

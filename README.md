@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.3.0
+- Stable tag: 3.3.1
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.3.1
+- Fix some styling issues ([#437])
+- Fix FediPress installation ([#435])
+
 ### 3.3.0
 - Styling Overhaul! ([#431])
 - Add the FediPress theme ([#433])
@@ -184,6 +188,8 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
 - Improve ghost.org ActivityPub compatibility ([#356])
 
+[#437]: https://github.com/akirk/friends/pull/437
+[#435]: https://github.com/akirk/friends/pull/435
 [#426]: https://github.com/akirk/friends/pull/426
 [#427]: https://github.com/akirk/friends/pull/427
 [#429]: https://github.com/akirk/friends/pull/429
