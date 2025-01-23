@@ -592,7 +592,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$feed_parsing_test->send( $feed );
 
 		$new_items = $feed_parsing_test->current();
-			$this->assertCount( 0, $new_items );
+		$this->assertCount( 0, $new_items );
 		$count = wp_count_posts( Friends::CPT );
 		$this->assertEquals( 10, $count->publish );
 

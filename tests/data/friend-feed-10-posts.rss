@@ -8,51 +8,61 @@
 			<title>First Post</title>
 			<link>http://friend.local/2023/01/01/first-post</link>
 			<description>This is the first post content.</description>
+			<pubDate>Mon, 01 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Second Post</title>
 			<link>http://friend.local/2023/01/02/second-post</link>
 			<description>This is the second post content.</description>
+			<pubDate>Tue, 02 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Third Post</title>
 			<link>http://friend.local/2023/01/03/third-post</link>
 			<description>This is the third post content.</description>
+			<pubDate>Wed, 03 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Fourth Post</title>
 			<link>http://friend.local/2023/01/04/fourth-post</link>
 			<description>This is the fourth post content.</description>
+			<pubDate>Thu, 04 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Fifth Post</title>
 			<link>http://friend.local/2023/01/05/fifth-post</link>
 			<description>This is the fifth post content.</description>
+			<pubDate>Fri, 05 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Sixth Post</title>
 			<link>http://friend.local/2023/01/06/sixth-post</link>
 			<description>This is the sixth post content.</description>
+			<pubDate>Sat, 06 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Seventh Post</title>
 			<link>http://friend.local/2023/01/07/seventh-post</link>
 			<description>This is the seventh post content.</description>
+			<pubDate>Sun, 07 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Eighth Post</title>
 			<link>http://friend.local/2023/01/08/eighth-post</link>
 			<description>This is the eighth post content.</description>
+			<pubDate>Mon, 08 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Ninth Post</title>
 			<link>http://friend.local/2023/01/09/ninth-post</link>
 			<description>This is the ninth post content.</description>
+			<pubDate>Tue, 09 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 		<item>
 			<title>Tenth Post</title>
 			<link>http://friend.local/2023/01/10/tenth-post</link>
 			<description>This is the tenth post content.</description>
+			<pubDate>Wed, 10 Jan 2023 00:00:00 +0000</pubDate>
 		</item>
 	</channel>
 </rss>

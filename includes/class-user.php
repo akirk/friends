@@ -588,7 +588,7 @@ class User extends \WP_User {
 
 		unset( $args['date_query'] );
 		$args['orderby'] = 'date';
-		$args['order'] = 'asc';
+		$args['order'] = 'desc';
 		if ( $this->is_retention_number_enabled() ) {
 			$args['offset'] = $this->get_retention_number();
 			$query = new \WP_Query();
@@ -608,13 +608,11 @@ class User extends \WP_User {
 
 		// Global setting.
 		if ( get_option( 'friends_enable_retention_number' ) ) {
-			unset( $args['author'] );
 			$args['offset'] = Friends::get_retention_number();
 			$query = new \WP_Query();
 			foreach ( $args as $key => $value ) {
 				$query->set( $key, $value );
 			}
-			$query = $this->modify_query_by_author( $query );
 
 			foreach ( $query->get_posts() as $post ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
