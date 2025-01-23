@@ -47,10 +47,8 @@ class Notifications {
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
 		add_action( 'activitypub_new_follower_email', array( $this, 'activitypub_new_follower_email' ), 10, 3 );
-		if ( ! get_user_option( 'friends_no_friend_follower_notification' ) ) {
-			add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
-			add_action( 'activitypub_followers_pre_remove_follower', array( $this, 'activitypub_followers_pre_remove_follower' ), 10, 3 );
-		}
+		add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
+		add_action( 'activitypub_followers_pre_remove_follower', array( $this, 'activitypub_followers_pre_remove_follower' ), 10, 3 );
 	}
 
 	/**
@@ -411,6 +409,9 @@ class Notifications {
 	 * @return void
 	 */
 	public function activitypub_followers_post_follow( $actor, $activitypub_object, $user_id, $follower ) {
+		if ( ! get_user_option( 'friends_no_friend_follower_notification', $user_id ) ) {
+			return;
+		}
 		$user = new User( $user_id );
 		if ( defined( 'WP_TESTS_EMAIL' ) ) {
 			$user->user_email = WP_TESTS_EMAIL;
@@ -473,6 +474,9 @@ class Notifications {
 	 * @return void
 	 */
 	public function activitypub_followers_pre_remove_follower( $follower, $user_id, $actor ) {
+		if ( ! get_user_option( 'friends_no_friend_follower_notification', $user_id ) ) {
+			return;
+		}
 		$user = new User( $user_id );
 		if ( defined( 'WP_TESTS_EMAIL' ) ) {
 			$user->user_email = WP_TESTS_EMAIL;
