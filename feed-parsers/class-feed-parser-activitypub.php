@@ -2275,7 +2275,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			wp_send_json_error( 'unknown-post', array( 'id' => $post->ID ) );
 		}
 
-		if ( get_post_meta( get_the_ID(), 'boosted', true ) ) {
+		if ( get_post_meta( $post->ID, 'boosted', true ) ) {
+			\delete_post_meta( $post->ID, 'boosted' );
 			$this->mastodon_api_unreblog( $post->ID );
 			wp_send_json_success( 'unboosted', array( 'id' => $post->ID ) );
 			return;
