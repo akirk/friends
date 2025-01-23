@@ -1,3 +1,7 @@
+### 3.3.2
+- Fixed sending ActivityPub boosts ([#440])
+- Fixed deleting by global retention number ([#439])
+
 ### 3.3.1
 - Fix some styling issues ([#437])
 - Fix FediPress installation ([#435])
@@ -334,6 +338,8 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#440]: https://github.com/akirk/friends/pull/440
+[#439]: https://github.com/akirk/friends/pull/439
 [#437]: https://github.com/akirk/friends/pull/437
 [#435]: https://github.com/akirk/friends/pull/435
 [#426]: https://github.com/akirk/friends/pull/426
