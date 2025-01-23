@@ -690,6 +690,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function get_activitypub_actor( $user_id ) {
+		return \Activitypub\Collection\Actors::get_by_id( $this->get_activitypub_actor_id( $user_id ) );
+	}
+
+	public function get_activitypub_actor_id( $user_id ) {
+		if ( null !== $user_id && \Activitypub\is_user_disabled( $user_id ) ) {
+			$user_id = null;
+		}
 		if ( null === $user_id ) {
 			$user_id = Friends::get_main_friend_user_id();
 			if ( \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
@@ -700,8 +707,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 
-		$actor = \Activitypub\Collection\Actors::get_by_id( $user_id );
-		return $actor;
+		return $user_id;
 	}
 
 	/**
@@ -888,7 +894,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
 			if ( isset( $activity['object']['tag'] ) && is_array( $activity['object']['tag'] ) ) {
-				$my_activitypub_id = \get_author_posts_url( $user_id );
+				$my_activitypub_id = (string) $this->get_activitypub_actor( $user_id );
 				foreach ( $activity['object']['tag'] as $tag ) {
 					if ( isset( $tag['type'] ) && 'Mention' === $tag['type'] && isset( $tag['href'] ) && $tag['href'] === $my_activitypub_id ) {
 						// It was a mention.
@@ -1186,7 +1192,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 		$this->log( 'Received announce for ' . $url );
-		$actor = $this->get_activitypub_actor( $user_id );
 		$response = \Activitypub\safe_remote_get( $url );
 		if ( \is_wp_error( $response ) ) {
 			return $response;
@@ -1431,6 +1436,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_follow_user( $url, $user_id = null ) {
+		$user_id = $this->get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
@@ -1506,6 +1512,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_unfollow_user( $url, $user_id = null ) {
+		$user_id = $this->get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
@@ -1992,7 +1999,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$actor = \get_author_posts_url( $user_id );
+		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( $type );
@@ -2112,7 +2120,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$actor = \get_author_posts_url( $user_id );
+		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Undo' );
@@ -2271,6 +2280,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			wp_send_json_success( 'unboosted', array( 'id' => $post->ID ) );
 			return;
 		}
+		\update_post_meta( $post->ID, 'boosted', get_current_user_id() );
 		$this->mastodon_api_reblog( $post->ID );
 
 		wp_send_json_success( 'boosted', array( 'id' => $post->ID ) );
@@ -2353,14 +2363,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_announce( $url, $user_id ) {
-		$actor = \get_author_posts_url( $user_id );
+		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Announce' );
 		$activity->set_actor( $actor );
 		$activity->set_object( $url );
 		$activity->set_id( $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ) );
-		$activity->set_to( 'https://www.w3.org/ns/activitystreams#Public' );
+		$activity->set_to( array( 'https://www.w3.org/ns/activitystreams#Public' ) );
 		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
 
 		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
@@ -2383,7 +2394,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$json = $activity->to_json();
-
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
 			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
@@ -2428,7 +2438,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_unannounce( $url, $user_id ) {
-		$actor = \get_author_posts_url( $user_id );
+		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Undo' );
