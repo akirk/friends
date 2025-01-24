@@ -1,3 +1,10 @@
+### 3.3.3
+- Remove the setting to change the post formats in the main query loop because it was confusing ([#446])
+- Protect posts that I have reacted on ([#447])
+- Fix Typo which prevented unannounces ([#443])
+- Plugins: Fix the More Details link ([#445])
+- Check the right user option about the follower e-mail ([#444])
+
 ### 3.3.2
 - Fixed sending ActivityPub boosts ([#440])
 - Fixed deleting by global retention number ([#439])
@@ -338,6 +345,11 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#446]: https://github.com/akirk/friends/pull/446
+[#447]: https://github.com/akirk/friends/pull/447
+[#443]: https://github.com/akirk/friends/pull/443
+[#445]: https://github.com/akirk/friends/pull/445
+[#444]: https://github.com/akirk/friends/pull/444
 [#440]: https://github.com/akirk/friends/pull/440
 [#439]: https://github.com/akirk/friends/pull/439
 [#437]: https://github.com/akirk/friends/pull/437
