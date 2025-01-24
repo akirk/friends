@@ -198,7 +198,6 @@ class Friends {
 
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'cron_schedules', array( $this, 'add_fifteen_minutes_interval' ) ); // phpcs:ignore WordPressVIPMinimum.Performance.IntervalInSeconds.IntervalInSeconds
-		add_filter( 'pre_get_posts', array( $this, 'pre_get_posts_filter_by_post_format' ), 20 );
 		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
@@ -1061,24 +1060,6 @@ class Friends {
 				$wp_query->set_404();
 				status_header( 404 );
 			}
-		}
-	}
-
-	/**
-	 * Modify the main query to allow limiting the post format on the homepage.
-	 *
-	 * @param      \WP_Query $query  The query.
-	 */
-	public function pre_get_posts_filter_by_post_format( $query ) {
-		global $wp_query;
-
-		if ( ! ( $query->is_main_query() || $query->is_feed() ) || ! empty( $wp_query->query['post_format'] ) || $query->is_friends_page ) {
-			return;
-		}
-
-		$tax_query = $this->wp_query_get_post_format_tax_query( $query->get( 'tax_query' ), get_option( 'friends_limit_homepage_post_format', false ) );
-		if ( $tax_query ) {
-			$query->set( 'tax_query', $tax_query );
 		}
 	}
 
