@@ -101,6 +101,10 @@ do_action( 'friends_settings_before_form' );
 							?>
 							</span>
 						</div>
+						<div>
+							<input type="checkbox" name="retention_delete_reacted" id="retention_delete_reacted" value="1" <?php checked( ! $args['retention_delete_reacted'] ); ?> />
+							<label for="retention_delete_reacted"><?php esc_html_e( 'Protect posts from deletion that I have reacted on.', 'friends' ); ?></label>
+						</div>
 					</fieldset>
 					<p class="description">
 						<?php
@@ -226,6 +230,9 @@ do_action( 'friends_settings_before_form' );
 						</ol>
 						<a href="" id="admin-add-emoji"><?php esc_html_e( 'Add an emoji', 'friends' ); ?></a>
 						<?php Friends\Friends::template_loader()->get_template_part( 'admin/reactions-picker' ); ?>
+						<?php if ( class_exists( 'Activitypub\Activitypub' ) ) : ?>
+							<p class="description"><?php esc_html_e( 'This will always send a "Like" on ActivityPub but you can use different reactions to distinguish them for yourself. For example ⭐️ for bookmarks and ❤️ for likes.', 'friends' ); ?></p>
+						<?php endif; ?>
 					</fieldset>
 				</td>
 			</tr>
