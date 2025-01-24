@@ -646,7 +646,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$count = wp_count_posts( Friends::CPT );
 		$this->assertEquals( 10, $count->publish );
 
-		$user->set_retention_number( 5 );
+		$user->set_retention_number( 7 );
 		// Nothing should change since it's not enabled.
 		$feed_parsing_test->send( $feed );
 		$new_items = $feed_parsing_test->current();
@@ -656,7 +656,42 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( 10, $count->publish );
 
 		$user->set_retention_number_enabled( true );
-		// Now the number should go down to 5.
+		// Now the number should go down to 7.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 7, $count->publish );
+
+		$user->set_retention_number( 5 );
+		// Let's react on the first post to protect it from deletion.
+		$posts = get_posts(
+			array(
+				'numberposts' => 1,
+				'post_type'   => Friends::CPT,
+				'order'	   => 'ASC',
+				'orderby'	 => 'date',
+			)
+		);
+
+		$reaction = '2764';
+		$emoji = Reactions::validate_emoji( $reaction );
+		$this->assertEquals( $emoji, '❤️' );
+		$ret = apply_filters( 'friends_react', null, $posts[0]->ID, $reaction );
+		$this->assertTrue( !! $ret );
+
+		// Now the number should go down to 6 (because 1 is protected).
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 6, $count->publish );
+
+		// Now let's disable the protection.
+		update_option( 'friends_retention_delete_reacted', true );
+		// Now the number should go down to 5 (because 1 is no longer protected).
 		$feed_parsing_test->send( $feed );
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 0, $new_items );
