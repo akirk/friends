@@ -521,14 +521,27 @@
 					if ( 'boosted' === result ) {
 						$this
 							.find( 'i.friends-boost-status' )
+							.removeClass( 'dashicons-warning' )
 							.addClass( 'dashicons dashicons-saved' );
+					} else if ( 'unboosted' === result ) {
+						$this
+							.find( 'i.friends-boost-status' )
+							.removeClass( 'dashicons dashicons-warning dashicons-saved' )
 					} else {
 						$this
 							.find( 'i.friends-boost-status' )
 							.addClass( 'dashicons dashicons-warning' )
-							.removeClass( 'dashicons-saved' );
+							.removeClass( 'dashicons-saved' )
+							.attr( 'title', result );
 					}
 				},
+				fail( result ) {
+					$this
+						.find( 'i.friends-boost-status' )
+						.addClass( 'dashicons dashicons-warning' )
+						.removeClass( 'dashicons-saved' )
+						.attr( 'title', result );
+					}
 			} );
 			return false;
 		} );
