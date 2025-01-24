@@ -7,7 +7,7 @@
  */
 
 $api = $args['api'];
-$more_info_url = $api->more_info;
+$more_info_url = $api->details;
 
 ?><div class="plugin-card plugin-card-<?php echo esc_attr( $api->slug ); ?>">
 	<div class="plugin-card-top">
@@ -45,8 +45,6 @@ $more_info_url = $api->more_info;
 	<div class="plugin-card-bottom">
 		<a class="<?php echo esc_attr( $args['button_classes'] ); ?>" data-slug="<?php echo esc_attr( $api->slug ); ?>" data-name="<?php echo esc_attr( $api->name ); ?>" href="<?php echo esc_url( $args['install_url'] ); ?>" aria-label="<?php echo /* translators: %1$s is a plugin name, %2$s is a plugin version. */ esc_html( sprintf( __( 'Install %1$s %2$s now', 'friends' ), $api->name, $api->version ) ); ?>"><?php echo esc_html( $args['button_text'] ); ?></a>
 
-		<a class="button details thickbox open-plugin-details-modal" href="<?php echo esc_url( $more_info_url ); ?>" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ echo /* translators: %s is a plugin name. */ esc_html( sprintf( __( 'More information about %s' ), $api->name ) ); ?>" data-title="<?php echo esc_attr( $api->name ); ?>"><?php esc_html_e( 'More Details' ); ?></a>
-
 		<a class="button deactivate <?php echo esc_attr( $args['deactivate_button_class'] ); ?>"
 			data-slug="<?php echo esc_attr( $api->slug ); ?>"
 			data-name="<?php echo esc_attr( $api->name ); ?>"
@@ -61,6 +59,8 @@ $more_info_url = $api->more_info;
 			);
 			?>
 		</a>
+
+		<a class="details thickbox open-plugin-details-modal" style="line-height: 2.3em" href="<?php echo esc_url( $more_info_url ); ?>" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ echo /* translators: %s is a plugin name. */ esc_html( sprintf( __( 'More information about %s' ), $api->name ) ); ?>" data-title="<?php echo esc_attr( $api->name ); ?>"><?php esc_html_e( 'More Details' ); ?></a>
 
 	</div>
 </div>
