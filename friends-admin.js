@@ -355,7 +355,6 @@ jQuery( function ( $ ) {
 	} );
 
 	var updateDashboardWidgets = function() {
-		console.log( 'updateDashboardWidgets' );
 		$( '.friends-dashboard-widget' ).each( function() {
 			const $this = $( this );
 			if ( $this.find( 'li.friends-post' ).length ) {
@@ -371,7 +370,7 @@ jQuery( function ( $ ) {
 			if ( $this.data( 'format' ) ) {
 				data.format = $this.data( 'format' );
 			}
-			console.log( data );
+
 			$.post(
 				friends.ajax_url,
 				data,
