@@ -580,11 +580,6 @@ class Admin {
 				}
 			}
 
-			if ( isset( $_POST['limit_homepage_post_format'] ) && in_array( $_POST['limit_homepage_post_format'], get_post_format_slugs() ) ) {
-				update_option( 'friends_limit_homepage_post_format', $_POST['limit_homepage_post_format'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			} else {
-				delete_option( 'friends_limit_homepage_post_format' );
-			}
 			if ( isset( $_POST['blocks_everywhere'] ) && boolval( $_POST['blocks_everywhere'] ) ) {
 				update_user_option( get_current_user_id(), 'friends_blocks_everywhere', 1 );
 			} else {

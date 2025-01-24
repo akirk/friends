@@ -133,42 +133,6 @@ do_action( 'friends_settings_before_form' );
 				<th scope="row"><?php esc_html_e( 'Post Formats', 'friends' ); ?></th>
 				<td>
 					<fieldset>
-						<label for="limit_homepage_post_format">
-								<?php
-								$select = '<select name="limit_homepage_post_format" id="limit_homepage_post_format">';
-								$select .= '<option value="0"' . selected( $args['limit_homepage_post_format'], false, false ) . '>' . esc_html( _x( 'All', 'All post-formats', 'friends' ) ) . '</option>';
-								foreach ( $args['post_format_strings'] as $format => $_title ) {
-									// translators: %s is a post format title.
-									$select .= '<option value="' . esc_attr( $format ) . '"' . selected( $args['limit_homepage_post_format'], $format, false ) . '>' . esc_html( sprintf( _x( '%s only', 'post-format only', 'friends' ), $_title ) ) . '</option>';
-								}
-								$select .= '</select>';
-
-								echo wp_kses(
-									sprintf(
-										// translators: %s is a Select dropdown of post formats, e.g. "All" or "Standard only" (see "post-format only").
-										__( 'On your homepage, show %s posts.', 'friends' ),
-										$select
-									),
-									array(
-										'select' => array(
-											'name' => array(),
-										),
-										'label'  => array(),
-										'option' => array(
-											'value'    => array(),
-											'selected' => array(),
-										),
-										'a'      => array(
-											'href'   => array(),
-											'rel'    => array(),
-											'target' => array(),
-										),
-									)
-								);
-								?>
-						</label>
-						<br/>
-
 						<label for="force_enable_post_formats">
 							<input name="force_enable_post_formats" type="checkbox" id="force_enable_post_formats" value="1" <?php checked( '1', $args['force_enable_post_formats'] ); ?>>
 							<span><?php esc_html_e( 'Always enable Post Formats, regardless of the theme support.', 'friends' ); ?></span>
