@@ -87,7 +87,9 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 			continue;
 		}
 		$title = strtok( $section, PHP_EOL );
-		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ) );
+		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ), 'https://github.com/akirk/' . $slug, 'https://raw.githubusercontent.com/akirk/' . $slug . '/HEAD/' );
+
+
 	}
 	$json[ $slug ] = $data;
 }
@@ -112,10 +114,10 @@ foreach ( array(
 		'sections'          => array(),
 	);
 
-	$readme_md = '## Overview' . PHP_EOL . file_get_contents( "https://raw.githubusercontent.com/$repo/master/README.md" );
-	foreach ( explode( PHP_EOL . '## ', $readme_md ) as $i => $section ) {
+	$readme_md = 'Overview' . PHP_EOL . file_get_contents( "https://raw.githubusercontent.com/$repo/HEAD/README.md" );
+	foreach ( explode( PHP_EOL . '## ', $readme_md ) as $section ) {
 		$title = strtok( $section, PHP_EOL );
-		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ) );
+		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ), $repo_info->html_url, 'https://raw.githubusercontent.com/' . $repo . '/HEAD/' );
 	}
 
 	$json[ $slug ] = $data;
@@ -131,12 +133,20 @@ echo 'plugins.json was created.', PHP_EOL;
  *
  * @return     string  The HTML.
  */
-function simple_convert_markdown( $md ) {
+function simple_convert_markdown( $md, $url, $img_base_url = '' ) {
+	if ( ! $img_base_url ) {
+		$img_base_url = $url;
+	}
 	$html = $md;
 	$html = preg_replace( '/^# (.*)$/m', '<h2>$1</h2>', $html );
 	$html = preg_replace( '/^## (.*)$/m', '<h3>$1</h3>', $html );
 	$html = preg_replace( '/^### (.*)$/m', '<h4>$1</h4>', $html );
+	$html = preg_replace( '/\*\*\*(.*?)\*\*\*/', '<strong><em>$1</em></strong>', $html );
+	$html = preg_replace( '/\*\*(.*?)\*\*/', '<strong>$1</strong>', $html );
 	$html = preg_replace( '/^> (.*)$/m', '<blockquote>$1</blockquote>', $html );
-	$html = preg_replace( '/\[([^\]]*)\]\(([^)]*)\)/', '<a href="$2">$1</a>', $html );
+	$html = preg_replace( '/!\[([^\]]*)\]\((https?:\/\/[^)]*)\)/', '<img src="$2" alt="$1"/>', $html );
+	$html = preg_replace( '/!\[([^\]]*)\]\(([^)]*)\)/', '<img src="' . $img_base_url . '/$2" alt="$1"/>', $html );
+	$html = preg_replace( '/\[([^\]]*)\]\((https?:\/\/[^)]*)\)/', '<a href="$2">$1</a>', $html );
+	$html = preg_replace( '/\[([^\]]*)\]\(([^)]*)\)/', '<a href="' . $url . '/$2">$1</a>', $html );
 	return trim( preg_replace( '/\n+/', "<br/>\n", trim( $html ) ) );
 }
