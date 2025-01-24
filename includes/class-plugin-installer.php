@@ -212,11 +212,6 @@ class Plugin_Installer {
 			echo esc_html( $api->get_error_message() );
 			exit;
 		}
-		if ( isset( $_GET['width'] ) && isset( $_GET['height'] ) ) {
-			$width = intval( $_GET['width'] );
-			$height = intval( $_GET['height'] );
-			echo '<iframe frameborder="0" hspace="0" allowtransparency="true" id="TB_iframeContent" style="width: ' . esc_attr( $width ) . 'px; height: ' . esc_attr( $height ) . 'px;" src="' . esc_attr( $api->more_info ) . '"></iframe>';
-		}
 
 		Friends::template_loader()->get_template_part( 'admin/plugin-details', null, (array) $api );
 		exit;

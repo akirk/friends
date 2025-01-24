@@ -142,6 +142,7 @@ function simple_convert_markdown( $md, $url, $img_base_url = '' ) {
 	$html = preg_replace( '/^## (.*)$/m', '<h3>$1</h3>', $html );
 	$html = preg_replace( '/^### (.*)$/m', '<h4>$1</h4>', $html );
 	$html = preg_replace( '/\*\*\*(.*?)\*\*\*/', '<strong><em>$1</em></strong>', $html );
+	$html = preg_replace( '/```(.*?)```/', '<tt>$1</tt>', $html );
 	$html = preg_replace( '/\*\*(.*?)\*\*/', '<strong>$1</strong>', $html );
 	$html = preg_replace( '/^> (.*)$/m', '<blockquote>$1</blockquote>', $html );
 	$html = preg_replace( '/!\[([^\]]*)\]\((https?:\/\/[^)]*)\)/', '<img src="$2" alt="$1"/>', $html );
