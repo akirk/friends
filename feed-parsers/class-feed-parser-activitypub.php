@@ -953,7 +953,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
 							require ABSPATH . WPINC . '/wp-diff.php';
 						}
-						$diff = new \Text_Diff( explode( 'PHP_EOL', wp_strip_all_tags( $item->content ) ), explode( 'PHP_EOL', wp_strip_all_tags( $_post->post_content ) ) );
+						$diff = new \Text_Diff( explode( 'PHP_EOL', wp_strip_all_tags( $_post->post_content ) ), explode( 'PHP_EOL', wp_strip_all_tags( $item->content ) ) );
 						$renderer = new \WP_Text_Diff_Renderer_inline();
 						$details['content'] = $renderer->render( $diff );
 						if ( empty( $details['content'] ) ) {
