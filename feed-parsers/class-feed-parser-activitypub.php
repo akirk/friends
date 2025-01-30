@@ -2626,6 +2626,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
+		if ( empty( $meta['attributedTo']['summary'] ) ) {
+			$meta['attributedTo']['summary'] = '';
+		}
+
 		Friends::template_loader()->get_template_part(
 			'frontend/parts/activitypub/follow-link',
 			null,
