@@ -1456,6 +1456,10 @@ class Frontend {
 
 						$template = $this->get_static_frontend_template( $current_part );
 						if ( $template ) {
+							$wp_query->is_404 = false;
+							$query->is_404 = false;
+							status_header( 200 );
+							add_filter( 'pre_handle_404', '__return_true' );
 							$this->template = $template;
 							return $query;
 						}
