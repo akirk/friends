@@ -301,3 +301,8 @@ span#friends_enable_retention_number_line {
 .friends-notification-manager details.options fieldset label {
 	width: 10em;
 }
+
+.friends-logs pre {
+	width: 38em;
+	white-space: pre-wrap;
+}
