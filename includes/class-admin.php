@@ -3463,7 +3463,7 @@ class Admin {
 			if ( ! is_array( $widget ) ) {
 				continue;
 			}
-			$title = 'Latest Posts';
+			$title = __( 'Latest Posts', 'friends' );
 			if ( isset( $widget['format'] ) ) {
 				$title = get_post_format_string( sanitize_key( $widget['format'] ) );
 			}
