@@ -2301,7 +2301,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_announce( $url, $user_id ) {
-		ActivityPub\add_to_outbox( $url, 'Announce', $user_id, ACTIVITYPUB_CONTENT_VISIBILITY_PUBLIC );
+		\Activitypub\add_to_outbox( $url, 'Announce', $user_id, ACTIVITYPUB_CONTENT_VISIBILITY_PUBLIC );
 	}
 
 	/**
@@ -2311,11 +2311,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_unannounce( $url, $user_id ) {
-		ActivityPub\add_to_outbox(
-			array(
-				'type'   => 'Announce',
-				'object' => $url,
-			),
+		$transformer = \Activitypub\Transformer\Factory::get_transformer( 'https://alex.kirk.at/' )->to_object();
+		$activity_object = $transformer->to_object();
+
+		\Activitypub\add_to_outbox(
+			$activity_object,
 			'Undo',
 			$user_id,
 			ACTIVITYPUB_CONTENT_VISIBILITY_PUBLIC
