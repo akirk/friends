@@ -1665,6 +1665,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$post_id = $this->cache_url( $url );
+		if ( is_wp_error( $post_id ) ) {
+			// show_message_on_frontend was called inside cache_url.
+			return;
+		}
 
 		if ( ! $post_id ) {
 			$this->show_message_on_frontend(
