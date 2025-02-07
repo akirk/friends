@@ -37,7 +37,7 @@
 								sprintf(
 									// translators: %s is a URL.
 									__( 'Send me an e-mail for posts of this friend if matches one of <a href="%s">my keywords</a>', 'friends' ),
-									esc_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ) )
+									esc_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-notification-manager' ) ) )
 								)
 							);
 							?>
