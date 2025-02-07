@@ -1731,29 +1731,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function the_content( $the_content ) {
-		$protected_tags = array();
-		foreach ( array(
-			'#<a.*?href=[^>]+>.*?</a>#i', // leave the inside of links alone.
-			'#<script[^>]*>.*?</script>#i', // leave the inside of scripts alone.
-			'#<style[^>]*>.*?</script>#i', // leave the inside of styles alone.
-			'#<[^>]+>#i', // leave the inside of any tags alone.
-		) as $regex ) {
-			$the_content = preg_replace_callback(
-				$regex,
-				function ( $m ) use ( &$protected_tags ) {
-					$c = count( $protected_tags );
-					$protect = '!#!#PROTECT' . $c . '#!#!';
-					$protected_tags[ $protect ] = $m[0];
-					return $protect;
-				},
-				$the_content
-			);
-		}
-
-		$the_content = \preg_replace_callback( '/@(?:[a-zA-Z0-9_-]+)/', array( $this, 'replace_with_links' ), $the_content );
-
-		$the_content = str_replace( array_keys( $protected_tags ), array_values( $protected_tags ), $the_content );
-
 		// replace all links in <a href="mention hashtag"> with /friends/tag/tagname using the WP_HTML_Tag_Processor.
 		$processor = new \WP_HTML_Tag_Processor( $the_content );
 		while ( $processor->next_tag( array( 'tag_name' => 'a' ) ) ) {
@@ -1776,35 +1753,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$the_content = $processor->get_updated_html();
 
 		return $the_content;
-	}
-
-	/**
-	 * Replace the mention with a link to the user.
-	 *
-	 * @param array $result The matched username.
-	 *
-	 * @return string The replaced username.
-	 */
-	public function replace_with_links( array $result ) {
-		$users = self::get_possible_mentions();
-		if ( ! isset( $users[ $result[0] ] ) ) {
-			return $result[0];
-		}
-
-		$metadata = $this->get_metadata( $users[ $result[0] ] );
-		if ( is_wp_error( $metadata ) || empty( $metadata['url'] ) ) {
-			return $result[0];
-		}
-
-		$username = ltrim( $users[ $result[0] ], '@' );
-		if ( ! empty( $metadata['name'] ) ) {
-			$username = $metadata['name'];
-		}
-		if ( ! empty( $metadata['preferredUsername'] ) ) {
-			$username = $metadata['preferredUsername'];
-		}
-		$username = '@<span>' . $username . '</span>';
-		return \sprintf( '<a rel="mention" class="u-url mention" href="%s">%s</a>', $metadata['url'], $username );
 	}
 
 	public function activitypub_save_settings( User $friend ) {
