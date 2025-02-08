@@ -121,7 +121,7 @@ class Access_Control {
 			}
 		}
 
-		if ( ! password_verify( $until . get_user_option( 'friends_out_token', $user_id ), $auth ) ) {
+		if ( ! $auth || ! password_verify( $until . get_user_option( 'friends_out_token', $user_id ), $auth ) ) {
 			return false;
 		}
 

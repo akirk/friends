@@ -1067,7 +1067,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				if ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
 					$data['content'] .= PHP_EOL;
 					$data['content'] .= '<!-- wp:image -->';
-					$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '" width="' . esc_attr( $attachment['width'] ) . '"  height="' . esc_attr( $attachment['height'] ) . '" class="size-full" /></p>';
+					$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '"';
+					if ( isset( $attachment['width'] ) && $attachment['height'] ) {
+						$data['content'] .= ' width="' . esc_attr( $attachment['width'] ) . '"';
+						$data['content'] .= ' height="' . esc_attr( $attachment['height'] ) . '"';
+					}
+					$data['content'] .= ' class="size-full" /></p>';
 					$data['content'] .= '<!-- /wp:image -->';
 				} elseif ( strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
 					$data['content'] .= PHP_EOL;
