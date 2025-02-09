@@ -94,14 +94,19 @@ abstract class Feed_Parser {
 		return preg_replace_callback(
 			'~(src|href)=(?:"([^"]+)|\'([^\']+))~i',
 			function ( $m ) use ( $permalink ) {
+				// Don't update hash-only links.
 				if ( str_starts_with( $m[2], '#' ) ) {
-					// Don't update hash-only links.
 					return $m[0];
 				}
 
+				// Remove absolute URL from hashes so that it can become relative.
 				if ( str_starts_with( $m[2], $permalink . '#' ) ) {
-					// Remove absolute URL from hashes.
 					return str_replace( $permalink, '', $m[0] );
+				}
+
+				// Don't convert content URLs like data:image/png;base64, etc.
+				if ( str_starts_with( $m[2], 'data:' ) ) {
+					return $m[0];
 				}
 
 				// Convert relative URLs to absolute ones.
