@@ -105,9 +105,9 @@
         "more_info": "https://github.com/alquimidia/fedipress",
         "author": "<a href=\"https://github.com/alquimidia\">alquimidia</a>",
         "slug": "alquimidia-fedipress",
-        "version": "v1.0.0",
-        "trunk": "https://api.github.com/repos/alquimidia/fedipress/zipball/v1.0.0",
-        "download_link": "https://api.github.com/repos/alquimidia/fedipress/zipball/v1.0.0",
+        "version": "v1.0.2",
+        "trunk": "https://api.github.com/repos/alquimidia/fedipress/zipball/v1.0.2",
+        "download_link": "https://api.github.com/repos/alquimidia/fedipress/zipball/v1.0.2",
         "last_updated": "2024-12-26",
         "sections": {
             "Overview": "<h2>FediPress</h2><br/>\nWordpress Plugin to customize <a href=\"https://github.com/akirk/friends\">Friends Plugin</a> feed.<br/>\n- Tested in WordPress up to: 6.7<br/>\n- License: GPL-3<br/>\nFediPress sets some sidebar widgets fixed and publishes made in form are public by default.<br/>\n<img src=\"https://raw.githubusercontent.com/alquimidia/fedipress/HEAD//img/sidebar.png\" alt=\"alt text\"/>",
