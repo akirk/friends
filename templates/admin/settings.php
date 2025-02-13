@@ -207,8 +207,8 @@ do_action( 'friends_settings_before_form' );
 						<label for="frontend-default-view">
 							<span><?php esc_html_e( 'Default view:', 'friends' ); ?></span>
 							<select name="frontend_default_view" id="frontend-default-view">
-								<option value="expanded"<?php selected( $args['frontend_default_view'], 'expanded' ); ?>><?php esc_html_e( 'Expanded', 'friends' ); ?></option>
-								<option value="collapsed"<?php selected( $args['frontend_default_view'], 'collapsed' ); ?>><?php esc_html_e( 'Collapsed', 'friends' ); ?></option>
+								<option value="expanded"<?php selected( $args['frontend_default_view'], 'expanded' ); ?>><?php esc_html_e( 'Expanded mode', 'friends' ); ?></option>
+								<option value="collapsed"<?php selected( $args['frontend_default_view'], 'collapsed' ); ?>><?php esc_html_e( 'Compact mode', 'friends' ); ?></option>
 							</select>
 						</label>
 					</fieldset>

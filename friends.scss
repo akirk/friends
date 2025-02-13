@@ -64,7 +64,6 @@ div {
 	}
 
 	&.active .menu,
-	.friends-dropdown-toggle:focus+.menu,
 	.menu:hover {
 		display: block;
 	}
@@ -616,6 +615,10 @@ h2#page-title a.dashicons {
 
 			h4.card-title {
 				padding-left: 1rem;
+			}
+
+			a.collapse-post {
+				display: none;
 			}
 
 			&.format-status {

@@ -116,7 +116,7 @@ if ( $args['friends']->frontend->reaction ) {
 </a>
 <?php endforeach; ?>
 
-<a class="chip toggle-compact" href=""><?php esc_html_e( 'Compact Mode', 'friends' ); ?></a>
+<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
 
 <?php do_action( 'friends_main_feed_header', $args ); ?>
 </div>
