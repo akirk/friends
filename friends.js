@@ -307,10 +307,38 @@
 		return false;
 	} );
 
+	let openMenu = null;
+	$document.on( 'click', 'a.friends-dropdown-toggle', function ( e ) {
+		const $this = $( this );
+		const dropdown = $this.next( '.menu' );
+		if ( dropdown.is( ':visible' ) ) {
+			dropdown.hide();
+			openMenu = null;
+		} else {
+			$( '.menu' ).hide();
+			dropdown.show();
+			openMenu = dropdown;
+		}
+		e.stopPropagation();
+		return false;
+	});
+	$document.on( 'click', function ( e ) {
+		if ( e.target.closest( '.friends-dropdown' ) ) {
+			return true;
+		}
+		if ( openMenu ) {
+			openMenu.hide();
+		}
+	} );
+
 	$document.on( 'click', 'a.collapse-post, .collapsed.card, .all-collapsed .card:not(.uncollapsed)', function ( e ) {
+		if ( e.target.closest( '.friends-dropdown' ) ) {
+			return true;
+		}
+
 		const card = $( this ).closest( 'article' );
 		let collapsed;
-		if ( card.closest( 'section.all-collapsed' ).length ) {
+		if ( card.closest( 'section.all-collapsed' ) ) {
 			card.toggleClass( 'uncollapsed' );
 			collapsed = ! card.is( '.uncollapsed' );
 		} else {
