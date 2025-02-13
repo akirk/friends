@@ -127,6 +127,8 @@ $args['friends']->frontend->link(
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
 <a class="chip" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend_user']->user_login, self_admin_url( 'admin.php?page=friends-refresh' ) ), 'friends-refresh' ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
 <?php endif; ?>
-<a class="chip toggle-compact" href=""><?php esc_html_e( 'Compact Mode', 'friends' ); ?></a>
+
+<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
+
 <?php do_action( 'friends_author_header', $args['friend_user'], $args ); ?>
 </div>
