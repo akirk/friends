@@ -1470,9 +1470,15 @@ class User extends \WP_User {
 
 	public static function mastodon_entity_relationship( $relationship, $user_id ) {
 		if ( ! class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
-			return $relationship;
+			if ( ! is_wp_error( $user_id ) ) {
+				$user = User::get_user_by_id( $user_id );
+				if ( ! $user ) {
+					$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
+				}
+			}
+		} else {
+			$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
 		}
-		$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
 		if ( $user instanceof self ) {
 			if ( ! $relationship instanceof \Enable_Mastodon_Apps\Entity\Relationship ) {
 				$relationship = new \Enable_Mastodon_Apps\Entity\Relationship();
