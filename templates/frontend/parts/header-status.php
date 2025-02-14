@@ -66,10 +66,12 @@ $avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, get
 			<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
 					<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
-					<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
-						– <?php echo esc_html( $override_author_name ); ?>
-					<?php endif; ?>
 				</a>
+				<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
+					<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
+					– <?php echo esc_html( $override_author_name ); ?>
+					</a>
+				<?php endif; ?>
 				<?php do_action( 'friends_post_author_meta', $friend_user ); ?>
 			<?php else : ?>
 				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">
@@ -111,10 +113,10 @@ $avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, get
 		</div>
 	</div>
 	<div class="overflow col-ml-auto">
+		<a class="btn btn-link collapse-post" tabindex="0" title="<?php esc_html_e( 'Double or meta/shift/cmd click to toggle all', 'friends' ); ?>">
+			<i class="dashicons dashicons-fullscreen-exit-alt"></i>
+		</a>
 		<div class="friends-dropdown friends-dropdown-right">
-			<a class="btn btn-link collapse-post" tabindex="0" title="<?php esc_html_e( 'Double or meta/shift/cmd click to toggle all', 'friends' ); ?>">
-				<i class="dashicons dashicons-fullscreen-exit-alt"></i>
-			</a>
 			<a class="btn btn-link friends-dropdown-toggle" tabindex="0">
 				<i class="dashicons dashicons-menu-alt2"></i>
 			</a>
