@@ -1546,7 +1546,6 @@ class Frontend {
 				$query->set( 'author__not_in', $hide_from_friends_page );
 			}
 		}
-
 		return $query;
 	}
 }
