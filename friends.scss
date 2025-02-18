@@ -268,11 +268,11 @@ h2#page-title a.dashicons {
 			height: .5em;
 		}
 
-		.follow-button span.name {
+		.boosted .follow-button, .boosted .follow-button span.name {
 			display: none;
 		}
 
-		.follow-button:hover span.name {
+		.boosted:hover .follow-button {
 			display: inline;
 		}
 

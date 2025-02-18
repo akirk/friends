@@ -67,11 +67,6 @@ $avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, get
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
 					<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
 				</a>
-				<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>
-					<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
-					– <?php echo esc_html( $override_author_name ); ?>
-					</a>
-				<?php endif; ?>
 				<?php do_action( 'friends_post_author_meta', $friend_user ); ?>
 			<?php else : ?>
 				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">

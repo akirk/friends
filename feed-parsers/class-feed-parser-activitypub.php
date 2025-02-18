@@ -2596,6 +2596,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			array(
 				'url'     => $meta['attributedTo']['id'],
 				'name'    => $meta['attributedTo']['name'],
+				'handle'  => self::convert_actor_to_mastodon_handle( $meta['attributedTo']['id'] ),
 				'summary' => wp_strip_all_tags( $meta['attributedTo']['summary'] ),
 			)
 		);
