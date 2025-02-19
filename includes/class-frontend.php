@@ -117,7 +117,6 @@ class Frontend {
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
-		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -242,7 +241,7 @@ class Frontend {
 		}
 	}
 
-	public function ensure_widget_editing( $components ) {
+	public static function ensure_widget_editing( $components ) {
 		if ( ! is_array( $components ) ) {
 			$components = array();
 		}
