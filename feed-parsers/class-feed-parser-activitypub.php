@@ -1989,7 +1989,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$json = $activity->to_json();
 
 		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
-			$inboxes = \Activitypub\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
 		} else {
 			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
 			$inboxes = array_unique( $inboxes );
@@ -2130,7 +2130,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$json = $activity->to_json();
 		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
-			$inboxes = \Activitypub\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
 		} else {
 			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
 			$inboxes = array_unique( $inboxes );
@@ -2379,7 +2379,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$json = $activity->to_json();
 		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
-			$inboxes = \Activitypub\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
 		} else {
 			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
 			$inboxes = array_unique( $inboxes );
@@ -2475,7 +2475,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$json = $activity->to_json();
 		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
-			$inboxes = \Activitypub\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
 		} else {
 			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
 			$inboxes = array_unique( $inboxes );
