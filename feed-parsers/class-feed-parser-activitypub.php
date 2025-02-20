@@ -1923,7 +1923,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
-	 * Prepare to follow the user via a scheduled event.
+	 * Prepare to like the post via a scheduled event.
 	 *
 	 * @param      \WP_Post $post       The post.
 	 * @param      string   $author_url  The author url.
@@ -1935,12 +1935,31 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $external_post_id ) {
 			$external_post_id = $post->guid;
 		}
+		$user_feed = User_Feed::get_by_url( $author_url );
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.3.0', '>=' ) ) {
+			$outbox_activity_id = \Activitypub\add_to_outbox( $external_post_id, 'Like', get_current_user_id(), ACTIVITYPUB_CONTENT_VISIBILITY_PUBLIC );
+			if ( ! $outbox_activity_id ) {
+				if ( $user_feed instanceof User_Feed ) {
+					$user_feed->update_last_log( __( 'Like failed.', 'friends' ) );
+				}
+				return false;
+			}
+			if ( $user_feed instanceof User_Feed ) {
+				$user_feed->update_last_log( __( 'Sent like.', 'friends' ) );
+			}
+			update_post_meta( $post->ID, 'ap_outbox_like_id', $outbox_activity_id );
+			return true;
+		}
 
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_like',
 			array( $author_url, $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_unlike'
 		);
+
+		if ( $queued && $user_feed instanceof User_Feed ) {
+			$user_feed->update_last_log( __( 'Queued like request.', 'friends' ) );
+		}
 
 		return $queued;
 	}
@@ -1967,8 +1986,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_id( $actor . '#like-' . \preg_replace( '~^https?://~', '', $external_post_id ) );
 		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
 
-		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
-		$inboxes = array_unique( $inboxes );
+		$json = $activity->to_json();
+
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+		} else {
+			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+			$inboxes = array_unique( $inboxes );
+		}
 
 		if ( empty( $inboxes ) ) {
 			$message = sprintf(
@@ -1985,8 +2010,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			Logging::log( 'like-failed', $message, $details, self::SLUG, $user_id );
 			return;
 		}
-
-		$json = $activity->to_json();
 
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
@@ -2049,18 +2072,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $external_post_id ) {
 			$external_post_id = $post->guid;
 		}
-
+		$user_feed = User_Feed::get_by_url( $author_url );
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.3.0', '>=' ) ) {
+			$outbox_activity_id = get_post_meta( $post->ID, 'ap_outbox_like_id', true );
+			if ( ! $outbox_activity_id ) {
+				if ( $user_feed instanceof User_Feed ) {
+					$user_feed->update_last_log( __( 'Unlike failed.', 'friends' ) );
+				}
+				return false;
+			}
+			if ( $user_feed instanceof User_Feed ) {
+				$user_feed->update_last_log( __( 'Sent unlike request.', 'friends' ) );
+			}
+			\Activitypub\Outbox::undo( $outbox_activity_id );
+			return true;
+		}
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unlike',
 			array( $author_url, $external_post_id, get_current_user_id() ),
 			'friends_feed_parser_activitypub_like'
 		);
 
-		if ( $queued ) {
-			$user_feed = User_Feed::get_by_url( $author_url );
-			if ( $user_feed instanceof User_Feed ) {
-				$user_feed->update_last_log( __( 'Queued unlike request.', 'friends' ) );
-			}
+		if ( $queued && $user_feed instanceof User_Feed ) {
+			$user_feed->update_last_log( __( 'Queued unlike request.', 'friends' ) );
 		}
 
 		return $queued;
@@ -2094,8 +2128,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 		$activity->set_id( $actor . '#unlike-' . \preg_replace( '~^https?://~', '', $external_post_id ) );
 
-		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
-		$inboxes = array_unique( $inboxes );
+		$json = $activity->to_json();
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+		} else {
+			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+			$inboxes = array_unique( $inboxes );
+		}
 
 		if ( empty( $inboxes ) ) {
 			$message = sprintf(
@@ -2112,8 +2151,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			Logging::log( 'unlike-failed', $message, $details, self::SLUG, $user_id );
 			return;
 		}
-
-		$json = $activity->to_json();
 
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
@@ -2244,11 +2281,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function mastodon_api_reblog( $post_id ) {
-		$this->queue_announce( get_permalink( $post_id ) );
+		$this->queue_announce( get_post( $post_id ) );
 	}
 
 	public function mastodon_api_unreblog( $post_id ) {
-		$this->queue_unannounce( get_permalink( $post_id ) );
+		$this->queue_unannounce( get_post( $post_id ) );
 	}
 
 	/**
@@ -2274,7 +2311,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $ret;
 		}
 		if ( User_Feed::get_parser_for_post_id( $post->ID ) === 'activitypub' ) {
-			$this->queue_announce( $post->guid );
+			$this->queue_announce( $post );
 			\update_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			\update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 			return true;
@@ -2288,7 +2325,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $ret;
 		}
 		if ( get_post_meta( $post->ID, 'reblogged', true ) === 'activitypub' ) {
-			$this->queue_unannounce( $post->guid );
+			$this->queue_unannounce( $post );
 			\delete_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			\delete_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 			return true;
@@ -2299,11 +2336,20 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * Prepare to announce the post via a scheduled event.
 	 *
-	 * @param      string $url  The url to announce.
+	 * @param      \WP_Post $post  The post.
 	 *
 	 * @return     bool|WP_Error              Whether the event was queued.
 	 */
-	public function queue_announce( $url ) {
+	public function queue_announce( \WP_Post $post ) {
+		$url = get_permalink( $post );
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.3.0', '>=' ) ) {
+			$outbox_activity_id = \Activitypub\add_to_outbox( $url, 'Announce', get_current_user_id(), ACTIVITYPUB_CONTENT_VISIBILITY_PUBLIC );
+			if ( ! $outbox_activity_id ) {
+				return false;
+			}
+			update_post_meta( $post->ID, 'ap_outbox_announce_id', $outbox_activity_id );
+			return true;
+		}
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_announce',
 			array( $url, get_current_user_id() ),
@@ -2331,8 +2377,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_to( array( 'https://www.w3.org/ns/activitystreams#Public' ) );
 		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
 
-		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
-		$inboxes = array_unique( $inboxes );
+		$json = $activity->to_json();
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+		} else {
+			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+			$inboxes = array_unique( $inboxes );
+		}
 
 		if ( empty( $inboxes ) ) {
 			$message = sprintf(
@@ -2350,7 +2401,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$json = $activity->to_json();
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
 			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
@@ -2374,11 +2424,20 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * Prepare to announce the post via a scheduled event.
 	 *
-	 * @param      string $url  The url to announce.
+	 * @param      \WP_Post $post  The post.
 	 *
 	 * @return     bool|WP_Error              Whether the event was queued.
 	 */
-	public function queue_unannounce( $url ) {
+	public function queue_unannounce( \WP_Post $post ) {
+		$url = get_permalink( $post );
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.3.0', '>=' ) ) {
+			$outbox_activity_id = get_post_meta( $post->ID, 'ap_outbox_announce_id', true );
+			if ( ! $outbox_activity_id ) {
+				return false;
+			}
+			\Activitypub\Outbox::undo( $outbox_activity_id );
+			return true;
+		}
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unannounce',
 			array( $url, get_current_user_id() ),
@@ -2414,8 +2473,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
 
-		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
-		$inboxes = array_unique( $inboxes );
+		$json = $activity->to_json();
+		if ( version_compare( ACTIVITYPUB_PLUGIN_VERSION, '5.2.0', '>=' ) ) {
+			$inboxes = \Activitypub\Collection\Followers::get_inboxes_for_activity( $json, $actor->get__id(), 500 );
+		} else {
+			$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+			$inboxes = array_unique( $inboxes );
+		}
 
 		if ( empty( $inboxes ) ) {
 			$message = sprintf(
@@ -2432,8 +2496,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			Logging::log( 'unannounce-failed', $message, $details, self::SLUG, $user_id );
 			return;
 		}
-
-		$json = $activity->to_json();
 
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
