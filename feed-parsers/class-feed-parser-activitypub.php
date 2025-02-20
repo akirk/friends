@@ -58,6 +58,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'activitypub_unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'activitypub_like_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'activitypub_unlike_post' ), 10, 3 );
+		\add_action( 'friends_feed_parser_activitypub_announce', array( $this, 'activitypub_announce' ), 10, 2 );
+		\add_action( 'friends_feed_parser_activitypub_unannounce', array( $this, 'activitypub_unannounce' ), 10, 2 );
 		\add_filter( 'friends_rewrite_incoming_url', array( get_called_class(), 'friends_webfinger_resolve' ), 10, 2 );
 
 		\add_filter( 'friends_edit_feeds_table_end', array( $this, 'activitypub_settings' ), 10 );
@@ -2242,11 +2244,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function mastodon_api_reblog( $post_id ) {
-		return $this->activitypub_announce( get_permalink( $post_id ), get_current_user_id() );
+		$this->queue_announce( get_permalink( $post_id ) );
 	}
 
 	public function mastodon_api_unreblog( $post_id ) {
-		return $this->activitypub_unannounce( get_permalink( $post_id ), get_current_user_id() );
+		$this->queue_unannounce( get_permalink( $post_id ) );
 	}
 
 	/**
@@ -2272,7 +2274,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $ret;
 		}
 		if ( User_Feed::get_parser_for_post_id( $post->ID ) === 'activitypub' ) {
-			$this->activitypub_announce( $post->guid );
+			$this->queue_announce( $post->guid );
 			\update_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			\update_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 			return true;
@@ -2286,12 +2288,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $ret;
 		}
 		if ( get_post_meta( $post->ID, 'reblogged', true ) === 'activitypub' ) {
-			$this->activitypub_unannounce( $post->guid );
+			$this->queue_unannounce( $post->guid );
 			\delete_post_meta( $post->ID, 'reblogged', 'activitypub' );
 			\delete_post_meta( $post->ID, 'reblogged_by', get_current_user_id() );
 			return true;
 		}
 		return $ret;
+	}
+
+	/**
+	 * Prepare to announce the post via a scheduled event.
+	 *
+	 * @param      string $url  The url to announce.
+	 *
+	 * @return     bool|WP_Error              Whether the event was queued.
+	 */
+	public function queue_announce( $url ) {
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_announce',
+			array( $url, get_current_user_id() ),
+			'friends_feed_parser_activitypub_unannounce'
+		);
+
+		return $queued;
 	}
 
 	/**
@@ -2301,7 +2320,72 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_announce( $url, $user_id ) {
-		\Activitypub\add_to_outbox( $url, 'Announce', $user_id, ACTIVITYPUB_CONTENT_VISIBILITY_PUBLIC );
+		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
+
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Announce' );
+		$activity->set_actor( $actor );
+		$activity->set_object( $url );
+		$activity->set_id( $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$activity->set_to( array( 'https://www.w3.org/ns/activitystreams#Public' ) );
+		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
+
+		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+		$inboxes = array_unique( $inboxes );
+
+		if ( empty( $inboxes ) ) {
+			$message = sprintf(
+				// translators: %s is the URL of the post.
+				__( 'Announce failed for %s', 'friends' ),
+				'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+			);
+
+			$details = array(
+				'url'   => $url,
+				'error' => __( 'No inboxes to send to.', 'friends' ),
+			);
+
+			Logging::log( 'announce-failed', $message, $details, self::SLUG, $user_id );
+			return;
+		}
+
+		$json = $activity->to_json();
+		$report = array();
+		foreach ( $inboxes as $inbox ) {
+			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
+		}
+
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Announced %s', 'friends' ),
+			'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+		);
+
+		$details = array(
+			'url'     => $url,
+			'inboxes' => $report,
+		);
+
+		Logging::log( 'announce', $message, $details, self::SLUG, $user_id );
+	}
+
+	/**
+	 * Prepare to announce the post via a scheduled event.
+	 *
+	 * @param      string $url  The url to announce.
+	 *
+	 * @return     bool|WP_Error              Whether the event was queued.
+	 */
+	public function queue_unannounce( $url ) {
+		$queued = $this->queue(
+			'friends_feed_parser_activitypub_unannounce',
+			array( $url, get_current_user_id() ),
+			'friends_feed_parser_activitypub_announce'
+		);
+
+		return $queued;
 	}
 
 	/**
@@ -2311,15 +2395,64 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_unannounce( $url, $user_id ) {
-		$transformer = \Activitypub\Transformer\Factory::get_transformer( 'https://alex.kirk.at/' )->to_object();
-		$activity_object = $transformer->to_object();
+		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
 
-		\Activitypub\add_to_outbox(
-			$activity_object,
-			'Undo',
-			$user_id,
-			ACTIVITYPUB_CONTENT_VISIBILITY_PUBLIC
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Undo' );
+		$activity->set_to( null );
+		$activity->set_cc( null );
+		$activity->set_actor( $actor );
+		$activity->set_id( $actor . '#activitypub_unannounce-' . \preg_replace( '~^https?://~', '', $url ) );
+		$activity->set_object(
+			array(
+				'type'   => 'Announce',
+				'actor'  => $actor,
+				'object' => $url,
+				'id'     => $actor . '#activitypub_announce-' . \preg_replace( '~^https?://~', '', $url ),
+			)
 		);
+		$activity->set_published( \gmdate( 'Y-m-d\TH:i:s\Z', time() ) );
+
+		$inboxes = apply_filters( 'activitypub_send_to_inboxes', array(), $user_id, $activity );
+		$inboxes = array_unique( $inboxes );
+
+		if ( empty( $inboxes ) ) {
+			$message = sprintf(
+				// translators: %s is the URL of the post.
+				__( 'Unannounce failed for %s', 'friends' ),
+				'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+			);
+
+			$details = array(
+				'url'   => $url,
+				'error' => __( 'No inboxes to send to.', 'friends' ),
+			);
+
+			Logging::log( 'unannounce-failed', $message, $details, self::SLUG, $user_id );
+			return;
+		}
+
+		$json = $activity->to_json();
+
+		$report = array();
+		foreach ( $inboxes as $inbox ) {
+			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
+		}
+
+		$message = sprintf(
+			// translators: %s is the URL of the post.
+			__( 'Unannounced %s', 'friends' ),
+			'<a href="' . esc_url( $url ) . '">' . $url . '</a>'
+		);
+
+		$details = array(
+			'url'     => $url,
+			'inboxes' => $report,
+		);
+
+		Logging::log( 'unannounce', $message, $details, self::SLUG, $user_id );
 	}
 
 	/**
