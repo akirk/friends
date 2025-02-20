@@ -1,3 +1,9 @@
+### 3.3.5
+- Use Outbox of the upcoming ActivityPub 5.3.0 and fix announce+like bug with Activitypub 5.2.0 ([#463])
+- Fix editing widgets in a block theme ([#475])
+- Augment bookmarks and favourites endpoints in EMA ([#474])
+- Improve the display of boosted posts ([#473])
+
 ### 3.3.4
 - Reduce the size of the Follow link ([#472])
 - Fix unfollowing in Enable Mastodon Apps ([#471])
@@ -363,6 +369,9 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - PHP: Introduced a namespace, changed the plugin hooks to friends_loaded and friends_load_parsers
 - Add checks for diagnosing the correct functioning to Site Health
 
+[#475]: https://github.com/akirk/friends/pull/475
+[#474]: https://github.com/akirk/friends/pull/474
+[#473]: https://github.com/akirk/friends/pull/473
 [#472]: https://github.com/akirk/friends/pull/472
 [#471]: https://github.com/akirk/friends/pull/471
 [#470]: https://github.com/akirk/friends/pull/470
@@ -371,6 +380,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#466]: https://github.com/akirk/friends/pull/466
 [#465]: https://github.com/akirk/friends/pull/465
 [#464]: https://github.com/akirk/friends/pull/464
+[#463]: https://github.com/akirk/friends/pull/463
 [#462]: https://github.com/akirk/friends/pull/462
 [#461]: https://github.com/akirk/friends/pull/461
 [#459]: https://github.com/akirk/friends/pull/459

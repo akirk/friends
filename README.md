@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.3.4
+- Stable tag: 3.3.5
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -95,6 +95,12 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 3.3.5
+- Use Outbox of the upcoming ActivityPub 5.3.0 and fix announce+like bug with Activitypub 5.2.0 ([#463])
+- Fix editing widgets in a block theme ([#475])
+- Augment bookmarks and favourites endpoints in EMA ([#474])
+- Improve the display of boosted posts ([#473])
 
 ### 3.3.4
 - Reduce the size of the Follow link ([#472])
@@ -217,6 +223,9 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
 - Improve ghost.org ActivityPub compatibility ([#356])
 
+[#475]: https://github.com/akirk/friends/pull/475
+[#474]: https://github.com/akirk/friends/pull/474
+[#473]: https://github.com/akirk/friends/pull/473
 [#472]: https://github.com/akirk/friends/pull/472
 [#471]: https://github.com/akirk/friends/pull/471
 [#470]: https://github.com/akirk/friends/pull/470
@@ -225,6 +234,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#466]: https://github.com/akirk/friends/pull/466
 [#465]: https://github.com/akirk/friends/pull/465
 [#464]: https://github.com/akirk/friends/pull/464
+[#463]: https://github.com/akirk/friends/pull/463
 [#462]: https://github.com/akirk/friends/pull/462
 [#461]: https://github.com/akirk/friends/pull/461
 [#459]: https://github.com/akirk/friends/pull/459
