@@ -73,6 +73,8 @@ add_action( 'activate_blog', array( __NAMESPACE__ . '\Friends', 'activate_plugin
 add_action( 'wp_initialize_site', array( __NAMESPACE__ . '\Friends', 'activate_for_blog' ) );
 
 // Register widgets.
+add_filter( 'customize_loaded_components', array( __NAMESPACE__ . '\Frontend', 'ensure_widget_editing' ) );
+
 require_once __DIR__ . '/widgets/class-widget-base-friends-list.php';
 require_once __DIR__ . '/widgets/class-widget-refresh.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Refresh', 'register' ) );
