@@ -719,7 +719,8 @@ class Feed {
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $modified_posts, $friend_user );
 
-		$friend_user->delete_outdated_posts();
+		$deleted_posts = $friend_user->delete_outdated_posts();
+		$new_posts = array_diff( $new_posts, $deleted_posts );
 
 		return $new_posts;
 	}
