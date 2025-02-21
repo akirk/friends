@@ -3656,8 +3656,12 @@ class Admin {
 			'test'  => array( $this, 'friend_roles_test' ),
 		);
 		$tests['direct']['friends-cron'] = array(
-			'label' => __( 'Friend cron job is enabled', 'friends' ),
+			'label' => __( 'Friends cron job is enabled', 'friends' ),
 			'test'  => array( $this, 'friends_cron_test' ),
+		);
+		$tests['direct']['friends-delete-cron'] = array(
+			'label' => __( 'Friends delete old posts cron job is enabled', 'friends' ),
+			'test'  => array( $this, 'friends_cron_delete_test' ),
 		);
 		return $tests;
 	}
@@ -3727,7 +3731,7 @@ class Admin {
 
 	public function friends_cron_test() {
 		$result = array(
-			'label'       => __( 'The friend cron job is enabled', 'friends' ),
+			'label'       => __( 'The refresh cron job is enabled', 'friends' ),
 			'status'      => 'good',
 			'badge'       => array(
 				'label' => __( 'Friends', 'friends' ),
@@ -3739,9 +3743,8 @@ class Admin {
 				'</p>',
 			'test'        => 'friends-cron',
 		);
-
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
-			$result['label'] = __( 'The friends cron job is not enabled', 'friends' );
+			$result['label'] = __( 'The refresh cron job is not enabled', 'friends' );
 			$result['badge']['color'] = 'red';
 			$result['status'] = 'critical';
 			$result['description'] .= '<p>';
@@ -3755,10 +3758,28 @@ class Admin {
 			$result['description'] .= '</p>';
 		}
 
+		return $result;
+	}
+
+	public function friends_cron_delete_test() {
+		$result = array(
+			'label'       => __( 'The cron job to delete old posts is enabled', 'friends' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'Friends', 'friends' ),
+				'color' => 'green',
+			),
+			'description' =>
+				'<p>' .
+				__( 'The Friends Plugin uses a cron job to delete old posts your friends.', 'friends' ) .
+				'</p>',
+			'test'        => 'friends-delete-cron',
+		);
+
 		if ( ! wp_next_scheduled( 'cron_friends_delete_old_posts' ) ) {
-			$result['label'] = __( 'The friends delete old posts cron job is not enabled', 'friends' );
-			$result['badge']['color'] = 'yellow';
-			$result['status'] = 'warning';
+			$result['label'] = __( 'The cron job to delete old posts is not enabled', 'friends' );
+			$result['badge']['color'] = 'orange';
+			$result['status'] = 'recommended';
 			$result['description'] .= '<p>';
 			$result['description'] .= wp_kses_post(
 				sprintf(
