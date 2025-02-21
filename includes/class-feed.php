@@ -557,6 +557,14 @@ class Feed {
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
 
+		// Sort items by date asc so that older posts will have lower ids than newer posts.
+		usort(
+			$items,
+			function ( $a, $b ) {
+				return strtotime( $a->date ) - strtotime( $b->date );
+			}
+		);
+
 		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
