@@ -460,7 +460,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'href' => $this->actor,
 				'name' => '@' . $this->friend_nicename,
 			),
-			$object->get_tag()
+			$object->get_tag() ?? array()
 		);
 
 		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_cc() );
