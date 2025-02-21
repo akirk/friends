@@ -69,6 +69,7 @@ class Feed {
 
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
 		add_action( 'friends_retrieve_user_feeds', array( $this, 'friends_retrieve_user_feeds' ) );
+		add_action( 'cron_friends_delete_old_posts', array( $this, 'cron_friends_delete_old_posts' ) );
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
@@ -120,6 +121,15 @@ class Feed {
 			$feed->set_polling_now();
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
+		}
+	}
+
+	/**
+	 * Cron function to delete old posts.
+	 */
+	public function cron_friends_delete_old_posts() {
+		foreach ( User_Feed::get_all_users() as $friend_user ) {
+			$friend_user->delete_old_posts();
 		}
 	}
 
