@@ -120,10 +120,6 @@ class Feed {
 			$feed->set_polling_now();
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
-			$friend_user = $feed->get_friend_user();
-			if ( $friend_user ) {
-				$friend_user->delete_outdated_posts();
-			}
 		}
 	}
 
@@ -144,7 +140,6 @@ class Feed {
 				$feed->set_polling_now();
 				$this->retrieve_feed( $feed );
 				$feed->was_polled();
-				$friend_user->delete_outdated_posts();
 			}
 		}
 	}
@@ -299,10 +294,6 @@ class Feed {
 			$feed->set_polling_now();
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
-			$friend_user = $feed->get_friend_user();
-			if ( $friend_user ) {
-				$friend_user->delete_outdated_posts();
-			}
 		}
 	}
 
@@ -727,6 +718,8 @@ class Feed {
 		$this->notify_about_new_posts( $friend_user, $new_posts, $user_feed );
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $modified_posts, $friend_user );
+
+		$friend_user->delete_outdated_posts();
 
 		return $new_posts;
 	}
