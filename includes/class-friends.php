@@ -653,6 +653,10 @@ class Friends {
 			wp_schedule_event( time(), 'fifteen-minutes', 'cron_friends_refresh_feeds' );
 		}
 
+		if ( ! wp_next_scheduled( 'cron_friends_delete_old_posts' ) ) {
+			wp_schedule_event( time(), 'daily', 'cron_friends_delete_old_posts' );
+		}
+
 		self::add_default_sidebars_widgets();
 		flush_rewrite_rules();
 	}
