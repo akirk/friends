@@ -44,6 +44,21 @@ class REST {
 		add_action( 'wp_trash_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
+		add_action( 'rest_pre_serve_request', array( $this, 'send_rest_origin' ), 20, 3 );
+	}
+
+	public function send_rest_origin( $ret, $response, $request ) {
+		if ( strpos( $request->get_route(), '/' . self::PREFIX . '/extension' ) !== 0 ) {
+			return $ret;
+		}
+
+		if ( $request->get_header( 'origin' ) ) {
+			$scheme = wp_parse_url( $request->get_header( 'origin' ), PHP_URL_SCHEME );
+			if ( 'moz-extension' === $scheme ) {
+				header( 'access-control-allow-origin: ' . $request->get_header( 'origin' ) );
+			}
+		}
+		return $ret;
 	}
 
 	/**
