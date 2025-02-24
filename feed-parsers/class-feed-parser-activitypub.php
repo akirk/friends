@@ -1722,6 +1722,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$post_id = reset( $new_posts );
 				} else {
 					$post_id = Feed::url_to_postid( $url );
+					if ( is_null( $post_id ) ) {
+						$post_id = Feed::url_to_postid( $item->permalink );
+					}
 				}
 			}
 		}
