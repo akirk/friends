@@ -114,6 +114,12 @@
 				$( '.navbar-section.search' ).append( $( '.search-dialog' ).children() );
 			}
 		}
+		if ( 69 === e.keyCode && ! e.metaKey && ! e.ctrlKey ) {
+			const links = $( 'header .post-edit-link' );
+			if ( 1 === links.length ) {
+				links[ 0 ].click();
+			}
+		}
 	} );
 
 	const refresh_feeds_now = function() {
