@@ -409,10 +409,12 @@
 				},
 				success( comments ) {
 					content.html( comments ).data( 'loaded', true );
+					clearTimeout( stillLoading );
 					callback();
 				},
 				error( message ) {
 					content.html( message ).data( 'loaded', true );
+					clearTimeout( stillLoading );
 				},
 			} );
 		}
