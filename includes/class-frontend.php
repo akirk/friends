@@ -307,25 +307,27 @@ class Frontend {
 		$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
 
 		$variables = array(
-			'emojis_json'        => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
-			'ajax_url'           => admin_url( 'admin-ajax.php' ),
-			'rest_base'          => rest_url( 'friends/v1/' ),
-			'rest_nonce'         => wp_create_nonce( 'wp_rest' ),
-			'text_link_expired'  => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
-			'text_undo'          => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			'text_trash_post'    => __( 'Trash this post', 'friends' ),
-			'text_del_convers'   => __( 'Do you really want to delete this conversation?', 'friends' ),
-			'text_no_more_posts' => __( 'No more posts available.', 'friends' ),
-			'text_checking_url'  => __( 'Checking URL.', 'friends' ),
-			'text_refreshed'     => __( 'Refreshed', 'friends' ),
-			'text_refreshing'    => __( 'Refreshing', 'friends' ),
-			'text_compact_mode'  => __( 'Compact mode', 'friends' ),
-			'text_expanded_mode' => __( 'Expanded mode', 'friends' ),
-			'refresh_now'        => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			'query_vars'         => $query_vars,
-			'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
-			'current_page'       => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-			'max_page'           => $wp_query->max_num_pages,
+			'emojis_json'           => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
+			'ajax_url'              => admin_url( 'admin-ajax.php' ),
+			'rest_base'             => rest_url( 'friends/v1/' ),
+			'rest_nonce'            => wp_create_nonce( 'wp_rest' ),
+			'text_link_expired'     => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
+			'text_undo'             => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			'text_trash_post'       => __( 'Trash this post', 'friends' ),
+			'text_del_convers'      => __( 'Do you really want to delete this conversation?', 'friends' ),
+			'text_no_more_posts'    => __( 'No more posts available.', 'friends' ),
+			'text_checking_url'     => __( 'Checking URL.', 'friends' ),
+			'text_refreshed'        => __( 'Refreshed', 'friends' ),
+			'text_refreshing'       => __( 'Refreshing', 'friends' ),
+			'text_compact_mode'     => __( 'Compact mode', 'friends' ),
+			'text_expanded_mode'    => __( 'Expanded mode', 'friends' ),
+			'text_loading_comments' => __( 'Loading comments...', 'friends' ),
+			'text_still_loading'    => __( 'Still loading...', 'friends' ),
+			'refresh_now'           => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'query_vars'            => $query_vars,
+			'qv_sign'               => sha1( wp_salt( 'nonce' ) . $query_vars ),
+			'current_page'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+			'max_page'              => $wp_query->max_num_pages,
 		);
 
 		// translators: %s is a user handle.
@@ -822,7 +824,7 @@ class Frontend {
 		remove_all_filters( 'comment_form_before' );
 		remove_all_filters( 'comment_form_after' );
 		if ( empty( $comments ) ) {
-			$content = apply_filters( 'friends_no_comments_feed_available', __( 'We tried to load comments remotely but there were no comments.', 'friends' ), $post_id, $friend_user, $user_feed );
+			$content = apply_filters( 'friends_no_comments_feed_available', __( 'No comments yet.', 'friends' ), $post_id, $friend_user, $user_feed );
 		} else {
 			$template_loader = Friends::template_loader();
 			ob_start();

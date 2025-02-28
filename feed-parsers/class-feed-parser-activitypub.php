@@ -2787,6 +2787,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+
+		if ( empty( $comments ) ) {
+			add_filter(
+				'friends_no_comments_feed_available',
+				function () use ( $post ) {
+					return __( 'No comments yet.', 'friends' ) . ' <a href="' . esc_url( get_permalink( $post ) ) . '" target="_blank">' . __( 'View this at the source', 'friends' ) . '</a>';
+				}
+			);
+		}
 		return $comments;
 	}
 
