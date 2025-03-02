@@ -113,6 +113,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
+
+		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 10, 2 );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -404,6 +406,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		return $user_id_map[ $user_id ];
 	}
+
+	public function mastodon_api_account_following( $following, $user_id ) {
+		if ( ! method_exists( '\Friends\User_Feed', 'get_by_parser' ) ) {
+			return array();
+		}
+
+		foreach ( User_Feed::get_by_parser( self::SLUG ) as $user_feed ) {
+			$following[] = apply_filters( 'mastodon_api_account', null, $user_feed->get_friend_user()->ID );
+		}
+
+		return $following;
+	}
+
 
 	public function register_post_meta() {
 		register_post_meta(

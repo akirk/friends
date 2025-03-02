@@ -424,13 +424,18 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
 		$object = $activitypub_post->to_object();
 
+		$tags = $object->get_tag();
+		if ( ! $tags ) {
+			$tags = array();
+		}
+
 		$this->assertContains(
 			array(
 				'type' => 'Mention',
 				'href' => $this->actor,
 				'name' => '@' . $this->friend_nicename,
 			),
-			$object->get_tag()
+			$tags
 		);
 
 		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_cc() );
@@ -454,13 +459,17 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
 		$object = $activitypub_post->to_object();
 
+		$tags = $object->get_tag();
+		if ( ! $tags ) {
+			$tags = array();
+		}
 		$this->assertNotContains(
 			array(
 				'type' => 'Mention',
 				'href' => $this->actor,
 				'name' => '@' . $this->friend_nicename,
 			),
-			$object->get_tag()
+			$tags
 		);
 
 		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_cc() );

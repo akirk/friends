@@ -21,6 +21,9 @@ class Only_EnableMastdodonApps_Test extends Friends_TestCase_Cache_HTTP {
 		}
 		parent::set_up();
 
+		add_filter( 'pre_option_mastodon_api_disable_ema_app_settings_changes', '__return_true' );
+		add_filter( 'pre_option_mastodon_api_disable_ema_announcements', '__return_true' );
+
 		$administrator = $this->factory->user->create(
 			array(
 				'role' => 'administrator',
