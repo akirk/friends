@@ -69,6 +69,7 @@ class Feed {
 
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
 		add_action( 'friends_retrieve_user_feeds', array( $this, 'friends_retrieve_user_feeds' ) );
+		add_action( 'cron_friends_delete_old_posts', array( $this, 'cron_friends_delete_old_posts' ) );
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
@@ -120,10 +121,15 @@ class Feed {
 			$feed->set_polling_now();
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
-			$friend_user = $feed->get_friend_user();
-			if ( $friend_user ) {
-				$friend_user->delete_outdated_posts();
-			}
+		}
+	}
+
+	/**
+	 * Cron function to delete old posts.
+	 */
+	public function cron_friends_delete_old_posts() {
+		foreach ( User_Feed::get_all_users() as $friend_user ) {
+			$friend_user->delete_old_posts();
 		}
 	}
 
@@ -144,7 +150,6 @@ class Feed {
 				$feed->set_polling_now();
 				$this->retrieve_feed( $feed );
 				$feed->was_polled();
-				$friend_user->delete_outdated_posts();
 			}
 		}
 	}
@@ -299,10 +304,6 @@ class Feed {
 			$feed->set_polling_now();
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
-			$friend_user = $feed->get_friend_user();
-			if ( $friend_user ) {
-				$friend_user->delete_outdated_posts();
-			}
 		}
 	}
 
@@ -556,6 +557,14 @@ class Feed {
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
 
+		// Sort items by date asc so that older posts will have lower ids than newer posts.
+		usort(
+			$items,
+			function ( $a, $b ) {
+				return strtotime( $a->date ) - strtotime( $b->date );
+			}
+		);
+
 		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
@@ -727,6 +736,9 @@ class Feed {
 		$this->notify_about_new_posts( $friend_user, $new_posts, $user_feed );
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $modified_posts, $friend_user );
+
+		$deleted_posts = $friend_user->delete_outdated_posts();
+		$new_posts = array_diff( $new_posts, $deleted_posts );
 
 		return $new_posts;
 	}

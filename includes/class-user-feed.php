@@ -723,6 +723,22 @@ class User_Feed {
 		return new \WP_Error( 'term_not_found' );
 	}
 
+	public static function get_all_users() {
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy' => self::TAXONOMY,
+			)
+		);
+		$users = array();
+		foreach ( $term_query->get_terms() as $term ) {
+			$feed = new self( $term );
+			$friend_user = $feed->get_friend_user();
+			$users[ $friend_user->ID ] = $friend_user;
+		}
+
+		return $users;
+	}
+
 	/**
 	 * Get all feeds due.
 	 *
