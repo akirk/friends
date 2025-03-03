@@ -147,7 +147,7 @@ class User_Feed {
 					continue;
 				}
 			}
-			$user = User::get_user_by_id( 'friends-virtual-user-' . $user_term_id );
+			$user = User::get_user_by_id( 1e10 + $user_term_id );
 			if ( $user ) {
 				$feeds = $user->get_feeds();
 				if ( isset( $feeds[ $this->term->term_id ] ) ) {
