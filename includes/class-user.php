@@ -97,7 +97,7 @@ class User extends \WP_User {
 		}
 
 		$friend_user = self::get_by_username( $user_login );
-		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
+		if ( $friend_user && ! is_wp_error( $friend_user ) && ! $subscription_override ) {
 			if ( $friend_user instanceof Subscription ) {
 				$friend_user = Subscription::convert_to_user( $friend_user );
 			}
