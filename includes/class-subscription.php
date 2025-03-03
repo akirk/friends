@@ -35,7 +35,7 @@ class Subscription extends User {
 
 	public function __construct( \WP_Term $term ) {
 		$this->term = $term;
-		$this->ID = 'friends-virtual-user-' . $term->term_id;
+		$this->ID = 1e10 + $term->term_id;
 
 		$this->caps = array_fill_keys( get_metadata( 'term', $term->term_id, 'roles' ), true );
 		$this->caps['subscription'] = true;
@@ -94,13 +94,6 @@ class Subscription extends User {
 	}
 
 	public static function get_by_username( $username ) {
-		if ( 0 === strpos( $username, 'friends-virtual-user-' ) ) {
-			$term_id = substr( $username, strlen( 'friends-virtual-user-' ) );
-			$term = get_term( intval( $term_id ), self::TAXONOMY );
-			if ( $term ) {
-				return new self( $term );
-			}
-		}
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,

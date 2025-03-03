@@ -318,9 +318,8 @@ class User extends \WP_User {
 	 * @return User|false The friend user or false.
 	 */
 	public static function get_user_by_id( $user_id ) {
-		if ( 0 === strpos( $user_id, 'friends-virtual-user-' ) ) {
-			$term_id = substr( $user_id, strlen( 'friends-virtual-user-' ) );
-			$term = get_term( intval( $term_id ), Subscription::TAXONOMY );
+		if ( $user_id > 1e10 ) {
+			$term = get_term( $user_id - 1e10, Subscription::TAXONOMY );
 			if ( $term && ! is_wp_error( $term ) ) {
 				return new Subscription( $term );
 			}
@@ -1472,9 +1471,6 @@ class User extends \WP_User {
 		if ( ! class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
 			if ( ! is_wp_error( $user_id ) ) {
 				$user = User::get_user_by_id( $user_id );
-				if ( ! $user ) {
-					$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
-				}
 			}
 		} else {
 			$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
