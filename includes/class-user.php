@@ -541,12 +541,13 @@ class User extends \WP_User {
 	/**
 	 * Maybe delete an outdated post.
 	 *
-	 * @param int $post_id The post ID.
+	 * @param int    $post_id The post ID.
+	 * @param string $reason The reason for deletion.
 	 * @return int|false The post ID if it was deleted, false otherwise.
 	 */
-	private function maybe_delete_outdated_post( int $post_id ) {
+	private function maybe_delete_outdated_post( int $post_id, string $reason = '' ) {
 		if ( ! get_option( 'friends_retention_delete_reacted' ) ) {
-			// get all terms for a post, no matter whetehr it's registered or not.
+			// get all terms for a post, no matter whether it's registered or not.
 			$term_query = new \WP_Term_Query(
 				array(
 					'object_ids' => $post_id,
@@ -572,10 +573,12 @@ class User extends \WP_User {
 				return false;
 			}
 		}
+
 		if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-			echo 'Deleting ', esc_html( $post_id ), '<br/>', PHP_EOL;
+			echo 'Deleting ', esc_html( $post_id ), '(date: ', esc_html( get_the_date( 'Y-m-d H:i:s', $post_id ) ), ') because ', esc_html( $reason ), '<br/>', PHP_EOL;
 		}
 		wp_delete_post( $post_id, true );
+
 		return $post_id;
 	}
 
@@ -587,8 +590,9 @@ class User extends \WP_User {
 
 		$args = array(
 			'post_type'      => Friends::CPT,
+			'post_status'    => array( 'publish', 'trash' ),
 			'fields'         => 'ids',
-			'posts_per_page' => -1,
+			'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
 		);
 
 		if ( $this->is_retention_days_enabled() ) {
@@ -608,12 +612,11 @@ class User extends \WP_User {
 			}
 			$query = $this->modify_query_by_author( $query );
 
-			foreach ( $query->get_posts() as $post ) {
-				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
+			foreach ( $query->get_posts() as $post_id ) {
+				$post_id = $this->maybe_delete_outdated_post( $post_id, 'date overflow' );
+				if ( $post_id ) {
+					$deleted_posts[] = $post_id;
 				}
-				wp_delete_post( $post->ID, true );
-				$deleted_posts[] = $post->ID;
 			}
 		}
 
@@ -627,9 +630,8 @@ class User extends \WP_User {
 				$query->set( $key, $value );
 			}
 			$query = $this->modify_query_by_author( $query );
-
 			foreach ( $query->get_posts() as $post_id ) {
-				$post_id = $this->maybe_delete_outdated_post( $post_id );
+				$post_id = $this->maybe_delete_outdated_post( $post_id, 'local number overflow' );
 				if ( $post_id ) {
 					$deleted_posts[] = $post_id;
 				}
@@ -645,7 +647,7 @@ class User extends \WP_User {
 			}
 
 			foreach ( $query->get_posts() as $post_id ) {
-				$post_id = $this->maybe_delete_outdated_post( $post_id );
+				$post_id = $this->maybe_delete_outdated_post( $post_id, 'global number overflow' );
 				if ( $post_id ) {
 					$deleted_posts[] = $post_id;
 				}
@@ -654,9 +656,13 @@ class User extends \WP_User {
 
 		// In any case, don't overflow the trash.
 		$args = array(
-			'post_type'   => Friends::CPT,
-			'post_status' => 'trash',
-			'offset'      => 30,
+			'post_type'      => Friends::CPT,
+			'post_status'    => 'trash',
+			'offset'         => 30,
+			'fields'         => 'ids',
+			'orderby'        => 'date',
+			'order'          => 'asc',
+			'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
 		);
 
 		$query = new \WP_Query();
@@ -666,7 +672,7 @@ class User extends \WP_User {
 		$query = $this->modify_query_by_author( $query );
 
 		foreach ( $query->get_posts() as $post_id ) {
-			$post_id = $this->maybe_delete_outdated_post( $post_id );
+			$post_id = $this->maybe_delete_outdated_post( $post_id, 'trash' );
 			if ( $post_id ) {
 				$deleted_posts[] = $post_id;
 			}
