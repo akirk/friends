@@ -552,15 +552,15 @@ class User extends \WP_User {
 	/**
 	 * Maybe delete an outdated post.
 	 *
-	 * @param \WP_Post $post The post.
+	 * @param int $post_id The post ID.
 	 * @return int|false The post ID if it was deleted, false otherwise.
 	 */
-	private function maybe_delete_outdated_post( \WP_Post $post ) {
+	private function maybe_delete_outdated_post( int $post_id ) {
 		if ( ! get_option( 'friends_retention_delete_reacted' ) ) {
 			// get all terms for a post, no matter whetehr it's registered or not.
 			$term_query = new \WP_Term_Query(
 				array(
-					'object_ids' => $post->ID,
+					'object_ids' => $post_id,
 				)
 			);
 			$reactions = array();
@@ -573,7 +573,7 @@ class User extends \WP_User {
 			}
 			if ( $reactions ) {
 				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Skipping ', esc_html( $post->ID ), ' because it has reactions (';
+					echo 'Skipping ', esc_html( $post_id ), ' because it has reactions (';
 					foreach ( array_keys( $reactions ) as $emoji ) {
 						echo esc_html( Reactions::validate_emoji( $emoji ) ), ' ';
 					}
@@ -584,10 +584,10 @@ class User extends \WP_User {
 			}
 		}
 		if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-			echo 'Deleting ', esc_html( $post->ID ), '<br/>', PHP_EOL;
+			echo 'Deleting ', esc_html( $post_id ), '<br/>', PHP_EOL;
 		}
-		wp_delete_post( $post->ID, true );
-		return $post->ID;
+		wp_delete_post( $post_id, true );
+		return $post_id;
 	}
 
 	/**
@@ -597,7 +597,9 @@ class User extends \WP_User {
 		$deleted_posts = array();
 
 		$args = array(
-			'post_type' => Friends::CPT,
+			'post_type'      => Friends::CPT,
+			'fields'         => 'ids',
+			'posts_per_page' => -1,
 		);
 
 		if ( $this->is_retention_days_enabled() ) {
@@ -637,8 +639,8 @@ class User extends \WP_User {
 			}
 			$query = $this->modify_query_by_author( $query );
 
-			foreach ( $query->get_posts() as $_post ) {
-				$post_id = $this->maybe_delete_outdated_post( $_post );
+			foreach ( $query->get_posts() as $post_id ) {
+				$post_id = $this->maybe_delete_outdated_post( $post_id );
 				if ( $post_id ) {
 					$deleted_posts[] = $post_id;
 				}
@@ -653,8 +655,8 @@ class User extends \WP_User {
 				$query->set( $key, $value );
 			}
 
-			foreach ( $query->get_posts() as $_post ) {
-				$post_id = $this->maybe_delete_outdated_post( $_post );
+			foreach ( $query->get_posts() as $post_id ) {
+				$post_id = $this->maybe_delete_outdated_post( $post_id );
 				if ( $post_id ) {
 					$deleted_posts[] = $post_id;
 				}
@@ -674,8 +676,8 @@ class User extends \WP_User {
 		}
 		$query = $this->modify_query_by_author( $query );
 
-		foreach ( $query->get_posts() as $_post ) {
-			$post_id = $this->maybe_delete_outdated_post( $_post );
+		foreach ( $query->get_posts() as $post_id ) {
+			$post_id = $this->maybe_delete_outdated_post( $post_id );
 			if ( $post_id ) {
 				$deleted_posts[] = $post_id;
 			}
