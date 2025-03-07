@@ -592,7 +592,7 @@ class User extends \WP_User {
 			'post_type'      => Friends::CPT,
 			'post_status'    => array( 'publish', 'trash' ),
 			'fields'         => 'ids',
-			'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
+			'posts_per_page' => 100,
 		);
 
 		if ( $this->is_retention_days_enabled() ) {
@@ -662,7 +662,7 @@ class User extends \WP_User {
 			'fields'         => 'ids',
 			'orderby'        => 'date',
 			'order'          => 'asc',
-			'posts_per_page' => 1000, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page
+			'posts_per_page' => 100,
 		);
 
 		$query = new \WP_Query();
