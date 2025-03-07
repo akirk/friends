@@ -564,8 +564,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 25, $new_items );
-		$post_id = $new_items[0];
-
+		$post_id = end( $new_items );
 		$post = get_post( $post_id );
 
 		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/', $post->guid );
