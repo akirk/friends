@@ -658,7 +658,7 @@ class User extends \WP_User {
 		$args = array(
 			'post_type'      => Friends::CPT,
 			'post_status'    => 'trash',
-			'offset'         => 30,
+			'offset'         => 100,
 			'fields'         => 'ids',
 			'orderby'        => 'date',
 			'order'          => 'asc',
