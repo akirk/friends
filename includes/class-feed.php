@@ -561,6 +561,9 @@ class Feed {
 		usort(
 			$items,
 			function ( $a, $b ) {
+				if ( ! isset( $a->date ) || ! isset( $b->date ) ) {
+					return 0;
+				}
 				return strtotime( $a->date ) - strtotime( $b->date );
 			}
 		);
