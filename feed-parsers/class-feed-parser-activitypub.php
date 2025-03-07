@@ -182,7 +182,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		} elseif ( ! is_wp_error( $user_id ) ) {
 			$user = User::get_user_by_id( $user_id );
 			if ( ! $user ) {
-				$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
+				$user = User::get_user_by_id( 1e10 + $user_id );
 			}
 		}
 		$user_id_map[ $user_id ] = $user;
@@ -387,7 +387,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			} else {
 				$user = User::get_user_by_id( $user_id );
 				if ( ! $user ) {
-					$user = User::get_user_by_id( 'friends-virtual-user-' . $user_id );
+					$user = User::get_user_by_id( 1e10 + $user_id );
 				}
 			}
 			if ( $user ) {
