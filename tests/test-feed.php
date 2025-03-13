@@ -154,6 +154,8 @@ class FeedTest extends \WP_UnitTestCase {
 			$user_feed = $feeds[ $file ];
 
 			$new_items = $user->retrieve_posts_from_feeds( array( $user_feed ) );
+			$deleted_items = Friends::get_instance()->delete_outdated_posts();
+			$new_items = array_diff( $new_items, $deleted_items );
 			$file = ( yield $new_items );
 		} while ( $file );
 		remove_filter( 'friends_pre_check_url', '__return_true' );
