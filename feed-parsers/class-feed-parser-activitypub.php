@@ -503,6 +503,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
 
+		if ( ! $user_feed ) {
+			// We don't know the actor.
+			return;
+		}
+
 		$friend_user = $user_feed->get_friend_user();
 		$object = $activity['object'];
 		$remote_url = $object['id'];
