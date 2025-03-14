@@ -59,10 +59,13 @@ class Messages {
 		add_filter( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 5 );
 		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 6 );
 		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 5 );
+		add_filter( 'mastodon_api_conversation', array( $this, 'mastodon_api_conversation' ), 10, 2 );
 		add_filter( 'mastodon_api_conversations', array( $this, 'mastodon_api_conversations' ), 10, 3 );
 		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 );
 		add_filter( 'api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 );
 		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 6 );
+		add_filter( 'mastodon_api_conversation_mark_read', array( $this, 'mastodon_api_conversation_mark_read' ), 10 );
+		add_filter( 'mastodon_api_conversation_delete', array( $this, 'delete_conversation' ), 10 );
 	}
 
 	/**
@@ -592,14 +595,18 @@ class Messages {
 	/**
 	 * Delete a conversation
 	 *
-	 * @param      User $friend_user     The friend user.
-	 * @param      int  $parent_post_id      The parent post id.
+	 * @param      int $parent_post_id      The parent post id.
 	 *
 	 * @return     \WP_Error|\WP_Post|bool  The post or false.
 	 */
-	public function delete_conversation( User $friend_user, $parent_post_id ) {
-		if ( ! apply_filters( 'friends_message_form_accounts', array(), $friend_user ) ) {
-			return new \WP_Error( 'not-a-friend', __( 'You cannot delete converations.', 'friends' ) );
+	public function delete_conversation( $parent_post_id ) {
+		if ( ! current_user_can( 'delete_post', $parent_post_id ) ) {
+			return new \WP_Error( 'cannot_delete', __( 'You cannot delete converations.', 'friends' ) );
+		}
+
+		$post = get_post( $parent_post_id );
+		if ( ! $post ) {
+			return new \WP_Error( 'friends_messages_delete_conversation', 'Record not found', array( 'status' => 404 ) );
 		}
 
 		$child_posts = get_children(
@@ -616,7 +623,7 @@ class Messages {
 
 		wp_delete_post( $parent_post_id );
 
-		return false;
+		return true;
 	}
 
 	/**
@@ -694,7 +701,7 @@ class Messages {
 		if ( ! $post_id ) {
 			wp_die( esc_html__( 'You cannot delete a conversation without a post id.', 'friends' ) );
 		}
-		$error = $this->delete_conversation( $friend_user, $post_id );
+		$error = $this->delete_conversation( $post_id );
 
 		if ( is_wp_error( $error ) ) {
 			wp_die( esc_html( $error->get_error_message() ) );
@@ -702,6 +709,51 @@ class Messages {
 
 		wp_safe_redirect( $friend_user->get_local_friends_page_url() );
 		exit;
+	}
+
+	public function mastodon_api_conversation( $conversation, $post_id ) {
+		$message = get_post( $post_id );
+		if ( ! $message ) {
+			return new \WP_Error( 'friends_messages_mastodon_api_conversation', 'Record not found', array( 'status' => 404 ) );
+		}
+
+		$last_status = get_posts(
+			array(
+				'post_type'   => self::CPT,
+				'post_parent' => $message->ID,
+				'post_status' => array( 'friends_read', 'friends_unread' ),
+				'orderby'     => 'date',
+				'order'       => 'DESC',
+				'numberposts' => 1,
+			)
+		);
+		if ( ! $last_status ) {
+			$last_status = $message;
+		} else {
+			$last_status = $last_status[0];
+		}
+
+		$unread = 'friends_unread' === $message->post_status;
+		if ( ! $unread ) {
+			$unread_posts = get_children(
+				array(
+					'post_parent' => $message->ID,
+					'post_type'   => self::CPT,
+					'post_status' => array( 'friends_unread' ),
+				)
+			);
+			if ( $unread_posts ) {
+				$unread = true;
+			}
+		}
+		$conversation = new \Enable_Mastodon_Apps\Entity\Conversation();
+		$conversation->id = $message->ID;
+		$conversation->unread = $unread;
+		$conversation->last_status = apply_filters( 'mastodon_api_status', null, $last_status->ID );
+		$conversation->accounts = array();
+		$conversation->accounts[] = apply_filters( 'mastodon_api_account', null, $message->post_author );
+
+		return $conversation;
 	}
 
 	public function mastodon_api_conversations( $conversations, $user_id, $limit = 20 ) {
@@ -713,42 +765,10 @@ class Messages {
 		$messages->set( 'order', 'DESC' );
 
 		foreach ( $messages->get_posts() as $message ) {
-			$last_status = get_posts(
-				array(
-					'post_type'   => self::CPT,
-					'post_parent' => $message->ID,
-					'post_status' => array( 'friends_read', 'friends_unread' ),
-					'orderby'     => 'date',
-					'order'       => 'DESC',
-					'numberposts' => 1,
-				)
-			);
-			if ( ! $last_status ) {
-				$last_status = $message;
-			} else {
-				$last_status = $last_status[0];
+			$conversation = $this->mastodon_api_conversation( null, $message->ID );
+			if ( $conversation && ! is_wp_error( $conversation ) ) {
+				$conversations[] = $conversation;
 			}
-
-			$unread = 'friends_unread' === $message->post_status;
-			if ( ! $unread ) {
-				$unread_posts = get_children(
-					array(
-						'post_parent' => $message->ID,
-						'post_type'   => self::CPT,
-						'post_status' => array( 'friends_unread' ),
-					)
-				);
-				if ( $unread_posts ) {
-					$unread = true;
-				}
-			}
-			$conversation = new \Enable_Mastodon_Apps\Entity\Conversation();
-			$conversation->id = $message->ID;
-			$conversation->unread = $unread;
-			$conversation->last_status = apply_filters( 'mastodon_api_status', null, $last_status->ID );
-			$conversation->accounts = array();
-			$conversation->accounts[] = apply_filters( 'mastodon_api_account', null, $message->post_author );
-			$conversations[] = $conversation;
 		}
 
 		return $conversations;
@@ -842,5 +862,46 @@ class Messages {
 		}
 
 		return apply_filters( 'mastodon_api_status', null, $post_id );
+	}
+
+	public function mastodon_api_conversation_mark_read( $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post ) {
+			return new \WP_Error( 'friends_messages_mastodon_api_conversation_mark_read', 'Record not found', array( 'status' => 404 ) );
+		}
+
+		if ( get_post_status( $post_id ) !== 'friends_read' ) {
+			wp_update_post(
+				array(
+					'ID'          => $post_id,
+					'post_status' => 'friends_read',
+				)
+			);
+		}
+
+		$child_posts = get_children(
+			array(
+				'post_parent' => $post_id,
+				'post_type'   => self::CPT,
+				'post_status' => array( 'friends_unread' ),
+			)
+		);
+		foreach ( $child_posts as $child ) {
+			wp_update_post(
+				array(
+					'ID'          => $child->ID,
+					'post_status' => 'friends_read',
+				)
+			);
+		}
+
+		wp_update_post(
+			array(
+				'ID'          => $post_id,
+				'post_status' => 'friends_read',
+			)
+		);
+
+		return true;
 	}
 }
