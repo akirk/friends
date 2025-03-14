@@ -445,7 +445,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( ! $send_to ) {
-			return new \WP_Error( 'invalid_recipient', __( 'Invalid recipient.', 'friends' ), compact( 'post_id', 'to', 'send_to' ) );
+			// We don't know this user.
+			return $post_id;
 		}
 
 		update_post_meta( $post_id, 'activitypub_content_visibility', ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE );

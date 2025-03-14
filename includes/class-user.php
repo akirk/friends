@@ -348,18 +348,7 @@ class User extends \WP_User {
 
 		return parent::__get( $key );
 	}
-	/**
-	 * Sends a message to the friend..
-	 *
-	 * @param      string $message  The message.
-	 * @param      string $subject  The subject.
-	 *
-	 * @return     \WP_Error|bool  True if the message was sent successfully.
-	 */
-	public function send_message( $message, $subject = null ) {
-		$friends = Friends::get_instance();
-		return $friends->messages->send_message( $this, $message, $subject );
-	}
+
 
 	public function insert_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
 		$current_user = wp_get_current_user();

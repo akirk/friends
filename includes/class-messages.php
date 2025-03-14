@@ -284,10 +284,15 @@ class Messages {
 	 */
 	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject, $reply_to_post_id = null ) {
 		add_filter( 'post_type_link', array( $this, 'post_type_link' ), 10, 2 );
+
+		$content = \wpautop( $message );
+		$content = \preg_replace( '/[\n\r\t]/', '', $content );
+		$content = \trim( $content );
+
 		$postdata = array(
 			'post_type'    => self::CPT,
 			'post_title'   => $subject,
-			'post_content' => $message,
+			'post_content' => $content,
 			'post_status'  => 'friends_read',
 			'post_parent'  => $reply_to_post_id,
 			'post_author'  => get_current_user_id(), // explicitly set it so that it is not overriden by the user.
