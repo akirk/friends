@@ -5,62 +5,108 @@
  * @package Friends
  */
 
+$time_format = get_option( 'date_format' ) . ' ' . get_option( 'time_format' );
+if ( false === strpos( $time_format, ':s' ) ) {
+	$time_format = str_replace( 'H:i', 'H:i:s', $time_format );
+	$time_format = str_replace( 'g:i', 'g:i:s', $time_format );
+}
+
 ?>
 <div class="card mt-2 p-2">
 	<strong><?php esc_html_e( 'Messages', 'friends' ); ?></strong>
 	<?php
 	while ( $args['existing_messages']->have_posts() ) {
 		$_post = $args['existing_messages']->next_post();
+		$subject = get_the_title( $_post );
+		if ( ! $subject ) {
+			$subject = get_the_excerpt( $_post );
+		}
+
+		$messages = get_posts(
+			array(
+				'post_parent' => $_post->ID,
+				'post_type'   => 'friend_message',
+				'post_status' => array( 'friends_read', 'friends_unread' ),
+				'order'       => 'ASC',
+				'numberposts' => -1,
+			)
+		);
+		array_unshift( $messages, $_post );
+
 		$class = '';
-		if ( get_post_status( $_post ) === 'friends_unread' ) {
-			$class .= ' unread';
+		$last_message_time = false;
+		foreach ( $messages as $message ) {
+			if ( get_post_status( $message ) === 'friends_unread' ) {
+				$class .= ' unread';
+			}
+			$post_time = get_post_modified_time( 'U', true, $message );
+			if ( ! $last_message_time || $post_time > $last_message_time ) {
+				$last_message_time = $post_time;
+			}
 		}
 		?>
 		<div class="friend-message" id="message-<?php echo esc_attr( $_post->ID ); ?>" data-id="<?php echo esc_attr( $_post->ID ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
-		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( get_post_modified_time( 'r', true, $_post ) ); ?>">
+		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $last_message_time ) ); ?>">
 			<?php
 			// translators: %s is a time span.
-			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( get_post_modified_time( 'U', true, $_post ) ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( $last_message_time ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			echo ': ';
-			echo esc_html( get_the_title( $_post ) );
+			echo esc_html( $subject );
 			?>
 		</a>
 		<div style="display: none" class="conversation">
 			<div class="messages">
 			<?php
-
-			$content = make_clickable( get_the_content( null, false, $_post ) );
-			preg_match_all( '/<span class="date">([^<]+)</', $content, $matches );
-			if ( $matches ) {
-				$replace = array();
-				foreach ( $matches[1] as $gmdate ) {
-
-					$replace[ $gmdate ] = esc_html(
+			foreach ( $messages as $message ) {
+				?>
+				<div class="message">
+				<?php
+				$post_time = get_post_modified_time( 'U', true, $message );
+				$ago = human_time_diff( $post_time );
+				$post_time = date_i18n( $time_format, $post_time );
+				$author = Friends\User::get_post_author( $message );
+				if ( get_current_user_id() === $author->ID ) {
+					echo wp_kses_post(
 						sprintf(
-							// translators: %s is a time span.
-							__( '%s ago' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-							human_time_diff( strtotime( $gmdate ) )
+							// translators: %2$s is the time span.
+							__( '<span class="author">You</span> wrote %s ago:', 'friends' ),
+							'<span class="time" title="' . esc_attr( $post_time ) . '">' . esc_html( $ago ) . '</span>'
+						)
+					);
+				} else {
+					echo wp_kses_post(
+						sprintf(
+							// translators: %1$s is the author, %2$s is the time span.
+							__( '%1$s wrote %2$s ago:', 'friends' ),
+							'<span class="author">' . esc_html( $author->display_name ) . '</span>',
+							'<span class="time" title="' . esc_attr( $post_time ) . '">' . esc_html( $ago ) . '</span>'
 						)
 					);
 				}
-				$content = str_replace( array_keys( $replace ), array_values( $replace ), $content );
+				?>
+				<blockquote>
+				<?php
+				$content = make_clickable( get_the_content( null, false, $message ) );
+				echo wp_kses_post( apply_filters( 'the_content', $content ) );
+				?>
+				</blockquote>
+				</div>
+				<?php
 			}
 
-			echo wp_kses_post( apply_filters( 'the_content', $content ) );
-			?>
-			</div>
-			<?php
 			Friends\Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
 				null,
 				array_merge(
 					$args,
 					array(
-						'subject' => get_the_title( $_post ),
+						'subject'  => $title,
+						'reply_to' => $_post->ID,
 					)
 				)
 			);
-			?>
+		?>
+		</div>
 		</div>
 		</div>
 		<?php

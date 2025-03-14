@@ -9,6 +9,8 @@
 
 namespace Friends;
 
+use WP_Error;
+
 /**
  * This is the class for the Messages part of the Friends Plugin.
  *
@@ -19,6 +21,7 @@ namespace Friends;
  */
 class Messages {
 	const CPT = 'friend_message';
+	const TAXONOMY = 'friend_message_user';
 
 	/**
 	 * Contains a reference to the Friends class.
@@ -42,6 +45,7 @@ class Messages {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'init', array( $this, 'register_taxonomy' ) );
 		add_filter( 'friends_unread_count', array( $this, 'friends_unread_messages_count' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_unread_messages' ) );
 		add_action( 'wp_ajax_friends-mark-read', array( $this, 'mark_message_read' ) );
@@ -50,6 +54,10 @@ class Messages {
 		add_action( 'friends_after_header', array( $this, 'friends_display_messages' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_message_form' ), 11, 2 );
 		add_filter( 'template_redirect', array( $this, 'handle_message_send' ), 10, 2 );
+		add_filter( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
+		add_filter( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 5 );
+		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 6 );
+		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 5 );
 	}
 
 
@@ -122,6 +130,23 @@ class Messages {
 		);
 	}
 
+	public function register_taxonomy() {
+		$args = array(
+			'labels'            => array(
+				'name'          => _x( 'Friend Message User', 'taxonomy general name', 'friends' ),
+				'singular_name' => _x( 'Friend Message User', 'taxonomy singular name', 'friends' ),
+				'menu_name'     => __( 'Friend Message User', 'friends' ),
+			),
+			'hierarchical'      => false,
+			'show_ui'           => true,
+			'show_admin_column' => true,
+			'query_var'         => true,
+			'rewrite'           => false,
+			'public'            => false,
+		);
+		register_taxonomy( self::TAXONOMY, self::CPT, $args );
+	}
+
 	/**
 	 * Add the REST API to send and receive friend requests
 	 */
@@ -155,7 +180,7 @@ class Messages {
 		}
 
 		$friend_user = new User( $user_id );
-		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
+		if ( ! apply_filters( 'friends_message_form_accounts', array(), $friend_user ) ) {
 			return new \WP_Error(
 				'friends_request_failed',
 				__( 'Could not respond to the request.', 'friends' ),
@@ -188,7 +213,7 @@ class Messages {
 		}
 
 		$friend_user = new User( $user_id );
-		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
+		if ( ! apply_filters( 'friends_message_form_accounts', array(), $friend_user ) ) {
 			return new \WP_Error(
 				'friends_request_failed',
 				__( 'Could not respond to the request.', 'friends' ),
@@ -200,73 +225,86 @@ class Messages {
 
 		$subject = wp_unslash( $request->get_param( 'subject' ) );
 		$message = wp_unslash( $request->get_param( 'message' ) );
-		$this->add_message_to_post( $friend_user, $friend_user, $subject, $message, true );
+		$remote_url = wp_unslash( $request->get_param( 'remote_url' ) );
+		$reply_to = wp_unslash( $request->get_param( 'reply_to' ) );
 
-		do_action( 'notify_friend_message_received', $friend_user, $message, $subject );
+		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $remote_url, $reply_to );
 
 		return array(
 			'status' => 'message-received',
 		);
 	}
 
+	public function friends_frontend_post_types_only_messages( $post_types ) {
+		$post_types = array( self::CPT );
+		return $post_types;
+	}
+
+
+	public function save_incoming_message( User $friend_user, $message, $subject = null, $remote_url = null, $reply_to = null ) {
+		$postdata = array(
+			'post_type'    => self::CPT,
+			'post_title'   => $subject,
+			'post_content' => $message,
+			'post_status'  => 'friends_unread',
+			'guid'         => $remote_url,
+		);
+
+		if ( $reply_to ) {
+			add_filter( 'friends_frontend_post_types', array( $this, 'friends_frontend_post_types_only_messages' ), 999 );
+			$reply_to_post_id = Feed::url_to_postid( $reply_to );
+			remove_filter( 'friends_frontend_post_types', array( $this, 'friends_frontend_post_types_only_messages' ), 999 );
+			if ( $reply_to_post_id ) {
+				$topmost_post = get_post( $reply_to_post_id );
+				while ( $topmost_post->post_parent ) {
+					$topmost_post = get_post( $topmost_post->post_parent );
+				}
+
+				$postdata['post_parent'] = $topmost_post->ID;
+			}
+		}
+
+		$post_id = $friend_user->insert_post( $postdata );
+		wp_set_object_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
+
+		return $post_id;
+	}
+
 	/**
 	 * Adds a message to friends_message post.
 	 *
-	 * @param      \WP_User $sender       The sender.
-	 * @param      User     $friend_user  The friend user to which this should be associated.
-	 * @param      string   $subject      The subject.
-	 * @param      string   $message      The message.
+	 * @param      int    $post_id        The return value that might be a post id.
+	 * @param      User   $friend_user  The friend user to which this should be associated.
+	 * @param      string $to           The recipient as URL.
+	 * @param      string $message      The message.
+	 * @param      string $subject      The subject.
+	 * @param      int    $reply_to_post_id  The reply to post ID.
 	 *
 	 * @return     int     The post ID.
 	 */
-	private function add_message_to_post( \WP_User $sender, User $friend_user, $subject, $message ) {
-		$existing_message = new \WP_Query(
-			array(
-				'post_type'   => self::CPT,
-				'author'      => $friend_user->ID,
-				'title'       => $subject,
-				'post_status' => array( 'friends_read', 'friends_unread' ),
-			)
+	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject, $reply_to_post_id = null ) {
+		add_filter( 'post_type_link', array( $this, 'post_type_link' ), 10, 2 );
+		$postdata = array(
+			'post_type'    => self::CPT,
+			'post_title'   => $subject,
+			'post_content' => $message,
+			'post_status'  => 'friends_read',
+			'post_parent'  => $reply_to_post_id,
+			'post_author'  => get_current_user_id(), // explicitly set it so that it is not overriden by the user.
 		);
-		$mark_unread = $sender->ID === $friend_user->ID;
 
-		$content = '';
-		$content .= '<!-- wp:friends/message {"sender":' . $sender->ID . ',"date":' . time() . '} -->' . PHP_EOL;
-		$content .= '<div class="wp-block-friends-message">';
-		$content .= '<span class="date">' . esc_html( gmdate( 'Y-m-d H:i:s' ) ) . '</span> ';
-		$content .= '<strong>' . esc_html( $sender->display_name ) . '</strong>: ';
-		if ( false === strpos( $message, '<!-- wp:' ) ) {
-			$content .= '<!-- wp:paragraph -->' . PHP_EOL . '<p>' . wp_kses_post( $message );
-			$content .= '</p>' . PHP_EOL;
-			$content .= '<!-- /wp:paragraph -->';
-		} else {
-			$content .= wp_kses_post( $message );
-		}
-		$content .= '</div>';
-		$content .= '<!-- /wp:friends/message -->';
-
-		if ( $existing_message->have_posts() ) {
-			$post = $existing_message->next_post();
-			$post_id = $post->ID;
-			wp_update_post(
-				array(
-					'ID'           => $post->ID,
-					'post_content' => $post->post_content . PHP_EOL . $content,
-					'post_status'  => $mark_unread ? 'friends_unread' : 'friends_read',
-				)
-			);
-		} else {
-			$post_id = $friend_user->insert_post(
-				array(
-					'post_type'    => self::CPT,
-					'post_title'   => $subject,
-					'post_content' => $content,
-					'post_status'  => $mark_unread ? 'friends_unread' : 'friends_read',
-				)
-			);
-		}
+		$post_id = wp_insert_post( $postdata );
+		remove_filter( 'post_type_link', array( $this, 'post_type_link' ), 10, 2 );
+		wp_set_object_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
 
 		return $post_id;
+	}
+
+	public function post_type_link( $post_link, \WP_Post $post ) {
+		if ( $post && self::CPT === $post->post_type ) {
+			return home_url( '?p=' . $post->ID );
+		}
+		return $post_link;
 	}
 
 	/**
@@ -341,28 +379,39 @@ class Messages {
 				)
 			);
 		}
-
+		$result = array();
 		$post_id = intval( $_POST['post_id'] );
-		if ( get_post_status( $post_id ) === 'friends_read' ) {
-			wp_send_json_success(
+		if ( get_post_status( $post_id ) !== 'friends_read' ) {
+			wp_update_post(
 				array(
-					'result' => true,
+					'ID'          => $post_id,
+					'post_status' => 'friends_read',
 				)
 			);
+			$result[] = $post_id;
 		}
-
-		wp_update_post(
+		$child_posts = get_children(
 			array(
-				'ID'          => $post_id,
-				'post_status' => 'friends_read',
+				'post_parent' => $post_id,
+				'post_type'   => self::CPT,
+				'post_status' => array( 'friends_unread' ),
 			)
 		);
+		foreach ( $child_posts as $child ) {
+			wp_update_post(
+				array(
+					'ID'          => $child->ID,
+					'post_status' => 'friends_read',
+				)
+			);
+			$result[] = $child->ID;
+		}
 
 		do_action( 'friends_message_read', $post_id );
 
 		wp_send_json_success(
 			array(
-				'result' => true,
+				'result' => $result,
 			)
 		);
 	}
@@ -386,7 +435,7 @@ class Messages {
 	 * @param      array $args         The arguments.
 	 */
 	public function friends_author_header( User $friend_user, $args ) {
-		if ( $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
+		if ( apply_filters( 'friends_message_form_accounts', array(), $friend_user ) ) {
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/author-header',
 				null,
@@ -406,18 +455,24 @@ class Messages {
 			return;
 		}
 
-		if ( $args['friend_user']->has_cap( self::get_minimum_cap( $args['friend_user'] ) ) ) {
-			$args['existing_messages'] = new \WP_Query(
+		if ( apply_filters( 'friends_message_form_accounts', array(), $args['friend_user'] ) ) {
+			$args['existing_messages'] = new \WP_Query();
+			$args['existing_messages']->set( 'post_type', self::CPT );
+			$args['existing_messages']->set( 'post_parent', '0' );
+			$args['existing_messages']->set( 'post_status', array( 'friends_read', 'friends_unread' ) );
+			$tax_query = array();
+			$tax_query[] =
 				array(
-					'post_type'   => self::CPT,
-					'author'      => $args['friend_user']->ID,
-					'post_status' => array( 'friends_read', 'friends_unread' ),
-				)
-			);
-
-			if ( ! $args['existing_messages']->have_posts() ) {
+					'taxonomy' => self::TAXONOMY,
+					'field'    => 'slug',
+					'terms'    => $args['friend_user']->ID,
+				);
+			$args['existing_messages']->set( 'tax_query', $tax_query );
+			$args['existing_messages']->get_posts();
+			if ( ! $args['existing_messages']->get_posts() ) {
 				return;
 			}
+			$args['accounts'] = apply_filters( 'friends_message_form_accounts', array(), $args['friend_user'] );
 
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/friend',
@@ -439,8 +494,9 @@ class Messages {
 		}
 
 		$args['blocks-everywhere'] = false;
+		$args['accounts'] = apply_filters( 'friends_message_form_accounts', array(), $args['friend_user'] );
 
-		if ( $args['friend_user']->has_cap( self::get_minimum_cap( $args['friend_user'] ) ) ) {
+		if ( $args['accounts'] ) {
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
 				null,
@@ -450,30 +506,32 @@ class Messages {
 		}
 	}
 
-	/**
-	 * Gets the minimum capability necessary to use messages.
-	 *
-	 * @param      User $friend_user  The friend user.
-	 * @return     string  The minimum capability.
-	 */
-	public static function get_minimum_cap( $friend_user ) {
-		return apply_filters( 'friends_message_minimum_cap', 'friend', $friend_user );
+	public function friends_message_form_accounts( $accounts, User $friend_user ) {
+		if ( $friend_user->has_cap( 'friend' ) ) {
+			// translators: %s is the user's URL.
+			$accounts[ $friend_user->get_rest_url() ] = sprintf( __( 'Friends connection (%s)', 'friends' ), $friend_user->user_url );
+		}
+
+		return $accounts;
 	}
 
 	/**
 	 * Sends a message to a friend.
 	 *
 	 * @param      User   $friend_user  The friend user.
+	 * @param      string $to           The recipient as URL.
 	 * @param      string $message      The message.
 	 * @param      string $subject      The subject.
+	 * @param      int    $reply_to_post_id  The reply to post ID.
 	 *
 	 * @return     \WP_Error|int  An error or the message post id.
 	 */
-	public function send_message( User $friend_user, $message, $subject = null ) {
-		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
+	public function send_message( User $friend_user, $to, $message, $subject = null, $reply_to_post_id = null ) {
+		$tos = apply_filters( 'friends_message_form_accounts', array(), $friend_user );
+		if ( ! isset( $tos[ $to ] ) ) {
 			return new \WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
 		}
-		if ( ! trim( $message ) ) {
+		if ( ! $message || ! trim( $message ) ) {
 			return new \WP_Error( 'empty-message', __( 'You cannot send empty messages.', 'friends' ) );
 		}
 
@@ -486,13 +544,29 @@ class Messages {
 			);
 		}
 
-		$post_id = $this->add_message_to_post( wp_get_current_user(), $friend_user, $subject, $message );
+		$post_id = apply_filters( 'friends_send_direct_message', null, $friend_user, $to, $message, $subject, $reply_to_post_id );
+
+		return $post_id;
+	}
+
+	public function friends_send_direct_message( $post_id, User $friend_user, $to, $message, $subject = null, $reply_to_post_id = null ) {
+		if ( $post_id || $to !== $friend_user->get_rest_url() ) {
+			return $post_id;
+		}
 
 		$body = array(
 			'subject' => $subject,
 			'message' => $message,
 			'auth'    => $friend_user->get_friend_auth(),
 		);
+
+		if ( $reply_to_post_id ) {
+			$body['reply_to'] = get_permalink( $reply_to_post_id );
+		}
+
+		if ( $post_id ) {
+			$body['remote_url'] = get_permalink( $post_id );
+		}
 
 		$response = wp_safe_remote_post(
 			$friend_user->get_rest_url() . '/message',
@@ -504,39 +578,38 @@ class Messages {
 		);
 
 		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			// TODO find a way to message the user.
 			return new \WP_Error( 'invalid-response', __( 'We received an unexpected response to our message.', 'friends' ) );
 		}
 
-		return $post_id;
+		return true;
 	}
 
 	/**
 	 * Delete a conversation
 	 *
-	 * @param      User   $friend_user  The friend user.
-	 * @param      string $subject      The subject.
+	 * @param      User $friend_user     The friend user.
+	 * @param      int  $parent_post_id      The parent post id.
 	 *
 	 * @return     \WP_Error|\WP_Post|bool  The post or false.
 	 */
-	public function delete_conversation( User $friend_user, $subject ) {
-		if ( ! $friend_user->has_cap( self::get_minimum_cap( $friend_user ) ) ) {
+	public function delete_conversation( User $friend_user, $parent_post_id ) {
+		if ( ! apply_filters( 'friends_message_form_accounts', array(), $friend_user ) ) {
 			return new \WP_Error( 'not-a-friend', __( 'You cannot delete converations.', 'friends' ) );
 		}
 
-		$existing_message = new \WP_Query(
+		$child_posts = get_children(
 			array(
+				'post_parent' => $parent_post_id,
 				'post_type'   => self::CPT,
-				'author'      => $friend_user->ID,
-				'title'       => $subject,
 				'post_status' => array( 'friends_read', 'friends_unread' ),
 			)
 		);
 
-		if ( $existing_message->have_posts() ) {
-			$post = $existing_message->next_post();
-			return wp_trash_post( $post->ID );
+		foreach ( $child_posts as $child_post ) {
+			wp_delete_post( $child_post->ID );
 		}
+
+		wp_delete_post( $parent_post_id );
 
 		return false;
 	}
@@ -571,7 +644,21 @@ class Messages {
 			wp_die( esc_html__( 'You cannot send an empty message.', 'friends' ) );
 		}
 
-		$error = $this->send_message( $friend_user, $message, $subject );
+		$reply_to_post_id = null;
+		if ( isset( $_REQUEST['friends_message_reply_to'] ) ) {
+			$reply_to_post_id = intval( $_REQUEST['friends_message_reply_to'] );
+		}
+
+		$to = null;
+		if ( isset( $_REQUEST['friends_message_account'] ) ) {
+			$to = sanitize_text_field( wp_unslash( $_REQUEST['friends_message_account'] ) );
+		}
+
+		if ( ! $to ) {
+			wp_die( esc_html__( 'You cannot send a message without a recipient.', 'friends' ) );
+		}
+
+		$error = $this->send_message( $friend_user, $to, $message, $subject, $reply_to_post_id );
 
 		if ( is_wp_error( $error ) ) {
 			wp_die( esc_html( $error->get_error_message() ) );
@@ -595,14 +682,14 @@ class Messages {
 
 		$friend_user = User::get_by_username( sanitize_text_field( wp_unslash( $_REQUEST['friends_message_recipient'] ) ) );
 
-		$subject = '';
-		if ( isset( $_REQUEST['friends_message_subject'] ) ) {
-			$subject = sanitize_text_field( wp_unslash( $_REQUEST['friends_message_subject'] ) );
+		$post_id = '';
+		if ( isset( $_REQUEST['friends_message_reply_to'] ) ) {
+			$post_id = sanitize_text_field( wp_unslash( $_REQUEST['friends_message_reply_to'] ) );
 		}
-		if ( ! $subject ) {
-			wp_die( esc_html__( 'You cannot delete a conversation without a subject.', 'friends' ) );
+		if ( ! $post_id ) {
+			wp_die( esc_html__( 'You cannot delete a conversation without a post id.', 'friends' ) );
 		}
-		$error = $this->delete_conversation( $friend_user, $subject );
+		$error = $this->delete_conversation( $friend_user, $post_id );
 
 		if ( is_wp_error( $error ) ) {
 			wp_die( esc_html( $error->get_error_message() ) );

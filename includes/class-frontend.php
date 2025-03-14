@@ -1133,7 +1133,7 @@ class Frontend {
 	 *
 	 * @param string   $post_link The post's permalink.
 	 * @param \WP_Post $post      The post in question.
-	 * @reeturn string The overriden post link.
+	 * @return string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, \WP_Post $post ) {
 		if ( $post && in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
