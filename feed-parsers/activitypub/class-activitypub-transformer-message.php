@@ -52,11 +52,20 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 
 		$mentions = '';
 		foreach ( $this->get_mentions() as $acct => $to ) {
-			$mentions .= sprintf(
-				'<a rel="mention" class="u-url mention" href="%s">%s</a> ',
-				esc_url( $to ),
-				esc_html( $acct )
+			$acct = substr( $acct, 0, strpos( $acct, '@', 1 ) );
+			$mention = sprintf(
+				'<a rel="mention" class="u-url mention" href="%s">',
+				esc_url( $to )
 			);
+			if ( strpos( $content, $mention ) !== false ) {
+				continue;
+			}
+
+			if ( strpos( $content, $acct ) !== false ) {
+				$content = str_replace( $acct, $mention . esc_html( $acct ) . '</a>', $content );
+			} else {
+				$mentions .= $mention . esc_html( $acct ) . '</a> ';
+			}
 		}
 
 		$content = $mentions . $content;

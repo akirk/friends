@@ -46,6 +46,7 @@ class Messages {
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
+		add_filter( 'post_type_link', array( $this, 'post_type_link' ), 10, 2 );
 		add_filter( 'friends_unread_count', array( $this, 'friends_unread_messages_count' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_unread_messages' ) );
 		add_action( 'wp_ajax_friends-mark-read', array( $this, 'mark_message_read' ) );
@@ -58,8 +59,11 @@ class Messages {
 		add_filter( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 5 );
 		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 6 );
 		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 5 );
+		add_filter( 'mastodon_api_conversations', array( $this, 'mastodon_api_conversations' ), 10, 3 );
+		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 );
+		add_filter( 'api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 );
+		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 6 );
 	}
-
 
 	/**
 	 * Registers the custom post type
@@ -242,12 +246,15 @@ class Messages {
 
 
 	public function save_incoming_message( User $friend_user, $message, $subject = null, $remote_url = null, $reply_to = null ) {
-		$postdata = array(
+		$post_data = array(
 			'post_type'    => self::CPT,
 			'post_title'   => $subject,
 			'post_content' => $message,
 			'post_status'  => 'friends_unread',
 			'guid'         => $remote_url,
+			'tax_input'    => array(
+				self::TAXONOMY => strval( $friend_user->ID ),
+			),
 		);
 
 		if ( $reply_to ) {
@@ -260,12 +267,11 @@ class Messages {
 					$topmost_post = get_post( $topmost_post->post_parent );
 				}
 
-				$postdata['post_parent'] = $topmost_post->ID;
+				$post_data['post_parent'] = $topmost_post->ID;
 			}
 		}
 
-		$post_id = $friend_user->insert_post( $postdata );
-		wp_set_object_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
+		$post_id = $friend_user->insert_post( $post_data );
 
 		return $post_id;
 	}
@@ -283,32 +289,35 @@ class Messages {
 	 * @return     int     The post ID.
 	 */
 	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject, $reply_to_post_id = null ) {
-		add_filter( 'post_type_link', array( $this, 'post_type_link' ), 10, 2 );
-
 		$content = \wpautop( $message );
 		$content = \preg_replace( '/[\n\r\t]/', '', $content );
 		$content = \trim( $content );
 
-		$postdata = array(
+		$post_data = array(
 			'post_type'    => self::CPT,
 			'post_title'   => $subject,
 			'post_content' => $content,
 			'post_status'  => 'friends_read',
 			'post_parent'  => $reply_to_post_id,
-			'post_author'  => get_current_user_id(), // explicitly set it so that it is not overriden by the user.
+			'tax_input'    => array(
+				self::TAXONOMY => strval( $friend_user->ID ),
+			),
 		);
 
-		$post_id = wp_insert_post( $postdata );
-		remove_filter( 'post_type_link', array( $this, 'post_type_link' ), 10, 2 );
-		wp_set_object_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
+		$post_id = wp_insert_post( $post_data );
 
 		return $post_id;
 	}
 
 	public function post_type_link( $post_link, \WP_Post $post ) {
 		if ( $post && self::CPT === $post->post_type ) {
-			return home_url( '?p=' . $post->ID );
+			if ( str_starts_with( $post->guid, home_url() ) ) {
+				return home_url( '?p=' . $post->ID );
+			}
+
+			return $post->guid;
 		}
+
 		return $post_link;
 	}
 
@@ -540,15 +549,6 @@ class Messages {
 			return new \WP_Error( 'empty-message', __( 'You cannot send empty messages.', 'friends' ) );
 		}
 
-		if ( empty( $subject ) ) {
-			$subject = sprintf(
-				// translators: %1$s is a date, %2$s is a time.
-				__( 'Conversation started on %1$s at %2$s', 'friends' ),
-				gmdate( 'Y-m-d' ),
-				gmdate( 'H:i:s' )
-			);
-		}
-
 		$post_id = apply_filters( 'friends_send_direct_message', null, $friend_user, $to, $message, $subject, $reply_to_post_id );
 
 		return $post_id;
@@ -702,5 +702,145 @@ class Messages {
 
 		wp_safe_redirect( $friend_user->get_local_friends_page_url() );
 		exit;
+	}
+
+	public function mastodon_api_conversations( $conversations, $user_id, $limit = 20 ) {
+		$messages = new \WP_Query();
+		$messages->set( 'post_type', self::CPT );
+		$messages->set( 'post_parent', '0' );
+		$messages->set( 'post_status', array( 'friends_read', 'friends_unread' ) );
+		$messages->set( 'posts_per_page', $limit );
+		$messages->set( 'order', 'DESC' );
+
+		foreach ( $messages->get_posts() as $message ) {
+			$last_status = get_posts(
+				array(
+					'post_type'   => self::CPT,
+					'post_parent' => $message->ID,
+					'post_status' => array( 'friends_read', 'friends_unread' ),
+					'orderby'     => 'date',
+					'order'       => 'DESC',
+					'numberposts' => 1,
+				)
+			);
+			if ( ! $last_status ) {
+				$last_status = $message;
+			} else {
+				$last_status = $last_status[0];
+			}
+
+			$unread = 'friends_unread' === $message->post_status;
+			if ( ! $unread ) {
+				$unread_posts = get_children(
+					array(
+						'post_parent' => $message->ID,
+						'post_type'   => self::CPT,
+						'post_status' => array( 'friends_unread' ),
+					)
+				);
+				if ( $unread_posts ) {
+					$unread = true;
+				}
+			}
+			$conversation = new \Enable_Mastodon_Apps\Entity\Conversation();
+			$conversation->id = $message->ID;
+			$conversation->unread = $unread;
+			$conversation->last_status = apply_filters( 'mastodon_api_status', null, $last_status->ID );
+			$conversation->accounts = array();
+			$conversation->accounts[] = apply_filters( 'mastodon_api_account', null, $message->post_author );
+			$conversations[] = $conversation;
+		}
+
+		return $conversations;
+	}
+
+	public function api_status_context_post_types( $post_types, $post_id ) {
+		if ( self::CPT === get_post_type( $post_id ) ) {
+			return array( self::CPT );
+		}
+		return $post_types;
+	}
+
+	public function api_status_context_post_statuses( $post_statuses, $post_id ) {
+		if ( self::CPT === get_post_type( $post_id ) ) {
+			return array( 'friends_read', 'friends_unread' );
+		}
+		return $post_statuses;
+	}
+
+	public function mastodon_api_submit_status( $status, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility ) {
+		if ( $status instanceof \WP_Error || $status instanceof \Enable_Mastodon_Apps\Entity\Status || 'direct' !== $visibility ) {
+			return $status;
+		}
+
+		$mentions = apply_filters(
+			'activitypub_extract_mentions',
+			array(),
+			$status_text,
+			null
+		);
+		$friend_user = false;
+		foreach ( $mentions as $mention ) {
+			$user_feed = User_Feed::get_by_url( $mention );
+			if ( $user_feed ) {
+				$friend_user = $user_feed->get_friend_user();
+				break;
+			}
+		}
+
+		if ( ! $friend_user ) {
+			// we cannot find the mentioned user, we need to stop this.
+			// TODO: handle the non-ActivityPub case.
+			return new \WP_Error( 'friends_messages_mastodon_api_submit_status', 'Direct message without a known mentioned user', array( 'status' => 400 ) );
+
+		}
+
+		$app = \Enable_Mastodon_Apps\Mastodon_App::get_current_app();
+		if ( ! $app->get_disable_blocks() ) {
+			$status_text = \Enable_Mastodon_Apps\Handler\Status::convert_to_blocks( $status_text );
+		}
+
+		if ( ! empty( $media_ids ) ) {
+			foreach ( $media_ids as $media_id ) {
+				$media = get_post( $media_id );
+				if ( ! $media ) {
+					return new \WP_Error( 'friends_messages_mastodon_api_submit_status', 'Media not found', array( 'status' => 400 ) );
+				}
+				if ( 'attachment' !== $media->post_type ) {
+					return new \WP_Error( 'friends_messages_mastodon_api_submit_status', 'Media not found', array( 'status' => 400 ) );
+				}
+				$attachment = \wp_get_attachment_metadata( $media_id );
+				if ( \wp_attachment_is( 'image', $media_id ) ) {
+					$status_text .= PHP_EOL;
+					$meta_json                  = array(
+						'id'       => intval( $media_id ),
+						'sizeSlug' => 'large',
+					);
+					$status_text .= '<!-- wp:image ' . wp_json_encode( $meta_json ) . ' -->' . PHP_EOL;
+					$status_text .= '<figure class="wp-block-image"><img src="' . esc_url( wp_get_attachment_url( $media_id ) ) . '" alt="" class="wp-image-' . esc_attr( $media_id ) . '"/></figure>' . PHP_EOL;
+					$status_text .= '<!-- /wp:image -->' . PHP_EOL;
+				} elseif ( \wp_attachment_is( 'video', $media_id ) ) {
+					$status_text .= PHP_EOL;
+					$status_text .= '<!-- wp:video ' . wp_json_encode( array( 'id' => $media_id ) ) . '  -->' . PHP_EOL;
+					$status_text .= '<figure class="wp-block-video"><video controls src="' . esc_url( wp_get_attachment_url( $media_id ) ) . '" width="' . esc_attr( $attachment['width'] ) . '" height="' . esc_attr( $attachment['height'] ) . '" /></figure>' . PHP_EOL;
+					$status_text .= '<!-- /wp:video -->' . PHP_EOL;
+				}
+			}
+		}
+
+		$post_id = $this->send_message( $friend_user, $user_feed->get_url(), $status_text, null, $in_reply_to_id );
+
+		if ( ! empty( $media_ids ) ) {
+			foreach ( $media_ids as $media_id ) {
+				wp_update_post(
+					array(
+						'ID'          => $media_id,
+						'post_parent' => $post_id,
+					)
+				);
+			}
+		}
+
+		return apply_filters( 'mastodon_api_status', null, $post_id );
 	}
 }

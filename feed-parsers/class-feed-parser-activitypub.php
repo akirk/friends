@@ -269,7 +269,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $account;
 	}
 
-	public function mastodon_api_status_add_reblogs( $status, $post_id, $request ) {
+	public function mastodon_api_status_add_reblogs( $status, $post_id, $request = null ) {
 		if ( Friends::CPT !== get_post_type( $post_id ) ) {
 			return $status;
 		}
@@ -855,7 +855,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return array The extracted mentions.
 	 */
 	public function activitypub_extract_in_reply_to_mentions( $mentions, $comment_content, $wp_object ) {
-		if ( 'WP_Comment' !== get_class( $wp_object ) ) {
+		if ( ! $wp_object || 'WP_Comment' !== get_class( $wp_object ) ) {
 			return $mentions;
 		}
 		$post_id = $wp_object->comment_post_ID;
