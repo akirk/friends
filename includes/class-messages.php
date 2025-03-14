@@ -9,8 +9,6 @@
 
 namespace Friends;
 
-use WP_Error;
-
 /**
  * This is the class for the Messages part of the Friends Plugin.
  *
