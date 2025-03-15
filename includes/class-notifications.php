@@ -46,6 +46,7 @@ class Notifications {
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
+		add_action( 'notify_unknown_friend_message_received', array( $this, 'notify_unknown_friend_message_received' ), 10, 4 );
 		add_action( 'activitypub_new_follower_email', array( $this, 'activitypub_new_follower_email' ), 10, 3 );
 		add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
 		add_action( 'activitypub_followers_pre_remove_follower', array( $this, 'activitypub_followers_pre_remove_follower' ), 10, 3 );
@@ -306,12 +307,6 @@ class Notifications {
 	/**
 	 * Notify the users of this site about a received message
 	 *
-	 * @param  User $friend_user The user who sent the message.
-	 */
-
-	/**
-	 * Notify the users of this site about a received message
-	 *
 	 * @param  User   $friend_user The user who sent the message.
 	 * @param       string $message     The message.
 	 * @param       string $subject     The subject.
@@ -349,6 +344,55 @@ class Notifications {
 
 		ob_start();
 		Friends::template_loader()->get_template_part( 'email/friend-message-received-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
+	}
+
+	/**
+	 * Notify the users of this site about a received message
+	 *
+	 * @param       string $sender_name The user who sent the message.
+	 * @param       string $message     The message.
+	 * @param       string $subject     The subject.
+	 * @param       string $feed_url    The url of the user who sent the message.
+	 */
+	public function notify_unknown_friend_message_received( $sender_name, $message, $subject, $feed_url ) {
+		$user = new User( Friends::get_main_friend_user_id() );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
+		if ( ! $user->user_email ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'notify_user_about_friend_message', true, $user ) ) {
+			return;
+		}
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( '%s sent you a message', 'friends' ), $sender_name );
+
+		$params = array(
+			'user'        => $user,
+			'sender_name' => $sender_name,
+			'feed_url'    => $feed_url,
+			'subject'     => $subject,
+			'message'     => $message,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/unknown-friend-message-received', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/unknown-friend-message-received-text', null, $params );
 		Friends::template_loader()->get_template_part( 'email/footer-text' );
 		$email_message['text'] = ob_get_contents();
 		ob_end_clean();

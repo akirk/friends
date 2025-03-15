@@ -598,7 +598,9 @@
 		} else {
 			conversation.show();
 			const messages = conversation.find( '.messages' ).get( 0 );
-			messages.scrollTop = messages.scrollHeight;
+			// scroll smoothly to the bottom of the overflow div:
+			$( messages ).animate( { scrollTop: messages.scrollHeight }, 1000 );
+
 			$this.find( 'a.display-message' ).removeClass( 'unread' );
 			wp.ajax.send( 'friends-mark-read', {
 				data: {

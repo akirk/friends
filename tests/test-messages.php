@@ -90,11 +90,12 @@ class MessagesTest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function test_send_messages() {
 		wp_set_current_user( $this->user_id );
+		$friends = Friends::get_instance();
 		$friend_user = new User( $this->friend_id );
-		$message_id = $friend_user->send_message( 'test' );
+		$message_id = $friends->messages->send_message( $friend_user, $friend_user->get_rest_url(), 'test' );
 		$this->assertNotInstanceOf( 'WP_Error', $message_id );
 		$post = get_post( $message_id );
-		$this->assertStringContainsString( '"sender":' . $this->user_id, $post->post_content );
+		$this->assertEquals( $this->user_id, $post->post_author );
 		$this->assertStringContainsString( '<p>test</p>', $post->post_content );
 	}
 

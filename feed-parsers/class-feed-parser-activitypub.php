@@ -115,6 +115,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
 
 		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 10, 2 );
+		add_action( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
+		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 6 );
 	}
 
 	public function friends_add_friends_input_placeholder() {
@@ -267,7 +269,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $account;
 	}
 
-	public function mastodon_api_status_add_reblogs( $status, $post_id, $request ) {
+	public function mastodon_api_status_add_reblogs( $status, $post_id, $request = null ) {
 		if ( Friends::CPT !== get_post_type( $post_id ) ) {
 			return $status;
 		}
@@ -419,6 +421,128 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $following;
 	}
 
+	public function friends_message_form_accounts( $accounts, User $friend_user ) {
+		foreach ( $friend_user->get_feeds() as $user_feed ) {
+			if ( 'activitypub' === $user_feed->get_parser() ) {
+				// translators: %s is the user's handle.
+				$accounts[ $user_feed->get_url() ] = sprintf( __( '%s (via ActivityPub)', 'friends' ), '@' . $this->convert_actor_to_mastodon_handle( $user_feed->get_url() ) );
+			}
+		}
+
+		return $accounts;
+	}
+
+	public function friends_send_direct_message( $post_id, User $friend_user, $to, $message, $subject = null, $reply_to_post_id = null ) {
+		if ( is_wp_error( $post_id ) || ! is_int( $post_id ) ) {
+			return $post_id;
+		}
+		$send_to = null;
+		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
+			if ( 'activitypub' === $user_feed->get_parser() && $user_feed->get_url() === $to ) {
+				$send_to = $to;
+				break;
+			}
+		}
+
+		if ( ! $send_to ) {
+			// We don't know this user.
+			return $post_id;
+		}
+
+		update_post_meta( $post_id, 'activitypub_content_visibility', ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE );
+		$inbox = \Activitypub\Http::get_remote_object( $send_to );
+
+		if ( ! $inbox || \is_wp_error( $inbox ) ) {
+			return new \WP_Error( 'friends_activitypub_inbox_error', __( 'Cannot get Activitypub inbox.', 'friends' ), compact( 'post_id', 'to', 'send_to' ) );
+		}
+		$inboxes = array();
+		if ( ! empty( $inbox['endpoints']['sharedInbox'] ) ) {
+			$inboxes[] = $inbox['endpoints']['sharedInbox'];
+		} elseif ( ! empty( $inbox['inbox'] ) ) {
+			$inboxes[] = $inbox['inbox'];
+		}
+
+		require_once __DIR__ . '/activitypub/class-activitypub-transformer-message.php';
+
+		$actor = \Activitypub\Model\User::from_wp_user( get_current_user_id() );
+		$transformer = new ActivityPub_Transformer_Message( get_post( $post_id ) );
+		if ( is_wp_error( $transformer ) ) {
+			return $transformer;
+		}
+		$transformer->set_content_visibility( ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE );
+		$transformer->to = array( $send_to );
+		if ( $reply_to_post_id ) {
+			$reply_to = get_post( $reply_to_post_id );
+			if ( ! is_wp_error( $reply_to ) ) {
+				$transformer->in_reply_to = $reply_to->guid;
+			}
+		}
+		$object = $transformer->to_object();
+
+		$activity = new \Activitypub\Activity\Activity();
+		$activity->set_type( 'Create' );
+		$activity->set_id( home_url( '?p=' . $post_id ) . '#direct-message' );
+		$activity->set_actor( $actor->get_id() );
+		$activity->set_object( $object );
+		$activity->set_to( $send_to );
+
+		$json = $activity->to_json();
+
+		foreach ( $inboxes as $inbox ) {
+			$result = \Activitypub\safe_remote_post( $inbox, $json, $actor->get__id() );
+		}
+
+		return $post_id;
+	}
+
+	public function handle_received_direct_message( $activity, $user_id ) {
+		$actor_url = $activity['actor'];
+		$user_feed = false;
+		if ( Friends::check_url( $actor_url ) ) {
+			// Let's check if we follow this actor. If not it might be a different URL representation.
+			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
+		}
+
+		$object = $activity['object'];
+		$remote_url = $object['id'];
+		$reply_to = null;
+		if ( isset( $object['inReplyTo'] ) ) {
+			$reply_to = $object['inReplyTo'];
+		}
+		$message = $object['content'];
+		$subject = null;
+
+		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
+			$actor = apply_filters( 'friends_get_activitypub_metadata', array(), $actor_url );
+			if ( ! $actor || is_wp_error( $actor ) ) {
+				return;
+			}
+
+			$sender_name = false;
+			if ( ! empty( $meta['name'] ) ) {
+				$sender_name = $meta['name'];
+			} elseif ( ! empty( $meta['preferredUsername'] ) ) {
+				$sender_name = $meta['preferredUsername'];
+			}
+
+			if ( isset( $meta['id'] ) ) {
+				if ( $sender_name ) {
+					$sender_name .= ' (@' . self::convert_actor_to_mastodon_handle( $meta['id'] ) . ')';
+				} else {
+					$sender_name = '@' . self::convert_actor_to_mastodon_handle( $meta['id'] );
+				}
+			} elseif ( ! $sender_name ) {
+				$sender_name = '@' . self::convert_actor_to_mastodon_handle( $actor_url );
+			}
+
+			do_action( 'notify_unknown_friend_message_received', $sender_name, $message, $subject, $actor_url, $remote_url, $reply_to );
+			return;
+		}
+
+		$friend_user = $user_feed->get_friend_user();
+
+		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $actor_url, $remote_url, $reply_to );
+	}
 
 	public function register_post_meta() {
 		register_post_meta(
@@ -759,7 +883,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return array The extracted mentions.
 	 */
 	public function activitypub_extract_in_reply_to_mentions( $mentions, $comment_content, $wp_object ) {
-		if ( 'WP_Comment' !== get_class( $wp_object ) ) {
+		if ( ! $wp_object || 'WP_Comment' !== get_class( $wp_object ) ) {
 			return $mentions;
 		}
 		$post_id = $wp_object->comment_post_ID;
@@ -806,7 +930,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function handle_received_create( $activity, $user_id ) {
-		return $this->handle_received_activity( $activity, $user_id, 'create' );
+		if (
+			\Activitypub\is_activity_public( $activity ) ||
+			// Only accept messages that have the user in the "to" field.
+			empty( $activity['to'] ) ||
+			! in_array( \Activitypub\Collection\Actors::get_by_id( $user_id )->get_id(), (array) $activity['to'], true )
+		) {
+			return $this->handle_received_activity( $activity, $user_id, 'create' );
+		}
+
+		$this->handle_received_direct_message( $activity, $user_id );
 	}
 
 	public function handle_received_undo( $activity, $user_id ) {

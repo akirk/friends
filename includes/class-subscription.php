@@ -110,7 +110,9 @@ class Subscription extends User {
 	}
 
 	public function insert_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
-		$postarr['post_author'] = 0;
+		if ( ! isset( $postarr['post_author'] ) ) {
+			$postarr['post_author'] = 0;
+		}
 		$post_id = wp_insert_post( $postarr, $wp_error, $fire_after_hooks );
 		if ( ! is_wp_error( $post_id ) ) {
 			wp_set_object_terms( $post_id, $this->get_term_id(), self::TAXONOMY );
