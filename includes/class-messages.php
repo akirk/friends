@@ -909,7 +909,7 @@ class Messages {
 		$post = get_post( $post_id );
 		if ( $post->post_parent ) {
 			$status->in_reply_to_id = $post->post_parent;
-			$status->in_reply_to_account_id = apply_filters( 'mastodon_api_account_id', null, $post->post_parent );
+			$status->in_reply_to_account_id = strval( get_current_user_id() );
 		}
 		return $status;
 	}
