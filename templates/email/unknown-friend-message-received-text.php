@@ -16,7 +16,7 @@ printf( __( 'Hi %s!', 'friends' ), $args['user']->display_name );
 echo PHP_EOL;
 
 // translators: %s is a username.
-printf( __( 'We just received a message from %s:', 'friends' ), $args['sender'] );
+printf( __( 'We just received a message from %s:', 'friends' ), $args['sender_name'] );
 echo PHP_EOL . PHP_EOL;
 
 echo $quoted_text;

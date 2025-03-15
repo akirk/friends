@@ -316,7 +316,7 @@ class Messages {
 
 	public function post_type_link( $post_link, \WP_Post $post ) {
 		if ( $post && self::CPT === $post->post_type ) {
-			if ( str_starts_with( $post->guid, home_url() ) ) {
+			if ( str_starts_with( $post->guid, home_url() ) || empty( $post->guid ) ) {
 				return home_url( '?p=' . $post->ID );
 			}
 
@@ -487,6 +487,7 @@ class Messages {
 					'terms'    => $args['friend_user']->ID,
 				);
 			$args['existing_messages']->set( 'tax_query', $tax_query );
+			$args['existing_messages']->set( 'posts_per_page', -1 );
 			if ( ! $args['existing_messages']->get_posts() ) {
 				return;
 			}

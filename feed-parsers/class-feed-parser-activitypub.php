@@ -518,24 +518,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				return;
 			}
 
-			$sender = false;
+			$sender_name = false;
 			if ( ! empty( $meta['name'] ) ) {
-				$sender = $meta['name'];
+				$sender_name = $meta['name'];
 			} elseif ( ! empty( $meta['preferredUsername'] ) ) {
-				$sender = $meta['preferredUsername'];
+				$sender_name = $meta['preferredUsername'];
 			}
 
 			if ( isset( $meta['id'] ) ) {
-				if ( $sender ) {
-					$sender .= ' (@' . self::convert_actor_to_mastodon_handle( $meta['id'] ) . ')';
+				if ( $sender_name ) {
+					$sender_name .= ' (@' . self::convert_actor_to_mastodon_handle( $meta['id'] ) . ')';
 				} else {
-					$sender = '@' . self::convert_actor_to_mastodon_handle( $meta['id'] );
+					$sender_name = '@' . self::convert_actor_to_mastodon_handle( $meta['id'] );
 				}
-			} elseif ( ! $sender ) {
-				$sender = '@' . self::convert_actor_to_mastodon_handle( $actor_url );
+			} elseif ( ! $sender_name ) {
+				$sender_name = '@' . self::convert_actor_to_mastodon_handle( $actor_url );
 			}
 
-			do_action( 'notify_unknown_friend_message_received', $sender, $message, $subject, $actor_url, $remote_url, $reply_to );
+			do_action( 'notify_unknown_friend_message_received', $sender_name, $message, $subject, $actor_url, $remote_url, $reply_to );
 			return;
 		}
 

@@ -15,8 +15,7 @@ if ( false === strpos( $time_format, ':s' ) ) {
 <div class="card mt-2 p-2">
 	<strong><?php esc_html_e( 'Messages', 'friends' ); ?></strong>
 	<?php
-	while ( $args['existing_messages']->have_posts() ) {
-		$_post = $args['existing_messages']->next_post();
+	foreach ( $args['existing_messages']->get_posts() as $_post ) {
 		$subject = get_the_title( $_post );
 		if ( ! $subject ) {
 			$subject = get_the_excerpt( $_post );

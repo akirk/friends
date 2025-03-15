@@ -354,12 +354,12 @@ class Notifications {
 	/**
 	 * Notify the users of this site about a received message
 	 *
-	 * @param       string $sender      The user who sent the message.
+	 * @param       string $sender_name The user who sent the message.
 	 * @param       string $message     The message.
 	 * @param       string $subject     The subject.
-	 * @param       string $feed_url  The url of the user who sent the message.
+	 * @param       string $feed_url    The url of the user who sent the message.
 	 */
-	public function notify_unknown_friend_message_received( $sender, $message, $subject, $feed_url ) {
+	public function notify_unknown_friend_message_received( $sender_name, $message, $subject, $feed_url ) {
 		$user = new User( Friends::get_main_friend_user_id() );
 		if ( defined( 'WP_TESTS_EMAIL' ) ) {
 			$user->user_email = WP_TESTS_EMAIL;
@@ -373,14 +373,14 @@ class Notifications {
 		}
 
 		// translators: %s is a user display name.
-		$email_title = sprintf( __( '%s sent you a message', 'friends' ), $sender );
+		$email_title = sprintf( __( '%s sent you a message', 'friends' ), $sender_name );
 
 		$params = array(
-			'user'     => $user,
-			'sender'   => $sender,
-			'feed_url' => $feed_url,
-			'subject'  => $subject,
-			'message'  => $message,
+			'user'        => $user,
+			'sender_name' => $sender_name,
+			'feed_url'    => $feed_url,
+			'subject'     => $subject,
+			'message'     => $message,
 		);
 
 		$email_message = array();

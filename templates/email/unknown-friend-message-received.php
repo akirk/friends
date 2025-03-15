@@ -17,7 +17,7 @@
 <p>
 	<?php
 	// translators: %s is a username.
-	printf( __( 'We just received a message from %s:', 'friends' ), esc_html( $args['sender'] ) );
+	printf( __( 'We just received a message from %s:', 'friends' ), esc_html( $args['sender_name'] ) );
 	?>
 </p>
 
