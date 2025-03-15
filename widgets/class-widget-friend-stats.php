@@ -84,7 +84,7 @@ class Widget_Friend_Stats extends \WP_Widget {
 		</summary>
 		<ul class="friend-stats menu menu-nav">
 			<?php if ( $show_followers ) : ?>
-				<li class="friend-stats-followers">
+				<li class="friend-stats-followers menu-item">
 					<a class="followers" href="<?php echo esc_url( home_url( '/friends/followers/' ) ); ?>">
 					<?php
 					echo esc_html(
@@ -99,7 +99,7 @@ class Widget_Friend_Stats extends \WP_Widget {
 				</li>
 				<?php endif; ?>
 			<?php if ( $show_blog_followers ) : ?>
-				<li class="friend-stats-followers">
+				<li class="friend-stats-followers menu-item">
 					<a class="followers" href="<?php echo esc_url( home_url( '/friends/blog-followers/' ) ); ?>">
 					<?php
 					echo esc_html(
@@ -113,29 +113,33 @@ class Widget_Friend_Stats extends \WP_Widget {
 					</a>
 				</li>
 				<?php endif; ?>
-				<li class="friend-stats-friends">
-					<?php
-					echo wp_kses(
-						sprintf(
-						/* translators: %s: number of friends */
-							_n( '%s Friend', '%s Friends', $friends_count, 'friends' ),
-							'<span class="friends">' . $friends_count . '</span>'
-						),
-						array( 'span' => array( 'class' => array() ) )
-					);
-					?>
+				<li class="friend-stats-friends menu-item">
+					<a href="<?php echo esc_attr( admin_url( 'page=friends-list' ) ); ?>">
+						<?php
+						echo wp_kses(
+							sprintf(
+							/* translators: %s: number of friends */
+								_n( '%s Friend', '%s Friends', $friends_count, 'friends' ),
+								'<span class="friends">' . $friends_count . '</span>'
+							),
+							array( 'span' => array( 'class' => true ) )
+						);
+						?>
+					</a>
 				</li>
-				<li class="friend-stats-subscriptions">
-					<?php
-					echo wp_kses(
-						sprintf(
-						/* translators: %s: number of subscriptions */
-							_n( '%s Subscription', '%s Subscriptions', $subscriptions_count, 'friends' ),
-							'<span class="subscriptions">' . $subscriptions_count . '</span>'
-						),
-						array( 'span' => array( 'class' => array() ) )
-					);
-					?>
+				<li class="friend-stats-subscriptions menu-item">
+					<a href="<?php echo esc_attr( admin_url( 'page=friends-list' ) ); ?>">
+						<?php
+							echo wp_kses(
+								sprintf(
+								/* translators: %s: number of subscriptions */
+									_n( '%s Subscription', '%s Subscriptions', $subscriptions_count, 'friends' ),
+									'<a class="subscriptions">' . $subscriptions_count . '</a>'
+								),
+								array( 'span' => array( 'class' => true ) )
+							);
+						?>
+					</a>
 				</li>
 
 		</ul>
