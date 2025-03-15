@@ -425,7 +425,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		foreach ( $friend_user->get_feeds() as $user_feed ) {
 			if ( 'activitypub' === $user_feed->get_parser() ) {
 				// translators: %s is the user's handle.
-				$accounts[ $user_feed->get_url() ] = sprintf( __( 'ActivityPub (%s)', 'friends' ), '@' . $this->convert_actor_to_mastodon_handle( $user_feed->get_url() ) );
+				$accounts[ $user_feed->get_url() ] = sprintf( __( '%s (via ActivityPub)', 'friends' ), '@' . $this->convert_actor_to_mastodon_handle( $user_feed->get_url() ) );
 			}
 		}
 
