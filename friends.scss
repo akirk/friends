@@ -113,6 +113,7 @@ div {
 }
 
 .off-canvas .off-canvas-content header.navbar #page-title {
+	margin-top: .1em;
 	margin-left: 3rem;
 }
 
@@ -189,6 +190,7 @@ h2#page-title a.dashicons {
 		a:active,
 		a:visited {
 			color: #333;
+			padding: .2rem;
 		}
 
 		.menu-item+.menu-item {
@@ -389,6 +391,9 @@ h2#page-title a.dashicons {
 
 	.friends-brand {
 		position: fixed;
+		margin-left: 1em;
+		margin-top: 1em;
+		font-size: 1.5em;
 
 		.friends-logo {
 
@@ -403,23 +408,13 @@ h2#page-title a.dashicons {
 				font-size: 1.2rem;
 				font-weight: 700;
 				line-height: 1.5rem;
-				margin-top: 1.5rem;
 				margin-bottom: 0;
-				margin-left: 1.5rem;
-				margin-right: .3rem;
 				text-transform: uppercase;
 
-			}
-
-			@media (min-width: 782px) {
-				& {
-					margin-top: 1rem;
-				}
 			}
 		}
 
 		.friends-sidebar-customize {
-			margin-left: 1.5rem;
 			color: #999;
 			font-size: .4rem;
 			line-height: .6rem;
@@ -435,6 +430,7 @@ h2#page-title a.dashicons {
 		position: fixed;
 		top: 5.5rem;
 		width: 12rem;
+		margin-left: 1em;
 
 		.accordion-header {
 			padding: 0;
@@ -484,6 +480,8 @@ h2#page-title a.dashicons {
 
 	img.avatar {
 		border-radius: 5px;
+		max-width: 36px;
+		max-height: 36px;
 	}
 
 	img.avatar.avatar-overlay {
