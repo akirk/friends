@@ -98,7 +98,7 @@ if ( false === strpos( $time_format, ':s' ) ) {
 				'subject'  => $title,
 				'reply_to' => $_post->ID,
 			);
-			$feed_url = get_post_meta( $_post->ID, 'friend_feed_url', true );
+			$feed_url = get_post_meta( $_post->ID, 'friends_feed_url', true );
 			if ( $feed_url ) {
 				$feed_args['accounts'] = array( $feed_url => $args['accounts'][ $feed_url ] );
 			}
