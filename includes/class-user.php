@@ -1444,6 +1444,21 @@ class User extends \WP_User {
 		return $account;
 	}
 
+	public static function mastodon_api_account_id( $user_id, $post_id ) {
+		if ( $user_id ) {
+			return $user_id;
+		}
+		$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
+		if ( ! $user ) {
+			$user = self::get_post_author( get_post( $post_id ) );
+		}
+		if ( $user instanceof self ) {
+			return $user->ID;
+		}
+
+		return $user_id;
+	}
+
 	public static function mastodon_api_get_posts_query_args( $args ) {
 		if ( isset( $args['author'] ) && is_string( $args['author'] ) ) {
 			$author = self::get_by_username( $args['author'] );

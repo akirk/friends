@@ -64,6 +64,8 @@ class Messages {
 		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 6 );
 		add_filter( 'mastodon_api_conversation_mark_read', array( $this, 'mastodon_api_conversation_mark_read' ), 10 );
 		add_filter( 'mastodon_api_conversation_delete', array( $this, 'delete_conversation' ), 10 );
+		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status' ), 20, 2 );
+		add_filter( 'mastodon_api_get_notifications_query_args', array( $this, 'mastodon_api_get_notifications_query_args' ), 20, 2 );
 	}
 
 	/**
@@ -253,9 +255,6 @@ class Messages {
 			'post_content' => $message,
 			'post_status'  => 'friends_unread',
 			'guid'         => $remote_url,
-			'tax_input'    => array(
-				self::TAXONOMY => strval( $friend_user->ID ),
-			),
 		);
 
 		if ( $reply_to ) {
@@ -273,6 +272,7 @@ class Messages {
 		}
 
 		$post_id = $friend_user->insert_post( $post_data );
+		wp_set_post_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
 
 		return $post_id;
 	}
@@ -300,12 +300,10 @@ class Messages {
 			'post_content' => $content,
 			'post_status'  => 'friends_read',
 			'post_parent'  => $reply_to_post_id,
-			'tax_input'    => array(
-				self::TAXONOMY => strval( $friend_user->ID ),
-			),
 		);
 
 		$post_id = wp_insert_post( $post_data );
+		wp_set_post_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
 
 		return $post_id;
 	}
@@ -483,7 +481,6 @@ class Messages {
 					'terms'    => $args['friend_user']->ID,
 				);
 			$args['existing_messages']->set( 'tax_query', $tax_query );
-			$args['existing_messages']->get_posts();
 			if ( ! $args['existing_messages']->get_posts() ) {
 				return;
 			}
@@ -749,6 +746,7 @@ class Messages {
 		$conversation->unread = $unread;
 		$conversation->last_status = apply_filters( 'mastodon_api_status', null, $last_status->ID );
 		$conversation->accounts = array();
+		// TODO: include virtual users.
 		$conversation->accounts[] = apply_filters( 'mastodon_api_account', null, $message->post_author );
 
 		return $conversation;
@@ -901,5 +899,44 @@ class Messages {
 		);
 
 		return true;
+	}
+
+	public function mastodon_api_status( $status, $post_id ) {
+		if ( ! $status instanceof \Enable_Mastodon_Apps\Entity\Status || get_post_type( $post_id ) !== self::CPT ) {
+			return $status;
+		}
+		$status->visibility = 'direct';
+		$post = get_post( $post_id );
+		if ( $post->post_parent ) {
+			$status->in_reply_to_id = $post->post_parent;
+			$status->in_reply_to_account_id = apply_filters( 'mastodon_api_account_id', null, $post->post_parent );
+		}
+		return $status;
+	}
+
+	public function mastodon_api_get_notifications_query_args( $args, $type ) {
+		if ( 'mention' !== $type ) {
+			return $args;
+		}
+		if ( ! isset( $args['post_type'] ) ) {
+			$args['post_type'] = array();
+		} elseif ( ! is_array( $args['post_type'] ) ) {
+			$args['post_type'] = array( $args['post_type'] );
+		}
+		$args['post_type'][] = self::CPT;
+
+		if ( ! isset( $args['post_status'] ) ) {
+			$args['post_status'] = array();
+		} elseif ( ! is_array( $args['post_status'] ) ) {
+			$args['post_status'] = array( $args['post_status'] );
+		}
+		if ( ! in_array( 'friends_unread', $args['post_status'] ) ) {
+			$args['post_status'][] = 'friends_unread';
+		}
+		if ( ! in_array( 'friends_read', $args['post_status'] ) ) {
+			$args['post_status'][] = 'friends_read';
+		}
+
+		return $args;
 	}
 }
