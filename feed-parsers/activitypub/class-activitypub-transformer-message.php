@@ -49,6 +49,9 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 	protected function get_content() {
 		$post    = $this->item;
 		$content = $post->post_content;
+		if ( ! $content ) {
+			$content = '';
+		}
 
 		$mentions = '';
 		foreach ( $this->get_mentions() as $acct => $to ) {
@@ -68,7 +71,11 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 			}
 		}
 
-		$content = $mentions . $content;
+		if ( preg_match( '/^(<p[^>]*>)/', $content, $m ) ) {
+			$content = $m[1] . $mentions . substr( $content, strlen( $m[1] ) );
+		} else {
+			$content = $mentions . \trim( $content );
+		}
 
 		$content = \wpautop( $content );
 		$content = \preg_replace( '/[\n\r\t]/', '', $content );
