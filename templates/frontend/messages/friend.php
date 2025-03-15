@@ -94,16 +94,19 @@ if ( false === strpos( $time_format, ':s' ) ) {
 				<?php
 			}
 
+			$feed_args = array(
+				'subject'  => $title,
+				'reply_to' => $_post->ID,
+			);
+			$feed_url = get_post_meta( $_post->ID, 'friend_feed_url', true );
+			if ( $feed_url ) {
+				$feed_args['accounts'] = array( $feed_url => $args['accounts'][ $feed_url ] );
+			}
+
 			Friends\Friends::template_loader()->get_template_part(
 				'frontend/messages/message-form',
 				null,
-				array_merge(
-					$args,
-					array(
-						'subject'  => $title,
-						'reply_to' => $_post->ID,
-					)
-				)
+				array_merge( $args, $feed_args )
 			);
 		?>
 		</div>

@@ -56,7 +56,7 @@ class Messages {
 		add_filter( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
 		add_filter( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 5 );
 		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 6 );
-		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 5 );
+		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 6 );
 		add_filter( 'mastodon_api_conversation', array( $this, 'mastodon_api_conversation' ), 10, 2 );
 		add_filter( 'mastodon_api_conversations', array( $this, 'mastodon_api_conversations' ), 10, 3 );
 		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 );
@@ -235,7 +235,7 @@ class Messages {
 		$remote_url = wp_unslash( $request->get_param( 'remote_url' ) );
 		$reply_to = wp_unslash( $request->get_param( 'reply_to' ) );
 
-		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $remote_url, $reply_to );
+		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $friend_user->get_rest_url(), $remote_url, $reply_to );
 
 		return array(
 			'status' => 'message-received',
@@ -248,7 +248,7 @@ class Messages {
 	}
 
 
-	public function save_incoming_message( User $friend_user, $message, $subject = null, $remote_url = null, $reply_to = null ) {
+	public function save_incoming_message( User $friend_user, $message, $subject = null, $feed_url = null, $remote_url = null, $reply_to = null ) {
 		$post_data = array(
 			'post_type'    => self::CPT,
 			'post_title'   => $subject,
@@ -273,6 +273,9 @@ class Messages {
 
 		$post_id = $friend_user->insert_post( $post_data );
 		wp_set_post_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
+		if ( $feed_url ) {
+			update_post_meta( $post_id, 'friends_feed_url', $feed_url );
+		}
 
 		return $post_id;
 	}
@@ -304,6 +307,9 @@ class Messages {
 
 		$post_id = wp_insert_post( $post_data );
 		wp_set_post_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
+		if ( $to ) {
+			update_post_meta( $post_id, 'friends_feed_url', $to );
+		}
 
 		return $post_id;
 	}

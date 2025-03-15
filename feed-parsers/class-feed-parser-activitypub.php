@@ -503,12 +503,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
 
-		if ( ! $user_feed ) {
-			// We don't know the actor.
-			return;
-		}
-
-		$friend_user = $user_feed->get_friend_user();
 		$object = $activity['object'];
 		$remote_url = $object['id'];
 		$reply_to = null;
@@ -518,7 +512,36 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$message = $object['content'];
 		$subject = null;
 
-		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $remote_url, $reply_to );
+		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
+			$actor = apply_filters( 'friends_get_activitypub_metadata', array(), $actor_url );
+			if ( ! $actor || is_wp_error( $actor ) ) {
+				return;
+			}
+
+			$sender = false;
+			if ( ! empty( $meta['name'] ) ) {
+				$sender = $meta['name'];
+			} elseif ( ! empty( $meta['preferredUsername'] ) ) {
+				$sender = $meta['preferredUsername'];
+			}
+
+			if ( isset( $meta['id'] ) ) {
+				if ( $sender ) {
+					$sender .= ' (@' . self::convert_actor_to_mastodon_handle( $meta['id'] ) . ')';
+				} else {
+					$sender = '@' . self::convert_actor_to_mastodon_handle( $meta['id'] );
+				}
+			} elseif ( ! $sender ) {
+				$sender = '@' . self::convert_actor_to_mastodon_handle( $actor_url );
+			}
+
+			do_action( 'notify_unknown_friend_message_received', $sender, $message, $subject, $actor_url, $remote_url, $reply_to );
+			return;
+		}
+
+		$friend_user = $user_feed->get_friend_user();
+
+		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $actor_url, $remote_url, $reply_to );
 	}
 
 	public function register_post_meta() {
