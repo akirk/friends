@@ -37,9 +37,11 @@ if $(git tag | grep -Eq ^$FRIENDS_VERSION\$); then
 		exit 1
 	fi
 
-	prs=$(git log $FRIENDS_VERSION..main --pretty=format:"- %s")
-	echo "### $NEW_VERSION" > new-changelog.md
-	echo -e "$prs" >> new-changelog.md
+	if [ -n new-changelog.md ]; then
+		prs=$(git log $FRIENDS_VERSION..main --pretty=format:"- %s")
+		echo "### $NEW_VERSION" > new-changelog.md
+		echo -e "$prs" >> new-changelog.md
+	fi
 
 	if [ -n "$VISUAL" ]; then
 		CMD="${VISUAL%% *}"
@@ -68,9 +70,9 @@ if $(git tag | grep -Eq ^$FRIENDS_VERSION\$); then
 		links="$links\n[$link]: https://github.com/akirk/friends/pull/${link:1}"
 	done
 
+	echo >> new-changelog.md
 
 	cat new-changelog.md > CHANGELOG.new
-	echo >> CHANGELOG.new
 	cat CHANGELOG.md | sed -e "s/#\([0-9]\+\)/[\1]/g" >> CHANGELOG.new
 	echo -e "$links" >> CHANGELOG.new
 	mv CHANGELOG.new CHANGELOG.md
@@ -78,11 +80,12 @@ if $(git tag | grep -Eq ^$FRIENDS_VERSION\$); then
 	echo -ne "\033[32m✔\033[0m "
 	echo "Changelog updated in CHANGELOG.md"
 
-	sed -i -e "/## Changelog/{n
+	sed -i -e '/## Changelog/{n
 r new-changelog.md
-}" README.md
+}' README.md
 
 	rm -f README.md-e
+	echo -e "$links" >> README.md
 
 	echo -ne "\033[32m✔\033[0m "
 	echo "Changelog updated in README.md"
