@@ -447,10 +447,10 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertTrue( $my_user_at_friend->has_cap( 'friend_request' ) );
 		$this->assertFalse( $my_user_at_friend->has_cap( 'friend' ) );
 
-		$message_id = $friend_user->send_message( 'test' );
+		$message_id = $friends->messages->send_message( $friend_user, $friend_user->get_rest_url(), 'test' );
 		$this->assertInstanceOf( 'WP_Error', $message_id );
 
-		$message_id = $my_user_at_friend->send_message( 'test' );
+		$message_id = $friends->messages->send_message( $my_user_at_friend, $my_user_at_friend->get_rest_url(), 'test' );
 		$this->assertInstanceOf( 'WP_Error', $message_id );
 	}
 

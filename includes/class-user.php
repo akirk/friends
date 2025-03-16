@@ -348,18 +348,7 @@ class User extends \WP_User {
 
 		return parent::__get( $key );
 	}
-	/**
-	 * Sends a message to the friend..
-	 *
-	 * @param      string $message  The message.
-	 * @param      string $subject  The subject.
-	 *
-	 * @return     \WP_Error|bool  True if the message was sent successfully.
-	 */
-	public function send_message( $message, $subject = null ) {
-		$friends = Friends::get_instance();
-		return $friends->messages->send_message( $this, $message, $subject );
-	}
+
 
 	public function insert_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
 		$current_user = wp_get_current_user();
@@ -1453,6 +1442,21 @@ class User extends \WP_User {
 		}
 
 		return $account;
+	}
+
+	public static function mastodon_api_account_id( $user_id, $post_id ) {
+		if ( $user_id ) {
+			return $user_id;
+		}
+		$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
+		if ( ! $user ) {
+			$user = self::get_post_author( get_post( $post_id ) );
+		}
+		if ( $user instanceof self ) {
+			return $user->ID;
+		}
+
+		return $user_id;
 	}
 
 	public static function mastodon_api_get_posts_query_args( $args ) {

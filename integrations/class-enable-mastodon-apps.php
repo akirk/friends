@@ -14,6 +14,7 @@ class Enable_Mastodon_Apps {
 	 */
 	public static function init() {
 		add_filter( 'mastodon_api_account', array( 'Friends\User', 'mastodon_api_account' ), 8, 4 );
+		add_filter( 'mastodon_api_account_id', array( 'Friends\User', 'mastodon_api_account_id' ), 8, 2 );
 		add_filter( 'mastodon_api_get_posts_query_args', array( 'Friends\User', 'mastodon_api_get_posts_query_args' ) );
 		add_filter( 'mastodon_entity_relationship', array( 'Friends\User', 'mastodon_entity_relationship' ), 10, 2 );
 		add_filter( 'mastodon_api_account_follow', array( get_called_class(), 'mastodon_api_account_follow' ), 10, 1 );
