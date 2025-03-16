@@ -539,79 +539,34 @@ class User extends \WP_User {
 	}
 
 	/**
-	 * Maybe delete an outdated post.
-	 *
-	 * @param \WP_Post $post The post.
-	 * @return int|false The post ID if it was deleted, false otherwise.
-	 */
-	private function maybe_delete_outdated_post( \WP_Post $post ) {
-		if ( ! get_option( 'friends_retention_delete_reacted' ) ) {
-			// get all terms for a post, no matter whetehr it's registered or not.
-			$term_query = new \WP_Term_Query(
-				array(
-					'object_ids' => $post->ID,
-				)
-			);
-			$reactions = array();
-			foreach ( $term_query->get_terms() as $term ) {
-				if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
-					continue;
-				}
-				$reactions[ $term->slug ] = true;
-
-			}
-			if ( $reactions ) {
-				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Skipping ', esc_html( $post->ID ), ' because it has reactions (';
-					foreach ( array_keys( $reactions ) as $emoji ) {
-						echo esc_html( Reactions::validate_emoji( $emoji ) ), ' ';
-					}
-					echo ')<br/>', PHP_EOL;
-
-				}
-				return false;
-			}
-		}
-		if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-			echo 'Deleting ', esc_html( $post->ID ), '<br/>', PHP_EOL;
-		}
-		wp_delete_post( $post->ID, true );
-		return $post->ID;
-	}
-
-	/**
 	 * Delete posts the user decided to automatically delete.
 	 */
 	public function delete_outdated_posts() {
 		$deleted_posts = array();
 
 		$args = array(
-			'post_type' => Friends::CPT,
+			'post_type'      => Friends::CPT,
+			'post_status'    => array( 'publish', 'trash' ),
+			'fields'         => 'ids',
+			'posts_per_page' => 10,
 		);
 
 		if ( $this->is_retention_days_enabled() ) {
 			$args['date_query'] = array(
 				'before' => gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $this->get_retention_days() * 24 ) . 'hours' ) ),
 			);
-		} elseif ( get_option( 'friends_enable_retention_days' ) ) {
-			$args['date_query'] = array(
-				'before' => gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( Friends::get_retention_days() * 24 ) . 'hours' ) ),
-			);
-		}
 
-		if ( isset( $args['date_query'] ) ) {
 			$query = new \WP_Query();
 			foreach ( $args as $key => $value ) {
 				$query->set( $key, $value );
 			}
 			$query = $this->modify_query_by_author( $query );
 
-			foreach ( $query->get_posts() as $post ) {
-				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
-					echo 'Deleting ', esc_html( $post->ID ), '<br/>';
+			foreach ( $query->get_posts() as $post_id ) {
+				$post_id = Friends::maybe_delete_outdated_post( $post_id, 'date overflow' );
+				if ( $post_id ) {
+					$deleted_posts[] = $post_id;
 				}
-				wp_delete_post( $post->ID, true );
-				$deleted_posts[] = $post->ID;
 			}
 		}
 
@@ -625,48 +580,11 @@ class User extends \WP_User {
 				$query->set( $key, $value );
 			}
 			$query = $this->modify_query_by_author( $query );
-
-			foreach ( $query->get_posts() as $_post ) {
-				$post_id = $this->maybe_delete_outdated_post( $_post );
+			foreach ( $query->get_posts() as $post_id ) {
+				$post_id = Friends::maybe_delete_outdated_post( $post_id, 'local number overflow' );
 				if ( $post_id ) {
 					$deleted_posts[] = $post_id;
 				}
-			}
-		}
-
-		// Global setting.
-		if ( get_option( 'friends_enable_retention_number' ) ) {
-			$args['offset'] = Friends::get_retention_number();
-			$query = new \WP_Query();
-			foreach ( $args as $key => $value ) {
-				$query->set( $key, $value );
-			}
-
-			foreach ( $query->get_posts() as $_post ) {
-				$post_id = $this->maybe_delete_outdated_post( $_post );
-				if ( $post_id ) {
-					$deleted_posts[] = $post_id;
-				}
-			}
-		}
-
-		// In any case, don't overflow the trash.
-		$args = array(
-			'post_type'   => Friends::CPT,
-			'post_status' => 'trash',
-			'offset'      => 30,
-		);
-
-		$query = new \WP_Query();
-		foreach ( $args as $key => $value ) {
-			$query->set( $key, $value );
-		}
-		$query = $this->modify_query_by_author( $query );
-
-		foreach ( $query->get_posts() as $_post ) {
-			$post_id = $this->maybe_delete_outdated_post( $_post );
-			if ( $post_id ) {
-				$deleted_posts[] = $post_id;
 			}
 		}
 

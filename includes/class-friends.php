@@ -198,6 +198,7 @@ class Friends {
 
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'cron_schedules', array( $this, 'add_fifteen_minutes_interval' ) ); // phpcs:ignore WordPressVIPMinimum.Performance.IntervalInSeconds.IntervalInSeconds
+		add_action( 'cron_friends_delete_old_posts', array( $this, 'cron_friends_delete_outdated_posts' ) );
 		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
@@ -651,6 +652,10 @@ class Friends {
 
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
 			wp_schedule_event( time(), 'fifteen-minutes', 'cron_friends_refresh_feeds' );
+		}
+
+		if ( ! wp_next_scheduled( 'cron_friends_delete_old_posts' ) ) {
+			wp_schedule_event( time(), 'hourly', 'cron_friends_delete_old_posts' );
 		}
 
 		self::add_default_sidebars_widgets();
@@ -1385,6 +1390,139 @@ class Friends {
 		}
 
 		return $url;
+	}
+
+	/**
+	 * Cron function to delete old posts.
+	 */
+	public function cron_friends_delete_outdated_posts() {
+		foreach ( User_Feed::get_all_users() as $friend_user ) {
+			$friend_user->delete_outdated_posts();
+		}
+		$this->delete_outdated_posts();
+	}
+
+	/**
+	 * Maybe delete an outdated post.
+	 *
+	 * @param int    $post_id The post ID.
+	 * @param string $reason The reason for deletion.
+	 * @return int|false The post ID if it was deleted, false otherwise.
+	 */
+	public static function maybe_delete_outdated_post( int $post_id, string $reason = '' ) {
+		if ( get_post_type( $post_id ) !== Friends::CPT ) {
+			return false;
+		}
+
+		if ( ! get_option( 'friends_retention_delete_reacted' ) ) {
+			// get all terms for a post, no matter whether it's registered or not.
+			$term_query = new \WP_Term_Query(
+				array(
+					'object_ids' => $post_id,
+				)
+			);
+			$reactions = array();
+			foreach ( $term_query->get_terms() as $term ) {
+				if ( substr( $term->taxonomy, 0, 16 ) !== 'friend-reaction-' ) {
+					continue;
+				}
+				$reactions[ $term->slug ] = true;
+
+			}
+			if ( $reactions ) {
+				if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
+					echo 'Skipping ', esc_html( $post_id ), ' because it has reactions (';
+					foreach ( array_keys( $reactions ) as $emoji ) {
+						echo esc_html( Reactions::validate_emoji( $emoji ) ), ' ';
+					}
+					echo ')<br/>', PHP_EOL;
+
+				}
+				return false;
+			}
+		}
+
+		if ( apply_filters( 'friends_debug', false ) && ! wp_doing_cron() ) {
+			echo 'Deleting ', esc_html( $post_id ), '(date: ', esc_html( get_the_date( 'Y-m-d H:i:s', $post_id ) ), ') because ', esc_html( $reason ), '<br/>', PHP_EOL;
+		}
+		wp_delete_post( $post_id, true );
+
+		return $post_id;
+	}
+
+	/**
+	 * Delete posts the user decided to automatically delete.
+	 */
+	public function delete_outdated_posts() {
+		$deleted_posts = array();
+
+		$args = array(
+			'post_type'      => Friends::CPT,
+			'post_status'    => array( 'publish', 'trash' ),
+			'fields'         => 'ids',
+			'posts_per_page' => 10,
+		);
+
+		if ( get_option( 'friends_enable_retention_days' ) ) {
+			$args['date_query'] = array(
+				'before' => gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( Friends::get_retention_days() * 24 ) . 'hours' ) ),
+			);
+
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+
+			foreach ( $query->get_posts() as $post_id ) {
+				$post_id = self::maybe_delete_outdated_post( $post_id, 'date overflow' );
+				if ( $post_id ) {
+					$deleted_posts[] = $post_id;
+				}
+			}
+			unset( $args['date_query'] );
+		}
+
+		$args['orderby'] = 'date';
+		$args['order'] = 'desc';
+		if ( get_option( 'friends_enable_retention_number' ) ) {
+			$args['offset'] = Friends::get_retention_number();
+			$query = new \WP_Query();
+			foreach ( $args as $key => $value ) {
+				$query->set( $key, $value );
+			}
+
+			foreach ( $query->get_posts() as $post_id ) {
+				$post_id = self::maybe_delete_outdated_post( $post_id, 'global number overflow' );
+				if ( $post_id ) {
+					$deleted_posts[] = $post_id;
+				}
+			}
+		}
+
+		// In any case, don't overflow the trash.
+		$args = array(
+			'post_type'      => Friends::CPT,
+			'post_status'    => 'trash',
+			'offset'         => 100,
+			'fields'         => 'ids',
+			'orderby'        => 'date',
+			'order'          => 'asc',
+			'posts_per_page' => 10,
+		);
+
+		$query = new \WP_Query();
+		foreach ( $args as $key => $value ) {
+			$query->set( $key, $value );
+		}
+
+		foreach ( $query->get_posts() as $post_id ) {
+			$post_id = self::maybe_delete_outdated_post( $post_id, 'trash' );
+			if ( $post_id ) {
+				$deleted_posts[] = $post_id;
+			}
+		}
+
+		return $deleted_posts;
 	}
 
 	/**
