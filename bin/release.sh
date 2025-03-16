@@ -128,7 +128,7 @@ r new-changelog.md
 	read
 	git add CHANGELOG.md README.md friends.php
 
-	echo -n "❯ git commit -m \"Version bump + Changelog"
+	echo -n "❯ git commit -m \"Version bump + Changelog\"
 	read
 	git commit -m "Version bump + Changelog"
 
