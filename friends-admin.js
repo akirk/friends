@@ -354,7 +354,6 @@ jQuery( function ( $ ) {
 	} );
 
 	var updateDashboardWidgets = function() {
-		console.log( 'updateDashboardWidgets' );
 		$( '.friends-dashboard-widget' ).each( function() {
 			const $this = $( this );
 			if ( $this.find( 'li.friends-post' ).length ) {
@@ -370,7 +369,7 @@ jQuery( function ( $ ) {
 			if ( $this.data( 'format' ) ) {
 				data.format = $this.data( 'format' );
 			}
-			console.log( data );
+
 			$.post(
 				friends.ajax_url,
 				data,
@@ -400,6 +399,18 @@ jQuery( function ( $ ) {
 		updateDashboardWidgets();
 		setInterval( updateDashboardWidgets, 60000 );
 	}
+
+	$( document ).on( 'click', '#copy-api-key', function ( e ) {
+		e.preventDefault();
+		const $this = $( this );
+		const $input = $( '#api-key' );
+		navigator.clipboard.writeText( $input.val() );
+		$this.text( friends.copied_text );
+		setTimeout( function () {
+			$this.text( friends.copy_text );
+		}, 2000 );
+		return false;
+	} );
 
 	setTimeout( function () {
 		if ( $( '#fetch-feeds' ).length ) {

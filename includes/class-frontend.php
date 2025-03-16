@@ -40,6 +40,13 @@ class Frontend {
 	public $author = false;
 
 	/**
+	 * Whether an tag is being displayed
+	 *
+	 * @var object|false
+	 */
+	public $tag = false;
+
+	/**
 	 * Whether a post-format is being displayed
 	 *
 	 * @var string|false
@@ -110,7 +117,6 @@ class Frontend {
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
-		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -118,6 +124,7 @@ class Frontend {
 		add_action( 'the_post', array( $this, 'the_post' ), 10, 2 );
 		add_action( 'parse_query', array( $this, 'parse_query' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
+		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
 		add_filter( 'friends_friend_posts_query_viewable', array( $this, 'expose_opml' ), 10, 2 );
@@ -234,7 +241,7 @@ class Frontend {
 		}
 	}
 
-	public function ensure_widget_editing( $components ) {
+	public static function ensure_widget_editing( $components ) {
 		if ( ! is_array( $components ) ) {
 			$components = array();
 		}
@@ -312,6 +319,8 @@ class Frontend {
 			'text_checking_url'  => __( 'Checking URL.', 'friends' ),
 			'text_refreshed'     => __( 'Refreshed', 'friends' ),
 			'text_refreshing'    => __( 'Refreshing', 'friends' ),
+			'text_compact_mode'  => __( 'Compact mode', 'friends' ),
+			'text_expanded_mode' => __( 'Expanded mode', 'friends' ),
 			'refresh_now'        => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'query_vars'         => $query_vars,
 			'qv_sign'            => sha1( wp_salt( 'nonce' ) . $query_vars ),
@@ -358,6 +367,16 @@ class Frontend {
 
 		return $classes;
 	}
+
+	public function tag_row_actions( $actions, $tag ) {
+		$actions['view-friends'] = sprintf(
+			'<a href="%s">%s</a>',
+			esc_url( home_url( '/friends/tag/' . $tag->name ) ),
+			__( 'View on your Friends page', 'friends' )
+		);
+		return $actions;
+	}
+
 
 	/**
 	 * Gets the minimal query variables.
@@ -653,10 +672,10 @@ class Frontend {
 			the_post();
 			$args = array(
 				'friends' => $friends,
-				'avatar'  => get_post_meta( get_the_ID(), 'gravatar', true ),
 			);
 
 			$args['friend_user'] = User::get_post_author( $post );
+			$args['avatar'] = $args['friend_user']->get_avatar_url();
 
 			$read_time = self::calculate_read_time( get_the_content() );
 			if ( $read_time >= 60 ) {
@@ -800,10 +819,11 @@ class Frontend {
 		$user_feed_url = get_post_meta( $post_id, 'feed_url', true );
 		$user_feed = $this->friends->feed->get_user_feed_by_url( $user_feed_url );
 
+		remove_all_filters( 'comment_form_before' );
+		remove_all_filters( 'comment_form_after' );
 		if ( empty( $comments ) ) {
 			$content = apply_filters( 'friends_no_comments_feed_available', __( 'We tried to load comments remotely but there were no comments.', 'friends' ), $post_id, $friend_user, $user_feed );
 		} else {
-			remove_all_filters( 'comment_form_before' );
 			$template_loader = Friends::template_loader();
 			ob_start();
 			?>
@@ -887,6 +907,10 @@ class Frontend {
 			$wp_query->is_404 = false;
 
 			status_header( 200 );
+			if ( 'frontend/index' === $this->template ) {
+				$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
+
+			}
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}
 
@@ -1023,11 +1047,11 @@ class Frontend {
 			}
 			$link .= ' ' . $name . '="' . esc_attr( $value ) . '"';
 		}
-		$link .= '>';
+		$link .= ' title="' . esc_attr( $text ) . '">';
 		if ( isset( $html_attributes['dashicon_front'] ) ) {
 			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon_front'] ) . '"></span>';
 		}
-		$link .= esc_html( $text );
+		$link .= '<span class="text">' . esc_html( $text ) . '</span>';
 		if ( isset( $html_attributes['dashicon_back'] ) ) {
 			$link .= '<span class="dashicons dashicons-' . esc_attr( $html_attributes['dashicon_back'] ) . '"></span>';
 		}
@@ -1109,7 +1133,7 @@ class Frontend {
 	 *
 	 * @param string   $post_link The post's permalink.
 	 * @param \WP_Post $post      The post in question.
-	 * @reeturn string The overriden post link.
+	 * @return string The overriden post link.
 	 */
 	public function friend_post_link( $post_link, \WP_Post $post ) {
 		if ( $post && in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
@@ -1409,6 +1433,17 @@ class Frontend {
 					}
 					break;
 
+				case 'tag':
+					if ( empty( $pagename_parts ) && $page_id ) {
+						// Support numeric tags.
+						$this->tag = strval( $page_id );
+						$page_id = false;
+					} else {
+						$this->tag = array_shift( $pagename_parts );
+					}
+					$tax_query = $this->friends->wp_query_get_post_tag_tax_query( $tax_query, $this->tag );
+					break;
+
 				default: // Maybe an author.
 					$author = User::get_by_username( $current_part );
 					if ( false === $author || is_wp_error( $author ) ) {
@@ -1420,6 +1455,10 @@ class Frontend {
 
 						$template = $this->get_static_frontend_template( $current_part );
 						if ( $template ) {
+							$wp_query->is_404 = false;
+							$query->is_404 = false;
+							status_header( 200 );
+							add_filter( 'pre_handle_404', '__return_true' );
 							$this->template = $template;
 							return $query;
 						}
@@ -1471,9 +1510,12 @@ class Frontend {
 			$query->set( 'page_id', $page_id );
 			if ( ! $this->author ) {
 				$post = get_post( $page_id );
-				$author = User::get_post_author( $post );
-				if ( false !== $author ) {
-					$this->author = $author;
+
+				if ( $post ) {
+					$author = User::get_post_author( $post );
+					if ( false !== $author ) {
+						$this->author = $author;
+					}
 				}
 			}
 			$query->is_single = true;
@@ -1503,7 +1545,6 @@ class Frontend {
 				$query->set( 'author__not_in', $hide_from_friends_page );
 			}
 		}
-
 		return $query;
 	}
 }

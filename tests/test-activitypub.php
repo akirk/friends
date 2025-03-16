@@ -136,6 +136,156 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		delete_user_option( 'activitypub_friends_show_replies', $this->friend_id );
 	}
 
+	public function test_incoming_update_person() {
+		$user_feed = User_Feed::get_by_url( $this->actor );
+		$friend_user = $user_feed->get_friend_user();
+		$old_description = $friend_user->description;
+
+		$new_description = 'New Description' . wp_rand();
+
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Update',
+					'id'     => $this->actor . '#update',
+					'actor'  => $this->actor,
+					'object' => array(
+						'type'         => 'Person',
+						'id'           => $this->actor,
+						'summary'      => $new_description,
+					),
+				)
+			)
+		);
+		$request->set_header( 'Content-type', 'application/json' );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 202, $response->get_status() );
+
+		$friend_user = $user_feed->get_friend_user();
+
+		$this->assertNotEquals( $old_description, $new_description );
+		$this->assertEquals( $friend_user->description, $new_description );
+	}
+
+	public function test_incoming_update_post() {
+		update_user_option( 'activitypub_friends_show_replies', '1', $this->friend_id );
+		$now = time() - 10;
+		$status_id = 123;
+
+		$posts = get_posts(
+			array(
+				'post_type' => Friends::CPT,
+				'author'    => $this->friend_id,
+			)
+		);
+
+		$post_count = count( $posts );
+
+		// Let's post a new Note through the REST API.
+		$date = gmdate( \DATE_W3C, $now++ );
+		$id = 'test' . $status_id;
+		$content = 'Test ' . $date . ' ' . wp_rand();
+		$attachment_url = 'https://mastodon.local/files/original/1234.png';
+		$attachment_width = 400;
+		$attachment_height = 600;
+
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Create',
+					'id'     => $id,
+					'actor'  => $this->actor,
+					'object' => array(
+						'type'         => 'Note',
+						'id'           => $id,
+						'attributedTo' => $this->actor,
+						'inReplyTo'    => null,
+						'content'      => $content,
+						'url'          => 'https://mastodon.local/users/akirk/statuses/' . $status_id,
+						'published'    => $date,
+						'attachment'   => array(
+							array(
+								'type'      => 'Document',
+								'mediaType' => 'image/png',
+								'url'       => $attachment_url,
+								'name'      => '',
+								'blurhash'  => '',
+								'width'     => $attachment_width,
+								'height'    => $attachment_height,
+
+							),
+						),
+					),
+				)
+			)
+		);
+		$request->set_header( 'Content-type', 'application/json' );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 202, $response->get_status() );
+
+		$posts = get_posts(
+			array(
+				'post_type' => Friends::CPT,
+				'author'    => $this->friend_id,
+			)
+		);
+
+		$this->assertEquals( $post_count + 1, count( $posts ) );
+		$this->assertStringStartsWith( $content, $posts[0]->post_content );
+		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
+		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
+
+		// Update the post
+		$date = gmdate( \DATE_W3C, $now++ );
+		$id = 'test' . $status_id;
+		$updated_content = 'Test ' . $date . ' ' . wp_rand();
+
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Update',
+					'id'     => $id . '#update',
+					'actor'  => 'https://mastodon.local/@akirk',
+
+					'object' =>
+					array(
+						'type'         => 'Note',
+						'id'           => $id,
+						'attributedTo' => 'https://mastodon.local/@akirk',
+						'inReplyTo'    => null,
+						'content'      => $updated_content,
+						'url'          => 'https://mastodon.local/users/akirk/statuses/' . $status_id,
+						'published'    => $date,
+					),
+				)
+			)
+		);
+
+		$request->set_header( 'Content-type', 'application/json' );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 202, $response->get_status() );
+
+		$posts = get_posts(
+			array(
+				'post_type' => Friends::CPT,
+				'author'    => $this->friend_id,
+			)
+		);
+
+		$this->assertEquals( $post_count + 1, count( $posts ) );
+		$this->assertEquals( $updated_content, $posts[0]->post_content );
+		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
+		$this->assertEquals( $this->friend_name, get_post_meta( $posts[0]->ID, 'author', true ) );
+
+		delete_user_option( 'activitypub_friends_show_replies', $this->friend_id );
+	}
+
 	public function test_incoming_mention_of_others() {
 		$now = time() - 10;
 		$status_id = 123;
@@ -274,13 +424,18 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
 		$object = $activitypub_post->to_object();
 
+		$tags = $object->get_tag();
+		if ( ! $tags ) {
+			$tags = array();
+		}
+
 		$this->assertContains(
 			array(
 				'type' => 'Mention',
 				'href' => $this->actor,
 				'name' => '@' . $this->friend_nicename,
 			),
-			$object->get_tag()
+			$tags
 		);
 
 		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_cc() );
@@ -304,13 +459,17 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
 		$object = $activitypub_post->to_object();
 
+		$tags = $object->get_tag();
+		if ( ! $tags ) {
+			$tags = array();
+		}
 		$this->assertNotContains(
 			array(
 				'type' => 'Mention',
 				'href' => $this->actor,
 				'name' => '@' . $this->friend_nicename,
 			),
-			$object->get_tag()
+			$tags
 		);
 
 		$this->assertContains( \get_rest_url( null, '/activitypub/1.0/users/1/followers' ), $object->get_cc() );
@@ -462,5 +621,32 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$actors[] = array( 'example@abc.org', 'abc.org', 'example' );
 
 		return $actors;
+	}
+
+	public function test_incoming_move() {
+		$new_url = 'https://example.com/new_url';
+
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Move',
+					'id'     => $this->actor . '/move',
+					'actor'  => $this->actor,
+					'object'  => $this->actor,
+					'target' => $new_url,
+				)
+			)
+		);
+		$request->set_header( 'Content-type', 'application/json' );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 202, $response->get_status() );
+
+		$old_user_feed = User_Feed::get_by_url( $this->actor );
+		$this->assertTrue( is_wp_error( $old_user_feed ) );
+
+		$new_user_feed = User_Feed::get_by_url( $new_url );
+		$this->assertInstanceof( 'Friends\User_Feed', $new_user_feed );
 	}
 }

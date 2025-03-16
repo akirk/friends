@@ -63,6 +63,15 @@ if ( $args['friends']->frontend->reaction ) {
 			$_title
 		)
 	);
+} elseif ( $args['friends']->frontend->tag ) {
+	echo esc_html(
+		sprintf(
+		// translators: %1$s is a hash tag, %2$s is a type of feed, e.g. "Main Feed".
+			_x( '#%1$s on %2$s', '#tag on feed', 'friends' ),
+			$args['friends']->frontend->tag,
+			$_title
+		)
+	);
 } else {
 	echo esc_html( $_title );
 }
@@ -107,12 +116,7 @@ if ( $args['friends']->frontend->reaction ) {
 </a>
 <?php endforeach; ?>
 
-<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=add-friend' ) ); ?>"><?php esc_html_e( 'Add New Friend', 'friends' ); ?></a>
-<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=friends-settings' ) ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Settings' ); ?></a>
-
-<?php if ( 'status' === $args['friends']->frontend->post_format ) : ?>
-	<a class="chip quick-post-panel-toggle" href="#"><?php esc_html_e( 'Quick Post Panel', 'friends' ); ?></a>
-<?php endif; ?>
+<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
 
 <?php do_action( 'friends_main_feed_header', $args ); ?>
 </div>

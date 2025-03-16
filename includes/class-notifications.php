@@ -46,10 +46,10 @@ class Notifications {
 		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
 		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
-		if ( ! get_user_option( 'friends_no_friend_follower_notification' ) ) {
-			add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
-			add_action( 'activitypub_followers_pre_remove_follower', array( $this, 'activitypub_followers_pre_remove_follower' ), 10, 3 );
-		}
+		add_action( 'notify_unknown_friend_message_received', array( $this, 'notify_unknown_friend_message_received' ), 10, 4 );
+		add_action( 'activitypub_new_follower_email', array( $this, 'activitypub_new_follower_email' ), 10, 3 );
+		add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
+		add_action( 'activitypub_followers_pre_remove_follower', array( $this, 'activitypub_followers_pre_remove_follower' ), 10, 3 );
 	}
 
 	/**
@@ -307,12 +307,6 @@ class Notifications {
 	/**
 	 * Notify the users of this site about a received message
 	 *
-	 * @param  User $friend_user The user who sent the message.
-	 */
-
-	/**
-	 * Notify the users of this site about a received message
-	 *
 	 * @param  User   $friend_user The user who sent the message.
 	 * @param       string $message     The message.
 	 * @param       string $subject     The subject.
@@ -358,6 +352,97 @@ class Notifications {
 	}
 
 	/**
+	 * Notify the users of this site about a received message
+	 *
+	 * @param       string $sender_name The user who sent the message.
+	 * @param       string $message     The message.
+	 * @param       string $subject     The subject.
+	 * @param       string $feed_url    The url of the user who sent the message.
+	 */
+	public function notify_unknown_friend_message_received( $sender_name, $message, $subject, $feed_url ) {
+		$user = new User( Friends::get_main_friend_user_id() );
+		if ( defined( 'WP_TESTS_EMAIL' ) ) {
+			$user->user_email = WP_TESTS_EMAIL;
+		}
+		if ( ! $user->user_email ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'notify_user_about_friend_message', true, $user ) ) {
+			return;
+		}
+
+		// translators: %s is a user display name.
+		$email_title = sprintf( __( '%s sent you a message', 'friends' ), $sender_name );
+
+		$params = array(
+			'user'        => $user,
+			'sender_name' => $sender_name,
+			'feed_url'    => $feed_url,
+			'subject'     => $subject,
+			'message'     => $message,
+		);
+
+		$email_message = array();
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
+		Friends::template_loader()->get_template_part( 'email/unknown-friend-message-received', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer' );
+		$email_message['html'] = ob_get_contents();
+		ob_end_clean();
+
+		ob_start();
+		Friends::template_loader()->get_template_part( 'email/unknown-friend-message-received-text', null, $params );
+		Friends::template_loader()->get_template_part( 'email/footer-text' );
+		$email_message['text'] = ob_get_contents();
+		ob_end_clean();
+
+		$this->send_mail( $user->user_email, $email_title, $email_message );
+	}
+
+	/**
+	 * Augment the ActivityPub new follower e-mail
+	 *
+	 * @param      array $actor  The actor.
+	 */
+	public function activitypub_new_follower_email( $actor ) {
+		if ( isset( $actor['id'] ) ) {
+			$url = $actor['id'];
+		} elseif ( isset( $actor['url'] ) ) {
+			$url = $actor['url'];
+		} else {
+			return;
+		}
+
+		$url = \ActivityPub\object_to_uri( $url );
+		$server = wp_parse_url( $url, PHP_URL_HOST );
+		$following = User_Feed::get_by_url( $url );
+		if ( ! $following || is_wp_error( $following ) ) {
+			$following = User_Feed::get_by_url( str_replace( '/users/', '/@', $url ) );
+		}
+		if ( $following && ! is_wp_error( $following ) ) {
+			$following = $following->get_friend_user();
+		} else {
+			$following = false;
+		}
+		echo '<p>';
+		if ( $following ) {
+			echo esc_html__( 'You are already following them!', 'friends' );
+			echo ' ';
+			// translators: %s is a URL.
+			echo wp_kses( sprintf( __( 'Go to their <a href="%s">friends page</a> to see what they recently posted about.', 'friends' ), esc_url( $following->get_local_friends_page_url() ) ), array( 'a' => array( 'href' => array() ) ) );
+		} else {
+			// translators: %s is a URL.
+			echo wp_kses( sprintf( __( 'You can view their profile at %s', 'friends' ), '<a href="' . esc_url( $url ) . '">' . esc_url( $url ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
+			echo '</p>';
+			echo '<p>';
+			// translators: %s is a URL.
+			echo wp_kses( sprintf( __( 'Maybe you want to <a href="%s">follow them back</a>?', 'friends' ), esc_url( add_query_arg( 'url', $url, admin_url( 'admin.php?page=add-friend' ) ) ) ), array( 'a' => array( 'href' => array() ) ) );
+		}
+		echo '</p>';
+	}
+
+	/**
 	 * Notify of a follower
 	 *
 	 * @param string                     $actor    The Actor URL.
@@ -368,6 +453,9 @@ class Notifications {
 	 * @return void
 	 */
 	public function activitypub_followers_post_follow( $actor, $activitypub_object, $user_id, $follower ) {
+		if ( ! get_user_option( 'friends_no_friend_follower_notification', $user_id ) ) {
+			return;
+		}
 		$user = new User( $user_id );
 		if ( defined( 'WP_TESTS_EMAIL' ) ) {
 			$user->user_email = WP_TESTS_EMAIL;
@@ -430,6 +518,9 @@ class Notifications {
 	 * @return void
 	 */
 	public function activitypub_followers_pre_remove_follower( $follower, $user_id, $actor ) {
+		if ( ! get_user_option( 'friends_no_friend_follower_notification', $user_id ) ) {
+			return;
+		}
 		$user = new User( $user_id );
 		if ( defined( 'WP_TESTS_EMAIL' ) ) {
 			$user->user_email = WP_TESTS_EMAIL;

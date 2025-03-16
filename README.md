@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.2.2
+- Stable tag: 3.3.5
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -96,6 +96,66 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 
 ## Changelog
 
+### 3.3.5
+- Use Outbox of the upcoming ActivityPub 5.3.0 and fix announce+like bug with Activitypub 5.2.0 ([#463])
+- Fix editing widgets in a block theme ([#475])
+- Augment bookmarks and favourites endpoints in EMA ([#474])
+- Improve the display of boosted posts ([#473])
+
+### 3.3.4
+- Reduce the size of the Follow link ([#472])
+- Fix unfollowing in Enable Mastodon Apps ([#471])
+- Bring back the collapse button for statuses ([#470])
+- Update plugins.json by @liviacarolgouvea ([#468])
+- Don't rewrite data URLs ([#467])
+- Prepare for the next Enable Mastodon Update ([#466])
+- Don't add domain for mentions ([#465])
+- Boosting: Show when there is a problem retrieving a URL ([#464])
+- Fix wrong link in User Notifications ([#462])
+- Don't double fetch URL for boosting ([#461])
+- Prevent 404s for static templates ([#452])
+- ActivityPub parser: avoid PHP warning by @jeherve ([#459])
+- Dashboard: make widget title translatable by @jeherve ([#457])
+- At A Glance messaging: ensure numbers are correctly displayed by @jeherve ([#458])
+- Prevent error when no summary is set ([#453])
+- Fix reversed Diff for post updates in the log ([#450])
+
+### 3.3.3
+- Remove the setting to change the post formats in the main query loop because it was confusing ([#446])
+- Protect posts that I have reacted on ([#447])
+- Fix Typo which prevented unannounces ([#443])
+- Plugins: Fix the More Details link ([#445])
+- Check the right user option about the follower e-mail ([#444])
+
+### 3.3.2
+- Fixed sending ActivityPub boosts ([#440])
+- Fixed deleting by global retention number ([#439])
+
+### 3.3.1
+- Fix some styling issues ([#437])
+- Fix FediPress installation ([#435])
+
+### 3.3.0
+- Styling Overhaul! ([#431])
+- Add the FediPress theme ([#433])
+- Incoming Feed Items: Fix in-article hash links ([#426])
+- Add more functions for a browser extension ([#427])
+- Browser Extension: API Key per user ([#429])
+- Fix parsing Pixelfed's Image attachments ([#430])
+- Add the friend's avatar to the page header ([#422])
+- Add inline follow link ([#432])
+- Log the newly supported ActivityPub events to the Friends Log ([#423])
+- Augment the ActivityPub New Follower E-Mail ([#434])
+
+### 3.2.3
+- ActivityPub: Support update of posts and people ([#421])
+- Add support for ActivityPub Move activity ([#420])
+- Make tagged Friend Posts accessible ([#419])
+- Uninstall: Delete more taxonomy entries ([#415])
+- Standardize REST Error messages ([#413])
+- Use the ActivityPub blog user as an actor if set to blog profile only ([#411])
+- Add a Duplicate Remover ([#409])
+
 ### 3.2.2
 - Move permissions checks into a dedicated permission_callback ([#408])
 - Add more checks around friendships ([#407])
@@ -163,6 +223,52 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 - Fix 404 on the New private post widget props @liviacarolgouvea ([#361])
 - Improve ghost.org ActivityPub compatibility ([#356])
 
+[#475]: https://github.com/akirk/friends/pull/475
+[#474]: https://github.com/akirk/friends/pull/474
+[#473]: https://github.com/akirk/friends/pull/473
+[#472]: https://github.com/akirk/friends/pull/472
+[#471]: https://github.com/akirk/friends/pull/471
+[#470]: https://github.com/akirk/friends/pull/470
+[#468]: https://github.com/akirk/friends/pull/468
+[#467]: https://github.com/akirk/friends/pull/467
+[#466]: https://github.com/akirk/friends/pull/466
+[#465]: https://github.com/akirk/friends/pull/465
+[#464]: https://github.com/akirk/friends/pull/464
+[#463]: https://github.com/akirk/friends/pull/463
+[#462]: https://github.com/akirk/friends/pull/462
+[#461]: https://github.com/akirk/friends/pull/461
+[#459]: https://github.com/akirk/friends/pull/459
+[#458]: https://github.com/akirk/friends/pull/458
+[#457]: https://github.com/akirk/friends/pull/457
+[#453]: https://github.com/akirk/friends/pull/453
+[#452]: https://github.com/akirk/friends/pull/452
+[#450]: https://github.com/akirk/friends/pull/450
+[#447]: https://github.com/akirk/friends/pull/447
+[#446]: https://github.com/akirk/friends/pull/446
+[#445]: https://github.com/akirk/friends/pull/445
+[#444]: https://github.com/akirk/friends/pull/444
+[#443]: https://github.com/akirk/friends/pull/443
+[#440]: https://github.com/akirk/friends/pull/440
+[#439]: https://github.com/akirk/friends/pull/439
+[#437]: https://github.com/akirk/friends/pull/437
+[#435]: https://github.com/akirk/friends/pull/435
+[#434]: https://github.com/akirk/friends/pull/434
+[#433]: https://github.com/akirk/friends/pull/433
+[#432]: https://github.com/akirk/friends/pull/432
+[#431]: https://github.com/akirk/friends/pull/431
+[#430]: https://github.com/akirk/friends/pull/430
+[#429]: https://github.com/akirk/friends/pull/429
+[#427]: https://github.com/akirk/friends/pull/427
+[#426]: https://github.com/akirk/friends/pull/426
+[#423]: https://github.com/akirk/friends/pull/423
+[#422]: https://github.com/akirk/friends/pull/422
+[#421]: https://github.com/akirk/friends/pull/421
+[#420]: https://github.com/akirk/friends/pull/420
+[#419]: https://github.com/akirk/friends/pull/419
+[#415]: https://github.com/akirk/friends/pull/415
+[#413]: https://github.com/akirk/friends/pull/413
+[#411]: https://github.com/akirk/friends/pull/411
+[#409]: https://github.com/akirk/friends/pull/409
 [#408]: https://github.com/akirk/friends/pull/408
 [#407]: https://github.com/akirk/friends/pull/407
 [#403]: https://github.com/akirk/friends/pull/403

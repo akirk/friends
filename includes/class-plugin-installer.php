@@ -65,34 +65,7 @@ class Plugin_Installer {
 
 			$button_classes = 'install button button-primary';
 			$button_text    = __( 'Install Now', 'friends' );
-
-			$api = plugins_api(
-				'plugin_information',
-				array(
-					'slug'   => sanitize_file_name( $plugin_slug ),
-					'fields' => array(
-						'short_description' => true,
-						'sections'          => false,
-						'requires'          => false,
-						'downloaded'        => true,
-						'last_updated'      => false,
-						'added'             => false,
-						'tags'              => false,
-						'compatibility'     => false,
-						'homepage'          => false,
-						'donate_link'       => false,
-						'icons'             => true,
-						'banners'           => true,
-					),
-				)
-			);
-
-			if ( isset( $additional_plugins[ $plugin_slug ] ) ) {
-				$api->more_info = admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $plugin_slug . '&TB_iframe=true' );
-				if ( is_string( $additional_plugins[ $plugin_slug ] ) ) {
-					$api->comment = $additional_plugins[ $plugin_slug ];
-				}
-			}
+			$api = self::get_plugin_info( sanitize_file_name( $plugin_slug ) );
 			if ( ! is_wp_error( $api ) ) {
 				$main_plugin_file = self::get_plugin_file( $plugin_slug );
 				if ( $main_plugin_file && self::check_file_extension( $main_plugin_file ) ) {
@@ -107,6 +80,35 @@ class Plugin_Installer {
 				self::render_template( $api, $button_text, $button_classes );
 			}
 		}
+	}
+
+	private static function get_plugin_info( $plugin_slug ) {
+		require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+		$api = \plugins_api(
+			'plugin_information',
+			array(
+				'slug'   => $plugin_slug,
+				'fields' => array(
+					'short_description' => true,
+					'sections'          => false,
+					'requires'          => false,
+					'downloaded'        => true,
+					'last_updated'      => false,
+					'added'             => false,
+					'tags'              => false,
+					'compatibility'     => false,
+					'homepage'          => false,
+					'donate_link'       => false,
+					'icons'             => true,
+					'banners'           => true,
+				),
+			)
+		);
+		$api->details = wp_nonce_url( admin_url( 'admin.php?page=friends-plugins&details=' . $plugin_slug ), 'friends-plugin-overview' );
+		if ( ! isset( $api->more_info ) ) {
+			$api->more_info = 'https://wordpress.org/plugins/' . $plugin_slug;
+		}
+		return $api;
 	}
 
 	/**
@@ -198,6 +200,21 @@ class Plugin_Installer {
 		}
 
 		return $our_plugins[ $args->slug ];
+	}
+
+	public static function plugin_details() {
+		if ( ! isset( $_GET['details'] ) || ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-plugin-overview' ) ) {
+			return;
+		}
+		$plugin_slug = sanitize_text_field( wp_unslash( $_GET['details'] ) );
+		$api = self::get_plugin_info( $plugin_slug );
+		if ( is_wp_error( $api ) ) {
+			echo esc_html( $api->get_error_message() );
+			exit;
+		}
+
+		Friends::template_loader()->get_template_part( 'admin/plugin-details', null, (array) $api );
+		exit;
 	}
 
 	/**
@@ -404,7 +421,8 @@ class Plugin_Installer {
 
 		require_once ABSPATH . 'wp-admin/includes/plugin.php';
 
-		deactivate_plugins( $plugin . '/' . $plugin . '.php' );
+		$main_plugin_file = self::get_plugin_file( $plugin );
+		deactivate_plugins( $main_plugin_file );
 
 		$msg = $plugin . ' successfully deactivated.';
 
@@ -474,8 +492,9 @@ class Plugin_Installer {
 
 		foreach ( $plugins as $plugin_file => $plugin_info ) {
 			$slug = dirname( plugin_basename( $plugin_file ) );
-			if ( $slug ) {
-				if ( $slug === $plugin_slug ) {
+			if ( '.' !== $slug ) {
+				// Github hosted plugins have a -hex appended.
+				if ( $slug === $plugin_slug || preg_match( '/^' . preg_quote( $plugin_slug, '/' ) . '-[0-9a-f]+$/', $slug ) ) {
 					return $plugin_file;
 				}
 			}

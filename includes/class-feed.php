@@ -120,10 +120,6 @@ class Feed {
 			$feed->set_polling_now();
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
-			$friend_user = $feed->get_friend_user();
-			if ( $friend_user ) {
-				$friend_user->delete_outdated_posts();
-			}
 		}
 	}
 
@@ -144,7 +140,6 @@ class Feed {
 				$feed->set_polling_now();
 				$this->retrieve_feed( $feed );
 				$feed->was_polled();
-				$friend_user->delete_outdated_posts();
 			}
 		}
 	}
@@ -299,10 +294,6 @@ class Feed {
 			$feed->set_polling_now();
 			$this->retrieve_feed( $feed );
 			$feed->was_polled();
-			$friend_user = $feed->get_friend_user();
-			if ( $friend_user ) {
-				$friend_user->delete_outdated_posts();
-			}
 		}
 	}
 
@@ -556,6 +547,17 @@ class Feed {
 		$post_formats    = get_post_format_strings();
 		$feed_post_format = $user_feed->get_post_format();
 
+		// Sort items by date asc so that older posts will have lower ids than newer posts.
+		usort(
+			$items,
+			function ( $a, $b ) {
+				if ( ! isset( $a->date ) || ! isset( $b->date ) ) {
+					return 0;
+				}
+				return strtotime( $a->date ) - strtotime( $b->date );
+			}
+		);
+
 		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_posts = array();
@@ -631,6 +633,11 @@ class Feed {
 					if ( empty( $old_post->$field ) || empty( $post_data[ $field ] ) ) {
 						continue;
 					}
+					if ( 'post_content' === $field && $old_post->$field !== $post_data[ $field ] ) {
+						$modified_post_data[ $field ] = $post_data[ $field ];
+						break;
+					}
+
 					if ( wp_strip_all_tags( $old_post->$field ) !== wp_strip_all_tags( $post_data[ $field ] ) ) {
 						$modified_post_data[ $field ] = $post_data[ $field ];
 						break;
@@ -654,6 +661,7 @@ class Feed {
 						if ( intval( $old_post->comment_count ) !== intval( $item->comment_count ) ) {
 							$modified_post_data['comment_count'] = $item->comment_count;
 						}
+
 						wp_update_post( $modified_post_data );
 						$modified_posts[] = $post_id;
 					}
@@ -721,6 +729,9 @@ class Feed {
 		$this->notify_about_new_posts( $friend_user, $new_posts, $user_feed );
 
 		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $modified_posts, $friend_user );
+
+		$deleted_posts = $friend_user->delete_outdated_posts();
+		$new_posts = array_diff( $new_posts, $deleted_posts );
 
 		return $new_posts;
 	}

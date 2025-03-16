@@ -154,6 +154,8 @@ class FeedTest extends \WP_UnitTestCase {
 			$user_feed = $feeds[ $file ];
 
 			$new_items = $user->retrieve_posts_from_feeds( array( $user_feed ) );
+			$deleted_items = Friends::get_instance()->delete_outdated_posts();
+			$new_items = array_diff( $new_items, $deleted_items );
 			$file = ( yield $new_items );
 		} while ( $file );
 		remove_filter( 'friends_pre_check_url', '__return_true' );
@@ -564,8 +566,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 25, $new_items );
-		$post_id = $new_items[0];
-
+		$post_id = end( $new_items );
 		$post = get_post( $post_id );
 
 		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/', $post->guid );
@@ -592,7 +593,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$feed_parsing_test->send( $feed );
 
 		$new_items = $feed_parsing_test->current();
-			$this->assertCount( 0, $new_items );
+		$this->assertCount( 0, $new_items );
 		$count = wp_count_posts( Friends::CPT );
 		$this->assertEquals( 10, $count->publish );
 
@@ -646,7 +647,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$count = wp_count_posts( Friends::CPT );
 		$this->assertEquals( 10, $count->publish );
 
-		$user->set_retention_number( 5 );
+		$user->set_retention_number( 7 );
 		// Nothing should change since it's not enabled.
 		$feed_parsing_test->send( $feed );
 		$new_items = $feed_parsing_test->current();
@@ -656,7 +657,42 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertEquals( 10, $count->publish );
 
 		$user->set_retention_number_enabled( true );
-		// Now the number should go down to 5.
+		// Now the number should go down to 7.
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 7, $count->publish );
+
+		$user->set_retention_number( 5 );
+		// Let's react on the first post to protect it from deletion.
+		$posts = get_posts(
+			array(
+				'numberposts' => 1,
+				'post_type'   => Friends::CPT,
+				'order'	   => 'ASC',
+				'orderby'	 => 'date',
+			)
+		);
+
+		$reaction = '2764';
+		$emoji = Reactions::validate_emoji( $reaction );
+		$this->assertEquals( $emoji, '❤️' );
+		$ret = apply_filters( 'friends_react', null, $posts[0]->ID, $reaction );
+		$this->assertTrue( !! $ret );
+
+		// Now the number should go down to 6 (because 1 is protected).
+		$feed_parsing_test->send( $feed );
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 0, $new_items );
+		wp_cache_delete( _count_posts_cache_key( Friends::CPT, '' ), 'counts' );
+		$count = wp_count_posts( Friends::CPT );
+		$this->assertEquals( 6, $count->publish );
+
+		// Now let's disable the protection.
+		update_option( 'friends_retention_delete_reacted', true );
+		// Now the number should go down to 5 (because 1 is no longer protected).
 		$feed_parsing_test->send( $feed );
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 0, $new_items );

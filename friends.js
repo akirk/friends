@@ -307,15 +307,38 @@
 		return false;
 	} );
 
-	$document.on( 'click', 'a.collapse-post', function ( e ) {
-		if ( e.metaKey || e.altKey || e.shiftKey ) {
-			$( this ).trigger( 'dblclick' );
-			return;
+	let openMenu = null;
+	$document.on( 'click', 'a.friends-dropdown-toggle', function ( e ) {
+		const $this = $( this );
+		const dropdown = $this.next( '.menu' );
+		if ( dropdown.is( ':visible' ) ) {
+			dropdown.hide();
+			openMenu = null;
+		} else {
+			$( '.menu' ).hide();
+			dropdown.show();
+			openMenu = dropdown;
+		}
+		e.stopPropagation();
+		return false;
+	});
+	$document.on( 'click', function ( e ) {
+		if ( e.target.closest( '.friends-dropdown' ) ) {
+			return true;
+		}
+		if ( openMenu ) {
+			openMenu.hide();
+		}
+	} );
+
+	$document.on( 'click', 'a.collapse-post, .collapsed.card, .all-collapsed .card:not(.uncollapsed)', function ( e ) {
+		if ( e.target.closest( '.friends-dropdown' ) ) {
+			return true;
 		}
 
 		const card = $( this ).closest( 'article' );
 		let collapsed;
-		if ( card.closest( 'section.all-collapsed' ).length ) {
+		if ( card.closest( 'section.all-collapsed' ) ) {
 			card.toggleClass( 'uncollapsed' );
 			collapsed = ! card.is( '.uncollapsed' );
 		} else {
@@ -324,23 +347,27 @@
 		}
 		if ( collapsed ) {
 			$( this )
-				.find( 'i' )
+				.find( 'i.dashicons-fullscreen-exit-alt' )
 				.removeClass( 'dashicons-fullscreen-exit-alt' )
 				.addClass( 'dashicons-fullscreen-alt' );
 		} else {
 			$( this )
-				.find( 'i' )
-				.removeClass( 'dashicons-fullscreen-exit-alt' )
-				.addClass( 'dashicons-fullscreen-alt' );
+				.find( 'i.dashicons-fullscreen-alt' )
+				.removeClass( 'dashicons-fullscreen-alt' )
+				.addClass( 'dashicons-fullscreen-exit-alt' );
 		}
 
 		return false;
 	} );
 
-	$document.on( 'dblclick', 'a.collapse-post', function () {
+	$document.on( 'click', 'a.toggle-compact', function () {
 		// Collapse-toggle all visible.
-		$( this ).closest( 'section' ).toggleClass( 'all-collapsed' );
-		$( this )[ 0 ].scrollIntoView();
+		$( 'section.posts' ).toggleClass( 'all-collapsed' );
+		if ( $( 'section.posts' ).is( '.all-collapsed' ) ) {
+			$( 'a.toggle-compact').text( friends.text_expanded_mode );
+		} else {
+			$( 'a.toggle-compact').text( friends.text_compact_mode );
+		}
 		$( window ).trigger( 'scroll' );
 		return false;
 	} );
@@ -522,14 +549,27 @@
 					if ( 'boosted' === result ) {
 						$this
 							.find( 'i.friends-boost-status' )
+							.removeClass( 'dashicons-warning' )
 							.addClass( 'dashicons dashicons-saved' );
+					} else if ( 'unboosted' === result ) {
+						$this
+							.find( 'i.friends-boost-status' )
+							.removeClass( 'dashicons dashicons-warning dashicons-saved' )
 					} else {
 						$this
 							.find( 'i.friends-boost-status' )
 							.addClass( 'dashicons dashicons-warning' )
-							.removeClass( 'dashicons-saved' );
+							.removeClass( 'dashicons-saved' )
+							.attr( 'title', result );
 					}
 				},
+				fail( result ) {
+					$this
+						.find( 'i.friends-boost-status' )
+						.addClass( 'dashicons dashicons-warning' )
+						.removeClass( 'dashicons-saved' )
+						.attr( 'title', result );
+					}
 			} );
 			return false;
 		} );
@@ -558,7 +598,9 @@
 		} else {
 			conversation.show();
 			const messages = conversation.find( '.messages' ).get( 0 );
-			messages.scrollTop = messages.scrollHeight;
+			// scroll smoothly to the bottom of the overflow div:
+			$( messages ).animate( { scrollTop: messages.scrollHeight }, 1000 );
+
 			$this.find( 'a.display-message' ).removeClass( 'unread' );
 			wp.ajax.send( 'friends-mark-read', {
 				data: {

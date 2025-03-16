@@ -30,6 +30,11 @@ if ( $args['friends']->frontend->reaction ) {
 		)
 	);
 } else {
+	if ( $args['friend_user']->get_avatar_url() ) {
+		?>
+		<img src="<?php echo esc_attr( $args['friend_user']->get_avatar_url() ); ?>" alt="<?php echo esc_attr( $args['friend_user']->display_name ); ?>" class="avatar" width="36" height="36" style="vertical-align: middle;" />
+		<?php
+	}
 	echo esc_html( $args['friend_user']->display_name );
 }
 ?>
@@ -52,7 +57,7 @@ $args['friends']->frontend->link(
 	<p>
 	<?php
 	echo wp_kses(
-		str_replace( '</p>', '<br/>', $args['friend_user']->description ),
+		make_clickable( str_replace( '</p>', '<br/>', $args['friend_user']->description ) ),
 		array(
 			'a'    => array( 'href' => array() ),
 			'span' => array( 'class' => array() ),
@@ -119,12 +124,11 @@ $args['friends']->frontend->link(
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Edit' ); ?></a>
 <?php endif; ?>
 
-<?php if ( 'status' === $args['friends']->frontend->post_format ) : ?>
-	<a class="chip quick-post-panel-toggle" href="#"><?php esc_html_e( 'Quick Post Panel', 'friends' ); ?></a>
-<?php endif; ?>
-
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
 <a class="chip" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend_user']->user_login, self_admin_url( 'admin.php?page=friends-refresh' ) ), 'friends-refresh' ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
 <?php endif; ?>
+
+<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
+
 <?php do_action( 'friends_author_header', $args['friend_user'], $args ); ?>
 </div>

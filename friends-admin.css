@@ -188,6 +188,12 @@ div.button.unfriend {
 	border-color: #b00;
 }
 
+.button.button-destructive {
+	border-color: #b00;
+	color: #a00;
+	text-decoration: none;
+}
+
 div.button.unfriend:hover {
 	border-color: #a00;
 }
@@ -294,4 +300,9 @@ span#friends_enable_retention_number_line {
 }
 .friends-notification-manager details.options fieldset label {
 	width: 10em;
+}
+
+.friends-logs pre {
+	width: 38em;
+	white-space: pre-wrap;
 }

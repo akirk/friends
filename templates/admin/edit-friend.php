@@ -67,7 +67,7 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 							<span class="info">ID: <?php echo esc_html( $args['friend']->get_term_id() ); ?></span>
 						<?php endif; ?>
 						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), add_query_arg( 'user', $args['friend']->user_login, self_admin_url( 'admin.php?page=edit-friend' ) ) ), 'convert-to-user-' . $args['friend']->user_login, 'convert-to-user' ) ); ?>"><?php esc_html_e( 'Convert to User', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), add_query_arg( 'user', $args['friend']->user_login, self_admin_url( 'admin.php?page=edit-friend' ) ) ), 'convert-to-user-' . $args['friend']->user_login, 'convert-to-user' ) ); ?>"><?php esc_html_e( 'Convert to User', 'friends' ); ?></a>
 						</p>
 					<?php else : ?>
 						<?php esc_html_e( 'User', 'friends' ); ?>
@@ -77,7 +77,7 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 						<p class="description">
 							<?php if ( $args['friend']->has_cap( 'friend' ) || $args['friend']->has_cap( 'pending_friend_request' ) || $args['friend']->has_cap( 'friend_request' ) ) : ?>
 							<?php else : ?>
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'convert-from-user-' . $args['friend']->user_login, 'convert-from-user' ) ); ?>"><?php esc_html_e( 'Convert to Virtual User', 'friends' ); ?></a>
+							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'convert-from-user-' . $args['friend']->user_login, 'convert-from-user' ) ); ?>"><?php esc_html_e( 'Convert to Virtual User', 'friends' ); ?></a>
 						<?php endif; ?>
 						</p>
 					<?php endif; ?>

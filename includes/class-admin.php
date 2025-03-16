@@ -163,6 +163,10 @@ class Admin {
 			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), $required_role, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 		}
 
+		if ( isset( $_GET['details'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-plugin-overview' ) ) {
+			add_action( 'load-' . $page_type . '_page_friends-plugins', array( 'Friends\Plugin_Installer', 'plugin_details' ) );
+		}
+
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 		add_submenu_page( 'friends', __( 'Plugins' ), __( 'Plugins' ), $required_role, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
 
@@ -202,6 +206,11 @@ class Admin {
 			// translators: as in log file.
 			$title = __( 'Log', 'friends' );
 			add_submenu_page( 'friends', $title, $title, $required_role, 'friends-logs', array( $this, 'render_friends_logs' ) );
+		}
+
+		if ( isset( $_GET['page'] ) && 'friends-browser-extension' === $_GET['page'] ) {
+			$title = __( 'Browser Extension', 'friends' );
+			add_submenu_page( 'friends', $title, $title, $required_role, 'friends-browser-extension', array( $this, 'render_browser_extension' ) );
 		}
 
 		if ( isset( $_GET['page'] ) && 'unfriend' === $_GET['page'] ) {
@@ -310,6 +319,8 @@ class Admin {
 			'ajax_url'                        => admin_url( 'admin-ajax.php' ),
 			'add_friend_url'                  => self_admin_url( 'admin.php?page=add-friend' ),
 			'add_friend_text'                 => __( 'Add a Friend', 'friends' ),
+			'copy_text'                       => __( 'Copy', 'friends' ),
+			'copied_text'                     => __( 'Copied!', 'friends' ),
 			'delete_feed_question'            => __( 'Delete the feed? You need to click "Save Changes" to really delete it.', 'friends' ),
 			'role_friend'                     => __( 'Friend', 'friends' ),
 			'role_acquaintance'               => __( 'Acquaintance', 'friends' ),
@@ -569,11 +580,6 @@ class Admin {
 				}
 			}
 
-			if ( isset( $_POST['limit_homepage_post_format'] ) && in_array( $_POST['limit_homepage_post_format'], get_post_format_slugs() ) ) {
-				update_option( 'friends_limit_homepage_post_format', $_POST['limit_homepage_post_format'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			} else {
-				delete_option( 'friends_limit_homepage_post_format' );
-			}
 			if ( isset( $_POST['blocks_everywhere'] ) && boolval( $_POST['blocks_everywhere'] ) ) {
 				update_user_option( get_current_user_id(), 'friends_blocks_everywhere', 1 );
 			} else {
@@ -605,6 +611,12 @@ class Admin {
 		update_option( 'friends_enable_retention_days', $retention_days_enabled );
 		if ( $retention_days_enabled && isset( $_POST['friends_retention_days'] ) ) {
 			update_option( 'friends_retention_days', max( 1, intval( $_POST['friends_retention_days'] ) ) );
+		}
+
+		if ( isset( $_POST['retention_delete_reacted'] ) && 1 === intval( $_POST['retention_delete_reacted'] ) ) {
+			delete_option( 'friends_retention_delete_reacted' );
+		} else {
+			update_option( 'friends_retention_delete_reacted', true );
 		}
 
 		if ( isset( $_POST['frontend_default_view'] ) && in_array(
@@ -667,7 +679,6 @@ class Admin {
 			null,
 			array(
 				'active' => 'friends',
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 
@@ -685,7 +696,6 @@ class Admin {
 			null,
 			array(
 				'active' => 'friends-settings',
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 		$this->check_admin_settings();
@@ -722,6 +732,7 @@ class Admin {
 					'retention_number'           => Friends::get_retention_number(),
 					'retention_days_enabled'     => get_option( 'friends_enable_retention_days' ),
 					'retention_number_enabled'   => get_option( 'friends_enable_retention_number' ),
+					'retention_delete_reacted'   => get_option( 'friends_retention_delete_reacted' ),
 					'frontend_default_view'      => get_user_option( 'friends_frontend_default_view', get_current_user_id() ),
 					'frontend_theme'             => get_user_option( 'friends_frontend_theme' ),
 					'blocks_everywhere'          => get_user_option( 'friends_blocks_everywhere' ),
@@ -946,7 +957,6 @@ class Admin {
 					__( 'Your Friend Requests', 'friends' ) => 'friends-list-requests',
 				),
 				'active' => $page,
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 
@@ -1886,7 +1896,7 @@ class Admin {
 						$avatar = $feed_details['avatar'];
 					}
 					if ( ! $description && ! empty( $feed_details['description'] ) ) {
-						$description = $feed_details['description'];
+						$description = wp_encode_emoji( $feed_details['description'] );
 					}
 				}
 
@@ -2734,21 +2744,59 @@ class Admin {
 		Friends::template_loader()->get_template_part( 'admin/duplicates', null, $args );
 	}
 
+	public function render_browser_extension() {
+		add_filter(
+			'friends_admin_tabs',
+			function ( $menu ) {
+				$menu[ __( 'Browser Extension', 'friends' ) ] = 'friends-browser-extension';
+				return $menu;
+			}
+		);
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-browser-extension',
+			)
+		);
+		$this->check_admin_settings();
+		$browser_api_key = Access_Control::get_browser_api_key();
+
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'friends-browser-extension' ) ) {
+			if ( isset( $_POST['revoke-api-key'] ) ) {
+				Access_Control::revoke_browser_api_key();
+				$browser_api_key = Access_Control::get_browser_api_key();
+			}
+		}
+
+		Friends::template_loader()->get_template_part(
+			'admin/browser-extension',
+			null,
+			array(
+				'browser-api-key' => $browser_api_key,
+			)
+		);
+
+		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
 
 	public function render_friends_logs() {
+		add_filter(
+			'friends_admin_tabs',
+			function ( $menu ) {
+				$menu[ __( 'Logs', 'friends' ) ] = 'friends-logs';
+				return $menu;
+			}
+		);
+
 		Friends::template_loader()->get_template_part(
 			'admin/settings-header',
 			null,
 			array(
 				'active' => 'friends-logs',
-				'title'  => __( 'Friends', 'friends' ),
 			)
 		);
 		$this->check_admin_settings();
-
-		?>
-		<h1><?php esc_html_e( 'Logs', 'friends' ); ?></h1>
-		<?php
 
 		Friends::template_loader()->get_template_part(
 			'admin/logs',
@@ -3396,7 +3444,7 @@ class Admin {
 
 		if ( $friend_post_count ) {
 			// translators: %s is the number of friend posts.
-			$items[] = '<a class="friend-posts" href="' . home_url( '/friends/' ) . '">' . sprintf( _n( '%s Post by Friends', '%s Posts by Friends', $friend_post_count, 'friends' ), $friend_post_count ) . '</a>';
+			$items[] = '<a class="friend-posts" href="' . home_url( '/friends/' ) . '">' . sprintf( _n( '%s Post by Friends', '%s Posts by Friends', $friend_post_count, 'friends' ), number_format_i18n( $friend_post_count ) ) . '</a>';
 		}
 		return $items;
 	}
@@ -3415,7 +3463,7 @@ class Admin {
 			if ( ! is_array( $widget ) ) {
 				continue;
 			}
-			$title = 'Latest Posts';
+			$title = __( 'Latest Posts', 'friends' );
 			if ( isset( $widget['format'] ) ) {
 				$title = get_post_format_string( sanitize_key( $widget['format'] ) );
 			}
@@ -3608,8 +3656,12 @@ class Admin {
 			'test'  => array( $this, 'friend_roles_test' ),
 		);
 		$tests['direct']['friends-cron'] = array(
-			'label' => __( 'Friend cron job is enabled', 'friends' ),
+			'label' => __( 'Friends cron job is enabled', 'friends' ),
 			'test'  => array( $this, 'friends_cron_test' ),
+		);
+		$tests['direct']['friends-delete-cron'] = array(
+			'label' => __( 'Friends delete old posts cron job is enabled', 'friends' ),
+			'test'  => array( $this, 'friends_cron_delete_test' ),
 		);
 		return $tests;
 	}
@@ -3679,7 +3731,7 @@ class Admin {
 
 	public function friends_cron_test() {
 		$result = array(
-			'label'       => __( 'The friend cron job is enabled', 'friends' ),
+			'label'       => __( 'The refresh cron job is enabled', 'friends' ),
 			'status'      => 'good',
 			'badge'       => array(
 				'label' => __( 'Friends', 'friends' ),
@@ -3691,11 +3743,43 @@ class Admin {
 				'</p>',
 			'test'        => 'friends-cron',
 		);
-
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
-			$result['label'] = __( 'The friends cron job is not enabled', 'friends' );
+			$result['label'] = __( 'The refresh cron job is not enabled', 'friends' );
 			$result['badge']['color'] = 'red';
 			$result['status'] = 'critical';
+			$result['description'] .= '<p>';
+			$result['description'] .= wp_kses_post(
+				sprintf(
+					// translators: %s is a URL.
+					__( '<strong>To fix this:</strong> <a href="%s">Enable the Friends cron job</a>.', 'friends' ),
+					esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings&rerun-activate' ) ), 'friends-settings' ) )
+				)
+			);
+			$result['description'] .= '</p>';
+		}
+
+		return $result;
+	}
+
+	public function friends_cron_delete_test() {
+		$result = array(
+			'label'       => __( 'The cron job to delete old posts is enabled', 'friends' ),
+			'status'      => 'good',
+			'badge'       => array(
+				'label' => __( 'Friends', 'friends' ),
+				'color' => 'green',
+			),
+			'description' =>
+				'<p>' .
+				__( 'The Friends Plugin uses a cron job to delete old posts your friends.', 'friends' ) .
+				'</p>',
+			'test'        => 'friends-delete-cron',
+		);
+
+		if ( ! wp_next_scheduled( 'cron_friends_delete_old_posts' ) ) {
+			$result['label'] = __( 'The cron job to delete old posts is not enabled', 'friends' );
+			$result['badge']['color'] = 'orange';
+			$result['status'] = 'recommended';
 			$result['description'] .= '<p>';
 			$result['description'] .= wp_kses_post(
 				sprintf(

@@ -3,7 +3,7 @@
  * Plugin name: Friends
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
- * Version: 3.2.2
+ * Version: 3.3.5
  * Requires PHP: 5.6
 
  * Description: A social network between WordPresses. Privacy focused, by itself a self-hosted RSS++ reader with notifications.
@@ -25,7 +25,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
-define( 'FRIENDS_VERSION', '3.2.2' );
+define( 'FRIENDS_VERSION', '3.3.5' );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 
@@ -60,7 +60,7 @@ require_once __DIR__ . '/includes/class-friends.php';
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );
 add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_hooks' ) );
 
-if ( is_admin() && FRIENDS_VERSION > get_option( 'friends_plugin_version' ) ) {
+if ( is_admin() && version_compare( get_option( 'friends_plugin_version' ), FRIENDS_VERSION, '<' ) ) {
 	add_action( 'admin_init', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ) );
 }
 
@@ -73,6 +73,8 @@ add_action( 'activate_blog', array( __NAMESPACE__ . '\Friends', 'activate_plugin
 add_action( 'wp_initialize_site', array( __NAMESPACE__ . '\Friends', 'activate_for_blog' ) );
 
 // Register widgets.
+add_filter( 'customize_loaded_components', array( __NAMESPACE__ . '\Frontend', 'ensure_widget_editing' ) );
+
 require_once __DIR__ . '/widgets/class-widget-base-friends-list.php';
 require_once __DIR__ . '/widgets/class-widget-refresh.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Refresh', 'register' ) );

@@ -293,7 +293,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 				array(
 					'permalink' => $item->get_permalink(),
 					'title'     => $title,
-					'content'   => $this->convert_relative_urls_to_absolute_urls( $item->get_content(), $url ),
+					'content'   => $this->convert_relative_urls_to_absolute_urls( $item->get_content(), $item->get_permalink() ),
 				)
 			);
 
@@ -347,7 +347,13 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			}
 
 			if ( is_object( $item->get_author() ) ) {
-				$feed_item->author = \wp_strip_all_tags( $item->get_author()->name );
+				$feed_item->author = $item->get_author()->name;
+				if ( ! $feed_item->author ) {
+					$feed_item->author = '';
+				}
+				// Strip HTML tags, even if they are escaped.
+				$feed_item->author = htmlspecialchars_decode( $feed_item->author, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+				$feed_item->author = \wp_strip_all_tags( $feed_item->author );
 			}
 
 			$feed_item->date         = $item->get_gmdate( 'U' );

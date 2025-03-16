@@ -87,10 +87,42 @@ foreach ( glob( __DIR__ . '/../../friends-*', GLOB_ONLYDIR ) as $dir ) {
 			continue;
 		}
 		$title = strtok( $section, PHP_EOL );
-		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ) );
+		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ), 'https://github.com/akirk/' . $slug, 'https://raw.githubusercontent.com/akirk/' . $slug . '/HEAD/' );
+
+
 	}
 	$json[ $slug ] = $data;
 }
+
+foreach ( array(
+	'alquimidia/fedipress',
+) as $repo ) {
+	$repo_info = json_decode( file_get_contents( "https://api.github.com/repos/$repo" ) );
+	$slug = strtr( $repo_info->full_name, '/', '-' );
+
+	$latest_release = json_decode( file_get_contents( "https://api.github.com/repos/$repo/releases/latest" ) );
+	$data = array(
+		'name'              => preg_replace( '/(\w)press/', '$1Press', ucfirst( $repo_info->name ) ),
+		'short_description' => $repo_info->description,
+		'more_info'         => $repo_info->html_url,
+		'author'            => '<a href="' . $repo_info->owner->html_url . '">' . $repo_info->owner->login . '</a>',
+		'slug'              => $slug,
+		'version'           => $latest_release->tag_name,
+		'trunk'             => $latest_release->zipball_url,
+		'download_link'     => $latest_release->zipball_url,
+		'last_updated'      => substr( $latest_release->published_at, 0, 10 ),
+		'sections'          => array(),
+	);
+
+	$readme_md = 'Overview' . PHP_EOL . file_get_contents( "https://raw.githubusercontent.com/$repo/HEAD/README.md" );
+	foreach ( explode( PHP_EOL . '## ', $readme_md ) as $section ) {
+		$title = strtok( $section, PHP_EOL );
+		$data['sections'][ $title ] = simple_convert_markdown( substr( $section, strlen( $title ) ), $repo_info->html_url, 'https://raw.githubusercontent.com/' . $repo . '/HEAD/' );
+	}
+
+	$json[ $slug ] = $data;
+}
+
 file_put_contents( __DIR__ . '/../plugins.json', json_encode( $json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
 echo 'plugins.json was created.', PHP_EOL;
 
@@ -101,12 +133,21 @@ echo 'plugins.json was created.', PHP_EOL;
  *
  * @return     string  The HTML.
  */
-function simple_convert_markdown( $md ) {
+function simple_convert_markdown( $md, $url, $img_base_url = '' ) {
+	if ( ! $img_base_url ) {
+		$img_base_url = $url;
+	}
 	$html = $md;
 	$html = preg_replace( '/^# (.*)$/m', '<h2>$1</h2>', $html );
 	$html = preg_replace( '/^## (.*)$/m', '<h3>$1</h3>', $html );
 	$html = preg_replace( '/^### (.*)$/m', '<h4>$1</h4>', $html );
+	$html = preg_replace( '/\*\*\*(.*?)\*\*\*/', '<strong><em>$1</em></strong>', $html );
+	$html = preg_replace( '/```(.*?)```/', '<tt>$1</tt>', $html );
+	$html = preg_replace( '/\*\*(.*?)\*\*/', '<strong>$1</strong>', $html );
 	$html = preg_replace( '/^> (.*)$/m', '<blockquote>$1</blockquote>', $html );
-	$html = preg_replace( '/\[([^\]]*)\]\(([^)]*)\)/', '<a href="$2">$1</a>', $html );
+	$html = preg_replace( '/!\[([^\]]*)\]\((https?:\/\/[^)]*)\)/', '<img src="$2" alt="$1"/>', $html );
+	$html = preg_replace( '/!\[([^\]]*)\]\(([^)]*)\)/', '<img src="' . $img_base_url . '/$2" alt="$1"/>', $html );
+	$html = preg_replace( '/\[([^\]]*)\]\((https?:\/\/[^)]*)\)/', '<a href="$2">$1</a>', $html );
+	$html = preg_replace( '/\[([^\]]*)\]\(([^)]*)\)/', '<a href="' . $url . '/$2">$1</a>', $html );
 	return trim( preg_replace( '/\n+/', "<br/>\n", trim( $html ) ) );
 }

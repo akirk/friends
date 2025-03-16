@@ -44,6 +44,21 @@ class REST {
 		add_action( 'wp_trash_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'before_delete_post', array( $this, 'notify_remote_friend_post_deleted' ) );
 		add_action( 'set_user_role', array( $this, 'notify_remote_friend_request_accepted' ), 20, 3 );
+		add_action( 'rest_pre_serve_request', array( $this, 'send_rest_origin' ), 20, 3 );
+	}
+
+	public function send_rest_origin( $ret, $response, $request ) {
+		if ( strpos( $request->get_route(), '/' . self::PREFIX . '/extension' ) !== 0 ) {
+			return $ret;
+		}
+
+		if ( $request->get_header( 'origin' ) ) {
+			$scheme = wp_parse_url( $request->get_header( 'origin' ), PHP_URL_SCHEME );
+			if ( 'moz-extension' === $scheme ) {
+				header( 'access-control-allow-origin: ' . $request->get_header( 'origin' ) );
+			}
+		}
+		return $ret;
 	}
 
 	/**
@@ -186,6 +201,22 @@ class REST {
 				'permission_callback' => function () {
 					return current_user_can( Friends::REQUIRED_ROLE );
 				},
+			)
+		);
+
+		register_rest_route(
+			self::PREFIX,
+			'extension',
+			array(
+				'methods'             => array( 'GET', 'POST' ),
+				'callback'            => array( $this, 'rest_extension' ),
+				'permission_callback' => '__return_true', // Public.
+				'params'              => array(
+					'key' => array(
+						'type'     => 'string',
+						'required' => false,
+					),
+				),
 			)
 		);
 	}
@@ -654,7 +685,23 @@ class REST {
 		);
 	}
 
+	public function rest_extension( $request ) {
+		$return = array(
+			'version'      => Friends::VERSION,
+			'friends_url'  => home_url( '/friends/' ),
+			'settings_url' => admin_url( 'admin.php?page=friends-browser-extension' ),
+		);
 
+		if ( 'POST' === $request->get_method() && $request->get_param( 'key' ) ) {
+			if ( Access_Control::check_browser_api_key( $request->get_param( 'key' ) ) ) {
+				$return = apply_filters( 'friends_browser_extension_rest_info', $return );
+			} else {
+				$return['error'] = 'Invalid API key';
+			}
+		}
+
+		return $return;
+	}
 
 
 	/**

@@ -65,6 +65,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 						– <?php echo esc_html( $override_author_name ); ?>
 					<?php endif; ?>
 				</a>
+				<?php do_action( 'friends_post_author_meta', $friend_user ); ?>
 			<?php else : ?>
 				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">
 					<strong><?php the_author(); ?></strong>

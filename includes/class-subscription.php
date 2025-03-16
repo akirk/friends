@@ -35,7 +35,7 @@ class Subscription extends User {
 
 	public function __construct( \WP_Term $term ) {
 		$this->term = $term;
-		$this->ID = 'friends-virtual-user-' . $term->term_id;
+		$this->ID = 1e10 + $term->term_id;
 
 		$this->caps = array_fill_keys( get_metadata( 'term', $term->term_id, 'roles' ), true );
 		$this->caps['subscription'] = true;
@@ -46,10 +46,10 @@ class Subscription extends User {
 		$this->data = (object) array(
 			'ID'              => $this->ID,
 			'user_login'      => $term->name,
-			'display_name'    => get_metadata( 'term', $term->term_id, 'display_name', true ),
-			'user_url'        => get_metadata( 'term', $term->term_id, 'user_url', true ),
-			'description'     => get_metadata( 'term', $term->term_id, 'description', true ),
-			'user_registered' => get_metadata( 'term', $term->term_id, 'created', true ),
+			'display_name'    => $this->get_user_option( 'display_name' ),
+			'user_url'        => $this->get_user_option( 'user_url' ),
+			'description'     => $this->get_user_option( 'description' ),
+			'user_registered' => $this->get_user_option( 'created' ),
 		);
 	}
 
@@ -94,13 +94,6 @@ class Subscription extends User {
 	}
 
 	public static function get_by_username( $username ) {
-		if ( 0 === strpos( $username, 'friends-virtual-user-' ) ) {
-			$term_id = substr( $username, strlen( 'friends-virtual-user-' ) );
-			$term = get_term( intval( $term_id ), self::TAXONOMY );
-			if ( $term ) {
-				return new self( $term );
-			}
-		}
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => self::TAXONOMY,
@@ -117,7 +110,9 @@ class Subscription extends User {
 	}
 
 	public function insert_post( array $postarr, $wp_error = false, $fire_after_hooks = true ) {
-		$postarr['post_author'] = 0;
+		if ( ! isset( $postarr['post_author'] ) ) {
+			$postarr['post_author'] = 0;
+		}
 		$post_id = wp_insert_post( $postarr, $wp_error, $fire_after_hooks );
 		if ( ! is_wp_error( $post_id ) ) {
 			wp_set_object_terms( $post_id, $this->get_term_id(), self::TAXONOMY );
@@ -533,20 +528,22 @@ class Subscription extends User {
 		global $wpdb;
 		// Convert feeds.
 		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				'UPDATE %s
-				JOIN %s
-				ON %s.term_taxonomy_id = %s.term_taxonomy_id
-				SET object_id = %d
-				WHERE object_id = %d
-				AND %s.taxonomy = %s',
-				$wpdb->term_relationships,
-				$wpdb->term_taxonomy,
-				$wpdb->term_relationships,
-				$wpdb->term_taxonomy,
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				sprintf(
+					'UPDATE %s
+					JOIN %s
+					ON %s.term_taxonomy_id = %s.term_taxonomy_id
+					SET object_id = %%d
+					WHERE object_id = %%d
+					AND %s.taxonomy = %%s',
+					$wpdb->term_relationships,
+					$wpdb->term_taxonomy,
+					$wpdb->term_relationships,
+					$wpdb->term_taxonomy,
+					$wpdb->term_taxonomy
+				),
 				$subscription->get_term_id(),
 				$user->ID,
-				$wpdb->term_taxonomy,
 				User_Feed::TAXONOMY
 			)
 		);
@@ -557,7 +554,7 @@ class Subscription extends User {
 
 		$user->delete();
 
-		return $user;
+		return $subscription;
 	}
 
 	public static function convert_to_user( Subscription $subscription ) {
@@ -582,20 +579,22 @@ class Subscription extends User {
 		global $wpdb;
 		// Convert feeds.
 		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				'UPDATE %s
-				JOIN %s
-				ON %s.term_taxonomy_id = %s.term_taxonomy_id
-				SET object_id = %d
-				WHERE object_id = %d
-				AND %s.taxonomy = %s',
-				$wpdb->term_relationships,
-				$wpdb->term_taxonomy,
-				$wpdb->term_relationships,
-				$wpdb->term_taxonomy,
+			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+				sprintf(
+					'UPDATE %s
+					JOIN %s
+					ON %s.term_taxonomy_id = %s.term_taxonomy_id
+					SET object_id = %%d
+					WHERE object_id = %%d
+					AND %s.taxonomy = %%s',
+					$wpdb->term_relationships,
+					$wpdb->term_taxonomy,
+					$wpdb->term_relationships,
+					$wpdb->term_taxonomy,
+					$wpdb->term_taxonomy
+				),
 				$user->ID,
 				$subscription->get_term_id(),
-				$wpdb->term_taxonomy,
 				User_Feed::TAXONOMY
 			)
 		);
