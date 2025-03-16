@@ -1467,9 +1467,7 @@ class Friends {
 			$args['date_query'] = array(
 				'before' => gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( Friends::get_retention_days() * 24 ) . 'hours' ) ),
 			);
-		}
 
-		if ( isset( $args['date_query'] ) ) {
 			$query = new \WP_Query();
 			foreach ( $args as $key => $value ) {
 				$query->set( $key, $value );
@@ -1481,9 +1479,9 @@ class Friends {
 					$deleted_posts[] = $post_id;
 				}
 			}
+			unset( $args['date_query'] );
 		}
 
-		unset( $args['date_query'] );
 		$args['orderby'] = 'date';
 		$args['order'] = 'desc';
 		if ( get_option( 'friends_enable_retention_number' ) ) {
