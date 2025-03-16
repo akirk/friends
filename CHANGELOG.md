@@ -1,3 +1,14 @@
+### 3.4.0
+- Fix old posts not being deleted for ActivityPub (#476)
+- Implement DMs for ActivityPub and EMA (#489)
+- Improve Frontend margins (#490)
+- Replace string ids for subscriptions with high ints (#483)
+- Fix redirect after converting user (#484)
+- Fix replying to posts with a different permalink (#478)
+- EMA: Implement following endpoint data (#480)
+- EMA: Remove old filters (#482)
+- Extension: Allow moz-extension as a URL protocol (#477)
+
 ### 3.3.5
 - Use Outbox of the upcoming ActivityPub 5.3.0 and fix announce+like bug with Activitypub 5.2.0 ([#463])
 - Fix editing widgets in a block theme ([#475])
@@ -565,3 +576,13 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [activitypub#213]: https://github.com/pfefferle/wordpress-activitypub/pull/213
 [activitypub#172]: https://github.com/pfefferle/wordpress-activitypub/pull/172
 [Send to E-Reader plugin]: https://github.com/akirk/friends-send-to-e-reader
+
+[#476]: https://github.com/akirk/friends/pull/476
+[#477]: https://github.com/akirk/friends/pull/477
+[#478]: https://github.com/akirk/friends/pull/478
+[#480]: https://github.com/akirk/friends/pull/480
+[#482]: https://github.com/akirk/friends/pull/482
+[#483]: https://github.com/akirk/friends/pull/483
+[#484]: https://github.com/akirk/friends/pull/484
+[#489]: https://github.com/akirk/friends/pull/489
+[#490]: https://github.com/akirk/friends/pull/490
