@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.4.0
+- Stable tag: 3.4.1
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -95,6 +95,10 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 3.4.1
+- DMs: Preview lastest message (#493)
+- Fix broken DMs when using the blog user in Activitypub (#492)
 
 ### 3.4.0
 - Fix old posts not being deleted for ActivityPub ([#476])
@@ -327,3 +331,6 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#484]: https://github.com/akirk/friends/pull/484
 [#489]: https://github.com/akirk/friends/pull/489
 [#490]: https://github.com/akirk/friends/pull/490
+
+[#492]: https://github.com/akirk/friends/pull/492
+[#493]: https://github.com/akirk/friends/pull/493
