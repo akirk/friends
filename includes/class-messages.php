@@ -493,13 +493,21 @@ class Messages {
 			}
 			$args['accounts'] = apply_filters( 'friends_message_form_accounts', array(), $args['friend_user'] );
 
+			add_filter( 'excerpt_length', array( $this, 'friends_message_excerpt_length' ) );
+
 			Friends::template_loader()->get_template_part(
 				'frontend/messages/friend',
 				null,
 				$args
 			);
 
+			remove_filter( 'excerpt_length', array( $this, 'friends_message_excerpt_length' ) );
+
 		}
+	}
+
+	public function friends_message_excerpt_length() {
+		return 10;
 	}
 
 	/**
