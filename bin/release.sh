@@ -70,9 +70,10 @@ if $(git tag | grep -Eq ^$FRIENDS_VERSION\$); then
 		links="$links\n[$link]: https://github.com/akirk/friends/pull/${link:1}"
 	done
 
-	echo >> new-changelog.md
+	cat new-changelog.md | sed -e "s/\(#[0-9]\{1,6\}\)/[\1]/g" > new-changelog.tmp
+	echo >> new-changelog.tmp
 
-	cat new-changelog.md | sed -e "s/\(#[0-9]\+\)/[\1]/g" > CHANGELOG.new
+	cp new-changelog.tmp CHANGELOG.new
 	cat CHANGELOG.md >> CHANGELOG.new
 	echo -e "$links" >> CHANGELOG.new
 	mv CHANGELOG.new CHANGELOG.md
@@ -81,10 +82,10 @@ if $(git tag | grep -Eq ^$FRIENDS_VERSION\$); then
 	echo "Changelog updated in CHANGELOG.md"
 
 	sed -i -e '/## Changelog/{n
-r new-changelog.md
+r new-changelog.tmp
 }' README.md
 
-	rm -f README.md-e
+	rm -f README.md-e new-changelog.tmp
 	echo -e "$links" >> README.md
 
 	echo -ne "\033[32m✔\033[0m "
