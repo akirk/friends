@@ -464,7 +464,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		require_once __DIR__ . '/activitypub/class-activitypub-transformer-message.php';
 
-		$actor = \Activitypub\Model\User::from_wp_user( get_current_user_id() );
+		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$actor = $this->get_activitypub_actor( $user_id );
+		if ( ! $actor ) {
+			return $post_id;
+		}
+
 		$transformer = new ActivityPub_Transformer_Message( get_post( $post_id ) );
 		if ( is_wp_error( $transformer ) ) {
 			return $transformer;
