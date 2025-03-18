@@ -72,8 +72,8 @@ if $(git tag | grep -Eq ^$FRIENDS_VERSION\$); then
 
 	echo >> new-changelog.md
 
-	cat new-changelog.md > CHANGELOG.new
-	cat CHANGELOG.md | sed -e "s/#\([0-9]\+\)/[\1]/g" >> CHANGELOG.new
+	cat new-changelog.md | sed -e "s/\(#[0-9]\+\)/[\1]/g" > CHANGELOG.new
+	cat CHANGELOG.md >> CHANGELOG.new
 	echo -e "$links" >> CHANGELOG.new
 	mv CHANGELOG.new CHANGELOG.md
 
