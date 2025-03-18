@@ -16,11 +16,6 @@ if ( false === strpos( $time_format, ':s' ) ) {
 	<strong><?php esc_html_e( 'Messages', 'friends' ); ?></strong>
 	<?php
 	foreach ( $args['existing_messages']->get_posts() as $_post ) {
-		$subject = get_the_title( $_post );
-		if ( ! $subject ) {
-			$subject = get_the_excerpt( $_post );
-		}
-
 		$messages = get_posts(
 			array(
 				'post_parent' => $_post->ID,
@@ -32,20 +27,26 @@ if ( false === strpos( $time_format, ':s' ) ) {
 		);
 		array_unshift( $messages, $_post );
 
-		$class = '';
+		$classes = array( 'display-message' => true );
+		$subject = false;
 		$last_message_time = false;
 		foreach ( $messages as $message ) {
 			if ( get_post_status( $message ) === 'friends_unread' ) {
-				$class .= ' unread';
+				$classes['unread'] = true;
 			}
 			$post_time = get_post_modified_time( 'U', true, $message );
 			if ( ! $last_message_time || $post_time > $last_message_time ) {
 				$last_message_time = $post_time;
+
+				$subject = get_the_title( $message );
+				if ( ! $subject ) {
+					$subject = get_the_excerpt( $message );
+				}
 			}
 		}
 		?>
 		<div class="friend-message" id="message-<?php echo esc_attr( $_post->ID ); ?>" data-id="<?php echo esc_attr( $_post->ID ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>">
-		<a href="" class="display-message<?php echo esc_attr( $class ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $last_message_time ) ); ?>">
+		<a href="" class="<?php echo esc_attr( implode( ' ', array_keys( $classes ) ) ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $last_message_time ) ); ?>">
 			<?php
 			// translators: %s is a time span.
 			echo esc_html( sprintf( __( '%s ago' ), human_time_diff( $last_message_time ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
