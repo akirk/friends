@@ -1,3 +1,7 @@
+### 3.4.1
+- DMs: Preview lastest message ([#493])
+- Fix broken DMs when using the blog user in Activitypub ([#492])
+
 ### 3.4.0
 - Fix old posts not being deleted for ActivityPub ([#476])
 - Implement DMs for ActivityPub and EMA ([#489])
@@ -586,3 +590,6 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#484]: https://github.com/akirk/friends/pull/484
 [#489]: https://github.com/akirk/friends/pull/489
 [#490]: https://github.com/akirk/friends/pull/490
+
+[#492]: https://github.com/akirk/friends/pull/492
+[#493]: https://github.com/akirk/friends/pull/493
