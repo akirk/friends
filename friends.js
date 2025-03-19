@@ -321,7 +321,7 @@
 			dropdown.hide();
 			openMenu = null;
 		} else {
-			$( '.menu' ).hide();
+			$( '.menu:not(.menu-nav)' ).hide();
 			dropdown.show();
 			openMenu = dropdown;
 		}
@@ -344,7 +344,7 @@
 
 		const card = $( this ).closest( 'article' );
 		let collapsed;
-		if ( card.closest( 'section.all-collapsed' ) ) {
+		if ( card.closest( 'section.all-collapsed' ).length ) {
 			card.toggleClass( 'uncollapsed' );
 			collapsed = ! card.is( '.uncollapsed' );
 		} else {
@@ -727,12 +727,18 @@
 		}
 	}
 
-	$document.on( 'click', '.quick-reply', function () {
+	$document.on( 'click', '.quick-reply,a.comments', function () {
 		const card = $( this ).closest( '.card' );
 		card.click();
 		$( this ).closest( '.friends-dropdown' ).hide();
 		openMenu = null;
-		loadComments( $( this ).closest( '.card' ).find( '.comments' ), function() {
+		const comments = $( this ).closest( '.card' ).find( '.comments' );
+
+		$( 'html, body' ).animate( {
+			scrollTop: comments.offset().top - 100,
+		}, 500 );
+
+		loadComments( comments, function() {
 			// focus #comment textarea but put the cursor at the end
 			const comment = card.find( '#comment' );
 			comment.focus();
