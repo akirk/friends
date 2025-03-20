@@ -2844,7 +2844,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function enable_comments_form( bool $comments_open, int $post_id ) {
-		if ( User_Feed::get_parser_for_post_id( $post_id ) === self::SLUG ) {
+		if ( is_user_logged_in() && User_Feed::get_parser_for_post_id( $post_id ) === self::SLUG ) {
 			return true;
 		}
 		return $comments_open;
