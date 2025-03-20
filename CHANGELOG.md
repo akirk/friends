@@ -1,3 +1,12 @@
+### 3.4.2
+- Many small UI Updates ([#494]):
+  - Added a keyboard shortcut for edit (press e) when you have the capabilities to edit a post (for example in a post collection)
+  - Don't hide the header overflow in mobile anymore
+  - Fix reply menu item to open comments on the same page
+  - Add a "still loading" text when loading comments takes long
+  - Show reply and boost menu links only for ActivityPub posts
+  - Show the comment form even if you disabled commenting globally on your WordPress
+
 ### 3.4.1
 - DMs: Preview lastest message ([#493])
 - Fix broken DMs when using the blog user in Activitypub ([#492])
@@ -593,3 +602,5 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 
 [#492]: https://github.com/akirk/friends/pull/492
 [#493]: https://github.com/akirk/friends/pull/493
+
+[#494]: https://github.com/akirk/friends/pull/494

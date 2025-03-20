@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.7
 - License: GPL-2.0-or-later
-- Stable tag: 3.4.1
+- Stable tag: 3.4.2
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -95,6 +95,15 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 3.4.2
+- Many small UI Updates ([#494]):
+  - Added a keyboard shortcut for edit (press e) when you have the capabilities to edit a post (for example in a post collection)
+  - Don't hide the header overflow in mobile anymore
+  - Fix reply menu item to open comments on the same page
+  - Add a "still loading" text when loading comments takes long
+  - Show reply and boost menu links only for ActivityPub posts
+  - Show the comment form even if you disabled commenting globally on your WordPress
 
 ### 3.4.1
 - DMs: Preview lastest message ([#493])
@@ -334,3 +343,5 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 
 [#492]: https://github.com/akirk/friends/pull/492
 [#493]: https://github.com/akirk/friends/pull/493
+
+[#494]: https://github.com/akirk/friends/pull/494
