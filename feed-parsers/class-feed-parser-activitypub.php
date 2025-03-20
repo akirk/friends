@@ -112,6 +112,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'friends_post_author_meta', array( self::class, 'friends_post_author_meta' ) );
 		add_action( 'friends_get_template_part_frontend/parts/header-menu', array( self::class, 'header_menu' ) );
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
+		add_action( 'comments_open', array( self::class, 'enable_comments_form' ), 10, 2 );
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
 
@@ -2842,15 +2843,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 	}
 
-	public static function enable_comment_form( $comments_open, $post_id ) {
-		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( ! $meta ) {
-			if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
-				return $comments_open;
-			}
+	public static function enable_comments_form( bool $comments_open, int $post_id ) {
+		if ( User_Feed::get_parser_for_post_id( $post_id ) === self::SLUG ) {
+			return true;
 		}
-
-		return true;
+		return $comments_open;
 	}
 
 	public static function comment_form( $post_id ) {
