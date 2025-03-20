@@ -1,3 +1,6 @@
+### 3.4.3
+- Rerelease of 3.4.2, which got stuck somewhere on WordPress.org
+
 ### 3.4.2
 - Many small UI Updates ([#494]):
   - Added a keyboard shortcut for edit (press e) when you have the capabilities to edit a post (for example in a post collection)
@@ -604,3 +607,4 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#493]: https://github.com/akirk/friends/pull/493
 
 [#494]: https://github.com/akirk/friends/pull/494
+
