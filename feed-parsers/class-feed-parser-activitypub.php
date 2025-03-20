@@ -110,7 +110,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
 
 		add_action( 'friends_post_author_meta', array( self::class, 'friends_post_author_meta' ) );
+		add_action( 'friends_get_template_part_frontend/parts/header-menu', array( self::class, 'header_menu' ) );
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
+		add_action( 'comments_open', array( self::class, 'enable_comments_form' ), 10, 2 );
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
 
@@ -2787,6 +2789,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
+
+		if ( empty( $comments ) ) {
+			add_filter(
+				'friends_no_comments_feed_available',
+				function () use ( $post ) {
+					return __( 'No comments yet.', 'friends' ) . ' <a href="' . esc_url( get_permalink( $post ) ) . '" target="_blank">' . __( 'View this at the source', 'friends' ) . '</a>';
+				}
+			);
+		}
 		return $comments;
 	}
 
@@ -2818,6 +2829,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'summary' => wp_strip_all_tags( $meta['attributedTo']['summary'] ),
 			)
 		);
+	}
+
+	public static function header_menu() {
+		if ( ! get_post_meta( get_the_ID(), self::SLUG, true ) ) {
+			return;
+		}
+
+		Friends::template_loader()->get_template_part(
+			'frontend/parts/activitypub/header-menu',
+			null,
+			array()
+		);
+	}
+
+	public static function enable_comments_form( bool $comments_open, int $post_id ) {
+		if ( is_user_logged_in() && User_Feed::get_parser_for_post_id( $post_id ) === self::SLUG ) {
+			return true;
+		}
+		return $comments_open;
 	}
 
 	public static function comment_form( $post_id ) {

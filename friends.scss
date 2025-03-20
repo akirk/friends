@@ -361,10 +361,6 @@ h2#page-title a.dashicons {
 					padding: 1rem;
 				}
 
-				.overflow {
-					display: none;
-				}
-
 				.card-title {
 					padding-left: 1rem;
 				}
@@ -648,7 +644,7 @@ h2#page-title a.dashicons {
 					margin-bottom: 0;
 
 					div.post-meta {
-						width: calc(100% - 5em);
+						width: calc(100% - 7em);
 						max-height: 1.5em;
 						overflow: hidden;
 						text-overflow: ellipsis;

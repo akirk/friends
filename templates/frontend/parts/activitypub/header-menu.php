@@ -1,0 +1,2 @@
+<li class="menu-item"><a href="<?php echo esc_url( add_query_arg( 'in_reply_to', get_permalink() ) ); ?>" class="quick-reply" data-url="<?php echo esc_attr( get_permalink() ); ?>"><?php esc_html_e( 'Reply', 'friends' ); ?></a></li>
+<li class="menu-item"><a href="<?php echo esc_url( add_query_arg( 'boost', get_permalink() ) ); ?>" class="boost" data-url="<?php echo esc_attr( get_permalink() ); ?>"><?php esc_html_e( 'Boost', 'friends' ); ?></a></li>
