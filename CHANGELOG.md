@@ -1,3 +1,6 @@
+### 3.4.4
+- Friends Page: ensure friends posts can be collapsed / uncollapsed ([#496])
+
 ### 3.4.3
 - Rerelease of 3.4.2, which got stuck somewhere on WordPress.org
 
@@ -608,3 +611,5 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 
 [#494]: https://github.com/akirk/friends/pull/494
 
+
+[#496]: https://github.com/akirk/friends/pull/496
