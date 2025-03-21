@@ -1,6 +1,3 @@
-### Unreleased
-- Friends Page: ensure Friends posts can be collapsed and uncollapsed.
-
 ### 3.4.3
 - Rerelease of 3.4.2, which got stuck somewhere on WordPress.org
 
