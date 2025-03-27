@@ -80,7 +80,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		switch ( $host ) {
 			case 'www.youtube.com':
 			case 'youtube.com':
-				if ( preg_match( '#/channel/([^?&$]+)#i', $url, $m ) ) {
+				if ( preg_match( '#/(?:channel/|@)([^?&$]+)#i', $url, $m ) ) {
 					return array(
 						'title'       => 'Youtube',
 						'rel'         => 'alternate',

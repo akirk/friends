@@ -105,6 +105,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 40, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
+		add_filter( 'mastodon_api_valid_user', array( $this, 'mastodon_api_valid_user' ), 15, 2 );
 		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_in_reply_to_id' ), 25 );
 		add_filter( 'mastodon_api_in_reply_to_id', array( $this, 'mastodon_api_in_reply_to_id' ), 25 );
 		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
@@ -195,7 +196,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 
 	public function mastodon_api_mapback_user_id( $user_id ) {
-		if ( ! is_string( $user_id ) ) {
+		if ( ! is_string( $user_id ) && $user_id < 1e10 ) {
 			return $user_id;
 		}
 
@@ -375,6 +376,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$in_reply_to_id = $this->cache_url( $in_reply_to_id );
 		}
 		return $in_reply_to_id;
+	}
+
+	public function mastodon_api_valid_user( $is_valid_user, $user_id ) {
+		if ( ! $is_valid_user ) {
+			$mapped_user_id = $this->mastodon_api_canonical_user_id( $user_id );
+			if ( $mapped_user_id ) {
+				return true;
+			}
+		}
+		return $is_valid_user;
 	}
 
 	public function mastodon_api_canonical_user_id( $user_id ) {

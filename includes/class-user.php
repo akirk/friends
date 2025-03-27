@@ -1378,12 +1378,19 @@ class User extends \WP_User {
 	}
 
 	public static function mastodon_api_get_posts_query_args( $args ) {
-		if ( isset( $args['author'] ) && is_string( $args['author'] ) ) {
+		if ( ! isset( $args['author'] ) ) {
+			return $args;
+		}
+		$author = false;
+		if ( is_string( $args['author'] ) ) {
 			$author = self::get_by_username( $args['author'] );
-			if ( $author instanceof User ) {
-				$args['post_type'][] = Friends::CPT;
-				return $author->modify_get_posts_args_by_author( $args );
-			}
+		} elseif ( is_numeric( $args['author'] ) ) {
+			$author = self::get_user_by_id( $args['author'] );
+		}
+
+		if ( $author instanceof User ) {
+			$args['post_type'][] = Friends::CPT;
+			return $author->modify_get_posts_args_by_author( $args );
 		}
 
 		return $args;
