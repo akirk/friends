@@ -1,3 +1,6 @@
+### 3.4.5
+- Enable Mastodon Apps: Fix user query ([#500])
+
 ### 3.4.4
 - Friends Page: ensure friends posts can be collapsed / uncollapsed ([#496])
 - Friends Page: Allow clicking on collapsed links ([#497])
@@ -610,3 +613,5 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#494]: https://github.com/akirk/friends/pull/494
 [#496]: https://github.com/akirk/friends/pull/496
 [#497]: https://github.com/akirk/friends/pull/497
+
+[#500]: https://github.com/akirk/friends/pull/500
