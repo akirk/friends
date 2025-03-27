@@ -313,7 +313,7 @@ class Friends {
 		);
 	}
 
-	public function allowed_http_origins() {
+	public function allow_browser_extension_request() {
 		if ( get_http_origin() && is_home() ) {
 			$scheme = wp_parse_url( get_http_origin(), PHP_URL_SCHEME );
 			if ( 'moz-extension' === $scheme ) {
