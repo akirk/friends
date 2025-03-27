@@ -190,6 +190,7 @@ class Friends {
 		add_action( 'init', array( 'Friends\Subscription', 'register_taxonomy' ) );
 
 		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
+		add_action( 'wp', array( $this, 'allow_browser_extension_request' ) );
 		add_filter( 'get_avatar_data', array( $this, 'get_avatar_data' ), 10, 2 );
 
 		add_action( 'template_redirect', array( $this, 'http_header' ), 5 );
@@ -310,6 +311,15 @@ class Friends {
 				'type'         => 'integer',
 			)
 		);
+	}
+
+	public function allow_browser_extension_request() {
+		if ( get_http_origin() && is_home() ) {
+			$scheme = wp_parse_url( get_http_origin(), PHP_URL_SCHEME );
+			if ( 'moz-extension' === $scheme ) {
+				header( 'access-control-allow-origin: ' . get_http_origin() );
+			}
+		}
 	}
 
 	public static function get_role_capabilities( $role ) {
