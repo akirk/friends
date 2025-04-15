@@ -2253,7 +2253,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( $user_feed instanceof User_Feed ) {
 				$user_feed->update_last_log( __( 'Sent unlike request.', 'friends' ) );
 			}
-			\Activitypub\Outbox::undo( $outbox_activity_id );
+			\Activitypub\Collection\Outbox::undo( $outbox_activity_id );
 			return true;
 		}
 		$queued = $this->queue(
@@ -2604,7 +2604,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! $outbox_activity_id ) {
 				return false;
 			}
-			\Activitypub\Outbox::undo( $outbox_activity_id );
+			\Activitypub\Collection\Outbox::undo( $outbox_activity_id );
 			return true;
 		}
 		$queued = $this->queue(
