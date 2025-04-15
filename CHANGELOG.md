@@ -1,3 +1,8 @@
+### 3.4.6
+- EMA: Fix wrong display of blog author for friends posts in subscriptions ([#505])
+- Allow CORS request for moz-extensions to the frontpage ([#501])
+- Fix Fatal when accessing the Activitypub outbox ([#504])
+
 ### 3.4.5
 - Enable Mastodon Apps: Fix user query ([#500])
 
@@ -615,3 +620,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#497]: https://github.com/akirk/friends/pull/497
 
 [#500]: https://github.com/akirk/friends/pull/500
+
+[#501]: https://github.com/akirk/friends/pull/501
+[#504]: https://github.com/akirk/friends/pull/504
+[#505]: https://github.com/akirk/friends/pull/505

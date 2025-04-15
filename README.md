@@ -3,9 +3,9 @@
 - Contributors: akirk
 - Tags: friends, rss, decentralized, social-network, own-your-data
 - Requires PHP: 7.2
-- Tested up to: 6.7
+- Tested up to: 6.8
 - License: GPL-2.0-or-later
-- Stable tag: 3.4.5
+- Stable tag: 3.4.6
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -95,6 +95,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 3.4.6
+- EMA: Fix wrong display of blog author for friends posts in subscriptions ([#505])
+- Allow CORS request for moz-extensions to the frontpage ([#501])
+- Fix Fatal when accessing the Activitypub outbox ([#504])
 
 ### 3.4.5
 - Enable Mastodon Apps: Fix user query ([#500])
@@ -356,3 +361,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#497]: https://github.com/akirk/friends/pull/497
 
 [#500]: https://github.com/akirk/friends/pull/500
+
+[#501]: https://github.com/akirk/friends/pull/501
+[#504]: https://github.com/akirk/friends/pull/504
+[#505]: https://github.com/akirk/friends/pull/505
