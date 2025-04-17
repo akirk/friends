@@ -1,3 +1,8 @@
+### 3.4.7
+- Remove profile link from the Activitypub Follower e-mail ([#507])
+- Add support for Youtube Feeds ([#508])
+- Enable Mastodon Apps: Fix broken posting experience without ActivityPub plugin ([#506])
+
 ### 3.4.6
 - EMA: Fix wrong display of blog author for friends posts in subscriptions ([#505])
 - Allow CORS request for moz-extensions to the frontpage ([#501])
@@ -624,3 +629,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#501]: https://github.com/akirk/friends/pull/501
 [#504]: https://github.com/akirk/friends/pull/504
 [#505]: https://github.com/akirk/friends/pull/505
+
+[#506]: https://github.com/akirk/friends/pull/506
+[#507]: https://github.com/akirk/friends/pull/507
+[#508]: https://github.com/akirk/friends/pull/508

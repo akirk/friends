@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.8
 - License: GPL-2.0-or-later
-- Stable tag: 3.4.6
+- Stable tag: 3.4.7
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -95,6 +95,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 3.4.7
+- Remove profile link from the Activitypub Follower e-mail ([#507])
+- Add support for Youtube Feeds ([#508])
+- Enable Mastodon Apps: Fix broken posting experience without ActivityPub plugin ([#506])
 
 ### 3.4.6
 - EMA: Fix wrong display of blog author for friends posts in subscriptions ([#505])
@@ -365,3 +370,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#501]: https://github.com/akirk/friends/pull/501
 [#504]: https://github.com/akirk/friends/pull/504
 [#505]: https://github.com/akirk/friends/pull/505
+
+[#506]: https://github.com/akirk/friends/pull/506
+[#507]: https://github.com/akirk/friends/pull/507
+[#508]: https://github.com/akirk/friends/pull/508
