@@ -433,11 +433,7 @@ class Notifications {
 			echo wp_kses( sprintf( __( 'Go to their <a href="%s">friends page</a> to see what they recently posted about.', 'friends' ), esc_url( $following->get_local_friends_page_url() ) ), array( 'a' => array( 'href' => array() ) ) );
 		} else {
 			// translators: %s is a URL.
-			echo wp_kses( sprintf( __( 'You can view their profile at %s', 'friends' ), '<a href="' . esc_url( $url ) . '">' . esc_url( $url ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
-			echo '</p>';
-			echo '<p>';
-			// translators: %s is a URL.
-			echo wp_kses( sprintf( __( 'Maybe you want to <a href="%s">follow them back</a>?', 'friends' ), esc_url( add_query_arg( 'url', $url, admin_url( 'admin.php?page=add-friend' ) ) ) ), array( 'a' => array( 'href' => array() ) ) );
+			echo wp_kses( sprintf( __( 'Maybe you want to <a href="%s">follow them back</a> using the Friends plugin?', 'friends' ), esc_url( add_query_arg( 'url', $url, admin_url( 'admin.php?page=add-friend' ) ) ) ), array( 'a' => array( 'href' => array() ) ) );
 		}
 		echo '</p>';
 	}
