@@ -34,7 +34,8 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 
 		\add_filter( 'friends_get_comments', array( $this, 'get_comments' ), 10, 4 );
 		\add_filter( 'friends_no_comments_feed_available', array( $this, 'no_comments_feed_available' ), 10, 2 );
-		\add_filter( 'friends_modify_feed_item', array( $this, 'podcast_support' ), 10, 4 );
+		\add_filter( 'friends_modify_feed_item', array( $this, 'podcast_audio_support' ) );
+		\add_filter( 'friends_modify_feed_item', array( $this, 'youtube_video_support' ) );
 	}
 
 	/**
@@ -288,7 +289,6 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 					$title = \html_entity_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401, 'UTF-8' );
 				}
 			}
-
 			$feed_item = new Feed_Item(
 				array(
 					'permalink' => $item->get_permalink(),
@@ -425,33 +425,81 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		return array_merge( $comments, $items );
 	}
 
-	public function podcast_support( $item, $user_feed, $friend_user, $post_id ) {
-		if (
-			isset( $item->enclosure['url'] )
-			&& false === stripos( $item->post_content, '<audio' )
-			&& false === stripos( $item->post_content, $item->enclosure['url'] )
-		) {
-			$audio_block  = '<!-- wp:audio -->';
-			$audio_block .= PHP_EOL;
-			$audio_block .= '<figure class="wp-block-audio"><audio controls src="';
-			$audio_block .= esc_url( $item->enclosure['url'] );
-			if ( isset( $item->enclosure['type'] ) ) {
-				$audio_block .= '" type="';
-				$audio_block .= esc_attr( $item->enclosure['type'] );
-			}
-			if ( isset( $item->enclosure['length'] ) ) {
-				$audio_block .= '" length="';
-				$audio_block .= esc_attr( $item->enclosure['length'] );
-			}
-			$audio_block .= '"></audio></figure>';
-			$audio_block .= PHP_EOL;
-			$audio_block .= '<!-- /wp:audio -->';
-			$audio_block .= PHP_EOL;
-			$audio_block .= PHP_EOL;
-
-			$item->post_content = $audio_block . $item->post_content;
-
+	public function podcast_audio_support( $item ) {
+		if ( ! isset( $item->enclosure['url'] ) ) {
+			return $item;
 		}
+		if ( false !== stripos( $item->post_content, '<audio' ) || false !== stripos( $item->post_content, $item->enclosure['url'] ) ) {
+			return $item;
+		}
+
+		if ( ! preg_match( '#\.(mp3|m4a|ogg|wav)$#i', $item->enclosure['url'] ) ) {
+			if ( ! isset( $item->enclosure['type'] ) || ! preg_match( '#audio/(mp3|m4a|ogg|wav)$#i', $item->enclosure['type'] ) ) {
+				return $item;
+			}
+		}
+
+		$audio_block  = '<!-- wp:audio -->';
+		$audio_block .= PHP_EOL;
+		$audio_block .= '<figure class="wp-block-audio"><audio controls src="';
+		$audio_block .= esc_url( $item->enclosure['url'] );
+		if ( isset( $item->enclosure['type'] ) ) {
+			$audio_block .= '" type="';
+			$audio_block .= esc_attr( $item->enclosure['type'] );
+		}
+		if ( isset( $item->enclosure['length'] ) ) {
+			$audio_block .= '" length="';
+			$audio_block .= esc_attr( $item->enclosure['length'] );
+		}
+		$audio_block .= '"></audio></figure>';
+		$audio_block .= PHP_EOL;
+		$audio_block .= '<!-- /wp:audio -->';
+		$audio_block .= PHP_EOL;
+		$audio_block .= PHP_EOL;
+
+		$item->post_content = $audio_block . $item->post_content;
+		return $item;
+	}
+	public function youtube_video_support( $item ) {
+		if ( ! isset( $item->enclosure['url'] ) ) {
+			return $item;
+		}
+		if ( false !== stripos( $item->post_content, '<iframe' ) || false !== stripos( $item->post_content, $item->enclosure['url'] ) ) {
+			return $item;
+		}
+		$p = wp_parse_url( $item->enclosure['url'] );
+		if ( ! isset( $p['host'] ) || ! isset( $p['path'] ) ) {
+			return $item;
+		}
+		if ( ! in_array( $p['host'], array( 'www.youtube.com', 'youtube.com', 'youtu.be' ) ) ) {
+			return $item;
+		}
+
+		if ( ! preg_match( '#/embed/([^?&$]+)#i', $item->enclosure['url'], $m ) ) {
+			if ( ! preg_match( '#/v/([^?&$]+)#i', $item->enclosure['url'], $m ) ) {
+				return $item;
+			}
+		}
+
+		if ( ! preg_match( '#^[a-zA-Z0-9_-]+$#', $m[1] ) ) {
+			return $item;
+		}
+
+		$youtube_block  = '<!-- wp:embed {"url":"';
+		$youtube_block .= esc_url( $item->enclosure['url'] );
+		$youtube_block .= '","type":"wp:youtube"} -->';
+		$youtube_block .= PHP_EOL;
+		$youtube_block .= '<figure class="wp-block-embed-youtube"><div class="wp-block-embed__wrapper">';
+		$youtube_block .= '<iframe width="560" height="315" src="https://www.youtube.com/embed/';
+		$youtube_block .= esc_attr( $m[1] );
+		$youtube_block .= '" frameborder="0" allowfullscreen></iframe>';
+		$youtube_block .= '</div></figure>';
+		$youtube_block .= PHP_EOL;
+		$youtube_block .= '<!-- /wp:embed -->';
+		$youtube_block .= PHP_EOL;
+		$youtube_block .= PHP_EOL;
+
+		$item->post_content = $youtube_block . $item->post_content;
 		return $item;
 	}
 }

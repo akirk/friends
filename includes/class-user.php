@@ -506,13 +506,12 @@ class User extends \WP_User {
 		foreach ( $feeds as $feed ) {
 			$posts = $friends->feed->retrieve_feed( $feed );
 			if ( ! is_wp_error( $posts ) ) {
-				$new_posts = array_merge( $new_posts, $posts );
+				foreach ( $posts as $post_id => $item ) {
+					$new_posts[ $post_id ] = $item;
+				}
 			}
 		}
-
-		$deleted_posts = $this->delete_outdated_posts();
-
-		return array_values( array_diff( $new_posts, $deleted_posts ) );
+		return $new_posts;
 	}
 
 	public function modify_query_by_author( \WP_Query $query ) {

@@ -155,7 +155,9 @@ class FeedTest extends \WP_UnitTestCase {
 
 			$new_items = $user->retrieve_posts_from_feeds( array( $user_feed ) );
 			$deleted_items = Friends::get_instance()->delete_outdated_posts();
-			$new_items = array_diff( $new_items, $deleted_items );
+			$new_item_ids = array_keys( $new_items );
+			$new_items_ids = array_diff( $new_item_ids, $deleted_items );
+			$new_items = array_intersect_key( $new_items, array_flip( $new_items_ids ) );
 			$file = ( yield $new_items );
 		} while ( $file );
 		remove_filter( 'friends_pre_check_url', '__return_true' );
@@ -244,7 +246,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$photomatt_tumblr = __DIR__ . '/data/photomatt-tumblr-com.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $photomatt_tumblr, $matt );
 
-		$new_items = $feed_parsing_test->current();
+		$feed_parsing_test->current();
 		$posts = get_posts(array('author'=>$matt_id, 'post_type'=>Friends::CPT));
 		$this->assertStringContainsString( '’', $posts[0]->post_title );
 		$this->assertStringContainsString( '’', $posts[1]->post_title );
@@ -302,7 +304,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 1, $new_items );
-		$post_id = $new_items[0];
+		$post_id = key( $new_items );
 		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
 
 		$feed_parsing_test->send( $feed_1_public_post );
@@ -320,7 +322,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 1, $new_items );
-		$post_id = $new_items[0];
+		$post_id = key( $new_items );
 		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
 
 		$feed_parsing_test->send( $feed_1_public_post );
@@ -338,7 +340,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 1, $new_items );
-		$post_id = $new_items[0];
+		$post_id = key( $new_items );
 		$this->assertCount( 0, wp_get_post_revisions( $post_id ) );
 
 		$feed_parsing_test->send( $feed_1_public_post );
@@ -566,7 +568,8 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 25, $new_items );
-		$post_id = end( $new_items );
+		$new_post_ids = array_keys( $new_items );
+		$post_id = end( $new_post_ids );
 		$post = get_post( $post_id );
 
 		$this->assertEquals( 'https://www.zylstra.org/blog/2022/10/habet-machina-translatio-lingua-latina/', $post->guid );
@@ -707,11 +710,12 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 1, $new_items );
-		$post_id = $new_items[0];
+		$post_id = key( $new_items );
 
 		$post = get_post( $post_id );
 
 		$this->assertEquals( 'https://podcast.local/2022/10/episode-1/', $post->guid );
+		$this->assertStringContainsString( '<!-- wp:audio -->', $post->post_content );
 		$this->assertStringContainsString( 'first-episode.mp3', $post->post_content );
 	}
 
@@ -741,5 +745,18 @@ class FeedTest extends \WP_UnitTestCase {
 		}
 		$this->assertEquals( 22, $users_created );
 		$this->assertEquals( 24, $feeds_imported );
+	}
+
+	public function test_youtube_feed() {
+		$youtube = __DIR__ . '/data/youtube.xml';
+		$feed_parsing_test = $this->feed_parsing_test( $youtube );
+
+		$new_items = $feed_parsing_test->current();
+		$this->assertCount( 15, $new_items );
+		$post_id = key( $new_items );
+		$post = get_post( $post_id );
+
+		$this->assertEquals( 'https://www.youtube.com/watch?v=mqoowQVxr9E', $post->guid );
+		$this->assertStringContainsString( '<!-- wp:embed', $post->post_content );
 	}
 }
