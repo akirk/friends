@@ -1316,7 +1316,7 @@ class User extends \WP_User {
 		}
 
 		$user = false;
-		if ( $user_id ) {
+		if ( $user_id && class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
 			$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
 		}
 
