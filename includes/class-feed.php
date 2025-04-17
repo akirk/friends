@@ -560,9 +560,9 @@ class Feed {
 
 		// Limit this as a safety measure.
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
-		$new_posts = array();
+		$new_post_ids = array();
 		$modified_posts = array();
-		foreach ( $items as $item ) {
+		foreach ( $items as $item_key => $item ) {
 			if ( ! isset( $item->permalink ) || ! $item->permalink ) {
 				continue;
 			}
@@ -663,7 +663,7 @@ class Feed {
 						}
 
 						wp_update_post( $modified_post_data );
-						$modified_posts[] = $post_id;
+						$modified_posts[ $item_key ] = $post_id;
 					}
 				}
 			} else {
@@ -677,7 +677,7 @@ class Feed {
 					continue;
 				}
 
-				$new_posts[] = $post_id;
+				$new_post_ids[ $item_key ] = $post_id;
 
 				$remote_post_ids[ $item->permalink ] = $post_id;
 			}
@@ -726,12 +726,19 @@ class Feed {
 		}
 		remove_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 
-		$this->notify_about_new_posts( $friend_user, $new_posts, $user_feed );
-
-		do_action( 'friends_retrieved_new_posts', $user_feed, $new_posts, $modified_posts, $friend_user );
-
 		$deleted_posts = $friend_user->delete_outdated_posts();
-		$new_posts = array_diff( $new_posts, $deleted_posts );
+		$new_post_ids = array_diff( $new_post_ids, $deleted_posts );
+
+		$this->notify_about_new_posts( $friend_user, $new_post_ids, $user_feed );
+
+		do_action( 'friends_retrieved_new_posts', $user_feed, $new_post_ids, $modified_posts, $friend_user );
+
+		$new_posts = array();
+		foreach ( $new_post_ids as $key => $post_id ) {
+			if ( isset( $items[ $key ] ) ) {
+				$new_posts[ $post_id ] = $items[ $key ];
+			}
+		}
 
 		return $new_posts;
 	}
