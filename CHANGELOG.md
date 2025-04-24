@@ -1,3 +1,6 @@
+### 3.4.8
+- Enable Mastodon Apps: Fix wrong reblog attribution ([#510])
+
 ### 3.4.7
 - Remove profile link from the Activitypub Follower e-mail ([#507])
 - Add support for Youtube Feeds ([#508])
@@ -633,3 +636,5 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#506]: https://github.com/akirk/friends/pull/506
 [#507]: https://github.com/akirk/friends/pull/507
 [#508]: https://github.com/akirk/friends/pull/508
+
+[#510]: https://github.com/akirk/friends/pull/510
