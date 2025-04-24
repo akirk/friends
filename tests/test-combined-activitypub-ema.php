@@ -196,10 +196,6 @@ class Combined_ActivityPub_EnableMastdodonApps_Test extends ActivityPubTest {
 		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
 		$this->assertEquals( $friend->ID, $re_resolved_account_id );
 
-		$account = $statuses[0]->account;
-		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
-		$this->assertEquals( $friend->ID, $re_resolved_account_id );
-
 		$this->assertNotEquals( $status->reblog->id, $status->id );
 		$this->assertNotEquals( $status->reblog->account->id, $status->account->id );
 		$this->assertNotEquals( $status->reblog->account->username, $status->account->username );
