@@ -277,7 +277,7 @@ class User extends \WP_User {
 	 * @return     string  The sanitized username.
 	 */
 	public static function sanitize_username( $username ) {
-		$username = preg_replace( '/[^a-z0-9.]+/', '-', strtolower( $username ) );
+		$username = preg_replace( '/[^a-z0-9.]+/', '-', strtolower( remove_accents( $username ) ) );
 		$username = sanitize_user( $username );
 		return $username;
 	}
@@ -1315,7 +1315,7 @@ class User extends \WP_User {
 		}
 
 		$user = false;
-		if ( $user_id && class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
+		if ( $user_id && class_exists( Feed_Parser_ActivityPub::class ) ) {
 			$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
 		}
 

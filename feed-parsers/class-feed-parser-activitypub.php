@@ -102,7 +102,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_filter( 'mastodon_api_mapback_user_id', array( $this, 'mastodon_api_mapback_user_id' ), 30, 4 );
 		add_filter( 'friends_mastodon_api_username', array( $this, 'friends_mastodon_api_username' ) );
-		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_augment_friend_posts' ), 9, 4 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 40, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 		add_filter( 'mastodon_api_valid_user', array( $this, 'mastodon_api_valid_user' ), 15, 2 );
@@ -207,71 +206,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $user_id;
 	}
 
-	public function mastodon_api_account_update_remapped( $account, $user_id, $request = null, $post = null ) {
-		if ( ! $account instanceof Entity_Account ) {
-				return $account;
-		}
-
-		if ( in_array( $account->id, $this->mapped_usernames, true ) ) {
-				return $account;
-		}
-
-			static $updated_accounts = array();
-		if ( ! isset( $updated_accounts[ $account->id ] ) ) {
-				$updated_account = \Activitypub\Integration\Enable_Mastodon_Apps::api_account_external( null, $account->id );
-			if ( ! $updated_account || is_wp_error( $updated_account ) || is_wp_error( $updated_account->acct ) ) {
-					$updated_accounts[ $account->id ] = $account;
-			} else {
-					$updated_accounts[ $account->id ] = $updated_account;
-			}
-		}
-			return $updated_accounts[ $account->id ];
-	}
-
-	public function mastodon_api_account_augment_friend_posts( $account, $user_id, $request = null, $post = null ) {
-		if ( ! $post instanceof \WP_Post ) {
-			return $account;
-		}
-
-		if ( Friends::CPT !== $post->post_type ) {
-			return $account;
-		}
-		$placeholder_image = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
-
-		$meta = get_post_meta( $post->ID, self::SLUG, true );
-		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
-			if ( ! $account instanceof Entity_Account ) {
-				$account = new Entity_Account();
-				$account->id             = $meta['attributedTo']['id'];
-				$account->created_at = new \DateTime( $post->post_date );
-			}
-			$account->username       = $meta['attributedTo']['preferredUsername'];
-			$account->acct           = $meta['attributedTo']['preferredUsername'] . '@' . wp_parse_url( $meta['attributedTo']['id'], PHP_URL_HOST );
-			$account->display_name   = $meta['attributedTo']['name'];
-			$account->url            = $meta['attributedTo']['id'];
-			$account->note           = $meta['attributedTo']['summary'];
-			if ( ! $account->note ) {
-				$account->note = '';
-			}
-			if ( isset( $meta['attributedTo']['icon'] ) ) {
-				$account->avatar = $meta['attributedTo']['icon'];
-			} else {
-				$account->avatar = $placeholder_image;
-			}
-			$account->avatar_static = $account->avatar;
-			if ( isset( $meta['attributedTo']['header'] ) ) {
-				$account->header = $meta['attributedTo']['header'];
-			} else {
-				$account->header = $placeholder_image;
-			}
-			$account->header_static = $account->header;
-
-			return $account;
-		}
-
-		return $account;
-	}
-
 	public function mastodon_api_status_add_reblogs( $status, $post_id, $request = null ) {
 		if ( Friends::CPT !== get_post_type( $post_id ) ) {
 			return $status;
@@ -317,15 +251,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$account->header_static = $account->header;
 					$account->created_at = $status->created_at;
 				}
-			} else {
-				$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID );
-
+			} elseif ( $friend_user instanceof User ) {
+				$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID, null, $post_id );
 			}
 
 			if ( $account instanceof Entity_Account ) {
 				$status->account = $account;
 				if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
-					$status->reblog->account->id = $meta['attributedTo']['id'];
+					$reblog_account = apply_filters( 'mastodon_api_account', null, $meta['attributedTo']['id'] );
+					if ( $reblog_account instanceof Entity_Account ) {
+						$status->reblog->account = $reblog_account;
+					} else {
+						$status->reblog->account->id = $meta['attributedTo']['id'];
+					}
 				}
 			}
 		}
