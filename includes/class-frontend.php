@@ -94,6 +94,8 @@ class Frontend {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
+		register_theme_directory( __DIR__ . '/../themes' );
+
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
 		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 2 );
 		add_filter( 'friends_header_widget_title', array( $this, 'header_widget_title' ) );
@@ -117,6 +119,7 @@ class Frontend {
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
+		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -124,6 +127,8 @@ class Frontend {
 		add_action( 'the_post', array( $this, 'the_post' ), 10, 2 );
 		add_action( 'parse_query', array( $this, 'parse_query' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
+		add_filter( 'stylesheet', array( $this, 'stylesheet' ) );
+		add_filter( 'block_type_metadata_settings', array( $this, 'block_type_metadata_settings' ), 15 );
 		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
@@ -365,11 +370,60 @@ class Frontend {
 	public function add_body_class( $classes ) {
 		if ( $this->friends->on_frontend() ) {
 			$classes[] = 'friends-page';
+			$classes[] = 'off-canvas';
+			$classes[] = 'off-canvas-sidebar-show';
 		}
 
 		return $classes;
 	}
 
+	public function stylesheet( $stylesheet ) {
+		if ( ! Friends::on_frontend() ) {
+			return $stylesheet;
+		}
+
+		return 'friends';
+	}
+
+	public function block_type_metadata_settings( $settings ) {
+		if ( ! Friends::on_frontend() || ! isset( $settings['name'] ) ) {
+			return $settings;
+		}
+		if ( 'core/post-author-name' === $settings['name'] ) {
+			$settings['render_callback'] = function ( $attributes, $content, $block ) {
+				if ( isset( $block->context['postId'] ) ) {
+					$author = User::get_post_author( get_post( $block->context['postId'] ) );
+				} else {
+					return '';
+				}
+				if ( empty( $author ) ) {
+					return '';
+				}
+
+				$author_name = $author->display_name;
+				$override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, $block->context['postId'] );
+				if ( isset( $attributes['isLink'] ) && $attributes['isLink'] ) {
+					$author_name = sprintf( '<a href="%1$s" target="%2$s" class="wp-block-post-author-name__link">%3$s</a>', $author->get_local_friends_page_url(), esc_attr( $attributes['linkTarget'] ), $author_name );
+				}
+
+				if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) {
+					$author_name .= ' – ' . esc_html( $override_author_name );
+				}
+
+				$classes = array();
+				if ( isset( $attributes['textAlign'] ) ) {
+					$classes[] = 'has-text-align-' . $attributes['textAlign'];
+				}
+				if ( isset( $attributes['style']['elements']['link']['color']['text'] ) ) {
+					$classes[] = 'has-link-color';
+				}
+				$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => implode( ' ', $classes ) ) );
+
+				return sprintf( '<div %1$s>%2$s</div>', $wrapper_attributes, $author_name );
+			};
+		}
+		return $settings;
+	}
 	public function tag_row_actions( $actions, $tag ) {
 		$actions['view-friends'] = sprintf(
 			'<a href="%s">%s</a>',
@@ -916,7 +970,11 @@ class Frontend {
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}
 
-		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
+		if ( wp_is_block_theme() ) {
+			return $template;
+		}
+		
+		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', 'expanded' );
 		$args['blocks-everywhere']     = false;
 
 		if ( isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -1475,6 +1533,8 @@ class Frontend {
 		$query->is_friends_page = true;
 		$query->is_singular = false;
 		$query->is_single = false;
+		$query->is_category = false;
+		$query->is_archive = false;
 		$query->queried_object = null;
 		$query->queried_object_id = null;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
