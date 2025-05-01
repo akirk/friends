@@ -1,6 +1,6 @@
 <?php
 /**
- * This is the Followers list
+ * This is the Subscriptions list
  *
  * @version 1.0
  * @package Friends

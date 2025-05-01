@@ -1982,6 +1982,14 @@ class Admin {
 
 		$wp_menu->add_menu(
 			array(
+				'id'     => 'add-friend',
+				'parent' => 'friends-menu',
+				'title'  => esc_html__( 'Add a friend', 'friends' ),
+				'href'   => home_url( '/friends/add-subscription' ),
+			)
+		);
+		$wp_menu->add_menu(
+			array(
 				'id'     => 'friends',
 				'parent' => 'friends-menu',
 				'title'  => esc_html__( 'Settings' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
