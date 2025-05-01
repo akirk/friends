@@ -122,7 +122,6 @@ class Friends {
 		new Blocks( $this );
 		new Logging( $this );
 		new Shortcodes( $this );
-		new Automatic_Status( $this );
 		new Site_Health();
 		new Migration();
 		$this->register_hooks();

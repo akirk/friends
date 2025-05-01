@@ -91,7 +91,7 @@ class User_Query extends \WP_User_Query {
 	}
 
 	public function add_virtual_subscriptions( $args = array() ) {
-		if ( isset( $args['meta_key'] ) && substr( $args['meta_key'], -8 ) === '_starred' ) {
+		if ( isset( $args['meta_key'] ) && substr( $args['meta_key'], -9 ) === '_starred' ) {
 			$args['meta_key'] = 'starred'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		}
 		$searches = array();
@@ -191,7 +191,7 @@ class User_Query extends \WP_User_Query {
 		$cache_key = get_current_blog_id() . '_' . $limit;
 		if ( ! self::$cache || ! isset( $recent_friends_subscriptions[ $cache_key ] ) ) {
 			$query = array(
-				'capability__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+				'capability__in' => array( 'subscription' ),
 				'number'         => $limit,
 			);
 			$sort = array(
@@ -240,41 +240,6 @@ class User_Query extends \WP_User_Query {
 		$search->add_virtual_subscriptions( $query );
 		$search->sort( $sort['orderby'], $sort['order'] );
 		return $search;
-	}
-
-	/**
-	 * Gets all friend requests.
-	 */
-	public static function all_friend_requests() {
-		static $all_friend_requests = array();
-		if ( ! self::$cache || ! isset( $all_friend_requests[ get_current_blog_id() ] ) ) {
-			$all_friend_requests[ get_current_blog_id() ] = new self(
-				array(
-					'role'    => 'friexnd_request',
-					'order'   => 'ASC',
-					'orderby' => 'display_name',
-				)
-			);
-		}
-		return $all_friend_requests[ get_current_blog_id() ];
-	}
-
-	/**
-	 * Gets all friend requests.
-	 */
-	public static function all_pending_friend_requests() {
-		static $all_pending_friend_requests = array();
-		if ( ! self::$cache || ! isset( $all_pending_friend_requests[ get_current_blog_id() ] ) ) {
-
-			$all_pending_friend_requests[ get_current_blog_id() ] = new self(
-				array(
-					'capability__in' => array( 'pending_friend_request', 'friend_request' ),
-					'order'          => 'ASC',
-					'orderby'        => 'display_name',
-				)
-			);
-		}
-		return $all_pending_friend_requests[ get_current_blog_id() ];
 	}
 
 	/**

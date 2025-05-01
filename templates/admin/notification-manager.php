@@ -32,11 +32,6 @@ foreach ( $args['feed_parsers'] as $feed_parser => $label ) {
 				</th>
 				<td>
 					<fieldset>
-						<label for="friend_request_notification">
-							<input name="friend_request_notification" type="checkbox" id="friend_request_notification" value="1" <?php checked( '1', ! $args['no_friend_request_notification'] ); ?>>
-							<span><?php esc_html_e( 'Friend Requests', 'friends' ); ?></span>
-						</label>
-						<br />
 						<?php if ( isset( $args['no_friend_follower_notification'] ) ) : ?>
 						<label for="friend_follower_notification">
 							<input name="friend_follower_notification" type="checkbox" id="friend_follower_notification" value="1" <?php checked( '1', ! $args['no_friend_follower_notification'] ); ?>>
