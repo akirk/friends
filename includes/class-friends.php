@@ -121,7 +121,6 @@ class Friends {
 		new Blocks( $this );
 		new Logging( $this );
 		new Shortcodes( $this );
-		new Automatic_Status( $this );
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
 

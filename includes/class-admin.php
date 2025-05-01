@@ -41,7 +41,6 @@ class Admin {
 	private function register_hooks() {
 		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_filter( 'users_list_table_query_args', array( $this, 'allow_role_multi_select' ) );
-		add_filter( 'user_row_actions', array( get_called_class(), 'user_row_actions' ), 10, 2 );
 		add_filter( 'the_title', array( $this, 'override_post_format_title' ), 10, 2 );
 		add_filter( 'get_edit_user_link', array( $this, 'admin_edit_user_link' ), 10, 2 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
@@ -134,8 +133,6 @@ class Admin {
 		add_action( 'load-' . $page_type . '_page_friends-notification-manager', array( $this, 'process_admin_notification_manager' ) );
 		add_action( 'load-' . $page_type . '_page_friends-import-export', array( $this, 'process_admin_import_export' ) );
 		add_action( 'load-' . $page_type . '_page_friends-settings', array( $this, 'process_admin_settings' ) );
-
-		add_submenu_page( 'friends', __( 'Friends &amp; Requests', 'friends' ), __( 'Friends &amp; Requests', 'friends' ), $required_role, 'friends-list', array( $this, 'render_friends_list' ) );
 
 		if (
 			isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-refresh' ) && 'friends-refresh' === $current_page
@@ -467,21 +464,6 @@ class Admin {
 		}
 
 		$this->check_admin_settings();
-		foreach ( array( 'ignore_incoming_friend_requests' ) as $checkbox ) {
-			if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
-				update_option( 'friends_' . $checkbox, true );
-			} else {
-				delete_option( 'friends_' . $checkbox );
-			}
-		}
-
-		foreach ( array( 'friend_request_notification' ) as $negative_user_checkbox ) {
-			if ( isset( $_POST[ $negative_user_checkbox ] ) && boolval( $_POST[ $negative_user_checkbox ] ) ) {
-				delete_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox );
-			} else {
-				update_user_option( get_current_user_id(), 'friends_no_' . $negative_user_checkbox, 1 );
-			}
-		}
 
 		if ( current_user_can( 'manage_options' ) ) {
 			foreach ( array( 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
@@ -490,12 +472,6 @@ class Admin {
 				} else {
 					delete_option( 'friends_' . $checkbox );
 				}
-			}
-
-			if ( isset( $_POST['blocks_everywhere'] ) && boolval( $_POST['blocks_everywhere'] ) ) {
-				update_user_option( get_current_user_id(), 'friends_blocks_everywhere', 1 );
-			} else {
-				delete_user_option( get_current_user_id(), 'friends_blocks_everywhere' );
 			}
 		}
 
@@ -646,7 +622,6 @@ class Admin {
 					'retention_delete_reacted'   => get_option( 'friends_retention_delete_reacted' ),
 					'frontend_default_view'      => get_user_option( 'friends_frontend_default_view', get_current_user_id() ),
 					'frontend_theme'             => get_user_option( 'friends_frontend_theme' ),
-					'blocks_everywhere'          => get_user_option( 'friends_blocks_everywhere' ),
 				)
 			)
 		);
@@ -676,8 +651,6 @@ class Admin {
 		}
 
 		if (
-			! $friend->has_cap( 'friend_request' ) &&
-			! $friend->has_cap( 'pending_friend_request' ) &&
 			! $friend->has_cap( 'friend' ) &&
 			! $friend->has_cap( 'subscription' )
 		) {
@@ -826,81 +799,6 @@ class Admin {
 		wp_send_json_success();
 	}
 
-
-	public function render_friends_list() {
-		 // phpcs:disable WordPress.Security.NonceVerification
-		$page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : 'friends';
-		Friends::template_loader()->get_template_part(
-			'admin/settings-header',
-			null,
-			array(
-				'menu'   => array(
-					__( 'Your Friends & Subscriptions', 'friends' ) => 'friends-list',
-					__( 'Your Friend Requests', 'friends' ) => 'friends-list-requests',
-				),
-				'active' => $page,
-			)
-		);
-
-		if ( 'friends-list-requests' === $page ) {
-			echo '<p>';
-			echo wp_kses(
-				sprintf(
-					// translators: %1$s is a URL, %2$s is the translated text "Your Friends & Subscriptions".
-					__( 'These are your current friend requests. To see all your friends and subscriptions, go to <a href="%1$s">%2$s</a>.', 'friends' ),
-					self_admin_url( 'admin.php?page=friends-list' ),
-					__( 'Your Friends & Subscriptions', 'friends' )
-				),
-				array(
-					'a' => array(
-						'href' => array(),
-					),
-				)
-			);
-			echo '</p>';
-			$query = User_Query::all_friend_requests();
-		} else {
-			$query = User_Query::all_associated_users();
-		}
-
-		if ( isset( $_GET['deleted'] ) ) {
-			?>
-			<div id="message" class="updated notice is-dismissible"><p>
-			<?php
-			echo esc_html(
-				sprintf(
-				// translators: % s is a username.
-					__( '%s was deleted.', 'friends' ),
-					sanitize_user( wp_unslash( $_GET['deleted'] ) )
-				)
-			);
-			?>
-				</p></div>
-			<?php
-		} elseif ( isset( $_GET['error'] ) ) {
-			?>
-			<div id="message" class="updated error is-dismissible"><p>
-			<?php
-			esc_html_e( 'An error occurred.', 'friends' );
-			echo ' ';
-			echo esc_html( sanitize_text_field( wp_unslash( $_GET['error'] ) ) );
-			?>
-			</p></div>
-			<?php
-		}
-		// phpcs:enable WordPress.Security.NonceVerification
-
-		Friends::template_loader()->get_template_part(
-			'admin/friends-list',
-			null,
-			array(
-				'friends' => $query->get_results(),
-			)
-		);
-
-		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
-	}
-
 	/**
 	 * Render the Friend rules preview
 	 *
@@ -968,7 +866,7 @@ class Admin {
 			}
 		} elseif ( isset( $_GET['convert-from-user'] ) && wp_verify_nonce( sanitize_key( $_GET['convert-from-user'] ), 'convert-from-user-' . $friend->user_login ) ) {
 			if ( $friend instanceof User && ! $friend instanceof Subscription ) {
-				if ( $friend->has_cap( 'friends_plugin' ) && ! $friend->has_cap( 'friend' ) && ! $friend->has_cap( 'pending_friend_request' ) && ! $friend->has_cap( 'friend_request' ) ) {
+				if ( $friend->has_cap( 'friends_plugin' ) ) {
 					Subscription::convert_from_user( $friend );
 				} else {
 					$arg = 'error';
@@ -1566,12 +1464,6 @@ class Admin {
 			update_user_option( get_current_user_id(), 'friends_no_new_post_notification', 1 );
 		}
 
-		if ( isset( $_POST['friend_request_notification'] ) && boolval( $_POST['friend_request_notification'] ) ) {
-			delete_user_option( get_current_user_id(), 'friends_no_friend_request_notification' );
-		} else {
-			update_user_option( get_current_user_id(), 'friends_no_friend_request_notification', 1 );
-		}
-
 		if ( isset( $_POST['friend_follower_notification'] ) && boolval( $_POST['friend_follower_notification'] ) ) {
 			delete_user_option( get_current_user_id(), 'friends_no_friend_follower_notification' );
 		} else {
@@ -1651,7 +1543,7 @@ class Admin {
 
 		$friend_users = new User_Query(
 			array(
-				'role__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ),
+				'role__in' => array( 'friend', 'acquaintance', 'subscription' ),
 				'orderby'  => 'display_name',
 				'order'    => 'ASC',
 			)
@@ -1663,16 +1555,15 @@ class Admin {
 		}
 
 		$args = array(
-			'friend_users'                   => $friend_users->get_results(),
-			'friends_settings_url'           => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
-			'hide_from_friends_page'         => $hide_from_friends_page,
-			'no_friend_request_notification' => get_user_option( 'friends_no_friend_request_notification' ),
-			'keyword_override_disabled'      => get_user_option( 'friends_keyword_notification_override_disabled' ),
-			'no_new_post_notification'       => get_user_option( 'friends_no_new_post_notification' ),
-			'no_keyword_notification'        => get_user_option( 'friends_no_keyword_notification' ),
-			'notification_keywords'          => Feed::get_all_notification_keywords(),
-			'active_keywords'                => Feed::get_active_notification_keywords(),
-			'feed_parsers'                   => $this->friends->feed->get_registered_parsers(),
+			'friend_users'              => $friend_users->get_results(),
+			'friends_settings_url'      => add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings' ) ),
+			'hide_from_friends_page'    => $hide_from_friends_page,
+			'keyword_override_disabled' => get_user_option( 'friends_keyword_notification_override_disabled' ),
+			'no_new_post_notification'  => get_user_option( 'friends_no_new_post_notification' ),
+			'no_keyword_notification'   => get_user_option( 'friends_no_keyword_notification' ),
+			'notification_keywords'     => Feed::get_all_notification_keywords(),
+			'active_keywords'           => Feed::get_active_notification_keywords(),
+			'feed_parsers'              => $this->friends->feed->get_registered_parsers(),
 		);
 
 		if ( class_exists( '\Activitypub\Notification' ) ) {
@@ -2012,76 +1903,6 @@ class Admin {
 	}
 
 	/**
-	 * Add actions to the user rows
-	 *
-	 * @param  array    $actions The existing actions.
-	 * @param  \WP_User $user    The user in question.
-	 * @return array The extended actions.
-	 */
-	public static function user_row_actions( array $actions, \WP_User $user ) {
-		if (
-			! Friends::has_required_privileges() ||
-			(
-				! $user->has_cap( 'friend_request' ) &&
-				! $user->has_cap( 'pending_friend_request' ) &&
-				! $user->has_cap( 'friend' ) &&
-				! $user->has_cap( 'subscription' )
-			)
-		) {
-			return $actions;
-		}
-
-		if ( is_multisite() ) {
-			// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			$actions = array_merge( array( 'edit' => '<a href="' . esc_url( self_admin_url( 'admin.php?page=edit-friend&user=' . $user->user_login ) ) . '">' . __( 'Edit' ) . '</a>' ), $actions );
-		}
-
-		// Ensuire we have a friends user here.
-		$user = new User( $user );
-
-		$actions['view'] = Frontend::get_link(
-			$user->user_url,
-			sprintf(
-			// translators: %s: Author’s display name.
-				__( 'Visit %s&#8217;s website' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				$user->display_name
-			),
-			array(),
-			$user
-		);
-		unset( $actions['resetpassword'] );
-
-		if ( $user->has_cap( 'friend_request' ) ) {
-			$link = self_admin_url( wp_nonce_url( 'users.php?action=accept_friend_request&users[]=' . $user->ID ) );
-
-			$actions['user_accept_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Accept Friend Request', 'friends' ) . '</a>';
-			$message = get_user_option( 'friends_request_message', $user->ID );
-			$actions['friends friends_request_date'] = '<br/><span class="nonessential">' . esc_html(
-				sprintf(
-				// translators: %s is a date.
-					__( 'Requested on %s', 'friends' ),
-					date_i18n( __( 'F j, Y g:i a' ), strtotime( $user->user_registered ) ) // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				)
-			) . '</span>';
-			if ( $message ) {
-				// translators: %s is a message text.
-				$actions['friends friend_request_message'] = '<br/><span class="nonessential">' . esc_html( sprintf( __( 'Message: %s', 'friends' ), $message ) ) . '</span>';
-			}
-		}
-
-		if ( $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'subscription' ) ) {
-			$link = wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $user->user_login ) ), 'add-friend-' . $user->user_login, 'add-friend' );
-			if ( $user->has_cap( 'pending_friend_request' ) ) {
-				$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Resend Friend Request', 'friends' ) . '</a>';
-			} elseif ( $user->has_cap( 'subscription' ) ) {
-				$actions['user_friend_request'] = '<a href="' . esc_url( $link ) . '">' . __( 'Send Friend Request', 'friends' ) . '</a>';
-			}
-		}
-
-		return $actions;
-	}
-
-	/**
 	 * Override the post title for specific post formats.
 	 *
 	 * @param      string $title    The title.
@@ -2322,31 +2143,10 @@ class Admin {
 	 * @return array        Items + our items.
 	 */
 	public function dashboard_glance_items( $items ) {
-		$count_users = count_users();
-		$count = array_merge(
-			array(
-				'friend'         => 0,
-				'acquaintance'   => 0,
-				'friend_request' => 0,
-				'subscription'   => 0,
-			),
-			$count_users['avail_roles']
-		);
-		$friend_count = $count['friend'] + $count['acquaintance'];
-		$friend_request_count = $count['friend_request'];
-		$subscription_count = $count['subscription'];
+		$subscription_count = User_Query::all_subscriptions()->get_total();
 		$friend_post_count = wp_count_posts( Friends::CPT );
 		$friend_post_count = $friend_post_count->publish + $friend_post_count->private;
 
-		$items[] = '<a class="friends" href="' . self_admin_url( 'users.php?role=friend' ) . '">' . sprintf(
-			// translators: %s is the number of your friends.
-			_n( '%s Friend', '%s Friends', $friend_count, 'friends' ),
-			$friend_count
-		) . '</a>';
-		if ( $friend_request_count ) {
-			// translators: %s is the number of friend requests.
-			$items[] = '<a class="friend-requests" href="' . self_admin_url( 'users.php?role=friend_request' ) . '">' . sprintf( _n( '%s Friend Request', '%s Friend Requests', $friend_request_count, 'friends' ), $friend_request_count ) . '</a>';
-		}
 		if ( $subscription_count ) {
 			// translators: %s is the number of subscriptions.
 			$items[] = '<a class="subscriptions" href="' . self_admin_url( 'users.php?role=subscription' ) . '">' . sprintf( _n( '%s Subscription', '%s Subscriptions', $subscription_count, 'friends' ), $subscription_count ) . '</a>';
