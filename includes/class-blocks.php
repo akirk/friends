@@ -19,13 +19,6 @@ namespace Friends;
  */
 class Blocks {
 	/**
-	 * Contains a reference to the Friends class.
-	 *
-	 * @var Friends
-	 */
-	private $friends = null;
-
-	/**
 	 * Whether an excerpt is currently being generated.
 	 *
 	 * @var        int
@@ -34,11 +27,8 @@ class Blocks {
 
 	/**
 	 * Constructor
-	 *
-	 * @param Friends $friends A reference to the Friends object.
 	 */
-	public function __construct( Friends $friends ) {
-		$this->friends = $friends;
+	public function __construct() {
 		$this->register_hooks();
 	}
 
@@ -57,7 +47,6 @@ class Blocks {
 		add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_start' ), 9, 2 );
 		add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
 		add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
-		add_filter( 'template_redirect', array( $this, 'handle_follow_me' ), 10, 2 );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
 		add_action( 'init', array( $this, 'register_blocks' ) );
 	}
@@ -76,24 +65,6 @@ class Blocks {
 				'render_callback' => array( $this, 'render_friends_list_block' ),
 			)
 		);
-
-		register_block_type_from_metadata(
-			FRIENDS_PLUGIN_DIR . '/blocks/friend-posts',
-			array(
-				'render_callback' => array( $this, 'render_friend_posts_block' ),
-			)
-		);
-
-		register_block_type_from_metadata(
-			FRIENDS_PLUGIN_DIR . '/blocks/follow-me',
-			array(
-				'render_callback' => array( $this, 'render_follow_me_block' ),
-			)
-		);
-
-		register_block_type_from_metadata(
-			FRIENDS_PLUGIN_DIR . '/blocks/message'
-		);
 	}
 
 	/**
@@ -107,25 +78,11 @@ class Blocks {
 			$attributes['user_types'] = 'friends';
 		}
 		switch ( $attributes['user_types'] ) {
-			case 'friend_requests':
-				$friends  = User_Query::all_friend_requests();
-				$no_users = __( "You currently don't have any friend requests.", 'friends' );
-				break;
-
-			case 'friends_subscriptions':
-				$friends  = User_Query::all_associated_users();
-				$no_users = __( "You don't have any friends or subscriptions yet.", 'friends' );
-				break;
-
+			default:
 			case 'subscriptions':
 				$friends  = User_Query::all_subscriptions();
 				$no_users = __( "You don't have any subscriptions yet.", 'friends' );
 				break;
-
-			case 'friends':
-			default:
-				$friends  = User_Query::all_friends();
-				$no_users = __( "You don't have any friends yet.", 'friends' );
 		}
 
 		if ( $friends->get_total() === 0 ) {
@@ -332,127 +289,6 @@ class Blocks {
 	}
 
 	/**
-	 * Handle the follow me button click.
-	 */
-	public function handle_follow_me() {
-		if ( ! isset( $_REQUEST['friends_friend_request_url'] ) ) {
-			return;
-		}
-		if ( ! isset( $_REQUEST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( $_REQUEST['_wpnonce'] ), 'friends_follow_me' ) ) {
-			wp_safe_redirect( add_query_arg( 'error', __( 'Unable to verify nonce, please try again.', 'friends' ) ) );
-			exit;
-		}
-		$access_transient_key = 'friends_follow_me_' . crc32( sanitize_key( $_SERVER['REMOTE_ADDR'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
-		$access_count = get_transient( $access_transient_key );
-		if ( $access_count >= 10 ) {
-			header( 'HTTP/1.0 529 Too Many Requests' );
-			wp_die( 'Too Many Requests' );
-		}
-		set_transient( $access_transient_key, $access_count + 1, 3600 );
-
-		$url = sanitize_text_field( wp_unslash( $_REQUEST['friends_friend_request_url'] ) );
-
-		$fqdn_regex = '(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)';
-		if ( false === strpos( $url, 'https://' ) ) {
-			$url = 'https://' . $url;
-		}
-		$parts = wp_parse_url( $url );
-
-		if ( ! preg_match( '/' . $fqdn_regex . '/', $parts['host'] ) ) {
-			wp_safe_redirect( add_query_arg( 'error', __( 'You specified an invalid URL.', 'friends' ) ) );
-			exit;
-		}
-
-		$response = wp_safe_remote_head(
-			$url,
-			array(
-				'timeout'     => 5,
-				'redirection' => 5,
-				'headers'     => array(
-					'Accept: text/html',
-				),
-			)
-		);
-		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			wp_safe_redirect(
-				add_query_arg(
-					'error',
-					sprintf( /* translators: %s is an HTTP status code */
-						__( 'The server returned an HTTP status: %s', 'friends' ),
-						wp_remote_retrieve_response_code( $response )
-					)
-				)
-			);
-			exit;
-		}
-
-		$links = (array) wp_remote_retrieve_header( $response, 'link' );
-		if ( ! empty( $links ) ) {
-			$friends_base_url_endpoints = array_filter(
-				$links,
-				function ( $link ) {
-					return preg_match( '/rel="friends-base-url"/', $link );
-				}
-			);
-
-			if ( ! empty( $friends_base_url_endpoints ) ) {
-				header( 'Location: ' . add_query_arg( 'add-friend', home_url(), $url ) );
-				exit;
-			}
-		}
-
-		// Try again for servers that filter out the Link headers.
-		$response = wp_safe_remote_get(
-			$url,
-			array(
-				'timeout'     => 5,
-				'redirection' => 5,
-			)
-		);
-		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			wp_safe_redirect(
-				add_query_arg(
-					'error',
-					sprintf( /* translators: %s is an HTTP status code */
-						__( 'The server returned an HTTP status: %s', 'friends' ),
-						wp_remote_retrieve_response_code( $response )
-					)
-				)
-			);
-			exit;
-		}
-
-		$content = wp_remote_retrieve_body( $response );
-		$mf = Mf2\parse( $content, $url );
-
-		if ( isset( $mf['rel-urls'] ) ) {
-			foreach ( $mf['rel-urls'] as $link_url => $link ) {
-				if ( in_array( 'friends-base-url', $link['rels'] ) ) {
-					header( 'Location: ' . add_query_arg( 'add-friend', home_url(), $link_url ) );
-					exit;
-				}
-			}
-		}
-
-		header( 'Location: ' . add_query_arg( 'url', $url, 'https://wpfriends.at/follow-me' ) );
-		exit;
-	}
-
-	/**
-	 * Add a CSRF to the Follow Me block.
-	 *
-	 * @param array     $attributes Block attributes.
-	 * @param string    $content    Block default content.
-	 * @param \WP_Block $block      Block instance.
-	 * @return string             The rendered content.
-	 */
-	public function render_follow_me_block( $attributes, $content, $block ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
-		$input = '<input type="text" name="friends_friend_request_url"';
-		$nonce = wp_nonce_field( 'friends_follow_me', '_wpnonce', true, false );
-		return str_replace( $input, $nonce . $input, $content );
-	}
-
-	/**
 	 * Render the "Only visible for friends" Blocks block
 	 *
 	 * @param  string $content    The content provided by the user.
@@ -477,7 +313,7 @@ class Blocks {
 
 		switch ( $visibility ) {
 			case 'only-friends':
-				if ( friends::has_required_privileges() ) {
+				if ( Friends::has_required_privileges() ) {
 					if ( $this->current_excerpt ) {
 						return $content;
 					}
@@ -489,7 +325,7 @@ class Blocks {
 				return '';
 
 			case 'not-friends':
-				if ( friends::has_required_privileges() ) {
+				if ( Friends::has_required_privileges() ) {
 					if ( $this->current_excerpt ) {
 						return $content;
 					}

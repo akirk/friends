@@ -11,7 +11,6 @@ if ( empty( $args['menu'] ) ) {
 		array(
 			__( 'Welcome', 'friends' )       => 'friends',
 			__( 'Settings' )                 => 'friends-settings', // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			__( 'Friendships', 'friends' )   => 'friends-wp-friendships',
 			__( 'Notifications', 'friends' ) => 'friends-notification-manager',
 			__( 'Import/Export', 'friends' ) => 'friends-import-export',
 		)

@@ -39,7 +39,6 @@ require_once __DIR__ . '/feed-parsers/class-feed-parser.php';
 require_once __DIR__ . '/feed-parsers/class-feed-parser-v2.php';
 require_once __DIR__ . '/feed-parsers/class-feed-item.php';
 
-require_once __DIR__ . '/includes/class-access-control.php';
 require_once __DIR__ . '/includes/class-admin.php';
 require_once __DIR__ . '/includes/class-automatic-status.php';
 require_once __DIR__ . '/includes/class-blocks.php';
@@ -93,9 +92,6 @@ add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Request', 're
 
 require_once __DIR__ . '/widgets/class-widget-friend-stats.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Stats', 'register' ) );
-
-require_once __DIR__ . '/widgets/class-widget-new-private-post.php';
-add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_New_Private_Post', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-post-formats.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Post_Formats', 'register' ) );

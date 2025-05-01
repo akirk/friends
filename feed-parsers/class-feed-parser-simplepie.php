@@ -393,11 +393,6 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			return $comments;
 		}
 
-		if ( ( $friend_user->is_friend_url( $comments_url ) && Friends::has_required_privileges() ) || wp_doing_cron() ) {
-			$comments_url = apply_filters( 'friends_friend_private_feed_url', $comments_url, $friend_user );
-			$comments_url = Friends::get_instance()->access_control->append_auth( $comments_url, $friend_user, 300 );
-		}
-
 		$items = $this->fetch_feed( $comments_url, $user_feed );
 
 		if ( is_wp_error( $items ) ) {

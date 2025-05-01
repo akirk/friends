@@ -8,10 +8,6 @@
 $c = -1;
 $hidden_feed_count = 0;
 $unsupported_feeds = array();
-$friends_host = false;
-if ( $args['friends_plugin'] ) {
-	$friends_host = wp_parse_url( $args['friends_plugin'], PHP_URL_HOST );
-}
 
 foreach ( $args['feeds'] as $feed_url => $details ) {
 	if ( ! isset( $details['parser'] ) || 'unsupported' === $details['parser'] ) {
@@ -68,62 +64,6 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 					<?php endif; ?>
 				</td>
 			</tr>
-			<?php if ( $args['friends_plugin'] ) : ?>
-			<tr>
-				<th scope="row"><label for="friendship"><?php esc_html_e( 'Friendship', 'friends' ); ?></label></th>
-				<td  title="<?php echo esc_attr( $args['friends_plugin'] ); ?>">
-					<label><input type="checkbox" id="friendship" name="friendship" value="<?php echo esc_attr( $args['friends_plugin'] ); ?>" checked /> <?php esc_html_e( 'Send request for friendship', 'friends' ); ?></label> —
-					<label><?php esc_html_e( 'Their role will be:', 'friends' ); ?> <select name="role" id="friendship-status">
-						<?php
-						foreach ( $args['friend_roles'] as $_role => $_title ) :
-							?>
-							<option value="<?php echo esc_attr( $_role ); ?>"<?php selected( $args['default_role'], $_role ); ?>><?php echo esc_html( $_title ); ?></option>
-						<?php endforeach; ?>
-					</select></label>
-					<p class="description details hidden"><small>
-						<?php
-						// translators: %s is a URL.
-						echo esc_html( sprintf( __( 'API URL: %s', 'friends' ), $args['friends_plugin'] ) );
-						?>
-						</small>
-					</p>
-					<p class="description">
-						<?php esc_html_e( 'When the other side accepts your friend request, a trusted connection between your sites is established.', 'friends' ); ?>
-					</p>
-					<p><small><a href="" id="send-friends-advanced"><?php esc_html_e( 'Add optional information »', 'friends' ); ?></a></small></p>
-				</td>
-			</tr>
-			<tr class="friends-advanced hidden">
-				<th scope="row"><label for="message"><?php esc_html_e( 'Message (Optional)', 'friends' ); ?></label></th>
-				<td>
-					<input type="text" autofocus id="message" name="message" value="<?php echo esc_attr( $args['message'] ); ?>" placeholder="<?php esc_attr_e( 'Enter a message for your friend', 'friends' ); ?>" class="large-text" maxlength="2000" />
-					<p class="description" id="message-description">
-						<?php esc_html_e( 'The short message you supply will be sent along with your friend request.', 'friends' ); ?>
-					</p>
-				</td>
-			</tr>
-			<tr class="friends-advanced hidden">
-				<th scope="row"><label for="codeword"><?php esc_html_e( 'Code word (Optional)', 'friends' ); ?></label></th>
-				<td>
-					<input type="text" autofocus id="codeword" name="codeword" value="<?php echo esc_attr( $args['codeword'] ); ?>" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'None' ); ?>" class="regular-text" />
-					<p class="description" id="codeword-description">
-						<?php esc_html_e( 'Your friend might have told you to provide something here.', 'friends' ); ?>
-					</p>
-				</td>
-			</tr>
-			<?php elseif ( get_option( 'friends_enable_wp_friendships' ) ) : ?>
-			<tr>
-				<th scope="row"><label for="friendship"><?php esc_html_e( 'Friendship', 'friends' ); ?></label></th>
-				<td>
-					<p class="description">
-						<?php
-						// translators: %s is a URL.
-						echo wp_kses( sprintf( __( 'No friends plugin could be found on %s, therefore only subscription options are available.', 'friends' ), '<strong>' . esc_html( $args['friend_url'] ) . '</strong>' ), array( 'strong' => array() ) );
-						?>
-					</p>
-				</td>
-			</tr>
-		<?php endif; ?>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Subscription', 'friends' ); ?></th>
 				<td>
