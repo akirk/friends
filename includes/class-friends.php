@@ -38,13 +38,6 @@ class Friends {
 	public $admin;
 
 	/**
-	 * A reference to the Access_Control object.
-	 *
-	 * @var Access_Control
-	 */
-	public $access_control;
-
-	/**
 	 * A reference to the Feed object.
 	 *
 	 * @var Feed
@@ -117,7 +110,6 @@ class Friends {
 	 * Constructor
 	 */
 	public function __construct() {
-		$this->access_control = new Access_Control( $this );
 		$this->admin          = new Admin( $this );
 		$this->feed           = new Feed( $this );
 		$this->messages       = new Messages( $this );
@@ -212,7 +204,6 @@ class Friends {
 		add_action( 'friends_convert_single_reply', array( $this, 'convert_single_reply_to_comment' ) );
 		add_action( 'template_redirect', array( $this, 'redirect_trashed_reply_to_comment' ), 4 );
 		add_action( 'template_redirect', array( $this, 'fallback_redirect_via_comment_meta' ), 4 );
-		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
 		add_filter( 'friends_frontend_post_types', array( $this, 'add_frontend_post_types' ) );
@@ -252,7 +243,7 @@ class Friends {
 		$args = array(
 			'labels'              => $labels,
 			'description'         => "A cached friend's post",
-			'publicly_queryable'  => self::authenticated_for_posts(),
+			'publicly_queryable'  => is_admin() && self::is_main_user() && apply_filters( 'friends_show_cached_posts', false ),
 			'show_ui'             => true,
 			'show_in_menu'        => apply_filters( 'friends_show_cached_posts', false ),
 			'show_in_nav_menus'   => false,
@@ -344,26 +335,16 @@ class Friends {
 	public static function get_role_capabilities( $role ) {
 		$capabilities = array();
 
-		$capabilities['friend_request'] = array(
-			'friend_request' => true,
-		);
-
-		$capabilities['pending_friend_request'] = array(
-			'pending_friend_request' => true,
-		);
-
 		$capabilities['subscription'] = array(
 			'subscription' => true,
 		);
 
 		$capabilities['acquaintance'] = array(
-			'read'   => true,
-			'friend' => true,
+			'subscription' => true,
 		);
 
 		// Friend is an Acquaintance who can read private posts.
 		$capabilities['friend'] = $capabilities['acquaintance'];
-		$capabilities['friend']['read_private_posts'] = true;
 
 		// All roles belonging to this plugin have the friends_plugin capability.
 		foreach ( array_keys( $capabilities ) as $type ) {
@@ -382,11 +363,9 @@ class Friends {
 	 */
 	private static function setup_roles() {
 		$default_roles = array(
-			'friend'                 => _x( 'Friend', 'User role', 'friends' ),
-			'acquaintance'           => _x( 'Acquaintance', 'User role', 'friends' ),
-			'friend_request'         => _x( 'Friend Request', 'User role', 'friends' ),
-			'pending_friend_request' => _x( 'Pending Friend Request', 'User role', 'friends' ),
-			'subscription'           => _x( 'Subscription', 'User role', 'friends' ),
+			'friend'       => _x( 'Friend', 'User role', 'friends' ),
+			'acquaintance' => _x( 'Acquaintance', 'User role', 'friends' ),
+			'subscription' => _x( 'Subscription', 'User role', 'friends' ),
 		);
 
 		$roles = new \WP_Roles();
@@ -412,53 +391,6 @@ class Friends {
 	}
 
 	/**
-	 * Creates a page /friends/ to enable customization via.
-	 */
-	public static function create_friends_page() {
-		$query = new \WP_Query(
-			array(
-				'name'      => 'friends',
-				'post_type' => 'page',
-			)
-		);
-		if ( $query->have_posts() ) {
-			return;
-		}
-		$content  = '<!-- wp:paragraph {"className":"only-friends"} -->' . PHP_EOL . '<p class="only-friends">';
-		$content .= __( 'Hi Friend!', 'friends' );
-		$content .= '<br/><br/>';
-		$content .= __( 'Do you know any of my friends? Maybe you want to become friends with them as well?', 'friends' );
-		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
-
-		$content .= '<!-- wp:friends/friends-list {"className":"only-friends","user_types":"friends"} /-->' . PHP_EOL;
-
-		$content .= '<!-- wp:paragraph {"className":"not-friends"} -->' . PHP_EOL . '<p class="not-friends">';
-		$content .= __( 'I have connected with my friends using <strong>WordPress</strong> and the <strong>Friends plugin</strong>. This means I can share private posts with just my friends while keeping my data under control.', 'friends' );
-		$content .= PHP_EOL;
-		// translators: %1$s and %2$s are URLs.
-		$content .= sprintf( __( 'If you also have a WordPress site with the friends plugin, you can send me a friend request. If not, get your own <a href="%1$s">WordPress</a> now, install the <a href="%2$s">Friends plugin</a>, and follow me!', 'friends' ), 'https://wordpress.org/', self::PLUGIN_URL );
-		$content .= PHP_EOL . '</p>' . PHP_EOL . '<!-- /wp:paragraph -->' . PHP_EOL;
-
-		$content .= '<!-- wp:friends/follow-me {"className":"not-friends"} -->' . PHP_EOL . '<div class="wp-block-friends-follow-me not-friends">';
-		$content .= '<form method="post"><!-- wp:paragraph -->' . PHP_EOL . '<p>';
-		$content .= __( 'Enter your blog URL to join my network. <a href="https://wpfriends.at/follow-me">Learn more</a>', 'friends' );
-		$content .= '</p>' . PHP_EOL;
-		$content .= '<!-- /wp:paragraph --><div><input type="text" name="friends_friend_request_url" placeholder="https://example.com/"/> <button>';
-		$content .= __( 'Follow this site', 'friends' );
-		$content .= '</button></div></form></div>' . PHP_EOL;
-		$content .= '</p>' . PHP_EOL . '<!-- /wp:friends/follow-me -->' . PHP_EOL;
-
-		$post_data = array(
-			'post_title'   => __( 'Friends', 'friends' ),
-			'post_content' => $content,
-			'post_type'    => 'page',
-			'post_name'    => 'friends',
-			'post_status'  => 'publish',
-		);
-		wp_insert_post( $post_data );
-	}
-
-	/**
 	 * Enable translated user roles.
 	 * props https://wordpress.stackexchange.com/a/141705/74893
 	 *
@@ -472,8 +404,6 @@ class Friends {
 		$roles = array(
 			'Friend',
 			'Acquaintance',
-			'Friend Request',
-			'Pending Friend Request',
 			'Subscription',
 		);
 
@@ -495,7 +425,7 @@ class Friends {
 	 * @return     array  The roles.
 	 */
 	public static function get_friends_plugin_roles() {
-		return apply_filters( 'friends_plugin_roles', array( 'friend', 'pending_friend_request', 'friend_request', 'subscription' ) );
+		return apply_filters( 'friends_plugin_roles', array( 'friend', 'subscription' ) );
 	}
 
 	/**
@@ -615,7 +545,6 @@ class Friends {
 	 */
 	private static function setup() {
 		self::setup_roles();
-		self::create_friends_page();
 
 		self::upgrade_plugin(
 			null,
@@ -845,15 +774,6 @@ class Friends {
 
 		$pagename_parts = explode( '/', trim( $pagename, '/' ) );
 		return count( $pagename_parts ) > 0 && 'friends' === $pagename_parts[0];
-	}
-
-	/**
-	 * Check whether the request has been authenticated to display (private) posts.
-	 *
-	 * @return     bool  Whether the posts can be accessed.
-	 */
-	public static function authenticated_for_posts() {
-		return Access_Control::private_rss_is_authenticated() || ( is_admin() && self::is_main_user() && apply_filters( 'friends_show_cached_posts', false ) );
 	}
 
 	/**
@@ -1105,21 +1025,6 @@ class Friends {
 	}
 
 	/**
-	 * Disables the author page for friends users.
-	 */
-	public function disable_friends_author_page() {
-		global $wp_query;
-
-		if ( is_author() && ! self::authenticated_for_posts() ) {
-			$author_obj = $wp_query->get_queried_object();
-			if ( $author_obj instanceof \WP_User && User::is_friends_plugin_user( $author_obj ) && ! self::on_frontend() ) {
-				$wp_query->set_404();
-				status_header( 404 );
-			}
-		}
-	}
-
-	/**
 	 * Fix a bug in core where it outputs cached friend posts.
 	 *
 	 * @param array $qvs Query variables.
@@ -1300,13 +1205,7 @@ class Friends {
 	 * Get all of the rel links for the HTML head.
 	 */
 	public static function get_link_rels() {
-		$rest_prefix = get_rest_url() . REST::PREFIX;
-		$links = array(
-			array(
-				'rel'  => 'friends-base-url',
-				'href' => $rest_prefix,
-			),
-		);
+		$links = array();
 
 		if ( get_option( 'friends_expose_post_format_feeds' ) && current_theme_supports( 'post-formats' ) ) {
 			$links = array_merge( $links, self::get_html_link_rel_alternate_post_formats() );
@@ -1751,6 +1650,8 @@ class Friends {
 		}
 
 		delete_option( 'friends_main_user_id' );
+
+		// Remove the friend roles that were created for older versions of this plugin.
 		remove_role( 'friend' );
 		remove_role( 'acquaintance' );
 		remove_role( 'friend_request' );

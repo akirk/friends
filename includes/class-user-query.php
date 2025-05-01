@@ -67,24 +67,6 @@ class User_Query extends \WP_User_Query {
 	public function get_total() {
 		return $this->total_users;
 	}
-	/**
-	 * Gets all friends.
-	 *
-	 * @return     User_Query  The requested users.
-	 */
-	public static function all_friends() {
-		static $all_friends = array();
-		if ( ! self::$cache || ! isset( $all_friends[ get_current_blog_id() ] ) ) {
-			$all_friends[ get_current_blog_id() ] = new self(
-				array(
-					'capability' => 'friend',
-					'order'      => 'ASC',
-					'orderby'    => 'display_name',
-				)
-			);
-		}
-		return $all_friends[ get_current_blog_id() ];
-	}
 
 	/**
 	 * Gets all friends.

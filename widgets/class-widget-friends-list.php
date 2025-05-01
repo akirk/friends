@@ -39,50 +39,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 	public function widget( $args, $instance ) {
 		$instance = wp_parse_args( $instance, $this->defaults() );
 
-		$all_friends     = User_Query::all_friends();
-		$friend_requests = User_Query::all_friend_requests();
-		$subscriptions   = User_Query::all_subscriptions();
-
-		// translators: %s is the number of your friends.
-		$friends_title = '<span class="dashicons dashicons-plus-alt"></span> ' . sprintf( _n( 'Friend %s', 'Friends %s', $all_friends->get_total(), 'friends' ), '<span class="friend-count">' . $all_friends->get_total() . '</span>' );
-
-		if ( $all_friends->get_total() > 0 || ( ! $friend_requests->get_total() && ! $subscriptions->get_total() ) ) {
-			echo $args['before_widget'];
-			$this->list_friends(
-				array_merge(
-					array(
-						'widget_id' => $args['widget_id'] . '-all',
-					),
-					$args
-				),
-				$friends_title,
-				$all_friends
-			);
-
-			if ( ! $all_friends->get_total() ) {
-				?>
-				<ul class="menu menu-nav accordion-body">
-					<li class="menu-item"><a href="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>" class="normal"><?php esc_html_e( 'Add your first friend or subscription now!', 'friends' ); ?></a></li>
-				</ul>
-				<?php
-			}
-			echo $args['after_widget'];
-		}
-		if ( $friend_requests->get_total() > 0 ) {
-			echo $args['before_widget'];
-			$this->list_friends(
-				array_merge(
-					array(
-						'widget_id' => $args['widget_id'] . '-requests',
-					),
-					$args
-				),
-				// translators: %1$s is the string "%s Friend", %2$s is a URL, %3$s is the number of open friend requests.
-				sprintf( _n( '%1$s <a href=%2$s>(%3$s request)</a>', '%1$s <a href=%2$s>(%3$s requests)</a>', $friend_requests->get_total(), 'friends' ), $friends_title, '"' . esc_attr( self_admin_url( 'users.php?role=friend_request' ) ) . '" class="open-requests"', $friend_requests->get_total() ),
-				$friend_requests
-			);
-			echo $args['after_widget'];
-		}
+		$subscriptions = User_Query::all_subscriptions();
 
 		if ( 0 !== $subscriptions->get_total() ) {
 			echo $args['before_widget'];
@@ -106,4 +63,3 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		do_action( 'friends_widget_friend_list_after', $this, $args );
 	}
 }
-
