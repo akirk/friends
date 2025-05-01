@@ -39,9 +39,7 @@ require_once __DIR__ . '/feed-parsers/class-feed-parser.php';
 require_once __DIR__ . '/feed-parsers/class-feed-parser-v2.php';
 require_once __DIR__ . '/feed-parsers/class-feed-item.php';
 
-require_once __DIR__ . '/includes/class-access-control.php';
 require_once __DIR__ . '/includes/class-admin.php';
-require_once __DIR__ . '/includes/class-automatic-status.php';
 require_once __DIR__ . '/includes/class-blocks.php';
 require_once __DIR__ . '/includes/class-feed.php';
 require_once __DIR__ . '/includes/class-frontend.php';
@@ -76,6 +74,9 @@ add_action( 'wp_initialize_site', array( __NAMESPACE__ . '\Friends', 'activate_f
 add_filter( 'customize_loaded_components', array( __NAMESPACE__ . '\Frontend', 'ensure_widget_editing' ) );
 
 require_once __DIR__ . '/widgets/class-widget-base-friends-list.php';
+require_once __DIR__ . '/widgets/class-widget-add-subscription.php';
+add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Add_Subscription', 'register' ) );
+
 require_once __DIR__ . '/widgets/class-widget-refresh.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Refresh', 'register' ) );
 
@@ -88,14 +89,8 @@ add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Starred_Friends_List
 require_once __DIR__ . '/widgets/class-widget-recent-friends-list.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Recent_Friends_List', 'register' ) );
 
-require_once __DIR__ . '/widgets/class-widget-friend-request.php';
-add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Request', 'register' ) );
-
 require_once __DIR__ . '/widgets/class-widget-friend-stats.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Friend_Stats', 'register' ) );
-
-require_once __DIR__ . '/widgets/class-widget-new-private-post.php';
-add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_New_Private_Post', 'register' ) );
 
 require_once __DIR__ . '/widgets/class-widget-post-formats.php';
 add_action( 'widgets_init', array( __NAMESPACE__ . '\Widget_Post_Formats', 'register' ) );

@@ -56,9 +56,6 @@ class Feed {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		add_filter( 'pre_get_posts', array( $this, 'private_feed_query' ), 1 );
-		add_filter( 'private_title_format', array( $this, 'private_title_format' ) );
-		add_filter( 'pre_option_rss_use_excerpt', array( $this, 'feed_use_excerpt' ), 90 );
 		add_filter( 'friends_early_modify_feed_item', array( $this, 'apply_early_feed_rules' ), 10, 3 );
 		add_filter( 'friends_modify_feed_item', array( $this, 'apply_feed_rules' ), 10, 3 );
 
@@ -744,33 +741,6 @@ class Feed {
 	}
 
 	/**
-	 * Remove the Private: when sending a private feed.
-	 *
-	 * @param  string $title_format The title format for a private post title.
-	 * @return string The modified title format for a private post title.
-	 */
-	public function private_title_format( $title_format ) {
-		if ( $this->friends->access_control->feed_is_authenticated() ) {
-			return '%s';
-		}
-		return $title_format;
-	}
-
-	/**
-	 * Disable excerpted feeds for friend feeds
-	 *
-	 * @param  boolean $feed_use_excerpt Whether to only have excerpts in feeds.
-	 * @return boolean The modified flag whether to have excerpts in feeds.
-	 */
-	public function feed_use_excerpt( $feed_use_excerpt ) {
-		if ( $this->friends->access_control->feed_is_authenticated() ) {
-			return 0;
-		}
-
-		return $feed_use_excerpt;
-	}
-
-	/**
 	 * Output an additional XMLNS for the feed.
 	 */
 	public function additional_feed_namespaces() {
@@ -787,15 +757,6 @@ class Feed {
 			$post_format = 'standard';
 		}
 		echo '<friends:post-format>' . esc_html( $post_format ) . '</friends:post-format>' . PHP_EOL;
-
-		$authenticated_user_id = $this->friends->access_control->feed_is_authenticated();
-		if ( ! $authenticated_user_id ) {
-			return;
-		}
-
-		echo '<friends:gravatar>' . esc_html( get_avatar_url( $post->post_author ) ) . '</friends:gravatar>' . PHP_EOL;
-		echo '<friends:post-status>' . esc_html( $post->post_status ) . '</friends:post-status>' . PHP_EOL;
-		echo '<friends:post-id>' . esc_html( $post->ID ) . '</friends:post-id>' . PHP_EOL;
 	}
 
 	/**
@@ -1151,25 +1112,6 @@ class Feed {
 		}
 
 		return $discovered_feeds;
-	}
-
-	/**
-	 * Modify the main query for the friends feed
-	 *
-	 * @param  \WP_Query $query The main query.
-	 * @return \WP_Query The modified main query.
-	 */
-	public function private_feed_query( \WP_Query $query ) {
-		if ( ! $this->friends->access_control->feed_is_authenticated() ) {
-			return $query;
-		}
-
-		$friend_user = $this->friends->access_control->get_authenticated_feed_user();
-		if ( ! $query->is_admin && $query->is_feed && $friend_user->has_cap( 'friend' ) && ! $friend_user->has_cap( 'acquaintance' ) ) {
-			$query->set( 'post_status', array( 'publish', 'private' ) );
-		}
-
-		return $query;
 	}
 
 	/**

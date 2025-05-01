@@ -48,13 +48,10 @@ class Messages {
 		add_filter( 'friends_unread_count', array( $this, 'friends_unread_messages_count' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_unread_messages' ) );
 		add_action( 'wp_ajax_friends-mark-read', array( $this, 'mark_message_read' ) );
-		add_action( 'rest_api_init', array( $this, 'add_rest_routes' ) );
 		add_action( 'friends_author_header', array( $this, 'friends_author_header' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_display_messages' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_message_form' ), 11, 2 );
 		add_filter( 'template_redirect', array( $this, 'handle_message_send' ), 10, 2 );
-		add_filter( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
-		add_filter( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 5 );
 		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 6 );
 		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 6 );
 		add_filter( 'mastodon_api_conversation', array( $this, 'mastodon_api_conversation' ), 10, 2 );
@@ -154,93 +151,8 @@ class Messages {
 		register_taxonomy( self::TAXONOMY, self::CPT, $args );
 	}
 
-	/**
-	 * Add the REST API to send and receive friend requests
-	 */
-	public function add_rest_routes() {
-		register_rest_route(
-			REST::PREFIX,
-			'message',
-			array(
-				'methods'             => 'POST',
-				'callback'            => array( $this, 'rest_receive_message' ),
-				'permission_callback' => array( $this, 'permission_check_receive_message' ),
-			)
-		);
-	}
 
-	public function permission_check_receive_message( \WP_REST_Request $request ) {
-		if ( Friends::authenticated_for_posts() ) {
-			return true;
-		}
 
-		$tokens = explode( '-', $request->get_param( 'auth' ) );
-		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
-		if ( ! $user_id ) {
-			return new \WP_Error(
-				'friends_request_failed',
-				__( 'Could not respond to the request.', 'friends' ),
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		$friend_user = new User( $user_id );
-		if ( ! apply_filters( 'friends_message_form_accounts', array(), $friend_user ) ) {
-			return new \WP_Error(
-				'friends_request_failed',
-				__( 'Could not respond to the request.', 'friends' ),
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		return true;
-	}
-
-	/**
-	 * Receive a message via REST
-	 *
-	 * @param  \WP_REST_Request $request The incoming request.
-	 * @return array The array to be returned via the REST API.
-	 */
-	public function rest_receive_message( \WP_REST_Request $request ) {
-		$tokens = explode( '-', $request->get_param( 'auth' ) );
-		$user_id = $this->friends->access_control->verify_token( $tokens[0], isset( $tokens[1] ) ? $tokens[1] : null, isset( $tokens[2] ) ? $tokens[2] : null );
-		if ( ! $user_id ) {
-			return new \WP_Error(
-				'friends_request_failed',
-				__( 'Could not respond to the request.', 'friends' ),
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		$friend_user = new User( $user_id );
-		if ( ! apply_filters( 'friends_message_form_accounts', array(), $friend_user ) ) {
-			return new \WP_Error(
-				'friends_request_failed',
-				__( 'Could not respond to the request.', 'friends' ),
-				array(
-					'status' => 403,
-				)
-			);
-		}
-
-		$subject = wp_unslash( $request->get_param( 'subject' ) );
-		$message = wp_unslash( $request->get_param( 'message' ) );
-		$remote_url = wp_unslash( $request->get_param( 'remote_url' ) );
-		$reply_to = wp_unslash( $request->get_param( 'reply_to' ) );
-
-		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $friend_user->get_rest_url(), $remote_url, $reply_to );
-
-		return array(
-			'status' => 'message-received',
-		);
-	}
 
 	public function friends_frontend_post_types_only_messages( $post_types ) {
 		$post_types = array( self::CPT );
@@ -436,18 +348,6 @@ class Messages {
 	}
 
 	/**
-	 * Adds the friend requests to the unread count.
-	 *
-	 * @param      int $unread  The unread count.
-	 *
-	 * @return     int   Unread count + friend requests.
-	 */
-	public function friends_unread_friend_request_count( $unread ) {
-		$friend_requests = User_Query::all_friend_requests();
-		return $unread + $friend_requests->get_total();
-	}
-
-	/**
 	 * Extend the author header.
 	 *
 	 * @param      User  $friend_user  The friend user.
@@ -533,15 +433,6 @@ class Messages {
 		}
 	}
 
-	public function friends_message_form_accounts( $accounts, User $friend_user ) {
-		if ( $friend_user->has_cap( 'friend' ) ) {
-			// translators: %s is the user's URL.
-			$accounts[ $friend_user->get_rest_url() ] = sprintf( __( 'Friends connection (%s)', 'friends' ), $friend_user->user_url );
-		}
-
-		return $accounts;
-	}
-
 	/**
 	 * Sends a message to a friend.
 	 *
@@ -565,41 +456,6 @@ class Messages {
 		$post_id = apply_filters( 'friends_send_direct_message', null, $friend_user, $to, $message, $subject, $reply_to_post_id );
 
 		return $post_id;
-	}
-
-	public function friends_send_direct_message( $post_id, User $friend_user, $to, $message, $subject = null, $reply_to_post_id = null ) {
-		if ( $post_id || $to !== $friend_user->get_rest_url() ) {
-			return $post_id;
-		}
-
-		$body = array(
-			'subject' => $subject,
-			'message' => $message,
-			'auth'    => $friend_user->get_friend_auth(),
-		);
-
-		if ( $reply_to_post_id ) {
-			$body['reply_to'] = get_permalink( $reply_to_post_id );
-		}
-
-		if ( $post_id ) {
-			$body['remote_url'] = get_permalink( $post_id );
-		}
-
-		$response = wp_safe_remote_post(
-			$friend_user->get_rest_url() . '/message',
-			array(
-				'body'        => $body,
-				'timeout'     => 20,
-				'redirection' => 5,
-			)
-		);
-
-		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			return new \WP_Error( 'invalid-response', __( 'We received an unexpected response to our message.', 'friends' ) );
-		}
-
-		return true;
 	}
 
 	/**

@@ -928,38 +928,53 @@ class Frontend {
 
 	public function get_static_frontend_template( $path ) {
 		global $friends_args;
+		global $wp_query;
+		$wp_query->is_singular = false;
+
 		switch ( $path ) {
-			case 'followers':
-				if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
-					$friends_args = array();
-					if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-						$friends_args['only_mutual'] = true;
-						$friends_args['title'] = __( 'Your Mutual Followers', 'friends' );
-					} else {
-						$friends_args['only_mutual'] = false;
-						$friends_args['title'] = __( 'Your Followers', 'friends' );
-					}
-					$friends_args['user_id'] = get_current_user_id();
-					return 'frontend/followers';
-				}
+			case 'subscriptions':
+				$path = 'frontend/subscriptions';
 				break;
+
+			case 'followers':
+				if ( ! class_exists( '\Activitypub\Collection\Followers' ) ) {
+					return 'frontend/index';
+				}
+
+				$friends_args = array();
+				if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$friends_args['only_mutual'] = true;
+					$friends_args['title'] = __( 'Your Mutual Followers', 'friends' );
+				} else {
+					$friends_args['only_mutual'] = false;
+					$friends_args['title'] = __( 'Your Followers', 'friends' );
+				}
+				$friends_args['user_id'] = get_current_user_id();
+				$path = 'frontend/followers';
+				break;
+
 			case 'blog-followers':
 				$friends_args = array();
-				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
-					if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-						$friends_args['only_mutual'] = true;
-						$friends_args['title'] = __( 'Your Mutual Blog Followers', 'friends' );
-					} else {
-						$friends_args['only_mutual'] = false;
-						$friends_args['title'] = __( 'Your Blog Followers', 'friends' );
-					}
-					$friends_args['user_id'] = \Activitypub\Collection\Actors::BLOG_USER_ID;
-					return 'frontend/followers';
+				if ( ! class_exists( '\Activitypub\Collection\Actors' ) ) {
+					return 'frontend/index';
 				}
+				if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$friends_args['only_mutual'] = true;
+					$friends_args['title'] = __( 'Your Mutual Blog Followers', 'friends' );
+				} else {
+					$friends_args['only_mutual'] = false;
+					$friends_args['title'] = __( 'Your Blog Followers', 'friends' );
+				}
+				$friends_args['user_id'] = \Activitypub\Collection\Actors::BLOG_USER_ID;
+				$path = 'frontend/followers';
 				break;
+
+			default:
+				return 'frontend/index';
 		}
 
-		return 'frontend/index';
+		$wp_query->is_404 = false;
+		return $path;
 	}
 
 	/**
@@ -1025,21 +1040,6 @@ class Frontend {
 	public static function get_link( $url, $text, array $html_attributes = array(), ?User $friend_user = null ) {
 		if ( is_null( $friend_user ) ) {
 			$friend_user = new User( get_the_author_meta( 'ID' ) );
-		}
-
-		if ( $friend_user->is_friend_url( $url ) && $friend_user->is_valid_friend() ) {
-			$html_attributes['target'] = '_blank';
-			$html_attributes['rel'] = 'noopener noreferrer';
-			if ( ! isset( $html_attributes['class'] ) ) {
-				$html_attributes['class'] = '';
-			}
-			$html_attributes['class'] = trim( $html_attributes['class'] . ' friends-auth-link' );
-			if ( ! isset( $html_attributes['dashicon_back'] ) ) {
-				$html_attributes['dashicon_back'] = 'admin-users';
-			}
-			$html_attributes['data-token'] = $friend_user->get_friend_auth();
-			$html_attributes['data-nonce'] = wp_create_nonce( 'auth-link-' . $url );
-			$html_attributes['data-friend'] = $friend_user->user_login;
 		}
 
 		$link = '<a href="' . esc_url( $url ) . '"';
@@ -1354,9 +1354,7 @@ class Frontend {
 		$viewable = $this->has_required_priviledges() && Friends::on_frontend();
 		if ( $query->is_feed() ) {
 			// Feeds can be viewed through extra authentication.
-			if ( $this->friends->access_control->private_rss_is_authenticated() ) {
-				$viewable = true;
-			} elseif ( isset( $wp_query->query['pagename'] ) ) {
+			if ( isset( $wp_query->query['pagename'] ) ) {
 				if ( apply_filters( 'friends_friend_feed_viewable', false, isset( $pagename_parts[0] ) ? $pagename_parts[0] : false ) ) {
 					$viewable = true;
 				}

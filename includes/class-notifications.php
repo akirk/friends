@@ -43,8 +43,6 @@ class Notifications {
 		add_filter( 'friends_rewrite_mail_html', array( $this, 'highlight_keywords' ), 10, 2 );
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 3 );
 		add_filter( 'friends_notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
-		add_action( 'notify_new_friend_request', array( $this, 'notify_new_friend_request' ) );
-		add_action( 'notify_accepted_friend_request', array( $this, 'notify_accepted_friend_request' ) );
 		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
 		add_action( 'notify_unknown_friend_message_received', array( $this, 'notify_unknown_friend_message_received' ), 10, 4 );
 		add_action( 'activitypub_new_follower_email', array( $this, 'activitypub_new_follower_email' ), 10, 3 );
@@ -212,96 +210,6 @@ class Notifications {
 		$this->send_mail( $user->user_email, wp_specialchars_decode( $email_title, ENT_QUOTES ), $email_message, array(), array(), $author->user_login );
 
 		return true;
-	}
-
-	/**
-	 * Notify the users of this site about a new friend request
-	 *
-	 * @param  User $friend_user The user requesting friendship.
-	 */
-	public function notify_new_friend_request( User $friend_user ) {
-		if ( ! $friend_user->has_cap( 'friend_request' ) ) {
-			return;
-		}
-		$user = new User( Friends::get_main_friend_user_id() );
-		if ( defined( 'WP_TESTS_EMAIL' ) ) {
-			$user->user_email = WP_TESTS_EMAIL;
-		}
-		if ( ! $user->user_email ) {
-			return;
-		}
-
-		$notify_user = ! get_user_option( 'friends_no_friend_request_notification', $user->ID );
-		if ( ! apply_filters( 'notify_user_about_friend_request', $notify_user, $user, $friend_user ) ) {
-			return;
-		}
-
-		// translators: %s is a user display name.
-		$email_title = sprintf( __( '%s sent a Friend Request', 'friends' ), $friend_user->display_name );
-
-		$params = array(
-			'user'        => $user,
-			'friend_user' => $friend_user,
-		);
-
-		$email_message = array();
-		ob_start();
-		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-		Friends::template_loader()->get_template_part( 'email/new-friend-request', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer' );
-		$email_message['html'] = ob_get_contents();
-		ob_end_clean();
-
-		ob_start();
-		Friends::template_loader()->get_template_part( 'email/new-friend-request-text', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer-text' );
-		$email_message['text'] = ob_get_contents();
-		ob_end_clean();
-
-		$this->send_mail( $user->user_email, $email_title, $email_message );
-	}
-
-	/**
-	 * Notify the users of this site about an accepted friend request
-	 *
-	 * @param  User $friend_user The user who accepted friendship.
-	 */
-	public function notify_accepted_friend_request( User $friend_user ) {
-		$user = new User( Friends::get_main_friend_user_id() );
-		if ( defined( 'WP_TESTS_EMAIL' ) ) {
-			$user->user_email = WP_TESTS_EMAIL;
-		}
-		if ( ! $user->user_email ) {
-			return;
-		}
-
-		if ( ! apply_filters( 'notify_user_about_accepted_friend_request', true, $user, $friend_user ) ) {
-			return;
-		}
-
-		// translators: %s is a user display name.
-		$email_title = sprintf( __( '%s accepted your Friend Request', 'friends' ), $friend_user->display_name );
-
-		$params = array(
-			'user'        => $user,
-			'friend_user' => $friend_user,
-		);
-
-		$email_message = array();
-		ob_start();
-		Friends::template_loader()->get_template_part( 'email/header', null, array( 'email_title' => $email_title ) );
-		Friends::template_loader()->get_template_part( 'email/accepted-friend-request', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer' );
-		$email_message['html'] = ob_get_contents();
-		ob_end_clean();
-
-		ob_start();
-		Friends::template_loader()->get_template_part( 'email/accepted-friend-request-text', null, $params );
-		Friends::template_loader()->get_template_part( 'email/footer-text' );
-		$email_message['text'] = ob_get_contents();
-		ob_end_clean();
-
-		$this->send_mail( $user->user_email, $email_title, $email_message );
 	}
 
 	/**

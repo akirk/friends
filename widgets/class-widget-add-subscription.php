@@ -16,16 +16,16 @@ namespace Friends;
  * @package Friends
  * @author Alex Kirk
  */
-class Widget_Friend_Request extends \WP_Widget {
+class Widget_Add_Subscription extends \WP_Widget {
 	/**
 	 * Constructor
 	 */
 	public function __construct() {
 		parent::__construct(
 			'friends-widget-friend-request',
-			__( 'Friend request', 'friends' ),
+			__( 'Add Subscription', 'friends' ),
 			array(
-				'description' => __( 'Send a friend request.', 'friends' ),
+				'description' => __( 'Add a new subscription.', 'friends' ),
 			)
 		);
 	}
@@ -46,13 +46,13 @@ class Widget_Friend_Request extends \WP_Widget {
 		}
 
 		?>
-		<form action="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>" method="post" class="form-horizontal">
-		<?php wp_nonce_field( 'add-friend' ); ?>
+		<form action="<?php echo esc_url( home_url( 'friends/add-suscription' ) ); ?>" method="post" class="form-horizontal">
+		<?php wp_nonce_field( 'add-suscription' ); ?>
 		<div class="form-group">
 			<input type="text" name="friend_url" aria-label="<?php echo esc_attr_e( "Enter the Friend's URL", 'friends' ); ?>"  placeholder="<?php echo esc_attr_e( "Friend's URL", 'friends' ); ?>" class="form-input input-sm" />
 		</div>
 		<div class="form-group">
-			<button class="btn btn-primary btn-sm"><?php echo esc_attr_e( 'Add Friend', 'friends' ); ?></button>
+			<button class="btn btn-primary btn-sm"><?php echo esc_attr_e( 'Add Subscription', 'friends' ); ?></button>
 		</div>
 		</form>
 		<?php
