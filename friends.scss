@@ -773,46 +773,6 @@ h2#page-title a.dashicons {
 		margin-right: .3em;
 	}
 
-	a.explanation-friends-auth-link,
-	a.friends-auth-link,
-	a.friends-auth-link:link,
-	a.friends-auth-link:active,
-	a.friends-auth-link,
-	a.friends-auth-link:link,
-	a.friends-auth-link:active {
-		color: #333;
-	}
-
-	a.friends-auth-link span.dashicons-admin-users {
-		display: inline;
-	}
-
-	a.friends-auth-link span.dashicons,
-	button.friends-auth-link span.dashicons {
-		color: #32c170;
-		margin-left: 6px;
-	}
-
-	a.explanation-friends-auth-link:hover,
-	a.friends-auth-link :hover,
-	a.friends-auth-link:hover,
-	a.friends-auth-link:hover span.dashicons,
-	button.friends-auth-link:hover span.dashicons {
-		color: #32c170;
-	}
-
-	a.explanation-friends-auth-link:hover,
-	a.friends-auth-link :hover,
-	a.friends-auth-link:hover {
-		text-decoration: underline;
-	}
-
-	a.explanation-friends-auth-link:hover span,
-	a.friends-auth-link :hover span,
-	a.friends-auth-link:hover span {
-		text-decoration: none;
-	}
-
 	.form-autocomplete .form-autocomplete-input .form-input {
 		width: auto;
 	}

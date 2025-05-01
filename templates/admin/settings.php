@@ -12,21 +12,6 @@ do_action( 'friends_settings_before_form' );
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
 		<tbody>
-			<?php if ( current_user_can( 'manage_options' ) ) : ?>
-			<tr>
-				<th scope="row"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Friendships' ); ?></th>
-				<td>
-					<fieldset>
-						<label for="enable_wp_friendships">
-							<input name="enable_wp_friendships" type="checkbox" id="enable_wp_friendships" value="1" <?php checked( '1', $args['enable_wp_friendships'] ); ?> />
-							<span><?php esc_html_e( 'Enable friendships between WordPresses.', 'friends' ); ?></span>
-						</label>
-					</fieldset>
-				</td>
-			</tr>
-					<?php
-			endif;
-			?>
 			<tr>
 				<th><?php esc_html_e( 'Retention', 'friends' ); ?></th>
 				<td>

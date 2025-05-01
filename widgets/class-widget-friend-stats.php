@@ -37,9 +37,6 @@ class Widget_Friend_Stats extends \WP_Widget {
 	 * @param array $instance Widget instance settings.
 	 */
 	public function widget( $args, $instance ) {
-		$friends = User_Query::all_friends();
-		$friends_count = $friends->get_total();
-
 		$subscriptions = User_Query::all_subscriptions();
 		$subscriptions_count = $subscriptions->get_total();
 
@@ -113,22 +110,8 @@ class Widget_Friend_Stats extends \WP_Widget {
 					</a>
 				</li>
 				<?php endif; ?>
-				<li class="friend-stats-friends menu-item">
-					<a href="<?php echo esc_attr( admin_url( 'page=friends-list' ) ); ?>">
-						<?php
-						echo wp_kses(
-							sprintf(
-							/* translators: %s: number of friends */
-								_n( '%s Friend', '%s Friends', $friends_count, 'friends' ),
-								'<span class="friends">' . $friends_count . '</span>'
-							),
-							array( 'span' => array( 'class' => true ) )
-						);
-						?>
-					</a>
-				</li>
 				<li class="friend-stats-subscriptions menu-item">
-					<a href="<?php echo esc_attr( admin_url( 'page=friends-list' ) ); ?>">
+					<a href="<?php echo esc_attr( home_url( '/friends/subscriptions/' ) ); ?>">
 						<?php
 							echo wp_kses(
 								sprintf(

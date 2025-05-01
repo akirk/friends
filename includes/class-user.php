@@ -1076,31 +1076,6 @@ class User extends \WP_User {
 	}
 
 	/**
-	 * Check whether this is a valid friend
-	 *
-	 * @return boolean Whether the user has valid friend data.
-	 */
-	public function is_valid_friend() {
-		if ( ! $this->has_cap( 'friend' ) ) {
-			return false;
-		}
-
-		if ( ! $this->data->user_url ) {
-			return false;
-		}
-
-		if ( ! $this->get_user_option( 'friends_in_token' ) ) {
-			return false;
-		}
-
-		if ( ! $this->get_user_option( 'friends_out_token' ) ) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
 	 * Gets the role name (for a specific count).
 	 *
 	 * @param      bool $group_subscriptions  Whether to group all types of subscriptions into the name "Subscriptions".
@@ -1109,28 +1084,9 @@ class User extends \WP_User {
 	 * @return     string  The role name.
 	 */
 	public function get_role_name( $group_subscriptions = false, $count = 1 ) {
-		if ( in_array( 'acquaintance', $this->roles ) ) {
-			return _nx( 'Acquaintance', 'Acquaintances', $count, 'User role', 'friends' );
-		}
-
-		if ( in_array( 'friend', $this->roles ) && $this->is_valid_friend() ) {
-			return _nx( 'Friend', 'Friends', $count, 'User role', 'friends' );
-		}
-
-		if ( in_array( 'subscription', $this->roles ) ) {
+		// Friend roles from old plugin versions are handled like subscriptions.
+		if ( array_diff( array( 'friend', 'acquaintance', 'subscription' ), $this->roles ) ) {
 			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
-		}
-
-		if ( $group_subscriptions && ( in_array( 'friend_request', $this->roles ) || in_array( 'pending_friend_request', $this->roles ) ) ) {
-			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
-		}
-
-		if ( in_array( 'friend_request', $this->roles ) ) {
-			return _nx( 'Friend Request', 'Friend Requests', $count, 'User role', 'friends' );
-		}
-
-		if ( in_array( 'pending_friend_request', $this->roles ) ) {
-			return _nx( 'Pending Friend Request', 'Pending Friend Requests', $count, 'User role', 'friends' );
 		}
 
 		$name = apply_filters( 'friend_user_role_name', false, $this );
@@ -1215,22 +1171,6 @@ class User extends \WP_User {
 	}
 
 	/**
-	 * Gets the friend auth to be used as a GET parameter.
-	 *
-	 * @param      integer $validity  The validity in seconds.
-	 *
-	 * @return     string   The friend auth.
-	 */
-	public function get_friend_auth( $validity = 3600 ) {
-		$friends = Friends::get_instance();
-		$friend_auth = $friends->access_control->get_friend_auth( $this, $validity );
-		if ( empty( $friend_auth ) ) {
-			return '';
-		}
-		return $friend_auth['me'] . '-' . $friend_auth['until'] . '-' . $friend_auth['auth'];
-	}
-
-	/**
 	 * Determines whether the specified url is friend url.
 	 *
 	 * @param      string $url    The url.
@@ -1245,27 +1185,6 @@ class User extends \WP_User {
 			return false;
 		}
 		return true;
-	}
-
-	/**
-	 * Get the REST URL for the friend
-	 *
-	 * @return string        The REST URL.
-	 */
-	public function get_rest_url() {
-		$friends = Friends::get_instance();
-		$rest_url = $this->get_user_option( 'friends_rest_url' );
-		if ( ! $rest_url || false === strpos( $rest_url, REST::PREFIX ) ) {
-			$rest_url = $friends->rest->discover_rest_url( $this->user_url );
-			if ( is_wp_error( $rest_url ) ) {
-				return null;
-			}
-
-			if ( $rest_url ) {
-				$this->update_user_option( 'friends_rest_url', $rest_url );
-			}
-		}
-		return $rest_url;
 	}
 
 	public function get_avatar_url() {
