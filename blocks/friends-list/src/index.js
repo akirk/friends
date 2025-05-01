@@ -23,18 +23,6 @@ registerBlockType( 'friends/friends-list', {
 							value={ attributes.user_types }
 							options={ [
 								{
-									label: __( 'Friends', 'friends' ),
-									value: 'friends',
-								},
-								{
-									label: __( 'Friend requests', 'friends' ),
-									value: 'friend_requests',
-								},
-								{
-									label: __( 'Subscriptions', 'friends' ),
-									value: 'subscriptions',
-								},
-								{
 									label: __( 'Friends + Subscriptions', 'friends' ),
 									value: 'friends_subscriptions',
 								},

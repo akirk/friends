@@ -58,9 +58,7 @@ class User extends \WP_User {
 	 * Create a User with a specific Friends-related role
 	 *
 	 * @param      string $user_login    The user login.
-	 * @param      string $role          The role: subscription,
-	 *                                   pending_friend_request,
-	 *                                   or friend_request.
+	 * @param      string $role          The role: subscription.
 	 * @param      string $url           The site URL for which
 	 *                                   to create the user.
 	 * @param      string $display_name  The user's display name.
@@ -72,19 +70,9 @@ class User extends \WP_User {
 	 * @return     User|\WP_Error  The created user or an error.
 	 */
 	public static function create( $user_login, $role, $url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
-		if ( 'subscription' === $role && ! $subscription_override ) {
+		$role = 'subscription'; // Only role supported after friendship removal.
+		if ( ! $subscription_override ) {
 			return Subscription::create( $user_login, $role, $url, $display_name, $avatar_url, $description );
-		}
-
-		$role_rank = array_flip(
-			array(
-				'subscription',
-				'pending_friend_request',
-				'friend_request',
-			)
-		);
-		if ( ! isset( $role_rank[ $role ] ) ) {
-			return new \WP_Error( 'invalid_role', 'Invalid role for creation specified' );
 		}
 
 		if ( is_multisite() ) {
@@ -101,17 +89,7 @@ class User extends \WP_User {
 			if ( $friend_user instanceof Subscription ) {
 				$friend_user = Subscription::convert_to_user( $friend_user );
 			}
-
-			foreach ( $role_rank as $_role => $rank ) {
-				if ( $rank > $role_rank[ $role ] ) {
-					break;
-				}
-				if ( $friend_user->has_cap( $_role ) ) {
-					// Upgrade user role.
-					$friend_user->set_role( $role );
-					break;
-				}
-			}
+			$friend_user->set_role( $role );
 			return $friend_user;
 		}
 
