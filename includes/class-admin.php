@@ -1975,27 +1975,11 @@ class Admin {
 			array(
 				'id'     => 'your-feed',
 				'parent' => 'friends-menu',
-				'title'  => esc_html__( 'My Friends Feed', 'friends' ),
-				'href'   => $my_url . '/friends/',
+				'title'  => esc_html__( 'Main Feed', 'friends' ),
+				'href'   => home_url( '/friends/' ),
 			)
 		);
 
-		$wp_menu->add_menu(
-			array(
-				'id'     => 'your-profile',
-				'parent' => 'friends-menu',
-				'title'  => esc_html__( 'My Public Friends Profile', 'friends' ),
-				'href'   => $my_url . '/friends/?public',
-			)
-		);
-		$wp_menu->add_menu(
-			array(
-				'id'     => 'friends-requests',
-				'parent' => 'friends-menu',
-				'title'  => esc_html__( 'My Friends & Requests', 'friends' ),
-				'href'   => $my_admin_url . '/wp-admin/admin.php?page=friends-list',
-			)
-		);
 		$wp_menu->add_menu(
 			array(
 				'id'     => 'friends',
