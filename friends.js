@@ -338,7 +338,7 @@
 	} );
 
 	$document.on( 'click', 'a.collapse-post, .collapsed.card, .all-collapsed .card:not(.uncollapsed)', function ( e ) {
-		if ( e.target.closest( '.friends-dropdown' ) || $( e.target ).is( 'a' ) ) {
+		if ( e.target.closest( '.friends-dropdown' ) || e.target.closest( 'a:not(.collapse-post)' ) ) {
 			return true;
 		}
 
