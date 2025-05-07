@@ -52,6 +52,7 @@ class Admin {
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'wp_ajax_friends_fetch_feeds', array( $this, 'ajax_fetch_feeds' ) );
 		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
+		add_action( 'wp_ajax_friends-preview-subscription', array( $this, 'ajax_preview_subscription' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
@@ -1032,6 +1033,16 @@ class Admin {
 				'url' => $url,
 			)
 		);
+	}
+
+	public function ajax_preview_subscription() {
+		if ( ! isset( $_POST['url'] ) ) {
+			wp_send_json_error( __( 'No URL provided.', 'friends' ) );
+		}
+
+		check_ajax_referer( 'friends_add_subscription' );
+
+		wp_send_json_success( 'test' );
 	}
 
 	/**

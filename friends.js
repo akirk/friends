@@ -749,4 +749,26 @@
 		} );
 	} );
 
+	$document.on('submit', '#add-subscription-form', function ( e ) {
+		e.preventDefault();
+		const $this = $( this );
+		const url = $this.find( 'input[name="url"]' ).val();
+		if ( ! url ) {
+			return;
+		}
+		wp.ajax.send( 'friends-preview-subscription', {
+			data: {
+				_ajax_nonce: $this.find( 'input[name=_wpnonce]' ).val(),
+				url: url,
+			},
+			success( r ) {
+				console.log( r );
+				$('#preview-subscription').html( r );
+			},
+			error( result ) {
+
+			}
+		} );
+	} );
+
 } )( jQuery, window.wp, window.friends );
