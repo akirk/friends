@@ -1805,7 +1805,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$user = User::get_post_author( get_post( $post_id ) );
+		$post = get_post( $post_id );
+		if ( ! ( $post instanceof \WP_Post ) ) {
+			return;
+		}
+		$user = User::get_post_author( $post );
 		wp_safe_redirect( $user->get_local_friends_page_url( $post_id ) . $append_to_redirect );
 		exit;
 	}
