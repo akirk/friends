@@ -1,3 +1,8 @@
+### 3.5.0
+- Prevent friends page running wide in compact view ([#522])
+- Prevent fatal for boosted post ([#521])
+- Flush Rewrite Rules later ([#520])
+
 ### 3.4.9
 - Message fixes ([#518], [#519])
 - Display only images in compact mode ([#517])
@@ -646,3 +651,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#517]: https://github.com/akirk/friends/pull/517
 [#518]: https://github.com/akirk/friends/pull/518
 [#519]: https://github.com/akirk/friends/pull/519
+
+[#520]: https://github.com/akirk/friends/pull/520
+[#521]: https://github.com/akirk/friends/pull/521
+[#522]: https://github.com/akirk/friends/pull/522

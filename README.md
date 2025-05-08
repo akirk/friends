@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.8
 - License: GPL-2.0-or-later
-- Stable tag: 3.4.9
+- Stable tag: 3.5.0
 
 Your own WordPress at the center of your online activity. Follow friends and other websites and establish friendship relationships between blogs.
 
@@ -95,6 +95,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 3.5.0
+- Prevent friends page running wide in compact view ([#522])
+- Prevent fatal for boosted post ([#521])
+- Flush Rewrite Rules later ([#520])
 
 ### 3.4.9
 - Message fixes ([#518], [#519])
@@ -387,3 +392,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#517]: https://github.com/akirk/friends/pull/517
 [#518]: https://github.com/akirk/friends/pull/518
 [#519]: https://github.com/akirk/friends/pull/519
+
+[#520]: https://github.com/akirk/friends/pull/520
+[#521]: https://github.com/akirk/friends/pull/521
+[#522]: https://github.com/akirk/friends/pull/522
