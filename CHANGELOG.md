@@ -1,3 +1,7 @@
+### 3.4.9
+- Message fixes ([#518], [#519])
+- Display only images in compact mode ([#517])
+
 ### 3.4.8
 - Enable Mastodon Apps: Fix wrong reblog attribution ([#510])
 
@@ -638,3 +642,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#508]: https://github.com/akirk/friends/pull/508
 
 [#510]: https://github.com/akirk/friends/pull/510
+
+[#517]: https://github.com/akirk/friends/pull/517
+[#518]: https://github.com/akirk/friends/pull/518
+[#519]: https://github.com/akirk/friends/pull/519
