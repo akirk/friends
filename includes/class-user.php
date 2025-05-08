@@ -1334,11 +1334,11 @@ class User extends \WP_User {
 				$note = '';
 			}
 			$account->id             = apply_filters( 'friends_mastodon_api_username', $user->ID );
-			$account->username       = $user->user_login;
+			$account->username       = is_string( $account->id ) ? $account->id : $user->user_login;
 			$account->display_name   = $user->display_name;
 			$account->avatar         = $user->get_avatar_url();
 			$account->avatar_static  = $user->get_avatar_url();
-			$account->acct           = $user->user_login;
+			$account->acct           = $account->username;
 			$account->note           = wpautop( $note );
 			$account->created_at     = new \DateTime( $user->user_registered );
 			$account->statuses_count = $user->get_post_stats()['post_count'];

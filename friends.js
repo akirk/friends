@@ -114,7 +114,7 @@
 				$( '.navbar-section.search' ).append( $( '.search-dialog' ).children() );
 			}
 		}
-		if ( 69 === e.keyCode && ! e.metaKey && ! e.ctrlKey ) {
+		if ( 69 === e.keyCode && ! e.metaKey && ! e.ctrlKey && ! $( e.target ).is( 'input, textarea' ) ) {
 			const links = $( 'header .post-edit-link' );
 			if ( 1 === links.length ) {
 				links[ 0 ].click();

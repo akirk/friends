@@ -59,8 +59,10 @@ class Messages {
 		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 6 );
 		add_filter( 'mastodon_api_conversation', array( $this, 'mastodon_api_conversation' ), 10, 2 );
 		add_filter( 'mastodon_api_conversations', array( $this, 'mastodon_api_conversations' ), 10, 3 );
-		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 );
-		add_filter( 'api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 );
+		add_filter( 'mastodon_api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 );
+		add_filter( 'mastodon_api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 );
+		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 ); // legacy filter.
+		add_filter( 'api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 ); // legacy filter.
 		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 6 );
 		add_filter( 'mastodon_api_conversation_mark_read', array( $this, 'mastodon_api_conversation_mark_read' ), 10 );
 		add_filter( 'mastodon_api_conversation_delete', array( $this, 'delete_conversation' ), 10 );
