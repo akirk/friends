@@ -1695,6 +1695,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				if ( ! isset( $users[ '@' . $slug ] ) ) {
 					$users[ '@' . $slug ] = $feed->get_url();
 				}
+				$mastodon_handle = self::convert_actor_to_mastodon_handle( $feed->get_url() );
+				if ( $mastodon_handle && $mastodon_handle !== $feed->get_url() ) {
+					$users[ '@' . $mastodon_handle ] = $feed->get_url();
+				}
 			}
 
 			$local_users = get_users(
@@ -1715,6 +1719,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$users[ '@' . sanitize_title( get_bloginfo( 'name' ) ) ] = get_bloginfo( 'url' );
 		}
 
+		// Sort by length of key descending.
+		uksort(
+			$users,
+			function ( $a, $b ) {
+				return strlen( $b ) - strlen( $a );
+			}
+		);
+
 		return $users;
 	}
 
@@ -1727,12 +1739,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_extract_mentions( $mentions, $post_content ) {
 		$users = self::get_possible_mentions();
-		preg_match_all( '/@(?:[a-zA-Z0-9_@.-]+)/', $post_content, $matches );
-		foreach ( $matches[0] as $match ) {
-			if ( isset( $users[ $match ] ) ) {
-				$mentions[ $match ] = $users[ $match ];
+
+		// Check if a user is mentioned in the $post_content.
+		$matches = array();
+		foreach ( $users as $user => $url ) {
+			if ( strpos( $post_content, $user ) !== false ) {
+				$mentions[ $user ] = $users[ $user ];
 			}
 		}
+
 		return $mentions;
 	}
 
@@ -2869,6 +2884,22 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	private static function convert_actor_to_mastodon_handle( $actor ) {
+		$data = \Activitypub\Webfinger::get_data( $actor );
+		if ( ! is_wp_error( $data ) && isset( $data['subject'] ) ) {
+			$subject = $data['subject'];
+			if ( 'acct:' === substr( $data['subject'], 0, 5 ) ) {
+				$subject = substr( $data['subject'], 5 );
+			} elseif ( isset( $data['aliases'] ) ) {
+				foreach ( $data['aliases'] as $alias ) {
+					if ( 'acct:' === substr( $alias, 0, 5 ) ) {
+						$subject = substr( $alias, 5 );
+						break;
+					}
+				}
+			}
+			return $subject;
+		}
+		// Construct from the URL as fallback.
 		$p = wp_parse_url( $actor );
 		if ( $p ) {
 			if ( isset( $p['host'] ) ) {
