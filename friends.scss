@@ -657,6 +657,15 @@ h2#page-title a.dashicons {
 				}
 			}
 
+			&.format-image {
+				div.card-body {
+					display: block;
+				}
+				header, h4.card-title {
+					display: none
+				}
+			}
+
 			footer.entry-meta {
 				display: none;
 			}
