@@ -812,12 +812,27 @@ class Messages {
 			$status_text,
 			null
 		);
+
+		/**
+		 * Documented in Enable_Mastodon_Apps\Handler\Status\prepare_post_data()
+		 */
+		$status_text = apply_filters( 'mastodon_api_submit_status_text', $status_text, $in_reply_to_id, $visibility );
+
 		$friend_user = false;
 		foreach ( $mentions as $mention ) {
 			$user_feed = User_Feed::get_by_url( $mention );
 			if ( $user_feed ) {
 				$friend_user = $user_feed->get_friend_user();
 				break;
+			}
+			if ( class_exists( Feed_Parser_ActivityPub::class ) ) {
+				$user_feed = User_Feed::get_by_url( $mention );
+				$url = Feed_Parser_ActivityPub::friends_webfinger_resolve( $mention, $mention );
+				$user_feed = User_Feed::get_by_url( $url );
+				if ( $user_feed ) {
+					$friend_user = $user_feed->get_friend_user();
+					break;
+				}
 			}
 		}
 
