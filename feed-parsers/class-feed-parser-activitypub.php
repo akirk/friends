@@ -2912,8 +2912,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( isset( $p['path'] ) ) {
 				$path_parts = explode( '/', trim( $p['path'], '/' ) );
 				$username = ltrim( array_pop( $path_parts ), '@' );
+				return $username . '@' . $domain;
 			}
-			return $username . '@' . $domain;
 		}
 
 		return $actor;
