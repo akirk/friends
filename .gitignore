@@ -11,4 +11,4 @@ node_modules
 readme.txt
 yarn.lock
 .phpunit.result.cache
-new_release.md
+new-changelog.md
