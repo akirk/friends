@@ -1,3 +1,7 @@
+### 3.5.1
+- Fix undefined user_id variable ([#525])
+- Fix broken rewrite rules ([#524])
+
 ### 3.5.0
 - Prevent friends page running wide in compact view ([#522])
 - Prevent fatal for boosted post ([#521])
@@ -655,3 +659,6 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#520]: https://github.com/akirk/friends/pull/520
 [#521]: https://github.com/akirk/friends/pull/521
 [#522]: https://github.com/akirk/friends/pull/522
+
+[#524]: https://github.com/akirk/friends/pull/524
+[#525]: https://github.com/akirk/friends/pull/525
