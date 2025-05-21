@@ -954,7 +954,21 @@ class Friends {
 		if ( false !== $counts ) {
 			return $counts;
 		} elseif ( ! $force_fetching ) {
-			return array_fill_keys( get_post_format_slugs(), '...' );
+			$post_formats = get_post_format_slugs();
+			uksort(
+				$post_formats,
+				function ( $a, $b ) {
+					// Sort standard to the top.
+					if ( 'standard' === $a ) {
+						return -1;
+					} elseif ( 'standard' === $b ) {
+						return 1;
+					}
+					return strnatcmp( $a, $b );
+				}
+			);
+			$counts = array_fill_keys( $post_formats, '...' );
+			return $counts;
 		}
 
 		$counts = array();
