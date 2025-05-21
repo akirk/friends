@@ -312,22 +312,32 @@ class Access_Control {
 	 * @return     array
 	 */
 	public function strict_friend_checking_for_super_admin( $caps, $cap, $user_id ) {
+		static $user_roles = array(), $is_superadmin = array();
+
 		if ( ! in_array( $cap, array( 'friend', 'acquaintance', 'pending_friend_request', 'friend_request', 'subscription' ) ) ) {
 			return $caps;
 		}
-		if ( ! is_multisite() || ! is_super_admin( $user_id ) ) {
-			return $caps;
-		}
 
-		$user = get_user_by( 'id', $user_id );
-		if ( ! $user ) {
-			return $caps;
-		}
-
-		foreach ( $user->roles as $role ) {
-			// If they have the role we are checking for, we'll respond with unmapped caps.
-			if ( $cap === $role ) {
+		if ( isset( $is_superadmin[ $user_id ] ) ) {
+			if ( ! $is_superadmin[ $user_id ] ) {
 				return $caps;
+			}
+		} elseif ( ! is_multisite() || ! is_super_admin( $user_id ) ) {
+			$is_superadmin[ $user_id ] = false;
+			return $caps;
+		}
+		$is_superadmin[ $user_id ] = true;
+
+		if ( ! isset( $user_roles[ $user_id ] ) ) {
+			$user_roles[ $user_id ] = get_user_meta( $user_id, 'wp_capabilities', true );
+		}
+
+		if ( is_array( $user_roles[ $user_id ] ) ) {
+			foreach ( $user_roles[ $user_id ] as $role ) {
+				// If they have the role we are checking for, we'll respond with unmapped caps.
+				if ( $cap === $role ) {
+					return $caps;
+				}
 			}
 		}
 

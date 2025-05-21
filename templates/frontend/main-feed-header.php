@@ -88,7 +88,7 @@ if ( $args['friends']->frontend->reaction ) {
 <?php endif; ?>
 
 <?php foreach ( $data['post_count_by_post_format'] as $post_format => $count ) : ?>
-	<a class="chip" href="<?php echo esc_url( home_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
+	<a class="chip post-count-<?php echo esc_attr( $post_format ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_post_counts' ) ); ?>" href="<?php echo esc_url( home_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
 <?php endforeach; ?>
 
 <?php if ( isset( $_GET['show-hidden'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
@@ -98,6 +98,10 @@ if ( $args['friends']->frontend->reaction ) {
 <?php elseif ( $hidden_post_count > 0 ) : ?>
 	<a class="chip" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
 		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) ); ?>
+	</a>
+<?php elseif ( $hidden_post_count ) : ?>
+	<a class="chip post-count-trash" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
+		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), $hidden_post_count ) ); ?>
 	</a>
 <?php endif; ?>
 

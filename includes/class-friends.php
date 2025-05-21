@@ -890,12 +890,16 @@ class Friends {
 	}
 
 	/**
-	 * Gets the post count by post format.
+	 * Gets the post count by post status.
 	 *
-	 * @return     array  The post count by post format.
+	 * @param      bool $force_fetching  Whether to force fetching.
+	 *
+	 * @return     object  The post count.
 	 */
-	public function get_post_count_by_post_format() {
-		$cache_key = 'post_count_by_post_format';
+	public function get_post_count_by_post_status( $force_fetching = false ) {
+		$cache_key = 'friends_post_count';
+
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
 		$counts = wp_cache_get( $cache_key, 'friends' );
 		if ( false !== $counts ) {
@@ -905,10 +909,69 @@ class Friends {
 		$counts = get_transient( $cache_key );
 		if ( false !== $counts ) {
 			return $counts;
+		} elseif ( ! $force_fetching ) {
+			return (object) array(
+				'trash' => '...',
+			);
+		}
+
+		$counts = new \stdClass();
+
+		foreach ( $post_types as $post_type ) {
+			$count = wp_count_posts( $post_type );
+			foreach ( (array) $count as $post_status => $c ) {
+				if ( ! isset( $counts->$post_status ) ) {
+					$counts->$post_status = 0;
+				}
+				$counts->$post_status += $c;
+			}
+		}
+
+		set_transient( $cache_key, $counts, HOUR_IN_SECONDS );
+		wp_cache_set( $cache_key, $counts, 'friends', HOUR_IN_SECONDS );
+
+		return $counts;
+	}
+
+	/**
+	 * Gets the post count by post format.
+	 *
+	 * @param      bool $force_fetching  Whether to force fetching.
+	 *
+	 * @return     array  The post count by post format.
+	 */
+	public function get_post_count_by_post_format( $force_fetching = false ) {
+		$cache_key = 'post_count_by_post_format';
+
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+
+		$counts = wp_cache_get( $cache_key, 'friends' );
+		if ( false !== $counts ) {
+			return $counts;
+		}
+
+		$counts = get_transient( $cache_key );
+		if ( false !== $counts ) {
+			return $counts;
+		} elseif ( ! $force_fetching ) {
+			$post_formats = get_post_format_slugs();
+			uksort(
+				$post_formats,
+				function ( $a, $b ) {
+					// Sort standard to the top.
+					if ( 'standard' === $a ) {
+						return -1;
+					} elseif ( 'standard' === $b ) {
+						return 1;
+					}
+					return strnatcmp( $a, $b );
+				}
+			);
+			$counts = array_fill_keys( $post_formats, '...' );
+			return $counts;
 		}
 
 		$counts = array();
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 
 		global $wpdb;
 
@@ -1057,7 +1120,7 @@ class Friends {
 		$data = array(
 			'description'               => '',
 			'post_count_by_post_format' => $this->get_post_count_by_post_format(),
-			'post_count_by_post_status' => \wp_count_posts( self::CPT ),
+			'post_count_by_post_status' => $this->get_post_count_by_post_status(),
 		);
 
 		return $data;
@@ -1233,6 +1296,10 @@ class Friends {
 			// translators: %s is a count.
 			'audio'    => _nx_noop( '%s audio', '%s audios', 'Post format', 'friends' ),
 		);
+
+		if ( ! is_numeric( $count ) ) {
+			return sprintf( translate_nooped_plural( $plurals[ $format ], 0, 'friends' ), $count );
+		}
 
 		return sprintf( translate_nooped_plural( $plurals[ $format ], $count, 'friends' ), number_format_i18n( $count ) );
 	}

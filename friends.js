@@ -201,6 +201,28 @@
 		refresh_feeds_now.apply( $( 'a.friends-refresh' ) );
 	}
 
+	$( function () {
+		const standard_count = $( '.chip.post-count-standard' );
+		if ( standard_count.text().substr( 0, 3 ) === '...' ) {
+			wp.ajax.send( 'friends-get-post-counts', {
+				data: {
+					_ajax_nonce: standard_count.data( 'nonce' )
+				},
+				success( r ) {
+					for ( const i in r ) {
+						if ( ! r[ i ] ) {
+							$( '.chip.post-count-' + i ).remove();
+							continue;
+						}
+						$( '.chip.post-count-' + i ).text( r[ i ] );
+					}
+				},
+			} );
+			return false;
+
+		}
+	});
+
 	$document.on(
 		'click',
 		'a.friends-auth-link, button.comments.friends-auth-link',

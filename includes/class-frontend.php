@@ -107,6 +107,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
 		add_action( 'wp_ajax_friends-set-widget-open-state', array( $this, 'ajax_set_widget_open_state' ) );
+		add_action( 'wp_ajax_friends-get-post-counts', array( $this, 'ajax_get_post_counts' ) );
 		add_action( 'friends_search_autocomplete', array( $this, 'autocomplete_user_search' ), 10, 2 );
 		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
@@ -1091,6 +1092,24 @@ class Frontend {
 		update_user_meta( get_current_user_id(), 'friends_widget_state', $state );
 
 		wp_send_json_success();
+	}
+
+	public function ajax_get_post_counts() {
+		check_ajax_referer( 'friends_post_counts' );
+		$counts = array_fill_keys( get_post_format_slugs(), 0 );
+
+		foreach ( $this->friends->get_post_count_by_post_format( true ) as $post_format => $count ) {
+			$counts[ $post_format ] = $this->friends->get_post_format_plural_string( $post_format, $count );
+		}
+
+		$post_counts = $this->friends->get_post_count_by_post_status( true );
+		if ( isset( $post_counts->trash ) && $post_counts->trash ) {
+			$counts['trash'] = sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $post_counts->trash, 'friends' ), number_format_i18n( $post_counts->trash ) );
+		} else {
+			$counts['trash'] = 0;
+		}
+
+		wp_send_json_success( $counts );
 	}
 
 	/**
