@@ -420,7 +420,6 @@ class Messages {
 			return;
 		}
 
-		$args['blocks-everywhere'] = false;
 		$args['accounts'] = apply_filters( 'friends_message_form_accounts', array(), $args['friend_user'] );
 
 		if ( $args['accounts'] ) {

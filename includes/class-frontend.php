@@ -917,7 +917,6 @@ class Frontend {
 		}
 
 		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
-		$args['blocks-everywhere']     = false;
 
 		if ( isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$args['show_welcome'] = true;
@@ -930,8 +929,12 @@ class Frontend {
 		global $friends_args;
 		global $wp_query;
 		$wp_query->is_singular = false;
-
 		switch ( $path ) {
+			case 'add-friend':
+			case 'add-subscription':
+				$path = 'frontend/add-subscription';
+				break;
+
 			case 'subscriptions':
 				$path = 'frontend/subscriptions';
 				break;
