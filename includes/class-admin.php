@@ -1042,7 +1042,18 @@ class Admin {
 
 		check_ajax_referer( 'friends_add_subscription' );
 
-		wp_send_json_success( 'test' );
+		$url = wp_unslash( $_POST['url'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$protocol = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! $protocol ) {
+			$url = apply_filters( 'friends_rewrite_incoming_url', 'https://' . $url, $url );
+		} else {
+			$url = apply_filters( 'friends_rewrite_incoming_url', $url, $url );
+		}
+
+		$ret = $this->friends->feed->discover_available_feeds( $url );
+
+		wp_send_json_success( $ret );
 	}
 
 	/**
