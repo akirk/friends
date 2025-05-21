@@ -31,7 +31,7 @@
 		<div class="wp-embed-footer">
 			<div class="wp-embed-site-title">
 				<a href="<?php the_permalink( $args['post'] ); ?>" target="_top">
-					<img src="<?php echo esc_url( $avatar ? $avatar : get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="wp-embed-site-icon" />
+					<img src="<?php echo esc_url( $avatar ? $avatar : get_avatar_url( get_the_author_meta( 'ID' ) ) ); /* phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage */ ?>" width="36" height="36" class="wp-embed-site-icon" />
 					<span><?php echo esc_html( get_the_author_meta( 'display_name' ) ); ?></span>
 				</a>
 			</div>

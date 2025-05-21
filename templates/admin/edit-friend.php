@@ -24,7 +24,7 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 					<?php
 					foreach ( $available_avatars as $avatar => $_title ) {
 						?>
-						<a href="" data-nonce="<?php echo esc_attr( wp_create_nonce( 'set-avatar-' . $args['friend']->user_login ) ); ?>" data-user="<?php echo esc_attr( $args['friend']->user_login ); ?>" class="set-avatar"><img src="<?php echo esc_url( $avatar ); ?>" alt="<?php echo esc_attr( $_title ); ?>" title="<?php echo esc_attr( $_title ); ?>" width="32" height="32" /></a>
+						<a href="" data-nonce="<?php echo esc_attr( wp_create_nonce( 'set-avatar-' . $args['friend']->user_login ) ); ?>" data-user="<?php echo esc_attr( $args['friend']->user_login ); ?>" class="set-avatar"><img src="<?php echo esc_url( $avatar ); /* phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage */ ?>" alt="<?php echo esc_attr( $_title ); ?>" title="<?php echo esc_attr( $_title ); ?>" width="32" height="32" /></a>
 						<?php
 					}
 					if ( ! empty( $available_avatars ) ) :
