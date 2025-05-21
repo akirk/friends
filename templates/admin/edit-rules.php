@@ -23,7 +23,7 @@
 						<option value="permalink" <?php selected( 'permalink', $rule['field'] ); ?>><?php echo esc_html_e( 'If the URL contains', 'friends' ); ?></option>
 					</select>
 				</th>
-				<td><input type="text" name="rules[regex][]" value="<?php echo esc_attr( $rule['regex'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter a text or regular expression', 'friends' ); ?>" /></td>
+				<td><input type="text" name="rules[regex][]" value="<?php echo esc_textarea( $rule['regex'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter a text or regular expression', 'friends' ); ?>" /></td>
 				<td>
 					<select name="rules[action][]" class="rule-action">
 						<option value="accept" <?php selected( 'accept', $rule['action'] ); ?>><?php echo esc_html_e( 'accept the item', 'friends' ); ?></option>
@@ -32,7 +32,7 @@
 						<option value="replace" <?php selected( 'replace', $rule['action'] ); ?>><?php echo esc_html_e( 'replace the match with this:', 'friends' ); ?></option>
 					</select>
 				</td>
-				<td style="<?php echo esc_attr( 'replace' !== $rule['action'] ? 'display: none' : '' ); ?>" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_attr( isset( $rule['replace'] ) ? $rule['replace'] : '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
+				<td style="<?php echo esc_attr( 'replace' !== $rule['action'] ? 'display: none' : '' ); ?>" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_textarea( isset( $rule['replace'] ) ? $rule['replace'] : '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
 				<?php if ( empty( $rule['regex'] ) ) : ?>
 					<td><span class="description">(<?php esc_html_e( 'Unsubmitted rule', 'friends' ); ?>)</span></td>
 				<?php endif; ?>

@@ -328,6 +328,7 @@ class Feed {
 
 		$rules  = $friend_user->get_feed_rules();
 		$action = $friend_user->get_feed_catch_all();
+		$decided = false;
 
 		foreach ( $rules as $rule ) {
 			if ( $item instanceof \WP_Post ) {
@@ -339,33 +340,49 @@ class Feed {
 			} else {
 				$field = $rule['field'];
 			}
-
-			if ( $item->$field && preg_match( '/' . str_replace( '/', '\\/', $rule['regex'] ) . '/ius', $item->$field ) ) {
+			$subject = false;
+			if ( $item->$field ) {
+				$subject = $item->$field;
+			}
+			$field_rule_field = $this->get_feed_rule_field( $rule['field'], $item );
+			if ( isset( $item->_feed_rule_transform[ $field_rule_field ] ) ) {
+				$subject = $item->_feed_rule_transform[ $field_rule_field ];
+			}
+			if ( $subject && preg_match( '/' . str_replace( '/', '\\/', $rule['regex'] ) . '/ius', $subject ) ) {
 				if ( 'replace' === $rule['action'] ) {
 					$item->_feed_rule_transform = array(
-						$this->get_feed_rule_field( $rule['field'], $item ) => preg_replace( '/' . $rule['regex'] . '/iu', $rule['replace'], $item->$field ),
+						$field_rule_field => preg_replace( '/' . str_replace( '/', '\\/', $rule['regex'] ) . '/ius', $rule['replace'], $subject ),
 					);
 					continue;
 				}
+				if ( $decided ) {
+					continue;
+				}
 				$action = $rule['action'];
-				break;
+				$decided = true;
 			}
 		}
+
 		switch ( $action ) {
 			case 'delete':
 				$item->_feed_rule_delete = true;
 				return $item;
 
 			case 'trash':
-				$item->_feed_rule_transform = array(
-					'post_status' => 'trash',
+				if ( empty( $item->_feed_rule_transform ) ) {
+					$item->_feed_rule_transform = array();
+				}
+				$item->_feed_rule_transform = array_merge(
+					$item->_feed_rule_transform,
+					array(
+						'post_status' => 'trash',
+					)
 				);
 				return $item;
 
 			case 'accept':
 				return $item;
 		}
-
 		return $item;
 	}
 
