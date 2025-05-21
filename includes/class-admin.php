@@ -2157,22 +2157,24 @@ class Admin {
 						$title = wp_strip_all_tags( $item->content );
 					}
 					?>
-					<li><a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):
+					<li>
 						<?php if ( $title ) : ?>
-							<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a> <?php echo esc_html( str_word_count( wp_strip_all_tags( $item->content ) ) ); ?> words
-							<?php else : ?>
-								<p>
-									<?php
-									echo wp_kses(
-										wp_trim_excerpt( $item->content ),
-										array(
-											'a'   => array( 'href' => array() ),
-											'img' => array( 'src' => array() ),
-										)
-									);
-									?>
-								</p>
-							<?php endif; ?>
+							<details><summary>
+						<?php endif; ?>
+							<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $item->date ); ?></a> (author: <?php echo esc_html( $item->author ); ?>, type: <?php echo esc_html( $item->post_format ); ?>):
+						<?php if ( $title ) : ?>
+							<a href="<?php echo esc_url( $item->permalink ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $title ); ?></a> <?php echo esc_html( str_word_count( wp_strip_all_tags( $item->content ) ) ); ?> words</summary>
+						<?php else : ?>
+							<p>
+						<?php endif; ?>
+							<?php
+								echo esc_textarea( $item->content );
+							?>
+						<?php if ( $title ) : ?>
+							</details>
+						<?php else : ?>
+							</p>
+						<?php endif; ?>
 						</li>
 						<?php
 				}
