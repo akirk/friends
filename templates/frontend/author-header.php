@@ -113,7 +113,7 @@ $args['friends']->frontend->link(
 </a>
 
 	<?php if ( $rules > 0 ) : ?>
-<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend_user']->user_login ) ); ?>">
+<a class="chip" href="<?php echo esc_attr( self_admin_url( 'admin.php?page=edit-friend-rules&user=' . $args['friend_user']->user_login . '&_wpnonce=' . wp_create_nonce( 'edit-friend-rules-' . $args['friend_user']->user_login ) ) ); ?>">
 		<?php
 		// translators: %d is the number of rules.
 		echo esc_html( sprintf( _n( '%d rule', '%d rules', $rules, 'friends' ), $rules ) );
