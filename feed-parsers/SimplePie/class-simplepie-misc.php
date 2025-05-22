@@ -24,7 +24,7 @@ class SimplePie_Misc extends \SimplePie_Misc {
 	 */
 	public static function change_encoding( $data, $input, $output ) {
 		if ( 'UTF-8' === $input && 'UTF-8' === $output ) {
-			$clean_utf8_regex = <<<'END'
+			$clean_utf8_regex = '
 !                                 # Thanks, https://stackoverflow.com/a/1401716/578588
   (                               # modified to clean for valid XML ASCII, see https://www.w3.org/TR/REC-xml/#NT-Char
     (?: [\x9\xD]                  # valid XML single-bytes
@@ -38,7 +38,7 @@ class SimplePie_Misc extends \SimplePie_Misc {
 | ( [\xC0-\xFF] )                 # invalid byte in range 11000000 - 11111111
 | (.)
 !x
-END;
+';
 			$data = preg_replace_callback(
 				$clean_utf8_regex,
 				function ( $captures ) {

@@ -195,7 +195,7 @@ $has_last_log = false;
 					<p class="description">
 					<?php
 					// translators: %s is a URL.
-					printf( __( '<a href=%s>Refresh</a> this feed now.', 'friends' ), esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend']->user_login, self_admin_url( 'admin.php?page=friends-refresh' ) ), 'friends-refresh' ) ) );
+					echo wp_kses( sprintf( __( '<a href=%s>Refresh</a> this feed now.', 'friends' ), esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend']->user_login, self_admin_url( 'admin.php?page=friends-refresh' ) ), 'friends-refresh' ) ) ), array( 'a' => array( 'href' => array() ) ) );
 					?>
 					</p>
 				</td>

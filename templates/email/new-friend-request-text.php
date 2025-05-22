@@ -1,10 +1,13 @@
 <?php
 /**
- * This template contains the HTML for the New Friend Request notification e-mail.
+ * This template contains the test for the New Friend Request notification e-mail.
  *
  * @version 1.0
  * @package Friends
  */
+
+// This is a text e-mail, not a place for HTML escaping.
+// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 
 // translators: %s is a user display name.
 printf( __( 'Hi %s!', 'friends' ), $args['user']->display_name );

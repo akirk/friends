@@ -6,6 +6,9 @@
  * @package Friends
  */
 
+// This is a text e-mail, not a place for HTML escaping.
+// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
+
 // translators: %s is a user display name.
 printf( __( 'Hi %s!', 'friends' ), $args['user']->display_name );
 echo PHP_EOL;

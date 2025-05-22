@@ -1,6 +1,6 @@
 <?php
 /**
- * This template contains the HTML for the New Friend Post notification e-mail.
+ * This template contains the text for the New Friend Post notification e-mail.
  *
  * @version 1.0
  * @package Friends
@@ -11,6 +11,8 @@ $plain_text            = wp_strip_all_tags( $ensure_linebreaks );
 $normalized_whitespace = preg_replace( '/(' . PHP_EOL . '\s*' . PHP_EOL . ')+/m', PHP_EOL . PHP_EOL, $plain_text );
 $quoted_text           = '> ' . str_replace( PHP_EOL, PHP_EOL . '> ', trim( $normalized_whitespace ) );
 
+// This is a text e-mail, not a place for HTML escaping.
+// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
 echo $quoted_text;
 
 echo PHP_EOL, PHP_EOL;

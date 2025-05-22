@@ -10,13 +10,13 @@
 <p>
 	<?php
 	// translators: %s is a user display name.
-		printf( __( 'Hi %s!', 'friends' ), esc_html( $args['user']->display_name ) );
+		echo esc_html( sprintf( __( 'Hi %s!', 'friends' ), $args['user']->display_name ) );
 	?>
 </p>
 
 <p>
 	<?php
-	echo __( 'You have a new follower:', 'friends' );
+	esc_html_e( 'You have a new follower:', 'friends' );
 	?>
 </p>
 
@@ -24,7 +24,7 @@
 	<tr>
 		<td style="vertical-align: top">
 			<a href="<?php echo esc_url( $args['follower']->get_url() ); ?>" style="float: left; margin-right: 1em;">
-				<img src="<?php echo esc_url( $args['follower']->get_icon_url() ); ?>" alt="<?php echo esc_attr( $args['follower']->get_name() ); ?>" width="64" height="64">
+				<img src="<?php echo esc_url( $args['follower']->get_icon_url() ); /* phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage */ ?>" alt="<?php echo esc_attr( $args['follower']->get_name() ); ?>" width="64" height="64">
 			</a>
 		</td>
 		<td>
@@ -45,7 +45,7 @@
 <p>
 <?php
 if ( $args['following'] ) {
-	echo esc_html__( 'You are already following them!', 'friends' );
+	esc_html_e( 'You are already following them!', 'friends' );
 	echo ' ';
 	// translators: %s is a URL.
 	echo wp_kses( sprintf( __( 'Go to their <a href="%s">friends page</a> to see what they recently posted about.', 'friends' ), esc_url( $args['following']->get_local_friends_page_url() ) ), array( 'a' => array( 'href' => array() ) ) );

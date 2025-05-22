@@ -29,7 +29,7 @@ do_action( 'friends_settings_before_form' );
 					</span>
 					<p class="description">
 					<?php
-					echo __( 'If your feed reader supports it, you can also subscribe to this URL as the OPML file gets updated as you add or remove friends.', 'friends' );
+					esc_html_e( 'If your feed reader supports it, you can also subscribe to this URL as the OPML file gets updated as you add or remove friends.', 'friends' );
 					?>
 					</p>
 				</td>
@@ -44,7 +44,7 @@ do_action( 'friends_settings_before_form' );
 					</span>
 					<p class="description">
 					<?php
-					echo __( 'Please be careful what you do with these feeds as they might contain private posts of your friends.', 'friends' );
+					esc_html_e( 'Please be careful what you do with these feeds as they might contain private posts of your friends.', 'friends' );
 					?>
 					</p>
 
@@ -57,7 +57,7 @@ do_action( 'friends_settings_before_form' );
 					<input type="file" name="opml" id="opml" accept=".opml" />
 					<p class="description">
 					<?php
-					echo __( 'Import an OPML file to import feeds.', 'friends' );
+					esc_html_e( 'Import an OPML file to import feeds.', 'friends' );
 					?>
 					</p>
 				</td>

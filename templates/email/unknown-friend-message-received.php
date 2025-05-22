@@ -10,14 +10,14 @@
 <p>
 	<?php
 	// translators: %s is a user display name.
-		printf( __( 'Hi %s!', 'friends' ), esc_html( $args['user']->display_name ) );
+		echo esc_html( sprintf( __( 'Hi %s!', 'friends' ), $args['user']->display_name ) );
 	?>
 </p>
 
 <p>
 	<?php
 	// translators: %s is a username.
-	printf( __( 'We just received a message from %s:', 'friends' ), esc_html( $args['sender_name'] ) );
+	echo esc_html( sprintf( __( 'We just received a message from %s:', 'friends' ), $args['sender_name'] ) );
 	?>
 </p>
 
@@ -31,6 +31,6 @@
 <p>
 	<?php
 	// translators: %s is a URL.
-	printf( __( 'Maybe you want to <a href=%s>follow them</a> to respond?', 'friends' ), esc_attr( home_url( '?add-friend=' . esc_url( $args['feed_url'] ) ) ) );
+	echo wp_kses( sprintf( __( 'Maybe you want to <a href=%s>follow them</a> to respond?', 'friends' ), esc_attr( home_url( '?add-friend=' . esc_url( $args['feed_url'] ) ) ) ), array( 'a' => array( 'href' => true ) ) );
 	?>
 </p>

@@ -354,8 +354,15 @@ class Admin {
 		add_filter(
 			'friends_friend_private_feed_url',
 			function ( $feed_url, $friend_user ) {
-				// translators: %1s is the name of the friend, %2$s is the feed URL.
-				printf( __( 'Refreshing %1$s at %2$s', 'friends' ) . '<br/>', '<a href="' . esc_url( $friend_user->get_local_friends_page_url() ) . '">' . esc_html( $friend_user->user_login ) . '</a>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $feed_url ) . '</a>' );
+				echo wp_kses(
+					// translators: %1s is the name of the friend, %2$s is the feed URL.
+					sprintf( __( 'Refreshing %1$s at %2$s', 'friends' ) . '<br/>', '<a href="' . esc_url( $friend_user->get_local_friends_page_url() ) . '">' . esc_html( $friend_user->user_login ) . '</a>', '<a href="' . esc_url( $feed_url ) . '">' . esc_html( $feed_url ) . '</a>' ),
+					array(
+						'a' => array(
+							'href' => array(),
+						),
+					)
+				);
 				return $feed_url;
 			},
 			10,
