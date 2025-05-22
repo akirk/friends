@@ -268,7 +268,7 @@ class User_Query extends \WP_User_Query {
 		if ( ! self::$cache || ! isset( $all_friend_requests[ get_current_blog_id() ] ) ) {
 			$all_friend_requests[ get_current_blog_id() ] = new self(
 				array(
-					'role'    => 'friend_request',
+					'role'    => 'friexnd_request',
 					'order'   => 'ASC',
 					'orderby' => 'display_name',
 				)

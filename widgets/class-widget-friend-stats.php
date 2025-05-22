@@ -114,7 +114,7 @@ class Widget_Friend_Stats extends \WP_Widget {
 				</li>
 				<?php endif; ?>
 				<li class="friend-stats-friends menu-item">
-					<a href="<?php echo esc_attr( admin_url( 'page=friends-list' ) ); ?>">
+					<a href="<?php echo esc_attr( admin_url( 'admin.php?page=friends-list' ) ); ?>">
 						<?php
 						echo wp_kses(
 							sprintf(
@@ -128,7 +128,7 @@ class Widget_Friend_Stats extends \WP_Widget {
 					</a>
 				</li>
 				<li class="friend-stats-subscriptions menu-item">
-					<a href="<?php echo esc_attr( admin_url( 'page=friends-list' ) ); ?>">
+					<a href="<?php echo esc_attr( admin_url( 'admin.php?page=friends-list' ) ); ?>">
 						<?php
 							echo wp_kses(
 								sprintf(
