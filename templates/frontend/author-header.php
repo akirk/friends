@@ -73,7 +73,11 @@ if ( ! empty( $args['friend_user']->user_url ) ) {
 			$user_hostname = substr( $user_hostname, 4 );
 		}
 		if ( isset( $user_url_parts['path'] ) && substr( $user_url_parts['path'], 0, 2 ) === '/@' ) {
-			$user_hostname .= esc_html( $user_url_parts['path'] );
+			$p = strpos( $user_url_parts['path'], '/', 1 );
+			if ( false === $p ) {
+				$p = strlen( $user_url_parts['path'] );
+			}
+			$user_hostname .= esc_html( substr( $user_url_parts['path'], 0, $p ) );
 		}
 		?>
 		<a class="chip" href="<?php echo esc_url( $args['friend_user']->user_url ); ?>"><?php echo esc_html( $user_hostname ); ?></a>
