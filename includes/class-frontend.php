@@ -1406,7 +1406,7 @@ class Frontend {
 					exit;
 				}
 			} elseif ( ! Friends::is_main_user() ) {
-				wp_die( __( 'You are not allowed to view this page.', 'friends' ) );
+				wp_die( esc_html__( 'You are not allowed to view this page.', 'friends' ) );
 			}
 
 			return $query;
