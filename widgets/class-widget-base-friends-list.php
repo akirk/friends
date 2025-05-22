@@ -88,27 +88,7 @@ abstract class Widget_Base_Friends_List extends \WP_Widget {
 				$url = $friend_user->user_url;
 			}
 			?>
-			<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a>
-				<?php
-				if ( $friend_user->user_url ) {
-					?>
-					<small class="label label-secondary">
-					<?php
-					$this->friends->frontend->link(
-						$friend_user->user_url,
-						'',
-						array(
-							'class' => 'dashicons dashicons-external',
-							'style' => 'display: inline',
-						),
-						$friend_user
-					);
-					?>
-					</small>
-					<?php
-				}
-				?>
-				</li>
+			<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a></li>
 			<?php
 		}
 	}

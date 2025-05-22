@@ -39,18 +39,6 @@ if ( $args['friends']->frontend->reaction ) {
 }
 ?>
 </a>
-<?php
-$args['friends']->frontend->link(
-	$args['friend_user']->user_url,
-	'',
-	array(
-		'class' => 'label dashicons dashicons-external',
-		'style' => 'vertical-align: middle; margin-left: .5em;',
-	),
-	$args['friend_user']
-);
-?>
-
 </h2>
 
 <?php if ( $args['friend_user']->description ) : ?>
@@ -75,6 +63,24 @@ $args['friends']->frontend->link(
 <?php endif; ?>
 
 <span class="chip"><?php echo /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html( sprintf( /* translators: %s is a localized date (F j, Y) */__( 'Since %s', 'friends' ), date_i18n( __( 'F j, Y' ), strtotime( $args['friend_user']->user_registered ) ) ) ); ?></span>
+
+<?php
+if ( ! empty( $args['friend_user']->user_url ) ) {
+	$user_url_parts = wp_parse_url( $args['friend_user']->user_url );
+	if ( isset( $user_url_parts['host'] ) ) {
+		$user_hostname = $user_url_parts['host'];
+		if ( substr( $user_hostname, 0, 4 ) === 'www.' ) {
+			$user_hostname = substr( $user_hostname, 4 );
+		}
+		if ( isset( $user_url_parts['path'] ) && substr( $user_url_parts['path'], 0, 2 ) === '/@' ) {
+			$user_hostname .= esc_html( $user_url_parts['path'] );
+		}
+		?>
+		<a class="chip" href="<?php echo esc_url( $args['friend_user']->user_url ); ?>"><?php echo esc_html( $user_hostname ); ?></a>
+		<?php
+	}
+}
+?>
 
 <?php foreach ( $args['friend_user']->get_post_count_by_post_format() as $post_format => $count ) : ?>
 	<a class="chip" href="<?php echo esc_attr( $args['friend_user']->get_local_friends_page_post_format_url( $post_format ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
