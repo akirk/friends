@@ -1326,6 +1326,9 @@ class User extends \WP_User {
 			$user = self::get_post_author( $post );
 		}
 		if ( $user instanceof self ) {
+			if ( ! self::is_friends_plugin_user( $user ) ) {
+				return $account;
+			}
 			if ( ! $account instanceof \Enable_Mastodon_Apps\Entity\Account ) {
 				$account = new \Enable_Mastodon_Apps\Entity\Account();
 			}
