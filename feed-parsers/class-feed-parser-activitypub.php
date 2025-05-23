@@ -117,6 +117,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
 
 		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 10, 2 );
+		add_action( 'mastodon_api_account', array( $this, 'mastodon_api_account' ), 9, 2 );
 		add_action( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
 		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 6 );
 	}
@@ -370,6 +371,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $following;
+	}
+
+	/**
+	 * Add following count to the user data.
+	 *
+	 * @param Account $user_data The user data.
+	 * @param string  $user_id   The user id.
+	 *
+	 * @return Account The filtered Account.
+	 */
+	public static function mastodon_api_account( $user_data, $user_id ) {
+		if ( get_current_user_id() !== $user_id ) {
+			return $user_data;
+		}
+		if ( ! method_exists( '\Friends\User_Feed', 'get_by_parser' ) ) {
+			return $user_data;
+		}
+
+		$user_data->following_count = count( User_Feed::get_by_parser( self::SLUG ) );
+
+		return $user_data;
 	}
 
 	public function friends_message_form_accounts( $accounts, User $friend_user ) {
