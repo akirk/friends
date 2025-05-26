@@ -116,7 +116,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
 
-		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 10, 2 );
+		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 20, 2 );
 		add_action( 'mastodon_api_account', array( $this, 'mastodon_api_account' ), 9, 2 );
 		add_action( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
 		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 6 );
