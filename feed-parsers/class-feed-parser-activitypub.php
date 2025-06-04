@@ -1884,6 +1884,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function the_content( $the_content ) {
+		if ( ! Friends::on_frontend() ) {
+			return $the_content;
+		}
+
 		// replace all links in <a href="mention hashtag"> with /friends/tag/tagname using the WP_HTML_Tag_Processor.
 		$processor = new \WP_HTML_Tag_Processor( $the_content );
 		while ( $processor->next_tag( array( 'tag_name' => 'a' ) ) ) {
