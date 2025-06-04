@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 6.8
 - License: GPL-2.0-or-later
-- Stable tag: 3.5.1
+- Stable tag: 3.5.2
 
 Follow others via RSS and ActivityPub and read their posts on your own WordPress.
 
@@ -95,6 +95,17 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 3.5.2
+- Expose following list via ActivityPub ([#538])
+- Convert query vars serialization to json ([#537])
+- Don't replace tags outside of the friends page ([#536])
+- Use EMA account data for a local user ([#535])
+- EMA: Fix following number for own user ([#534])
+- Remove external hover links ([#533])
+- Plugin Check Fixes ([#532])
+- Ajaxify Post Count display on the main friends page ([#531])
+- Always apply replace rules and fix html entity replacing ([#530])
 
 ### 3.5.1
 - Fix undefined user_id variable ([#525])
@@ -403,3 +414,13 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 
 [#524]: https://github.com/akirk/friends/pull/524
 [#525]: https://github.com/akirk/friends/pull/525
+
+[#530]: https://github.com/akirk/friends/pull/530
+[#531]: https://github.com/akirk/friends/pull/531
+[#532]: https://github.com/akirk/friends/pull/532
+[#533]: https://github.com/akirk/friends/pull/533
+[#534]: https://github.com/akirk/friends/pull/534
+[#535]: https://github.com/akirk/friends/pull/535
+[#536]: https://github.com/akirk/friends/pull/536
+[#537]: https://github.com/akirk/friends/pull/537
+[#538]: https://github.com/akirk/friends/pull/538
