@@ -1783,19 +1783,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return array The array of following urls.
 	 */
 	public function activitypub_rest_following( $follow_list, $user ) {
-		if ( 0 === $user->get__id() ) {
-			return $follow_list;
-		}
-
-		if ( Friends::get_main_friend_user_id() !== $user->get__id() ) {
-			return $follow_list;
-		}
-
-		foreach ( User_Feed::get_by_parser( self::SLUG ) as $user_feed ) {
-			$follow_list[] = array(
-				'id'   => $user_feed->get_url(),
-				'name' => $user_feed->get_title(),
-			);
+		if ( Friends::get_main_friend_user_id() === $user->get__id() ) {
+			foreach ( User_Feed::get_by_parser( self::SLUG ) as $user_feed ) {
+				$follow_list[] = array(
+					'id'   => $user_feed->get_url(),
+					'name' => $user_feed->get_title(),
+				);
+			}
 		}
 
 		return $follow_list;
