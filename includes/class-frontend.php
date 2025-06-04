@@ -304,7 +304,7 @@ class Frontend {
 		$version = Friends::VERSION;
 		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ), true );
 
-		$query_vars = serialize( $this->get_minimal_query_vars( $wp_query->query_vars ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+		$query_vars = wp_json_encode( $this->get_minimal_query_vars( $wp_query->query_vars ) );
 
 		$variables = array(
 			'emojis_json'           => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
@@ -713,8 +713,8 @@ class Frontend {
 			wp_send_json_error();
 			exit;
 		}
-		// We need to unserialize the query vars to maintain PHP compatibility.
-		$query_vars = unserialize( $query_vars ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize
+
+		$query_vars = json_decode( $query_vars, true );
 		$query_vars['paged'] = intval( $_POST['page'] ) + 1;
 		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
