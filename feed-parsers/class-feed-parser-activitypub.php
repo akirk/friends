@@ -74,6 +74,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_mentions' ), 10, 2 );
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_in_reply_to_mentions' ), 10, 3 );
 		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_user' ) );
+		\add_filter( 'activitypub_rest_following', array( $this, 'activitypub_rest_following' ), 10, 2 );
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
@@ -1771,6 +1772,33 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $mentions;
+	}
+
+	/**
+	 * Add the follows for the main user.
+	 *
+	 * @param array                   $follow_list The array of following urls.
+	 * @param \Activitypub\Model\User $user        The user object.
+	 *
+	 * @return array The array of following urls.
+	 */
+	public function activitypub_rest_following( $follow_list, $user ) {
+		if ( 0 === $user->get__id() ) {
+			return $follow_list;
+		}
+
+		if ( Friends::get_main_friend_user_id() !== $user->get__id() ) {
+			return $follow_list;
+		}
+
+		foreach ( User_Feed::get_by_parser( self::SLUG ) as $user_feed ) {
+			$follow_list[] = array(
+				'id'   => $user_feed->get_url(),
+				'name' => $user_feed->get_title(),
+			);
+		}
+
+		return $follow_list;
 	}
 
 	private function show_message_on_frontend( $message, $error = null ) {
