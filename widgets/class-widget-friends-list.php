@@ -40,13 +40,17 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		$instance = wp_parse_args( $instance, $this->defaults() );
 
 		$subscriptions = User_Query::all_subscriptions();
+		$widget_id = '';
+		if ( ! empty( $args['widget_id'] ) ) {
+			$widget_id = $args['widget_id'];
+		}
 
 		if ( 0 !== $subscriptions->get_total() ) {
 			echo $args['before_widget'];
 			$this->list_friends(
 				array_merge(
 					array(
-						'widget_id' => $args['widget_id'] . '-subscriptions',
+						'widget_id' => $widget_id . '-subscriptions',
 					),
 					$args
 				),

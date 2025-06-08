@@ -41,9 +41,14 @@ class Widget_Post_Formats extends \WP_Widget {
 		$friends = Friends::get_instance();
 
 		echo wp_kses( $args['before_widget'], 'post' );
-		$open = Frontend::get_widget_open_state( $args['widget_id'] );
+		$open = true;
+		$widget_id = '';
+		if ( ! empty( $args['widget_id'] ) ) {
+			$widget_id = $args['widget_id'];
+			$open = Frontend::get_widget_open_state( $widget_id );
+		}
 		?>
-		<details class="accordion" <?php echo esc_attr( $open ); ?> data-id="<?php echo esc_attr( $args['widget_id'] ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_widget_state' ) ); ?>">
+		<details class="accordion" <?php echo esc_attr( $open ); ?> data-id="<?php echo esc_attr( $widget_id ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_widget_state' ) ); ?>">
 			<summary class="accordion-header">
 				<?php
 				if ( ! empty( $instance['title'] ) ) {
