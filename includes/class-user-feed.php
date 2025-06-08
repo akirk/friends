@@ -733,7 +733,9 @@ class User_Feed {
 		foreach ( $term_query->get_terms() as $term ) {
 			$feed = new self( $term );
 			$friend_user = $feed->get_friend_user();
-			$users[ $friend_user->ID ] = $friend_user;
+			if ( $friend_user ) {
+				$users[ $friend_user->ID ] = $friend_user;
+			}
 		}
 
 		return $users;
