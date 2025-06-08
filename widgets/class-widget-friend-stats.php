@@ -53,8 +53,10 @@ class Widget_Friend_Stats extends \WP_Widget {
 				$show_followers = true;
 			}
 			if ( ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode || ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
-				$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
-				$show_blog_followers = true;
+				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
+					$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
+					$show_blog_followers = true;
+				}
 			}
 		}
 		echo $args['before_widget'];
@@ -126,6 +128,7 @@ class Widget_Friend_Stats extends \WP_Widget {
 				</li>
 
 		</ul>
+		</details>
 		<?php
 
 		do_action( 'friends_widget_starred_friend_list_after', $this, $args );
