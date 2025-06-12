@@ -1474,7 +1474,7 @@ class Frontend {
 						}
 
 						$template = $this->get_static_frontend_template( $current_part );
-						if ( $template ) {
+						if ( 'frontend/index' !== $template ) {
 							$wp_query->is_404 = false;
 							$query->is_404 = false;
 							status_header( 200 );

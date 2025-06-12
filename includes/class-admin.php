@@ -3894,12 +3894,12 @@ class Admin {
 			return $query;
 		}
 
-		$author = User::get_by_username( $query->query['author'] );
+		$author = User::get_user_by_id( $query->query['author'] );
 		if ( ! $author ) {
 			return $query;
 		}
-		$author->modify_query_by_author( $query );
-		$query->query['author'] = '';
+		$query->query_vars['author'] = '';
+		$query = $author->modify_query_by_author( $query );
 
 		return $query;
 	}
