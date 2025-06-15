@@ -50,6 +50,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_move', array( $this, 'handle_received_move' ), 15, 2 );
 		\add_action( 'activitypub_inbox_update', array( $this, 'handle_received_update' ), 15, 2 );
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
+		\add_action( 'activitypub_interactions_follow_url', array( $this, 'activitypub_interactions_follow_url' ), 10, 2 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
@@ -1793,6 +1794,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $follow_list;
+	}
+
+	public function activitypub_interactions_follow_url( $redirect_uri, $uri ) {
+		if ( ! $redirect_uri ) {
+			$redirect_uri = add_query_arg( 'url', $uri, self_admin_url( 'admin.php?page=add-friend' ) );
+		}
+		return $redirect_uri;
 	}
 
 	private function show_message_on_frontend( $message, $error = null ) {
