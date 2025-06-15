@@ -812,7 +812,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function get_activitypub_actor_id( $user_id ) {
-		if ( null !== $user_id && \Activitypub\is_user_disabled( $user_id ) ) {
+		if ( null !== $user_id && ! \Activitypub\user_can_activitypub( $user_id ) ) {
 			$user_id = null;
 		}
 		if ( null === $user_id ) {
