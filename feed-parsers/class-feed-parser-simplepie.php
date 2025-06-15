@@ -485,14 +485,16 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			return $item;
 		}
 
+		$video_url = 'https://youtube.com/v/' . esc_html( $m[1] );
+
 		$youtube_block  = '<!-- wp:embed {"url":"';
-		$youtube_block .= esc_url( $item->enclosure['url'] );
+		$youtube_block .= esc_url( $video_url );
 		$youtube_block .= '","type":"wp:youtube"} -->';
 		$youtube_block .= PHP_EOL;
-		$youtube_block .= '<figure class="wp-block-embed-youtube"><div class="wp-block-embed__wrapper">';
-		$youtube_block .= '<iframe width="560" height="315" src="https://www.youtube.com/embed/';
-		$youtube_block .= esc_attr( $m[1] );
-		$youtube_block .= '" frameborder="0" allowfullscreen></iframe>';
+		$youtube_block .= '<figure class="wp-block-embed is-type-rich is-provider-embed-handler wp-block-embed-embed-handler wp-embed-aspect-16-9 wp-has-aspect-ratio"><div class="wp-block-embed__wrapper">';
+		$youtube_block .= PHP_EOL;
+		$youtube_block .= esc_url( $video_url );
+		$youtube_block .= PHP_EOL;
 		$youtube_block .= '</div></figure>';
 		$youtube_block .= PHP_EOL;
 		$youtube_block .= '<!-- /wp:embed -->';
