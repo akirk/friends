@@ -1135,7 +1135,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private function handle_incoming_create( $activity ) {
 		$permalink = $activity['id'];
 		if ( isset( $activity['url'] ) ) {
-			$permalink = $activity['url'];
+			if ( is_array( $activity['url'] ) ) {
+				if ( empty( $activity['attachment'] ) ) {
+					$activity['attachment'] = $activity['url'];
+				}
+			} elseif ( is_string( $activity['url'] ) ) {
+				$permalink = $activity['url'];
+			}
 		}
 
 		$data = array(
@@ -1188,15 +1194,90 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( ! empty( $activity['attachment'] ) ) {
+			$attachments = array();
 			foreach ( $activity['attachment'] as $attachment ) {
 				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
 					continue;
 				}
-				if ( ! in_array( $attachment['type'], array( 'Document', 'Image' ), true ) ) {
+				if ( ! in_array( $attachment['type'], array( 'Document', 'Image', 'Link' ), true ) ) {
 					continue;
 				}
 
-				if ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
+				if ( empty( $attachment['url'] ) ) {
+					if ( ! empty( $attachment['href'] ) ) {
+						$attachment['url'] = $attachment['href'];
+					}
+				}
+				if ( 'application/x-mpegURL' === $attachment['mediaType'] ) {
+					if ( ! empty( $attachment['tag'] ) ) {
+						$videos = array();
+						foreach ( $attachment['tag'] as $tag ) {
+							if ( strpos( $tag['mediaType'], 'video/' ) === false ) {
+								continue;
+							}
+							if ( empty( $tag['rel'] ) ) {
+								$videos[ $tag['height'] ] = $tag;
+							}
+						}
+
+						if ( ! empty( $videos ) ) {
+							if ( isset( $videos[720] ) ) {
+								$video = $videos[720];
+							} elseif ( isset( $videos[480] ) ) {
+								$video = $videos[480];
+							} elseif ( isset( $videos[360] ) ) {
+								$video = $videos[360];
+							} else {
+								$video = reset( $videos );
+							}
+
+							$data['content'] .= PHP_EOL;
+							$data['content'] .= '<!-- wp:video -->';
+							$data['content'] .= '<figure class="wp-block-video"><video controls="controls"';
+							if ( isset( $video['width'] ) && $video['height'] ) {
+								$data['content'] .= ' width="' . esc_attr( $video['width'] ) . '"';
+								$data['content'] .= ' height="' . esc_attr( $video['height'] ) . '"';
+							}
+							if ( isset( $activity['icon'] ) && ! empty( $activity['icon'] ) ) {
+								if ( is_array( $activity['icon'] ) ) {
+									$poster = null;
+									// choose the larger icon.
+									foreach ( $activity['icon'] as $icon ) {
+										if ( isset( $icon['width'] ) && isset( $icon['height'] ) && isset( $icon['url'] ) && ( ! $poster || ( $icon['width'] > $poster['width'] && $icon['height'] > $poster['height'] ) ) ) {
+											$poster = $icon;
+										}
+									}
+								} else {
+									$poster = $activity['icon'];
+								}
+								if ( $poster ) {
+									$data['content'] .= ' poster="' . esc_url( $poster['url'] ) . '"';
+								}
+							}
+							$data['content'] .= ' src="' . esc_url( $video['href'] ) . '" type="' . esc_attr( $video['mediaType'] ) . '"';
+							if ( isset( $activity['duration'] ) ) {
+								$data['content'] .= ' duration="' . esc_attr( $activity['duration'] ) . '"';
+							}
+							$data['content'] .= '/>';
+							if ( ! empty( $activity['subtitleLanguage'] ) ) {
+								foreach ( $activity['subtitleLanguage'] as $subtitle ) {
+									$type = '';
+									if ( '.vtt' === substr( $subtitle['url'], -4 ) ) {
+										$type = 'text/vtt';
+									}
+									$data['content'] .= '<track src="' . esc_url( $subtitle['url'] ) . '" kind="subtitles" srclang="' . esc_attr( $subtitle['identifier'] ) . '" type="' . esc_attr( $type ) . '" label="' . esc_attr( $subtitle['name'] ) . '" />';
+								}
+							}
+							$data['content'] .= '</video>';
+							if ( ! empty( $attachment['name'] ) ) {
+								$data['content'] .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
+							}
+							$data['content'] .= '</figure>';
+							$data['content'] .= '<!-- /wp:video -->';
+
+						}
+					}
+				} elseif ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
 					$data['content'] .= PHP_EOL;
 					$data['content'] .= '<!-- wp:image -->';
 					$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '"';
@@ -1209,7 +1290,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				} elseif ( strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
 					$data['content'] .= PHP_EOL;
 					$data['content'] .= '<!-- wp:video -->';
-					$data['content'] .= '<figure class="wp-block-video"><video controls src="' . esc_url( $attachment['url'] ) . '" />';
+					$data['content'] .= '<figure class="wp-block-video"><video src="' . esc_url( $attachment['url'] ) . '" type="' . esc_attr( $attachment['mediaType'] ) . '">';
 					if ( ! empty( $attachment['name'] ) ) {
 						$data['content'] .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
 					}

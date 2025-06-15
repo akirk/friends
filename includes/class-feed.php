@@ -579,6 +579,7 @@ class Feed {
 		add_filter( 'wp_revisions_to_keep', array( $this, 'revisions_to_keep' ) );
 		$new_post_ids = array();
 		$modified_posts = array();
+		$manual_refresh = isset( $_GET['page'] ) && 'friends-refresh' === $_GET['page'] && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-refresh' );
 		foreach ( $items as $item_key => $item ) {
 			if ( ! isset( $item->permalink ) || ! $item->permalink ) {
 				continue;
@@ -670,7 +671,7 @@ class Feed {
 						}
 					}
 
-					if ( ! $was_modified_by_user ) {
+					if ( ! $was_modified_by_user || $manual_refresh ) {
 						$modified_post_data['ID'] = $post_id;
 						if ( isset( $modified_post_data['post_content'] ) ) {
 							$modified_post_data['post_content'] = str_replace( '\\', '\\\\', $modified_post_data['post_content'] );
