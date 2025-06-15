@@ -623,6 +623,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$feed_details['type'] = 'application/activity+json';
 		$feed_details['autoselect'] = true;
+		$actor = $this->get_activitypub_actor( get_current_user_id() );
+		if ( $actor ) {
+			$feed_details['additional-info'] = 'You will follow as <tt>' . $actor->get_webfinger() . '</tt>';
+		}
 
 		$feed_details['suggested-username'] = str_replace( ' ', '-', sanitize_user( $meta['name'] ) );
 

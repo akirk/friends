@@ -223,6 +223,16 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 								echo ' | ';
 								// translators: %s is relation to the URL, e.g. self or alternate.
 								echo esc_html( sprintf( __( 'rel: %s', 'friends' ), $details['rel'] ) );
+								if ( isset( $details['additional-info'] ) ) {
+									echo '<br>' . wp_kses(
+										$details['additional-info'],
+										array(
+											'b'  => true,
+											'tt' => true,
+											'a'  => array( 'href' => array() ),
+										)
+									);
+								}
 								?>
 							</p>
 						</li>
