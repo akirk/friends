@@ -1135,7 +1135,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private function handle_incoming_create( $activity ) {
 		$permalink = $activity['id'];
 		if ( isset( $activity['url'] ) ) {
-			$permalink = $activity['url'];
+			if ( is_array( $activity['url'] ) ) {
+				if ( empty( $activity['attachment'] ) ) {
+					$activity['attachment'] = $activity['url'];
+				}
+			} elseif ( is_string( $activity['url'] ) ) {
+				$permalink = $activity['url'];
+			}
 		}
 
 		$data = array(
@@ -1188,14 +1194,45 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( ! empty( $activity['attachment'] ) ) {
+			$attachments = array();
 			foreach ( $activity['attachment'] as $attachment ) {
 				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
 					continue;
 				}
-				if ( ! in_array( $attachment['type'], array( 'Document', 'Image' ), true ) ) {
+				if ( ! in_array( $attachment['type'], array( 'Document', 'Image', 'Link' ), true ) ) {
 					continue;
 				}
-
+				// Peertube.
+				if ( 'application/x-mpegURL' === $attachment['mediaType'] ) {
+					if ( ! empty( $attachment['tag'] ) ) {
+						$videos = array();
+						foreach ( $attachment['tag'] as $attachment ) {
+							if ( strpos( $attachment['mediaType'], 'video/' ) === false ) {
+								continue;
+							}
+							if ( empty( $attachment['rel'] ) ) {
+								$videos[ $attachment['height'] ] = $attachment;
+							}
+						}
+						if ( isset( $videos[720] ) ) {
+							// Prefer 720p.
+							$attachments[] = $videos[720];
+						} elseif ( isset( $videos[1080] ) ) {
+							$attachments[] = $videos[1080];
+						} else {
+							$attachments[] = reset( $videos );
+						}
+					}
+					continue;
+				}
+				$attachments[] = $attachment;
+			}
+			foreach ( $attachments as $attachment ) {
+				if ( empty( $attachment['url'] ) ) {
+					if ( ! empty( $attachment['href'] ) ) {
+						$attachment['url'] = $attachment['href'];
+					}
+				}
 				if ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
 					$data['content'] .= PHP_EOL;
 					$data['content'] .= '<!-- wp:image -->';
