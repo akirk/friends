@@ -1067,6 +1067,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				return $this->handle_incoming_create( $activity['object'] );
 			case 'update':
 				if ( isset( $activity['object']['type'] ) && 'Person' === $activity['object']['type'] ) {
+					if ( ! $user_feed instanceof User_Feed ) {
+						return null;
+					}
 					return $this->handle_incoming_update_person( $activity['object'], $user_feed );
 				}
 				$item = $this->handle_incoming_create( $activity['object'] );
