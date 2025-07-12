@@ -439,7 +439,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		require_once __DIR__ . '/activitypub/class-activitypub-transformer-message.php';
 
-		$user_id = $this->get_activitypub_actor_id( get_current_user_id() );
+		$user_id = self::get_activitypub_actor_id( get_current_user_id() );
 		$actor = $this->get_activitypub_actor( $user_id );
 		if ( ! $actor ) {
 			return $post_id;
@@ -813,10 +813,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function get_activitypub_actor( $user_id ) {
-		return \Activitypub\Collection\Actors::get_by_id( $this->get_activitypub_actor_id( $user_id ) );
+		return \Activitypub\Collection\Actors::get_by_id( self::get_activitypub_actor_id( $user_id ) );
 	}
 
-	public function get_activitypub_actor_id( $user_id ) {
+	public static function get_activitypub_actor_id( $user_id ) {
 		if ( null !== $user_id && ! \Activitypub\user_can_activitypub( $user_id ) ) {
 			$user_id = null;
 		}
@@ -1654,7 +1654,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_follow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
@@ -1730,7 +1730,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_unfollow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
@@ -2241,7 +2241,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -2377,7 +2377,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -2633,7 +2633,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_announce( $url, $user_id ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -2721,7 +2721,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_unannounce( $url, $user_id ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
