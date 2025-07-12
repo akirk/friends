@@ -58,9 +58,6 @@
 		}
 		img {
 			object-fit: contain;
-		}
-
-		figure img, img.size-full {
 			max-width: 100% !important;
 			height: auto !important;
 		}
