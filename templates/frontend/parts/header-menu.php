@@ -8,29 +8,10 @@
 
 $friend_user = $args['friend_user'];
 
-if ( apply_filters( 'friends_debug', false ) ) : ?>
-	<?php
-	$edit_user_link = Friends\Admin::admin_edit_user_link( false, $friend_user );
-	if ( $edit_user_link ) :
-		?>
-		<li class="menu-item"><a href="<?php echo esc_attr( $edit_user_link ); ?>"><?php esc_html_e( 'Edit friend', 'friends' ); ?></a></li>
-	<?php endif; ?>
-<?php endif; ?>
-
+?>
 <li class="menu-item">
 	<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() . get_the_ID() . '/?share=' . hash( 'crc32b', apply_filters( 'friends_share_salt', wp_salt( 'nonce' ) ) . get_the_ID() ) ); ?>"><?php esc_html_e( 'Share link', 'friends' ); ?></a>
 </li>
-
-<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
-	<li class="menu-item friends-dropdown">
-		<select name="post-format" class="friends-change-post-format form-select select-sm" data-change-post-format-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-change-post-format_' . get_the_ID() ) ); ?>" data-id="<?php echo esc_attr( get_the_ID() ); ?>" >
-			<option disabled="disabled"><?php esc_html_e( 'Change post format', 'friends' ); ?></option>
-			<?php foreach ( get_post_format_strings() as $format => $_title ) : ?>
-			<option value="<?php echo esc_attr( $format ); ?>"<?php selected( get_post_format(), $format ); ?>><?php echo esc_html( $_title ); ?></option>
-		<?php endforeach; ?>
-		</select>
-	</li>
-<?php endif; ?>
 
 <?php if ( current_user_can( 'edit_post', get_current_user_id(), get_the_ID() ) ) : ?>
 	<li class="menu-item"><?php edit_post_link(); ?></li>
