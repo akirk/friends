@@ -580,6 +580,14 @@ class Friends {
 			}
 		}
 
+		if ( function_exists( '\Activitypub\follow' ) && version_compare( $previous_version, '4.0.0', '<' ) ) {
+			// Migrate the Followers to the ActivityPub plugin (added in its 7.0.0).
+			$user_id = Feed_Parser_ActivityPub::get_activitypub_actor_id( Friends::get_main_friend_user_id() );
+			foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
+				\Activitypub\follow( $user_feed->get_url(), $user_id );
+			}
+		}
+
 		update_option( 'friends_plugin_version', Friends::VERSION );
 	}
 
@@ -1474,7 +1482,9 @@ class Friends {
 	 */
 	public function cron_friends_delete_outdated_posts() {
 		foreach ( User_Feed::get_all_users() as $friend_user ) {
-			$friend_user->delete_outdated_posts();
+			if ( $friend_user instanceof User ) {
+				$friend_user->delete_outdated_posts();
+			}
 		}
 		$this->delete_outdated_posts();
 	}

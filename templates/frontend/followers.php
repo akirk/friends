@@ -7,7 +7,7 @@
  */
 
 $args = array_merge( $friends_args, $args );
-$blog_followers = class_exists( '\ActivityPub\Collection\Actors' ) && \ActivityPub\Collection\Actors::BLOG_USER_ID === $args['user_id'];
+$blog_followers = class_exists( '\Activitypub\Collection\Actors' ) && \Activitypub\Collection\Actors::BLOG_USER_ID === $args['user_id'];
 $args['title'] = __( 'Your Followers', 'friends' );
 if ( $blog_followers ) {
 	$args['title'] = __( 'Your Blog Followers', 'friends' );
@@ -33,14 +33,15 @@ if ( $blog_followers ) {
 ?>
 <section class="followers">
 	<?php
-	if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
-		$follower_data = \ActivityPub\Collection\Followers::get_followers_with_count( $args['user_id'] );
+	if ( class_exists( '\Activitypub\Collection\Followers' ) ) {
+		$follower_data = \Activitypub\Collection\Followers::get_followers_with_count( $args['user_id'] );
 		$total = $follower_data['total'];
 		$already_following = 0;
 		foreach ( $follower_data['followers'] as $k => $follower ) {
-			$data = $follower->to_array();
+			$actor = \Activitypub\Collection\Actors::get_actor( $follower );
+			$data = $actor->to_array();
 
-			$data['url'] = \ActivityPub\object_to_uri( $data['url'] );
+			$data['url'] = \Activitypub\object_to_uri( $data['url'] );
 			$data['server'] = wp_parse_url( $data['url'], PHP_URL_HOST );
 			$data['css_class'] = '';
 
