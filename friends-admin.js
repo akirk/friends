@@ -250,63 +250,6 @@ jQuery( function ( $ ) {
 			.prop( 'selected', true );
 	} );
 
-	$( document ).on(
-		'click',
-		'a.friends-auth-link, button.comments.friends-auth-link',
-		function () {
-			const $this = jQuery( this );
-			const token = $this.data( 'token' );
-
-			if ( ! token ) {
-				return;
-			}
-			let href = $this.attr( 'href' );
-
-			const parts = token.split( /-/ );
-			const now = new Date();
-			if ( now / 1000 > parts[ 1 ] ) {
-				wp.ajax
-					.post( 'friends_refresh_link_token', {
-						_ajax_nonce: $this.data( 'nonce' ),
-						friend: $this.data( 'friend' ),
-						url: href,
-					} )
-					.done( function ( response ) {
-						if ( response.data ) {
-							$this.data( 'token', response.data.token );
-						}
-					} );
-
-				// eslint-disable-next-line no-alert
-				window.alert( friends.text_link_expired );
-				return false;
-			}
-
-			if ( href && href.indexOf( 'friend_auth=' ) < 0 ) {
-				let hash = href.indexOf( '#' );
-				if ( hash >= 0 ) {
-					hash = href.substr( hash );
-					href = href.substr( 0, href.length - hash.length );
-				} else {
-					hash = '';
-				}
-
-				if ( href.indexOf( '?' ) >= 0 ) {
-					href += '&';
-				} else {
-					href += '?';
-				}
-				href += 'friend_auth=' + token + hash;
-				$this.attr( 'href', href );
-			}
-
-			if ( $this.is( 'button' ) ) {
-				window.location.href = href;
-				return false;
-			}
-		}
-	);
-
 	$( document ).on( 'click', 'a.set-avatar', function () {
 		setAvatarUrl(
 			$( this ).find( 'img' ).prop( 'src' ),

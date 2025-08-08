@@ -156,19 +156,6 @@ table.feed-table.widefat th.nowrap {
 	content: "\f307";
 }
 
-a.friends-auth-link span.dashicons,
-button.friends-auth-link span.dashicons {
-	color: #32c170;
-	margin-left: 6px;
-}
-
-a.explanation-friends-auth-link:hover,
-a.friends-auth-link :hover,
-a.friends-auth-link:hover span.dashicons,
-button.friends-auth-link:hover span.dashicons {
-	color: #32c170;
-}
-
 p.lastlog {
 	padding: .8em 1em;
 	margin-bottom: 2em;
