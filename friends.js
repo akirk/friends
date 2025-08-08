@@ -281,7 +281,7 @@
 	} );
 
 	$document.on( 'click', 'a.collapse-post, .collapsed.card, .all-collapsed .card:not(.uncollapsed)', function ( e ) {
-		if ( e.target.closest( '.friends-dropdown' ) || $( e.target ).is( 'a' ) ) {
+		if ( e.target.closest( '.friends-dropdown' ) || $( e.target ).is( 'a:not(.collapse-post)' ) ) {
 			return true;
 		}
 
@@ -746,6 +746,28 @@
 				state: previously_open ? 'closed' : 'open',
 			},
 			success() {},
+		} );
+	} );
+
+	$document.on('submit', '#add-subscription-form', function ( e ) {
+		e.preventDefault();
+		const $this = $( this );
+		const url = $this.find( 'input[name="url"]' ).val();
+		if ( ! url ) {
+			return;
+		}
+		wp.ajax.send( 'friends-preview-subscription', {
+			data: {
+				_ajax_nonce: $this.find( 'input[name=_wpnonce]' ).val(),
+				url: url,
+			},
+			success( r ) {
+				console.log( r );
+				$('#preview-subscription').html( r );
+			},
+			error( result ) {
+
+			}
 		} );
 	} );
 

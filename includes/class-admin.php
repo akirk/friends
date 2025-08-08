@@ -52,6 +52,7 @@ class Admin {
 		add_action( 'wp_ajax_friends_preview_rules', array( $this, 'ajax_preview_friend_rules' ) );
 		add_action( 'wp_ajax_friends_fetch_feeds', array( $this, 'ajax_fetch_feeds' ) );
 		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
+		add_action( 'wp_ajax_friends-preview-subscription', array( $this, 'ajax_preview_subscription' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
@@ -1034,6 +1035,27 @@ class Admin {
 		);
 	}
 
+	public function ajax_preview_subscription() {
+		if ( ! isset( $_POST['url'] ) ) {
+			wp_send_json_error( __( 'No URL provided.', 'friends' ) );
+		}
+
+		check_ajax_referer( 'friends_add_subscription' );
+
+		$url = wp_unslash( $_POST['url'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$protocol = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! $protocol ) {
+			$url = apply_filters( 'friends_rewrite_incoming_url', 'https://' . $url, $url );
+		} else {
+			$url = apply_filters( 'friends_rewrite_incoming_url', $url, $url );
+		}
+
+		$ret = $this->friends->feed->discover_available_feeds( $url );
+
+		wp_send_json_success( $ret );
+	}
+
 	/**
 	 * Process the Friends Edit Notifications page
 	 */
@@ -1980,6 +2002,14 @@ class Admin {
 			)
 		);
 
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'add-friend',
+				'parent' => 'friends-menu',
+				'title'  => esc_html__( 'Add a friend', 'friends' ),
+				'href'   => home_url( '/friends/add-subscription' ),
+			)
+		);
 		$wp_menu->add_menu(
 			array(
 				'id'     => 'friends',
