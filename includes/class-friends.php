@@ -18,6 +18,7 @@ namespace Friends;
 class Friends {
 	const VERSION       = FRIENDS_VERSION;
 	const CPT           = 'friend_post_cache';
+	const TAG_TAXONOMY  = 'friend_tag';
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'edit_private_posts';
@@ -187,6 +188,7 @@ class Friends {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'init', array( $this, 'register_friend_tag_taxonomy' ) );
 		add_action( 'init', array( 'Friends\Subscription', 'register_taxonomy' ) );
 
 		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
@@ -208,6 +210,37 @@ class Friends {
 		add_filter( 'request', array( $this, 'limit_post_format_request' ), 20 );
 		add_filter( 'my_apps_plugins', array( $this, 'register_my_apps' ) );
 		User::register_wrapper_hooks();
+	}
+
+	/**
+	 * Register the friend tag taxonomy
+	 */
+	public function register_friend_tag_taxonomy() {
+		$labels = array(
+			'name'          => __( 'Friend Tags', 'friends' ),
+			'singular_name' => __( 'Friend Tag', 'friends' ),
+			'search_items'  => __( 'Search Friend Tags', 'friends' ),
+			'all_items'     => __( 'All Friend Tags', 'friends' ),
+			'edit_item'     => __( 'Edit Friend Tag', 'friends' ),
+			'update_item'   => __( 'Update Friend Tag', 'friends' ),
+			'add_new_item'  => __( 'Add New Friend Tag', 'friends' ),
+			'new_item_name' => __( 'New Friend Tag Name', 'friends' ),
+			'menu_name'     => __( 'Friend Tags', 'friends' ),
+		);
+
+		$args = array(
+			'hierarchical'       => false,
+			'labels'             => $labels,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'rewrite'            => array( 'slug' => 'friend-tag' ),
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_in_rest'       => true,
+		);
+
+		register_taxonomy( self::TAG_TAXONOMY, self::CPT, $args );
 	}
 
 	/**
@@ -245,7 +278,7 @@ class Friends {
 			'menu_position'       => 5,
 			'menu_icon'           => 'dashicons-groups',
 			'supports'            => array( 'title', 'editor', 'author', 'revisions', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
-			'taxonomies'          => array( 'post_tag', 'post_format', 'friend-reaction-' . get_current_user_id() ),
+			'taxonomies'          => array( self::TAG_TAXONOMY, 'post_format', 'friend-reaction-' . get_current_user_id() ),
 			'has_archive'         => true,
 			'rewrite'             => false,
 		);
@@ -1245,7 +1278,7 @@ class Friends {
 			$tax_query['relation'] = 'AND';
 		}
 		$post_tag_query = array(
-			'taxonomy' => 'post_tag',
+			'taxonomy' => self::TAG_TAXONOMY,
 			'field'    => 'slug',
 			'operator' => 'IN',
 			'terms'    => $filter_by_post_tag,
@@ -1610,6 +1643,7 @@ class Friends {
 			User_Feed::TAXONOMY,
 			User_Feed::POST_TAXONOMY,
 			Subscription::TAXONOMY,
+			self::TAG_TAXONOMY,
 		);
 
 		$affected_users = new \WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
