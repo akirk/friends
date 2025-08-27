@@ -37,7 +37,7 @@ class Subscription extends User {
 		$this->term = $term;
 		$this->ID = 1e10 + $term->term_id;
 
-		$this->caps = array_fill_keys( get_metadata( 'term', $term->term_id, 'roles' ), true );
+		$this->caps = array_fill_keys( get_metadata( 'term', $term->term_id, 'roles', false ), true );
 		$this->caps['subscription'] = true;
 		$this->get_role_caps();
 
