@@ -184,4 +184,123 @@ class Migration {
 			}
 		}
 	}
+
+	/**
+	 * Backfill mention tags from Mastodon HTML content (version 4.1.0)
+	 */
+	public static function backfill_mention_tags_from_mastodon_html() {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Build lookup table of local user ActivityPub URLs before processing posts.
+		$local_user_urls = self::build_local_user_activitypub_lookup();
+
+		if ( empty( $local_user_urls ) ) {
+			return; // No local users to check for mentions.
+		}
+
+		// Get all Friends posts that might contain Mastodon mentions in HTML.
+		$posts_with_html = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT ID, post_content
+				FROM {$wpdb->posts}
+				WHERE post_type = %s
+				AND post_status IN ('publish', 'private')
+				AND post_content LIKE %s",
+				Friends::CPT,
+				'%u-url mention%'
+			)
+		);
+
+		if ( empty( $posts_with_html ) ) {
+			return;
+		}
+
+		$processed_count = 0;
+		$mention_tags_added = 0;
+
+		foreach ( $posts_with_html as $post ) {
+			$mention_tags = self::extract_mention_tags_from_html( $post->post_content, $local_user_urls );
+
+			if ( ! empty( $mention_tags ) ) {
+				wp_set_post_terms( $post->ID, $mention_tags, Friends::TAG_TAXONOMY, true );
+				$mention_tags_added += count( $mention_tags );
+			}
+
+			++$processed_count;
+		}
+
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( $processed_count > 0 ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( 'Friends Migration: Processed %d posts, added %d mention tags', $processed_count, $mention_tags_added ) );
+		}
+	}
+
+	/**
+	 * Build a lookup table of local user ActivityPub URLs to usernames
+	 *
+	 * @return array Array mapping ActivityPub URLs to usernames
+	 */
+	private static function build_local_user_activitypub_lookup() {
+		$lookup = array();
+
+		// Check if ActivityPub plugin is available.
+		if ( ! class_exists( '\Activitypub\Collection\Actors' ) ) {
+			return $lookup;
+		}
+
+		$users = get_users();
+		foreach ( $users as $user ) {
+			try {
+				// Use ActivityPub plugin to get the proper actor URL.
+				$actor = \Activitypub\Collection\Actors::get_by_id( $user->ID );
+				if ( ! is_wp_error( $actor ) && $actor ) {
+					$activitypub_url = $actor->get_id();
+					if ( $activitypub_url ) {
+						$lookup[ $activitypub_url ] = $user->user_login;
+					}
+				}
+			} catch ( Exception $e ) {
+				// Skip this user if there's an error getting their ActivityPub ID.
+				continue;
+			}
+		}
+
+		return $lookup;
+	}
+
+	/**
+	 * Extract mention tags from Mastodon HTML content
+	 *
+	 * @param string $html_content The HTML content to parse.
+	 * @param array  $local_user_urls Lookup table of local user URLs to usernames.
+	 * @return array Array of mention tag names
+	 */
+	private static function extract_mention_tags_from_html( $html_content, $local_user_urls ) {
+		$mention_tags = array();
+
+		// Parse HTML to find mention links:
+		// Pattern: <a href="ACTIVITYPUB_URL" class="u-url mention">@<span>USERNAME</span></a>.
+		$pattern = '/<a\s+[^>]*href=["\'](https?:\/\/[^"\']+)["\'][^>]*class=["\'][^"\']*u-url mention[^"\']*["\'][^>]*>@<span>([^<]+)<\/span><\/a>/i';
+
+		if ( preg_match_all( $pattern, $html_content, $matches, PREG_SET_ORDER ) ) {
+			foreach ( $matches as $match ) {
+				$activitypub_url = $match[1];
+
+				// Look up the URL in our pre-built lookup table.
+				if ( isset( $local_user_urls[ $activitypub_url ] ) ) {
+					$username = $local_user_urls[ $activitypub_url ];
+					$mention_tag = 'mention-' . $username;
+					$mention_tags[] = $mention_tag;
+				}
+			}
+		}
+
+		return array_unique( $mention_tags );
+	}
 }
