@@ -19,6 +19,21 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	protected $friend_nicename;
 	protected $actor;
 
+	/**
+	 * Helper method to send an ActivityPub message to a user's inbox
+	 */
+	private function send_activitypub_message( $user_id, $activity_data, $use_server_dispatch = false ) {
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . $user_id . '/inbox' );
+		$request->set_body( wp_json_encode( $activity_data ) );
+		$request->set_header( 'Content-type', 'application/json' );
+		
+		if ( $use_server_dispatch ) {
+			return $this->server->dispatch( $request );
+		}
+		
+		return rest_do_request( $request );
+	}
+
 	public function test_incoming_post() {
 		update_user_option( 'activitypub_friends_show_replies', '1', $this->friend_id );
 		$now = time() - 10;
@@ -41,40 +56,33 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$attachment_width = 400;
 		$attachment_height = 600;
 
-		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
-		$request->set_body(
-			wp_json_encode(
-				array(
-					'type'   => 'Create',
-					'id'     => $id,
-					'actor'  => $this->actor,
-					'object' => array(
-						'type'         => 'Note',
-						'id'           => $id,
-						'attributedTo' => $this->actor,
-						'inReplyTo'    => null,
-						'content'      => $content,
-						'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
-						'published'    => $date,
-						'attachment'   => array(
-							array(
-								'type'      => 'Document',
-								'mediaType' => 'image/png',
-								'url'       => $attachment_url,
-								'name'      => '',
-								'blurhash'  => '',
-								'width'     => $attachment_width,
-								'height'    => $attachment_height,
-
-							),
-						),
+		$activity_data = array(
+			'type'   => 'Create',
+			'id'     => $id,
+			'actor'  => $this->actor,
+			'object' => array(
+				'type'         => 'Note',
+				'id'           => $id,
+				'attributedTo' => $this->actor,
+				'inReplyTo'    => null,
+				'content'      => $content,
+				'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
+				'published'    => $date,
+				'attachment'   => array(
+					array(
+						'type'      => 'Document',
+						'mediaType' => 'image/png',
+						'url'       => $attachment_url,
+						'name'      => '',
+						'blurhash'  => '',
+						'width'     => $attachment_width,
+						'height'    => $attachment_height,
 					),
-				)
-			)
+				),
+			),
 		);
-		$request->set_header( 'Content-type', 'application/json' );
 
-		$response = $this->server->dispatch( $request );
+		$response = $this->send_activitypub_message( get_current_user_id(), $activity_data, true );
 		$this->assertEquals( 202, $response->get_status() );
 
 		$posts = get_posts(
@@ -621,6 +629,154 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$actors[] = array( 'example@abc.org', 'abc.org', 'example' );
 
 		return $actors;
+	}
+
+	public function test_auto_tagging_hashtags_and_mentions() {
+		$now = time() - 10;
+		$status_id = 456;
+
+		$local_user = get_current_user_id();
+		
+		$posts = get_posts(
+			array(
+				'post_type' => Friends::CPT,
+				'author'    => $local_user,
+			)
+		);
+
+		$post_count = count( $posts );
+
+		// Get the local user's ActivityPub ID - use a manual ID since actor setup is complex  
+		$current_user = get_userdata( $local_user );
+		$local_activitypub_id = 'https://example.com/users/' . $current_user->user_login;
+
+		// Create ActivityPub post with hashtags and CC mention
+		$date = gmdate( \DATE_W3C, $now++ );
+		$id = 'test' . $status_id;
+		$content = 'Testing #hashtag and #another-tag functionality!';
+
+		$activity_data = array(
+			'type'   => 'Create',
+			'id'     => $id,
+			'actor'  => $this->actor,
+			'cc'     => array( $local_activitypub_id ), // Mention the local user
+			'object' => array(
+				'id'           => $id,
+				'type'         => 'Note',
+				'published'    => $date,
+				'attributedTo' => $this->actor,
+				'content'      => $content,
+				'cc'           => array( $local_activitypub_id ),
+				'tag'          => array(
+					array(
+						'type' => 'Hashtag',
+						'name' => '#hashtag',
+						'href' => 'https://mastodon.local/tags/hashtag',
+					),
+					array(
+						'type' => 'Hashtag', 
+						'name' => '#another-tag',
+						'href' => 'https://mastodon.local/tags/another-tag',
+					),
+				),
+			),
+		);
+		
+		$response = $this->send_activitypub_message( $local_user, $activity_data );
+
+		$posts = get_posts(
+			array(
+				'post_type' => Friends::CPT,
+				'author'    => $local_user,
+			)
+		);
+
+		$this->assertEquals( $post_count + 1, count( $posts ) );
+		$this->assertStringContainsString( $content, $posts[0]->post_content );
+
+		// Check that hashtags are applied
+		$tags = wp_get_post_terms( $posts[0]->ID, Friends::TAG_TAXONOMY );
+		$tag_names = wp_list_pluck( $tags, 'name' );
+		
+		$this->assertContains( 'hashtag', $tag_names );
+		$this->assertContains( 'another-tag', $tag_names );
+		
+		// Check that mention tag is applied (should be mention-{current_user_login})
+		$expected_mention_tag = 'mention-' . $current_user->user_login;
+		$this->assertContains( $expected_mention_tag, $tag_names );
+	}
+
+	public function test_auto_tagging_respects_disable_option() {
+		// Enable the disable option
+		update_option( 'friends_disable_auto_tagging', true );
+
+		$now = time() - 10;
+		$status_id = 789;
+
+		$local_user = get_current_user_id();
+		
+		$posts = get_posts(
+			array(
+				'post_type' => Friends::CPT,
+				'author'    => $local_user,
+			)
+		);
+
+		$post_count = count( $posts );
+
+		// Get the local user's ActivityPub ID - use a manual ID since actor setup is complex
+		$current_user = get_userdata( $local_user );
+		$local_activitypub_id = 'https://example.com/users/' . $current_user->user_login;
+
+		$date = gmdate( \DATE_W3C, $now++ );
+		$id = 'test' . $status_id;
+		$content = 'Testing #disabled-hashtag when auto-tagging is disabled!';
+
+		$activity_data = array(
+			'type'   => 'Create',
+			'id'     => $id,
+			'actor'  => $this->actor,
+			'cc'     => array( $local_activitypub_id ),
+			'object' => array(
+				'id'           => $id,
+				'type'         => 'Note',
+				'published'    => $date,
+				'attributedTo' => $this->actor,
+				'content'      => $content,
+				'cc'           => array( $local_activitypub_id ),
+				'tag'          => array(
+					array(
+						'type' => 'Hashtag',
+						'name' => '#disabled-hashtag',
+						'href' => 'https://mastodon.local/tags/disabled-hashtag',
+					),
+				),
+			),
+		);
+		
+		$response = $this->send_activitypub_message( $local_user, $activity_data );
+
+		$posts = get_posts(
+			array(
+				'post_type' => Friends::CPT,
+				'author'    => $local_user,
+			)
+		);
+
+		$this->assertEquals( $post_count + 1, count( $posts ) );
+
+		// Check that hashtags are NOT applied but mentions still are
+		$tags = wp_get_post_terms( $posts[0]->ID, Friends::TAG_TAXONOMY );
+		$tag_names = wp_list_pluck( $tags, 'name' );
+		
+		$this->assertNotContains( 'disabled-hashtag', $tag_names );
+		
+		// Mentions should still work even when auto-tagging is disabled
+		$expected_mention_tag = 'mention-' . $current_user->user_login;
+		$this->assertContains( $expected_mention_tag, $tag_names );
+
+		// Clean up
+		delete_option( 'friends_disable_auto_tagging' );
 	}
 
 	public function test_incoming_move() {

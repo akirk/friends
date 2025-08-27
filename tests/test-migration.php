@@ -284,4 +284,44 @@ class MigrationTest extends \WP_UnitTestCase {
 		$regular_tags = wp_get_post_terms( $regular_post_id, 'post_tag', array( 'fields' => 'names' ) );
 		$this->assertContains( 'shared-tag', $regular_tags );
 	}
+
+	public function test_cleanup_orphaned_friend_tags() {
+		// Create some friend tags
+		$tag1 = wp_insert_term( 'orphaned-tag', Friends::TAG_TAXONOMY );
+		$tag2 = wp_insert_term( 'used-tag', Friends::TAG_TAXONOMY );
+		$tag3 = wp_insert_term( 'another-orphaned-tag', Friends::TAG_TAXONOMY );
+
+		$this->assertNotWPError( $tag1 );
+		$this->assertNotWPError( $tag2 );  
+		$this->assertNotWPError( $tag3 );
+
+		// Create a Friends post and assign only one tag to it
+		$post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Test Post',
+			'post_status' => 'publish',
+		) );
+
+		wp_set_post_terms( $post_id, array( $tag2['term_id'] ), Friends::TAG_TAXONOMY );
+
+		// Verify all tags exist before cleanup
+		$this->assertNotFalse( get_term( $tag1['term_id'], Friends::TAG_TAXONOMY ) );
+		$this->assertNotFalse( get_term( $tag2['term_id'], Friends::TAG_TAXONOMY ) );
+		$this->assertNotFalse( get_term( $tag3['term_id'], Friends::TAG_TAXONOMY ) );
+
+		// Run cleanup
+		Friends::get_instance()->cleanup_orphaned_friend_tags();
+
+		// Verify orphaned tags were deleted
+		$orphaned1 = get_term( $tag1['term_id'], Friends::TAG_TAXONOMY );
+		$orphaned3 = get_term( $tag3['term_id'], Friends::TAG_TAXONOMY );
+		$this->assertTrue( is_wp_error( $orphaned1 ) || is_null( $orphaned1 ) );
+		$this->assertTrue( is_wp_error( $orphaned3 ) || is_null( $orphaned3 ) );
+
+		// Verify used tag still exists
+		$used_tag = get_term( $tag2['term_id'], Friends::TAG_TAXONOMY );
+		$this->assertNotWPError( $used_tag );
+		$this->assertNotFalse( $used_tag );
+		$this->assertEquals( 'used-tag', $used_tag->name );
+	}
 }
