@@ -359,10 +359,44 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 			$feed_item->date         = $item->get_gmdate( 'U' );
 			$feed_item->updated_date = $item->get_updated_gmdate( 'U' );
 
+			$tags = $this->extract_hashtags( $feed_item );
+			if ( ! empty( $tags ) ) {
+				$feed_item->friend_tags = $tags;
+			}
+
 			$feed_items[] = $feed_item;
 		}
 
 		return $feed_items;
+	}
+
+	/**
+	 * Extract hashtags from a feed item's content and title
+	 *
+	 * @param Feed_Item $feed_item The feed item.
+	 * @return array Array of hashtag strings
+	 */
+	private function extract_hashtags( $feed_item ) {
+		$tags = array();
+
+		$text = '';
+		if ( ! empty( $feed_item->title ) ) {
+			$text .= $feed_item->title . ' ';
+		}
+		if ( ! empty( $feed_item->content ) ) {
+			$text .= wp_strip_all_tags( $feed_item->content );
+		}
+
+		if ( preg_match_all( '/#([A-Za-z0-9_-]+)/', $text, $matches ) ) {
+			foreach ( $matches[1] as $hashtag ) {
+				$tag_name = sanitize_title( strtolower( $hashtag ) );
+				if ( ! empty( $tag_name ) && strlen( $tag_name ) > 1 ) {
+					$tags[] = $tag_name;
+				}
+			}
+		}
+
+		return array_unique( $tags );
 	}
 
 	public function no_comments_feed_available( $text, $post_id ) {

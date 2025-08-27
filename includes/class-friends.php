@@ -1465,6 +1465,7 @@ class Friends {
 			$friend_user->delete_outdated_posts();
 		}
 		$this->delete_outdated_posts();
+		$this->cleanup_orphaned_friend_tags();
 	}
 
 	/**
@@ -1588,6 +1589,28 @@ class Friends {
 		}
 
 		return $deleted_posts;
+	}
+
+	/**
+	 * Clean up orphaned friend tags that have no posts.
+	 */
+	public function cleanup_orphaned_friend_tags() {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => self::TAG_TAXONOMY,
+				'hide_empty' => false,
+			)
+		);
+
+		if ( is_wp_error( $terms ) ) {
+			return;
+		}
+
+		foreach ( $terms as $term ) {
+			if ( 0 === $term->count ) {
+				wp_delete_term( $term->term_id, self::TAG_TAXONOMY );
+			}
+		}
 	}
 
 	/**

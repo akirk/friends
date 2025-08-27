@@ -578,7 +578,7 @@ class Admin {
 		}
 
 		$this->check_admin_settings();
-		foreach ( array( 'ignore_incoming_friend_requests', 'enable_wp_friendships' ) as $checkbox ) {
+		foreach ( array( 'ignore_incoming_friend_requests', 'enable_wp_friendships', 'disable_auto_tagging' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
@@ -751,6 +751,7 @@ class Admin {
 					'limit_homepage_post_format' => get_option( 'friends_limit_homepage_post_format', false ),
 					'expose_post_format_feeds'   => get_option( 'friends_expose_post_format_feeds' ),
 					'enable_wp_friendships'      => get_option( 'friends_enable_wp_friendships' ),
+					'disable_auto_tagging'       => get_option( 'friends_disable_auto_tagging' ),
 					'retention_days'             => Friends::get_retention_days(),
 					'retention_number'           => Friends::get_retention_number(),
 					'retention_days_enabled'     => get_option( 'friends_enable_retention_days' ),
