@@ -111,48 +111,110 @@ class Migration {
 
 	/**
 	 * Migrate post_tag taxonomy to friend_tag taxonomy for Friends CPT posts (version 4.0.0)
+	 * Initiates batched migration for large datasets.
 	 */
 	public static function migrate_post_tags_to_friend_tags() {
+		// Check if migration is already in progress.
+		if ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			return;
+		}
+
+		// Count total posts to migrate.
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+		$total_posts = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT p.ID)
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				WHERE p.post_type = %s AND tt.taxonomy = 'post_tag'",
+				Friends::CPT
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( ! $total_posts ) {
+			return;
+		}
+
+		// Set migration progress tracking.
+		update_option( 'friends_tag_migration_in_progress', true );
+		update_option( 'friends_tag_migration_total', $total_posts );
+		update_option( 'friends_tag_migration_processed', 0 );
+		update_option( 'friends_tag_migration_offset', 0 );
+
+		// Schedule the first batch.
+		wp_schedule_single_event( time(), 'friends_migrate_post_tags_batch' );
+	}
+
+	/**
+	 * Process a single batch of post tag migration.
+	 */
+	public static function migrate_post_tags_batch() {
 		global $wpdb;
 
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Get all Friends CPT posts that have post_tag terms.
+		$batch_size = apply_filters( 'friends_tag_migration_batch_size', 100 );
+		$offset = (int) get_option( 'friends_tag_migration_offset', 0 );
+
+		// Get a batch of Friends CPT posts that have post_tag terms.
 		$friends_posts_with_tags = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT p.ID, tr.term_taxonomy_id, t.term_id, t.name, t.slug
-			FROM {$wpdb->posts} p
-			INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-			INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-			INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
-			WHERE p.post_type = %s AND tt.taxonomy = 'post_tag'",
-				Friends::CPT
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+				WHERE p.post_type = %s AND tt.taxonomy = 'post_tag'
+				ORDER BY p.ID, t.term_id
+				LIMIT %d OFFSET %d",
+				Friends::CPT,
+				$batch_size,
+				$offset
 			)
 		);
 
 		if ( empty( $friends_posts_with_tags ) ) {
+			// Migration complete - run cleanup.
+			self::finalize_post_tag_migration();
 			return;
 		}
 
-		// Collect term taxonomy IDs for bulk deletion and track terms for cleanup.
+		// Group posts by ID to handle multiple tags per post.
+		$posts_by_id = array();
+		foreach ( $friends_posts_with_tags as $tagged_post ) {
+			if ( ! isset( $posts_by_id[ $tagged_post->ID ] ) ) {
+				$posts_by_id[ $tagged_post->ID ] = array();
+			}
+			$posts_by_id[ $tagged_post->ID ][] = $tagged_post;
+		}
+
+		// Process each post with all its tags.
 		$term_taxonomy_ids = array();
 		$term_ids_to_check = array();
 
-		// Process each tagged post.
-		foreach ( $friends_posts_with_tags as $tagged_post ) {
-			// Add the friend_tag to the post using the tag name (wp_set_post_terms will create it if needed).
-			wp_set_post_terms( $tagged_post->ID, array( $tagged_post->name ), Friends::TAG_TAXONOMY, true );
+		foreach ( $posts_by_id as $post_id => $post_tags ) {
+			// Collect all tag names for this post.
+			$tag_names = array();
+			foreach ( $post_tags as $tagged_post ) {
+				$tag_names[] = $tagged_post->name;
+				$term_taxonomy_ids[] = $tagged_post->term_taxonomy_id;
+				$term_ids_to_check[] = $tagged_post->term_id;
+			}
 
-			// Collect term taxonomy IDs for bulk deletion.
-			$term_taxonomy_ids[] = $tagged_post->term_taxonomy_id;
-			$term_ids_to_check[] = $tagged_post->term_id;
+			// Add all friend_tags to this post at once.
+			wp_set_post_terms( $post_id, $tag_names, Friends::TAG_TAXONOMY, true );
 		}
 
-		// Bulk delete post_tag relationships for Friends posts only.
+		// Bulk delete post_tag relationships for this batch of Friends posts.
 		if ( ! empty( $term_taxonomy_ids ) ) {
-			$friends_post_ids = wp_list_pluck( $friends_posts_with_tags, 'ID' );
-			$post_placeholders = implode( ',', array_fill( 0, count( $friends_post_ids ), '%d' ) );
+			$processed_post_ids = array_keys( $posts_by_id );
+			$post_placeholders = implode( ',', array_fill( 0, count( $processed_post_ids ), '%d' ) );
 			$term_placeholders = implode( ',', array_fill( 0, count( $term_taxonomy_ids ), '%d' ) );
 
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -162,28 +224,68 @@ class Migration {
 					"DELETE FROM {$wpdb->term_relationships}
 					WHERE object_id IN ($post_placeholders)
 					AND term_taxonomy_id IN ($term_placeholders)",
-					array_merge( $friends_post_ids, $term_taxonomy_ids )
+					array_merge( $processed_post_ids, $term_taxonomy_ids )
 				)
 			);
 			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// phpcs:enable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		}
+
+		// Update progress.
+		$processed = (int) get_option( 'friends_tag_migration_processed', 0 );
+		$processed += count( $posts_by_id );
+		update_option( 'friends_tag_migration_processed', $processed );
+		update_option( 'friends_tag_migration_offset', $offset + $batch_size );
+
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Clean up orphaned post_tag terms that no longer have associations.
-		$unique_term_ids = array_unique( $term_ids_to_check );
-		foreach ( $unique_term_ids as $term_id ) {
-			// Update term counts after our bulk deletion, then check if orphaned.
-			wp_update_term_count( $term_id, 'post_tag' );
-			$term = get_term( $term_id, 'post_tag' );
+		// Schedule next batch.
+		wp_schedule_single_event( time() + 1, 'friends_migrate_post_tags_batch' );
+	}
 
-			// If term exists and has no count, delete it.
+	/**
+	 * Finalize post tag migration by cleaning up orphaned terms.
+	 */
+	public static function finalize_post_tag_migration() {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Get all post_tag terms that were potentially used by Friends posts.
+		$all_post_tag_terms = $wpdb->get_results(
+			"SELECT DISTINCT t.term_id
+			FROM {$wpdb->terms} t
+			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+			WHERE tt.taxonomy = 'post_tag'"
+		);
+
+		// Clean up orphaned post_tag terms.
+		foreach ( $all_post_tag_terms as $term_data ) {
+			wp_update_term_count( $term_data->term_id, 'post_tag' );
+			$term = get_term( $term_data->term_id, 'post_tag' );
+
 			if ( $term && ! is_wp_error( $term ) && 0 === $term->count ) {
-				wp_delete_term( $term_id, 'post_tag' );
+				wp_delete_term( $term_data->term_id, 'post_tag' );
 			}
 		}
+
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Clear migration progress flags.
+		delete_option( 'friends_tag_migration_in_progress' );
+		delete_option( 'friends_tag_migration_total' );
+		delete_option( 'friends_tag_migration_processed' );
+		delete_option( 'friends_tag_migration_offset' );
+
+		// Log completion.
+
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( 'Friends: Post tag migration completed successfully.' );
 	}
+
 
 	/**
 	 * Backfill mention tags from Mastodon HTML content (version 4.1.0)

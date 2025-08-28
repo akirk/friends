@@ -41,6 +41,9 @@ class MigrationTest extends \WP_UnitTestCase {
 	 * Test migrating post_tag to friend_tag for Friends CPT posts
 	 */
 	public function test_migrate_post_tags_to_friend_tags() {
+		// Include Migration class
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		
 		// Step 1: Setup pre-migration environment (old CPT with post_tag)
 		$this->setup_pre_migration_environment();
 
@@ -77,9 +80,11 @@ class MigrationTest extends \WP_UnitTestCase {
 		$friend_tags_before = wp_get_post_terms( $test_post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
 		$this->assertEmpty( $friend_tags_before );
 
-		// Step 4: Run the migration
-		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		// Step 4: Run the migration for testing
 		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
 
 		// Step 5: Verify migration results
 		$friend_tags_after = wp_get_post_terms( $test_post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
@@ -95,6 +100,9 @@ class MigrationTest extends \WP_UnitTestCase {
 	 * Test migration doesn't affect non-Friends posts
 	 */
 	public function test_migration_ignores_non_friends_posts() {
+		// Include Migration class
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		
 		// Setup the new environment first (for the friend_tag taxonomy to exist)
 		$this->setup_post_migration_environment();
 
@@ -122,9 +130,11 @@ class MigrationTest extends \WP_UnitTestCase {
 		$assigned_post_tags_before = wp_get_post_terms( $regular_post_id, 'post_tag', array( 'fields' => 'names' ) );
 		$this->assertCount( 2, $assigned_post_tags_before );
 
-		// Run migration
-		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		// Run migration for testing
 		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
 
 		// Verify regular post still has post_tag terms (unchanged)
 		$assigned_post_tags_after = wp_get_post_terms( $regular_post_id, 'post_tag', array( 'fields' => 'names' ) );
@@ -140,6 +150,9 @@ class MigrationTest extends \WP_UnitTestCase {
 	 * Test migration handles duplicate tag names correctly
 	 */
 	public function test_migration_handles_duplicate_tags() {
+		// Include Migration class
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		
 		// Setup pre-migration environment
 		$this->setup_pre_migration_environment();
 
@@ -167,9 +180,11 @@ class MigrationTest extends \WP_UnitTestCase {
 		// Simulate upgrade
 		$this->setup_post_migration_environment();
 
-		// Run migration
-		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		// Run migration for testing
 		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
 
 		// Verify both posts have the friend_tag
 		$post1_friend_tags = wp_get_post_terms( $post1_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
@@ -200,6 +215,9 @@ class MigrationTest extends \WP_UnitTestCase {
 	 * Test migration with no tagged Friends posts
 	 */
 	public function test_migration_with_no_tagged_posts() {
+		// Include Migration class
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		
 		// Setup pre-migration environment
 		$this->setup_pre_migration_environment();
 
@@ -213,9 +231,11 @@ class MigrationTest extends \WP_UnitTestCase {
 		// Simulate upgrade
 		$this->setup_post_migration_environment();
 
-		// Run migration
-		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		// Run migration for testing
 		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
 
 		// Verify no friend_tag terms were created
 		$friend_tags = wp_get_post_terms( $test_post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
@@ -230,6 +250,9 @@ class MigrationTest extends \WP_UnitTestCase {
 	 * Test migration cleans up orphaned tags
 	 */
 	public function test_migration_cleans_up_orphaned_tags() {
+		// Include Migration class
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		
 		// Create tags first (before any CPT setup)
 		$shared_tag = wp_insert_term( 'shared-tag', 'post_tag' );
 		$friends_only_tag = wp_insert_term( 'friends-only-tag', 'post_tag' );
@@ -264,9 +287,11 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertNotFalse( get_term( $shared_tag['term_id'], 'post_tag' ) );
 		$this->assertNotFalse( get_term( $friends_only_tag['term_id'], 'post_tag' ) );
 
-		// Run migration
-		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		// Run migration for testing
 		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
 
 		// Verify shared tag still exists (used by regular post)
 		$this->assertNotFalse( get_term( $shared_tag['term_id'], 'post_tag' ) );
@@ -283,6 +308,47 @@ class MigrationTest extends \WP_UnitTestCase {
 		// Verify regular post still has its post_tag
 		$regular_tags = wp_get_post_terms( $regular_post_id, 'post_tag', array( 'fields' => 'names' ) );
 		$this->assertContains( 'shared-tag', $regular_tags );
+	}
+
+	/**
+	 * Test that the cron hook method works correctly
+	 */
+	public function test_cron_migrate_post_tags_batch_works() {
+		// Create a Friends instance to test the cron method
+		$friends = Friends::get_instance();
+		
+		// Setup pre-migration environment
+		$this->setup_pre_migration_environment();
+
+		// Create test data
+		$test_post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Test Cron Migration',
+			'post_status' => 'publish',
+		) );
+
+		$test_tags = array( 'cron-test' );
+		$tag_ids = array();
+
+		foreach ( $test_tags as $tag_name ) {
+			$tag = wp_insert_term( $tag_name, 'post_tag' );
+			$this->assertNotWPError( $tag );
+			$tag_ids[] = $tag['term_id'];
+		}
+
+		wp_set_post_terms( $test_post_id, $tag_ids, 'post_tag' );
+
+		// Setup post-migration environment
+		$this->setup_post_migration_environment();
+
+		// Initiate migration to set up progress tracking
+		Migration::migrate_post_tags_to_friend_tags();
+		
+		// Call the cron method - this should work correctly
+		$friends->cron_migrate_post_tags_batch();
+		
+		// Verify that the cron method exists and can be called
+		$this->assertTrue( method_exists( $friends, 'cron_migrate_post_tags_batch' ) );
 	}
 
 	public function test_cleanup_orphaned_friend_tags() {

@@ -202,6 +202,7 @@ class Friends {
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'cron_schedules', array( $this, 'add_fifteen_minutes_interval' ) ); // phpcs:ignore WordPressVIPMinimum.Performance.IntervalInSeconds.IntervalInSeconds
 		add_action( 'cron_friends_delete_old_posts', array( $this, 'cron_friends_delete_outdated_posts' ) );
+		add_action( 'friends_migrate_post_tags_batch', array( $this, 'cron_migrate_post_tags_batch' ) );
 		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
@@ -1466,6 +1467,15 @@ class Friends {
 		}
 		$this->delete_outdated_posts();
 		$this->cleanup_orphaned_friend_tags();
+	}
+
+	/**
+	 * Cron function to process post tag migration batches.
+	 * Ensures the Migration class is loaded before calling the batch method.
+	 */
+	public function cron_migrate_post_tags_batch() {
+		require_once __DIR__ . '/class-migration.php';
+		Migration::migrate_post_tags_batch();
 	}
 
 	/**

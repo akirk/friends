@@ -838,6 +838,9 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	public function test_feed_processing_with_hashtags_and_setting() {
+		// Ensure auto-tagging is enabled for this test
+		delete_option( 'friends_disable_auto_tagging' );
+		
 		// Test that hashtags are processed and applied correctly
 		$user = new User( $this->alex );
 		

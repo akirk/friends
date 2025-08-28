@@ -632,22 +632,23 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_auto_tagging_hashtags_and_mentions() {
+		// Ensure auto-tagging is enabled for this test
+		delete_option( 'friends_disable_auto_tagging' );
+		
 		$now = time() - 10;
 		$status_id = 456;
 
-		$local_user = get_current_user_id();
-		
 		$posts = get_posts(
 			array(
 				'post_type' => Friends::CPT,
-				'author'    => $local_user,
+				'author'    => $this->friend_id,
 			)
 		);
 
 		$post_count = count( $posts );
 
-		// Get the local user's ActivityPub ID - use a manual ID since actor setup is complex  
-		$current_user = get_userdata( $local_user );
+		// Get the current user's ActivityPub ID for CC mention
+		$current_user = get_userdata( get_current_user_id() );
 		$local_activitypub_id = 'https://example.com/users/' . $current_user->user_login;
 
 		// Create ActivityPub post with hashtags and CC mention
@@ -682,20 +683,24 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			),
 		);
 		
-		$response = $this->send_activitypub_message( $local_user, $activity_data );
+		$response = $this->send_activitypub_message( get_current_user_id(), $activity_data, true );
 
-		$posts = get_posts(
+		$new_posts = get_posts(
 			array(
 				'post_type' => Friends::CPT,
-				'author'    => $local_user,
+				'author'    => $this->friend_id,
 			)
 		);
-
-		$this->assertEquals( $post_count + 1, count( $posts ) );
-		$this->assertStringContainsString( $content, $posts[0]->post_content );
+		
+		// Debug: check response and post creation
+		error_log( 'ActivityPub response status: ' . $response->get_status() );
+		error_log( 'Posts before: ' . $post_count . ', Posts after: ' . count( $new_posts ) );
+		
+		$this->assertEquals( $post_count + 1, count( $new_posts ) );
+		$this->assertStringContainsString( $content, $new_posts[0]->post_content );
 
 		// Check that hashtags are applied
-		$tags = wp_get_post_terms( $posts[0]->ID, Friends::TAG_TAXONOMY );
+		$tags = wp_get_post_terms( $new_posts[0]->ID, Friends::TAG_TAXONOMY );
 		$tag_names = wp_list_pluck( $tags, 'name' );
 		
 		$this->assertContains( 'hashtag', $tag_names );
