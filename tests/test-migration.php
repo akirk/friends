@@ -582,7 +582,7 @@ class MigrationTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test comprehensive post_tag count recalculation and cleanup
+	 * Test Friends-focused post_tag count recalculation and cleanup
 	 */
 	public function test_recalculate_all_post_tag_counts() {
 		// Setup environment
@@ -602,6 +602,17 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertNotWPError( $orphaned_tag1 );
 		$this->assertNotWPError( $orphaned_tag2 );
 		$this->assertNotWPError( $shared_tag );
+		
+		// Create corresponding friend_tag terms (so they'll be included in recalculation)
+		$friend_active_tag = wp_insert_term( 'active-tag', Friends::TAG_TAXONOMY );
+		$friend_orphaned_tag1 = wp_insert_term( 'orphaned-tag-1', Friends::TAG_TAXONOMY );
+		$friend_orphaned_tag2 = wp_insert_term( 'orphaned-tag-2', Friends::TAG_TAXONOMY );
+		$friend_shared_tag = wp_insert_term( 'shared-tag', Friends::TAG_TAXONOMY );
+		
+		$this->assertNotWPError( $friend_active_tag );
+		$this->assertNotWPError( $friend_orphaned_tag1 );
+		$this->assertNotWPError( $friend_orphaned_tag2 );
+		$this->assertNotWPError( $friend_shared_tag );
 		
 		// Assign tags to posts
 		wp_set_post_terms( $regular_post1, array( $active_tag['term_id'], $shared_tag['term_id'] ), 'post_tag' );
@@ -668,26 +679,32 @@ class MigrationTest extends \WP_UnitTestCase {
 		$friends = new Friends();
 		$this->setup_post_migration_environment();
 		
-		// Create some post_tag terms
+		// Create some post_tag terms with friend_tag equivalents
 		$tag1 = wp_insert_term( 'test-tag-1', 'post_tag' );
 		$tag2 = wp_insert_term( 'test-tag-2', 'post_tag' );
+		$friend_tag1 = wp_insert_term( 'test-tag-1', Friends::TAG_TAXONOMY );
+		$friend_tag2 = wp_insert_term( 'test-tag-2', Friends::TAG_TAXONOMY );
 		$this->assertNotWPError( $tag1 );
 		$this->assertNotWPError( $tag2 );
+		$this->assertNotWPError( $friend_tag1 );
+		$this->assertNotWPError( $friend_tag2 );
 		
 		// Test Site Health when tags exist
 		$result = $friends->site_health_test_post_tag_count_recalculation();
 		$this->assertEquals( 'recommended', $result['status'] );
-		$this->assertStringContainsString( 'Post tag count recalculation available', $result['label'] );
-		$this->assertStringContainsString( 'Found 2 post_tag terms', $result['description'] );
-		$this->assertStringContainsString( 'Recalculate All Post Tag Counts', $result['actions'] );
+		$this->assertStringContainsString( 'Friends post tag count recalculation available', $result['label'] );
+		$this->assertStringContainsString( 'Found 2 post_tag terms that have friend_tag equivalents', $result['description'] );
+		$this->assertStringContainsString( 'Recalculate Friends Post Tag Counts', $result['actions'] );
 		
 		// Clean up all tags
 		wp_delete_term( $tag1['term_id'], 'post_tag' );
 		wp_delete_term( $tag2['term_id'], 'post_tag' );
+		wp_delete_term( $friend_tag1['term_id'], Friends::TAG_TAXONOMY );
+		wp_delete_term( $friend_tag2['term_id'], Friends::TAG_TAXONOMY );
 		
 		// Test Site Health when no tags exist
 		$result = $friends->site_health_test_post_tag_count_recalculation();
 		$this->assertEquals( 'good', $result['status'] );
-		$this->assertStringContainsString( 'No post tags to recalculate', $result['label'] );
+		$this->assertStringContainsString( 'No Friends post tags to recalculate', $result['label'] );
 	}
 }
