@@ -1638,15 +1638,29 @@ class Friends {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Count post_tag terms that also exist in friend_tag taxonomy with 0 count.
+		// Count ALL post_tag terms with 0 count.
 		$orphaned_count = $wpdb->get_var(
 			"SELECT COUNT(*)
-			FROM {$wpdb->terms} pt
-			INNER JOIN {$wpdb->term_taxonomy} ptt ON pt.term_id = ptt.term_id AND ptt.taxonomy = 'post_tag'
-			INNER JOIN {$wpdb->terms} ft ON pt.slug = ft.slug
-			INNER JOIN {$wpdb->term_taxonomy} ftt ON ft.term_id = ftt.term_id AND ftt.taxonomy = 'friend_tag'
-			WHERE ptt.count = 0"
+			FROM {$wpdb->terms} t
+			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+			WHERE tt.taxonomy = 'post_tag' AND tt.count = 0"
 		);
+
+		// Debug: Log the count
+		error_log( sprintf( 'Friends Debug: Site Health found %d post_tag terms with zero count', $orphaned_count ) );
+
+		// Debug: List the terms with zero count
+		if ( $orphaned_count > 0 ) {
+			$orphaned_terms = $wpdb->get_results(
+				"SELECT t.term_id, t.name, t.slug, tt.count
+				FROM {$wpdb->terms} t
+				INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+				WHERE tt.taxonomy = 'post_tag' AND tt.count = 0"
+			);
+			foreach ( $orphaned_terms as $term ) {
+				error_log( sprintf( 'Friends Debug: Zero count term: "%s" (ID: %d, count: %d)', $term->name, $term->term_id, $term->count ) );
+			}
+		}
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -1664,13 +1678,13 @@ class Friends {
 					sprintf(
 						// translators: %d is the number of orphaned post_tag terms.
 						_n(
-							'%d orphaned post_tag term was found that exists in the friend_tag taxonomy but has no associated posts.',
-							'%d orphaned post_tag terms were found that exist in the friend_tag taxonomy but have no associated posts.',
+							'%d orphaned post_tag term was found with no associated posts.',
+							'%d orphaned post_tag terms were found with no associated posts.',
 							$orphaned_count,
 							'friends'
 						),
 						$orphaned_count
-					) . ' ' . __( 'These tags were likely created by Friends posts before migration and can be safely removed to keep your tag cloud clean.', 'friends' )
+					) . ' ' . __( 'These tags may have been created by Friends posts before migration or other sources and can be safely removed to keep your tag cloud clean.', 'friends' )
 				),
 				'actions'     => sprintf(
 					'<p><a href="#" class="button" onclick="friendsCleanupPostTags(); return false;">%s</a></p>',
