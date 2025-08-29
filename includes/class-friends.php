@@ -208,6 +208,7 @@ class Friends {
 		// Site Health integration.
 		add_filter( 'site_status_tests', array( $this, 'add_site_health_tests' ) );
 		add_action( 'wp_ajax_friends_restart_migration', array( $this, 'ajax_restart_migration' ) );
+		add_action( 'wp_ajax_friends_cleanup_post_tags', array( $this, 'ajax_cleanup_post_tags' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_site_health_scripts' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
@@ -1495,6 +1496,11 @@ class Friends {
 			'test'  => array( $this, 'site_health_test_migration' ),
 		);
 
+		$tests['direct']['friends_post_tag_cleanup'] = array(
+			'label' => __( 'Friends Post Tag Cleanup', 'friends' ),
+			'test'  => array( $this, 'site_health_test_post_tag_cleanup' ),
+		);
+
 		return $tests;
 	}
 
@@ -1615,6 +1621,77 @@ class Friends {
 	}
 
 	/**
+	 * Site Health test for orphaned post_tag cleanup.
+	 *
+	 * @return array Site Health test result.
+	 */
+	public function site_health_test_post_tag_cleanup() {
+		require_once __DIR__ . '/class-migration.php';
+
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Count post_tag terms that also exist in friend_tag taxonomy with 0 count.
+		$orphaned_count = $wpdb->get_var(
+			"SELECT COUNT(*)
+			FROM {$wpdb->terms} pt
+			INNER JOIN {$wpdb->term_taxonomy} ptt ON pt.term_id = ptt.term_id AND ptt.taxonomy = 'post_tag'
+			INNER JOIN {$wpdb->terms} ft ON pt.slug = ft.slug
+			INNER JOIN {$wpdb->term_taxonomy} ftt ON ft.term_id = ftt.term_id AND ftt.taxonomy = 'friend_tag'
+			WHERE ptt.count = 0"
+		);
+
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( $orphaned_count > 0 ) {
+			$result = array(
+				'label'       => __( 'Orphaned post tags found', 'friends' ),
+				'status'      => 'recommended',
+				'badge'       => array(
+					'label' => __( 'Friends', 'friends' ),
+					'color' => 'orange',
+				),
+				'description' => sprintf(
+					'<p>%s</p>',
+					sprintf(
+						// translators: %d is the number of orphaned post_tag terms.
+						_n(
+							'%d orphaned post_tag term was found that exists in the friend_tag taxonomy but has no associated posts.',
+							'%d orphaned post_tag terms were found that exist in the friend_tag taxonomy but have no associated posts.',
+							$orphaned_count,
+							'friends'
+						),
+						$orphaned_count
+					) . ' ' . __( 'These tags were likely created by Friends posts before migration and can be safely removed to keep your tag cloud clean.', 'friends' )
+				),
+				'actions'     => sprintf(
+					'<p><a href="#" class="button" onclick="friendsCleanupPostTags(); return false;">%s</a></p>',
+					__( 'Clean Up Orphaned Tags', 'friends' )
+				),
+				'test'        => 'friends_post_tag_cleanup',
+			);
+		} else {
+			$result = array(
+				'label'       => __( 'No orphaned post tags found', 'friends' ),
+				'status'      => 'good',
+				'badge'       => array(
+					'label' => __( 'Friends', 'friends' ),
+					'color' => 'green',
+				),
+				'description' => sprintf(
+					'<p>%s</p>',
+					__( 'Your post_tag taxonomy is clean. No orphaned tags from Friends posts were found.', 'friends' )
+				),
+				'test'        => 'friends_post_tag_cleanup',
+			);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * AJAX handler to restart migration.
 	 */
 	public function ajax_restart_migration() {
@@ -1630,6 +1707,49 @@ class Friends {
 		wp_send_json_success(
 			array(
 				'message' => __( 'Migration has been restarted and is running in the background.', 'friends' ),
+			)
+		);
+	}
+
+	/**
+	 * AJAX handler to clean up orphaned post tags.
+	 */
+	public function ajax_cleanup_post_tags() {
+		check_ajax_referer( 'friends_cleanup_post_tags', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( __( 'You do not have permission to perform this action.', 'friends' ) );
+		}
+
+		require_once __DIR__ . '/class-migration.php';
+		$results = Migration::cleanup_orphaned_post_tags();
+
+		if ( $results['deleted'] > 0 ) {
+			$message = sprintf(
+				// translators: %1$d is the number of deleted tags, %2$d is the number checked.
+				_n(
+					'Cleanup completed: %1$d orphaned post_tag was deleted (%2$d tags checked).',
+					'Cleanup completed: %1$d orphaned post_tags were deleted (%2$d tags checked).',
+					$results['deleted'],
+					'friends'
+				),
+				$results['deleted'],
+				$results['checked']
+			);
+		} elseif ( $results['checked'] > 0 ) {
+			$message = sprintf(
+				// translators: %d is the number of tags checked.
+				__( 'Cleanup completed: All %d tags checked were already clean (no deletions needed).', 'friends' ),
+				$results['checked']
+			);
+		} else {
+			$message = __( 'No orphaned post_tags were found to clean up.', 'friends' );
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => $message,
+				'results' => $results,
 			)
 		);
 	}
@@ -1657,6 +1777,12 @@ class Friends {
 			}
 		}
 		
+		function friendsCleanupPostTags() {
+			if (confirm('" . esc_js( __( 'This will clean up orphaned post_tag terms that were created by Friends posts. Only unused tags will be deleted. Continue?', 'friends' ) ) . "')) {
+				friendsRunCleanup();
+			}
+		}
+		
 		function friendsRunMigration() {
 			fetch(ajaxurl, {
 				method: 'POST',
@@ -1680,6 +1806,32 @@ class Friends {
 			.catch(error => {
 				console.error('Error:', error);
 				alert('An error occurred while starting the migration.');
+			});
+		}
+		
+		function friendsRunCleanup() {
+			fetch(ajaxurl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: new URLSearchParams({
+					action: 'friends_cleanup_post_tags',
+					nonce: '" . wp_create_nonce( 'friends_cleanup_post_tags' ) . "'
+				})
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert(data.data.message);
+					location.reload();
+				} else {
+					alert('Error: ' + (data.data || 'Unknown error'));
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('An error occurred while cleaning up post tags.');
 			});
 		}
 		";

@@ -457,6 +457,90 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Re-run Migration', $result['actions'] );
 	}
 
+	/**
+	 * Test post_tag cleanup functionality
+	 */
+	public function test_cleanup_orphaned_post_tags() {
+		// Setup both taxonomies
+		$this->setup_pre_migration_environment();
+		$this->setup_post_migration_environment();
+		
+		// Create a post_tag and a friend_tag with the same slug
+		$post_tag = wp_insert_term( 'duplicate-tag', 'post_tag' );
+		$friend_tag = wp_insert_term( 'duplicate-tag', Friends::TAG_TAXONOMY );
+		$this->assertNotWPError( $post_tag );
+		$this->assertNotWPError( $friend_tag );
+		
+		// Create another post_tag that will be orphaned
+		$orphaned_tag = wp_insert_term( 'orphaned-duplicate', 'post_tag' );
+		$orphaned_friend_tag = wp_insert_term( 'orphaned-duplicate', Friends::TAG_TAXONOMY );
+		$this->assertNotWPError( $orphaned_tag );
+		$this->assertNotWPError( $orphaned_friend_tag );
+		
+		// Create a regular post and assign the first post_tag (so it won't be deleted)
+		$regular_post = $this->factory->post->create( array(
+			'post_type' => 'post',
+		) );
+		wp_set_post_terms( $regular_post, array( $post_tag['term_id'] ), 'post_tag' );
+		
+		// Assign the friend_tag to a Friends post
+		$friends_post = $this->factory->post->create( array(
+			'post_type' => Friends::CPT,
+		) );
+		wp_set_post_terms( $friends_post, array( $friend_tag['term_id'] ), Friends::TAG_TAXONOMY );
+		
+		// The orphaned post_tag should have count 0, while the first should have count 1
+		wp_update_term_count( $post_tag['term_id'], 'post_tag' );
+		wp_update_term_count( $orphaned_tag['term_id'], 'post_tag' );
+		
+		// Run cleanup
+		$results = Migration::cleanup_orphaned_post_tags();
+		
+		// Should have checked only the orphaned tag (only tags with count=0 are checked)
+		$this->assertEquals( 1, $results['checked'] );
+		$this->assertEquals( 1, $results['recalculated'] );
+		
+		// The orphaned one should be deleted
+		$this->assertEquals( 1, $results['deleted'] );
+		
+		// Verify the tag with posts still exists
+		$surviving_tag = get_term( $post_tag['term_id'], 'post_tag' );
+		$this->assertNotWPError( $surviving_tag );
+		$this->assertEquals( 'duplicate-tag', $surviving_tag->name );
+		
+		// Verify the orphaned tag was deleted
+		$deleted_tag = get_term( $orphaned_tag['term_id'], 'post_tag' );
+		$this->assertTrue( is_wp_error( $deleted_tag ) || is_null( $deleted_tag ) );
+	}
+
+	/**
+	 * Test post_tag cleanup Site Health integration
+	 */
+	public function test_post_tag_cleanup_site_health() {
+		$friends = Friends::get_instance();
+		
+		// Setup both taxonomies
+		$this->setup_pre_migration_environment();
+		$this->setup_post_migration_environment();
+		
+		// Test when no orphaned tags exist
+		$result = $friends->site_health_test_post_tag_cleanup();
+		$this->assertEquals( 'good', $result['status'] );
+		$this->assertStringContainsString( 'No orphaned post tags found', $result['label'] );
+		
+		// Create orphaned post_tag that also exists in friend_tag
+		$post_tag = wp_insert_term( 'orphaned-site-health', 'post_tag' );
+		$friend_tag = wp_insert_term( 'orphaned-site-health', Friends::TAG_TAXONOMY );
+		$this->assertNotWPError( $post_tag );
+		$this->assertNotWPError( $friend_tag );
+		
+		// Test Site Health when orphaned tags exist
+		$result = $friends->site_health_test_post_tag_cleanup();
+		$this->assertEquals( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'Orphaned post tags found', $result['label'] );
+		$this->assertStringContainsString( 'Clean Up Orphaned Tags', $result['actions'] );
+	}
+
 	public function test_cleanup_orphaned_friend_tags() {
 		// Create some friend tags
 		$tag1 = wp_insert_term( 'orphaned-tag', Friends::TAG_TAXONOMY );

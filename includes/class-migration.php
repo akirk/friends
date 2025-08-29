@@ -341,6 +341,77 @@ class Migration {
 	}
 
 	/**
+	 * Clean up orphaned post_tag terms that exist in friend_tag taxonomy.
+	 * These are post_tag terms that were originally created by Friends posts
+	 * but are now orphaned after migration to friend_tag taxonomy.
+	 *
+	 * @return array Cleanup results with counts.
+	 */
+	public static function cleanup_orphaned_post_tags() {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Find post_tag terms that also exist in friend_tag taxonomy by slug.
+		$orphaned_tags = $wpdb->get_results(
+			"SELECT pt.term_id as post_tag_id, pt.name, pt.slug, ptt.count as post_tag_count,
+					ft.term_id as friend_tag_id, ftt.count as friend_tag_count
+			FROM {$wpdb->terms} pt
+			INNER JOIN {$wpdb->term_taxonomy} ptt ON pt.term_id = ptt.term_id AND ptt.taxonomy = 'post_tag'
+			INNER JOIN {$wpdb->terms} ft ON pt.slug = ft.slug
+			INNER JOIN {$wpdb->term_taxonomy} ftt ON ft.term_id = ftt.term_id AND ftt.taxonomy = 'friend_tag'
+			WHERE ptt.count = 0"
+		);
+
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		$cleanup_results = array(
+			'checked'        => 0,
+			'recalculated'   => 0,
+			'deleted'        => 0,
+			'tags_processed' => array(),
+		);
+
+		foreach ( $orphaned_tags as $tag_data ) {
+			++$cleanup_results['checked'];
+
+			// Recalculate the post_tag count to be sure it's accurate.
+			wp_update_term_count( $tag_data->post_tag_id, 'post_tag' );
+
+			// Get the updated term to check the real count.
+			$updated_term = get_term( $tag_data->post_tag_id, 'post_tag' );
+
+			if ( $updated_term && ! is_wp_error( $updated_term ) ) {
+				++$cleanup_results['recalculated'];
+
+				// If count is still 0 after recalculation, delete the orphaned post_tag.
+				if ( 0 === $updated_term->count ) {
+					$deleted = wp_delete_term( $tag_data->post_tag_id, 'post_tag' );
+					if ( ! is_wp_error( $deleted ) && $deleted ) {
+						++$cleanup_results['deleted'];
+						$cleanup_results['tags_processed'][] = array(
+							'name'   => $tag_data->name,
+							'slug'   => $tag_data->slug,
+							'action' => 'deleted',
+						);
+					}
+				} else {
+					$cleanup_results['tags_processed'][] = array(
+						'name'   => $tag_data->name,
+						'slug'   => $tag_data->slug,
+						'action' => 'kept',
+						'count'  => $updated_term->count,
+					);
+				}
+			}
+		}
+
+		return $cleanup_results;
+	}
+
+	/**
 	 * Backfill mention tags from Mastodon HTML content (version 4.1.0)
 	 */
 	public static function backfill_mention_tags_from_mastodon_html() {
