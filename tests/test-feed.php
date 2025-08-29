@@ -838,6 +838,11 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	public function test_feed_processing_with_hashtags_and_setting() {
+		// Ensure the friend_tag taxonomy is registered and CPT is using new taxonomy
+		Friends::get_instance()->register_friend_tag_taxonomy();
+		unregister_post_type( Friends::CPT );
+		Friends::get_instance()->register_custom_post_type();
+		
 		// Ensure auto-tagging is enabled for this test
 		delete_option( 'friends_disable_auto_tagging' );
 		
@@ -873,7 +878,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$extract_method->setAccessible( true );
 		$extracted_tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
 		$feed_item->friend_tags = $extracted_tags;
-
+		
 		$feed_items = array( $feed_item );
 		$new_posts = Friends::get_instance()->feed->process_incoming_feed_items( $feed_items, $user_feed );
 
@@ -885,14 +890,16 @@ class FeedTest extends \WP_UnitTestCase {
 		$tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY );
 		$tag_names = wp_list_pluck( $tags, 'name' );
 
-		// Debug output
-		error_log( 'Tags applied: ' . print_r( $tag_names, true ) );
-
 		$this->assertContains( 'feedtest', $tag_names );
 		$this->assertContains( 'unittest', $tag_names );
 	}
 
 	public function test_feed_processing_respects_disable_auto_tagging() {
+		// Ensure the friend_tag taxonomy is registered and CPT is using new taxonomy
+		Friends::get_instance()->register_friend_tag_taxonomy();
+		unregister_post_type( Friends::CPT );
+		Friends::get_instance()->register_custom_post_type();
+		
 		// Enable disable option
 		update_option( 'friends_disable_auto_tagging', true );
 
@@ -939,9 +946,6 @@ class FeedTest extends \WP_UnitTestCase {
 		// Check that hashtags were NOT applied but mentions were
 		$tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY );
 		$tag_names = wp_list_pluck( $tags, 'name' );
-
-		// Debug output
-		error_log( 'Tags applied (disabled test): ' . print_r( $tag_names, true ) );
 
 		$this->assertNotContains( 'disabledhashtag', $tag_names );
 		$this->assertContains( 'mention-testuser', $tag_names );
