@@ -351,6 +351,112 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertTrue( method_exists( $friends, 'cron_migrate_post_tags_batch' ) );
 	}
 
+	/**
+	 * Test migration status methods
+	 */
+	public function test_migration_status_methods() {
+		// Reset any existing status
+		Migration::reset_migration_status();
+		
+		// Test initial status
+		$status = Migration::get_migration_status();
+		$this->assertFalse( $status['completed'] );
+		$this->assertFalse( $status['in_progress'] );
+		$this->assertEquals( 0, $status['total'] );
+		$this->assertEquals( 0, $status['processed'] );
+		$this->assertEquals( 0, $status['progress_percent'] );
+		
+		// Test manual trigger
+		$this->setup_pre_migration_environment();
+		
+		// Create test data
+		$test_post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Test Status',
+			'post_status' => 'publish',
+		) );
+		
+		$tag = wp_insert_term( 'status-test', 'post_tag' );
+		$this->assertNotWPError( $tag );
+		wp_set_post_terms( $test_post_id, array( $tag['term_id'] ), 'post_tag' );
+		
+		$this->setup_post_migration_environment();
+		
+		// Test manual trigger
+		Migration::trigger_migration_manually();
+		$status = Migration::get_migration_status();
+		$this->assertTrue( $status['in_progress'] );
+		$this->assertEquals( 1, $status['total'] );
+		
+		// Complete the migration
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
+		
+		// Test completed status
+		$status = Migration::get_migration_status();
+		$this->assertTrue( $status['completed'] );
+		$this->assertFalse( $status['in_progress'] );
+		$this->assertGreaterThan( 0, $status['completed_time'] );
+	}
+
+	/**
+	 * Test Site Health integration
+	 */
+	public function test_site_health_integration() {
+		$friends = Friends::get_instance();
+		
+		// Test that Site Health tests are added
+		$tests = array();
+		$tests = $friends->add_site_health_tests( $tests );
+		$this->assertArrayHasKey( 'direct', $tests );
+		$this->assertArrayHasKey( 'friends_post_tag_migration', $tests['direct'] );
+		
+		// Test Site Health test when no migration needed
+		Migration::reset_migration_status();
+		$result = $friends->site_health_test_migration();
+		$this->assertEquals( 'good', $result['status'] );
+		$this->assertStringContainsString( 'No post tag migration needed', $result['label'] );
+		
+		// Test with posts needing migration
+		$this->setup_pre_migration_environment();
+		
+		$test_post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Site Health Test',
+			'post_status' => 'publish',
+		) );
+		
+		$tag = wp_insert_term( 'site-health-test', 'post_tag' );
+		$this->assertNotWPError( $tag );
+		wp_set_post_terms( $test_post_id, array( $tag['term_id'] ), 'post_tag' );
+		
+		$this->setup_post_migration_environment();
+		
+		// Test Site Health when migration is recommended
+		$result = $friends->site_health_test_migration();
+		$this->assertEquals( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'Post tag migration recommended', $result['label'] );
+		$this->assertStringContainsString( 'Start Migration', $result['actions'] );
+		
+		// Start migration and test in-progress status
+		Migration::migrate_post_tags_to_friend_tags();
+		$result = $friends->site_health_test_migration();
+		$this->assertEquals( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'in progress', $result['label'] );
+		
+		// Complete migration
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
+		
+		// Test completed status
+		$result = $friends->site_health_test_migration();
+		$this->assertEquals( 'good', $result['status'] );
+		$this->assertStringContainsString( 'completed', $result['label'] );
+		$this->assertStringContainsString( 'Re-run Migration', $result['actions'] );
+	}
+
 	public function test_cleanup_orphaned_friend_tags() {
 		// Create some friend tags
 		$tag1 = wp_insert_term( 'orphaned-tag', Friends::TAG_TAXONOMY );

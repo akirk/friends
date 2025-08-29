@@ -119,6 +119,11 @@ class Migration {
 			return;
 		}
 
+		// Check if migration has already been completed.
+		if ( get_option( 'friends_tag_migration_completed' ) ) {
+			return;
+		}
+
 		// Count total posts to migrate.
 		global $wpdb;
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -140,11 +145,11 @@ class Migration {
 			return;
 		}
 
-		// Set migration progress tracking.
-		update_option( 'friends_tag_migration_in_progress', true );
-		update_option( 'friends_tag_migration_total', $total_posts );
-		update_option( 'friends_tag_migration_processed', 0 );
-		update_option( 'friends_tag_migration_offset', 0 );
+		// Set migration progress tracking (not autoloaded).
+		update_option( 'friends_tag_migration_in_progress', true, false );
+		update_option( 'friends_tag_migration_total', $total_posts, false );
+		update_option( 'friends_tag_migration_processed', 0, false );
+		update_option( 'friends_tag_migration_offset', 0, false );
 
 		// Schedule the first batch.
 		wp_schedule_single_event( time(), 'friends_migrate_post_tags_batch' );
@@ -234,8 +239,8 @@ class Migration {
 		// Update progress.
 		$processed = (int) get_option( 'friends_tag_migration_processed', 0 );
 		$processed += count( $posts_by_id );
-		update_option( 'friends_tag_migration_processed', $processed );
-		update_option( 'friends_tag_migration_offset', $offset + $batch_size );
+		update_option( 'friends_tag_migration_processed', $processed, false );
+		update_option( 'friends_tag_migration_offset', $offset + $batch_size, false );
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -280,12 +285,60 @@ class Migration {
 		delete_option( 'friends_tag_migration_processed' );
 		delete_option( 'friends_tag_migration_offset' );
 
-		// Log completion.
+		// Mark migration as completed (not autoloaded).
+		update_option( 'friends_tag_migration_completed', time(), false );
 
+		// Log completion.
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		error_log( 'Friends: Post tag migration completed successfully.' );
 	}
 
+	/**
+	 * Get migration status information.
+	 *
+	 * @return array Array with migration status details.
+	 */
+	public static function get_migration_status() {
+		$status = array(
+			'completed'      => (bool) get_option( 'friends_tag_migration_completed' ),
+			'in_progress'    => (bool) get_option( 'friends_tag_migration_in_progress' ),
+			'total'          => (int) get_option( 'friends_tag_migration_total', 0 ),
+			'processed'      => (int) get_option( 'friends_tag_migration_processed', 0 ),
+			'completed_time' => get_option( 'friends_tag_migration_completed' ),
+		);
+
+		if ( $status['total'] > 0 && $status['processed'] > 0 ) {
+			$status['progress_percent'] = min( 100, round( ( $status['processed'] / $status['total'] ) * 100, 1 ) );
+		} else {
+			$status['progress_percent'] = 0;
+		}
+
+		return $status;
+	}
+
+	/**
+	 * Reset migration status to allow re-running migration.
+	 * Useful for manual triggers or development.
+	 */
+	public static function reset_migration_status() {
+		delete_option( 'friends_tag_migration_completed' );
+		delete_option( 'friends_tag_migration_in_progress' );
+		delete_option( 'friends_tag_migration_total' );
+		delete_option( 'friends_tag_migration_processed' );
+		delete_option( 'friends_tag_migration_offset' );
+
+		// Clear any scheduled migration events.
+		wp_clear_scheduled_hook( 'friends_migrate_post_tags_batch' );
+	}
+
+	/**
+	 * Manually trigger post tag migration.
+	 * Resets status first to allow re-running.
+	 */
+	public static function trigger_migration_manually() {
+		self::reset_migration_status();
+		self::migrate_post_tags_to_friend_tags();
+	}
 
 	/**
 	 * Backfill mention tags from Mastodon HTML content (version 4.1.0)

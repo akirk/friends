@@ -205,6 +205,11 @@ class Friends {
 		add_action( 'friends_migrate_post_tags_batch', array( $this, 'cron_migrate_post_tags_batch' ) );
 		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
+		// Site Health integration.
+		add_filter( 'site_status_tests', array( $this, 'add_site_health_tests' ) );
+		add_action( 'wp_ajax_friends_restart_migration', array( $this, 'ajax_restart_migration' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_site_health_scripts' ) );
+
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
 		add_filter( 'friends_frontend_post_types', array( $this, 'add_frontend_post_types' ) );
 
@@ -1476,6 +1481,210 @@ class Friends {
 	public function cron_migrate_post_tags_batch() {
 		require_once __DIR__ . '/class-migration.php';
 		Migration::migrate_post_tags_batch();
+	}
+
+	/**
+	 * Add Friends-specific tests to Site Health.
+	 *
+	 * @param array $tests Site Health tests.
+	 * @return array Modified tests array.
+	 */
+	public function add_site_health_tests( $tests ) {
+		$tests['direct']['friends_post_tag_migration'] = array(
+			'label' => __( 'Friends Post Tag Migration', 'friends' ),
+			'test'  => array( $this, 'site_health_test_migration' ),
+		);
+
+		return $tests;
+	}
+
+	/**
+	 * Site Health test for post tag migration status.
+	 *
+	 * @return array Site Health test result.
+	 */
+	public function site_health_test_migration() {
+		require_once __DIR__ . '/class-migration.php';
+		$status = Migration::get_migration_status();
+
+		if ( $status['completed'] ) {
+			$result = array(
+				'label'       => __( 'Post tag migration completed', 'friends' ),
+				'status'      => 'good',
+				'badge'       => array(
+					'label' => __( 'Friends', 'friends' ),
+					'color' => 'green',
+				),
+				'description' => sprintf(
+					'<p>%s</p>',
+					$status['completed_time'] ? sprintf(
+						// translators: %s is a human-readable time difference.
+						__( 'The migration from post_tag to friend_tag taxonomy was completed %s ago.', 'friends' ),
+						human_time_diff( $status['completed_time'] )
+					) : __( 'The migration from post_tag to friend_tag taxonomy has been completed.', 'friends' )
+				),
+				'actions'     => sprintf(
+					'<p><a href="#" class="button" onclick="friendsRestartMigration(); return false;">%s</a></p>',
+					__( 'Re-run Migration', 'friends' )
+				),
+				'test'        => 'friends_post_tag_migration',
+			);
+		} elseif ( $status['in_progress'] ) {
+			$result = array(
+				'label'       => __( 'Post tag migration in progress', 'friends' ),
+				'status'      => 'recommended',
+				'badge'       => array(
+					'label' => __( 'Friends', 'friends' ),
+					'color' => 'blue',
+				),
+				'description' => sprintf(
+					'<p>%s</p>',
+					sprintf(
+						// translators: %1$d is processed posts, %2$d is total posts, %3$s is percentage.
+						__( 'Migration is currently running. Progress: %1$d of %2$d posts processed (%3$s%%).', 'friends' ),
+						$status['processed'],
+						$status['total'],
+						$status['progress_percent']
+					)
+				),
+				'test'        => 'friends_post_tag_migration',
+			);
+		} else {
+			// Check if migration is needed.
+			global $wpdb;
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+			$posts_to_migrate = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(DISTINCT p.ID)
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+					INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+					WHERE p.post_type = %s AND tt.taxonomy = 'post_tag'",
+					self::CPT
+				)
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+			if ( $posts_to_migrate > 0 ) {
+				$result = array(
+					'label'       => __( 'Post tag migration recommended', 'friends' ),
+					'status'      => 'recommended',
+					'badge'       => array(
+						'label' => __( 'Friends', 'friends' ),
+						'color' => 'orange',
+					),
+					'description' => sprintf(
+						'<p>%s</p>',
+						sprintf(
+							// translators: %d is the number of posts that need migration.
+							_n(
+								'%d Friends post is using the old post_tag taxonomy and should be migrated to the new friend_tag taxonomy.',
+								'%d Friends posts are using the old post_tag taxonomy and should be migrated to the new friend_tag taxonomy.',
+								$posts_to_migrate,
+								'friends'
+							),
+							$posts_to_migrate
+						)
+					),
+					'actions'     => sprintf(
+						'<p><a href="#" class="button button-primary" onclick="friendsStartMigration(); return false;">%s</a></p>',
+						__( 'Start Migration', 'friends' )
+					),
+					'test'        => 'friends_post_tag_migration',
+				);
+			} else {
+				$result = array(
+					'label'       => __( 'No post tag migration needed', 'friends' ),
+					'status'      => 'good',
+					'badge'       => array(
+						'label' => __( 'Friends', 'friends' ),
+						'color' => 'green',
+					),
+					'description' => sprintf(
+						'<p>%s</p>',
+						__( 'All Friends posts are already using the correct friend_tag taxonomy.', 'friends' )
+					),
+					'test'        => 'friends_post_tag_migration',
+				);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * AJAX handler to restart migration.
+	 */
+	public function ajax_restart_migration() {
+		check_ajax_referer( 'friends_restart_migration', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( __( 'You do not have permission to perform this action.', 'friends' ) );
+		}
+
+		require_once __DIR__ . '/class-migration.php';
+		Migration::trigger_migration_manually();
+
+		wp_send_json_success(
+			array(
+				'message' => __( 'Migration has been restarted and is running in the background.', 'friends' ),
+			)
+		);
+	}
+
+	/**
+	 * Enqueue scripts for Site Health page.
+	 *
+	 * @param string $hook_suffix Current admin page hook suffix.
+	 */
+	public function enqueue_site_health_scripts( $hook_suffix ) {
+		if ( 'site-health.php' !== $hook_suffix ) {
+			return;
+		}
+
+		$script = "
+		function friendsStartMigration() {
+			if (confirm('" . esc_js( __( 'This will migrate all post tags to friend tags for Friends posts. This process runs in the background. Continue?', 'friends' ) ) . "')) {
+				friendsRunMigration();
+			}
+		}
+		
+		function friendsRestartMigration() {
+			if (confirm('" . esc_js( __( 'This will restart the post tag migration. Any previous progress will be reset. Continue?', 'friends' ) ) . "')) {
+				friendsRunMigration();
+			}
+		}
+		
+		function friendsRunMigration() {
+			fetch(ajaxurl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: new URLSearchParams({
+					action: 'friends_restart_migration',
+					nonce: '" . wp_create_nonce( 'friends_restart_migration' ) . "'
+				})
+			})
+			.then(response => response.json())
+			.then(data => {
+				if (data.success) {
+					alert(data.data.message);
+					location.reload();
+				} else {
+					alert('Error: ' + (data.data || 'Unknown error'));
+				}
+			})
+			.catch(error => {
+				console.error('Error:', error);
+				alert('An error occurred while starting the migration.');
+			});
+		}
+		";
+
+		wp_add_inline_script( 'jquery', $script );
 	}
 
 	/**

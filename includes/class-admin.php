@@ -669,10 +669,12 @@ class Admin {
 			}
 		}
 
+		$redirect_args = array( 'updated' => '1' );
+
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
+			wp_safe_redirect( add_query_arg( $redirect_args, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
