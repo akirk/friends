@@ -348,67 +348,8 @@ class Migration {
 	 * @return array Cleanup results with counts.
 	 */
 	public static function cleanup_orphaned_post_tags() {
-		global $wpdb;
-
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		// Find post_tag terms that also exist in friend_tag taxonomy by slug.
-		$orphaned_tags = $wpdb->get_results(
-			"SELECT pt.term_id as post_tag_id, pt.name, pt.slug, ptt.count as post_tag_count,
-					ft.term_id as friend_tag_id, ftt.count as friend_tag_count
-			FROM {$wpdb->terms} pt
-			INNER JOIN {$wpdb->term_taxonomy} ptt ON pt.term_id = ptt.term_id AND ptt.taxonomy = 'post_tag'
-			INNER JOIN {$wpdb->terms} ft ON pt.slug = ft.slug
-			INNER JOIN {$wpdb->term_taxonomy} ftt ON ft.term_id = ftt.term_id AND ftt.taxonomy = 'friend_tag'
-			WHERE ptt.count = 0"
-		);
-
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		$cleanup_results = array(
-			'checked'        => 0,
-			'recalculated'   => 0,
-			'deleted'        => 0,
-			'tags_processed' => array(),
-		);
-
-		foreach ( $orphaned_tags as $tag_data ) {
-			++$cleanup_results['checked'];
-
-			// Recalculate the post_tag count to be sure it's accurate.
-			wp_update_term_count( $tag_data->post_tag_id, 'post_tag' );
-
-			// Get the updated term to check the real count.
-			$updated_term = get_term( $tag_data->post_tag_id, 'post_tag' );
-
-			if ( $updated_term && ! is_wp_error( $updated_term ) ) {
-				++$cleanup_results['recalculated'];
-
-				// If count is still 0 after recalculation, delete the orphaned post_tag.
-				if ( 0 === $updated_term->count ) {
-					$deleted = wp_delete_term( $tag_data->post_tag_id, 'post_tag' );
-					if ( ! is_wp_error( $deleted ) && $deleted ) {
-						++$cleanup_results['deleted'];
-						$cleanup_results['tags_processed'][] = array(
-							'name'   => $tag_data->name,
-							'slug'   => $tag_data->slug,
-							'action' => 'deleted',
-						);
-					}
-				} else {
-					$cleanup_results['tags_processed'][] = array(
-						'name'   => $tag_data->name,
-						'slug'   => $tag_data->slug,
-						'action' => 'kept',
-						'count'  => $updated_term->count,
-					);
-				}
-			}
-		}
-
-		return $cleanup_results;
+		// Use the comprehensive cleanup approach instead of Friends-focused.
+		return self::recalculate_all_post_tag_counts();
 	}
 
 	/**
@@ -447,9 +388,6 @@ class Migration {
 
 			$old_count = $tag_data->count;
 
-			// Debug: Log what we're checking
-			error_log( sprintf( 'Friends Debug: Checking post_tag "%s" (ID: %d, old count: %d)', $tag_data->name, $tag_data->term_id, $old_count ) );
-
 			// Calculate the REAL count excluding Friends CPT posts
 			global $wpdb;
 			$real_count = $wpdb->get_var(
@@ -466,7 +404,7 @@ class Migration {
 			);
 
 			// Update the term count in the database to reflect reality (excluding Friends posts)
-			$wpdb->update(
+			$update_result = $wpdb->update(
 				$wpdb->term_taxonomy,
 				array( 'count' => $real_count ),
 				array(
@@ -474,16 +412,11 @@ class Migration {
 					'taxonomy' => 'post_tag',
 				)
 			);
+			// Clear term cache so get_term() returns the updated count.
+			clean_term_cache( $tag_data->term_id, 'post_tag' );
 
 			++$cleanup_results['recalculated'];
-			$new_count = $real_count;
-
-			// Debug: Log count changes
-			if ( $old_count !== $new_count ) {
-				error_log( sprintf( 'Friends Debug: Count corrected for "%s" from %d to %d (excluding Friends posts)', $tag_data->name, $old_count, $new_count ) );
-			}
-
-			error_log( sprintf( 'Friends Debug: Tag "%s" has %d non-Friends posts using it', $tag_data->name, $new_count ) );
+			$new_count = (int) $real_count;
 
 			// Log if count changed or if we're about to delete.
 			if ( $old_count !== $new_count || 0 === $new_count ) {
@@ -499,16 +432,10 @@ class Migration {
 
 			// If count is 0 after recalculation, delete the orphaned post_tag.
 			if ( 0 === $new_count ) {
-				error_log( sprintf( 'Friends Debug: Deleting orphaned post_tag "%s"', $tag_data->name ) );
 				$deleted = wp_delete_term( $tag_data->term_id, 'post_tag' );
 				if ( ! is_wp_error( $deleted ) && $deleted ) {
 					++$cleanup_results['deleted'];
-					error_log( sprintf( 'Friends Debug: Successfully deleted post_tag "%s"', $tag_data->name ) );
-				} else {
-					error_log( sprintf( 'Friends Debug: Failed to delete post_tag "%s": %s', $tag_data->name, is_wp_error( $deleted ) ? $deleted->get_error_message() : 'Unknown error' ) );
 				}
-			} else {
-				error_log( sprintf( 'Friends Debug: Not deleting "%s" because count is %d (not 0)', $tag_data->name, $new_count ) );
 			}
 		}
 

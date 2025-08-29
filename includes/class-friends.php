@@ -1638,29 +1638,25 @@ class Friends {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Count ALL post_tag terms with 0 count.
+		// Count ALL post_tag terms that have no actual post associations (excluding Friends posts).
 		$orphaned_count = $wpdb->get_var(
-			"SELECT COUNT(*)
-			FROM {$wpdb->terms} t
-			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-			WHERE tt.taxonomy = 'post_tag' AND tt.count = 0"
-		);
-
-		// Debug: Log the count
-		error_log( sprintf( 'Friends Debug: Site Health found %d post_tag terms with zero count', $orphaned_count ) );
-
-		// Debug: List the terms with zero count
-		if ( $orphaned_count > 0 ) {
-			$orphaned_terms = $wpdb->get_results(
-				"SELECT t.term_id, t.name, t.slug, tt.count
+			$wpdb->prepare(
+				"SELECT COUNT(*)
 				FROM {$wpdb->terms} t
 				INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-				WHERE tt.taxonomy = 'post_tag' AND tt.count = 0"
-			);
-			foreach ( $orphaned_terms as $term ) {
-				error_log( sprintf( 'Friends Debug: Zero count term: "%s" (ID: %d, count: %d)', $term->name, $term->term_id, $term->count ) );
-			}
-		}
+				LEFT JOIN (
+					SELECT DISTINCT tt2.term_id
+					FROM {$wpdb->term_relationships} tr
+					INNER JOIN {$wpdb->term_taxonomy} tt2 ON tr.term_taxonomy_id = tt2.term_taxonomy_id
+					INNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID
+					WHERE tt2.taxonomy = 'post_tag' 
+					AND p.post_status IN ('publish', 'private')
+					AND p.post_type != %s
+				) used_terms ON t.term_id = used_terms.term_id
+				WHERE tt.taxonomy = 'post_tag' AND used_terms.term_id IS NULL",
+				self::CPT
+			)
+		);
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
