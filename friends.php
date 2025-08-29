@@ -52,6 +52,7 @@ require_once __DIR__ . '/includes/class-notifications.php';
 require_once __DIR__ . '/includes/class-plugin-installer.php';
 require_once __DIR__ . '/includes/class-reactions.php';
 require_once __DIR__ . '/includes/class-rest.php';
+require_once __DIR__ . '/includes/class-site-health.php';
 require_once __DIR__ . '/includes/class-shortcodes.php';
 require_once __DIR__ . '/includes/class-template-loader.php';
 require_once __DIR__ . '/includes/class-third-parties.php';

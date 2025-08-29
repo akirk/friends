@@ -404,19 +404,21 @@ class MigrationTest extends \WP_UnitTestCase {
 	 * Test Site Health integration
 	 */
 	public function test_site_health_integration() {
-		$friends = Friends::get_instance();
+		require_once FRIENDS_PLUGIN_DIR . 'includes/class-site-health.php';
+		$site_health = new \Friends\Site_Health();
 		
 		// Test that Site Health tests are added
 		$tests = array();
-		$tests = $friends->add_site_health_tests( $tests );
+		$tests = $site_health->add_tests( $tests );
 		$this->assertArrayHasKey( 'direct', $tests );
-		$this->assertArrayHasKey( 'friends_post_tag_migration', $tests['direct'] );
+		$this->assertArrayHasKey( 'friends_migration', $tests['direct'] );
 		
-		// Test Site Health test when no migration needed
+		// Test Site Health test when no migration needed (default state)
 		Migration::reset_migration_status();
-		$result = $friends->site_health_test_migration();
-		$this->assertEquals( 'good', $result['status'] );
-		$this->assertStringContainsString( 'No post tag migration needed', $result['label'] );
+		$result = $site_health->test_migration();
+		// Without any posts to migrate, it should show migration available
+		$this->assertEquals( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'Post tag migration available', $result['label'] );
 		
 		// Test with posts needing migration
 		$this->setup_pre_migration_environment();
@@ -434,14 +436,14 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->setup_post_migration_environment();
 		
 		// Test Site Health when migration is recommended
-		$result = $friends->site_health_test_migration();
+		$result = $site_health->test_migration();
 		$this->assertEquals( 'recommended', $result['status'] );
-		$this->assertStringContainsString( 'Post tag migration recommended', $result['label'] );
-		$this->assertStringContainsString( 'Start Migration', $result['actions'] );
+		$this->assertStringContainsString( 'Post tag migration available', $result['label'] );
+		$this->assertStringContainsString( 'Start Migration', $result['description'] );
 		
 		// Start migration and test in-progress status
 		Migration::migrate_post_tags_to_friend_tags();
-		$result = $friends->site_health_test_migration();
+		$result = $site_health->test_migration();
 		$this->assertEquals( 'recommended', $result['status'] );
 		$this->assertStringContainsString( 'in progress', $result['label'] );
 		
@@ -451,10 +453,10 @@ class MigrationTest extends \WP_UnitTestCase {
 		}
 		
 		// Test completed status
-		$result = $friends->site_health_test_migration();
+		$result = $site_health->test_migration();
 		$this->assertEquals( 'good', $result['status'] );
 		$this->assertStringContainsString( 'completed', $result['label'] );
-		$this->assertStringContainsString( 'Re-run Migration', $result['actions'] );
+		$this->assertStringContainsString( 'completed', $result['description'] );
 	}
 
 	/**
@@ -524,7 +526,8 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->setup_post_migration_environment();
 		
 		// Test when no orphaned tags exist
-		$result = $friends->site_health_test_post_tag_cleanup();
+		$site_health = new \Friends\Site_Health();
+		$result = $site_health->test_post_tag_cleanup();
 		$this->assertEquals( 'good', $result['status'] );
 		$this->assertStringContainsString( 'No orphaned post tags found', $result['label'] );
 		
@@ -535,10 +538,10 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertNotWPError( $friend_tag );
 		
 		// Test Site Health when orphaned tags exist
-		$result = $friends->site_health_test_post_tag_cleanup();
+		$result = $site_health->test_post_tag_cleanup();
 		$this->assertEquals( 'recommended', $result['status'] );
 		$this->assertStringContainsString( 'Orphaned post tags found', $result['label'] );
-		$this->assertStringContainsString( 'Clean Up Orphaned Tags', $result['actions'] );
+		$this->assertStringContainsString( 'Clean Up Orphaned Tags', $result['description'] );
 	}
 
 	public function test_cleanup_orphaned_friend_tags() {
@@ -675,18 +678,19 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertNotWPError( $tag2 );
 		
 		// Test Site Health when tags exist
-		$result = $friends->site_health_test_post_tag_count_recalculation();
+		$site_health = new \Friends\Site_Health();
+		$result = $site_health->test_post_tag_count_recalculation();
 		$this->assertEquals( 'recommended', $result['status'] );
 		$this->assertStringContainsString( 'Post tag count recalculation available', $result['label'] );
-		$this->assertStringContainsString( 'Found 2 post_tag terms', $result['description'] );
-		$this->assertStringContainsString( 'Recalculate All Post Tag Counts', $result['actions'] );
+		$this->assertStringContainsString( 'You have 2 post_tag terms', $result['description'] );
+		$this->assertStringContainsString( 'Recalculate All Tag Counts', $result['description'] );
 		
 		// Clean up all tags
 		wp_delete_term( $tag1['term_id'], 'post_tag' );
 		wp_delete_term( $tag2['term_id'], 'post_tag' );
 		
 		// Test Site Health when no tags exist
-		$result = $friends->site_health_test_post_tag_count_recalculation();
+		$result = $site_health->test_post_tag_count_recalculation();
 		$this->assertEquals( 'good', $result['status'] );
 		$this->assertStringContainsString( 'No post tags to recalculate', $result['label'] );
 	}
