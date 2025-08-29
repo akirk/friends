@@ -412,9 +412,9 @@ class Migration {
 	}
 
 	/**
-	 * Comprehensive post_tag count recalculation and cleanup.
-	 * This recalculates counts for ALL post_tag terms and removes any with zero count.
-	 * This catches orphaned tags that don't have friend_tag counterparts.
+	 * Recalculate post_tag counts and cleanup for Friends-related tags.
+	 * This recalculates counts for post_tag terms that have friend_tag equivalents
+	 * and removes any with zero count after recalculation.
 	 *
 	 * @return array Cleanup results with counts.
 	 */
@@ -424,12 +424,13 @@ class Migration {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Get all post_tag terms.
+		// Get post_tag terms that also exist in friend_tag taxonomy by slug.
 		$all_post_tags = $wpdb->get_results(
-			"SELECT t.term_id, t.name, t.slug, tt.count
-			FROM {$wpdb->terms} t
-			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-			WHERE tt.taxonomy = 'post_tag'"
+			"SELECT pt.term_id, pt.name, pt.slug, ptt.count
+			FROM {$wpdb->terms} pt
+			INNER JOIN {$wpdb->term_taxonomy} ptt ON pt.term_id = ptt.term_id AND ptt.taxonomy = 'post_tag'
+			INNER JOIN {$wpdb->terms} ft ON pt.slug = ft.slug
+			INNER JOIN {$wpdb->term_taxonomy} ftt ON ft.term_id = ftt.term_id AND ftt.taxonomy = 'friend_tag'"
 		);
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
