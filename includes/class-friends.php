@@ -1709,13 +1709,12 @@ class Friends {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Count post_tag terms that have friend_tag equivalents.
+		// Count all post_tag terms.
 		$total_post_tags = $wpdb->get_var(
 			"SELECT COUNT(*)
-			FROM {$wpdb->terms} pt
-			INNER JOIN {$wpdb->term_taxonomy} ptt ON pt.term_id = ptt.term_id AND ptt.taxonomy = 'post_tag'
-			INNER JOIN {$wpdb->terms} ft ON pt.slug = ft.slug
-			INNER JOIN {$wpdb->term_taxonomy} ftt ON ft.term_id = ftt.term_id AND ftt.taxonomy = 'friend_tag'"
+			FROM {$wpdb->terms} t
+			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+			WHERE tt.taxonomy = 'post_tag'"
 		);
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -1723,7 +1722,7 @@ class Friends {
 
 		if ( $total_post_tags > 0 ) {
 			$result = array(
-				'label'       => __( 'Friends post tag count recalculation available', 'friends' ),
+				'label'       => __( 'Post tag count recalculation available', 'friends' ),
 				'status'      => 'recommended',
 				'badge'       => array(
 					'label' => __( 'Friends', 'friends' ),
@@ -1733,25 +1732,25 @@ class Friends {
 					'<p>%s</p><p>%s</p>',
 					sprintf(
 						// translators: %d is the number of post_tag terms.
-						__( 'Found %d post_tag terms that have friend_tag equivalents. Some may have outdated counts or be orphaned after Friends migration.', 'friends' ),
+						__( 'Found %d post_tag terms. Some may have outdated counts or be orphaned tags (excluding Friends posts which now use friend_tag taxonomy).', 'friends' ),
 						$total_post_tags
 					),
 					sprintf(
 						'<button type="button" class="button button-primary" onclick="friendsRecalculatePostTagCounts(this)" data-nonce="%s">%s</button>',
 						wp_create_nonce( 'friends_recalculate_post_tag_counts' ),
-						__( 'Recalculate Friends Post Tag Counts and Clean Up', 'friends' )
+						__( 'Recalculate All Post Tag Counts and Clean Up', 'friends' )
 					)
 				),
 				'actions'     => sprintf(
 					'<p><a href="#" onclick="friendsRecalculatePostTagCounts(this); return false;" data-nonce="%s">%s</a></p>',
 					wp_create_nonce( 'friends_recalculate_post_tag_counts' ),
-					__( 'Recalculate Friends Post Tag Counts and Clean Up', 'friends' )
+					__( 'Recalculate All Post Tag Counts and Clean Up', 'friends' )
 				),
 				'test'        => 'friends_post_tag_count_recalculation',
 			);
 		} else {
 			$result = array(
-				'label'       => __( 'No Friends post tags to recalculate', 'friends' ),
+				'label'       => __( 'No post tags to recalculate', 'friends' ),
 				'status'      => 'good',
 				'badge'       => array(
 					'label' => __( 'Friends', 'friends' ),
@@ -1759,7 +1758,7 @@ class Friends {
 				),
 				'description' => sprintf(
 					'<p>%s</p>',
-					__( 'No post_tag terms with friend_tag equivalents were found, so no Friends-related recalculation is needed.', 'friends' )
+					__( 'No post_tag terms were found, so no recalculation is needed.', 'friends' )
 				),
 				'test'        => 'friends_post_tag_count_recalculation',
 			);
@@ -1848,8 +1847,8 @@ class Friends {
 			$message = sprintf(
 				// translators: %1$d is the number of deleted tags, %2$d is the number checked, %3$d is the number recalculated.
 				_n(
-					'Friends cleanup completed: %1$d orphaned post_tag was deleted after recalculating %3$d Friends-related tags (%2$d total tags checked).',
-					'Friends cleanup completed: %1$d orphaned post_tags were deleted after recalculating %3$d Friends-related tags (%2$d total tags checked).',
+					'Cleanup completed: %1$d orphaned post_tag was deleted after recalculating %3$d tags (%2$d total tags checked). Counts now exclude Friends posts.',
+					'Cleanup completed: %1$d orphaned post_tags were deleted after recalculating %3$d tags (%2$d total tags checked). Counts now exclude Friends posts.',
 					$results['deleted'],
 					'friends'
 				),
@@ -1860,12 +1859,12 @@ class Friends {
 		} elseif ( $results['recalculated'] > 0 ) {
 			$message = sprintf(
 				// translators: %1$d is the number recalculated, %2$d is the number checked.
-				__( 'Friends cleanup completed: %1$d Friends-related tag counts updated, %2$d total tags checked (no deletions needed).', 'friends' ),
+				__( 'Cleanup completed: %1$d post_tag counts updated, %2$d total tags checked (no deletions needed). Counts now exclude Friends posts.', 'friends' ),
 				$results['recalculated'],
 				$results['checked']
 			);
 		} else {
-			$message = __( 'No Friends-related post_tags were found to recalculate or clean up.', 'friends' );
+			$message = __( 'No post_tags were found to recalculate or clean up.', 'friends' );
 		}
 
 		wp_send_json_success(
@@ -1906,7 +1905,7 @@ class Friends {
 		}
 		
 		function friendsRecalculatePostTagCounts(button) {
-			if (confirm('" . esc_js( __( 'This will recalculate counts for post_tag terms that have friend_tag equivalents and delete any with zero count. This focuses on Friends-related tags only. Continue?', 'friends' ) ) . "')) {
+			if (confirm('" . esc_js( __( 'This will recalculate counts for ALL post_tag terms (excluding Friends posts) and delete any with zero count. This includes both Friends-related and regular post tags. Continue?', 'friends' ) ) . "')) {
 				const nonce = button.getAttribute('data-nonce');
 				friendsRunRecalculation(nonce);
 			}
