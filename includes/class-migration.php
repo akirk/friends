@@ -412,6 +412,77 @@ class Migration {
 	}
 
 	/**
+	 * Comprehensive post_tag count recalculation and cleanup.
+	 * This recalculates counts for ALL post_tag terms and removes any with zero count.
+	 * This catches orphaned tags that don't have friend_tag counterparts.
+	 *
+	 * @return array Cleanup results with counts.
+	 */
+	public static function recalculate_all_post_tag_counts() {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		// Get all post_tag terms.
+		$all_post_tags = $wpdb->get_results(
+			"SELECT t.term_id, t.name, t.slug, tt.count
+			FROM {$wpdb->terms} t
+			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+			WHERE tt.taxonomy = 'post_tag'"
+		);
+
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		$cleanup_results = array(
+			'checked'        => 0,
+			'recalculated'   => 0,
+			'deleted'        => 0,
+			'tags_processed' => array(),
+		);
+
+		foreach ( $all_post_tags as $tag_data ) {
+			++$cleanup_results['checked'];
+
+			$old_count = $tag_data->count;
+
+			// Recalculate the post_tag count.
+			wp_update_term_count( $tag_data->term_id, 'post_tag' );
+
+			// Get the updated term to check the real count.
+			$updated_term = get_term( $tag_data->term_id, 'post_tag' );
+
+			if ( $updated_term && ! is_wp_error( $updated_term ) ) {
+				++$cleanup_results['recalculated'];
+
+				$new_count = $updated_term->count;
+
+				// Log if count changed or if we're about to delete.
+				if ( $old_count !== $new_count || 0 === $new_count ) {
+					$cleanup_results['tags_processed'][] = array(
+						'name'      => $tag_data->name,
+						'slug'      => $tag_data->slug,
+						'old_count' => $old_count,
+						'new_count' => $new_count,
+						'action'    => 0 === $new_count ? 'deleted' : 'count_updated',
+					);
+				}
+
+				// If count is 0 after recalculation, delete the orphaned post_tag.
+				if ( 0 === $new_count ) {
+					$deleted = wp_delete_term( $tag_data->term_id, 'post_tag' );
+					if ( ! is_wp_error( $deleted ) && $deleted ) {
+						++$cleanup_results['deleted'];
+					}
+				}
+			}
+		}
+
+		return $cleanup_results;
+	}
+
+	/**
 	 * Backfill mention tags from Mastodon HTML content (version 4.1.0)
 	 */
 	public static function backfill_mention_tags_from_mastodon_html() {

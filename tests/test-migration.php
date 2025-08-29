@@ -580,4 +580,114 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertNotFalse( $used_tag );
 		$this->assertEquals( 'used-tag', $used_tag->name );
 	}
+
+	/**
+	 * Test comprehensive post_tag count recalculation and cleanup
+	 */
+	public function test_recalculate_all_post_tag_counts() {
+		// Setup environment
+		$this->setup_post_migration_environment();
+		
+		// Create regular posts with post_tags
+		$regular_post1 = $this->factory->post->create( array( 'post_type' => 'post' ) );
+		$regular_post2 = $this->factory->post->create( array( 'post_type' => 'post' ) );
+		
+		// Create various post_tag terms
+		$active_tag = wp_insert_term( 'active-tag', 'post_tag' );
+		$orphaned_tag1 = wp_insert_term( 'orphaned-tag-1', 'post_tag' );
+		$orphaned_tag2 = wp_insert_term( 'orphaned-tag-2', 'post_tag' );
+		$shared_tag = wp_insert_term( 'shared-tag', 'post_tag' );
+		
+		$this->assertNotWPError( $active_tag );
+		$this->assertNotWPError( $orphaned_tag1 );
+		$this->assertNotWPError( $orphaned_tag2 );
+		$this->assertNotWPError( $shared_tag );
+		
+		// Assign tags to posts
+		wp_set_post_terms( $regular_post1, array( $active_tag['term_id'], $shared_tag['term_id'] ), 'post_tag' );
+		wp_set_post_terms( $regular_post2, array( $shared_tag['term_id'] ), 'post_tag' );
+		
+		// Manually mess up some counts to simulate outdated data
+		global $wpdb;
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		$wpdb->update(
+			$wpdb->term_taxonomy,
+			array( 'count' => 99 ),
+			array( 'term_id' => $active_tag['term_id'], 'taxonomy' => 'post_tag' )
+		);
+		$wpdb->update(
+			$wpdb->term_taxonomy,
+			array( 'count' => 5 ),
+			array( 'term_id' => $orphaned_tag1['term_id'], 'taxonomy' => 'post_tag' )
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		
+		// Verify messed up counts
+		$messed_up_term = get_term( $active_tag['term_id'], 'post_tag' );
+		$this->assertEquals( 99, $messed_up_term->count );
+		
+		// Run comprehensive recalculation
+		$results = Migration::recalculate_all_post_tag_counts();
+		
+		// Should check all tags that exist (may be fewer if WordPress cleaned some up)
+		$this->assertGreaterThanOrEqual( 3, $results['checked'] );
+		$this->assertEquals( $results['checked'], $results['recalculated'] );
+		
+		// Should delete the 2 orphaned tags (with 0 count after recalculation)
+		$this->assertEquals( 2, $results['deleted'] );
+		
+		// Verify active tag count was corrected
+		$corrected_term = get_term( $active_tag['term_id'], 'post_tag' );
+		$this->assertEquals( 1, $corrected_term->count );
+		
+		// Verify shared tag count is correct
+		$shared_term = get_term( $shared_tag['term_id'], 'post_tag' );
+		$this->assertEquals( 2, $shared_term->count );
+		
+		// Verify orphaned tags were deleted
+		$deleted_tag1 = get_term( $orphaned_tag1['term_id'], 'post_tag' );
+		$deleted_tag2 = get_term( $orphaned_tag2['term_id'], 'post_tag' );
+		$this->assertTrue( is_wp_error( $deleted_tag1 ) || is_null( $deleted_tag1 ) );
+		$this->assertTrue( is_wp_error( $deleted_tag2 ) || is_null( $deleted_tag2 ) );
+		
+		// Verify results contain detailed information
+		$this->assertArrayHasKey( 'tags_processed', $results );
+		// Only tags with count changes or deletions are logged
+		$this->assertGreaterThanOrEqual( 2, count( $results['tags_processed'] ) );
+		
+		// Check that both orphaned and count-updated tags are in results
+		$processed_actions = array_column( $results['tags_processed'], 'action' );
+		$this->assertContains( 'deleted', $processed_actions );
+		$this->assertContains( 'count_updated', $processed_actions );
+	}
+
+	/**
+	 * Test post_tag count recalculation Site Health integration
+	 */
+	public function test_post_tag_count_recalculation_site_health() {
+		$friends = new Friends();
+		$this->setup_post_migration_environment();
+		
+		// Create some post_tag terms
+		$tag1 = wp_insert_term( 'test-tag-1', 'post_tag' );
+		$tag2 = wp_insert_term( 'test-tag-2', 'post_tag' );
+		$this->assertNotWPError( $tag1 );
+		$this->assertNotWPError( $tag2 );
+		
+		// Test Site Health when tags exist
+		$result = $friends->site_health_test_post_tag_count_recalculation();
+		$this->assertEquals( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'Post tag count recalculation available', $result['label'] );
+		$this->assertStringContainsString( 'Found 2 post_tag terms', $result['description'] );
+		$this->assertStringContainsString( 'Recalculate All Post Tag Counts', $result['actions'] );
+		
+		// Clean up all tags
+		wp_delete_term( $tag1['term_id'], 'post_tag' );
+		wp_delete_term( $tag2['term_id'], 'post_tag' );
+		
+		// Test Site Health when no tags exist
+		$result = $friends->site_health_test_post_tag_count_recalculation();
+		$this->assertEquals( 'good', $result['status'] );
+		$this->assertStringContainsString( 'No post tags to recalculate', $result['label'] );
+	}
 }
