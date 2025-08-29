@@ -388,20 +388,36 @@ class Migration {
 
 			$old_count = $tag_data->count;
 
-			// Calculate the REAL count excluding Friends CPT posts
+			// Calculate the REAL count only including post types that support post_tag taxonomy
 			global $wpdb;
-			$real_count = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT COUNT(*) FROM {$wpdb->term_relationships} tr
-					INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-					INNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID
-					WHERE tt.term_id = %d AND tt.taxonomy = 'post_tag' 
-					AND p.post_status IN ('publish', 'private') 
-					AND p.post_type != %s",
-					$tag_data->term_id,
-					Friends::CPT
-				)
-			);
+
+			// Get post types that support the post_tag taxonomy
+			$post_types = get_post_types_by_support( array(), 'and' );
+			$post_tag_post_types = array();
+			foreach ( $post_types as $post_type ) {
+				if ( is_object_in_taxonomy( $post_type, 'post_tag' ) ) {
+					$post_tag_post_types[] = $post_type;
+				}
+			}
+
+			if ( empty( $post_tag_post_types ) ) {
+				$real_count = 0;
+			} else {
+				$placeholders = implode( ',', array_fill( 0, count( $post_tag_post_types ), '%s' ) );
+				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				$real_count = $wpdb->get_var(
+					$wpdb->prepare(
+						"SELECT COUNT(*) FROM {$wpdb->term_relationships} tr
+						INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+						INNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID
+						WHERE tt.term_id = %d AND tt.taxonomy = 'post_tag'
+						AND p.post_status IN ('publish', 'private')
+						AND p.post_type IN ($placeholders)",
+						array_merge( array( $tag_data->term_id ), $post_tag_post_types )
+					)
+				);
+				// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			}
 
 			// Update the term count in the database to reflect reality (excluding Friends posts)
 			$update_result = $wpdb->update(

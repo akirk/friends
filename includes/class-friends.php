@@ -1638,25 +1638,49 @@ class Friends {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Count ALL post_tag terms that have no actual post associations (excluding Friends posts).
-		$orphaned_count = $wpdb->get_var(
-			$wpdb->prepare(
+		// Count ALL post_tag terms that have no actual post associations from supported post types.
+
+		// Get post types that support the post_tag taxonomy
+		$post_types = get_post_types_by_support( array(), 'and' );
+		$post_tag_post_types = array();
+		foreach ( $post_types as $post_type ) {
+			if ( is_object_in_taxonomy( $post_type, 'post_tag' ) ) {
+				$post_tag_post_types[] = $post_type;
+			}
+		}
+
+		if ( empty( $post_tag_post_types ) ) {
+			$orphaned_count = $wpdb->get_var(
 				"SELECT COUNT(*)
 				FROM {$wpdb->terms} t
 				INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-				LEFT JOIN (
-					SELECT DISTINCT tt2.term_id
-					FROM {$wpdb->term_relationships} tr
-					INNER JOIN {$wpdb->term_taxonomy} tt2 ON tr.term_taxonomy_id = tt2.term_taxonomy_id
-					INNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID
-					WHERE tt2.taxonomy = 'post_tag' 
-					AND p.post_status IN ('publish', 'private')
-					AND p.post_type != %s
-				) used_terms ON t.term_id = used_terms.term_id
-				WHERE tt.taxonomy = 'post_tag' AND used_terms.term_id IS NULL",
-				self::CPT
-			)
-		);
+				WHERE tt.taxonomy = 'post_tag'"
+			);
+		} else {
+			$placeholders = implode( ',', array_fill( 0, count( $post_tag_post_types ), '%s' ) );
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:disable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+			$orphaned_count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*)
+					FROM {$wpdb->terms} t
+					INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
+					LEFT JOIN (
+						SELECT DISTINCT tt2.term_id
+						FROM {$wpdb->term_relationships} tr
+						INNER JOIN {$wpdb->term_taxonomy} tt2 ON tr.term_taxonomy_id = tt2.term_taxonomy_id
+						INNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID
+						WHERE tt2.taxonomy = 'post_tag'
+						AND p.post_status IN ('publish', 'private')
+						AND p.post_type IN ($placeholders)
+					) used_terms ON t.term_id = used_terms.term_id
+					WHERE tt.taxonomy = 'post_tag' AND used_terms.term_id IS NULL",
+					$post_tag_post_types
+				)
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:enable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+		}
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
