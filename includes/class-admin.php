@@ -66,9 +66,7 @@ class Admin {
 		add_action( 'dashboard_glance_items', array( $this, 'dashboard_glance_items' ) );
 		add_action( 'wp_dashboard_setup', array( $this, 'add_dashboard_widgets' ), 8 );
 		add_action( 'wp_ajax_friends_dashboard', array( $this, 'ajax_friends_dashboard' ) );
-		add_filter( 'site_status_tests', array( $this, 'site_status_tests' ) );
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
-		add_filter( 'debug_information', array( $this, 'site_health_debug' ) );
 		add_filter( 'friends_create_and_follow', array( $this, 'create_and_follow' ), 10, 4 );
 		add_filter( 'friends_admin_tabs', array( $this, 'maybe_remove_friendship_settings' ) );
 
@@ -578,7 +576,7 @@ class Admin {
 		}
 
 		$this->check_admin_settings();
-		foreach ( array( 'ignore_incoming_friend_requests', 'enable_wp_friendships' ) as $checkbox ) {
+		foreach ( array( 'ignore_incoming_friend_requests', 'enable_wp_friendships', 'disable_auto_tagging' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
@@ -669,10 +667,12 @@ class Admin {
 			}
 		}
 
+		$redirect_args = array( 'updated' => '1' );
+
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( 'updated', '1', remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
+			wp_safe_redirect( add_query_arg( $redirect_args, remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
 		}
 		exit;
 	}
@@ -751,6 +751,7 @@ class Admin {
 					'limit_homepage_post_format' => get_option( 'friends_limit_homepage_post_format', false ),
 					'expose_post_format_feeds'   => get_option( 'friends_expose_post_format_feeds' ),
 					'enable_wp_friendships'      => get_option( 'friends_enable_wp_friendships' ),
+					'disable_auto_tagging'       => get_option( 'friends_disable_auto_tagging' ),
 					'retention_days'             => Friends::get_retention_days(),
 					'retention_number'           => Friends::get_retention_number(),
 					'retention_days_enabled'     => get_option( 'friends_enable_retention_days' ),
@@ -3675,210 +3676,9 @@ class Admin {
 		);
 	}
 
-	public function site_status_tests( $tests ) {
-		$tests['direct']['friends-roles'] = array(
-			'label' => __( 'Friend roles were created', 'friends' ),
-			'test'  => array( $this, 'friend_roles_test' ),
-		);
-		$tests['direct']['friends-cron'] = array(
-			'label' => __( 'Friends cron job is enabled', 'friends' ),
-			'test'  => array( $this, 'friends_cron_test' ),
-		);
-		$tests['direct']['friends-delete-cron'] = array(
-			'label' => __( 'Friends delete old posts cron job is enabled', 'friends' ),
-			'test'  => array( $this, 'friends_cron_delete_test' ),
-		);
-		return $tests;
-	}
-
-	public function get_missing_friends_plugin_roles() {
-		$missing = Friends::get_friends_plugin_roles();
-		$roles = new \WP_Roles();
-		foreach ( $roles->roles as $role => $data ) {
-			if ( isset( $data['capabilities']['friends_plugin'] ) ) {
-				foreach ( $missing as $k => $cap ) {
-					if ( isset( $data['capabilities'][ $cap ] ) ) {
-						unset( $missing[ $k ] );
-						break;
-					}
-				}
-			}
-		}
-
-		return array_values( $missing );
-	}
-
-	public function friend_roles_test() {
-		$result = array(
-			'label'       => __( 'The friend roles have been installed', 'friends' ),
-			'status'      => 'good',
-			'badge'       => array(
-				'label' => __( 'Friends', 'friends' ),
-				'color' => 'green',
-			),
-			'description' =>
-				'<p>' .
-				__( 'The Friends Plugin uses users and user roles to determine friendship status between sites.', 'friends' ) .
-				'</p>' .
-				'<p>' .
-				sprintf(
-					// translators: %s is a list of roles.
-					__( 'These are the roles required for the friends plugin: %s', 'friends' ),
-					implode( ', ', Friends::get_friends_plugin_roles() )
-				) .
-				'</p>',
-			'test'        => 'friends-roles',
-		);
-
-		$missing_friend_roles = $this->get_missing_friends_plugin_roles();
-		if ( ! empty( $missing_friend_roles ) ) {
-
-			$result['label'] = sprintf(
-				// translators: %s is a list of missing roles.
-				__( 'Not all friend roles have been installed. Missing: %s', 'friends' ),
-				implode( ', ', $missing_friend_roles )
-			);
-			$result['badge']['color'] = 'red';
-			$result['status'] = 'critical';
-			$result['description'] .= '<p>';
-			$result['description'] .= wp_kses_post(
-				sprintf(
-					// translators: %s is a URL.
-					__( '<strong>To fix this:</strong> <a href="%s">Re-run activation of the Friends plugin</a>.', 'friends' ),
-					esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings&rerun-activate' ) ), 'friends-settings' ) )
-				)
-			);
-			$result['description'] .= '</p>';
-		}
-
-		return $result;
-	}
-
-	public function friends_cron_test() {
-		$result = array(
-			'label'       => __( 'The refresh cron job is enabled', 'friends' ),
-			'status'      => 'good',
-			'badge'       => array(
-				'label' => __( 'Friends', 'friends' ),
-				'color' => 'green',
-			),
-			'description' =>
-				'<p>' .
-				__( 'The Friends Plugin uses a cron job to fetch your friends\' feeds.', 'friends' ) .
-				'</p>',
-			'test'        => 'friends-cron',
-		);
-		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
-			$result['label'] = __( 'The refresh cron job is not enabled', 'friends' );
-			$result['badge']['color'] = 'red';
-			$result['status'] = 'critical';
-			$result['description'] .= '<p>';
-			$result['description'] .= wp_kses_post(
-				sprintf(
-					// translators: %s is a URL.
-					__( '<strong>To fix this:</strong> <a href="%s">Enable the Friends cron job</a>.', 'friends' ),
-					esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings&rerun-activate' ) ), 'friends-settings' ) )
-				)
-			);
-			$result['description'] .= '</p>';
-		}
-
-		return $result;
-	}
-
-	public function friends_cron_delete_test() {
-		$result = array(
-			'label'       => __( 'The cron job to delete old posts is enabled', 'friends' ),
-			'status'      => 'good',
-			'badge'       => array(
-				'label' => __( 'Friends', 'friends' ),
-				'color' => 'green',
-			),
-			'description' =>
-				'<p>' .
-				__( 'The Friends Plugin uses a cron job to delete old posts your friends.', 'friends' ) .
-				'</p>',
-			'test'        => 'friends-delete-cron',
-		);
-
-		if ( ! wp_next_scheduled( 'cron_friends_delete_old_posts' ) ) {
-			$result['label'] = __( 'The cron job to delete old posts is not enabled', 'friends' );
-			$result['badge']['color'] = 'orange';
-			$result['status'] = 'recommended';
-			$result['description'] .= '<p>';
-			$result['description'] .= wp_kses_post(
-				sprintf(
-					// translators: %s is a URL.
-					__( '<strong>To fix this:</strong> <a href="%s">Enable the Friends cron job</a>.', 'friends' ),
-					esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=friends-settings&rerun-activate' ) ), 'friends-settings' ) )
-				)
-			);
-			$result['description'] .= '</p>';
-		}
-
-		return $result;
-	}
-
 	public function site_status_test_php_modules( $modules ) {
 		$modules['mbstring']['required'] = true;
 		return $modules;
-	}
-
-	public function site_health_debug( $debug_info ) {
-		$missing_friend_roles = $this->get_missing_friends_plugin_roles();
-		$debug_info['friends'] = array(
-			'label'  => __( 'Friends', 'friends' ),
-			'fields' => array(
-				'version'   => array(
-					'label' => __( 'Friends Version', 'friends' ),
-					'value' => Friends::VERSION,
-				),
-				'mbstring'  => array(
-					'label' => __( 'mbstring is available', 'friends' ),
-					'value' => function_exists( 'mb_check_encoding' ) ? __( 'Yes' ) : __( 'No' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				),
-				'roles'     => array(
-					'label' => __( 'Friend roles missing', 'friends' ),
-					'value' => empty( $missing_friend_roles ) ? sprintf(
-						// translators: %s is a list of roles.
-						__( 'All roles found: %s', 'friends' ),
-						implode( ', ', Friends::get_friends_plugin_roles() )
-					) : implode( ', ', $missing_friend_roles ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				),
-				'main_user' => array(
-					'label' => __( 'Main Friend User', 'friends' ),
-					'value' => self::human_readable_main_user(),
-				),
-				'parsers'   => array(
-					'label' => __( 'Registered Parsers', 'friends' ),
-					'value' => wp_strip_all_tags( implode( ', ', $this->friends->feed->get_registered_parsers() ) ),
-				),
-			),
-		);
-
-		return $debug_info;
-	}
-
-	/**
-	 * Returns a human readable string for which user is the main user.
-	 *
-	 * @return string
-	 */
-	private static function human_readable_main_user() {
-		$main_user = Friends::get_main_friend_user_id();
-
-		if ( ! $main_user ) {
-			// translators: %d is the number of users.
-			return esc_html( sprintf( __( 'No main user set. Admin users: %d', 'friends' ), User_Query::all_admin_users()->get_total() ) );
-		}
-
-		$user = new \WP_User( $main_user );
-
-		if ( ! $user ) {
-			return sprintf( '#%1$d %2$s', $main_user, '???' );
-		}
-
-		return sprintf( '#%1$d %2$s', $user->ID, $user->user_login );
 	}
 
 	public function admin_friend_posts_query( $query ) {

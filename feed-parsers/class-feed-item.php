@@ -202,6 +202,12 @@ class Feed_Item {
 				$value = strval( $value );
 				$this->data['meta']['external-id'] = $value;
 				return $value;
+			case 'friend_tags':
+			case 'friend_mention_tags':
+				if ( ! is_array( $value ) ) {
+					return new \WP_Error( 'invalid-tags', 'Tags must be an array.' );
+				}
+				break;
 
 			default:
 				return new \WP_Error( 'invalid-key', 'This value cannot be stored in a feed item.' );

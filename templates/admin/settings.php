@@ -201,6 +201,26 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<tr>
+				<th scope="row"><?php esc_html_e( 'Auto-Tagging', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="disable_auto_tagging">
+							<input name="disable_auto_tagging" type="checkbox" id="disable_auto_tagging" value="1" <?php checked( '1', $args['disable_auto_tagging'] ); ?> />
+							<span><?php esc_html_e( 'Disable automatic tagging of incoming posts with hashtags.', 'friends' ); ?></span>
+						</label>
+						<p class="description">
+						<?php
+						esc_html_e( 'When incoming friend posts are tagged based on contained hashtags, you can filter by tag.', 'friends' );
+						echo ' ';
+						esc_html_e( 'These tags are separate from the tags you use for your own posts.', 'friends' );
+						echo '<br>';
+						esc_html_e( 'If you like to avoid an increased number of taxonomy terms in your database, you can disable this, although tags indicating a mention for local users will always be applied.', 'friends' );
+						?>
+						</p>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row" rowspan="3"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
 				<td>
 					<fieldset>

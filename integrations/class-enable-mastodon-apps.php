@@ -22,6 +22,7 @@ class Enable_Mastodon_Apps {
 		add_filter( 'mastodon_api_view_post_types', array( get_called_class(), 'mastodon_api_view_post_types' ) );
 		add_filter( 'mastodon_api_favourites_args', array( get_called_class(), 'mastodon_api_favourites_args' ), 10, 2 );
 		add_filter( 'mastodon_api_bookmarks_args', array( get_called_class(), 'mastodon_api_bookmarks_args' ), 10, 2 );
+		add_filter( 'mastodon_api_get_notifications_query_args', array( get_called_class(), 'mastodon_api_get_notifications_query_args' ), 10, 2 );
 	}
 
 	public static function mastodon_api_account_follow( $user_id ) {
@@ -91,6 +92,67 @@ class Enable_Mastodon_Apps {
 		}
 
 		$args['tax_query'] = $tax_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+
+		return $args;
+	}
+
+	public static function mastodon_api_get_notifications_query_args( $args, $type ) {
+		if ( 'mention' !== $type ) {
+			return $args;
+		}
+
+		if ( ! isset( $args['post_type'] ) ) {
+			$args['post_type'] = array();
+		} elseif ( ! is_array( $args['post_type'] ) ) {
+			$args['post_type'] = array( $args['post_type'] );
+		}
+
+		// Include public Friends posts for public mentions.
+		if ( ! in_array( Friends::CPT, $args['post_type'] ) ) {
+			$args['post_type'][] = Friends::CPT;
+		}
+
+		if ( ! isset( $args['post_status'] ) ) {
+			$args['post_status'] = array();
+		} elseif ( ! is_array( $args['post_status'] ) ) {
+			$args['post_status'] = array( $args['post_status'] );
+		}
+
+		// Add public post statuses for mentions.
+		if ( ! in_array( 'publish', $args['post_status'] ) ) {
+			$args['post_status'][] = 'publish';
+		}
+		if ( ! in_array( 'private', $args['post_status'] ) ) {
+			$args['post_status'][] = 'private';
+		}
+
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+
+		// Add tax_query to filter for mention tags for the current user.
+		$current_user = wp_get_current_user();
+		if ( $current_user && $current_user->ID ) {
+			$mention_tag = 'mention-' . $current_user->user_login;
+
+			$mention_query = array(
+				'taxonomy' => Friends::TAG_TAXONOMY,
+				'field'    => 'name',
+				'terms'    => $mention_tag,
+			);
+
+			if ( ! isset( $args['tax_query'] ) ) {
+				$args['tax_query'] = array( $mention_query );
+			} elseif ( ! empty( $args['tax_query'] ) ) {
+				$args['tax_query'] = array(
+					'relation' => 'OR',
+					$args['tax_query'],
+					$mention_query,
+				);
+			} else {
+				$args['tax_query'] = array( $mention_query );
+			}
+		}
+
+		// phpcs:enable WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 
 		return $args;
 	}

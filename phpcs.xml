@@ -19,11 +19,24 @@
 		<exclude name="Squiz.Commenting.FileComment.MissingPackageTag" />
 		<exclude name="Squiz.Commenting.VariableComment.Missing" />
 		<exclude name="Squiz.Commenting.FunctionComment.Missing" />
+		<exclude name="Squiz.Commenting.InlineComment.InvalidEndChar" />
 	</rule>
 	<rule ref="WordPress-Docs" />
 
 	<rule ref="WordPress.Files.FileName.InvalidClassFileName">
 		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.DB.DirectDatabaseQuery.DirectQuery">
+		<exclude-pattern>includes/class-migration.php</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.DB.DirectDatabaseQuery.NoCaching">
+		<exclude-pattern>includes/class-migration.php</exclude-pattern>
+	</rule>
+
+	<rule ref="WordPress.PHP.DevelopmentFunctions.error_log_error_log">
+		<exclude-pattern>includes/class-migration.php</exclude-pattern>
 	</rule>
 
 	<rule ref="WordPress.Security.EscapeOutput">
