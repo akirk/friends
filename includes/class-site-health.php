@@ -115,20 +115,64 @@ class Site_Health {
 				'test'        => 'friends_migration',
 			);
 		} else {
-			$result = array(
-				'label'       => __( 'Post tag migration available', 'friends' ),
-				'status'      => 'recommended',
-				'badge'       => array(
-					'label' => __( 'Friends', 'friends' ),
-					'color' => 'orange',
-				),
-				'description' => sprintf(
-					'<p>%s</p><p><button type="button" class="button button-primary" onclick="friendsRestartMigration(this)">%s</button></p>',
-					__( 'Friends posts are still using the post_tag taxonomy. A migration to the friend_tag taxonomy is recommended for better organization.', 'friends' ),
-					__( 'Start Migration', 'friends' )
-				),
-				'test'        => 'friends_migration',
+			// No migration status options are set, check the database to see current state
+			global $wpdb;
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+			$friends_posts_with_post_tags = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(DISTINCT p.ID)
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+					INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+					WHERE p.post_type = %s
+					AND tt.taxonomy = 'post_tag'
+					AND p.post_status IN ('publish', 'private')",
+					Friends::CPT
+				)
 			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+			if ( $friends_posts_with_post_tags > 0 ) {
+				$result = array(
+					'label'       => __( 'Friends posts need tag migration', 'friends' ),
+					'status'      => 'recommended',
+					'badge'       => array(
+						'label' => __( 'Friends', 'friends' ),
+						'color' => 'orange',
+					),
+					'description' => sprintf(
+						'<p>%s</p><p><button type="button" class="button button-primary" onclick="friendsRestartMigration(this)">%s</button></p>',
+						sprintf(
+							/* translators: %d: number of posts */
+							_n(
+								'%d Friends post is still using the post_tag taxonomy. A migration to the friend_tag taxonomy is recommended for better organization.',
+								'%d Friends posts are still using the post_tag taxonomy. A migration to the friend_tag taxonomy is recommended for better organization.',
+								$friends_posts_with_post_tags,
+								'friends'
+							),
+							$friends_posts_with_post_tags
+						),
+						__( 'Start Migration', 'friends' )
+					),
+					'test'        => 'friends_migration',
+				);
+			} else {
+				$result = array(
+					'label'       => __( 'No Friends tag migration needed', 'friends' ),
+					'status'      => 'good',
+					'badge'       => array(
+						'label' => __( 'Friends', 'friends' ),
+						'color' => 'green',
+					),
+					'description' => sprintf(
+						'<p>%s</p>',
+						__( 'No Friends posts are using the post_tag taxonomy. All Friends posts are properly using the friend_tag taxonomy.', 'friends' )
+					),
+					'test'        => 'friends_migration',
+				);
+			}
 		}
 
 		return $result;
