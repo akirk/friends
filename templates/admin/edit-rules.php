@@ -17,19 +17,19 @@
 			<tr>
 				<th>
 					<select name="rules[field][]">
-						<option value="title" <?php selected( 'title', $rule['field'] ); ?>><?php echo esc_html_e( 'If the title contains', 'friends' ); ?></option>
-						<option value="content" <?php selected( 'content', $rule['field'] ); ?>><?php echo esc_html_e( 'If the content contains', 'friends' ); ?></option>
-						<option value="author" <?php selected( 'author', $rule['field'] ); ?>><?php echo esc_html_e( 'If the author contains', 'friends' ); ?></option>
-						<option value="permalink" <?php selected( 'permalink', $rule['field'] ); ?>><?php echo esc_html_e( 'If the URL contains', 'friends' ); ?></option>
+						<option value="title" <?php selected( 'title', $rule['field'] ); ?>><?php esc_html_e( 'If the title contains', 'friends' ); ?></option>
+						<option value="content" <?php selected( 'content', $rule['field'] ); ?>><?php esc_html_e( 'If the content contains', 'friends' ); ?></option>
+						<option value="author" <?php selected( 'author', $rule['field'] ); ?>><?php esc_html_e( 'If the author contains', 'friends' ); ?></option>
+						<option value="permalink" <?php selected( 'permalink', $rule['field'] ); ?>><?php esc_html_e( 'If the URL contains', 'friends' ); ?></option>
 					</select>
 				</th>
 				<td><input type="text" name="rules[regex][]" value="<?php echo esc_textarea( $rule['regex'] ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter a text or regular expression', 'friends' ); ?>" /></td>
 				<td>
 					<select name="rules[action][]" class="rule-action">
-						<option value="accept" <?php selected( 'accept', $rule['action'] ); ?>><?php echo esc_html_e( 'accept the item', 'friends' ); ?></option>
-						<option value="trash" <?php selected( 'trash', $rule['action'] ); ?>><?php echo esc_html_e( 'trash the item', 'friends' ); ?></option>
-						<option value="delete" <?php selected( 'delete', $rule['action'] ); ?>><?php echo esc_html_e( 'delete the item', 'friends' ); ?></option>
-						<option value="replace" <?php selected( 'replace', $rule['action'] ); ?>><?php echo esc_html_e( 'replace the match with this:', 'friends' ); ?></option>
+						<option value="accept" <?php selected( 'accept', $rule['action'] ); ?>><?php esc_html_e( 'accept the item', 'friends' ); ?></option>
+						<option value="trash" <?php selected( 'trash', $rule['action'] ); ?>><?php esc_html_e( 'trash the item', 'friends' ); ?></option>
+						<option value="delete" <?php selected( 'delete', $rule['action'] ); ?>><?php esc_html_e( 'delete the item', 'friends' ); ?></option>
+						<option value="replace" <?php selected( 'replace', $rule['action'] ); ?>><?php esc_html_e( 'replace the match with this:', 'friends' ); ?></option>
 					</select>
 				</td>
 				<td style="<?php echo esc_attr( 'replace' !== $rule['action'] ? 'display: none' : '' ); ?>" class="replace-with"><input type="text" name="rules[replace][]" value="<?php echo esc_textarea( isset( $rule['replace'] ) ? $rule['replace'] : '' ); ?>" class="regular-text" placeholder="<?php esc_attr_e( 'Enter the text to replace it with', 'friends' ); ?>" /></td>
@@ -42,9 +42,9 @@
 			<th><label for="field"><?php esc_html_e( 'In any other case', 'friends' ); ?></label></th>
 			<td colspan="3">
 				<select name="catch_all">
-					<option value="accept" <?php selected( 'accept', $args['catch_all'] ); ?>><?php echo esc_html_e( 'accept the item', 'friends' ); ?></option>
-					<option value="trash" <?php selected( 'trash', $args['catch_all'] ); ?>><?php echo esc_html_e( 'trash the item', 'friends' ); ?></option>
-					<option value="delete" <?php selected( 'delete', $args['catch_all'] ); ?>><?php echo esc_html_e( 'delete the item', 'friends' ); ?></option>
+					<option value="accept" <?php selected( 'accept', $args['catch_all'] ); ?>><?php esc_html_e( 'accept the item', 'friends' ); ?></option>
+					<option value="trash" <?php selected( 'trash', $args['catch_all'] ); ?>><?php esc_html_e( 'trash the item', 'friends' ); ?></option>
+					<option value="delete" <?php selected( 'delete', $args['catch_all'] ); ?>><?php esc_html_e( 'delete the item', 'friends' ); ?></option>
 				</select>
 			</td>
 		</tr>
