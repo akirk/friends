@@ -49,10 +49,10 @@ class Widget_Friend_Request extends \WP_Widget {
 		<form action="<?php echo esc_url( self_admin_url( 'admin.php?page=add-friend' ) ); ?>" method="post" class="form-horizontal">
 		<?php wp_nonce_field( 'add-friend' ); ?>
 		<div class="form-group">
-			<input type="text" name="friend_url" aria-label="<?php echo esc_attr_e( "Enter the Friend's URL", 'friends' ); ?>"  placeholder="<?php echo esc_attr_e( "Friend's URL", 'friends' ); ?>" class="form-input input-sm" />
+			<input type="text" name="friend_url" aria-label="<?php esc_attr_e( "Enter the Friend's URL", 'friends' ); ?>"  placeholder="<?php esc_attr_e( "Friend's URL", 'friends' ); ?>" class="form-input input-sm" />
 		</div>
 		<div class="form-group">
-			<button class="btn btn-primary btn-sm"><?php echo esc_attr_e( 'Add Friend', 'friends' ); ?></button>
+			<button class="btn btn-primary btn-sm"><?php esc_attr_e( 'Add Friend', 'friends' ); ?></button>
 		</div>
 		</form>
 		<?php
