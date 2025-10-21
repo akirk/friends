@@ -1890,10 +1890,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function activitypub_extract_mentions( $mentions, $post_content ) {
 		$users = self::get_possible_mentions();
 
-		// Check if a user is mentioned in the $post_content.
-		$matches = array();
 		foreach ( $users as $user => $url ) {
-			if ( strpos( $post_content, $user ) !== false ) {
+			$pos = strpos( $post_content, $user );
+			if ( false !== $pos ) {
+				$after_pos = $pos + strlen( $user );
+				if ( $after_pos < strlen( $post_content ) && '@' === $post_content[ $after_pos ] ) {
+					continue;
+				}
 				$mentions[ $user ] = $users[ $user ];
 			}
 		}

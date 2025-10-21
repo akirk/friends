@@ -333,18 +333,21 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 				}
 			}
 
-			foreach ( $item->get_enclosures() as $enclosure ) {
-				if ( ! isset( $enclosure->link ) ) {
-					continue;
-				}
+			$enclosures = $item->get_enclosures();
+			if ( is_array( $enclosures ) ) {
+				foreach ( $enclosures as $enclosure ) {
+					if ( ! isset( $enclosure->link ) ) {
+						continue;
+					}
 
-				$feed_item->enclosure = array_filter(
-					array(
-						'url'    => $enclosure->get_link(),
-						'type'   => $enclosure->get_type(),
-						'length' => $enclosure->get_length(),
-					)
-				);
+					$feed_item->enclosure = array_filter(
+						array(
+							'url'    => $enclosure->get_link(),
+							'type'   => $enclosure->get_type(),
+							'length' => $enclosure->get_length(),
+						)
+					);
+				}
 			}
 
 			if ( is_object( $item->get_author() ) ) {

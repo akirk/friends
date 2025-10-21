@@ -536,6 +536,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		add_filter( 'activitypub_defer_signature_verification', '__return_true' );
 		add_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
+		add_filter( 'activitypub_pre_http_get_remote_object', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
 		add_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 2 );
 
@@ -571,10 +572,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->friend_nicename = sanitize_title( $this->friend_nicename );
 
 		self::$users[ $this->actor ] = array(
-			'id'   => $this->actor,
-			'url'  => $this->actor,
-			'name' => $this->friend_name,
-			'icon' => array(
+			'id'                => $this->actor,
+			'url'               => $this->actor,
+			'name'              => $this->friend_name,
+			'preferredUsername' => 'akirk',
+			'icon'              => array(
 				'type' => 'Image',
 				'url'  => $this->actor . '.png',
 			),
@@ -586,6 +588,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 	public function tear_down() {
 		remove_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
+		remove_filter( 'activitypub_pre_http_get_remote_object', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		remove_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
 		remove_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 2 );
 		remove_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8 );
@@ -607,6 +610,24 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			return self::$users[ $url ]['url'];
 		}
 		return $ret;
+	}
+
+	private function mock_local_user_activitypub_metadata( $local_user ) {
+		$current_user = get_userdata( $local_user );
+		$local_activitypub_id = get_author_posts_url( $local_user );
+
+		self::$users[ $local_activitypub_id ] = array(
+			'id'                => $local_activitypub_id,
+			'url'               => $local_activitypub_id,
+			'name'              => $current_user->display_name,
+			'preferredUsername' => $current_user->user_login,
+			'icon'              => array(
+				'type' => 'Image',
+				'url'  => get_avatar_url( $current_user->ID ),
+			),
+		);
+
+		return $local_activitypub_id;
 	}
 
 	public function invalid_http_response() {
@@ -632,9 +653,8 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_auto_tagging_hashtags_and_mentions() {
-		// Ensure auto-tagging is enabled for this test
 		delete_option( 'friends_disable_auto_tagging' );
-		
+
 		$now = time() - 10;
 		$status_id = 456;
 
@@ -647,25 +667,27 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$post_count = count( $posts );
 
-		// Get the current user's ActivityPub ID for CC mention
-		$current_user = get_userdata( get_current_user_id() );
-		$local_activitypub_id = 'https://example.com/users/' . $current_user->user_login;
+		$local_user = get_current_user_id();
+		$current_user = get_userdata( $local_user );
+		$local_activitypub_id = $this->mock_local_user_activitypub_metadata( $local_user );
 
 		// Create ActivityPub post with hashtags and CC mention
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 		$content = 'Testing #hashtag and #another-tag functionality!';
 
 		$activity_data = array(
 			'type'   => 'Create',
 			'id'     => $id,
 			'actor'  => $this->actor,
-			'cc'     => array( $local_activitypub_id ), // Mention the local user
+			'to'     => array( 'https://www.w3.org/ns/activitystreams#Public' ),
+			'cc'     => array( $local_activitypub_id ),
 			'object' => array(
 				'id'           => $id,
 				'type'         => 'Note',
 				'published'    => $date,
 				'attributedTo' => $this->actor,
+				'to'           => array( 'https://www.w3.org/ns/activitystreams#Public' ),
 				'content'      => $content,
 				'cc'           => array( $local_activitypub_id ),
 				'tag'          => array(
@@ -675,9 +697,14 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 						'href' => 'https://mastodon.local/tags/hashtag',
 					),
 					array(
-						'type' => 'Hashtag', 
+						'type' => 'Hashtag',
 						'name' => '#another-tag',
 						'href' => 'https://mastodon.local/tags/another-tag',
+					),
+					array(
+						'type' => 'Mention',
+						'href' => $local_activitypub_id,
+						'name' => '@' . $current_user->user_login,
 					),
 				),
 			),
@@ -691,11 +718,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'author'    => $this->friend_id,
 			)
 		);
-		
-		// Debug: check response and post creation
-		error_log( 'ActivityPub response status: ' . $response->get_status() );
-		error_log( 'Posts before: ' . $post_count . ', Posts after: ' . count( $new_posts ) );
-		
+
 		$this->assertEquals( $post_count + 1, count( $new_posts ) );
 		$this->assertStringContainsString( $content, $new_posts[0]->post_content );
 
@@ -712,7 +735,6 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_auto_tagging_respects_disable_option() {
-		// Enable the disable option
 		update_option( 'friends_disable_auto_tagging', true );
 
 		$now = time() - 10;
@@ -723,30 +745,31 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$posts = get_posts(
 			array(
 				'post_type' => Friends::CPT,
-				'author'    => $local_user,
+				'author'    => $this->friend_id,
 			)
 		);
 
 		$post_count = count( $posts );
 
-		// Get the local user's ActivityPub ID - use a manual ID since actor setup is complex
 		$current_user = get_userdata( $local_user );
-		$local_activitypub_id = 'https://example.com/users/' . $current_user->user_login;
+		$local_activitypub_id = $this->mock_local_user_activitypub_metadata( $local_user );
 
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 		$content = 'Testing #disabled-hashtag when auto-tagging is disabled!';
 
 		$activity_data = array(
 			'type'   => 'Create',
 			'id'     => $id,
 			'actor'  => $this->actor,
+			'to'     => array( 'https://www.w3.org/ns/activitystreams#Public' ),
 			'cc'     => array( $local_activitypub_id ),
 			'object' => array(
 				'id'           => $id,
 				'type'         => 'Note',
 				'published'    => $date,
 				'attributedTo' => $this->actor,
+				'to'           => array( 'https://www.w3.org/ns/activitystreams#Public' ),
 				'content'      => $content,
 				'cc'           => array( $local_activitypub_id ),
 				'tag'          => array(
@@ -754,6 +777,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 						'type' => 'Hashtag',
 						'name' => '#disabled-hashtag',
 						'href' => 'https://mastodon.local/tags/disabled-hashtag',
+					),
+					array(
+						'type' => 'Mention',
+						'href' => $local_activitypub_id,
+						'name' => '@' . $current_user->user_login,
 					),
 				),
 			),
@@ -764,7 +792,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$posts = get_posts(
 			array(
 				'post_type' => Friends::CPT,
-				'author'    => $local_user,
+				'author'    => $this->friend_id,
 			)
 		);
 
