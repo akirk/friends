@@ -158,7 +158,8 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 
 		$feed = new \SimplePie();
 
-		$feed->set_sanitize_class( '\WP_SimplePie_Sanitize_KSES' );
+		$feed->get_registry()->register( \SimplePie\Sanitize::class, '\WP_SimplePie_Sanitize_KSES', true );
+
 		// We must manually overwrite $feed->sanitize because SimplePie's
 		// constructor sets it before we have a chance to set the sanitization class.
 		$feed->sanitize = new \WP_SimplePie_Sanitize_KSES();
