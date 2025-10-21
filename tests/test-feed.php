@@ -100,7 +100,7 @@ class FeedTest extends \WP_UnitTestCase {
 		// We're using the same in and out token here since we're faking this on a single install.
 		update_user_option( $this->friend_id, 'friends_out_token', $this->friends_in_token );
 
-		fetch_feed( null ); // load SimplePie.
+		fetch_feed( '' ); // load SimplePie.
 	}
 
 	/**
