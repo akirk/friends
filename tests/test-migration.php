@@ -406,52 +406,52 @@ class MigrationTest extends \WP_UnitTestCase {
 	public function test_site_health_integration() {
 		require_once FRIENDS_PLUGIN_DIR . 'includes/class-site-health.php';
 		$site_health = new \Friends\Site_Health();
-		
+
 		// Test that Site Health tests are added
 		$tests = array();
 		$tests = $site_health->add_tests( $tests );
 		$this->assertArrayHasKey( 'direct', $tests );
 		$this->assertArrayHasKey( 'friends_migration', $tests['direct'] );
-		
+
 		// Test Site Health test when no migration needed (default state)
 		Migration::reset_migration_status();
 		$result = $site_health->test_migration();
-		// Without any posts to migrate, it should show migration available
-		$this->assertEquals( 'recommended', $result['status'] );
-		$this->assertStringContainsString( 'Post tag migration available', $result['label'] );
-		
+		// Without any posts to migrate, it should show good status
+		$this->assertEquals( 'good', $result['status'] );
+		$this->assertStringContainsString( 'No Friends tag migration needed', $result['label'] );
+
 		// Test with posts needing migration
 		$this->setup_pre_migration_environment();
-		
+
 		$test_post_id = $this->factory->post->create( array(
 			'post_type'   => Friends::CPT,
 			'post_title'  => 'Site Health Test',
 			'post_status' => 'publish',
 		) );
-		
+
 		$tag = wp_insert_term( 'site-health-test', 'post_tag' );
 		$this->assertNotWPError( $tag );
 		wp_set_post_terms( $test_post_id, array( $tag['term_id'] ), 'post_tag' );
-		
+
 		$this->setup_post_migration_environment();
-		
+
 		// Test Site Health when migration is recommended
 		$result = $site_health->test_migration();
 		$this->assertEquals( 'recommended', $result['status'] );
-		$this->assertStringContainsString( 'Post tag migration available', $result['label'] );
+		$this->assertStringContainsString( 'need tag migration', $result['label'] );
 		$this->assertStringContainsString( 'Start Migration', $result['description'] );
-		
+
 		// Start migration and test in-progress status
 		Migration::migrate_post_tags_to_friend_tags();
 		$result = $site_health->test_migration();
 		$this->assertEquals( 'recommended', $result['status'] );
 		$this->assertStringContainsString( 'in progress', $result['label'] );
-		
+
 		// Complete migration
 		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
 			Migration::migrate_post_tags_batch();
 		}
-		
+
 		// Test completed status
 		$result = $site_health->test_migration();
 		$this->assertEquals( 'good', $result['status'] );
