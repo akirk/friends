@@ -268,10 +268,23 @@ class Migration {
 
 		// Clean up orphaned post_tag terms.
 		foreach ( $all_post_tag_terms as $term_data ) {
-			wp_update_term_count( $term_data->term_id, 'post_tag' );
-			$term = get_term( $term_data->term_id, 'post_tag' );
+			// Calculate count excluding revisions, ap_actor, post_collection, and Friends CPT.
+			$real_count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(DISTINCT p.ID)
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+					INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+					WHERE tt.term_id = %d
+					AND tt.taxonomy = 'post_tag'
+					AND p.post_status IN ('publish', 'private', 'draft', 'pending', 'future')
+					AND p.post_type NOT IN ('revision', 'ap_actor', 'post_collection', %s)",
+					$term_data->term_id,
+					Friends::CPT
+				)
+			);
 
-			if ( $term && ! is_wp_error( $term ) && 0 === $term->count ) {
+			if ( 0 === (int) $real_count ) {
 				wp_delete_term( $term_data->term_id, 'post_tag' );
 			}
 		}
@@ -388,38 +401,27 @@ class Migration {
 
 			$old_count = $tag_data->count;
 
-			// Calculate the REAL count only including post types that support post_tag taxonomy
+			// Calculate the REAL count excluding revisions, ap_actor, post_collection, and Friends CPT.
 			global $wpdb;
 
-			// Get post types that support the post_tag taxonomy
-			$post_types = get_post_types_by_support( array(), 'and' );
-			$post_tag_post_types = array();
-			foreach ( $post_types as $post_type ) {
-				if ( is_object_in_taxonomy( $post_type, 'post_tag' ) ) {
-					$post_tag_post_types[] = $post_type;
-				}
-			}
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			$real_count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(DISTINCT p.ID)
+					FROM {$wpdb->posts} p
+					INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+					INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+					WHERE tt.term_id = %d
+					AND tt.taxonomy = 'post_tag'
+					AND p.post_status IN ('publish', 'private', 'draft', 'pending', 'future')
+					AND p.post_type NOT IN ('revision', 'ap_actor', 'post_collection', %s)",
+					$tag_data->term_id,
+					Friends::CPT
+				)
+			);
+			// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
-			if ( empty( $post_tag_post_types ) ) {
-				$real_count = 0;
-			} else {
-				$placeholders = implode( ',', array_fill( 0, count( $post_tag_post_types ), '%s' ) );
-				// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-				$real_count = $wpdb->get_var(
-					$wpdb->prepare(
-						"SELECT COUNT(*) FROM {$wpdb->term_relationships} tr
-						INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-						INNER JOIN {$wpdb->posts} p ON tr.object_id = p.ID
-						WHERE tt.term_id = %d AND tt.taxonomy = 'post_tag'
-						AND p.post_status IN ('publish', 'private')
-						AND p.post_type IN ($placeholders)",
-						array_merge( array( $tag_data->term_id ), $post_tag_post_types )
-					)
-				);
-				// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			}
-
-			// Update the term count in the database to reflect reality (excluding Friends posts)
+			// Update the term count in the database to reflect reality (excluding Friends posts and other irrelevant types)
 			$update_result = $wpdb->update(
 				$wpdb->term_taxonomy,
 				array( 'count' => $real_count ),

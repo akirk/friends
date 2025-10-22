@@ -665,6 +665,147 @@ class MigrationTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test migration cleanup excludes revisions and other irrelevant post types
+	 */
+	public function test_migration_cleanup_excludes_irrelevant_post_types() {
+		// Include Migration class
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+
+		// Step 1: Setup pre-migration environment (old CPT with post_tag)
+		$this->setup_pre_migration_environment();
+
+		// Step 2: Create test data using the old configuration
+		$test_tag = wp_insert_term( 'test-exclusion-tag', 'post_tag' );
+		$this->assertNotWPError( $test_tag );
+
+		// Create a Friends post with this tag using old configuration
+		$friends_post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Friends Post',
+			'post_status' => 'publish',
+		) );
+		wp_set_post_terms( $friends_post_id, array( $test_tag['term_id'] ), 'post_tag' );
+
+		// Create a revision with the same tag (simulating WordPress auto-save behavior)
+		$revision_id = $this->factory->post->create( array(
+			'post_type'   => 'revision',
+			'post_title'  => 'Revision',
+			'post_status' => 'inherit',
+			'post_parent' => $friends_post_id,
+		) );
+		wp_set_post_terms( $revision_id, array( $test_tag['term_id'] ), 'post_tag' );
+
+		// Create an ap_actor post with the same tag
+		$ap_actor_id = $this->factory->post->create( array(
+			'post_type'   => 'ap_actor',
+			'post_title'  => 'AP Actor',
+			'post_status' => 'publish',
+		) );
+		wp_set_post_terms( $ap_actor_id, array( $test_tag['term_id'] ), 'post_tag' );
+
+		// Create a post_collection post with the same tag
+		$post_collection_id = $this->factory->post->create( array(
+			'post_type'   => 'post_collection',
+			'post_title'  => 'Post Collection',
+			'post_status' => 'publish',
+		) );
+		wp_set_post_terms( $post_collection_id, array( $test_tag['term_id'] ), 'post_tag' );
+
+		// Verify the tag exists and has posts associated
+		$term_before = get_term( $test_tag['term_id'], 'post_tag' );
+		$this->assertNotWPError( $term_before );
+
+		// Step 3: Simulate plugin upgrade - unregister old, register new
+		$this->setup_post_migration_environment();
+
+		// Step 4: Run migration
+		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
+
+		// Step 5: Verify migration results
+		// Verify the tag was deleted (because only Friends post used it, and that was migrated)
+		$term_after = get_term( $test_tag['term_id'], 'post_tag' );
+		$this->assertTrue( is_wp_error( $term_after ) || is_null( $term_after ) );
+
+		// Verify Friends post now has friend_tag
+		$friend_tags = wp_get_post_terms( $friends_post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
+		$this->assertContains( 'test-exclusion-tag', $friend_tags );
+
+		// Verify Friends post no longer has post_tag
+		$post_tags = wp_get_post_terms( $friends_post_id, 'post_tag', array( 'fields' => 'names' ) );
+		$this->assertEmpty( $post_tags );
+	}
+
+	/**
+	 * Test migration cleanup preserves tags used by regular posts
+	 */
+	public function test_migration_cleanup_preserves_regular_post_tags() {
+		// Include Migration class
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+
+		// Step 1: Setup pre-migration environment (old CPT with post_tag)
+		$this->setup_pre_migration_environment();
+
+		// Step 2: Create test data using the old configuration
+		$test_tag = wp_insert_term( 'shared-with-regular-post', 'post_tag' );
+		$this->assertNotWPError( $test_tag );
+
+		// Create a Friends post with this tag using old configuration
+		$friends_post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Friends Post',
+			'post_status' => 'publish',
+		) );
+		wp_set_post_terms( $friends_post_id, array( $test_tag['term_id'] ), 'post_tag' );
+
+		// Create a regular post with the same tag
+		$regular_post_id = $this->factory->post->create( array(
+			'post_type'   => 'post',
+			'post_title'  => 'Regular Post',
+			'post_status' => 'publish',
+		) );
+		wp_set_post_terms( $regular_post_id, array( $test_tag['term_id'] ), 'post_tag' );
+
+		// Create a revision for the regular post with the same tag
+		$revision_id = $this->factory->post->create( array(
+			'post_type'   => 'revision',
+			'post_title'  => 'Revision',
+			'post_status' => 'inherit',
+			'post_parent' => $regular_post_id,
+		) );
+		wp_set_post_terms( $revision_id, array( $test_tag['term_id'] ), 'post_tag' );
+
+		// Verify the tag exists before migration
+		$term_before = get_term( $test_tag['term_id'], 'post_tag' );
+		$this->assertNotWPError( $term_before );
+
+		// Step 3: Simulate plugin upgrade - unregister old, register new
+		$this->setup_post_migration_environment();
+
+		// Step 4: Run migration
+		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
+
+		// Step 5: Verify migration results
+		// Verify the tag still exists (because regular post uses it)
+		$term_after = get_term( $test_tag['term_id'], 'post_tag' );
+		$this->assertNotWPError( $term_after );
+		$this->assertEquals( 'shared-with-regular-post', $term_after->name );
+
+		// Verify Friends post has friend_tag
+		$friend_tags = wp_get_post_terms( $friends_post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
+		$this->assertContains( 'shared-with-regular-post', $friend_tags );
+
+		// Verify regular post still has post_tag
+		$regular_post_tags = wp_get_post_terms( $regular_post_id, 'post_tag', array( 'fields' => 'names' ) );
+		$this->assertContains( 'shared-with-regular-post', $regular_post_tags );
+	}
+
+	/**
 	 * Test post_tag count recalculation Site Health integration
 	 */
 	public function test_post_tag_count_recalculation_site_health() {
