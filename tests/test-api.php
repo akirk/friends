@@ -98,7 +98,7 @@ class APITest extends Friends_TestCase_Cache_HTTP {
 			)
 		);
 
-		fetch_feed( null ); // load SimplePie.
+		fetch_feed( '' ); // load SimplePie.
 		require_once __DIR__ . '/class-local-feed-fetcher.php';
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 100, 2 );
 		add_filter( 'local_fetch_feed', array( $this, 'local_fetch_feed' ), 100, 2 );
@@ -141,7 +141,7 @@ class APITest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function wp_feed_options( $feed, $url ) {
 		$feed->enable_cache( false );
-		$feed->set_file_class( __NAMESPACE__ . '\Local_Feed_Fetcher' );
+		$feed->get_registry()->register( 'File', __NAMESPACE__ . '\Local_Feed_Fetcher' );
 	}
 
 	/**

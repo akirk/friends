@@ -736,6 +736,14 @@ class Feed {
 
 			wp_set_object_terms( $post_id, $user_feed->get_id(), User_Feed::POST_TAXONOMY );
 
+			if ( ! get_option( 'friends_disable_auto_tagging' ) && isset( $item->friend_tags ) && ! empty( $item->friend_tags ) && is_array( $item->friend_tags ) ) {
+				wp_set_post_terms( $post_id, $item->friend_tags, Friends::TAG_TAXONOMY, true );
+			}
+
+			if ( isset( $item->friend_mention_tags ) && ! empty( $item->friend_mention_tags ) && is_array( $item->friend_mention_tags ) ) {
+				wp_set_post_terms( $post_id, $item->friend_mention_tags, Friends::TAG_TAXONOMY, true );
+			}
+
 			update_post_meta( $post_id, 'parser', $user_feed->get_parser() );
 			update_post_meta( $post_id, 'feed_url', $user_feed->get_url() );
 

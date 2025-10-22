@@ -100,7 +100,7 @@ class FeedTest extends \WP_UnitTestCase {
 		// We're using the same in and out token here since we're faking this on a single install.
 		update_user_option( $this->friend_id, 'friends_out_token', $this->friends_in_token );
 
-		fetch_feed( null ); // load SimplePie.
+		fetch_feed( '' ); // load SimplePie.
 	}
 
 	/**
@@ -758,5 +758,199 @@ class FeedTest extends \WP_UnitTestCase {
 
 		$this->assertEquals( 'https://www.youtube.com/watch?v=mqoowQVxr9E', $post->guid );
 		$this->assertStringContainsString( '<!-- wp:embed', $post->post_content );
+	}
+
+	public function test_simplepie_hashtag_extraction() {
+		// Create a mock SimplePie feed item with hashtags
+		$friends_feed = Friends::get_instance()->feed;
+		$parser = new Feed_Parser_SimplePie( $friends_feed );
+
+		// Create a test feed item
+		$feed_item = new Feed_Item(
+			array(
+				'permalink' => 'https://example.com/post-with-hashtags',
+				'title'     => 'Post with #hashtag in title',
+				'content'   => 'This is a test post with #testing and #another-hashtag in the content!',
+			)
+		);
+
+		// Use reflection to access private method
+		$reflection = new \ReflectionClass( $parser );
+		$extract_method = $reflection->getMethod( 'extract_hashtags' );
+		$extract_method->setAccessible( true );
+
+		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+
+		$this->assertContains( 'hashtag', $tags );
+		$this->assertContains( 'testing', $tags );
+		$this->assertContains( 'another-hashtag', $tags );
+		$this->assertCount( 3, $tags );
+	}
+
+	public function test_simplepie_hashtag_extraction_with_duplicates() {
+		$friends_feed = Friends::get_instance()->feed;
+		$parser = new Feed_Parser_SimplePie( $friends_feed );
+
+		// Create a test feed item with duplicate hashtags
+		$feed_item = new Feed_Item(
+			array(
+				'permalink' => 'https://example.com/post-with-duplicate-hashtags',
+				'title'     => 'Post with #duplicate hashtag',
+				'content'   => 'This post has #duplicate hashtags and #duplicate again',
+			)
+		);
+
+		// Use reflection to access private method
+		$reflection = new \ReflectionClass( $parser );
+		$extract_method = $reflection->getMethod( 'extract_hashtags' );
+		$extract_method->setAccessible( true );
+
+		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+
+		$this->assertContains( 'duplicate', $tags );
+		$this->assertEquals( 1, array_count_values( $tags )['duplicate'] ); // Should appear only once
+	}
+
+	public function test_simplepie_hashtag_extraction_filters_short_tags() {
+		$friends_feed = Friends::get_instance()->feed;
+		$parser = new Feed_Parser_SimplePie( $friends_feed );
+
+		// Create a test feed item with short hashtags that should be filtered
+		$feed_item = new Feed_Item(
+			array(
+				'permalink' => 'https://example.com/post-with-short-hashtags',
+				'title'     => 'Post with #a single letter hashtag',
+				'content'   => 'This post has #b and #validtag hashtags',
+			)
+		);
+
+		// Use reflection to access private method  
+		$reflection = new \ReflectionClass( $parser );
+		$extract_method = $reflection->getMethod( 'extract_hashtags' );
+		$extract_method->setAccessible( true );
+
+		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+
+		$this->assertNotContains( 'a', $tags );
+		$this->assertNotContains( 'b', $tags );
+		$this->assertContains( 'validtag', $tags );
+		$this->assertCount( 1, $tags );
+	}
+
+	public function test_feed_processing_with_hashtags_and_setting() {
+		// Ensure the friend_tag taxonomy is registered and CPT is using new taxonomy
+		Friends::get_instance()->register_friend_tag_taxonomy();
+		unregister_post_type( Friends::CPT );
+		Friends::get_instance()->register_custom_post_type();
+		
+		// Ensure auto-tagging is enabled for this test
+		delete_option( 'friends_disable_auto_tagging' );
+		
+		// Test that hashtags are processed and applied correctly
+		$user = new User( $this->alex );
+		
+		// Create a feed for the user if none exists
+		$feeds = $user->get_active_feeds();
+		if ( empty( $feeds ) ) {
+			$user_feed = $user->save_feed(
+				'https://example.com/feed.xml',
+				array( 'parser' => 'simplepie' )
+			);
+			$this->assertNotWPError( $user_feed );
+		} else {
+			$user_feed = $feeds[0];
+		}
+
+		// Create a mock feed item with hashtags
+		$feed_item = new Feed_Item(
+			array(
+				'permalink' => 'https://example.com/hashtag-test-' . wp_rand(),
+				'title'     => 'Test Post with #feedtest',
+				'content'   => 'This is a test with #feedtest and #unittest hashtags',
+				'date'      => time() - 100,
+			)
+		);
+		
+		// Simulate SimplePie parser hashtag extraction
+		$parser = new Feed_Parser_SimplePie( Friends::get_instance()->feed );
+		$reflection = new \ReflectionClass( $parser );
+		$extract_method = $reflection->getMethod( 'extract_hashtags' );
+		$extract_method->setAccessible( true );
+		$extracted_tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+		$feed_item->friend_tags = $extracted_tags;
+		
+		$feed_items = array( $feed_item );
+		$new_posts = Friends::get_instance()->feed->process_incoming_feed_items( $feed_items, $user_feed );
+
+		$this->assertNotEmpty( $new_posts );
+		$this->assertCount( 1, $new_posts );
+		$post_id = array_keys( $new_posts )[0];
+
+		// Check that hashtags were applied
+		$tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY );
+		$tag_names = wp_list_pluck( $tags, 'name' );
+
+		$this->assertContains( 'feedtest', $tag_names );
+		$this->assertContains( 'unittest', $tag_names );
+	}
+
+	public function test_feed_processing_respects_disable_auto_tagging() {
+		// Ensure the friend_tag taxonomy is registered and CPT is using new taxonomy
+		Friends::get_instance()->register_friend_tag_taxonomy();
+		unregister_post_type( Friends::CPT );
+		Friends::get_instance()->register_custom_post_type();
+		
+		// Enable disable option
+		update_option( 'friends_disable_auto_tagging', true );
+
+		$user = new User( $this->alex );
+		
+		// Create a feed for the user if none exists
+		$feeds = $user->get_active_feeds();
+		if ( empty( $feeds ) ) {
+			$user_feed = $user->save_feed(
+				'https://example.com/feed.xml',
+				array( 'parser' => 'simplepie' )
+			);
+			$this->assertNotWPError( $user_feed );
+		} else {
+			$user_feed = $feeds[0];
+		}
+
+		// Create a mock feed item with hashtags and mention tags
+		$feed_item = new Feed_Item(
+			array(
+				'permalink' => 'https://example.com/disabled-hashtag-test-' . wp_rand(),
+				'title'     => 'Test Post with #disabledhashtag',
+				'content'   => 'This should not get hashtag tags but should get mentions',
+				'date'      => time() - 200,
+			)
+		);
+		
+		// Simulate SimplePie parser hashtag extraction
+		$parser = new Feed_Parser_SimplePie( Friends::get_instance()->feed );
+		$reflection = new \ReflectionClass( $parser );
+		$extract_method = $reflection->getMethod( 'extract_hashtags' );
+		$extract_method->setAccessible( true );
+		$extracted_tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+		$feed_item->friend_tags = $extracted_tags;
+		$feed_item->friend_mention_tags = array( 'mention-testuser' );
+
+		$feed_items = array( $feed_item );
+		$new_posts = Friends::get_instance()->feed->process_incoming_feed_items( $feed_items, $user_feed );
+
+		$this->assertNotEmpty( $new_posts );
+		$this->assertCount( 1, $new_posts );
+		$post_id = array_keys( $new_posts )[0];
+
+		// Check that hashtags were NOT applied but mentions were
+		$tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY );
+		$tag_names = wp_list_pluck( $tags, 'name' );
+
+		$this->assertNotContains( 'disabledhashtag', $tag_names );
+		$this->assertContains( 'mention-testuser', $tag_names );
+
+		// Clean up
+		delete_option( 'friends_disable_auto_tagging' );
 	}
 }
