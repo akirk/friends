@@ -22,7 +22,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	/**
 	 * Helper method to send an ActivityPub message to a user's inbox
 	 */
-	private function send_activitypub_message( $user_id, $activity_data, $use_server_dispatch = false ) {
+	private function receive_activity( $user_id, $activity_data, $use_server_dispatch = false ) {
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . $user_id . '/inbox' );
 		$request->set_body( wp_json_encode( $activity_data ) );
 		$request->set_header( 'Content-type', 'application/json' );
@@ -82,7 +82,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			),
 		);
 
-		$response = $this->send_activitypub_message( get_current_user_id(), $activity_data, true );
+		$response = $this->receive_activity( get_current_user_id(), $activity_data, true );
 		$this->assertEquals( 202, $response->get_status() );
 
 		$posts = get_posts(
@@ -710,7 +710,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			),
 		);
 		
-		$response = $this->send_activitypub_message( get_current_user_id(), $activity_data, true );
+		$response = $this->receive_activity( get_current_user_id(), $activity_data, true );
 
 		$new_posts = get_posts(
 			array(
@@ -787,7 +787,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			),
 		);
 		
-		$response = $this->send_activitypub_message( $local_user, $activity_data );
+		$response = $this->receive_activity( $local_user, $activity_data );
 
 		$posts = get_posts(
 			array(
