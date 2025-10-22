@@ -242,10 +242,10 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 
 		switch ( $host ) {
 			case 'github.com':
-				$feed->set_file_class( __NAMESPACE__ . '\SimplePie_File_Accept_Only_RSS' );
+				$feed->get_registry()->register( 'File', __NAMESPACE__ . '\SimplePie_File_Accept_Only_RSS' );
 				break;
 			default:
-				$feed->set_file_class( '\WP_SimplePie_File' );
+				$feed->get_registry()->register( 'File', '\WP_SimplePie_File' );
 		}
 		/**
 		 * Maybe Rewrite a URL

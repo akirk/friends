@@ -141,7 +141,7 @@ class APITest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function wp_feed_options( $feed, $url ) {
 		$feed->enable_cache( false );
-		$feed->set_file_class( __NAMESPACE__ . '\Local_Feed_Fetcher' );
+		$feed->get_registry()->register( 'File', __NAMESPACE__ . '\Local_Feed_Fetcher' );
 	}
 
 	/**
