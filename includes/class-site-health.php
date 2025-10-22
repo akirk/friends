@@ -202,19 +202,20 @@ class Site_Health {
 		}
 
 		if ( empty( $post_tag_post_types ) ) {
-			$orphaned_count = $wpdb->get_var(
-				"SELECT COUNT(*)
+			$orphaned_tags = $wpdb->get_results(
+				"SELECT t.term_id, t.name, t.slug
 				FROM {$wpdb->terms} t
 				INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-				WHERE tt.taxonomy = 'post_tag'"
+				WHERE tt.taxonomy = 'post_tag'
+				ORDER BY t.name ASC"
 			);
 		} else {
 			$placeholders = implode( ',', array_fill( 0, count( $post_tag_post_types ), '%s' ) );
 			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			// phpcs:disable WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$orphaned_count = $wpdb->get_var(
+			$orphaned_tags = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT COUNT(*)
+					"SELECT t.term_id, t.name, t.slug
 					FROM {$wpdb->terms} t
 					INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
 					LEFT JOIN (
@@ -226,7 +227,8 @@ class Site_Health {
 						AND p.post_status IN ('publish', 'private')
 						AND p.post_type IN ($placeholders)
 					) used_terms ON t.term_id = used_terms.term_id
-					WHERE tt.taxonomy = 'post_tag' AND used_terms.term_id IS NULL",
+					WHERE tt.taxonomy = 'post_tag' AND used_terms.term_id IS NULL
+					ORDER BY t.name ASC",
 					$post_tag_post_types
 				)
 			);
@@ -237,7 +239,45 @@ class Site_Health {
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		$orphaned_count = count( $orphaned_tags );
+
 		if ( $orphaned_count > 0 ) {
+			$description = sprintf(
+				/* translators: %d: number of orphaned tags */
+				_n(
+					'%d orphaned post_tag term was found with no associated posts. These tags may have been created by Friends posts before migration or other sources and can be safely removed to keep your tag cloud clean.',
+					'%d orphaned post_tag terms were found with no associated posts. These tags may have been created by Friends posts before migration or other sources and can be safely removed to keep your tag cloud clean.',
+					$orphaned_count,
+					'friends'
+				),
+				$orphaned_count
+			);
+
+			$tag_list_limit = 15;
+			if ( $orphaned_count <= $tag_list_limit ) {
+				$tag_names = array_map(
+					function ( $tag ) {
+						return '<code>' . esc_html( $tag->name ) . '</code>';
+					},
+					$orphaned_tags
+				);
+				$description .= '<br><br><strong>' . __( 'Tags to be deleted:', 'friends' ) . '</strong> ' . implode( ', ', $tag_names );
+			} else {
+				$shown_tags = array_slice( $orphaned_tags, 0, $tag_list_limit );
+				$tag_names = array_map(
+					function ( $tag ) {
+						return '<code>' . esc_html( $tag->name ) . '</code>';
+					},
+					$shown_tags
+				);
+				$remaining = $orphaned_count - $tag_list_limit;
+				$description .= '<br><br><strong>' . __( 'Tags to be deleted:', 'friends' ) . '</strong> ' . implode( ', ', $tag_names ) . sprintf(
+					/* translators: %d: number of additional tags */
+					_n( ' and %d more', ' and %d more', $remaining, 'friends' ),
+					$remaining
+				);
+			}
+
 			$result = array(
 				'label'       => __( 'Orphaned post tags found', 'friends' ),
 				'status'      => 'recommended',
@@ -247,16 +287,7 @@ class Site_Health {
 				),
 				'description' => sprintf(
 					'<p>%s</p><p><button type="button" class="button button-primary" onclick="friendsCleanupPostTags(this)">%s</button></p>',
-					sprintf(
-						/* translators: %d: number of orphaned tags */
-						_n(
-							'%d orphaned post_tag term was found with no associated posts. These tags may have been created by Friends posts before migration or other sources and can be safely removed to keep your tag cloud clean.',
-							'%d orphaned post_tag terms were found with no associated posts. These tags may have been created by Friends posts before migration or other sources and can be safely removed to keep your tag cloud clean.',
-							$orphaned_count,
-							'friends'
-						),
-						$orphaned_count
-					),
+					$description,
 					__( 'Clean Up Orphaned Tags', 'friends' )
 				),
 				'test'        => 'friends_orphaned_post_tags',
@@ -292,18 +323,57 @@ class Site_Health {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
-		// Count all post_tag terms.
-		$total_post_tags = $wpdb->get_var(
-			"SELECT COUNT(*)
+		// Get all post_tag terms.
+		$all_post_tags = $wpdb->get_results(
+			"SELECT t.term_id, t.name, t.slug, tt.count
 			FROM {$wpdb->terms} t
 			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-			WHERE tt.taxonomy = 'post_tag'"
+			WHERE tt.taxonomy = 'post_tag'
+			ORDER BY t.name ASC"
 		);
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
 
+		$total_post_tags = count( $all_post_tags );
+
 		if ( $total_post_tags > 0 ) {
+			$description = sprintf(
+				/* translators: %d: number of post tags */
+				_n(
+					'You have %d post_tag term. You can recalculate all post tag counts to ensure they accurately reflect only posts from supported post types, excluding Friends posts, revisions, and other system post types.',
+					'You have %d post_tag terms. You can recalculate all post tag counts to ensure they accurately reflect only posts from supported post types, excluding Friends posts, revisions, and other system post types.',
+					$total_post_tags,
+					'friends'
+				),
+				$total_post_tags
+			);
+
+			$tag_list_limit = 15;
+			if ( $total_post_tags <= $tag_list_limit ) {
+				$tag_names = array_map(
+					function ( $tag ) {
+						return '<code>' . esc_html( $tag->name ) . '</code>';
+					},
+					$all_post_tags
+				);
+				$description .= '<br><br><strong>' . __( 'Tags to be recalculated:', 'friends' ) . '</strong> ' . implode( ', ', $tag_names );
+			} else {
+				$shown_tags = array_slice( $all_post_tags, 0, $tag_list_limit );
+				$tag_names = array_map(
+					function ( $tag ) {
+						return '<code>' . esc_html( $tag->name ) . '</code>';
+					},
+					$shown_tags
+				);
+				$remaining = $total_post_tags - $tag_list_limit;
+				$description .= '<br><br><strong>' . __( 'Tags to be recalculated:', 'friends' ) . '</strong> ' . implode( ', ', $tag_names ) . sprintf(
+					/* translators: %d: number of additional tags */
+					_n( ' and %d more', ' and %d more', $remaining, 'friends' ),
+					$remaining
+				);
+			}
+
 			$result = array(
 				'label'       => __( 'Post tag count recalculation available', 'friends' ),
 				'status'      => 'recommended',
@@ -313,16 +383,7 @@ class Site_Health {
 				),
 				'description' => sprintf(
 					'<p>%s</p><p><button type="button" class="button button-primary" onclick="friendsRecalculatePostTagCounts(this)">%s</button></p>',
-					sprintf(
-						/* translators: %d: number of post tags */
-						_n(
-							'You have %d post_tag term. You can recalculate all post tag counts to ensure they accurately reflect only posts from supported post types, excluding Friends posts.',
-							'You have %d post_tag terms. You can recalculate all post tag counts to ensure they accurately reflect only posts from supported post types, excluding Friends posts.',
-							$total_post_tags,
-							'friends'
-						),
-						$total_post_tags
-					),
+					$description,
 					__( 'Recalculate All Tag Counts', 'friends' )
 				),
 				'test'        => 'friends_post_tag_count_recalculation',
@@ -570,7 +631,7 @@ class Site_Health {
 		}
 
 		require_once __DIR__ . '/class-migration.php';
-		Migration::restart_migration();
+		Migration::trigger_migration_manually();
 
 		wp_send_json_success( array( 'message' => __( 'Migration restarted successfully.', 'friends' ) ) );
 	}

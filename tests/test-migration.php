@@ -542,6 +542,8 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertEquals( 'recommended', $result['status'] );
 		$this->assertStringContainsString( 'Orphaned post tags found', $result['label'] );
 		$this->assertStringContainsString( 'Clean Up Orphaned Tags', $result['description'] );
+		$this->assertStringContainsString( 'Tags to be deleted:', $result['description'] );
+		$this->assertStringContainsString( 'orphaned-site-health', $result['description'] );
 	}
 
 	public function test_cleanup_orphaned_friend_tags() {
@@ -806,6 +808,28 @@ class MigrationTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test orphaned post tags display with many tags
+	 */
+	public function test_post_tag_cleanup_site_health_with_many_tags() {
+		$this->setup_post_migration_environment();
+
+		// Create 20 orphaned post_tag terms
+		for ( $i = 1; $i <= 20; $i++ ) {
+			$tag = wp_insert_term( "orphaned-tag-{$i}", 'post_tag' );
+			$this->assertNotWPError( $tag );
+		}
+
+		// Test Site Health when many orphaned tags exist
+		$site_health = new \Friends\Site_Health();
+		$result = $site_health->test_post_tag_cleanup();
+		$this->assertEquals( 'recommended', $result['status'] );
+		$this->assertStringContainsString( 'Orphaned post tags found', $result['label'] );
+		$this->assertStringContainsString( 'Tags to be deleted:', $result['description'] );
+		$this->assertStringContainsString( 'orphaned-tag-1', $result['description'] );
+		$this->assertStringContainsString( 'and 5 more', $result['description'] );
+	}
+
+	/**
 	 * Test post_tag count recalculation Site Health integration
 	 */
 	public function test_post_tag_count_recalculation_site_health() {
@@ -825,6 +849,9 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Post tag count recalculation available', $result['label'] );
 		$this->assertStringContainsString( 'You have 2 post_tag terms', $result['description'] );
 		$this->assertStringContainsString( 'Recalculate All Tag Counts', $result['description'] );
+		$this->assertStringContainsString( 'Tags to be recalculated:', $result['description'] );
+		$this->assertStringContainsString( 'test-tag-1', $result['description'] );
+		$this->assertStringContainsString( 'test-tag-2', $result['description'] );
 		
 		// Clean up all tags
 		wp_delete_term( $tag1['term_id'], 'post_tag' );
