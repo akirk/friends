@@ -18,14 +18,6 @@ function friendsCleanupPostTags(button) {
 	}
 }
 
-function friendsRecalculatePostTagCounts(button) {
-	if (confirm(friendsSiteHealth.confirmRecalculate)) {
-		button.disabled = true;
-		button.textContent = 'Recalculating...';
-		friendsRunRecalculation();
-	}
-}
-
 function friendsRunMigration() {
 	fetch(friendsSiteHealth.ajaxUrl, {
 		method: 'POST',
@@ -75,31 +67,5 @@ function friendsRunCleanup() {
 	.catch(error => {
 		console.error('Error:', error);
 		alert('An error occurred while cleaning up tags.');
-	});
-}
-
-function friendsRunRecalculation() {
-	fetch(friendsSiteHealth.ajaxUrl, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/x-www-form-urlencoded',
-		},
-		body: new URLSearchParams({
-			action: 'friends_recalculate_post_tag_counts',
-			nonce: friendsSiteHealth.recalculatePostTagCountsNonce
-		})
-	})
-	.then(response => response.json())
-	.then(data => {
-		if (data.success) {
-			alert(data.data.message);
-			location.reload();
-		} else {
-			alert('Error: ' + (data.data || 'Unknown error'));
-		}
-	})
-	.catch(error => {
-		console.error('Error:', error);
-		alert('An error occurred while recalculating counts.');
 	});
 }

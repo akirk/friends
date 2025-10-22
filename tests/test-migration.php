@@ -829,37 +829,4 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'and 5 more', $result['description'] );
 	}
 
-	/**
-	 * Test post_tag count recalculation Site Health integration
-	 */
-	public function test_post_tag_count_recalculation_site_health() {
-		$friends = new Friends();
-		$this->setup_post_migration_environment();
-		
-		// Create some post_tag terms (no need for friend_tag equivalents now)
-		$tag1 = wp_insert_term( 'test-tag-1', 'post_tag' );
-		$tag2 = wp_insert_term( 'test-tag-2', 'post_tag' );
-		$this->assertNotWPError( $tag1 );
-		$this->assertNotWPError( $tag2 );
-		
-		// Test Site Health when tags exist
-		$site_health = new \Friends\Site_Health();
-		$result = $site_health->test_post_tag_count_recalculation();
-		$this->assertEquals( 'recommended', $result['status'] );
-		$this->assertStringContainsString( 'Post tag count recalculation available', $result['label'] );
-		$this->assertStringContainsString( 'You have 2 post_tag terms', $result['description'] );
-		$this->assertStringContainsString( 'Recalculate All Tag Counts', $result['description'] );
-		$this->assertStringContainsString( 'Tags to be recalculated:', $result['description'] );
-		$this->assertStringContainsString( 'test-tag-1', $result['description'] );
-		$this->assertStringContainsString( 'test-tag-2', $result['description'] );
-		
-		// Clean up all tags
-		wp_delete_term( $tag1['term_id'], 'post_tag' );
-		wp_delete_term( $tag2['term_id'], 'post_tag' );
-		
-		// Test Site Health when no tags exist
-		$result = $site_health->test_post_tag_count_recalculation();
-		$this->assertEquals( 'good', $result['status'] );
-		$this->assertStringContainsString( 'No post tags to recalculate', $result['label'] );
-	}
 }

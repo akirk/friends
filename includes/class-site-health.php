@@ -23,7 +23,6 @@ class Site_Health {
 		add_filter( 'debug_information', array( $this, 'site_health_debug' ) );
 		add_action( 'wp_ajax_friends_restart_migration', array( $this, 'ajax_restart_migration' ) );
 		add_action( 'wp_ajax_friends_cleanup_post_tags', array( $this, 'ajax_cleanup_post_tags' ) );
-		add_action( 'wp_ajax_friends_recalculate_post_tag_counts', array( $this, 'ajax_recalculate_post_tag_counts' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
@@ -42,11 +41,6 @@ class Site_Health {
 		$tests['direct']['friends_orphaned_post_tags'] = array(
 			'label' => __( 'Friends Orphaned Post Tags', 'friends' ),
 			'test'  => array( $this, 'test_post_tag_cleanup' ),
-		);
-
-		$tests['direct']['friends_post_tag_count_recalculation'] = array(
-			'label' => __( 'Post Tag Count Recalculation', 'friends' ),
-			'test'  => array( $this, 'test_post_tag_count_recalculation' ),
 		);
 
 		$tests['direct']['friends-roles'] = array(
@@ -305,102 +299,6 @@ class Site_Health {
 					__( 'All post_tag terms have associated posts. Your tag system is clean.', 'friends' )
 				),
 				'test'        => 'friends_orphaned_post_tags',
-			);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Site Health test for post tag count recalculation.
-	 *
-	 * @return array Site Health test result.
-	 */
-	public function test_post_tag_count_recalculation() {
-		require_once __DIR__ . '/class-migration.php';
-
-		global $wpdb;
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		// Get all post_tag terms.
-		$all_post_tags = $wpdb->get_results(
-			"SELECT t.term_id, t.name, t.slug, tt.count
-			FROM {$wpdb->terms} t
-			INNER JOIN {$wpdb->term_taxonomy} tt ON t.term_id = tt.term_id
-			WHERE tt.taxonomy = 'post_tag'
-			ORDER BY t.name ASC"
-		);
-
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
-
-		$total_post_tags = count( $all_post_tags );
-
-		if ( $total_post_tags > 0 ) {
-			$description = sprintf(
-				/* translators: %d: number of post tags */
-				_n(
-					'You have %d post_tag term. You can recalculate all post tag counts to ensure they accurately reflect only posts from supported post types, excluding Friends posts, revisions, and other system post types.',
-					'You have %d post_tag terms. You can recalculate all post tag counts to ensure they accurately reflect only posts from supported post types, excluding Friends posts, revisions, and other system post types.',
-					$total_post_tags,
-					'friends'
-				),
-				$total_post_tags
-			);
-
-			$tag_list_limit = 15;
-			if ( $total_post_tags <= $tag_list_limit ) {
-				$tag_names = array_map(
-					function ( $tag ) {
-						return '<code>' . esc_html( $tag->name ) . '</code>';
-					},
-					$all_post_tags
-				);
-				$description .= '<br><br><strong>' . __( 'Tags to be recalculated:', 'friends' ) . '</strong> ' . implode( ', ', $tag_names );
-			} else {
-				$shown_tags = array_slice( $all_post_tags, 0, $tag_list_limit );
-				$tag_names = array_map(
-					function ( $tag ) {
-						return '<code>' . esc_html( $tag->name ) . '</code>';
-					},
-					$shown_tags
-				);
-				$remaining = $total_post_tags - $tag_list_limit;
-				$description .= '<br><br><strong>' . __( 'Tags to be recalculated:', 'friends' ) . '</strong> ' . implode( ', ', $tag_names ) . sprintf(
-					/* translators: %d: number of additional tags */
-					_n( ' and %d more', ' and %d more', $remaining, 'friends' ),
-					$remaining
-				);
-			}
-
-			$result = array(
-				'label'       => __( 'Post tag count recalculation available', 'friends' ),
-				'status'      => 'recommended',
-				'badge'       => array(
-					'label' => __( 'Friends', 'friends' ),
-					'color' => 'blue',
-				),
-				'description' => sprintf(
-					'<p>%s</p><p><button type="button" class="button button-primary" onclick="friendsRecalculatePostTagCounts(this)">%s</button></p>',
-					$description,
-					__( 'Recalculate All Tag Counts', 'friends' )
-				),
-				'test'        => 'friends_post_tag_count_recalculation',
-			);
-		} else {
-			$result = array(
-				'label'       => __( 'No post tags to recalculate', 'friends' ),
-				'status'      => 'good',
-				'badge'       => array(
-					'label' => __( 'Friends', 'friends' ),
-					'color' => 'green',
-				),
-				'description' => sprintf(
-					'<p>%s</p>',
-					__( 'No post_tag terms found in your system.', 'friends' )
-				),
-				'test'        => 'friends_post_tag_count_recalculation',
 			);
 		}
 
@@ -670,53 +568,6 @@ class Site_Health {
 	}
 
 	/**
-	 * AJAX handler for recalculating post tag counts.
-	 */
-	public function ajax_recalculate_post_tag_counts() {
-		check_ajax_referer( 'friends_recalculate_post_tag_counts', 'nonce' );
-
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( __( 'You do not have permission to perform this action.', 'friends' ) );
-		}
-
-		require_once __DIR__ . '/class-migration.php';
-		$results = Migration::recalculate_all_post_tag_counts();
-
-		if ( $results['deleted'] > 0 ) {
-			wp_send_json_success(
-				array(
-					'message' => sprintf(
-					/* translators: %1$d: recalculated count, %2$d: deleted count */
-						_n(
-							'Recalculated %1$d tag count and deleted %2$d orphaned tag.',
-							'Recalculated %1$d tag counts and deleted %2$d orphaned tags.',
-							$results['recalculated'],
-							'friends'
-						),
-						$results['recalculated'],
-						$results['deleted']
-					),
-				)
-			);
-		} else {
-			wp_send_json_success(
-				array(
-					'message' => sprintf(
-					/* translators: %d: recalculated count */
-						_n(
-							'Recalculated %d tag count. No orphaned tags found.',
-							'Recalculated %d tag counts. No orphaned tags found.',
-							$results['recalculated'],
-							'friends'
-						),
-						$results['recalculated']
-					),
-				)
-			);
-		}
-	}
-
-	/**
 	 * Enqueue scripts for Site Health pages.
 	 *
 	 * @param string $hook Current admin page.
@@ -738,13 +589,11 @@ class Site_Health {
 			'friends-site-health',
 			'friendsSiteHealth',
 			array(
-				'restartMigrationNonce'         => wp_create_nonce( 'friends_restart_migration' ),
-				'cleanupPostTagsNonce'          => wp_create_nonce( 'friends_cleanup_post_tags' ),
-				'recalculatePostTagCountsNonce' => wp_create_nonce( 'friends_recalculate_post_tag_counts' ),
-				'ajaxUrl'                       => admin_url( 'admin-ajax.php' ),
-				'confirmRestart'                => __( 'This will restart the migration process. Any posts that were previously migrated will be re-processed. Continue?', 'friends' ),
-				'confirmCleanup'                => __( 'This will clean up orphaned post_tag terms that were created by Friends posts. Only unused tags will be deleted. Continue?', 'friends' ),
-				'confirmRecalculate'            => __( 'This will recalculate all post_tag counts and delete any orphaned tags. Continue?', 'friends' ),
+				'restartMigrationNonce' => wp_create_nonce( 'friends_restart_migration' ),
+				'cleanupPostTagsNonce'  => wp_create_nonce( 'friends_cleanup_post_tags' ),
+				'ajaxUrl'               => admin_url( 'admin-ajax.php' ),
+				'confirmRestart'        => __( 'This will restart the migration process. Any posts that were previously migrated will be re-processed. Continue?', 'friends' ),
+				'confirmCleanup'        => __( 'This will clean up orphaned post_tag terms that were created by Friends posts. Only unused tags will be deleted. Continue?', 'friends' ),
 			)
 		);
 	}
