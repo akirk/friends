@@ -73,7 +73,7 @@ class NotificationTest extends \WP_UnitTestCase {
 			3
 		);
 		$friends = Friends::get_instance();
-		fetch_feed( null ); // load SimplePie.
+		fetch_feed( '' ); // load SimplePie.
 		update_option( 'home', 'http://me.local' );
 
 		$file = new \SimplePie_File( __DIR__ . '/data/friend-feed-1-private-post.rss' );
@@ -420,7 +420,7 @@ class NotificationTest extends \WP_UnitTestCase {
 			3
 		);
 		$friends = Friends::get_instance();
-		fetch_feed( null ); // load SimplePie.
+		fetch_feed( '' ); // load SimplePie.
 		update_option( 'home', 'http://me.local' );
 		update_option(
 			'friends_notification_keywords',

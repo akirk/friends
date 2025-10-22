@@ -10,7 +10,7 @@ namespace Friends;
 /**
  * Test the Enable Mastodon Apps integration
  */
-class Combined_ActivityPub_EnableMastdodonApps_Test extends ActivityPubTest {
+class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 	public static $users = array();
 	private $posts = array();
 	private $token;

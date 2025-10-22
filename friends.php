@@ -5,7 +5,7 @@
  * Plugin URI: https://github.com/akirk/friends
  * Version: 4.0.0-alpha1
  * Requires PHP: 7.2
- 
+ *
  * Description: Follow others via RSS and ActivityPub and read their posts on your own WordPress.
  *
  * License: GPL2
@@ -52,6 +52,7 @@ require_once __DIR__ . '/includes/class-notifications.php';
 require_once __DIR__ . '/includes/class-plugin-installer.php';
 require_once __DIR__ . '/includes/class-reactions.php';
 require_once __DIR__ . '/includes/class-rest.php';
+require_once __DIR__ . '/includes/class-site-health.php';
 require_once __DIR__ . '/includes/class-shortcodes.php';
 require_once __DIR__ . '/includes/class-template-loader.php';
 require_once __DIR__ . '/includes/class-third-parties.php';

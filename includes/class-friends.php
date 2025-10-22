@@ -18,6 +18,7 @@ namespace Friends;
 class Friends {
 	const VERSION       = FRIENDS_VERSION;
 	const CPT           = 'friend_post_cache';
+	const TAG_TAXONOMY  = 'friend_tag';
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'edit_private_posts';
@@ -130,6 +131,7 @@ class Friends {
 		new Logging( $this );
 		new Shortcodes( $this );
 		new Automatic_Status( $this );
+		new Site_Health();
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
 
@@ -187,6 +189,7 @@ class Friends {
 	 */
 	private function register_hooks() {
 		add_action( 'init', array( $this, 'register_custom_post_type' ) );
+		add_action( 'init', array( $this, 'register_friend_tag_taxonomy' ) );
 		add_action( 'init', array( 'Friends\Subscription', 'register_taxonomy' ) );
 
 		add_action( 'init', array( 'Friends\User_Feed', 'register_taxonomy' ) );
@@ -200,6 +203,7 @@ class Friends {
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'cron_schedules', array( $this, 'add_fifteen_minutes_interval' ) ); // phpcs:ignore WordPressVIPMinimum.Performance.IntervalInSeconds.IntervalInSeconds
 		add_action( 'cron_friends_delete_old_posts', array( $this, 'cron_friends_delete_outdated_posts' ) );
+		add_action( 'friends_migrate_post_tags_batch', array( $this, 'cron_migrate_post_tags_batch' ) );
 		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
@@ -208,6 +212,37 @@ class Friends {
 		add_filter( 'request', array( $this, 'limit_post_format_request' ), 20 );
 		add_filter( 'my_apps_plugins', array( $this, 'register_my_apps' ) );
 		User::register_wrapper_hooks();
+	}
+
+	/**
+	 * Register the friend tag taxonomy
+	 */
+	public function register_friend_tag_taxonomy() {
+		$labels = array(
+			'name'          => __( 'Friend Tags', 'friends' ),
+			'singular_name' => __( 'Friend Tag', 'friends' ),
+			'search_items'  => __( 'Search Friend Tags', 'friends' ),
+			'all_items'     => __( 'All Friend Tags', 'friends' ),
+			'edit_item'     => __( 'Edit Friend Tag', 'friends' ),
+			'update_item'   => __( 'Update Friend Tag', 'friends' ),
+			'add_new_item'  => __( 'Add New Friend Tag', 'friends' ),
+			'new_item_name' => __( 'New Friend Tag Name', 'friends' ),
+			'menu_name'     => __( 'Friend Tags', 'friends' ),
+		);
+
+		$args = array(
+			'hierarchical'       => false,
+			'labels'             => $labels,
+			'show_ui'            => true,
+			'show_admin_column'  => true,
+			'query_var'          => true,
+			'rewrite'            => array( 'slug' => 'friend-tag' ),
+			'public'             => false,
+			'publicly_queryable' => false,
+			'show_in_rest'       => true,
+		);
+
+		register_taxonomy( self::TAG_TAXONOMY, self::CPT, $args );
 	}
 
 	/**
@@ -245,7 +280,7 @@ class Friends {
 			'menu_position'       => 5,
 			'menu_icon'           => 'dashicons-groups',
 			'supports'            => array( 'title', 'editor', 'author', 'revisions', 'thumbnail', 'excerpt', 'comments', 'post-formats' ),
-			'taxonomies'          => array( 'post_tag', 'post_format', 'friend-reaction-' . get_current_user_id() ),
+			'taxonomies'          => array( self::TAG_TAXONOMY, 'post_format', 'friend-reaction-' . get_current_user_id() ),
 			'has_archive'         => true,
 			'rewrite'             => false,
 		);
@@ -499,18 +534,16 @@ class Friends {
 	public static function upgrade_plugin() {
 		$previous_version = get_option( 'friends_plugin_version' );
 
+		// Bail early if no migration is necessary.
+		if ( version_compare( $previous_version, Friends::VERSION, '>=' ) ) {
+			return;
+		}
+
+		// Load migration class for any upgrade.
+		require_once __DIR__ . '/class-migration.php';
+
 		if ( version_compare( $previous_version, '0.20.1', '<' ) ) {
-			$users = User_Query::all_associated_users();
-			foreach ( $users->get_results() as $user ) {
-				$gravatar = get_user_option( 'friends_gravatar', $user->ID );
-				$user_icon_url = get_user_option( 'friends_user_icon_url', $user->ID );
-				if ( $gravatar ) {
-					if ( ! $user_icon_url ) {
-						update_user_option( $user->ID, 'friends_user_icon_url', $gravatar );
-					}
-					delete_user_option( $user->ID, 'friends_gravatar' );
-				}
-			}
+			Migration::migrate_gravatar_to_user_icon_url();
 		}
 
 		if ( version_compare( $previous_version, '2.1.3', '<' ) ) {
@@ -518,66 +551,23 @@ class Friends {
 		}
 
 		if ( version_compare( $previous_version, '2.6.0', '<' ) ) {
-			$users = User_Query::all_associated_users();
-			foreach ( $users->get_results() as $user ) {
-				if ( get_option( 'friends_feed_rules_' . $user->ID ) ) {
-					$user->update_user_option( 'friends_feed_rules', get_option( 'friends_feed_rules_' . $user->ID ) );
-				}
-				if ( get_option( 'friends_feed_catch_all_' . $user->ID ) ) {
-					$user->update_user_option( 'friends_feed_catch_all', get_option( 'friends_feed_catch_all_' . $user->ID ) );
-				}
-			}
+			Migration::migrate_feed_options_to_user_options();
 		}
 
 		if ( version_compare( $previous_version, '2.8.7', '<' ) ) {
-			$users = User_Query::all_associated_users();
-			foreach ( $users->get_results() as $user ) {
-				if ( ! ( $user instanceof Subscription ) ) {
-					// We have a user that is not a virtual user, so the friendship functionality had been used.
-					update_option( 'friends_enable_wp_friendships', 1 );
-					break;
-				}
-			}
+			Migration::enable_wp_friendships_if_used();
 		}
 
 		if ( version_compare( $previous_version, '2.9.4', '<' ) ) {
-			// Migrate to the new External user.
-			$user = User::get_by_username( 'external-mentions' );
-			if ( $user && $user instanceof Subscription ) {
-				wp_update_term(
-					$user->get_term_id(),
-					Subscription::TAXONOMY,
-					array(
-						'slug' => 'external',
-						'name' => _x( 'External', 'user name', 'friends' ),
-					)
-				);
-				$user->update_user_option( 'display_name', _x( 'External', 'user name', 'friends' ) );
-			}
-
-			// Upgrade cron schedule.
-			$next_scheduled = wp_next_scheduled( 'cron_friends_refresh_feeds' );
-			if ( $next_scheduled ) {
-				$event = wp_get_scheduled_event( 'cron_friends_refresh_feeds' );
-				if ( $event && 'fifteen-minutes' !== $event->schedule ) {
-					wp_unschedule_event( $next_scheduled, 'cron_friends_refresh_feeds' );
-					$next_scheduled = false;
-				}
-			}
-			if ( ! $next_scheduled ) {
-				wp_schedule_event( time(), 'fifteen-minutes', 'cron_friends_refresh_feeds' );
-			}
+			Migration::migrate_external_user_and_cron();
 		}
 
 		if ( version_compare( $previous_version, '3.1.8', '<' ) ) {
-			// Migrate the option friends_frontend_default_view to a user option.
-			$users = User_Query::all_admin_users();
-			foreach ( $users->get_results() as $user ) {
-				$default_view = get_option( 'friends_frontend_default_view' );
-				if ( $default_view ) {
-					$user->update_user_option( 'friends_frontend_default_view', $default_view );
-				}
-			}
+			Migration::migrate_frontend_default_view_to_user_option();
+		}
+
+		if ( version_compare( $previous_version, '4.0.0', '<' ) ) {
+			Migration::migrate_post_tags_to_friend_tags();
 		}
 
 		update_option( 'friends_plugin_version', Friends::VERSION );
@@ -1245,7 +1235,7 @@ class Friends {
 			$tax_query['relation'] = 'AND';
 		}
 		$post_tag_query = array(
-			'taxonomy' => 'post_tag',
+			'taxonomy' => self::TAG_TAXONOMY,
 			'field'    => 'slug',
 			'operator' => 'IN',
 			'terms'    => $filter_by_post_tag,
@@ -1477,6 +1467,16 @@ class Friends {
 			$friend_user->delete_outdated_posts();
 		}
 		$this->delete_outdated_posts();
+		$this->cleanup_orphaned_friend_tags();
+	}
+
+	/**
+	 * Cron function to process post tag migration batches.
+	 * Ensures the Migration class is loaded before calling the batch method.
+	 */
+	public function cron_migrate_post_tags_batch() {
+		require_once __DIR__ . '/class-migration.php';
+		Migration::migrate_post_tags_batch();
 	}
 
 	/**
@@ -1603,6 +1603,28 @@ class Friends {
 	}
 
 	/**
+	 * Clean up orphaned friend tags that have no posts.
+	 */
+	public function cleanup_orphaned_friend_tags() {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => self::TAG_TAXONOMY,
+				'hide_empty' => false,
+			)
+		);
+
+		if ( is_wp_error( $terms ) ) {
+			return;
+		}
+
+		foreach ( $terms as $term ) {
+			if ( 0 === $term->count ) {
+				wp_delete_term( $term->term_id, self::TAG_TAXONOMY );
+			}
+		}
+	}
+
+	/**
 	 * Delete all the data the plugin has stored in WordPress
 	 */
 	public static function uninstall_plugin() {
@@ -1610,6 +1632,7 @@ class Friends {
 			User_Feed::TAXONOMY,
 			User_Feed::POST_TAXONOMY,
 			Subscription::TAXONOMY,
+			self::TAG_TAXONOMY,
 		);
 
 		$affected_users = new \WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
