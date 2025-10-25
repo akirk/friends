@@ -499,17 +499,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 
 			$sender_name = false;
-			if ( ! empty( $meta['name'] ) ) {
-				$sender_name = $meta['name'];
-			} elseif ( ! empty( $meta['preferredUsername'] ) ) {
-				$sender_name = $meta['preferredUsername'];
+			if ( ! empty( $actor['name'] ) ) {
+				$sender_name = $actor['name'];
+			} elseif ( ! empty( $actor['preferredUsername'] ) ) {
+				$sender_name = $actor['preferredUsername'];
 			}
 
-			if ( isset( $meta['id'] ) ) {
+			if ( isset( $actor['id'] ) ) {
 				if ( $sender_name ) {
-					$sender_name .= ' (@' . self::convert_actor_to_mastodon_handle( $meta['id'] ) . ')';
+					$sender_name .= ' (@' . self::convert_actor_to_mastodon_handle( $actor['id'] ) . ')';
 				} else {
-					$sender_name = '@' . self::convert_actor_to_mastodon_handle( $meta['id'] );
+					$sender_name = '@' . self::convert_actor_to_mastodon_handle( $actor['id'] );
 				}
 			} elseif ( ! $sender_name ) {
 				$sender_name = '@' . self::convert_actor_to_mastodon_handle( $actor_url );
@@ -1062,9 +1062,36 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return Feed_Item|null The feed item or null if it's not a valid activity.
 	 */
 	protected function process_incoming_activity( $type, $activity, $user_id, $user_feed ) {
+		$tags = array();
+		$mention_tags = array();
+
+		// Extract mention tags from CC field - if the current user is in CC, add their mention tag.
+		if ( isset( $activity['cc'] ) && is_array( $activity['cc'] ) ) {
+			$my_activitypub_id = (string) $this->get_activitypub_actor( $user_id );
+			if ( in_array( $my_activitypub_id, (array) $activity['cc'], true ) ) {
+				$local_user = get_userdata( $user_id );
+				if ( $local_user ) {
+					$mention_tags[] = 'mention-' . $local_user->user_login;
+				}
+			}
+		}
+
+		// Extract hashtags from ActivityPub object tags.
+		if ( isset( $activity['object']['tag'] ) && is_array( $activity['object']['tag'] ) ) {
+			foreach ( $activity['object']['tag'] as $tag ) {
+				if ( isset( $tag['type'] ) && 'Hashtag' === $tag['type'] && isset( $tag['name'] ) ) {
+					$tag_name = ltrim( $tag['name'], '#' );
+					$tag_name = sanitize_title( $tag_name );
+					if ( ! empty( $tag_name ) ) {
+						$tags[] = $tag_name;
+					}
+				}
+			}
+		}
+
 		switch ( $type ) {
 			case 'create':
-				return $this->handle_incoming_create( $activity['object'] );
+				return $this->handle_incoming_create( $activity['object'], $tags, $mention_tags );
 			case 'update':
 				if ( isset( $activity['object']['type'] ) && 'Person' === $activity['object']['type'] ) {
 					if ( ! $user_feed instanceof User_Feed ) {
@@ -1072,7 +1099,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					}
 					return $this->handle_incoming_update_person( $activity['object'], $user_feed );
 				}
-				$item = $this->handle_incoming_create( $activity['object'] );
+				$item = $this->handle_incoming_create( $activity['object'], $tags, $mention_tags );
 				if ( isset( $activity['object']['type'] ) && 'Note' === $activity['object']['type'] ) {
 					$friend_user = $user_feed->get_friend_user();
 					$post_id = Feed::url_to_postid( $item->permalink );
@@ -1134,8 +1161,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * We received a post for a feed, handle it.
 	 *
 	 * @param      array $activity     The object from ActivityPub.
+	 * @param      array $tags         Optional hashtags to attach to the item.
+	 * @param      array $mention_tags Optional mention tags to attach to the item.
 	 */
-	private function handle_incoming_create( $activity ) {
+	private function handle_incoming_create( $activity, $tags = array(), $mention_tags = array() ) {
 		$permalink = $activity['id'];
 		if ( isset( $activity['url'] ) ) {
 			if ( is_array( $activity['url'] ) ) {
@@ -1303,6 +1332,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 
+		if ( ! empty( $tags ) && is_array( $tags ) ) {
+			$data['friend_tags'] = $tags;
+		}
+
+		// These are separate so that they won't be faked.
+		if ( ! empty( $mention_tags ) && is_array( $mention_tags ) ) {
+			$data['friend_mention_tags'] = $mention_tags;
+		}
+
 		$this->log(
 			'Received feed item',
 			array(
@@ -1430,7 +1468,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$object['published'] = gmdate( 'Y-m-d H:i:s', strtotime( $published_date ) );
 		$object['reblog'] = true;
 
-		return $this->handle_incoming_create( $object );
+		return $this->handle_incoming_create( $object, array(), array() );
 	}
 
 	/**
@@ -1852,10 +1890,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function activitypub_extract_mentions( $mentions, $post_content ) {
 		$users = self::get_possible_mentions();
 
-		// Check if a user is mentioned in the $post_content.
-		$matches = array();
 		foreach ( $users as $user => $url ) {
-			if ( strpos( $post_content, $user ) !== false ) {
+			$pos = strpos( $post_content, $user );
+			if ( false !== $pos ) {
+				$after_pos = $pos + strlen( $user );
+				if ( $after_pos < strlen( $post_content ) && '@' === $post_content[ $after_pos ] ) {
+					continue;
+				}
 				$mentions[ $user ] = $users[ $user ];
 			}
 		}
@@ -1978,7 +2019,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				return false;
 			}
 			$this->log( 'Received response', compact( 'url', 'object' ) );
-			$item = $this->handle_incoming_create( $object );
+			$item = $this->handle_incoming_create( $object, array(), array() );
 			if ( $item instanceof Feed_Item ) {
 				$new_posts = $this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
 				if ( 1 === count( $new_posts ) ) {

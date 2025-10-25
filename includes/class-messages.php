@@ -250,7 +250,7 @@ class Messages {
 	}
 
 
-	public function save_incoming_message( User $friend_user, $message, $subject = null, $feed_url = null, $remote_url = null, $reply_to = null ) {
+	public function save_incoming_message( User $friend_user, $message, $subject = '', $feed_url = null, $remote_url = null, $reply_to = null ) {
 		$post_data = array(
 			'post_type'    => self::CPT,
 			'post_title'   => $subject,
@@ -294,7 +294,7 @@ class Messages {
 	 *
 	 * @return     int     The post ID.
 	 */
-	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject, $reply_to_post_id = null ) {
+	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null ) {
 		$content = \wpautop( $message );
 		$content = \preg_replace( '/[\n\r\t]/', '', $content );
 		$content = \trim( $content );
@@ -555,7 +555,7 @@ class Messages {
 	 *
 	 * @return     \WP_Error|int  An error or the message post id.
 	 */
-	public function send_message( User $friend_user, $to, $message, $subject = null, $reply_to_post_id = null ) {
+	public function send_message( User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null ) {
 		$tos = apply_filters( 'friends_message_form_accounts', array(), $friend_user );
 		if ( ! isset( $tos[ $to ] ) ) {
 			return new \WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
