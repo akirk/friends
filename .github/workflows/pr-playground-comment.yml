@@ -19,11 +19,11 @@ jobs:
 
             const commentBody = `## Test this PR in WordPress Playground
 
-You can test this pull request directly in WordPress Playground:
+            You can test this pull request directly in WordPress Playground:
 
-[Launch WordPress Playground](${playgroundUrl})
+            [Launch WordPress Playground](${playgroundUrl})
 
-This will install and activate the plugin with the changes from this PR.`;
+            This will install and activate the plugin with the changes from this PR.`.replace(/^            /gm, '');
 
             // Check if we already posted a comment
             const { data: comments } = await github.rest.issues.listComments({
@@ -33,7 +33,7 @@ This will install and activate the plugin with the changes from this PR.`;
             });
 
             const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
+              comment.user.login === 'github-actions[bot]' &&
               comment.body.includes('Test this PR in WordPress Playground')
             );
 

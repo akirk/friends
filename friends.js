@@ -527,32 +527,42 @@
 	/* Reactions */
 	$( function () {
 		$document.on( 'click', 'button.friends-reaction', function () {
+			const $this = $( this );
+			$this.addClass( 'loading' );
 			wp.ajax.send( 'friends-toggle-react', {
 				data: {
-					_ajax_nonce: $( this ).data( 'nonce' ),
-					post_id: $( this ).data( 'id' ),
-					reaction: $( this ).data( 'emoji' ),
+					_ajax_nonce: $this.data( 'nonce' ),
+					post_id: $this.data( 'id' ),
+					reaction: $this.data( 'emoji' ),
 				},
 				success() {
 					window.location.reload();
+				},
+				error() {
+					$this.removeClass( 'loading' );
 				},
 			} );
 			return false;
 		} );
 
 		$( '.friends-reaction-picker' ).on( 'click', 'button', function () {
+			const $this = $( this );
+			$this.addClass( 'loading' );
 			wp.ajax.send( 'friends-toggle-react', {
 				data: {
-					_ajax_nonce: $( this )
+					_ajax_nonce: $this
 						.closest( '.friends-reaction-picker' )
 						.data( 'nonce' ),
-					post_id: $( this )
+					post_id: $this
 						.closest( '.friends-reaction-picker' )
 						.data( 'id' ),
-					reaction: $( this ).data( 'emoji' ),
+					reaction: $this.data( 'emoji' ),
 				},
 				success() {
 					window.location.reload();
+				},
+				error() {
+					$this.removeClass( 'loading' );
 				},
 			} );
 			return false;
@@ -583,12 +593,14 @@
 	$( function () {
 		$document.on( 'click', 'a.friends-boost', function () {
 			const $this = $( this );
+			$this.addClass( 'loading' );
 			wp.ajax.send( 'friends-boost', {
 				data: {
 					_ajax_nonce: $this.data( 'nonce' ),
 					post_id: $this.data( 'id' ),
 				},
 				success( result ) {
+					$this.removeClass( 'loading' );
 					if ( 'boosted' === result ) {
 						$this
 							.find( 'i.friends-boost-status' )
@@ -607,6 +619,7 @@
 					}
 				},
 				fail( result ) {
+					$this.removeClass( 'loading' );
 					$this
 						.find( 'i.friends-boost-status' )
 						.addClass( 'dashicons dashicons-warning' )
