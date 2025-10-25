@@ -33,7 +33,7 @@ This will install and activate the plugin with the changes from this PR.`;
             });
 
             const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
+              comment.user.login === 'github-actions[bot]' &&
               comment.body.includes('Test this PR in WordPress Playground')
             );
 
