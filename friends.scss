@@ -360,28 +360,10 @@ h2#page-title a.dashicons {
 				.card-body {
 					padding: 1rem;
 
-					ul,
-					ol {
-						margin-left: 0;
-						padding-left: 1rem;
-					}
-
-					ul ul,
-					ol ol,
-					ul ol,
-					ol ul {
-						margin-left: 0;
-						padding-left: 1rem;
-					}
-
-					p.note {
-						margin-left: 0;
-						margin-right: 0;
-					}
-
-					a {
-						word-wrap: break-word;
-						overflow-wrap: break-word;
+					button,
+					.btn {
+						white-space: normal;
+						margin-bottom: 1.2rem;
 					}
 				}
 

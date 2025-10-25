@@ -15,7 +15,7 @@ jobs:
         with:
           script: |
             const prNumber = context.payload.pull_request.number;
-            const playgroundUrl = `https://playground.wordpress.net/#{%22steps%22:[{%22step%22:%22installPlugin%22,%22pluginData%22:{%22resource%22:%22git:directory%22,%22url%22:%22https://github.com/akirk/friends%22,%22ref%22:%22refs/pull/${prNumber}/head%22,%22refType%22:%22refname%22},%22options%22:{%22activate%22:true}}]}`;
+            const playgroundUrl = `https://playground.wordpress.net/#{%22landingPage%22:%22/friends/%22,%22steps%22:[{%22step%22:%22installPlugin%22,%22pluginData%22:{%22resource%22:%22git:directory%22,%22url%22:%22https://github.com/akirk/friends%22,%22ref%22:%22refs/pull/${prNumber}/head%22,%22refType%22:%22refname%22},%22options%22:{%22activate%22:true}}]}`;
 
             const commentBody = `## Test this PR in WordPress Playground
 
