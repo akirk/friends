@@ -359,6 +359,12 @@ h2#page-title a.dashicons {
 
 				.card-body {
 					padding: 1rem;
+
+					button,
+					.btn {
+						white-space: normal;
+						margin-bottom: 1.2rem;
+					}
 				}
 
 				.card-title {
