@@ -1,8 +1,27 @@
+:root {
+	color-scheme: light dark;
+}
+
 $body-bg: #f7f8f9;
+$body-bg-dark: #1a1a1a;
 
 $primary-color: #2e5bec;
+$primary-color-dark: #5b8aff;
+
 $dark-color: #3e396b;
+$dark-color-dark: #e0e0e0;
+
 $border-color-light: #eee;
+$border-color-dark: #333;
+
+$text-color-light: hsl(246, 30.487804878%, 37.1568627451%);
+$text-color-dark: #e0e0e0;
+
+$link-color-light: #2e5bec;
+$link-color-dark: #5b8aff;
+
+$card-bg-light: #fff;
+$card-bg-dark: #2a2a2a;
 
 div {
 	min-width: 0; // fixes overflowing <pre>
@@ -110,6 +129,10 @@ div {
 	background-color: $body-bg;
 	margin-top: 32px;
 	width: 12rem;
+
+	@media (prefers-color-scheme: dark) {
+		background-color: $body-bg-dark;
+	}
 }
 
 .off-canvas .off-canvas-content header.navbar #page-title {
@@ -135,8 +158,13 @@ h2#page-title a.dashicons {
 
 .friends-page {
 	background-color: $body-bg;
-	color: $body-font-color;
+	color: $text-color-light;
 	overflow-wrap: break-word;
+
+	@media (prefers-color-scheme: dark) {
+		background-color: $body-bg-dark;
+		color: $text-color-dark;
+	}
 
 	code,
 	pre {
@@ -146,7 +174,11 @@ h2#page-title a.dashicons {
 	min-height: 100vh;
 
 	a:visited {
-		color: $link-color-dark;
+		color: $link-color-light;
+
+		@media (prefers-color-scheme: dark) {
+			color: $link-color-dark;
+		}
 	}
 
 	a.off-canvas-toggle:visited {
@@ -158,11 +190,19 @@ h2#page-title a.dashicons {
 	a:hover,
 	a:focus,
 	a:active {
-		color: $link-color;
+		color: $link-color-light;
+
+		@media (prefers-color-scheme: dark) {
+			color: $link-color-dark;
+		}
 	}
 
 	summary.accordion-header {
-		color: $link-color;
+		color: $link-color-light;
+
+		@media (prefers-color-scheme: dark) {
+			color: $link-color-dark;
+		}
 		cursor: pointer;
 		white-space: nowrap;
 		text-overflow: ellipsis;
@@ -191,6 +231,10 @@ h2#page-title a.dashicons {
 		a:visited {
 			color: #333;
 			padding: .2rem;
+
+			@media (prefers-color-scheme: dark) {
+				color: #e0e0e0;
+			}
 		}
 
 		.menu-item+.menu-item {
@@ -311,6 +355,12 @@ h2#page-title a.dashicons {
 		padding: 0;
 		border: 0;
 		border-radius: 10px;
+		background-color: $card-bg-light;
+
+		@media (prefers-color-scheme: dark) {
+			box-shadow: 0 0 2px rgba(255, 255, 255, .1);
+			background-color: $card-bg-dark;
+		}
 
 		.card-body {
 
@@ -346,6 +396,12 @@ h2#page-title a.dashicons {
 				font-size: .8rem;
 				color: #666;
 				background-color: #f7f7f7;
+
+				@media (prefers-color-scheme: dark) {
+					border-left-color: #444;
+					color: #aaa;
+					background-color: #1f1f1f;
+				}
 			}
 		}
 
@@ -402,7 +458,11 @@ h2#page-title a.dashicons {
 			a,
 			a:visited,
 			a:active {
-				color: $link-color;
+				color: $link-color-light;
+
+				@media (prefers-color-scheme: dark) {
+					color: $link-color-dark;
+				}
 			}
 
 			h2 {
@@ -446,6 +506,11 @@ h2#page-title a.dashicons {
 			border-radius: 20px;
 			line-height: 20px;
 			vertical-align: bottom;
+
+			@media (prefers-color-scheme: dark) {
+				border-color: $primary-color-dark;
+				color: $primary-color-dark;
+			}
 		}
 	}
 
@@ -500,11 +565,19 @@ h2#page-title a.dashicons {
 	div.friends-main-widget h1 a {
 		color: #222;
 		text-decoration: none;
+
+		@media (prefers-color-scheme: dark) {
+			color: #e0e0e0;
+		}
 	}
 
 	div.friends-widget h4 a {
 		color: #222;
 		text-decoration: none;
+
+		@media (prefers-color-scheme: dark) {
+			color: #e0e0e0;
+		}
 	}
 
 	div.friends-widget a.open-requests {
@@ -524,6 +597,10 @@ h2#page-title a.dashicons {
 		font-weight: bold;
 		letter-spacing: 2px;
 		color: $primary-color;
+
+		@media (prefers-color-scheme: dark) {
+			color: $primary-color-dark;
+		}
 	}
 
 	section.posts {
@@ -697,6 +774,11 @@ h2#page-title a.dashicons {
 
 		footer.comments-content {
 			border-top: 1px solid $border-color-light;
+
+			@media (prefers-color-scheme: dark) {
+				border-top-color: $border-color-dark;
+			}
+
 			&.closed {
 				display: none;
 			}
@@ -716,6 +798,10 @@ h2#page-title a.dashicons {
 				margin-left: 0;
 				padding-left: 5px;
 				border-left: 3px solid #eee;
+
+				@media (prefers-color-scheme: dark) {
+					border-left-color: #444;
+				}
 			}
 
 			.comment-list .children>li {
@@ -796,6 +882,10 @@ h2#page-title a.dashicons {
 	a.friends-auth-link:link,
 	a.friends-auth-link:active {
 		color: #333;
+
+		@media (prefers-color-scheme: dark) {
+			color: #e0e0e0;
+		}
 	}
 
 	a.friends-auth-link span.dashicons-admin-users {
@@ -840,6 +930,10 @@ h2#page-title a.dashicons {
 		border: 0;
 		cursor: pointer;
 		z-index: 999999;
+
+		@media (prefers-color-scheme: dark) {
+			background-color: #2a2a2a;
+		}
 	}
 
 	.friends-reaction-picker button:focus {
@@ -858,11 +952,19 @@ h2#page-title a.dashicons {
 			max-width: 80%;
 			margin: 1em;
 			border-bottom: 1px solid $border-color-light;
+
+			@media (prefers-color-scheme: dark) {
+				border-bottom-color: $border-color-dark;
+			}
 		}
 	}
 
 	.chip {
 		background-color: #fff;
+
+		@media (prefers-color-scheme: dark) {
+			background-color: #2a2a2a;
+		}
 	}
 
 	/* to support mastodon style tags */
