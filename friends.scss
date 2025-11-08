@@ -317,6 +317,16 @@ h2#page-title a.dashicons {
 		.btn.btn-primary.active {
 			color: #e0e0e0;
 		}
+
+		// Dark mode for menus
+		.menu {
+			background: #2a2a2a;
+			box-shadow: 0 .05rem .2rem rgba(0, 0, 0, .5);
+		}
+
+		.friends-dropdown .menu {
+			background: #2a2a2a;
+		}
 	}
 
 	.d-none {
