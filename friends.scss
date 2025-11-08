@@ -277,6 +277,32 @@ h2#page-title a.dashicons {
 		min-height: auto;
 	}
 
+	// Dark mode overrides for form inputs
+	@media (prefers-color-scheme: dark) {
+		.form-input,
+		.form-select,
+		textarea.form-input,
+		input[type="text"],
+		input[type="email"],
+		input[type="password"],
+		input[type="search"],
+		input[type="url"] {
+			background: #2a2a2a;
+			color: #e0e0e0;
+			border-color: #444;
+		}
+
+		.form-input::placeholder {
+			color: #666;
+		}
+
+		.input-group .input-group-addon {
+			background: #2a2a2a;
+			border-color: #444;
+			color: #e0e0e0;
+		}
+	}
+
 	.d-none {
 		display: none;
 	}
