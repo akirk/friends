@@ -301,6 +301,22 @@ h2#page-title a.dashicons {
 			border-color: #444;
 			color: #e0e0e0;
 		}
+
+		// Softer button text colors for dark mode
+		.btn.btn-primary,
+		.nav-links div a,
+		.nav-links div a:hover,
+		.btn:active,
+		.btn.active {
+			color: #e0e0e0;
+		}
+
+		.btn.btn-primary:hover,
+		.btn.btn-primary:focus,
+		.btn.btn-primary:active,
+		.btn.btn-primary.active {
+			color: #e0e0e0;
+		}
 	}
 
 	.d-none {
