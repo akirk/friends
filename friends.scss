@@ -327,6 +327,11 @@ h2#page-title a.dashicons {
 		.friends-dropdown .menu {
 			background: #2a2a2a;
 		}
+
+		.menu .menu-item > a:focus,
+		.menu .menu-item > a:hover {
+			background: #3a3a3a;
+		}
 	}
 
 	.d-none {
