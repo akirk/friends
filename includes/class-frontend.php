@@ -68,6 +68,20 @@ class Frontend {
 	public $reaction = false;
 
 	/**
+	 * The search query after parsing filters.
+	 *
+	 * @var string|false
+	 */
+	public $search_query = false;
+
+	/**
+	 * The friend to filter search results by (from: filter).
+	 *
+	 * @var User|false
+	 */
+	public $search_from_filter = false;
+
+	/**
 	 * The current theme.
 	 *
 	 * @var string
@@ -778,16 +792,49 @@ class Frontend {
 	 * @return     array  The autocomplete results.
 	 */
 	public function autocomplete_user_search( $results, $q ) {
-		$users = User_Query::search( '*' . $q . '*' );
+		$search_query = $q;
+		$from_prefix = false;
 
-		foreach ( $users->get_results() as $friend ) {
-			$result = '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
-			$result .= '<span class="ab-icon dashicons dashicons-businessperson"></span>';
-			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->display_name );
-			$result .= ' <small>';
-			$result .= str_ireplace( $q, '<mark>' . $q . '</mark>', $friend->user_login );
-			$result .= '</small></a>';
-			$results[] = $result;
+		// Check if query starts with "from:" to suggest friend filters.
+		if ( preg_match( '/^from:@?(.*)$/i', $q, $matches ) ) {
+			$from_prefix = true;
+			$search_query = $matches[1];
+		}
+
+		// Only search for users if there's something to search.
+		if ( ! empty( $search_query ) ) {
+			$users = User_Query::search( '*' . $search_query . '*' );
+
+			foreach ( $users->get_results() as $friend ) {
+				if ( $from_prefix ) {
+					// User is typing "from:" - suggest filter syntax.
+					$result = '<a href="' . esc_url( add_query_arg( 's', 'from:' . $friend->user_login, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
+					$result .= '<span class="ab-icon dashicons dashicons-businessperson"></span>';
+					$result .= 'from:' . str_ireplace( $search_query, '<mark>' . $search_query . '</mark>', $friend->display_name );
+					$result .= ' <small>';
+					$result .= __( 'Filter by friend', 'friends' );
+					$result .= '</small></a>';
+					$results[] = $result;
+				} else {
+					// Regular user search - show both options.
+					// 1. Link to friend's page.
+					$result = '<a href="' . esc_url( $friend->get_local_friends_page_url() ) . '" class="has-icon-left">';
+					$result .= '<span class="ab-icon dashicons dashicons-businessperson"></span>';
+					$result .= str_ireplace( $search_query, '<mark>' . $search_query . '</mark>', $friend->display_name );
+					$result .= ' <small>';
+					$result .= str_ireplace( $search_query, '<mark>' . $search_query . '</mark>', $friend->user_login );
+					$result .= '</small></a>';
+					$results[] = $result;
+
+					// 2. Suggest search filter for this friend.
+					$result = '<a href="' . esc_url( add_query_arg( 's', 'from:' . $friend->user_login, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
+					$result .= '<span class="ab-icon dashicons dashicons-search"></span>';
+					$result .= __( 'Posts from', 'friends' ) . ' ';
+					$result .= str_ireplace( $search_query, '<mark>' . $search_query . '</mark>', $friend->display_name );
+					$result .= '</a>';
+					$results[] = $result;
+				}
+			}
 		}
 
 		return $results;
@@ -1341,6 +1388,47 @@ class Frontend {
 	}
 
 	/**
+	 * Parse search query to extract filters like "from:username"
+	 *
+	 * @param  string $search_query The raw search query.
+	 * @return array Array with 'query' (cleaned search string) and 'from' (User object or false).
+	 */
+	private function parse_search_query( $search_query ) {
+		$result = array(
+			'query' => $search_query,
+			'from'  => false,
+		);
+
+		if ( empty( $search_query ) ) {
+			return $result;
+		}
+
+		// Match "from:username" or "from:@username" pattern.
+		if ( preg_match( '/\bfrom:@?([^\s]+)/', $search_query, $matches ) ) {
+			$username = $matches[1];
+
+			// Try to find the user.
+			$user = User::get_by_username( $username );
+
+			// Also try with display name for better UX.
+			if ( ! $user || is_wp_error( $user ) ) {
+				$users = User_Query::search( $username );
+				if ( ! empty( $users->get_results() ) ) {
+					$user = $users->get_results()[0];
+				}
+			}
+
+			if ( $user && ! is_wp_error( $user ) ) {
+				$result['from'] = $user;
+				// Remove the from: filter from the search query.
+				$result['query'] = trim( preg_replace( '/\bfrom:@?[^\s]+/', '', $search_query ) );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Modify the main query for the /friends page
 	 *
 	 * @param  \WP_Query $query The main query.
@@ -1416,6 +1504,23 @@ class Frontend {
 		remove_action( 'pre_get_posts', array( 'Kind_Taxonomy', 'kind_firehose_query' ), 99 );
 
 		switch_to_locale( get_user_locale() );
+
+		// Parse search query for filters like "from:username".
+		$search_query = get_query_var( 's' );
+		if ( ! empty( $search_query ) ) {
+			$parsed = $this->parse_search_query( $search_query );
+			$this->search_query = $parsed['query'];
+			$this->search_from_filter = $parsed['from'];
+
+			// Update the query with the cleaned search string.
+			if ( ! empty( $parsed['query'] ) ) {
+				$query->set( 's', $parsed['query'] );
+			} else {
+				// If only filter was provided (e.g., "from:username" with no other terms),
+				// remove the search parameter to avoid empty search.
+				$query->set( 's', '' );
+			}
+		}
 
 		$tax_query = array();
 		$post_format = null;
@@ -1542,6 +1647,11 @@ class Frontend {
 			$query->is_singular = true;
 			$wp->set_query_var( 'page', null );
 			$wp->set_query_var( 'page_id', $page_id );
+		}
+
+		// Apply search from: filter if no author is already set from URL.
+		if ( ! $this->author && $this->search_from_filter ) {
+			$this->author = $this->search_from_filter;
 		}
 
 		if ( $this->author ) {

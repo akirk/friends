@@ -47,11 +47,32 @@ switch ( $args['friends']->frontend->post_format ) {
 		break;
 }
 if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	$_title = sprintf(
-		// translators: %s is a search term.
-		__( 'Search for "%s"', 'friends' ),
-		esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-	);
+	$search_query = esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+	if ( $args['friends']->frontend->search_from_filter ) {
+		// Search with friend filter applied.
+		$friend_name = $args['friends']->frontend->search_from_filter->display_name;
+		if ( ! empty( $args['friends']->frontend->search_query ) ) {
+			$_title = sprintf(
+				// translators: %1$s is a search term, %2$s is a friend's name.
+				__( 'Search for "%1$s" from %2$s', 'friends' ),
+				$args['friends']->frontend->search_query,
+				$friend_name
+			);
+		} else {
+			$_title = sprintf(
+				// translators: %s is a friend's name.
+				__( 'Posts from %s', 'friends' ),
+				$friend_name
+			);
+		}
+	} else {
+		$_title = sprintf(
+			// translators: %s is a search term.
+			__( 'Search for "%s"', 'friends' ),
+			$search_query
+		);
+	}
 }
 
 if ( $args['friends']->frontend->reaction ) {
