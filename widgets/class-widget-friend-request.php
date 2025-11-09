@@ -52,7 +52,7 @@ class Widget_Friend_Request extends \WP_Widget {
 			<input type="text" name="friend_url" aria-label="<?php esc_attr_e( "Enter the Friend's URL", 'friends' ); ?>"  placeholder="<?php esc_attr_e( "Friend's URL", 'friends' ); ?>" class="form-input input-sm" />
 		</div>
 		<div class="form-group">
-			<button class="btn btn-primary btn-sm"><?php esc_attr_e( 'Add Friend', 'friends' ); ?></button>
+			<button class="btn btn-primary btn-sm"><?php esc_html_e( 'Add Friend', 'friends' ); ?></button>
 		</div>
 		</form>
 		<?php
