@@ -17,7 +17,7 @@ $friend_user = $args['friend_user'];
 	<li class="menu-item"><?php edit_post_link(); ?></li>
 <?php endif; ?>
 
-<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
+<?php if ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) ) : ?>
 	<?php if ( apply_filters( 'friends_show_author_edit', true, $args['friend_user'] ) ) : ?>
 	<li class="menu-item"><a href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend_user']->user_login, add_query_arg( 'post', get_the_ID(), self_admin_url( 'admin.php?page=edit-friend-rules' ) ) ), 'edit-friend-rules-' . $args['friend_user']->user_login ) ); ?>" title="<?php esc_attr_e( 'Muffle posts like these', 'friends' ); ?>" class="friends-muffle-post">
 		<?php esc_html_e( 'Muffle posts like these', 'friends' ); ?>

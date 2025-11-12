@@ -207,7 +207,7 @@ class Blocks {
 				array(
 					'numberposts' => $count,
 					'offset'      => $offset,
-					'post_type'   => apply_filters( 'friends_frontend_post_types', array() ),
+					'post_type'   => Friends::get_frontend_post_types(),
 				)
 			);
 			if ( count( $recent_posts ) === 0 ) {

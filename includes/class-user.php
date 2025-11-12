@@ -687,7 +687,7 @@ class User extends \WP_User {
 	 */
 	public function get_post_in_trash_count() {
 		global $wpdb;
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = Friends::get_frontend_post_types();
 
 		$cache_key = 'get_post_in_trash_count_' . $this->get_term_id() . '_' . implode( '_', $post_types );
 		if ( false !== wp_cache_get( $cache_key, 'friends' ) ) {
@@ -733,7 +733,7 @@ class User extends \WP_User {
 			return $counts;
 		}
 		$counts = array();
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = Friends::get_frontend_post_types();
 		$post_formats_term_ids = array();
 		foreach ( get_post_format_slugs() as $post_format ) {
 			$term = get_term_by( 'slug', 'post-format-' . $post_format, 'post_format' );
@@ -819,7 +819,7 @@ class User extends \WP_User {
 		if ( false !== $post_stats ) {
 			return $post_stats;
 		}
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = Friends::get_frontend_post_types();
 		$post_stats = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				sprintf(
@@ -877,7 +877,7 @@ class User extends \WP_User {
 
 	public function get_all_post_ids() {
 		global $wpdb;
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = Friends::get_frontend_post_types();
 
 		$cache_key = 'get_all_post_ids_' . $this->ID . '_' . implode( '_', $post_types );
 		$post_ids = wp_cache_get( $cache_key, 'friends' );

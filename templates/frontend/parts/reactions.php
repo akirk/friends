@@ -18,7 +18,7 @@ foreach ( $reactions as $slug => $reaction ) {
 	echo '</button>' . PHP_EOL;
 }
 
-if ( ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) || count( $reactions ) || get_the_author_meta( 'ID' ) !== get_current_user_id() ) && ( Friends\Friends::is_main_user() || current_user_can( 'friend' ) || current_user_can( 'acquaintance' ) ) ) :
+if ( ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) || count( $reactions ) || get_the_author_meta( 'ID' ) !== get_current_user_id() ) && ( Friends\Friends::is_main_user() || current_user_can( 'friend' ) || current_user_can( 'acquaintance' ) ) ) :
 	?>
 	<div class="friends-dropdown">
 		<a class="btn btn-link ml-1 friends-action new-reaction friends-dropdown-toggle" tabindex="0" title="<?php echo esc_attr_x( 'Reaction', '+ Reaction', 'friends' ); ?>">

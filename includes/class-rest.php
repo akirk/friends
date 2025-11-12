@@ -620,7 +620,7 @@ class REST {
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		if ( ! in_array( get_post_type( $post_id ), apply_filters( 'friends_frontend_post_types', array() ) ) ) {
+		if ( ! in_array( get_post_type( $post_id ), Friends::get_frontend_post_types() ) ) {
 			return false;
 		}
 

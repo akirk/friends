@@ -3664,7 +3664,7 @@ class Admin {
 			);
 
 		} else {
-			$query_args['post_type'] = apply_filters( 'friends_frontend_post_types', array( 'post' ) );
+			$query_args['post_type'] = Friends::get_frontend_post_types( array( 'post' ) );
 			$args['posts'] = get_posts( $query_args );
 			Friends::template_loader()->get_template_part( 'admin/dashboard-widget', null, $args );
 		}
@@ -3686,7 +3686,7 @@ class Admin {
 		if ( $wp_query !== $query || ! is_admin() ) {
 			return $query;
 		}
-		if ( ! isset( $query->query['post_type'] ) || ! in_array( $query->query['post_type'], apply_filters( 'friends_frontend_post_types', array( 'post' ) ), true ) ) {
+		if ( ! isset( $query->query['post_type'] ) || ! in_array( $query->query['post_type'], Friends::get_frontend_post_types( array( 'post' ) ), true ) ) {
 			return $query;
 		}
 

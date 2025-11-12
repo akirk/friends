@@ -880,6 +880,41 @@ class Friends {
 	}
 
 	/**
+	 * Gets the frontend post types.
+	 *
+	 * @param array $default_types The default post types.
+	 * @return array The frontend post types.
+	 */
+	public static function get_frontend_post_types( $default_types = array() ) {
+		global $wp_filter;
+		if ( isset( $wp_filter['friends_frontend_post_types'] ) ) {
+			$has_external_hooks = false;
+			foreach ( $wp_filter['friends_frontend_post_types']->callbacks as $priority => $callbacks ) {
+				foreach ( $callbacks as $callback ) {
+					$is_internal = false;
+					if ( is_array( $callback['function'] ) && isset( $callback['function'][0] ) ) {
+						$class_name = is_object( $callback['function'][0] ) ? get_class( $callback['function'][0] ) : $callback['function'][0];
+						if ( ( __CLASS__ === $class_name || 'Friends\Friends' === $class_name ) && 'add_frontend_post_types' === $callback['function'][1] ) {
+							$is_internal = true;
+						}
+						if ( ( 'Friends\Messages' === $class_name || 'Friends_Messages' === $class_name ) && 'friends_frontend_post_types_only_messages' === $callback['function'][1] ) {
+							$is_internal = true;
+						}
+					}
+					if ( ! $is_internal ) {
+						$has_external_hooks = true;
+						break 2;
+					}
+				}
+			}
+			if ( $has_external_hooks ) {
+				_deprecated_hook( 'friends_frontend_post_types', '3.7.0' );
+			}
+		}
+		return apply_filters( 'friends_frontend_post_types', $default_types );
+	}
+
+	/**
 	 * Gets the post count by post status.
 	 *
 	 * @param      bool $force_fetching  Whether to force fetching.
@@ -889,7 +924,7 @@ class Friends {
 	public function get_post_count_by_post_status( $force_fetching = false ) {
 		$cache_key = 'friends_post_count';
 
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = self::get_frontend_post_types();
 
 		$counts = wp_cache_get( $cache_key, 'friends' );
 		if ( false !== $counts ) {
@@ -933,7 +968,7 @@ class Friends {
 	public function get_post_count_by_post_format( $force_fetching = false ) {
 		$cache_key = 'post_count_by_post_format';
 
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = self::get_frontend_post_types();
 
 		$counts = wp_cache_get( $cache_key, 'friends' );
 		if ( false !== $counts ) {
@@ -1053,7 +1088,7 @@ class Friends {
 			return $post_stats;
 		}
 
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = self::get_frontend_post_types();
 		$post_stats = $wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$wpdb->prepare(
 				'SELECT SUM(

@@ -46,7 +46,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 + 45
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2 translator-exclude">
-		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
+		<?php if ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) ) : ?>
 			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
 				<?php echo get_avatar( $args['friend_user']->ID, 36 ); ?>
 			</a>
@@ -58,7 +58,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 	</div>
 	<div class="post-meta translator-exclude">
 		<div class="author">
-			<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
+			<?php if ( in_array( get_post_type(), Friends\Friends::get_frontend_post_types(), true ) ) : ?>
 				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
 					<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
 					<?php if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) : ?>

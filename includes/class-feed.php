@@ -1211,7 +1211,7 @@ class Feed {
 		if ( false !== $post_id ) {
 			return $post_id;
 		}
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		$post_types = Friends::get_frontend_post_types();
 		$args = $post_types;
 
 		global $wpdb;
@@ -1250,7 +1250,7 @@ class Feed {
 	}
 
 	public function post_embed_url( $embed_url, $post ) {
-		if ( ! in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ) ) ) {
+		if ( ! in_array( $post->post_type, Friends::get_frontend_post_types() ) ) {
 			return $embed_url;
 		}
 
