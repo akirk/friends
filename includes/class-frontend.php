@@ -930,7 +930,7 @@ class Frontend {
 		global $friends_args;
 		switch ( $path ) {
 			case 'followers':
-				if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
+				if ( class_exists( '\Activitypub\Collection\Followers' ) ) {
 					$friends_args = array();
 					if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 						$friends_args['only_mutual'] = true;
@@ -945,7 +945,7 @@ class Frontend {
 				break;
 			case 'blog-followers':
 				$friends_args = array();
-				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
+				if ( class_exists( '\Activitypub\Collection\Actors' ) ) {
 					if ( isset( $_GET['mutual'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 						$friends_args['only_mutual'] = true;
 						$friends_args['title'] = __( 'Your Mutual Blog Followers', 'friends' );

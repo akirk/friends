@@ -522,7 +522,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function test_get_example_metadata_by_actor( $actor, $domain, $username ) {
 		add_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8, 3 );
-		$metadata = \ActivityPub\get_remote_metadata_by_actor( $actor );
+		$metadata = \Activitypub\get_remote_metadata_by_actor( $actor );
 		$this->assertEquals( sprintf( 'https://%s/users/%s/', $domain, $username ), $metadata['url'], $actor );
 		$this->assertEquals( $username, $metadata['name'], $actor );
 		remove_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8, 3 );
