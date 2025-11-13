@@ -78,8 +78,8 @@ class Admin_ActivityPub_Sync {
 						printf(
 							/* translators: %1$d: number of follows imported, %2$d: number of follows exported */
 							esc_html__( 'Sync completed! Imported %1$d follows from ActivityPub, exported %2$d follows to ActivityPub.', 'friends' ),
-							esc_html( $_GET['imported'] ?? 0 ), // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-							esc_html( $_GET['exported'] ?? 0 ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+							isset( $_GET['imported'] ) ? absint( wp_unslash( $_GET['imported'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+							isset( $_GET['exported'] ) ? absint( wp_unslash( $_GET['exported'] ) ) : 0 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 						);
 						?>
 					</p>
@@ -264,17 +264,17 @@ class Admin_ActivityPub_Sync {
 		foreach ( $activitypub_follows as $url => $actor_data ) {
 			if ( isset( $friends_feeds[ $url ] ) ) {
 				$status['in_sync'][ $url ] = $actor_data['name'] ?? $actor_data['preferredUsername'];
-				$status['in_sync_count']++;
+				++$status['in_sync_count'];
 			} else {
 				$status['only_activitypub'][] = $actor_data;
-				$status['only_activitypub_count']++;
+				++$status['only_activitypub_count'];
 			}
 		}
 
 		foreach ( $friends_feeds as $url => $user_feed ) {
 			if ( ! isset( $activitypub_follows[ $url ] ) ) {
 				$status['only_friends'][] = $user_feed;
-				$status['only_friends_count']++;
+				++$status['only_friends_count'];
 			}
 		}
 
@@ -365,7 +365,7 @@ class Admin_ActivityPub_Sync {
 									'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
 								)
 							);
-							$imported++;
+							++$imported;
 						}
 					}
 				}
@@ -378,7 +378,7 @@ class Admin_ActivityPub_Sync {
 				if ( ! in_array( $feed_url, $activitypub_follows, true ) ) {
 					$result = \Activitypub\follow( $feed_url, $user_id );
 					if ( ! is_wp_error( $result ) ) {
-						$exported++;
+						++$exported;
 					}
 				}
 			}

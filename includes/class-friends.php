@@ -619,7 +619,7 @@ class Friends {
 											'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
 										)
 									);
-									$following_count++;
+									++$following_count;
 								}
 							}
 						}

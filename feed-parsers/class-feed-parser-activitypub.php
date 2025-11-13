@@ -1906,12 +1906,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		//
 		// Example usage:
 		// if ( 'Follow' === $activity_data['type'] && ! empty( $activity_data['object'] ) ) {
-		//     $actor_url = $activity_data['object'];
-		//     // Check if already exists in Friends, if not, create Subscription + User_Feed
+		// $actor_url = $activity_data['object'];
+		// Check if already exists in Friends, if not, create Subscription + User_Feed
 		// }
 		// if ( 'Undo' === $activity_data['type'] && ! empty( $activity_data['object']['type'] ) && 'Follow' === $activity_data['object']['type'] ) {
-		//     $actor_url = $activity_data['object']['object'];
-		//     // Remove from Friends if it exists
+		// $actor_url = $activity_data['object']['object'];
+		// Remove from Friends if it exists
 		// }
 	}
 
