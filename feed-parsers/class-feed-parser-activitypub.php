@@ -50,6 +50,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_move', array( $this, 'handle_received_move' ), 15, 2 );
 		\add_action( 'activitypub_inbox_update', array( $this, 'handle_received_update' ), 15, 2 );
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
+		\add_action( 'activitypub_handled_accept', array( $this, 'activitypub_handled_accept' ), 10, 4 );
 		\add_action( 'activitypub_interactions_follow_url', array( $this, 'activitypub_interactions_follow_url' ), 10, 2 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
@@ -914,6 +915,74 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$this->activitypub_already_handled[ $activity['object']['id'] ] = $reaction;
 		}
 		return $activity;
+	}
+
+	/**
+	 * Handle ActivityPub Accept activity (follow accepted by remote server).
+	 *
+	 * This fires after a Follow activity is successfully accepted by the remote server.
+	 * We use this to ensure the follow is properly synced in Friends.
+	 *
+	 * @param array              $accept   The ActivityPub activity data.
+	 * @param int[]              $user_ids The local user IDs.
+	 * @param bool               $success  True on success, false otherwise.
+	 * @param \WP_Post|\WP_Error $result   The remote actor post or error.
+	 */
+	public function activitypub_handled_accept( $accept, $user_ids, $success, $result ) {
+		// Only process successful accepts.
+		if ( ! $success || is_wp_error( $result ) ) {
+			return;
+		}
+
+		// Extract the actor URL that was followed.
+		if ( empty( $accept['object']['object'] ) ) {
+			return;
+		}
+
+		$actor_url = is_array( $accept['object']['object'] ) ? $accept['object']['object']['id'] : $accept['object']['object'];
+
+		if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
+			return;
+		}
+
+		// Check if this follow already exists in Friends.
+		$existing = User_Feed::get_by_url( $actor_url );
+		if ( ! is_wp_error( $existing ) ) {
+			// Already exists, ensure it's active.
+			if ( ! $existing->is_active() ) {
+				$existing->activate();
+			}
+			return;
+		}
+
+		// Follow was accepted but doesn't exist in Friends - create it.
+		$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
+		if ( is_wp_error( $actor_data ) || empty( $actor_data ) ) {
+			return;
+		}
+
+		// Create Subscription (virtual user).
+		$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
+		$subscription = Subscription::create(
+			$user_login,
+			'subscription',
+			$actor_data['url'],
+			$actor_data['name'] ?? $actor_data['preferredUsername'],
+			isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
+			$actor_data['summary'] ?? null
+		);
+
+		if ( ! is_wp_error( $subscription ) ) {
+			// Attach ActivityPub feed to the subscription.
+			$subscription->save_feed(
+				$actor_url,
+				array(
+					'parser' => self::SLUG,
+					'active' => true,
+					'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
+				)
+			);
+		}
 	}
 
 	public function handle_received_create( $activity, $user_id ) {
