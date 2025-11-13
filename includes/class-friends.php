@@ -581,14 +581,12 @@ class Friends {
 			// Reverse sync: Import existing ActivityPub follows INTO Friends.
 			if ( class_exists( '\Activitypub\Collection\Following' ) ) {
 				$following_count = 0;
-				$actors = \Activitypub\Collection\Following::get_followers( $user_id );
+				$actors = \Activitypub\Collection\Following::get_all( $user_id );
 				if ( ! is_wp_error( $actors ) && is_array( $actors ) ) {
 					foreach ( $actors as $actor ) {
-						if ( is_object( $actor ) && method_exists( $actor, 'get_url' ) ) {
-							$actor_url = $actor->get_url();
-						} elseif ( is_string( $actor ) ) {
-							$actor_url = $actor;
-						} else {
+						// Convert WP_Post to actor URL.
+						$actor_url = \Activitypub\object_to_uri( $actor );
+						if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
 							continue;
 						}
 

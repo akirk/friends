@@ -232,20 +232,18 @@ class Admin_ActivityPub_Sync {
 		// Get ActivityPub follows.
 		$activitypub_follows = array();
 		if ( class_exists( '\Activitypub\Collection\Following' ) ) {
-			$actors = \Activitypub\Collection\Following::get_followers( $user_id );
+			$actors = \Activitypub\Collection\Following::get_all( $user_id );
 			if ( ! is_wp_error( $actors ) && is_array( $actors ) ) {
 				foreach ( $actors as $actor ) {
-					if ( is_object( $actor ) && method_exists( $actor, 'get_url' ) ) {
-						$actor_url = $actor->get_url();
-						$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
-						if ( ! is_wp_error( $actor_data ) ) {
-							$activitypub_follows[ $actor_url ] = $actor_data;
-						}
-					} elseif ( is_string( $actor ) ) {
-						$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor );
-						if ( ! is_wp_error( $actor_data ) ) {
-							$activitypub_follows[ $actor ] = $actor_data;
-						}
+					// Convert WP_Post to actor URL.
+					$actor_url = \Activitypub\object_to_uri( $actor );
+					if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
+						continue;
+					}
+
+					$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
+					if ( ! is_wp_error( $actor_data ) ) {
+						$activitypub_follows[ $actor_url ] = $actor_data;
 					}
 				}
 			}
@@ -321,14 +319,16 @@ class Admin_ActivityPub_Sync {
 		// Get ActivityPub follows.
 		$activitypub_follows = array();
 		if ( class_exists( '\Activitypub\Collection\Following' ) ) {
-			$actors = \Activitypub\Collection\Following::get_followers( $user_id );
+			$actors = \Activitypub\Collection\Following::get_all( $user_id );
 			if ( ! is_wp_error( $actors ) && is_array( $actors ) ) {
 				foreach ( $actors as $actor ) {
-					if ( is_object( $actor ) && method_exists( $actor, 'get_url' ) ) {
-						$activitypub_follows[] = $actor->get_url();
-					} elseif ( is_string( $actor ) ) {
-						$activitypub_follows[] = $actor;
+					// Convert WP_Post to actor URL.
+					$actor_url = \Activitypub\object_to_uri( $actor );
+					if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
+						continue;
 					}
+
+					$activitypub_follows[] = $actor_url;
 				}
 			}
 		}
