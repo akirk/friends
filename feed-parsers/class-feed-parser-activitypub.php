@@ -28,6 +28,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private $activitypub_already_handled = array();
 	private $mapped_usernames = array();
 	private $friends_feed;
+	private $syncing_from_activitypub = false;
 
 	/**
 	 * Constructor.
@@ -1768,6 +1769,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 
+		// If we're syncing FROM ActivityPub, don't send the unfollow back TO ActivityPub.
+		// This prevents an infinite loop when unfollowing via ActivityPub UI.
+		if ( $this->syncing_from_activitypub ) {
+			return false;
+		}
+
 		$queued = $this->queue(
 			'friends_feed_parser_activitypub_unfollow',
 			array( $user_feed->get_url() ),
@@ -1950,11 +1957,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
-	 * Handle ActivityPub outbox activities (for future sync monitoring).
+	 * Handle ActivityPub outbox activities for automatic sync.
 	 *
-	 * This hook fires when an activity is added to the outbox. We can use it
-	 * to detect follows/unfollows initiated via ActivityPub's UI and sync them
-	 * to Friends. Currently a placeholder for when ActivityPub adds more specific hooks.
+	 * This hook fires when an activity is added to the outbox. We use it
+	 * to detect follows/unfollows initiated via ActivityPub and sync them
+	 * to Friends automatically.
 	 *
 	 * @param int    $post_id  The post ID of the outbox entry.
 	 * @param string $activity The activity JSON.
@@ -1970,18 +1977,70 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		// TODO: When ActivityPub supports following via UI, this will help sync.
-		// For now, this is a placeholder for future functionality.
-		//
-		// Example usage:
-		// if ( 'Follow' === $activity_data['type'] && ! empty( $activity_data['object'] ) ) {
-		// $actor_url = $activity_data['object'];
-		// Check if already exists in Friends, if not, create Subscription + User_Feed
-		// }
-		// if ( 'Undo' === $activity_data['type'] && ! empty( $activity_data['object']['type'] ) && 'Follow' === $activity_data['object']['type'] ) {
-		// $actor_url = $activity_data['object']['object'];
-		// Remove from Friends if it exists
-		// }
+		// Handle Undo(Follow) - someone unfollowed via ActivityPub.
+		if ( 'Undo' === $activity_data['type'] ) {
+			$this->handle_outbox_unfollow( $activity_data );
+			return;
+		}
+
+		// Handle Follow - someone followed via ActivityPub.
+		// Note: activitypub_handled_accept hook already handles this when the
+		// follow is accepted, but we can add a fallback here if needed.
+		if ( 'Follow' === $activity_data['type'] ) {
+			// Already handled by activitypub_handled_accept hook.
+			// This is just here for documentation/future use.
+			return;
+		}
+	}
+
+	/**
+	 * Handle unfollow from ActivityPub outbox (remove from Friends).
+	 *
+	 * @param array $activity The Undo activity data.
+	 */
+	private function handle_outbox_unfollow( $activity ) {
+		// Verify it's an Undo of a Follow activity.
+		if ( empty( $activity['object'] ) || ! is_array( $activity['object'] ) ) {
+			return;
+		}
+
+		$undone_activity = $activity['object'];
+		if ( empty( $undone_activity['type'] ) || 'Follow' !== $undone_activity['type'] ) {
+			return;
+		}
+
+		// Extract the actor URL that was unfollowed.
+		if ( empty( $undone_activity['object'] ) ) {
+			return;
+		}
+
+		$actor_url = is_array( $undone_activity['object'] ) ? $undone_activity['object']['id'] : $undone_activity['object'];
+
+		if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
+			return;
+		}
+
+		// Check if this feed exists in Friends.
+		$existing = User_Feed::get_by_url( $actor_url );
+		if ( is_wp_error( $existing ) ) {
+			// Doesn't exist in Friends, nothing to remove.
+			return;
+		}
+
+		// Get the friend user and deactivate the feed.
+		$friend_user = $existing->get_friend_user();
+		if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+			return;
+		}
+
+		// Set flag to prevent sending unfollow back to ActivityPub (infinite loop prevention).
+		$this->syncing_from_activitypub = true;
+
+		// Deactivate the feed.
+		$existing->deactivate();
+
+		// Reset flag.
+		$this->syncing_from_activitypub = false;
 	}
 
 	private function show_message_on_frontend( $message, $error = null ) {
