@@ -41,6 +41,7 @@ require_once __DIR__ . '/feed-parsers/class-feed-item.php';
 
 require_once __DIR__ . '/includes/class-access-control.php';
 require_once __DIR__ . '/includes/class-admin.php';
+require_once __DIR__ . '/includes/class-admin-activitypub-sync.php';
 require_once __DIR__ . '/includes/class-automatic-status.php';
 require_once __DIR__ . '/includes/class-blocks.php';
 require_once __DIR__ . '/includes/class-feed.php';

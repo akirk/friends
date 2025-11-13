@@ -99,6 +99,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_filter( 'pre_get_remote_metadata_by_actor', array( $this, 'disable_webfinger_for_example_domains' ), 9, 2 );
 
+		// Hook into ActivityPub outbox events (for future following sync).
+		\add_action( 'post_activitypub_add_to_outbox', array( $this, 'activitypub_outbox_activity' ), 10, 2 );
+
 		add_filter( 'friends_get_feed_metadata', array( $this, 'friends_get_feed_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( $this, 'friends_activitypub_metadata' ), 10, 2 );
 
@@ -1875,6 +1878,41 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$redirect_uri = add_query_arg( 'url', $uri, self_admin_url( 'admin.php?page=add-friend' ) );
 		}
 		return $redirect_uri;
+	}
+
+	/**
+	 * Handle ActivityPub outbox activities (for future sync monitoring).
+	 *
+	 * This hook fires when an activity is added to the outbox. We can use it
+	 * to detect follows/unfollows initiated via ActivityPub's UI and sync them
+	 * to Friends. Currently a placeholder for when ActivityPub adds more specific hooks.
+	 *
+	 * @param int    $post_id  The post ID of the outbox entry.
+	 * @param string $activity The activity JSON.
+	 */
+	public function activitypub_outbox_activity( $post_id, $activity ) {
+		// Parse the activity to see if it's a Follow or Undo(Follow).
+		if ( empty( $activity ) ) {
+			return;
+		}
+
+		$activity_data = is_string( $activity ) ? json_decode( $activity, true ) : $activity;
+		if ( empty( $activity_data['type'] ) ) {
+			return;
+		}
+
+		// TODO: When ActivityPub supports following via UI, this will help sync.
+		// For now, this is a placeholder for future functionality.
+		//
+		// Example usage:
+		// if ( 'Follow' === $activity_data['type'] && ! empty( $activity_data['object'] ) ) {
+		//     $actor_url = $activity_data['object'];
+		//     // Check if already exists in Friends, if not, create Subscription + User_Feed
+		// }
+		// if ( 'Undo' === $activity_data['type'] && ! empty( $activity_data['object']['type'] ) && 'Follow' === $activity_data['object']['type'] ) {
+		//     $actor_url = $activity_data['object']['object'];
+		//     // Remove from Friends if it exists
+		// }
 	}
 
 	private function show_message_on_frontend( $message, $error = null ) {

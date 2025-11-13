@@ -132,6 +132,7 @@ class Friends {
 		new Shortcodes( $this );
 		new Automatic_Status( $this );
 		new Site_Health();
+		new Admin_ActivityPub_Sync();
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
 
@@ -575,6 +576,58 @@ class Friends {
 			$user_id = Feed_Parser_ActivityPub::get_activitypub_actor_id( Friends::get_main_friend_user_id() );
 			foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
 				\Activitypub\follow( $user_feed->get_url(), $user_id );
+			}
+
+			// Reverse sync: Import existing ActivityPub follows INTO Friends.
+			if ( class_exists( '\Activitypub\Collection\Following' ) ) {
+				$following_count = 0;
+				$actors = \Activitypub\Collection\Following::get_followers( $user_id );
+				if ( ! is_wp_error( $actors ) && is_array( $actors ) ) {
+					foreach ( $actors as $actor ) {
+						if ( is_object( $actor ) && method_exists( $actor, 'get_url' ) ) {
+							$actor_url = $actor->get_url();
+						} elseif ( is_string( $actor ) ) {
+							$actor_url = $actor;
+						} else {
+							continue;
+						}
+
+						// Check if already exists as User_Feed.
+						$existing = User_Feed::get_by_url( $actor_url );
+						if ( is_wp_error( $existing ) ) {
+							// Fetch actor metadata.
+							$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
+							if ( ! is_wp_error( $actor_data ) && ! empty( $actor_data ) ) {
+								// Create Subscription (virtual user).
+								$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
+								$subscription = Subscription::create(
+									$user_login,
+									'subscription',
+									$actor_data['url'],
+									$actor_data['name'] ?? $actor_data['preferredUsername'],
+									isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
+									$actor_data['summary'] ?? null
+								);
+
+								if ( ! is_wp_error( $subscription ) ) {
+									// Attach ActivityPub feed to the subscription.
+									$subscription->save_feed(
+										$actor_url,
+										array(
+											'parser' => Feed_Parser_ActivityPub::SLUG,
+											'active' => true,
+											'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
+										)
+									);
+									$following_count++;
+								}
+							}
+						}
+					}
+				}
+				if ( $following_count > 0 ) {
+					update_option( 'friends_activitypub_import_count', $following_count );
+				}
 			}
 		}
 
