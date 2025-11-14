@@ -86,6 +86,22 @@ class Admin_ActivityPub_Sync {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( isset( $_GET['dry_run'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-info is-dismissible">
+					<p>
+						<?php
+						printf(
+							/* translators: %1$d: number of follows that would be imported, %2$d: number of follows that would be exported */
+							esc_html__( 'Dry run completed! Would import %1$d follows from ActivityPub, would export %2$d follows to ActivityPub.', 'friends' ),
+							isset( $_GET['imported'] ) ? absint( wp_unslash( $_GET['imported'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+							isset( $_GET['exported'] ) ? absint( wp_unslash( $_GET['exported'] ) ) : 0 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						);
+						?>
+					</p>
+					<p><strong><?php esc_html_e( 'No changes were made. This was a simulation only.', 'friends' ); ?></strong></p>
+				</div>
+			<?php endif; ?>
+
 			<h2><?php esc_html_e( 'Summary', 'friends' ); ?></h2>
 			<table class="widefat">
 				<tbody>
@@ -113,12 +129,16 @@ class Admin_ActivityPub_Sync {
 			</table>
 
 			<?php if ( $sync_status['only_activitypub_count'] > 0 || $sync_status['only_friends_count'] > 0 ) : ?>
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block;">
 					<input type="hidden" name="action" value="friends_activitypub_sync">
 					<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
-					<p>
-						<?php submit_button( __( 'Sync Now (Bidirectional)', 'friends' ), 'primary', 'submit', false ); ?>
-					</p>
+					<?php submit_button( __( 'Sync Now (Bidirectional)', 'friends' ), 'primary', 'submit', false ); ?>
+				</form>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-left: 10px;">
+					<input type="hidden" name="action" value="friends_activitypub_sync">
+					<input type="hidden" name="dry_run" value="1">
+					<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
+					<?php submit_button( __( 'Dry Run (Preview Only)', 'friends' ), 'secondary', 'submit', false ); ?>
 				</form>
 			<?php endif; ?>
 
@@ -289,17 +309,25 @@ class Admin_ActivityPub_Sync {
 			wp_die( esc_html__( 'You do not have permission to perform this action.', 'friends' ) );
 		}
 
+		$dry_run = isset( $_POST['dry_run'] ) && '1' === $_POST['dry_run']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$user_id = Feed_Parser_ActivityPub::get_activitypub_actor_id( Friends::get_main_friend_user_id() );
-		$result = $this->perform_sync( $user_id );
+		$result = $this->perform_sync( $user_id, $dry_run );
+
+		$redirect_args = array(
+			'page'     => 'friends-activitypub-sync',
+			'imported' => $result['imported'],
+			'exported' => $result['exported'],
+		);
+
+		if ( $dry_run ) {
+			$redirect_args['dry_run'] = 1;
+		} else {
+			$redirect_args['synced'] = 1;
+		}
 
 		wp_safe_redirect(
 			add_query_arg(
-				array(
-					'page'     => 'friends-activitypub-sync',
-					'synced'   => 1,
-					'imported' => $result['imported'],
-					'exported' => $result['exported'],
-				),
+				$redirect_args,
 				admin_url( 'admin.php' )
 			)
 		);
@@ -309,10 +337,11 @@ class Admin_ActivityPub_Sync {
 	/**
 	 * Perform bidirectional sync
 	 *
-	 * @param int $user_id The ActivityPub user ID.
+	 * @param int  $user_id The ActivityPub user ID.
+	 * @param bool $dry_run Whether to perform a dry run (simulation only).
 	 * @return array Results with imported and exported counts.
 	 */
-	public function perform_sync( $user_id ) {
+	public function perform_sync( $user_id, $dry_run = false ) {
 		$imported = 0;
 		$exported = 0;
 
@@ -346,26 +375,32 @@ class Admin_ActivityPub_Sync {
 				if ( is_wp_error( $existing ) ) {
 					$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
 					if ( ! is_wp_error( $actor_data ) && ! empty( $actor_data ) ) {
-						$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
-						$subscription = Subscription::create(
-							$user_login,
-							'subscription',
-							$actor_data['url'],
-							$actor_data['name'] ?? $actor_data['preferredUsername'],
-							isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
-							$actor_data['summary'] ?? null
-						);
-
-						if ( ! is_wp_error( $subscription ) ) {
-							$subscription->save_feed(
-								$actor_url,
-								array(
-									'parser' => Feed_Parser_ActivityPub::SLUG,
-									'active' => true,
-									'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
-								)
-							);
+						if ( $dry_run ) {
+							// Dry run: just count what would be imported.
 							++$imported;
+						} else {
+							// Actually perform the import.
+							$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
+							$subscription = Subscription::create(
+								$user_login,
+								'subscription',
+								$actor_data['url'],
+								$actor_data['name'] ?? $actor_data['preferredUsername'],
+								isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
+								$actor_data['summary'] ?? null
+							);
+
+							if ( ! is_wp_error( $subscription ) ) {
+								$subscription->save_feed(
+									$actor_url,
+									array(
+										'parser' => Feed_Parser_ActivityPub::SLUG,
+										'active' => true,
+										'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
+									)
+								);
+								++$imported;
+							}
 						}
 					}
 				}
@@ -373,12 +408,20 @@ class Admin_ActivityPub_Sync {
 		}
 
 		// Export: Friends -> ActivityPub.
-		if ( function_exists( '\Activitypub\follow' ) ) {
+		// Populate ActivityPub's Following collection directly without sending Follow activities.
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 			foreach ( $friends_feeds as $feed_url ) {
 				if ( ! in_array( $feed_url, $activitypub_follows, true ) ) {
-					$result = \Activitypub\follow( $feed_url, $user_id );
-					if ( ! is_wp_error( $result ) ) {
+					if ( $dry_run ) {
+						// Dry run: just count what would be exported.
 						++$exported;
+					} else {
+						// Actually perform the export.
+						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $feed_url );
+						if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+							add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
+							++$exported;
+						}
 					}
 				}
 			}
