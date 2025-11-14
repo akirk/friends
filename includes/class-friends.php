@@ -572,10 +572,28 @@ class Friends {
 		}
 
 		if ( function_exists( '\Activitypub\follow' ) && version_compare( $previous_version, '4.0.0', '<' ) ) {
-			// Migrate the Followers to the ActivityPub plugin (added in its 7.0.0).
+			// Migrate Friends feeds to the ActivityPub Following collection (added in 7.0.0).
+			// We populate the collection directly WITHOUT sending Follow activities,
+			// since these relationships already exist through Friends.
 			$user_id = Feed_Parser_ActivityPub::get_activitypub_actor_id( Friends::get_main_friend_user_id() );
 			foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
-				\Activitypub\follow( $user_feed->get_url(), $user_id );
+				if ( ! $user_feed->is_active() ) {
+					continue; // Skip inactive feeds.
+				}
+
+				$actor_url = $user_feed->get_url();
+
+				// Get or fetch the remote actor post.
+				if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+					$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+
+					if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+						// Directly add to Following collection without sending Follow activity.
+						// This populates ActivityPub's Following collection as if the follow
+						// had been accepted, but without federation network traffic.
+						add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
+					}
+				}
 			}
 
 			// Reverse sync: Import existing ActivityPub follows INTO Friends.
