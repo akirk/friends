@@ -87,18 +87,84 @@ class Admin_ActivityPub_Sync {
 			<?php endif; ?>
 
 			<?php if ( isset( $_GET['dry_run'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-				<div class="notice notice-info is-dismissible">
-					<p>
-						<?php
-						printf(
-							/* translators: %1$d: number of follows that would be imported, %2$d: number of follows that would be exported */
-							esc_html__( 'Dry run completed! Would import %1$d follows from ActivityPub, would export %2$d follows to ActivityPub.', 'friends' ),
-							isset( $_GET['imported'] ) ? absint( wp_unslash( $_GET['imported'] ) ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-							isset( $_GET['exported'] ) ? absint( wp_unslash( $_GET['exported'] ) ) : 0 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-						);
-						?>
-					</p>
+				<?php
+				$imported_count = isset( $_GET['imported'] ) ? absint( wp_unslash( $_GET['imported'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$exported_count = isset( $_GET['exported'] ) ? absint( wp_unslash( $_GET['exported'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				?>
+				<div class="notice notice-info is-dismissible" style="border-left-width: 4px;">
+					<h3 style="margin-top: 0.5em;"><?php esc_html_e( '🔍 Dry Run Results (Preview)', 'friends' ); ?></h3>
 					<p><strong><?php esc_html_e( 'No changes were made. This was a simulation only.', 'friends' ); ?></strong></p>
+
+					<?php if ( $imported_count > 0 ) : ?>
+						<p>
+							<?php
+							printf(
+								/* translators: %d: number of follows that would be imported */
+								esc_html__( '📥 Would import %d follows FROM ActivityPub TO Friends:', 'friends' ),
+								esc_html( $imported_count )
+							);
+							?>
+						</p>
+						<ul style="margin-left: 2em;">
+							<?php foreach ( array_slice( $sync_status['only_activitypub'], 0, 10 ) as $actor_data ) : ?>
+								<li>
+									<strong><?php echo esc_html( $actor_data['name'] ?? $actor_data['preferredUsername'] ?? 'Unknown' ); ?></strong>
+									<br><code><?php echo esc_html( $actor_data['url'] ); ?></code>
+								</li>
+							<?php endforeach; ?>
+							<?php if ( count( $sync_status['only_activitypub'] ) > 10 ) : ?>
+								<li><em>
+									<?php
+									printf(
+										/* translators: %d: number of additional accounts */
+										esc_html__( '...and %d more (see table below)', 'friends' ),
+										count( $sync_status['only_activitypub'] ) - 10
+									);
+									?>
+								</em></li>
+							<?php endif; ?>
+						</ul>
+					<?php else : ?>
+						<p><?php esc_html_e( '📥 No follows to import from ActivityPub.', 'friends' ); ?></p>
+					<?php endif; ?>
+
+					<?php if ( $exported_count > 0 ) : ?>
+						<p>
+							<?php
+							printf(
+								/* translators: %d: number of follows that would be exported */
+								esc_html__( '📤 Would export %d follows FROM Friends TO ActivityPub:', 'friends' ),
+								esc_html( $exported_count )
+							);
+							?>
+						</p>
+						<ul style="margin-left: 2em;">
+							<?php foreach ( array_slice( $sync_status['only_friends'], 0, 10 ) as $user_feed ) : ?>
+								<li>
+									<strong><?php echo esc_html( $user_feed->get_title() ); ?></strong>
+									(<?php echo esc_html( $user_feed->get_friend_user()->display_name ); ?>)
+									<br><code><?php echo esc_html( $user_feed->get_url() ); ?></code>
+								</li>
+							<?php endforeach; ?>
+							<?php if ( count( $sync_status['only_friends'] ) > 10 ) : ?>
+								<li><em>
+									<?php
+									printf(
+										/* translators: %d: number of additional accounts */
+										esc_html__( '...and %d more (see table below)', 'friends' ),
+										count( $sync_status['only_friends'] ) - 10
+									);
+									?>
+								</em></li>
+							<?php endif; ?>
+						</ul>
+					<?php else : ?>
+						<p><?php esc_html_e( '📤 No follows to export to ActivityPub.', 'friends' ); ?></p>
+					<?php endif; ?>
+
+					<p style="background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin-top: 1em;">
+						<strong><?php esc_html_e( '⚠️ To actually perform this sync, click "Sync Now (Bidirectional)" below.', 'friends' ); ?></strong>
+					</p>
 				</div>
 			<?php endif; ?>
 
