@@ -92,78 +92,126 @@ class Admin_ActivityPub_Sync {
 				$exported_count = isset( $_GET['exported'] ) ? absint( wp_unslash( $_GET['exported'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				?>
 				<div class="notice notice-info is-dismissible" style="border-left-width: 4px;">
-					<h3 style="margin-top: 0.5em;"><?php esc_html_e( '🔍 Dry Run Results (Preview)', 'friends' ); ?></h3>
+					<h3 style="margin-top: 0.5em;"><?php esc_html_e( 'Dry Run Results (Preview)', 'friends' ); ?></h3>
 					<p><strong><?php esc_html_e( 'No changes were made. This was a simulation only.', 'friends' ); ?></strong></p>
 
 					<?php if ( $imported_count > 0 ) : ?>
+						<h4><?php esc_html_e( 'Import: ActivityPub -> Friends', 'friends' ); ?></h4>
 						<p>
 							<?php
 							printf(
 								/* translators: %d: number of follows that would be imported */
-								esc_html__( '📥 Would import %d follows FROM ActivityPub TO Friends:', 'friends' ),
+								esc_html__( 'Would import %d follows:', 'friends' ),
 								esc_html( $imported_count )
 							);
 							?>
 						</p>
-						<ul style="margin-left: 2em;">
-							<?php foreach ( array_slice( $sync_status['only_activitypub'], 0, 10 ) as $actor_data ) : ?>
-								<li>
-									<strong><?php echo esc_html( $actor_data['name'] ?? $actor_data['preferredUsername'] ?? 'Unknown' ); ?></strong>
-									<br><code><?php echo esc_html( $actor_data['url'] ); ?></code>
-								</li>
-							<?php endforeach; ?>
-							<?php if ( count( $sync_status['only_activitypub'] ) > 10 ) : ?>
-								<li><em>
-									<?php
-									printf(
-										/* translators: %d: number of additional accounts */
-										esc_html__( '...and %d more (see table below)', 'friends' ),
-										count( $sync_status['only_activitypub'] ) - 10
-									);
-									?>
-								</em></li>
-							<?php endif; ?>
-						</ul>
+						<table class="widefat" style="margin-bottom: 1em;">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Actor', 'friends' ); ?></th>
+									<th><?php esc_html_e( 'ActivityPub Post ID', 'friends' ); ?></th>
+									<th><?php esc_html_e( 'Action', 'friends' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( array_slice( $sync_status['only_activitypub'], 0, 20 ) as $actor_data ) : ?>
+									<tr>
+										<td>
+											<strong><?php echo esc_html( $actor_data['name'] ?? $actor_data['preferredUsername'] ?? 'Unknown' ); ?></strong><br>
+											<code style="font-size: 11px;"><?php echo esc_html( $actor_data['url'] ); ?></code>
+										</td>
+										<td><code><?php echo esc_html( $actor_data['post_id'] ); ?></code></td>
+										<td>
+											<span style="color: #0073aa;">
+												<?php esc_html_e( 'Create new Subscription user', 'friends' ); ?><br>
+												<?php esc_html_e( 'Add User_Feed term (parser: activitypub)', 'friends' ); ?>
+											</span>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+								<?php if ( count( $sync_status['only_activitypub'] ) > 20 ) : ?>
+									<tr>
+										<td colspan="3"><em>
+											<?php
+											printf(
+												/* translators: %d: number of additional accounts */
+												esc_html__( '...and %d more (see table below)', 'friends' ),
+												count( $sync_status['only_activitypub'] ) - 20
+											);
+											?>
+										</em></td>
+									</tr>
+								<?php endif; ?>
+							</tbody>
+						</table>
 					<?php else : ?>
-						<p><?php esc_html_e( '📥 No follows to import from ActivityPub.', 'friends' ); ?></p>
+						<p><?php esc_html_e( 'Import: No follows to import from ActivityPub.', 'friends' ); ?></p>
 					<?php endif; ?>
 
 					<?php if ( $exported_count > 0 ) : ?>
+						<h4><?php esc_html_e( 'Export: Friends -> ActivityPub', 'friends' ); ?></h4>
 						<p>
 							<?php
 							printf(
 								/* translators: %d: number of follows that would be exported */
-								esc_html__( '📤 Would export %d follows FROM Friends TO ActivityPub:', 'friends' ),
+								esc_html__( 'Would export %d follows:', 'friends' ),
 								esc_html( $exported_count )
 							);
 							?>
 						</p>
-						<ul style="margin-left: 2em;">
-							<?php foreach ( array_slice( $sync_status['only_friends'], 0, 10 ) as $user_feed ) : ?>
-								<li>
-									<strong><?php echo esc_html( $user_feed->get_title() ); ?></strong>
-									(<?php echo esc_html( $user_feed->get_friend_user()->display_name ); ?>)
-									<br><code><?php echo esc_html( $user_feed->get_url() ); ?></code>
-								</li>
-							<?php endforeach; ?>
-							<?php if ( count( $sync_status['only_friends'] ) > 10 ) : ?>
-								<li><em>
-									<?php
-									printf(
-										/* translators: %d: number of additional accounts */
-										esc_html__( '...and %d more (see table below)', 'friends' ),
-										count( $sync_status['only_friends'] ) - 10
-									);
-									?>
-								</em></li>
-							<?php endif; ?>
-						</ul>
+						<table class="widefat" style="margin-bottom: 1em;">
+							<thead>
+								<tr>
+									<th><?php esc_html_e( 'Friend / Feed', 'friends' ); ?></th>
+									<th><?php esc_html_e( 'User Feed Term ID', 'friends' ); ?></th>
+									<th><?php esc_html_e( 'Action', 'friends' ); ?></th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( array_slice( $sync_status['only_friends'], 0, 20 ) as $feed_data ) : ?>
+									<tr>
+										<td>
+											<strong><?php echo esc_html( $feed_data['title'] ); ?></strong>
+											(<?php echo esc_html( $feed_data['friend_user'] ); ?>)<br>
+											<code style="font-size: 11px;"><?php echo esc_html( $feed_data['url'] ); ?></code>
+										</td>
+										<td><code><?php echo esc_html( $feed_data['term_id'] ); ?></code></td>
+										<td>
+											<span style="color: #0073aa;">
+												<?php esc_html_e( 'Fetch/create Remote Actor post', 'friends' ); ?><br>
+												<?php
+												printf(
+													/* translators: %d: ActivityPub user ID */
+													esc_html__( 'Add post_meta _activitypub_followed_by = %d', 'friends' ),
+													esc_html( $user_id )
+												);
+												?>
+											</span>
+										</td>
+									</tr>
+								<?php endforeach; ?>
+								<?php if ( count( $sync_status['only_friends'] ) > 20 ) : ?>
+									<tr>
+										<td colspan="3"><em>
+											<?php
+											printf(
+												/* translators: %d: number of additional accounts */
+												esc_html__( '...and %d more (see table below)', 'friends' ),
+												count( $sync_status['only_friends'] ) - 20
+											);
+											?>
+										</em></td>
+									</tr>
+								<?php endif; ?>
+							</tbody>
+						</table>
 					<?php else : ?>
-						<p><?php esc_html_e( '📤 No follows to export to ActivityPub.', 'friends' ); ?></p>
+						<p><?php esc_html_e( 'Export: No follows to export to ActivityPub.', 'friends' ); ?></p>
 					<?php endif; ?>
 
 					<p style="background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin-top: 1em;">
-						<strong><?php esc_html_e( '⚠️ To actually perform this sync, click "Sync Now (Bidirectional)" below.', 'friends' ); ?></strong>
+						<strong><?php esc_html_e( 'To actually perform this sync, click "Sync Now (Bidirectional)" below.', 'friends' ); ?></strong>
 					</p>
 				</div>
 			<?php endif; ?>
@@ -240,14 +288,18 @@ class Admin_ActivityPub_Sync {
 							<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
 							<th><?php esc_html_e( 'Title', 'friends' ); ?></th>
 							<th><?php esc_html_e( 'Friend', 'friends' ); ?></th>
+							<th><?php esc_html_e( 'User Feed Term ID', 'friends' ); ?></th>
+							<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $sync_status['only_friends'] as $user_feed ) : ?>
+						<?php foreach ( $sync_status['only_friends'] as $feed_data ) : ?>
 							<tr>
-								<td><a href="<?php echo esc_url( $user_feed->get_url() ); ?>" target="_blank"><?php echo esc_html( $user_feed->get_url() ); ?></a></td>
-								<td><?php echo esc_html( $user_feed->get_title() ); ?></td>
-								<td><?php echo esc_html( $user_feed->get_friend_user()->display_name ); ?></td>
+								<td><a href="<?php echo esc_url( $feed_data['url'] ); ?>" target="_blank"><?php echo esc_html( $feed_data['url'] ); ?></a></td>
+								<td><?php echo esc_html( $feed_data['title'] ); ?></td>
+								<td><?php echo esc_html( $feed_data['friend_user'] ); ?></td>
+								<td><code><?php echo esc_html( $feed_data['term_id'] ); ?></code></td>
+								<td><code><?php echo esc_html( $feed_data['parser'] ); ?></code></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -261,6 +313,8 @@ class Admin_ActivityPub_Sync {
 						<tr>
 							<th><?php esc_html_e( 'URL', 'friends' ); ?></th>
 							<th><?php esc_html_e( 'Name', 'friends' ); ?></th>
+							<th><?php esc_html_e( 'Friend', 'friends' ); ?></th>
+							<th><?php esc_html_e( 'User Feed Term ID', 'friends' ); ?></th>
 							<th><?php esc_html_e( 'ActivityPub Post ID', 'friends' ); ?></th>
 						</tr>
 					</thead>
@@ -269,6 +323,8 @@ class Admin_ActivityPub_Sync {
 							<tr>
 								<td><a href="<?php echo esc_url( $url ); ?>" target="_blank"><?php echo esc_html( $url ); ?></a></td>
 								<td><?php echo esc_html( $data['name'] ); ?></td>
+								<td><?php echo esc_html( $data['friend_user'] ); ?></td>
+								<td><code><?php echo esc_html( $data['term_id'] ); ?></code></td>
 								<td><code><?php echo esc_html( $data['post_id'] ); ?></code></td>
 							</tr>
 						<?php endforeach; ?>
@@ -369,9 +425,15 @@ class Admin_ActivityPub_Sync {
 		foreach ( $activitypub_follows as $url => $post_id ) {
 			$post_data = $activitypub_posts[ $post_id ];
 			if ( isset( $friends_feeds[ $url ] ) ) {
+				$user_feed = $friends_feeds[ $url ];
 				$status['in_sync'][ $url ] = array(
-					'name'    => $post_data['name'] ?? $post_data['preferredUsername'] ?? 'Unknown',
-					'post_id' => $post_id,
+					'name'           => $post_data['name'] ?? $post_data['preferredUsername'] ?? 'Unknown',
+					'post_id'        => $post_id,
+					'term_id'        => $user_feed->get_id(),
+					'parser'         => $user_feed->get_parser(),
+					'active'         => $user_feed->is_active(),
+					'friend_user'    => $user_feed->get_friend_user()->display_name,
+					'friend_user_id' => $user_feed->get_friend_user()->ID,
 				);
 				++$status['in_sync_count'];
 			} else {
@@ -382,7 +444,17 @@ class Admin_ActivityPub_Sync {
 
 		foreach ( $friends_feeds as $url => $user_feed ) {
 			if ( ! isset( $activitypub_follows[ $url ] ) ) {
-				$status['only_friends'][] = $user_feed;
+				// Include detailed User_Feed info for better dry run display.
+				$status['only_friends'][] = array(
+					'user_feed'      => $user_feed,
+					'url'            => $url,
+					'term_id'        => $user_feed->get_id(),
+					'title'          => $user_feed->get_title(),
+					'parser'         => $user_feed->get_parser(),
+					'active'         => $user_feed->is_active(),
+					'friend_user'    => $user_feed->get_friend_user()->display_name,
+					'friend_user_id' => $user_feed->get_friend_user()->ID,
+				);
 				++$status['only_friends_count'];
 			}
 		}
