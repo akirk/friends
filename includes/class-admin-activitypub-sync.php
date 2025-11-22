@@ -435,10 +435,11 @@ class Admin_ActivityPub_Sync {
 						}
 					}
 					// Debug: Show sample URLs from Friends with normalization.
+					$debug_lookup_map = $this->build_actor_lookup_map();
 					$sample_friends_data = array();
 					foreach ( array_slice( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ), 0, 5 ) as $feed ) {
 						$original_url = $feed->get_url();
-						$normalized_url = $this->normalize_actor_url( $original_url );
+						$normalized_url = $this->normalize_actor_url( $original_url, $debug_lookup_map, false );
 						$sample_friends_data[] = array(
 							'original'   => $original_url,
 							'normalized' => $normalized_url,
@@ -466,71 +467,95 @@ class Admin_ActivityPub_Sync {
 	}
 
 	/**
-	 * Normalize a URL or webfinger address to a canonical actor URL.
-	 * Uses transient caching to avoid repeated network requests.
+	 * Build a lookup map from all ap_actor posts for fast URL matching.
+	 * Maps both guid (canonical URL) and _activitypub_acct (webfinger) to canonical URL.
 	 *
-	 * @param string $url The URL or webfinger address to normalize.
+	 * @return array Map of various URL formats to canonical actor URLs.
+	 */
+	private function build_actor_lookup_map() {
+		global $wpdb;
+
+		$lookup = array();
+
+		// Get all ap_actor posts with their guid and acct meta.
+		$actors = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			"SELECT p.ID, p.guid, pm.meta_value as acct
+			FROM {$wpdb->posts} p
+			LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_activitypub_acct'
+			WHERE p.post_type = 'ap_actor'"
+		);
+
+		foreach ( $actors as $actor ) {
+			$canonical_url = $actor->guid;
+			if ( empty( $canonical_url ) ) {
+				continue;
+			}
+
+			// Map canonical URL to itself.
+			$lookup[ $canonical_url ] = $canonical_url;
+
+			// Map webfinger acct to canonical URL (with and without leading @).
+			if ( ! empty( $actor->acct ) ) {
+				$lookup[ $actor->acct ] = $canonical_url;
+				$lookup[ '@' . ltrim( $actor->acct, '@' ) ] = $canonical_url;
+				$lookup[ ltrim( $actor->acct, '@' ) ] = $canonical_url;
+			}
+		}
+
+		return $lookup;
+	}
+
+	/**
+	 * Normalize a URL or webfinger address to a canonical actor URL.
+	 * Uses a pre-built lookup map for fast local matching, with optional network fallback.
+	 *
+	 * @param string $url        The URL or webfinger address to normalize.
+	 * @param array  $lookup_map Optional pre-built lookup map from build_actor_lookup_map().
+	 * @param bool   $network_fallback Whether to fall back to network requests if not found locally.
 	 * @return string|null The normalized URL or null if resolution fails.
 	 */
-	private function normalize_actor_url( $url ) {
+	private function normalize_actor_url( $url, $lookup_map = null, $network_fallback = false ) {
 		if ( empty( $url ) ) {
 			return null;
 		}
 
-		// Check cache first.
-		$cache_key = 'friends_norm_url_' . md5( $url );
-		$cached = get_transient( $cache_key );
-		if ( false !== $cached ) {
-			// Empty string means we cached a failure.
-			return '' === $cached ? null : $cached;
+		// If we have a lookup map, try it first (fast local lookup).
+		if ( null !== $lookup_map ) {
+			// Try exact match.
+			if ( isset( $lookup_map[ $url ] ) ) {
+				return $lookup_map[ $url ];
+			}
+			// Try with/without @ prefix for webfinger.
+			if ( isset( $lookup_map[ '@' . ltrim( $url, '@' ) ] ) ) {
+				return $lookup_map[ '@' . ltrim( $url, '@' ) ];
+			}
 		}
 
-		$normalized = null;
+		// If no network fallback requested, return null for unmatched URLs.
+		if ( ! $network_fallback ) {
+			// For valid URLs, return as-is (might match later).
+			if ( filter_var( $url, FILTER_VALIDATE_URL ) ) {
+				return $url;
+			}
+			return null;
+		}
 
-		// If it's a webfinger address (starts with @), resolve it to an actor URL.
+		// Network fallback for webfinger addresses.
 		if ( str_starts_with( $url, '@' ) ) {
-			// Try to resolve via webfinger.
 			if ( class_exists( '\Activitypub\Webfinger' ) && method_exists( '\Activitypub\Webfinger', 'resolve' ) ) {
 				$resolved = \Activitypub\Webfinger::resolve( $url );
 				if ( ! is_wp_error( $resolved ) && ! empty( $resolved ) ) {
-					$normalized = $resolved;
+					return $resolved;
 				}
-			}
-			// Fallback: try get_remote_metadata_by_actor which handles webfinger.
-			if ( ! $normalized && function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
-				$actor_data = \Activitypub\get_remote_metadata_by_actor( $url );
-				if ( ! is_wp_error( $actor_data ) && isset( $actor_data['id'] ) ) {
-					$normalized = $actor_data['id'];
-				}
-			}
-		} elseif ( filter_var( $url, FILTER_VALIDATE_URL ) ) {
-			// For URLs, first check if we already have this actor cached locally.
-			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-				$local_actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $url );
-				if ( ! is_wp_error( $local_actor ) && $local_actor instanceof \WP_Post ) {
-					// Found locally, use its guid as canonical URL.
-					$normalized = $local_actor->guid;
-				}
-			}
-
-			// If not found locally, fetch metadata (slower).
-			if ( ! $normalized && function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
-				$actor_data = \Activitypub\get_remote_metadata_by_actor( $url );
-				if ( ! is_wp_error( $actor_data ) && isset( $actor_data['id'] ) ) {
-					$normalized = $actor_data['id'];
-				}
-			}
-
-			// Fall back to the URL itself if all else fails.
-			if ( ! $normalized ) {
-				$normalized = $url;
 			}
 		}
 
-		// Cache result for 1 hour (empty string for failures).
-		set_transient( $cache_key, $normalized ? $normalized : '', HOUR_IN_SECONDS );
+		// For URLs, return as-is.
+		if ( filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			return $url;
+		}
 
-		return $normalized;
+		return null;
 	}
 
 	/**
@@ -550,6 +575,9 @@ class Admin_ActivityPub_Sync {
 			'only_friends'           => array(),
 			'in_sync'                => array(),
 		);
+
+		// Build lookup map for fast URL normalization (single DB query).
+		$lookup_map = $this->build_actor_lookup_map();
 
 		// Get ActivityPub follows - keep the WP_Post objects and derive URLs from them.
 		$activitypub_follows = array(); // Keyed by canonical URL for comparison.
@@ -582,12 +610,12 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds and normalize their URLs.
+		// Get Friends feeds and normalize their URLs using the lookup map (no network calls).
 		$friends_feeds = array();         // Keyed by canonical URL.
 		$friends_feed_objects = array();  // Original User_Feed objects keyed by canonical URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
 			$feed_url = $user_feed->get_url();
-			$canonical_url = $this->normalize_actor_url( $feed_url );
+			$canonical_url = $this->normalize_actor_url( $feed_url, $lookup_map, false );
 			if ( $canonical_url ) {
 				$friends_feeds[ $canonical_url ] = $user_feed;
 				$friends_feed_objects[ $canonical_url ] = array(
@@ -694,6 +722,9 @@ class Admin_ActivityPub_Sync {
 		$imported = 0;
 		$exported = 0;
 
+		// Build lookup map for fast URL normalization.
+		$lookup_map = $this->build_actor_lookup_map();
+
 		// Get ActivityPub follows - keep post objects and derive URLs from them.
 		$activitypub_follows = array(); // URL -> post_id mapping.
 		$activitypub_posts = array();   // post_id -> post data.
@@ -720,12 +751,12 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds and normalize their URLs for comparison.
+		// Get Friends feeds and normalize their URLs for comparison (no network calls).
 		$friends_feeds = array();           // Keyed by canonical URL.
 		$friends_feed_original = array();   // Keyed by canonical URL, stores original URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
 			$feed_url = $user_feed->get_url();
-			$canonical_url = $this->normalize_actor_url( $feed_url );
+			$canonical_url = $this->normalize_actor_url( $feed_url, $lookup_map, false );
 			if ( $canonical_url ) {
 				$friends_feeds[ $canonical_url ] = $user_feed;
 				$friends_feed_original[ $canonical_url ] = $feed_url;
