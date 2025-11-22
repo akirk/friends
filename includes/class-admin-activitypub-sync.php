@@ -398,27 +398,36 @@ class Admin_ActivityPub_Sync {
 							<td><code><?php echo esc_html( $raw_count ); ?></code></td>
 						</tr>
 						<?php
-						// Debug: Show sample URLs from ActivityPub.
+						// Debug: Show sample URLs from ActivityPub - try multiple methods.
 						if ( ! is_wp_error( $raw_following ) && is_array( $raw_following ) && count( $raw_following ) > 0 ) {
 							$sample_ap_urls = array();
 							foreach ( array_slice( $raw_following, 0, 5 ) as $actor ) {
 								if ( $actor instanceof \WP_Post ) {
-									$url = \Activitypub\object_to_uri( $actor );
+									$url_from_uri = \Activitypub\object_to_uri( $actor );
+									$url_from_guid = $actor->guid;
+									$url_from_meta = get_post_meta( $actor->ID, '_activitypub_actor_id', true );
+									$url_from_meta2 = get_post_meta( $actor->ID, 'activitypub_actor_id', true );
 									$sample_ap_urls[] = array(
-										'post_id' => $actor->ID,
-										'url'     => $url,
-										'type'    => gettype( $url ),
+										'post_id'    => $actor->ID,
+										'post_title' => $actor->post_title,
+										'guid'       => $url_from_guid,
+										'meta_1'     => $url_from_meta,
+										'meta_2'     => $url_from_meta2,
+										'object_uri' => $url_from_uri,
 									);
 								}
 							}
 							?>
 							<tr>
-								<th><?php esc_html_e( 'Sample ActivityPub URLs (from object_to_uri)', 'friends' ); ?></th>
+								<th><?php esc_html_e( 'Sample ap_actor posts (debugging URL source)', 'friends' ); ?></th>
 								<td>
 									<?php foreach ( $sample_ap_urls as $sample ) : ?>
-										<code>ID:<?php echo esc_html( $sample['post_id'] ); ?></code> →
-										<code><?php echo esc_html( $sample['url'] ? $sample['url'] : '(empty)' ); ?></code>
-										(<?php echo esc_html( $sample['type'] ); ?>)<br>
+										<strong>ID:<?php echo esc_html( $sample['post_id'] ); ?></strong> - <?php echo esc_html( $sample['post_title'] ); ?><br>
+										&nbsp;&nbsp;guid: <code><?php echo esc_html( $sample['guid'] ? $sample['guid'] : '(empty)' ); ?></code><br>
+										&nbsp;&nbsp;_activitypub_actor_id: <code><?php echo esc_html( $sample['meta_1'] ? $sample['meta_1'] : '(empty)' ); ?></code><br>
+										&nbsp;&nbsp;activitypub_actor_id: <code><?php echo esc_html( $sample['meta_2'] ? $sample['meta_2'] : '(empty)' ); ?></code><br>
+										&nbsp;&nbsp;object_to_uri(): <code><?php echo esc_html( $sample['object_uri'] ? $sample['object_uri'] : '(empty/NULL)' ); ?></code><br>
+										<hr style="margin: 5px 0;">
 									<?php endforeach; ?>
 								</td>
 							</tr>
