@@ -398,6 +398,49 @@ class Admin_ActivityPub_Sync {
 							<td><code><?php echo esc_html( $raw_count ); ?></code></td>
 						</tr>
 						<?php
+						// Debug: Show sample URLs from ActivityPub.
+						if ( ! is_wp_error( $raw_following ) && is_array( $raw_following ) && count( $raw_following ) > 0 ) {
+							$sample_ap_urls = array();
+							foreach ( array_slice( $raw_following, 0, 5 ) as $actor ) {
+								if ( $actor instanceof \WP_Post ) {
+									$url = \Activitypub\object_to_uri( $actor );
+									$sample_ap_urls[] = array(
+										'post_id' => $actor->ID,
+										'url'     => $url,
+										'type'    => gettype( $url ),
+									);
+								}
+							}
+							?>
+							<tr>
+								<th><?php esc_html_e( 'Sample ActivityPub URLs (from object_to_uri)', 'friends' ); ?></th>
+								<td>
+									<?php foreach ( $sample_ap_urls as $sample ) : ?>
+										<code>ID:<?php echo esc_html( $sample['post_id'] ); ?></code> →
+										<code><?php echo esc_html( $sample['url'] ? $sample['url'] : '(empty)' ); ?></code>
+										(<?php echo esc_html( $sample['type'] ); ?>)<br>
+									<?php endforeach; ?>
+								</td>
+							</tr>
+							<?php
+						}
+					}
+					// Debug: Show sample URLs from Friends.
+					$sample_friends_urls = array();
+					foreach ( array_slice( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ), 0, 5 ) as $feed ) {
+						$sample_friends_urls[] = $feed->get_url();
+					}
+					if ( ! empty( $sample_friends_urls ) ) {
+						?>
+						<tr>
+							<th><?php esc_html_e( 'Sample Friends Feed URLs', 'friends' ); ?></th>
+							<td>
+								<?php foreach ( $sample_friends_urls as $url ) : ?>
+									<code><?php echo esc_html( $url ); ?></code><br>
+								<?php endforeach; ?>
+							</td>
+						</tr>
+						<?php
 					}
 					?>
 				</tbody>
