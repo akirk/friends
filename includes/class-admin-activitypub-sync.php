@@ -434,18 +434,25 @@ class Admin_ActivityPub_Sync {
 							<?php
 						}
 					}
-					// Debug: Show sample URLs from Friends.
-					$sample_friends_urls = array();
+					// Debug: Show sample URLs from Friends with normalization.
+					$sample_friends_data = array();
 					foreach ( array_slice( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ), 0, 5 ) as $feed ) {
-						$sample_friends_urls[] = $feed->get_url();
+						$original_url = $feed->get_url();
+						$normalized_url = $this->normalize_actor_url( $original_url );
+						$sample_friends_data[] = array(
+							'original'   => $original_url,
+							'normalized' => $normalized_url,
+						);
 					}
-					if ( ! empty( $sample_friends_urls ) ) {
+					if ( ! empty( $sample_friends_data ) ) {
 						?>
 						<tr>
-							<th><?php esc_html_e( 'Sample Friends Feed URLs', 'friends' ); ?></th>
+							<th><?php esc_html_e( 'Sample Friends Feed URLs (with normalization)', 'friends' ); ?></th>
 							<td>
-								<?php foreach ( $sample_friends_urls as $url ) : ?>
-									<code><?php echo esc_html( $url ); ?></code><br>
+								<?php foreach ( $sample_friends_data as $data ) : ?>
+									<strong>Original:</strong> <code><?php echo esc_html( $data['original'] ); ?></code><br>
+									<strong>Normalized:</strong> <code><?php echo esc_html( $data['normalized'] ? $data['normalized'] : '(failed)' ); ?></code><br>
+									<hr style="margin: 5px 0;">
 								<?php endforeach; ?>
 							</td>
 						</tr>
@@ -456,6 +463,52 @@ class Admin_ActivityPub_Sync {
 			</table>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Normalize a URL or webfinger address to a canonical actor URL.
+	 *
+	 * @param string $url The URL or webfinger address to normalize.
+	 * @return string|null The normalized URL or null if resolution fails.
+	 */
+	private function normalize_actor_url( $url ) {
+		if ( empty( $url ) ) {
+			return null;
+		}
+
+		// If it's a webfinger address (starts with @), resolve it to an actor URL.
+		if ( str_starts_with( $url, '@' ) ) {
+			// Try to resolve via webfinger.
+			if ( function_exists( '\Activitypub\Webfinger::resolve' ) ) {
+				$resolved = \Activitypub\Webfinger::resolve( $url );
+				if ( ! is_wp_error( $resolved ) && ! empty( $resolved ) ) {
+					return $resolved;
+				}
+			}
+			// Fallback: try get_remote_metadata_by_actor which handles webfinger.
+			if ( function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
+				$actor_data = \Activitypub\get_remote_metadata_by_actor( $url );
+				if ( ! is_wp_error( $actor_data ) && isset( $actor_data['id'] ) ) {
+					return $actor_data['id'];
+				}
+			}
+			return null;
+		}
+
+		// If it's already a URL, try to get the canonical actor ID.
+		if ( filter_var( $url, FILTER_VALIDATE_URL ) ) {
+			// Check if this URL returns an actor with a different canonical ID.
+			if ( function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
+				$actor_data = \Activitypub\get_remote_metadata_by_actor( $url );
+				if ( ! is_wp_error( $actor_data ) && isset( $actor_data['id'] ) ) {
+					return $actor_data['id'];
+				}
+			}
+			// Fall back to the URL itself.
+			return $url;
+		}
+
+		return null;
 	}
 
 	/**
@@ -477,7 +530,7 @@ class Admin_ActivityPub_Sync {
 		);
 
 		// Get ActivityPub follows - keep the WP_Post objects and derive URLs from them.
-		$activitypub_follows = array(); // Keyed by URL for comparison.
+		$activitypub_follows = array(); // Keyed by canonical URL for comparison.
 		$activitypub_posts = array();   // Keyed by post ID for reference.
 		if ( class_exists( '\Activitypub\Collection\Following' ) ) {
 			$actors = \Activitypub\Collection\Following::get_all( $user_id );
@@ -487,8 +540,8 @@ class Admin_ActivityPub_Sync {
 						continue;
 					}
 
-					// Get URL from the post object.
-					$actor_url = \Activitypub\object_to_uri( $actor );
+					// Get URL from the post's guid field (canonical actor URL).
+					$actor_url = $actor->guid;
 					if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
 						continue;
 					}
@@ -498,14 +551,8 @@ class Admin_ActivityPub_Sync {
 						'post'    => $actor,
 						'post_id' => $actor->ID,
 						'url'     => $actor_url,
+						'name'    => $actor->post_title,
 					);
-
-					// Fetch additional metadata for display.
-					$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
-					if ( ! is_wp_error( $actor_data ) ) {
-						$activitypub_posts[ $actor->ID ]['name'] = $actor_data['name'] ?? null;
-						$activitypub_posts[ $actor->ID ]['preferredUsername'] = $actor_data['preferredUsername'] ?? null;
-					}
 
 					// Map URL to post ID for comparison.
 					$activitypub_follows[ $actor_url ] = $actor->ID;
@@ -513,10 +560,26 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds.
-		$friends_feeds = array();
+		// Get Friends feeds and normalize their URLs.
+		$friends_feeds = array();         // Keyed by canonical URL.
+		$friends_feed_objects = array();  // Original User_Feed objects keyed by canonical URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
-			$friends_feeds[ $user_feed->get_url() ] = $user_feed;
+			$feed_url = $user_feed->get_url();
+			$canonical_url = $this->normalize_actor_url( $feed_url );
+			if ( $canonical_url ) {
+				$friends_feeds[ $canonical_url ] = $user_feed;
+				$friends_feed_objects[ $canonical_url ] = array(
+					'user_feed'    => $user_feed,
+					'original_url' => $feed_url,
+				);
+			} else {
+				// Could not normalize, use original URL.
+				$friends_feeds[ $feed_url ] = $user_feed;
+				$friends_feed_objects[ $feed_url ] = array(
+					'user_feed'    => $user_feed,
+					'original_url' => $feed_url,
+				);
+			}
 		}
 
 		$status['activitypub_count'] = count( $activitypub_follows );
@@ -620,8 +683,8 @@ class Admin_ActivityPub_Sync {
 						continue;
 					}
 
-					// Get URL from the post object.
-					$actor_url = \Activitypub\object_to_uri( $actor );
+					// Get URL from the post's guid field (canonical actor URL).
+					$actor_url = $actor->guid;
 					if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
 						continue;
 					}
@@ -635,10 +698,20 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds.
-		$friends_feeds = array();
+		// Get Friends feeds and normalize their URLs for comparison.
+		$friends_feeds = array();           // Keyed by canonical URL.
+		$friends_feed_original = array();   // Keyed by canonical URL, stores original URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
-			$friends_feeds[ $user_feed->get_url() ] = $user_feed;
+			$feed_url = $user_feed->get_url();
+			$canonical_url = $this->normalize_actor_url( $feed_url );
+			if ( $canonical_url ) {
+				$friends_feeds[ $canonical_url ] = $user_feed;
+				$friends_feed_original[ $canonical_url ] = $feed_url;
+			} else {
+				// Could not normalize, use original URL.
+				$friends_feeds[ $feed_url ] = $user_feed;
+				$friends_feed_original[ $feed_url ] = $feed_url;
+			}
 		}
 
 		// Import: ActivityPub -> Friends.
