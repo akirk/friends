@@ -351,6 +351,55 @@ class Admin_ActivityPub_Sync {
 						<th><?php esc_html_e( 'Last Import Count (on upgrade)', 'friends' ); ?></th>
 						<td><?php echo esc_html( get_option( 'friends_activitypub_import_count', '0' ) ); ?></td>
 					</tr>
+					<?php
+					// Debug: Check for posts with _activitypub_followed_by meta.
+					global $wpdb;
+					$meta_count = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_activitypub_followed_by' AND meta_value = %s",
+							$user_id
+						)
+					);
+					$pending_count = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+						$wpdb->prepare(
+							"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_activitypub_followed_by_pending' AND meta_value = %s",
+							$user_id
+						)
+					);
+					?>
+					<tr>
+						<th><?php esc_html_e( 'Posts with _activitypub_followed_by meta (DB query)', 'friends' ); ?></th>
+						<td><code><?php echo esc_html( $meta_count ); ?></code></td>
+					</tr>
+					<tr>
+						<th><?php esc_html_e( 'Posts with _activitypub_followed_by_pending meta (DB query)', 'friends' ); ?></th>
+						<td><code><?php echo esc_html( $pending_count ); ?></code></td>
+					</tr>
+					<?php
+					// Debug: Count ap_actor posts.
+					if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+						$ap_actor_count = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+							"SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'ap_actor'"
+						);
+						?>
+						<tr>
+							<th><?php esc_html_e( 'Total ap_actor posts in database', 'friends' ); ?></th>
+							<td><code><?php echo esc_html( $ap_actor_count ); ?></code></td>
+						</tr>
+						<?php
+					}
+					// Debug: Raw Following::get_all() output.
+					if ( class_exists( '\Activitypub\Collection\Following' ) ) {
+						$raw_following = \Activitypub\Collection\Following::get_all( $user_id );
+						$raw_count = is_wp_error( $raw_following ) ? 'Error: ' . $raw_following->get_error_message() : count( $raw_following );
+						?>
+						<tr>
+							<th><?php esc_html_e( 'Following::get_all() raw result count', 'friends' ); ?></th>
+							<td><code><?php echo esc_html( $raw_count ); ?></code></td>
+						</tr>
+						<?php
+					}
+					?>
 				</tbody>
 			</table>
 		</div>
