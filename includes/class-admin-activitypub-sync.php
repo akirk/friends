@@ -216,6 +216,7 @@ class Admin_ActivityPub_Sync {
 							<th><?php esc_html_e( 'Actor URL', 'friends' ); ?></th>
 							<th><?php esc_html_e( 'Name', 'friends' ); ?></th>
 							<th><?php esc_html_e( 'Username', 'friends' ); ?></th>
+							<th><?php esc_html_e( 'ActivityPub Post ID', 'friends' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -224,6 +225,7 @@ class Admin_ActivityPub_Sync {
 								<td><a href="<?php echo esc_url( $actor_data['url'] ); ?>" target="_blank"><?php echo esc_html( $actor_data['url'] ); ?></a></td>
 								<td><?php echo esc_html( $actor_data['name'] ?? 'N/A' ); ?></td>
 								<td><?php echo esc_html( $actor_data['preferredUsername'] ?? 'N/A' ); ?></td>
+								<td><code><?php echo esc_html( $actor_data['post_id'] ); ?></code></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -259,13 +261,15 @@ class Admin_ActivityPub_Sync {
 						<tr>
 							<th><?php esc_html_e( 'URL', 'friends' ); ?></th>
 							<th><?php esc_html_e( 'Name', 'friends' ); ?></th>
+							<th><?php esc_html_e( 'ActivityPub Post ID', 'friends' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $sync_status['in_sync'] as $url => $name ) : ?>
+						<?php foreach ( $sync_status['in_sync'] as $url => $data ) : ?>
 							<tr>
 								<td><a href="<?php echo esc_url( $url ); ?>" target="_blank"><?php echo esc_html( $url ); ?></a></td>
-								<td><?php echo esc_html( $name ); ?></td>
+								<td><?php echo esc_html( $data['name'] ); ?></td>
+								<td><code><?php echo esc_html( $data['post_id'] ); ?></code></td>
 							</tr>
 						<?php endforeach; ?>
 					</tbody>
@@ -315,22 +319,39 @@ class Admin_ActivityPub_Sync {
 			'in_sync'                => array(),
 		);
 
-		// Get ActivityPub follows.
-		$activitypub_follows = array();
+		// Get ActivityPub follows - keep the WP_Post objects and derive URLs from them.
+		$activitypub_follows = array(); // Keyed by URL for comparison.
+		$activitypub_posts = array();   // Keyed by post ID for reference.
 		if ( class_exists( '\Activitypub\Collection\Following' ) ) {
 			$actors = \Activitypub\Collection\Following::get_all( $user_id );
 			if ( ! is_wp_error( $actors ) && is_array( $actors ) ) {
 				foreach ( $actors as $actor ) {
-					// Convert WP_Post to actor URL.
+					if ( ! $actor instanceof \WP_Post ) {
+						continue;
+					}
+
+					// Get URL from the post object.
 					$actor_url = \Activitypub\object_to_uri( $actor );
 					if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
 						continue;
 					}
 
+					// Store post reference.
+					$activitypub_posts[ $actor->ID ] = array(
+						'post'    => $actor,
+						'post_id' => $actor->ID,
+						'url'     => $actor_url,
+					);
+
+					// Fetch additional metadata for display.
 					$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
 					if ( ! is_wp_error( $actor_data ) ) {
-						$activitypub_follows[ $actor_url ] = $actor_data;
+						$activitypub_posts[ $actor->ID ]['name'] = $actor_data['name'] ?? null;
+						$activitypub_posts[ $actor->ID ]['preferredUsername'] = $actor_data['preferredUsername'] ?? null;
 					}
+
+					// Map URL to post ID for comparison.
+					$activitypub_follows[ $actor_url ] = $actor->ID;
 				}
 			}
 		}
@@ -345,12 +366,16 @@ class Admin_ActivityPub_Sync {
 		$status['friends_count'] = count( $friends_feeds );
 
 		// Find matches and differences.
-		foreach ( $activitypub_follows as $url => $actor_data ) {
+		foreach ( $activitypub_follows as $url => $post_id ) {
+			$post_data = $activitypub_posts[ $post_id ];
 			if ( isset( $friends_feeds[ $url ] ) ) {
-				$status['in_sync'][ $url ] = $actor_data['name'] ?? $actor_data['preferredUsername'];
+				$status['in_sync'][ $url ] = array(
+					'name'    => $post_data['name'] ?? $post_data['preferredUsername'] ?? 'Unknown',
+					'post_id' => $post_id,
+				);
 				++$status['in_sync_count'];
 			} else {
-				$status['only_activitypub'][] = $actor_data;
+				$status['only_activitypub'][] = $post_data;
 				++$status['only_activitypub_count'];
 			}
 		}
@@ -411,19 +436,28 @@ class Admin_ActivityPub_Sync {
 		$imported = 0;
 		$exported = 0;
 
-		// Get ActivityPub follows.
-		$activitypub_follows = array();
+		// Get ActivityPub follows - keep post objects and derive URLs from them.
+		$activitypub_follows = array(); // URL -> post_id mapping.
+		$activitypub_posts = array();   // post_id -> post data.
 		if ( class_exists( '\Activitypub\Collection\Following' ) ) {
 			$actors = \Activitypub\Collection\Following::get_all( $user_id );
 			if ( ! is_wp_error( $actors ) && is_array( $actors ) ) {
 				foreach ( $actors as $actor ) {
-					// Convert WP_Post to actor URL.
+					if ( ! $actor instanceof \WP_Post ) {
+						continue;
+					}
+
+					// Get URL from the post object.
 					$actor_url = \Activitypub\object_to_uri( $actor );
 					if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
 						continue;
 					}
 
-					$activitypub_follows[] = $actor_url;
+					$activitypub_follows[ $actor_url ] = $actor->ID;
+					$activitypub_posts[ $actor->ID ] = array(
+						'post' => $actor,
+						'url'  => $actor_url,
+					);
 				}
 			}
 		}
@@ -431,14 +465,17 @@ class Admin_ActivityPub_Sync {
 		// Get Friends feeds.
 		$friends_feeds = array();
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
-			$friends_feeds[] = $user_feed->get_url();
+			$friends_feeds[ $user_feed->get_url() ] = $user_feed;
 		}
 
 		// Import: ActivityPub -> Friends.
-		foreach ( $activitypub_follows as $actor_url ) {
-			if ( ! in_array( $actor_url, $friends_feeds, true ) ) {
+		// Use the post data we already have from ActivityPub.
+		foreach ( $activitypub_posts as $post_id => $post_data ) {
+			$actor_url = $post_data['url'];
+			if ( ! isset( $friends_feeds[ $actor_url ] ) ) {
 				$existing = User_Feed::get_by_url( $actor_url );
 				if ( is_wp_error( $existing ) ) {
+					// Fetch metadata for creating the subscription.
 					$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
 					if ( ! is_wp_error( $actor_data ) && ! empty( $actor_data ) ) {
 						if ( $dry_run ) {
@@ -476,13 +513,13 @@ class Admin_ActivityPub_Sync {
 		// Export: Friends -> ActivityPub.
 		// Populate ActivityPub's Following collection directly without sending Follow activities.
 		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			foreach ( $friends_feeds as $feed_url ) {
-				if ( ! in_array( $feed_url, $activitypub_follows, true ) ) {
+			foreach ( $friends_feeds as $feed_url => $user_feed ) {
+				if ( ! isset( $activitypub_follows[ $feed_url ] ) ) {
 					if ( $dry_run ) {
 						// Dry run: just count what would be exported.
 						++$exported;
 					} else {
-						// Actually perform the export.
+						// Actually perform the export - fetch/create the actor post.
 						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $feed_url );
 						if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
 							add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
