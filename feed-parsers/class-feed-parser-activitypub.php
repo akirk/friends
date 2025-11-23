@@ -19,14 +19,14 @@ use Enable_Mastodon_Apps\Entity\Account as Entity_Account;
  * This is the class for integrating ActivityPub into the Friends Plugin.
  */
 class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
-	const SLUG = 'activitypub';
-	const NAME = 'ActivityPub';
-	const URL = 'https://www.w3.org/TR/activitypub/';
+	const SLUG                        = 'activitypub';
+	const NAME                        = 'ActivityPub';
+	const URL                         = 'https://www.w3.org/TR/activitypub/';
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_.-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
-	const EXTERNAL_USERNAME = 'external';
+	const EXTERNAL_USERNAME           = 'external';
 
 	private $activitypub_already_handled = array();
-	private $mapped_usernames = array();
+	private $mapped_usernames            = array();
 	private $friends_feed;
 
 	/**
@@ -180,7 +180,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( is_string( $user_id ) && ! is_numeric( $user_id ) ) {
 			$user = User::get_by_username( $user_id );
 			if ( ! $user ) {
-				$url = self::friends_webfinger_resolve( $user_id, $user_id );
+				$url       = self::friends_webfinger_resolve( $user_id, $user_id );
 				$user_feed = User_Feed::get_by_url( $url );
 				if ( $user_feed && ! is_wp_error( $user_feed ) ) {
 					$user = $user_feed->get_friend_user();
@@ -215,27 +215,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$account = false;
-		$meta = get_post_meta( $post_id, self::SLUG, true );
+		$meta    = get_post_meta( $post_id, self::SLUG, true );
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
-				$status->reblog = clone $status;
+				$status->reblog          = clone $status;
 				$status->reblog->account = clone $status->account;
-				$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
+				$status->reblog->id      = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
 			}
-			$friend_user = User::get_post_author( get_post( $post_id ) );
-			$external_user = $this->get_external_user();
+			$friend_user      = User::get_post_author( get_post( $post_id ) );
+			$external_user    = $this->get_external_user();
 			$is_external_user = get_class( $external_user ) === get_class( $friend_user ) && $external_user->get_object_id() === $friend_user->get_object_id();
 			if ( $is_external_user ) {
 				$feed_url = get_post_meta( $post_id, 'feed_url', true );
 				if ( $feed_url ) {
-					$actor = self::convert_actor_to_mastodon_handle( $feed_url );
-					$account = new Entity_Account();
-					$account->id             = $feed_url;
-					$account->username       = strtok( $actor, '@' );
-					$account->acct           = $actor;
-					$account->display_name   = $friend_user->display_name;
-					$account->url            = $feed_url;
-					$account->note = $friend_user->description;
+					$actor                 = self::convert_actor_to_mastodon_handle( $feed_url );
+					$account               = new Entity_Account();
+					$account->id           = $feed_url;
+					$account->username     = strtok( $actor, '@' );
+					$account->acct         = $actor;
+					$account->display_name = $friend_user->display_name;
+					$account->url          = $feed_url;
+					$account->note         = $friend_user->description;
 					if ( ! $account->note ) {
 						$account->note = '';
 					}
@@ -252,7 +252,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						$account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
 					}
 					$account->header_static = $account->header;
-					$account->created_at = $status->created_at;
+					$account->created_at    = $status->created_at;
 				}
 			} elseif ( $friend_user instanceof User ) {
 				$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID, null, $post_id );
@@ -440,7 +440,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		require_once __DIR__ . '/activitypub/class-activitypub-transformer-message.php';
 
 		$user_id = $this->get_activitypub_actor_id( get_current_user_id() );
-		$actor = $this->get_activitypub_actor( $user_id );
+		$actor   = $this->get_activitypub_actor( $user_id );
 		if ( ! $actor ) {
 			return $post_id;
 		}
@@ -483,9 +483,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
 
-		$object = $activity['object'];
+		$object     = $activity['object'];
 		$remote_url = $object['id'];
-		$reply_to = null;
+		$reply_to   = null;
 		if ( isset( $object['inReplyTo'] ) ) {
 			$reply_to = $object['inReplyTo'];
 		}
@@ -617,13 +617,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		// Disable polling.
-		$feed_details['interval'] = YEAR_IN_SECONDS;
-		$feed_details['next-poll'] = gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS );
+		$feed_details['interval']    = YEAR_IN_SECONDS;
+		$feed_details['next-poll']   = gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS );
 		$feed_details['post-format'] = 'status';
 
-		$feed_details['type'] = 'application/activity+json';
+		$feed_details['type']       = 'application/activity+json';
 		$feed_details['autoselect'] = true;
-		$actor = $this->get_activitypub_actor( get_current_user_id() );
+		$actor                      = $this->get_activitypub_actor( get_current_user_id() );
 		if ( $actor ) {
 			$feed_details['additional-info'] = 'You will follow as <tt>' . $actor->get_webfinger() . '</tt>';
 		}
@@ -788,7 +788,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$items = array();
 		foreach ( $outbox['orderedItems'] as $object ) {
-			$type = strtolower( $object['type'] );
+			$type    = strtolower( $object['type'] );
 			$items[] = $this->process_incoming_activity( $type, $object, get_current_user_id(), $user_feed );
 		}
 
@@ -840,7 +840,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function get_external_user() {
 		$external_username = apply_filters( 'friends_external_username', self::EXTERNAL_USERNAME );
-		$user = User::get_by_username( $external_username );
+		$user              = User::get_by_username( $external_username );
 		if ( ! $user || is_wp_error( $user ) ) {
 			$user = Subscription::create( $external_username, 'subscription', home_url(), _x( 'External', 'user name', 'friends' ) );
 		}
@@ -871,7 +871,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $mentions;
 		}
 		$post_id = $wp_object->comment_post_ID;
-		$post = get_post( $post_id );
+		$post    = get_post( $post_id );
 		if ( Friends::CPT !== $post->post_type ) {
 			return $mentions;
 		}
@@ -885,7 +885,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function extract_html_mentions( $content ) {
-		$tags = new \WP_HTML_Tag_Processor( $content );
+		$tags     = new \WP_HTML_Tag_Processor( $content );
 		$mentions = array();
 		while ( $tags->next_tag(
 			array(
@@ -1009,7 +1009,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! $meta || is_wp_error( $meta ) || ! isset( $meta['url'] ) ) {
 				$error = 'No URL found';
 				if ( is_wp_error( $meta ) ) {
-					$error = $meta->get_error_message();
+					$error  = $meta->get_error_message();
 					$error .= ' ' . print_r( $meta->get_error_data(), true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 				}
 				$this->log( 'Received invalid meta for ' . $actor_url . ' ' . $error, $meta );
@@ -1062,7 +1062,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return Feed_Item|null The feed item or null if it's not a valid activity.
 	 */
 	protected function process_incoming_activity( $type, $activity, $user_id, $user_feed ) {
-		$tags = array();
+		$tags         = array();
 		$mention_tags = array();
 
 		// Extract mention tags from CC field - if the current user is in CC, add their mention tag.
@@ -1102,8 +1102,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$item = $this->handle_incoming_create( $activity['object'], $tags, $mention_tags );
 				if ( isset( $activity['object']['type'] ) && 'Note' === $activity['object']['type'] ) {
 					$friend_user = $user_feed->get_friend_user();
-					$post_id = Feed::url_to_postid( $item->permalink );
-					$message = sprintf(
+					$post_id     = Feed::url_to_postid( $item->permalink );
+					$message     = sprintf(
 						// translators: %1$s is the post URL, %2$s is the linked user display name.
 						__( 'Received <a href="%1$s">post update</a> for %2$s', 'friends' ),
 						$friend_user->get_local_friends_page_url( $post_id ),
@@ -1115,8 +1115,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
 							require ABSPATH . WPINC . '/wp-diff.php';
 						}
-						$diff = new \Text_Diff( explode( 'PHP_EOL', wp_strip_all_tags( $_post->post_content ) ), explode( 'PHP_EOL', wp_strip_all_tags( $item->content ) ) );
-						$renderer = new \WP_Text_Diff_Renderer_inline();
+						$diff               = new \Text_Diff( explode( 'PHP_EOL', wp_strip_all_tags( $_post->post_content ) ), explode( 'PHP_EOL', wp_strip_all_tags( $item->content ) ) );
+						$renderer           = new \WP_Text_Diff_Renderer_inline();
 						$details['content'] = $renderer->render( $diff );
 						if ( empty( $details['content'] ) ) {
 							unset( $details['content'] );
@@ -1124,7 +1124,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					}
 
 					if ( ! empty( $details ) ) {
-						$details['post_id'] = $post_id;
+						$details['post_id']  = $post_id;
 						$details['activity'] = $activity;
 						Logging::log( 'post-update', $message, $details, self::SLUG, 0, $friend_user->ID );
 					}
@@ -1373,9 +1373,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! class_exists( 'WP_Text_Diff_Renderer_inline', false ) ) {
 				require ABSPATH . WPINC . '/wp-diff.php';
 			}
-			$summary = wp_encode_emoji( $activity['summary'] );
-			$diff = new \Text_Diff( explode( PHP_EOL, $friend_user->description ), explode( PHP_EOL, $summary ) );
-			$renderer = new \WP_Text_Diff_Renderer_inline();
+			$summary            = wp_encode_emoji( $activity['summary'] );
+			$diff               = new \Text_Diff( explode( PHP_EOL, $friend_user->description ), explode( PHP_EOL, $summary ) );
+			$renderer           = new \WP_Text_Diff_Renderer_inline();
 			$details['summary'] = $renderer->render( $diff );
 			if ( empty( $details['summary'] ) ) {
 				unset( $details['summary'] );
@@ -1416,7 +1416,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$comment_id = null;
 		if ( preg_match( '/#comment-(\d+)$/i', $permalink, $matches ) ) {
 			$comment_id = $matches[1];
-			$permalink = substr( $permalink, 0, - strlen( $matches[0] ) );
+			$permalink  = substr( $permalink, 0, - strlen( $matches[0] ) );
 		}
 
 		$post_id = Feed::url_to_postid( $permalink );
@@ -1455,7 +1455,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( \is_wp_error( $response ) ) {
 			return $response;
 		}
-		$json = \wp_remote_retrieve_body( $response );
+		$json   = \wp_remote_retrieve_body( $response );
 		$object = \json_decode( $json, true );
 		if ( ! $object ) {
 			$this->log( 'Received invalid json', compact( 'json' ) );
@@ -1466,7 +1466,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$published_date = 'now';
 		}
 		$object['published'] = gmdate( 'Y-m-d H:i:s', strtotime( $published_date ) );
-		$object['reblog'] = true;
+		$object['reblog']    = true;
 
 		return $this->handle_incoming_create( $object, array(), array() );
 	}
@@ -1496,7 +1496,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function get_reaction_display_name( $display_name, $term ) {
-		$url = get_term_meta( $term->term_id, 'url', true );
+		$url  = get_term_meta( $term->term_id, 'url', true );
 		$meta = \Activitypub\get_remote_metadata_by_actor( $url );
 		if ( $meta && ! is_wp_error( $meta ) && ! empty( $meta['preferredUsername'] ) ) {
 			$host = wp_parse_url( $meta['id'], PHP_URL_HOST );
@@ -1695,9 +1695,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_follow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
-		$meta = $this->get_metadata( $url );
+		$user_id   = $this->get_activitypub_actor_id( $user_id );
+		$actor     = $this->get_activitypub_actor( $user_id );
+		$meta      = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( is_wp_error( $meta ) ) {
 			if ( $user_feed instanceof User_Feed ) {
@@ -1711,8 +1711,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 			return $meta;
 		}
-		$to = $meta['id'];
-		$type = 'Follow';
+		$to    = $meta['id'];
+		$type  = 'Follow';
 		$inbox = self::get_inbox_by_actor( $to, $type );
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
@@ -1771,9 +1771,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_unfollow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
-		$meta = $this->get_metadata( $url );
+		$user_id   = $this->get_activitypub_actor_id( $user_id );
+		$actor     = $this->get_activitypub_actor( $user_id );
+		$meta      = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
 		if ( is_wp_error( $meta ) ) {
 			if ( $user_feed instanceof User_Feed ) {
@@ -1787,8 +1787,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 			return $meta;
 		}
-		$to = $meta['id'];
-		$type = 'Follow';
+		$to    = $meta['id'];
+		$type  = 'Follow';
 		$inbox = self::get_inbox_by_actor( $to, $type );
 		if ( is_wp_error( $inbox ) ) {
 			return $inbox;
@@ -1952,14 +1952,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function cache_reply_to_boost() {
-		$url = false;
+		$url                = false;
 		$append_to_redirect = '';
 
 		// The ignores are not necessary now but when https://github.com/WordPress/WordPress-Coding-Standards/issues/2299 comes into effect.
 		$in_reply_to = filter_input( INPUT_GET, 'in_reply_to', FILTER_SANITIZE_URL ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$boost = filter_input( INPUT_GET, 'boost', FILTER_SANITIZE_URL ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$boost       = filter_input( INPUT_GET, 'boost', FILTER_SANITIZE_URL ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( $in_reply_to ) {
-			$url = $in_reply_to;
+			$url                 = $in_reply_to;
 			$append_to_redirect .= '#comment';
 		} elseif ( $boost ) {
 			$url = $boost;
@@ -1998,9 +1998,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function cache_url( $url ) {
 		$post_id = apply_filters( 'friends_cache_url_post_id', false, $url );
 		if ( ! $post_id ) {
-			$user = $this->get_external_user();
+			$user      = $this->get_external_user();
 			$user_feed = $this->get_external_mentions_feed();
-			$response = \Activitypub\safe_remote_get( $url );
+			$response  = \Activitypub\safe_remote_get( $url );
 			if ( \is_wp_error( $response ) ) {
 				$this->show_message_on_frontend(
 					sprintf(
@@ -2012,7 +2012,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				);
 				return $response;
 			}
-			$json = \wp_remote_retrieve_body( $response );
+			$json   = \wp_remote_retrieve_body( $response );
 			$object = \json_decode( $json, true );
 			if ( ! $object ) {
 				$this->log( 'Received invalid json', compact( 'json' ) );
@@ -2059,9 +2059,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					continue;
 				}
 			}
-			$href = $processor->get_attribute( 'href' );
+			$href       = $processor->get_attribute( 'href' );
 			$path_parts = explode( '/', rtrim( wp_parse_url( $href, PHP_URL_PATH ), '/' ) );
-			$tag = array_pop( $path_parts );
+			$tag        = array_pop( $path_parts );
 			$processor->set_attribute( 'href', '/friends/tag/' . sanitize_title_with_dashes( $tag ) . '/' );
 			$processor->set_attribute( 'original-href', $href );
 		}
@@ -2128,7 +2128,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $item;
 		}
 
-		$external_user = $this->get_external_user();
+		$external_user    = $this->get_external_user();
 		$is_external_user = get_class( $external_user ) === get_class( $friend_user ) && $external_user->get_object_id() === $friend_user->get_object_id();
 		if (
 			! $is_external_user &&
@@ -2136,7 +2136,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			! $friend_user->get_user_option( 'activitypub_friends_show_replies' )
 		) {
 			$plain_text_content = \wp_strip_all_tags( $item->post_content );
-			$possible_mentions = self::get_possible_mentions();
+			$possible_mentions  = self::get_possible_mentions();
 
 			$no_known_user_found = true;
 			if ( preg_match( '/^@(?:[a-zA-Z0-9_.-]+)/i', $plain_text_content, $m ) ) {
@@ -2284,9 +2284,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return void|WP_Error
 	 */
 	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
-		$type = 'Like';
+		$type    = 'Like';
 		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
+		$actor   = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( $type );
@@ -2324,7 +2324,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
-			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$response         = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
 			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
 		}
 
@@ -2338,7 +2338,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
-		$type = 'like';
+		$type    = 'like';
 		$message = sprintf(
 			// translators: %s is the URL of the post.
 			__( 'Liked %s', 'friends' ),
@@ -2420,9 +2420,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return void|WP_Error
 	 */
 	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
-		$type = 'Like';
+		$type    = 'Like';
 		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
+		$actor   = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Undo' );
@@ -2465,7 +2465,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
-			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$response         = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
 			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
 		}
 
@@ -2479,7 +2479,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				)
 			);
 		}
-		$type = 'unlike';
+		$type    = 'unlike';
 		$message = sprintf(
 			// translators: %s is the URL of the post.
 			__( 'Unliked %s', 'friends' ),
@@ -2503,7 +2503,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function friends_search_autocomplete( $results, $q ) {
-		$url = preg_match( '#^(https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
+		$url           = preg_match( '#^(https?:\/\/)?(?:w{3}\.)?[\w-]+(?:\.[\w-]+)+((?:\/[^\s\/]*)*)#i', $q, $m );
 		$url_with_path = isset( $m[2] ) && $m[2];
 
 		$already_added = false;
@@ -2515,41 +2515,41 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( ! $already_added ) {
 			if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
-				$result = '<a href="' . esc_url( add_query_arg( 'url', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
-				$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
-				$result .= 'Follow ';
-				$result .= ' <small>';
-				$result .= esc_html( $q );
-				$result .= '</small></a>';
+				$result    = '<a href="' . esc_url( add_query_arg( 'url', $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
+				$result   .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
+				$result   .= 'Follow ';
+				$result   .= ' <small>';
+				$result   .= esc_html( $q );
+				$result   .= '</small></a>';
 				$results[] = $result;
 			} elseif ( ( $url && ! $url_with_path ) || preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $q ) ) {
-				$result = '<a href="' . esc_url( add_query_arg( 'url', $m[1] ? $q : 'https://' . $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
-				$result .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
-				$result .= 'Follow ';
-				$result .= ' <small>';
-				$result .= esc_html( $q );
-				$result .= '</small></a>';
+				$result    = '<a href="' . esc_url( add_query_arg( 'url', $m[1] ? $q : 'https://' . $q, admin_url( 'admin.php?page=add-friend' ) ) ) . '" class="has-icon-left">';
+				$result   .= '<span class="ab-icon dashicons dashicons-businessperson"><span class="dashicons dashicons-plus"></span></span>';
+				$result   .= 'Follow ';
+				$result   .= ' <small>';
+				$result   .= esc_html( $q );
+				$result   .= '</small></a>';
 				$results[] = $result;
 			}
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( add_query_arg( 'boost', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
-			$result .= '<span class="ab-icon dashicons dashicons-controls-repeat"></span>';
-			$result .= 'Boost ';
-			$result .= ' <small>';
-			$result .= esc_html( Friends::url_truncate( $q ) );
-			$result .= '</small></a>';
+			$result    = '<a href="' . esc_url( add_query_arg( 'boost', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
+			$result   .= '<span class="ab-icon dashicons dashicons-controls-repeat"></span>';
+			$result   .= 'Boost ';
+			$result   .= ' <small>';
+			$result   .= esc_html( Friends::url_truncate( $q ) );
+			$result   .= '</small></a>';
 			$results[] = $result;
 		}
 
 		if ( $url_with_path ) {
-			$result = '<a href="' . esc_url( add_query_arg( 'in_reply_to', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
-			$result .= '<span class="ab-icon dashicons dashicons-admin-comments"></span>';
-			$result .= 'Reply to ';
-			$result .= ' <small>';
-			$result .= esc_html( Friends::url_truncate( $q ) );
-			$result .= '</small></a>';
+			$result    = '<a href="' . esc_url( add_query_arg( 'in_reply_to', $q, home_url( '/friends/' ) ) ) . '" class="has-icon-left">';
+			$result   .= '<span class="ab-icon dashicons dashicons-admin-comments"></span>';
+			$result   .= 'Reply to ';
+			$result   .= ' <small>';
+			$result   .= esc_html( Friends::url_truncate( $q ) );
+			$result   .= '</small></a>';
 			$results[] = $result;
 		}
 
@@ -2607,8 +2607,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     bool  The return value.
 	 */
 	public function unqueue_activitypub_create( $ret ) {
-		$hook = 'transition_post_status';
-		$filter = array( '\Activitypub\Activitypub', 'schedule_post_activity' );
+		$hook     = 'transition_post_status';
+		$filter   = array( '\Activitypub\Activitypub', 'schedule_post_activity' );
 		$priority = has_filter( $hook, $filter );
 		if ( $priority ) {
 			remove_filter( $hook, $filter, $priority );
@@ -2678,7 +2678,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_announce( $url, $user_id ) {
 		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
+		$actor   = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Announce' );
@@ -2714,7 +2714,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
-			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$response         = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
 			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
 		}
 
@@ -2766,7 +2766,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_unannounce( $url, $user_id ) {
 		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
+		$actor   = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Undo' );
@@ -2810,7 +2810,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$report = array();
 		foreach ( $inboxes as $inbox ) {
-			$response = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
+			$response         = \Activitypub\safe_remote_post( $inbox, $json, $user_id );
 			$report[ $inbox ] = wp_remote_retrieve_response_message( $response );
 		}
 
@@ -3004,9 +3004,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function comment_form( $post_id ) {
-		$post = get_post( $post_id );
+		$post     = get_post( $post_id );
 		$mentions = self::extract_html_mentions( $post->post_content );
-		$meta = get_post_meta( $post->ID, self::SLUG, true );
+		$meta     = get_post_meta( $post->ID, self::SLUG, true );
 		if ( isset( $meta['attributedTo']['id'] ) && $meta['attributedTo']['id'] ) {
 			$mentions[ $meta['attributedTo']['id'] ] = $meta['attributedTo']['id'];
 		}
@@ -3015,7 +3015,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( $mentions ) {
 			$comment_content = '@' . implode( ' @', array_map( array( self::class, 'convert_actor_to_mastodon_handle' ), array_keys( $mentions ) ) ) . ' ';
 		}
-		$html5 = current_theme_supports( 'html5', 'comment-form' ) ? 'html5' : 'xhtml';
+		$html5              = current_theme_supports( 'html5', 'comment-form' ) ? 'html5' : 'xhtml';
 		$required_attribute = ( $html5 ? ' required' : ' required="required"' );
 		$required_indicator = ' ' . wp_required_field_indicator();
 
@@ -3096,7 +3096,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 			if ( isset( $p['path'] ) ) {
 				$path_parts = explode( '/', trim( $p['path'], '/' ) );
-				$username = ltrim( array_pop( $path_parts ), '@' );
+				$username   = ltrim( array_pop( $path_parts ), '@' );
 			}
 			return $username . '@' . $domain;
 		}
@@ -3117,10 +3117,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		if ( ! $metadata ) {
 			$username = null;
-			$domain = null;
+			$domain   = null;
 			if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $actor, $m ) ) {
 				$username = $m[1];
-				$domain = $m[2];
+				$domain   = $m[2];
 			} else {
 				$p = wp_parse_url( $actor );
 				if ( $p ) {
@@ -3129,7 +3129,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					}
 					if ( isset( $p['path'] ) ) {
 						$path_parts = explode( '/', trim( $p['path'], '/' ) );
-						$username = ltrim( array_pop( $path_parts ), '@' );
+						$username   = ltrim( array_pop( $path_parts ), '@' );
 					}
 				}
 			}
