@@ -500,6 +500,13 @@ class Admin_ActivityPub_Sync {
 				$lookup[ '@' . ltrim( $actor->acct, '@' ) ] = $canonical_url;
 				$lookup[ ltrim( $actor->acct, '@' ) ] = $canonical_url;
 			}
+
+			// Map alternative URL formats to canonical URL.
+			// Mastodon: /users/username <-> /@username
+			if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $canonical_url, $matches ) ) {
+				$alt_url = $matches[1] . '/@' . $matches[2];
+				$lookup[ $alt_url ] = $canonical_url;
+			}
 		}
 
 		return $lookup;
