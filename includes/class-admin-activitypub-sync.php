@@ -785,49 +785,33 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Try to match "only in ActivityPub" with "only in Friends" by URL transformation.
-		// Build a map of Friends URLs and their variations.
-		$friends_url_map = array();
+		// Try to match "only in Friends" URLs to their canonical forms via metadata lookup.
+		// Build a map: canonical URL -> Friends URL.
+		$canonical_to_friends = array();
 		foreach ( $sync_status['only_friends'] as $feed_data ) {
-			$url = $feed_data['url'];
-			$friends_url_map[ $url ] = $url;
+			$friends_url = $feed_data['url'];
 
-			// Mastodon: /@username variant for /users/username URLs.
-			if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $url, $matches ) ) {
-				$alt_url = $matches[1] . '/@' . $matches[2];
-				$friends_url_map[ $alt_url ] = $url;
-			}
-			// Mastodon: /users/username variant for /@username URLs.
-			if ( preg_match( '#^(https?://[^/]+)/@([^/]+)$#', $url, $matches ) ) {
-				$alt_url = $matches[1] . '/users/' . $matches[2];
-				$friends_url_map[ $alt_url ] = $url;
-			}
-			// Pixelfed: /users/username variant for /username URLs (no @ prefix).
-			if ( preg_match( '#^(https?://[^/]+)/([^/@][^/]*)$#', $url, $matches ) ) {
-				$alt_url = $matches[1] . '/users/' . $matches[2];
-				$friends_url_map[ $alt_url ] = $url;
-			}
-			// Pixelfed: /username variant for /users/username URLs.
-			if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $url, $matches ) ) {
-				$alt_url = $matches[1] . '/' . $matches[2];
-				$friends_url_map[ $alt_url ] = $url;
+			// Fetch metadata to get the canonical ID.
+			if ( function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
+				$meta = \Activitypub\get_remote_metadata_by_actor( $friends_url );
+				if ( ! is_wp_error( $meta ) && isset( $meta['id'] ) ) {
+					$canonical_to_friends[ $meta['id'] ] = $friends_url;
+				}
 			}
 		}
 
-		// Check each "only in ActivityPub" actor against the Friends URL map.
+		// Check each "only in ActivityPub" actor against the resolved canonical URLs.
 		foreach ( $sync_status['only_activitypub'] as $actor_data ) {
 			$canonical_url = $actor_data['url'];
 			$post_id = $actor_data['post_id'];
 
-			// Check if canonical URL matches any Friends URL variation.
-			if ( isset( $friends_url_map[ $canonical_url ] ) ) {
-				$friends_url = $friends_url_map[ $canonical_url ];
-				if ( $friends_url !== $canonical_url ) {
-					$existing = get_post_meta( $post_id, '_friends_feed_url', true );
-					if ( $existing !== $friends_url ) {
-						update_post_meta( $post_id, '_friends_feed_url', $friends_url );
-						++$updated;
-					}
+			// Check if this canonical URL matches any Friends URL.
+			if ( isset( $canonical_to_friends[ $canonical_url ] ) ) {
+				$friends_url = $canonical_to_friends[ $canonical_url ];
+				$existing = get_post_meta( $post_id, '_friends_feed_url', true );
+				if ( $existing !== $friends_url ) {
+					update_post_meta( $post_id, '_friends_feed_url', $friends_url );
+					++$updated;
 				}
 			}
 		}
