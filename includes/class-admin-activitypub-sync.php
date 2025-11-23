@@ -860,12 +860,22 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds and normalize their URLs for comparison (no network calls).
+		// Get Friends feeds and normalize their URLs for comparison.
+		// Use lookup map first (fast), then metadata lookup for unresolved URLs.
 		$friends_feeds = array();           // Keyed by canonical URL.
 		$friends_feed_original = array();   // Keyed by canonical URL, stores original URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
 			$feed_url = $user_feed->get_url();
 			$canonical_url = $this->normalize_actor_url( $feed_url, $lookup_map, false );
+
+			// If lookup map didn't resolve to a different URL, try metadata lookup.
+			if ( $canonical_url === $feed_url && function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
+				$meta = \Activitypub\get_remote_metadata_by_actor( $feed_url );
+				if ( ! is_wp_error( $meta ) && isset( $meta['id'] ) && $meta['id'] !== $feed_url ) {
+					$canonical_url = $meta['id'];
+				}
+			}
+
 			if ( $canonical_url ) {
 				$friends_feeds[ $canonical_url ] = $user_feed;
 				$friends_feed_original[ $canonical_url ] = $feed_url;
