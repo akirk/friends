@@ -468,7 +468,7 @@ class Admin_ActivityPub_Sync {
 
 	/**
 	 * Build a lookup map from all ap_actor posts for fast URL matching.
-	 * Maps both guid (canonical URL) and _activitypub_acct (webfinger) to canonical URL.
+	 * Maps guid (canonical URL), _activitypub_acct (webfinger), and _friends_feed_url to canonical URL.
 	 *
 	 * @return array Map of various URL formats to canonical actor URLs.
 	 */
@@ -477,12 +477,15 @@ class Admin_ActivityPub_Sync {
 
 		$lookup = array();
 
-		// Get all ap_actor posts with their guid and acct meta.
+		// Get all ap_actor posts with their guid, acct meta, and friends feed URL.
 		$actors = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			"SELECT p.ID, p.guid, pm.meta_value as acct
+			"SELECT p.ID, p.guid,
+				MAX(CASE WHEN pm.meta_key = '_activitypub_acct' THEN pm.meta_value END) as acct,
+				MAX(CASE WHEN pm.meta_key = '_friends_feed_url' THEN pm.meta_value END) as friends_url
 			FROM {$wpdb->posts} p
-			LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_activitypub_acct'
-			WHERE p.post_type = 'ap_actor'"
+			LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+			WHERE p.post_type = 'ap_actor'
+			GROUP BY p.ID, p.guid"
 		);
 
 		foreach ( $actors as $actor ) {
@@ -501,11 +504,9 @@ class Admin_ActivityPub_Sync {
 				$lookup[ ltrim( $actor->acct, '@' ) ] = $canonical_url;
 			}
 
-			// Map alternative URL formats to canonical URL.
-			// Mastodon: /users/username <-> /@username
-			if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $canonical_url, $matches ) ) {
-				$alt_url = $matches[1] . '/@' . $matches[2];
-				$lookup[ $alt_url ] = $canonical_url;
+			// Map stored Friends feed URL to canonical URL.
+			if ( ! empty( $actor->friends_url ) ) {
+				$lookup[ $actor->friends_url ] = $canonical_url;
 			}
 		}
 
@@ -825,10 +826,17 @@ class Admin_ActivityPub_Sync {
 						// Dry run: just count what would be exported.
 						++$exported;
 					} else {
+						// Get the original Friends feed URL (might differ from canonical).
+						$original_url = isset( $friends_feed_original[ $feed_url ] ) ? $friends_feed_original[ $feed_url ] : $feed_url;
+
 						// Actually perform the export - fetch/create the actor post.
-						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $feed_url );
+						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $original_url );
 						if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
 							add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
+							// Store the original Friends URL for future lookups.
+							if ( $original_url !== $actor_post->guid ) {
+								update_post_meta( $actor_post->ID, '_friends_feed_url', $original_url );
+							}
 							++$exported;
 						}
 					}
