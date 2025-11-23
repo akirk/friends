@@ -792,14 +792,24 @@ class Admin_ActivityPub_Sync {
 			$url = $feed_data['url'];
 			$friends_url_map[ $url ] = $url;
 
-			// Add /@username variant for /users/username URLs.
+			// Mastodon: /@username variant for /users/username URLs.
 			if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $url, $matches ) ) {
 				$alt_url = $matches[1] . '/@' . $matches[2];
 				$friends_url_map[ $alt_url ] = $url;
 			}
-			// Add /users/username variant for /@username URLs.
+			// Mastodon: /users/username variant for /@username URLs.
 			if ( preg_match( '#^(https?://[^/]+)/@([^/]+)$#', $url, $matches ) ) {
 				$alt_url = $matches[1] . '/users/' . $matches[2];
+				$friends_url_map[ $alt_url ] = $url;
+			}
+			// Pixelfed: /users/username variant for /username URLs (no @ prefix).
+			if ( preg_match( '#^(https?://[^/]+)/([^/@][^/]*)$#', $url, $matches ) ) {
+				$alt_url = $matches[1] . '/users/' . $matches[2];
+				$friends_url_map[ $alt_url ] = $url;
+			}
+			// Pixelfed: /username variant for /users/username URLs.
+			if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $url, $matches ) ) {
+				$alt_url = $matches[1] . '/' . $matches[2];
 				$friends_url_map[ $alt_url ] = $url;
 			}
 		}
