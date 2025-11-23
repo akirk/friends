@@ -86,6 +86,20 @@ class Admin_ActivityPub_Sync {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( isset( $_GET['backfilled'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-success is-dismissible">
+					<p>
+						<?php
+						printf(
+							/* translators: %d: number of URLs backfilled */
+							esc_html__( 'Backfill completed! Updated %d actor records with Friends feed URLs.', 'friends' ),
+							isset( $_GET['backfilled'] ) ? absint( wp_unslash( $_GET['backfilled'] ) ) : 0 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<?php if ( isset( $_GET['dry_run'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 				<?php
 				$imported_count = isset( $_GET['imported'] ) ? absint( wp_unslash( $_GET['imported'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -248,11 +262,27 @@ class Admin_ActivityPub_Sync {
 					<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
 					<?php submit_button( __( 'Sync Now (Bidirectional)', 'friends' ), 'primary', 'submit', false ); ?>
 				</form>
+				<?php if ( $sync_status['only_friends_count'] > 0 ) : ?>
+					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-left: 10px;">
+						<input type="hidden" name="action" value="friends_activitypub_sync">
+						<input type="hidden" name="export_only" value="1">
+						<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
+						<?php submit_button( __( 'Export Only (Friends → ActivityPub)', 'friends' ), 'secondary', 'submit', false ); ?>
+					</form>
+				<?php endif; ?>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-left: 10px;">
 					<input type="hidden" name="action" value="friends_activitypub_sync">
 					<input type="hidden" name="dry_run" value="1">
 					<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
 					<?php submit_button( __( 'Dry Run (Preview Only)', 'friends' ), 'secondary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
+			<?php if ( $sync_status['in_sync_count'] > 0 ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-left: 10px;">
+					<input type="hidden" name="action" value="friends_activitypub_sync">
+					<input type="hidden" name="backfill_urls" value="1">
+					<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
+					<?php submit_button( __( 'Backfill URLs (update existing)', 'friends' ), 'secondary', 'submit', false ); ?>
 				</form>
 			<?php endif; ?>
 
@@ -648,6 +678,7 @@ class Admin_ActivityPub_Sync {
 			$post_data = $activitypub_posts[ $post_id ];
 			if ( isset( $friends_feeds[ $url ] ) ) {
 				$user_feed = $friends_feeds[ $url ];
+				$original_url = isset( $friends_feed_objects[ $url ]['original_url'] ) ? $friends_feed_objects[ $url ]['original_url'] : $url;
 				$status['in_sync'][ $url ] = array(
 					'name'           => $post_data['name'] ?? $post_data['preferredUsername'] ?? 'Unknown',
 					'post_id'        => $post_id,
@@ -656,6 +687,7 @@ class Admin_ActivityPub_Sync {
 					'active'         => $user_feed->is_active(),
 					'friend_user'    => $user_feed->get_friend_user()->display_name,
 					'friend_user_id' => $user_feed->get_friend_user()->ID,
+					'original_url'   => $original_url,
 				);
 				++$status['in_sync_count'];
 			} else {
@@ -695,19 +727,29 @@ class Admin_ActivityPub_Sync {
 		}
 
 		$dry_run = isset( $_POST['dry_run'] ) && '1' === $_POST['dry_run']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$export_only = isset( $_POST['export_only'] ) && '1' === $_POST['export_only']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$backfill_urls = isset( $_POST['backfill_urls'] ) && '1' === $_POST['backfill_urls']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$user_id = Feed_Parser_ActivityPub::get_activitypub_actor_id( Friends::get_main_friend_user_id() );
-		$result = $this->perform_sync( $user_id, $dry_run );
 
-		$redirect_args = array(
-			'page'     => 'friends-activitypub-sync',
-			'imported' => $result['imported'],
-			'exported' => $result['exported'],
-		);
-
-		if ( $dry_run ) {
-			$redirect_args['dry_run'] = 1;
+		if ( $backfill_urls ) {
+			$result = $this->backfill_friends_urls( $user_id );
+			$redirect_args = array(
+				'page'       => 'friends-activitypub-sync',
+				'backfilled' => $result['updated'],
+			);
 		} else {
-			$redirect_args['synced'] = 1;
+			$result = $this->perform_sync( $user_id, $dry_run, $export_only );
+			$redirect_args = array(
+				'page'     => 'friends-activitypub-sync',
+				'imported' => $result['imported'],
+				'exported' => $result['exported'],
+			);
+
+			if ( $dry_run ) {
+				$redirect_args['dry_run'] = 1;
+			} else {
+				$redirect_args['synced'] = 1;
+			}
 		}
 
 		wp_safe_redirect(
@@ -720,13 +762,41 @@ class Admin_ActivityPub_Sync {
 	}
 
 	/**
+	 * Backfill _friends_feed_url meta for existing in-sync actors.
+	 *
+	 * @param int $user_id The ActivityPub user ID.
+	 * @return array Results with updated count.
+	 */
+	private function backfill_friends_urls( $user_id ) {
+		$updated = 0;
+		$sync_status = $this->get_sync_status( $user_id );
+
+		foreach ( $sync_status['in_sync'] as $canonical_url => $data ) {
+			$post_id = $data['post_id'];
+			$original_url = isset( $data['original_url'] ) ? $data['original_url'] : null;
+
+			// If we have a Friends feed with a different URL, store it.
+			if ( $original_url && $original_url !== $canonical_url ) {
+				$existing = get_post_meta( $post_id, '_friends_feed_url', true );
+				if ( $existing !== $original_url ) {
+					update_post_meta( $post_id, '_friends_feed_url', $original_url );
+					++$updated;
+				}
+			}
+		}
+
+		return array( 'updated' => $updated );
+	}
+
+	/**
 	 * Perform bidirectional sync
 	 *
 	 * @param int  $user_id The ActivityPub user ID.
 	 * @param bool $dry_run Whether to perform a dry run (simulation only).
+	 * @param bool $export_only Whether to only export (skip import).
 	 * @return array Results with imported and exported counts.
 	 */
-	public function perform_sync( $user_id, $dry_run = false ) {
+	public function perform_sync( $user_id, $dry_run = false, $export_only = false ) {
 		$imported = 0;
 		$exported = 0;
 
@@ -775,47 +845,49 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Import: ActivityPub -> Friends.
+		// Import: ActivityPub -> Friends (skip if export_only).
 		// Use the post data we already have from ActivityPub.
-		foreach ( $activitypub_posts as $post_id => $post_data ) {
-			$actor_url = $post_data['url'];
-			if ( ! isset( $friends_feeds[ $actor_url ] ) ) {
-				$existing = User_Feed::get_by_url( $actor_url );
-				if ( is_wp_error( $existing ) ) {
-					// Fetch metadata for creating the subscription.
-					$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
-					if ( ! is_wp_error( $actor_data ) && ! empty( $actor_data ) ) {
-						if ( $dry_run ) {
-							// Dry run: just count what would be imported.
-							++$imported;
-						} else {
-							// Actually perform the import.
-							$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
-							$subscription = Subscription::create(
-								$user_login,
-								'subscription',
-								$actor_data['url'],
-								$actor_data['name'] ?? $actor_data['preferredUsername'],
-								isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
-								$actor_data['summary'] ?? null
-							);
-
-							if ( ! is_wp_error( $subscription ) ) {
-								$subscription->save_feed(
-									$actor_url,
-									array(
-										'parser' => Feed_Parser_ActivityPub::SLUG,
-										'active' => true,
-										'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
-									)
-								);
+		if ( ! $export_only ) {
+			foreach ( $activitypub_posts as $post_id => $post_data ) {
+				$actor_url = $post_data['url'];
+				if ( ! isset( $friends_feeds[ $actor_url ] ) ) {
+					$existing = User_Feed::get_by_url( $actor_url );
+					if ( is_wp_error( $existing ) ) {
+						// Fetch metadata for creating the subscription.
+						$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
+						if ( ! is_wp_error( $actor_data ) && ! empty( $actor_data ) ) {
+							if ( $dry_run ) {
+								// Dry run: just count what would be imported.
 								++$imported;
+							} else {
+								// Actually perform the import.
+								$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
+								$subscription = Subscription::create(
+									$user_login,
+									'subscription',
+									$actor_data['url'],
+									$actor_data['name'] ?? $actor_data['preferredUsername'],
+									isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
+									$actor_data['summary'] ?? null
+								);
+
+								if ( ! is_wp_error( $subscription ) ) {
+									$subscription->save_feed(
+										$actor_url,
+										array(
+											'parser' => Feed_Parser_ActivityPub::SLUG,
+											'active' => true,
+											'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
+										)
+									);
+									++$imported;
+								}
 							}
 						}
 					}
 				}
 			}
-		}
+		} // End export_only check.
 
 		// Export: Friends -> ActivityPub.
 		// Populate ActivityPub's Following collection directly without sending Follow activities.
