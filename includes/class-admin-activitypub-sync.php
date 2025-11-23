@@ -762,7 +762,7 @@ class Admin_ActivityPub_Sync {
 	}
 
 	/**
-	 * Backfill _friends_feed_url meta for existing in-sync actors.
+	 * Backfill _friends_feed_url meta for existing and potential matches.
 	 *
 	 * @param int $user_id The ActivityPub user ID.
 	 * @return array Results with updated count.
@@ -771,16 +771,53 @@ class Admin_ActivityPub_Sync {
 		$updated = 0;
 		$sync_status = $this->get_sync_status( $user_id );
 
+		// Update existing in-sync items.
 		foreach ( $sync_status['in_sync'] as $canonical_url => $data ) {
 			$post_id = $data['post_id'];
 			$original_url = isset( $data['original_url'] ) ? $data['original_url'] : null;
 
-			// If we have a Friends feed with a different URL, store it.
 			if ( $original_url && $original_url !== $canonical_url ) {
 				$existing = get_post_meta( $post_id, '_friends_feed_url', true );
 				if ( $existing !== $original_url ) {
 					update_post_meta( $post_id, '_friends_feed_url', $original_url );
 					++$updated;
+				}
+			}
+		}
+
+		// Try to match "only in ActivityPub" with "only in Friends" by URL transformation.
+		// Build a map of Friends URLs and their variations.
+		$friends_url_map = array();
+		foreach ( $sync_status['only_friends'] as $feed_data ) {
+			$url = $feed_data['url'];
+			$friends_url_map[ $url ] = $url;
+
+			// Add /@username variant for /users/username URLs.
+			if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $url, $matches ) ) {
+				$alt_url = $matches[1] . '/@' . $matches[2];
+				$friends_url_map[ $alt_url ] = $url;
+			}
+			// Add /users/username variant for /@username URLs.
+			if ( preg_match( '#^(https?://[^/]+)/@([^/]+)$#', $url, $matches ) ) {
+				$alt_url = $matches[1] . '/users/' . $matches[2];
+				$friends_url_map[ $alt_url ] = $url;
+			}
+		}
+
+		// Check each "only in ActivityPub" actor against the Friends URL map.
+		foreach ( $sync_status['only_activitypub'] as $actor_data ) {
+			$canonical_url = $actor_data['url'];
+			$post_id = $actor_data['post_id'];
+
+			// Check if canonical URL matches any Friends URL variation.
+			if ( isset( $friends_url_map[ $canonical_url ] ) ) {
+				$friends_url = $friends_url_map[ $canonical_url ];
+				if ( $friends_url !== $canonical_url ) {
+					$existing = get_post_meta( $post_id, '_friends_feed_url', true );
+					if ( $existing !== $friends_url ) {
+						update_post_meta( $post_id, '_friends_feed_url', $friends_url );
+						++$updated;
+					}
 				}
 			}
 		}
