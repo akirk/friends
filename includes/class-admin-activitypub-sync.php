@@ -755,10 +755,11 @@ class Admin_ActivityPub_Sync {
 		$status['friends_count'] = count( $friends_feeds_active );
 
 		// Find matches and differences.
+		// Use ALL feeds to check if ActivityPub actors already exist in Friends.
 		foreach ( $activitypub_follows as $url => $post_id ) {
 			$post_data = $activitypub_posts[ $post_id ];
-			if ( isset( $friends_feeds[ $url ] ) ) {
-				$user_feed = $friends_feeds[ $url ];
+			if ( isset( $friends_feeds_all[ $url ] ) ) {
+				$user_feed = $friends_feeds_all[ $url ];
 				$original_url = isset( $friends_feed_objects[ $url ]['original_url'] ) ? $friends_feed_objects[ $url ]['original_url'] : $url;
 				$status['in_sync'][ $url ] = array(
 					'name'           => $post_data['name'] ?? $post_data['preferredUsername'] ?? 'Unknown',
@@ -777,7 +778,8 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		foreach ( $friends_feeds as $url => $user_feed ) {
+		// Only export ACTIVE feeds to ActivityPub.
+		foreach ( $friends_feeds_active as $url => $user_feed ) {
 			if ( ! isset( $activitypub_follows[ $url ] ) ) {
 				// Include detailed User_Feed info for better dry run display.
 				$status['only_friends'][] = array(
@@ -1015,22 +1017,23 @@ class Admin_ActivityPub_Sync {
 		}
 
 		// Get Friends feeds - the feed URL is already the ActivityPub actor URL.
-		// Only include active feeds.
-		$friends_feeds = array();           // Keyed by feed URL.
+		// We need ALL feeds to check for duplicates, but only active feeds for export.
+		$friends_feeds_all = array();     // All feeds (for duplicate checking).
+		$friends_feeds_active = array();  // Only active feeds (for export).
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
-			if ( ! $user_feed->is_active() ) {
-				continue;
-			}
 			$feed_url = $user_feed->get_url();
-			$friends_feeds[ $feed_url ] = $user_feed;
+			$friends_feeds_all[ $feed_url ] = $user_feed;
+			if ( $user_feed->is_active() ) {
+				$friends_feeds_active[ $feed_url ] = $user_feed;
+			}
 		}
 
 		// Import: ActivityPub -> Friends (skip if export_only).
-		// Use the post data we already have from ActivityPub.
+		// Use ALL feeds to check for duplicates (including inactive).
 		if ( ! $export_only ) {
 			foreach ( $activitypub_posts as $post_id => $post_data ) {
 				$actor_url = $post_data['url'];
-				if ( ! isset( $friends_feeds[ $actor_url ] ) ) {
+				if ( ! isset( $friends_feeds_all[ $actor_url ] ) ) {
 					$existing = User_Feed::get_by_url( $actor_url );
 					if ( is_wp_error( $existing ) ) {
 						// Fetch metadata for creating the subscription.
@@ -1087,13 +1090,13 @@ class Admin_ActivityPub_Sync {
 		} // End export_only check.
 
 		// Export: Friends -> ActivityPub.
-		// Populate ActivityPub's Following collection directly without sending Follow activities.
+		// Only export ACTIVE feeds.
 		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 			$errors[] = 'Export skipped: Remote_Actors class not available';
 		} else {
-			$export_candidates = count( $friends_feeds );
+			$export_candidates = count( $friends_feeds_active );
 			$export_matched = 0;
-			foreach ( $friends_feeds as $feed_url => $user_feed ) {
+			foreach ( $friends_feeds_active as $feed_url => $user_feed ) {
 				if ( isset( $activitypub_follows[ $feed_url ] ) ) {
 					// Already in ActivityPub, skip.
 					++$export_matched;
