@@ -55,7 +55,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
 		\add_action( 'friends_suggest_display_name', array( $this, 'suggest_display_name' ), 10, 2 );
-		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'activitypub_unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'activitypub_like_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'activitypub_unlike_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_announce', array( $this, 'activitypub_announce' ), 10, 2 );
@@ -2000,76 +1999,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return false;
 		}
 
-		$queued = $this->queue(
-			'friends_feed_parser_activitypub_unfollow',
-			array( $user_feed->get_url() ),
-			'friends_feed_parser_activitypub_follow'
-		);
+		$queued = \Activitypub\unfollow( $user_feed->get_url(), self::get_activitypub_actor_id( null ) );
 
 		if ( $queued ) {
 			$user_feed->update_last_log( __( 'Queued unfollow request.', 'friends' ) );
 		}
 
 		return $queued;
-	}
-
-	/**
-	 * Unfllow a user via ActivityPub at a URL.
-	 *
-	 * @param      string $url    The url.
-	 * @param      int    $user_id   The current user id.
-	 */
-	public function activitypub_unfollow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
-		$meta = $this->get_metadata( $url );
-		$user_feed = User_Feed::get_by_url( $url );
-		if ( is_wp_error( $meta ) ) {
-			if ( $user_feed instanceof User_Feed ) {
-				$user_feed->update_last_log(
-					sprintf(
-						// translators: %s an error message.
-						__( 'Error: %s', 'friends' ),
-						$meta->get_error_code() . ' ' . $meta->get_error_message()
-					)
-				);
-			}
-			return $meta;
-		}
-		$to = $meta['id'];
-		$type = 'Follow';
-		$inbox = self::get_inbox_by_actor( $to, $type );
-		if ( is_wp_error( $inbox ) ) {
-			return $inbox;
-		}
-
-		$activity = new \Activitypub\Activity\Activity();
-		$activity->set_type( 'Undo' );
-		$activity->set_to( null );
-		$activity->set_cc( null );
-		$activity->set_actor( $actor );
-		$activity->set_object(
-			array(
-				'type'   => $type,
-				'actor'  => $actor->get_url(),
-				'object' => $to,
-				'id'     => $to,
-			)
-		);
-		$activity->set_id( $actor . '#unfollow-' . \preg_replace( '~^https?://~', '', $to ) );
-		$activity = $activity->to_json();
-		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
-
-		$user_feed = User_Feed::get_by_url( $url );
-		if ( $user_feed instanceof User_Feed ) {
-			$user_feed->update_last_log(
-				sprintf(
-				// translators: %s is the response from the remote server.
-					__( 'Sent unfollow request with response: %s', 'friends' ),
-					wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response )
-				)
-			);
-		}
 	}
 
 	/**
