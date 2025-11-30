@@ -735,23 +735,24 @@ class Admin_ActivityPub_Sync {
 		}
 
 		// Get Friends feeds - the feed URL is already the ActivityPub actor URL.
-		// Only include active feeds.
-		$friends_feeds = array();         // Keyed by feed URL.
+		// We need ALL feeds to check for duplicates, but only active feeds for export.
+		$friends_feeds_all = array();     // All feeds (for duplicate checking).
+		$friends_feeds_active = array();  // Only active feeds (for export).
 		$friends_feed_objects = array();  // Original User_Feed objects keyed by feed URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
-			if ( ! $user_feed->is_active() ) {
-				continue;
-			}
 			$feed_url = $user_feed->get_url();
-			$friends_feeds[ $feed_url ] = $user_feed;
+			$friends_feeds_all[ $feed_url ] = $user_feed;
 			$friends_feed_objects[ $feed_url ] = array(
 				'user_feed'    => $user_feed,
 				'original_url' => $feed_url,
 			);
+			if ( $user_feed->is_active() ) {
+				$friends_feeds_active[ $feed_url ] = $user_feed;
+			}
 		}
 
 		$status['activitypub_count'] = count( $activitypub_follows );
-		$status['friends_count'] = count( $friends_feeds );
+		$status['friends_count'] = count( $friends_feeds_active );
 
 		// Find matches and differences.
 		foreach ( $activitypub_follows as $url => $post_id ) {
