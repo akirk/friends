@@ -28,30 +28,64 @@ $has_last_log = false;
 								$has_last_log = true;
 								$last_log = $feed->get_last_log();
 							}
+							$is_activitypub_feed = $feed->is_activitypub_feed();
 							?>
-							<li class="<?php echo esc_attr( $feed->get_active() ? 'active' : 'inactive hidden' ); ?>">
+							<li class="<?php echo esc_attr( $feed->get_active() ? 'active' : 'inactive hidden' ); ?><?php echo $is_activitypub_feed ? ' activitypub-feed' : ''; ?>">
 								<details>
 									<summary>
 										<?php echo esc_attr( $feed->get_title() ); ?>
-										<a href="<?php echo esc_url( $feed->get_url() ); ?>"><?php echo esc_url( $feed->get_url() ); ?></a></summary>
+										<a href="<?php echo esc_url( $feed->get_url() ); ?>"><?php echo esc_url( $feed->get_url() ); ?></a>
+										<?php if ( $is_activitypub_feed ) : ?>
+											<span class="activitypub-badge" title="<?php esc_attr_e( 'Linked to ActivityPub plugin', 'friends' ); ?>">AP</span>
+										<?php endif; ?>
+									</summary>
 									<table class="form-table">
 										<tbody>
+											<?php if ( $is_activitypub_feed ) : ?>
+											<tr>
+												<td colspan="2">
+													<p class="description activitypub-notice">
+														<?php
+														echo wp_kses(
+															sprintf(
+																/* translators: %s is a link to the ActivityPub following list. */
+																__( 'This feed is synced with the ActivityPub plugin. The URL is managed by the <a href="%s">ActivityPub following</a>.', 'friends' ),
+																esc_url( admin_url( 'users.php?page=activitypub-following-list' ) )
+															),
+															array( 'a' => array( 'href' => array() ) )
+														);
+														?>
+													</p>
+												</td>
+											</tr>
+											<?php endif; ?>
 											<tr>
 												<th><?php esc_html_e( 'Active', 'friends' ); ?></th>
 												<td><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></td>
 											</tr>
 											<tr>
 												<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
-												<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
+												<td>
+													<?php if ( $is_activitypub_feed ) : ?>
+														<code><?php echo esc_html( $feed->get_url() ); ?></code>
+														<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" />
+													<?php else : ?>
+														<input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" />
+													<?php endif; ?>
+												</td>
 											</tr>
 											<tr>
 												<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
 												<td>
+													<?php if ( $is_activitypub_feed ) : ?>
+														<strong><?php esc_html_e( 'ActivityPub', 'friends' ); ?></strong>
+														<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" value="activitypub" />
+													<?php else : ?>
 													<select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
-													<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
+														<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
 														<option value="<?php echo esc_attr( $slug ); ?>"<?php selected( $slug, $feed->get_parser() ); ?>><?php echo esc_html( wp_strip_all_tags( $parser_name ) ); ?></option>
 													<?php endforeach; ?>
-													<?php if ( 'unsupported' === $feed->get_parser() ) : ?>
+														<?php if ( 'unsupported' === $feed->get_parser() ) : ?>
 														<option value="<?php echo esc_attr( $feed->get_parser() ); ?>" selected="selected">
 															<?php
 															// translators: %s is the name of a deleted parser.
@@ -68,6 +102,7 @@ $has_last_log = false;
 													<?php endif; ?>
 												</select>
 												<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend&parser=' . esc_url( $feed->get_parser() ) . '&feed=' . esc_attr( $term_id ) . '&preview=' . esc_url( $feed->get_url() ) ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
+													<?php endif; ?>
 											</td>
 										</tr>
 										<tr>
@@ -86,7 +121,14 @@ $has_last_log = false;
 										</tr>
 										<tr>
 											<th><?php esc_html_e( 'Actions', 'friends' ); ?></th>
-											<td><a href="#" class="delete-feed">Delete</a></td>
+											<td>
+												<?php if ( $is_activitypub_feed ) : ?>
+													<a href="#" class="delete-feed activitypub-unfollow"><?php esc_html_e( 'Unfollow &amp; Remove', 'friends' ); ?></a>
+													<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][ap-actor-id]" value="<?php echo esc_attr( $feed->get_ap_actor_id() ); ?>" />
+												<?php else : ?>
+													<a href="#" class="delete-feed"><?php esc_html_e( 'Delete', 'friends' ); ?></a>
+												<?php endif; ?>
+											</td>
 										</tr>
 										<?php do_action( 'friends_feed_list_item', $feed, $term_id ); ?>
 									</tbody>

@@ -68,11 +68,17 @@ class User_Feed {
 	}
 
 	/**
-	 * Gets the URL (= the term name).
+	 * Gets the URL. For ActivityPub feeds linked to an ap_actor, this returns
+	 * the URL from the ap_actor post (the source of truth). Otherwise returns
+	 * the term name.
 	 *
-	 * @return string The URL (= the term name).
+	 * @return string The feed URL.
 	 */
 	public function get_url() {
+		$ap_actor_url = $this->get_ap_actor_url();
+		if ( $ap_actor_url ) {
+			return $ap_actor_url;
+		}
 		return $this->term->name;
 	}
 
@@ -193,6 +199,54 @@ class User_Feed {
 	 */
 	public function get_mime_type() {
 		return self::validate_mime_type( get_metadata( 'term', $this->term->term_id, 'mime-type', true ) );
+	}
+
+	/**
+	 * Gets the linked ActivityPub actor post ID.
+	 *
+	 * @return int|null The ap_actor post ID, or null if not linked.
+	 */
+	public function get_ap_actor_id() {
+		$ap_actor_id = get_metadata( 'term', $this->term->term_id, 'ap-actor-id', true );
+		return $ap_actor_id ? absint( $ap_actor_id ) : null;
+	}
+
+	/**
+	 * Checks if this feed is linked to an ActivityPub actor.
+	 *
+	 * @return bool True if this is an ActivityPub feed with a linked actor.
+	 */
+	public function is_activitypub_feed() {
+		return 'activitypub' === $this->get_parser() && null !== $this->get_ap_actor_id();
+	}
+
+	/**
+	 * Gets the URL from the linked ActivityPub actor post.
+	 *
+	 * @return string|null The actor URL from the ap_actor post, or null if not available.
+	 */
+	public function get_ap_actor_url() {
+		$ap_actor_id = $this->get_ap_actor_id();
+		if ( ! $ap_actor_id ) {
+			return null;
+		}
+
+		$ap_actor = get_post( $ap_actor_id );
+		if ( ! $ap_actor || 'ap_actor' !== $ap_actor->post_type ) {
+			return null;
+		}
+
+		return $ap_actor->guid;
+	}
+
+	/**
+	 * Sets the linked ActivityPub actor post ID.
+	 *
+	 * @param int $ap_actor_id The ap_actor post ID.
+	 * @return bool True on success, false on failure.
+	 */
+	public function set_ap_actor_id( $ap_actor_id ) {
+		return $this->update_metadata( 'ap-actor-id', absint( $ap_actor_id ) );
 	}
 
 	/**
@@ -535,6 +589,16 @@ class User_Feed {
 				'type'              => 'string',
 				'single'            => true,
 				'sanitize_callback' => array( __CLASS__, 'validate_poll_date' ),
+			)
+		);
+
+		register_term_meta(
+			self::TAXONOMY,
+			'ap-actor-id',
+			array(
+				'type'              => 'integer',
+				'single'            => true,
+				'sanitize_callback' => 'absint',
 			)
 		);
 
