@@ -86,6 +86,26 @@ class Admin_ActivityPub_Sync {
 				</div>
 			<?php endif; ?>
 
+			<?php
+			// Display sync errors if any.
+			if ( isset( $_GET['has_errors'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$sync_errors = get_transient( 'friends_activitypub_sync_errors' );
+				if ( $sync_errors ) :
+					delete_transient( 'friends_activitypub_sync_errors' );
+					?>
+					<div class="notice notice-warning is-dismissible">
+						<h4><?php esc_html_e( 'Sync Errors/Warnings', 'friends' ); ?></h4>
+						<ul style="margin-left: 1.5em; list-style: disc;">
+							<?php foreach ( $sync_errors as $error ) : ?>
+								<li><code><?php echo esc_html( $error ); ?></code></li>
+							<?php endforeach; ?>
+						</ul>
+					</div>
+					<?php
+				endif;
+			endif;
+			?>
+
 			<?php if ( isset( $_GET['backfilled'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 				<div class="notice notice-success is-dismissible">
 					<p>
@@ -755,6 +775,12 @@ class Admin_ActivityPub_Sync {
 				'exported' => $result['exported'],
 			);
 
+			// Store errors in transient for display after redirect.
+			if ( ! empty( $result['errors'] ) ) {
+				set_transient( 'friends_activitypub_sync_errors', $result['errors'], 60 );
+				$redirect_args['has_errors'] = 1;
+			}
+
 			if ( $dry_run ) {
 				$redirect_args['dry_run'] = 1;
 			} else {
@@ -840,6 +866,7 @@ class Admin_ActivityPub_Sync {
 	public function perform_sync( $user_id, $dry_run = false, $export_only = false ) {
 		$imported = 0;
 		$exported = 0;
+		$errors = array();
 
 		// Build lookup map for fast URL normalization.
 		$lookup_map = $this->build_actor_lookup_map();
@@ -906,33 +933,50 @@ class Admin_ActivityPub_Sync {
 					if ( is_wp_error( $existing ) ) {
 						// Fetch metadata for creating the subscription.
 						$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
-						if ( ! is_wp_error( $actor_data ) && is_array( $actor_data ) && ! empty( $actor_data['preferredUsername'] ) ) {
-							if ( $dry_run ) {
-								// Dry run: just count what would be imported.
-								++$imported;
-							} else {
-								// Actually perform the import.
-								$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
-								$subscription = Subscription::create(
-									$user_login,
-									'subscription',
-									$actor_data['url'] ?? $actor_url,
-									$actor_data['name'] ?? $actor_data['preferredUsername'],
-									isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
-									$actor_data['summary'] ?? null
-								);
+						if ( is_wp_error( $actor_data ) ) {
+							$errors[] = sprintf( 'Import %s: metadata fetch failed - %s', $actor_url, $actor_data->get_error_message() );
+							continue;
+						}
+						if ( ! is_array( $actor_data ) || empty( $actor_data['preferredUsername'] ) ) {
+							$errors[] = sprintf( 'Import %s: invalid metadata (missing preferredUsername)', $actor_url );
+							continue;
+						}
 
-								if ( ! is_wp_error( $subscription ) ) {
-									$subscription->save_feed(
-										$actor_url,
-										array(
-											'parser' => Feed_Parser_ActivityPub::SLUG,
-											'active' => true,
-											'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
-										)
-									);
-									++$imported;
-								}
+						$user_login = sanitize_title( $actor_data['preferredUsername'] . '.' . wp_parse_url( $actor_url, PHP_URL_HOST ) );
+
+						// Check if user already exists (would cause Subscription::create to fail).
+						$existing_user = get_user_by( 'login', $user_login );
+						if ( $existing_user ) {
+							$errors[] = sprintf( 'Import %s: user "%s" already exists (ID %d)', $actor_url, $user_login, $existing_user->ID );
+							continue;
+						}
+
+						if ( $dry_run ) {
+							// Dry run: count what would be imported (validated above).
+							++$imported;
+						} else {
+							// Actually perform the import.
+							$subscription = Subscription::create(
+								$user_login,
+								'subscription',
+								$actor_data['url'] ?? $actor_url,
+								$actor_data['name'] ?? $actor_data['preferredUsername'],
+								isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
+								$actor_data['summary'] ?? null
+							);
+
+							if ( is_wp_error( $subscription ) ) {
+								$errors[] = sprintf( 'Import %s: subscription creation failed - %s', $actor_url, $subscription->get_error_message() );
+							} else {
+								$subscription->save_feed(
+									$actor_url,
+									array(
+										'parser' => Feed_Parser_ActivityPub::SLUG,
+										'active' => true,
+										'title'  => $actor_data['name'] ?? $actor_data['preferredUsername'],
+									)
+								);
+								++$imported;
 							}
 						}
 					}
@@ -945,16 +989,27 @@ class Admin_ActivityPub_Sync {
 		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 			foreach ( $friends_feeds as $feed_url => $user_feed ) {
 				if ( ! isset( $activitypub_follows[ $feed_url ] ) ) {
-					if ( $dry_run ) {
-						// Dry run: just count what would be exported.
-						++$exported;
-					} else {
-						// Get the original Friends feed URL (might differ from canonical).
-						$original_url = isset( $friends_feed_original[ $feed_url ] ) ? $friends_feed_original[ $feed_url ] : $feed_url;
+					// Get the original Friends feed URL (might differ from canonical).
+					$original_url = isset( $friends_feed_original[ $feed_url ] ) ? $friends_feed_original[ $feed_url ] : $feed_url;
 
+					if ( $dry_run ) {
+						// Dry run: try to fetch actor to validate it would work.
+						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $original_url );
+						if ( is_wp_error( $actor_post ) ) {
+							$errors[] = sprintf( 'Export %s: actor fetch failed - %s', $original_url, $actor_post->get_error_message() );
+						} elseif ( ! $actor_post instanceof \WP_Post ) {
+							$errors[] = sprintf( 'Export %s: actor fetch returned invalid data', $original_url );
+						} else {
+							++$exported;
+						}
+					} else {
 						// Actually perform the export - fetch/create the actor post.
 						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $original_url );
-						if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+						if ( is_wp_error( $actor_post ) ) {
+							$errors[] = sprintf( 'Export %s: actor fetch failed - %s', $original_url, $actor_post->get_error_message() );
+						} elseif ( ! $actor_post instanceof \WP_Post ) {
+							$errors[] = sprintf( 'Export %s: actor fetch returned invalid data', $original_url );
+						} else {
 							add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
 							// Store the original Friends URL for future lookups.
 							if ( $original_url !== $actor_post->guid ) {
@@ -970,6 +1025,7 @@ class Admin_ActivityPub_Sync {
 		return array(
 			'imported' => $imported,
 			'exported' => $exported,
+			'errors'   => $errors,
 		);
 	}
 }
