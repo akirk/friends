@@ -59,9 +59,6 @@ class Admin {
 		add_action( 'wp_ajax_friends_refresh_link_token', array( $this, 'ajax_refresh_link_token' ) );
 		add_action( 'wp_ajax_friends_fetch_feeds', array( $this, 'ajax_fetch_feeds' ) );
 		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
-		// Migration AJAX handlers are registered in Migration class.
-		require_once __DIR__ . '/class-migration.php';
-		Migration::register_ajax_hooks();
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
@@ -3736,8 +3733,6 @@ class Admin {
 			}
 			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
 		}
-
-		require_once __DIR__ . '/class-migration.php';
 
 		$statuses = Migration::get_all_statuses();
 		?>

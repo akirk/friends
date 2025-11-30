@@ -27,6 +27,27 @@ class Migration {
 	private static $registry = array();
 
 	/**
+	 * Constructor
+	 */
+	public function __construct() {
+		$this->register_hooks();
+	}
+
+	/**
+	 * Register the WordPress hooks
+	 */
+	private function register_hooks() {
+		add_action( 'wp_ajax_friends_run_migration', array( $this, 'ajax_run_migration' ) );
+		add_action( 'wp_ajax_friends_get_migration_status', array( $this, 'ajax_get_migration_status' ) );
+		add_action( 'wp_ajax_friends_process_migration_batch', array( $this, 'ajax_process_migration_batch' ) );
+		add_action( 'wp_ajax_friends_get_migration_debug', array( $this, 'ajax_get_migration_debug' ) );
+		add_action( 'wp_ajax_friends_clear_failed_url', array( $this, 'ajax_clear_failed_url' ) );
+
+		// Register debug output hooks for migrations.
+		add_action( 'friends_migration_debug_link_activitypub_feeds_to_actors', array( $this, 'debug_link_activitypub_feeds_to_actors' ) );
+	}
+
+	/**
 	 * Register all migrations.
 	 */
 	public static function register_migrations() {
@@ -359,23 +380,9 @@ class Migration {
 	}
 
 	/**
-	 * Register AJAX hooks for migration admin.
-	 */
-	public static function register_ajax_hooks() {
-		add_action( 'wp_ajax_friends_run_migration', array( __CLASS__, 'ajax_run_migration' ) );
-		add_action( 'wp_ajax_friends_get_migration_status', array( __CLASS__, 'ajax_get_migration_status' ) );
-		add_action( 'wp_ajax_friends_process_migration_batch', array( __CLASS__, 'ajax_process_migration_batch' ) );
-		add_action( 'wp_ajax_friends_get_migration_debug', array( __CLASS__, 'ajax_get_migration_debug' ) );
-		add_action( 'wp_ajax_friends_clear_failed_url', array( __CLASS__, 'ajax_clear_failed_url' ) );
-
-		// Register debug output hooks for migrations.
-		add_action( 'friends_migration_debug_link_activitypub_feeds_to_actors', array( __CLASS__, 'debug_link_activitypub_feeds_to_actors' ) );
-	}
-
-	/**
 	 * AJAX handler for clearing failed URLs to allow retry.
 	 */
-	public static function ajax_clear_failed_url() {
+	public function ajax_clear_failed_url() {
 		check_ajax_referer( 'friends_clear_failed_url' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
@@ -434,7 +441,7 @@ class Migration {
 	/**
 	 * AJAX handler for running a migration.
 	 */
-	public static function ajax_run_migration() {
+	public function ajax_run_migration() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'friends' ) ) );
 		}
@@ -460,7 +467,7 @@ class Migration {
 	/**
 	 * AJAX handler for getting migration status.
 	 */
-	public static function ajax_get_migration_status() {
+	public function ajax_get_migration_status() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'friends' ) ) );
 		}
@@ -492,7 +499,7 @@ class Migration {
 	/**
 	 * AJAX handler for processing a migration batch.
 	 */
-	public static function ajax_process_migration_batch() {
+	public function ajax_process_migration_batch() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'friends' ) ) );
 		}
@@ -531,7 +538,7 @@ class Migration {
 	/**
 	 * AJAX handler for getting migration debug output.
 	 */
-	public static function ajax_get_migration_debug() {
+	public function ajax_get_migration_debug() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'friends' ) ) );
 		}
@@ -1650,7 +1657,7 @@ class Migration {
 	 *
 	 * @param array $status The migration status (unused but required by hook signature).
 	 */
-	public static function debug_link_activitypub_feeds_to_actors( $status ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function debug_link_activitypub_feeds_to_actors( $status ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		$failed_urls = get_option( 'friends_ap_feeds_failed_urls', array() );
 		$failed_count = get_option( 'friends_ap_feeds_failed_count', 0 );
 		$linked_count = get_option( 'friends_ap_feeds_linked_count', 0 );

@@ -132,6 +132,7 @@ class Friends {
 		new Shortcodes( $this );
 		new Automatic_Status( $this );
 		new Site_Health();
+		new Migration();
 		$this->register_hooks();
 		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
 
