@@ -617,6 +617,50 @@ class Admin_ActivityPub_Sync {
 	}
 
 	/**
+	 * Record a sync failure for a feed and optionally disable it after too many failures.
+	 *
+	 * @param User_Feed $user_feed The feed that failed.
+	 * @param string    $error_message The error message.
+	 * @param int       $max_failures Maximum failures before disabling (default 5).
+	 * @return bool Whether the feed was disabled.
+	 */
+	private function record_sync_failure( $user_feed, $error_message, $max_failures = 5 ) {
+		$term_id = $user_feed->get_id();
+		$failures = (int) get_term_meta( $term_id, '_sync_failures', true );
+		++$failures;
+		update_term_meta( $term_id, '_sync_failures', $failures );
+		update_term_meta( $term_id, '_last_sync_error', $error_message );
+		update_term_meta( $term_id, '_last_sync_attempt', time() );
+
+		if ( $failures >= $max_failures ) {
+			// Disable the feed after too many failures.
+			$user_feed->update_metadata( 'active', false );
+			$user_feed->update_last_log(
+				sprintf(
+					/* translators: %d: number of failures */
+					__( 'Feed disabled after %1$d sync failures. Last error: %2$s', 'friends' ),
+					$failures,
+					$error_message
+				)
+			);
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Clear sync failure count for a feed (called on successful sync).
+	 *
+	 * @param User_Feed $user_feed The feed that succeeded.
+	 */
+	private function clear_sync_failures( $user_feed ) {
+		$term_id = $user_feed->get_id();
+		delete_term_meta( $term_id, '_sync_failures' );
+		delete_term_meta( $term_id, '_last_sync_error' );
+	}
+
+	/**
 	 * Get the current sync status
 	 *
 	 * @param int $user_id The ActivityPub user ID.
@@ -668,36 +712,16 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds and normalize their URLs.
-		// Uses lookup map first (fast), then metadata lookup for unresolved URLs (consistent with perform_sync).
-		$friends_feeds = array();         // Keyed by canonical URL.
-		$friends_feed_objects = array();  // Original User_Feed objects keyed by canonical URL.
+		// Get Friends feeds - the feed URL is already the ActivityPub actor URL.
+		$friends_feeds = array();         // Keyed by feed URL.
+		$friends_feed_objects = array();  // Original User_Feed objects keyed by feed URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
 			$feed_url = $user_feed->get_url();
-			$canonical_url = $this->normalize_actor_url( $feed_url, $lookup_map, false );
-
-			// If lookup map didn't resolve to a different URL, try metadata lookup (mirrors perform_sync behavior).
-			if ( $canonical_url === $feed_url && function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
-				$meta = \Activitypub\get_remote_metadata_by_actor( $feed_url );
-				if ( ! is_wp_error( $meta ) && is_array( $meta ) && isset( $meta['id'] ) && $meta['id'] !== $feed_url ) {
-					$canonical_url = $meta['id'];
-				}
-			}
-
-			if ( $canonical_url ) {
-				$friends_feeds[ $canonical_url ] = $user_feed;
-				$friends_feed_objects[ $canonical_url ] = array(
-					'user_feed'    => $user_feed,
-					'original_url' => $feed_url,
-				);
-			} else {
-				// Could not normalize, use original URL.
-				$friends_feeds[ $feed_url ] = $user_feed;
-				$friends_feed_objects[ $feed_url ] = array(
-					'user_feed'    => $user_feed,
-					'original_url' => $feed_url,
-				);
-			}
+			$friends_feeds[ $feed_url ] = $user_feed;
+			$friends_feed_objects[ $feed_url ] = array(
+				'user_feed'    => $user_feed,
+				'original_url' => $feed_url,
+			);
 		}
 
 		$status['activitypub_count'] = count( $activitypub_follows );
@@ -897,30 +921,11 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds and normalize their URLs for comparison.
-		// Use lookup map first (fast), then metadata lookup for unresolved URLs.
-		$friends_feeds = array();           // Keyed by canonical URL.
-		$friends_feed_original = array();   // Keyed by canonical URL, stores original URL.
+		// Get Friends feeds - the feed URL is already the ActivityPub actor URL.
+		$friends_feeds = array();           // Keyed by feed URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
 			$feed_url = $user_feed->get_url();
-			$canonical_url = $this->normalize_actor_url( $feed_url, $lookup_map, false );
-
-			// If lookup map didn't resolve to a different URL, try metadata lookup.
-			if ( $canonical_url === $feed_url && function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
-				$meta = \Activitypub\get_remote_metadata_by_actor( $feed_url );
-				if ( ! is_wp_error( $meta ) && is_array( $meta ) && isset( $meta['id'] ) && $meta['id'] !== $feed_url ) {
-					$canonical_url = $meta['id'];
-				}
-			}
-
-			if ( $canonical_url ) {
-				$friends_feeds[ $canonical_url ] = $user_feed;
-				$friends_feed_original[ $canonical_url ] = $feed_url;
-			} else {
-				// Could not normalize, use original URL.
-				$friends_feeds[ $feed_url ] = $user_feed;
-				$friends_feed_original[ $feed_url ] = $feed_url;
-			}
+			$friends_feeds[ $feed_url ] = $user_feed;
 		}
 
 		// Import: ActivityPub -> Friends (skip if export_only).
@@ -986,39 +991,76 @@ class Admin_ActivityPub_Sync {
 
 		// Export: Friends -> ActivityPub.
 		// Populate ActivityPub's Following collection directly without sending Follow activities.
-		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$errors[] = 'Export skipped: Remote_Actors class not available';
+		} else {
+			$export_candidates = count( $friends_feeds );
+			$export_matched = 0;
 			foreach ( $friends_feeds as $feed_url => $user_feed ) {
-				if ( ! isset( $activitypub_follows[ $feed_url ] ) ) {
-					// Get the original Friends feed URL (might differ from canonical).
-					$original_url = isset( $friends_feed_original[ $feed_url ] ) ? $friends_feed_original[ $feed_url ] : $feed_url;
+				if ( isset( $activitypub_follows[ $feed_url ] ) ) {
+					// Already in ActivityPub, skip.
+					++$export_matched;
+					continue;
+				}
 
-					if ( $dry_run ) {
-						// Dry run: try to fetch actor to validate it would work.
-						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $original_url );
-						if ( is_wp_error( $actor_post ) ) {
-							$errors[] = sprintf( 'Export %s: actor fetch failed - %s', $original_url, $actor_post->get_error_message() );
-						} elseif ( ! $actor_post instanceof \WP_Post ) {
-							$errors[] = sprintf( 'Export %s: actor fetch returned invalid data', $original_url );
-						} else {
-							++$exported;
+				// The feed URL is already the ActivityPub actor URL.
+				if ( $dry_run ) {
+					// Dry run: try to fetch actor to validate it would work.
+					$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $feed_url );
+					if ( is_wp_error( $actor_post ) ) {
+						$error_msg = $actor_post->get_error_message();
+						$errors[] = sprintf( 'Export %s: actor fetch failed - %s', $feed_url, $error_msg );
+						$this->record_sync_failure( $user_feed, $error_msg );
+					} elseif ( ! $actor_post instanceof \WP_Post ) {
+						$errors[] = sprintf( 'Export %s: actor fetch returned invalid data', $feed_url );
+						$this->record_sync_failure( $user_feed, 'Invalid actor data' );
+					} else {
+						$this->clear_sync_failures( $user_feed );
+						++$exported;
+					}
+				} else {
+					// Actually perform the export - fetch/create the actor post.
+					$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $feed_url );
+					if ( is_wp_error( $actor_post ) ) {
+						$error_msg = $actor_post->get_error_message();
+						$errors[] = sprintf( 'Export %s: actor fetch failed - %s', $feed_url, $error_msg );
+						$disabled = $this->record_sync_failure( $user_feed, $error_msg );
+						if ( $disabled ) {
+							$errors[] = sprintf( 'Export %s: feed disabled after repeated failures', $feed_url );
+						}
+					} elseif ( ! $actor_post instanceof \WP_Post ) {
+						$errors[] = sprintf( 'Export %s: actor fetch returned invalid data', $feed_url );
+						$disabled = $this->record_sync_failure( $user_feed, 'Invalid actor data' );
+						if ( $disabled ) {
+							$errors[] = sprintf( 'Export %s: feed disabled after repeated failures', $feed_url );
 						}
 					} else {
-						// Actually perform the export - fetch/create the actor post.
-						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $original_url );
-						if ( is_wp_error( $actor_post ) ) {
-							$errors[] = sprintf( 'Export %s: actor fetch failed - %s', $original_url, $actor_post->get_error_message() );
-						} elseif ( ! $actor_post instanceof \WP_Post ) {
-							$errors[] = sprintf( 'Export %s: actor fetch returned invalid data', $original_url );
-						} else {
-							add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
-							// Store the original Friends URL for future lookups.
-							if ( $original_url !== $actor_post->guid ) {
-								update_post_meta( $actor_post->ID, '_friends_feed_url', $original_url );
-							}
-							++$exported;
+						add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
+						// Store the Friends feed URL for future lookups if it differs from the actor's canonical URL.
+						if ( $feed_url !== $actor_post->guid ) {
+							update_post_meta( $actor_post->ID, '_friends_feed_url', $feed_url );
 						}
+						$this->clear_sync_failures( $user_feed );
+						++$exported;
 					}
 				}
+			}
+
+			// Add debug info about export matching.
+			if ( $export_candidates > 0 && 0 === $exported && empty(
+				array_filter(
+					$errors,
+					function ( $e ) {
+						return strpos( $e, 'Export' ) === 0; }
+				)
+			) ) {
+				$errors[] = sprintf(
+					'Export debug: %d Friends feeds total, %d matched ActivityPub URLs, %d remaining for export, %d exported',
+					$export_candidates,
+					$export_matched,
+					$export_candidates - $export_matched,
+					$exported
+				);
 			}
 		}
 
