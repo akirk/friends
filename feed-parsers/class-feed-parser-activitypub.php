@@ -1761,7 +1761,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$queued = \Activitypub\follow( $user_feed->get_url(), self::get_activitypub_actor_id() );
+		$queued = \Activitypub\follow( $user_feed->get_url(), self::get_activitypub_actor_id( Friends::get_main_friend_user_id() ) );
 
 		if ( $queued ) {
 			$user_feed->update_last_log( __( 'Queued follow request.', 'friends' ) );
@@ -2017,8 +2017,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$activity_data = is_string( $activity ) ? json_decode( $activity, true ) : $activity;
-		if ( empty( $activity_data['type'] ) ) {
+		if ( is_string( $activity ) ) {
+			$activity_data = json_decode( $activity, true );
+		} elseif ( is_object( $activity ) && method_exists( $activity, 'to_array' ) ) {
+			$activity_data = $activity->to_array();
+		} else {
+			$activity_data = $activity;
+		}
+		if ( ! is_array( $activity_data ) || empty( $activity_data['type'] ) ) {
 			return;
 		}
 

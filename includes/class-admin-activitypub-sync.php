@@ -433,17 +433,17 @@ class Admin_ActivityPub_Sync {
 							$sample_ap_urls = array();
 							foreach ( array_slice( $raw_following, 0, 5 ) as $actor ) {
 								if ( $actor instanceof \WP_Post ) {
-									$url_from_uri = \Activitypub\object_to_uri( $actor );
 									$url_from_guid = $actor->guid;
 									$url_from_meta = get_post_meta( $actor->ID, '_activitypub_actor_id', true );
 									$url_from_meta2 = get_post_meta( $actor->ID, 'activitypub_actor_id', true );
+									$url_friends_feed = get_post_meta( $actor->ID, '_friends_feed_url', true );
 									$sample_ap_urls[] = array(
-										'post_id'    => $actor->ID,
-										'post_title' => $actor->post_title,
-										'guid'       => $url_from_guid,
-										'meta_1'     => $url_from_meta,
-										'meta_2'     => $url_from_meta2,
-										'object_uri' => $url_from_uri,
+										'post_id'      => $actor->ID,
+										'post_title'   => $actor->post_title,
+										'guid'         => $url_from_guid,
+										'meta_1'       => $url_from_meta,
+										'meta_2'       => $url_from_meta2,
+										'friends_feed' => $url_friends_feed,
 									);
 								}
 							}
@@ -456,7 +456,7 @@ class Admin_ActivityPub_Sync {
 										&nbsp;&nbsp;guid: <code><?php echo esc_html( $sample['guid'] ? $sample['guid'] : '(empty)' ); ?></code><br>
 										&nbsp;&nbsp;_activitypub_actor_id: <code><?php echo esc_html( $sample['meta_1'] ? $sample['meta_1'] : '(empty)' ); ?></code><br>
 										&nbsp;&nbsp;activitypub_actor_id: <code><?php echo esc_html( $sample['meta_2'] ? $sample['meta_2'] : '(empty)' ); ?></code><br>
-										&nbsp;&nbsp;object_to_uri(): <code><?php echo esc_html( $sample['object_uri'] ? $sample['object_uri'] : '(empty/NULL)' ); ?></code><br>
+										&nbsp;&nbsp;_friends_feed_url: <code><?php echo esc_html( $sample['friends_feed'] ? $sample['friends_feed'] : '(empty)' ); ?></code><br>
 										<hr style="margin: 5px 0;">
 									<?php endforeach; ?>
 								</td>
@@ -648,12 +648,22 @@ class Admin_ActivityPub_Sync {
 			}
 		}
 
-		// Get Friends feeds and normalize their URLs using the lookup map (no network calls).
+		// Get Friends feeds and normalize their URLs.
+		// Uses lookup map first (fast), then metadata lookup for unresolved URLs (consistent with perform_sync).
 		$friends_feeds = array();         // Keyed by canonical URL.
 		$friends_feed_objects = array();  // Original User_Feed objects keyed by canonical URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
 			$feed_url = $user_feed->get_url();
 			$canonical_url = $this->normalize_actor_url( $feed_url, $lookup_map, false );
+
+			// If lookup map didn't resolve to a different URL, try metadata lookup (mirrors perform_sync behavior).
+			if ( $canonical_url === $feed_url && function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
+				$meta = \Activitypub\get_remote_metadata_by_actor( $feed_url );
+				if ( ! is_wp_error( $meta ) && is_array( $meta ) && isset( $meta['id'] ) && $meta['id'] !== $feed_url ) {
+					$canonical_url = $meta['id'];
+				}
+			}
+
 			if ( $canonical_url ) {
 				$friends_feeds[ $canonical_url ] = $user_feed;
 				$friends_feed_objects[ $canonical_url ] = array(
@@ -794,7 +804,7 @@ class Admin_ActivityPub_Sync {
 			// Fetch metadata to get the canonical ID.
 			if ( function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
 				$meta = \Activitypub\get_remote_metadata_by_actor( $friends_url );
-				if ( ! is_wp_error( $meta ) && isset( $meta['id'] ) ) {
+				if ( ! is_wp_error( $meta ) && is_array( $meta ) && isset( $meta['id'] ) ) {
 					$canonical_to_friends[ $meta['id'] ] = $friends_url;
 				}
 			}
@@ -871,7 +881,7 @@ class Admin_ActivityPub_Sync {
 			// If lookup map didn't resolve to a different URL, try metadata lookup.
 			if ( $canonical_url === $feed_url && function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
 				$meta = \Activitypub\get_remote_metadata_by_actor( $feed_url );
-				if ( ! is_wp_error( $meta ) && isset( $meta['id'] ) && $meta['id'] !== $feed_url ) {
+				if ( ! is_wp_error( $meta ) && is_array( $meta ) && isset( $meta['id'] ) && $meta['id'] !== $feed_url ) {
 					$canonical_url = $meta['id'];
 				}
 			}
@@ -896,7 +906,7 @@ class Admin_ActivityPub_Sync {
 					if ( is_wp_error( $existing ) ) {
 						// Fetch metadata for creating the subscription.
 						$actor_data = \Activitypub\get_remote_metadata_by_actor( $actor_url );
-						if ( ! is_wp_error( $actor_data ) && ! empty( $actor_data ) ) {
+						if ( ! is_wp_error( $actor_data ) && is_array( $actor_data ) && ! empty( $actor_data['preferredUsername'] ) ) {
 							if ( $dry_run ) {
 								// Dry run: just count what would be imported.
 								++$imported;
@@ -906,7 +916,7 @@ class Admin_ActivityPub_Sync {
 								$subscription = Subscription::create(
 									$user_login,
 									'subscription',
-									$actor_data['url'],
+									$actor_data['url'] ?? $actor_url,
 									$actor_data['name'] ?? $actor_data['preferredUsername'],
 									isset( $actor_data['icon']['url'] ) ? $actor_data['icon']['url'] : null,
 									$actor_data['summary'] ?? null

@@ -94,16 +94,22 @@ class ActivityPubSyncTest extends \WP_UnitTestCase {
 	 * Helper to clean up ap_actor posts.
 	 */
 	private function cleanup_ap_actors() {
-		$posts = get_posts(
-			array(
-				'post_type'      => 'ap_actor',
-				'posts_per_page' => -1,
-				'post_status'    => 'any',
-			)
+		global $wpdb;
+
+		// Clear object cache to ensure we get fresh data.
+		wp_cache_flush();
+
+		// Use direct query to ensure we catch all posts.
+		$post_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'ap_actor'"
 		);
-		foreach ( $posts as $post ) {
-			wp_delete_post( $post->ID, true );
+
+		foreach ( $post_ids as $post_id ) {
+			wp_delete_post( $post_id, true );
 		}
+
+		// Clear cache again after deletion.
+		wp_cache_flush();
 	}
 
 	/**
@@ -377,16 +383,25 @@ class ActivityPubSyncTest extends \WP_UnitTestCase {
 	 * Test that actors without guid are skipped in lookup map.
 	 */
 	public function test_build_actor_lookup_map_skips_empty_guid() {
-		// Create post without guid.
+		global $wpdb;
+
+		// Create post (WordPress auto-generates a guid).
 		$post_id = wp_insert_post(
 			array(
 				'post_type'   => 'ap_actor',
 				'post_title'  => 'Empty GUID Actor',
 				'post_status' => 'publish',
-				'guid'        => '',
 			)
 		);
 		update_post_meta( $post_id, '_activitypub_acct', 'test@example.org' );
+
+		// Directly update the guid to empty (WordPress doesn't allow empty guid via wp_update_post).
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$wpdb->posts,
+			array( 'guid' => '' ),
+			array( 'ID' => $post_id )
+		);
+		clean_post_cache( $post_id );
 
 		$lookup = $this->sync_admin->test_build_actor_lookup_map();
 
