@@ -55,7 +55,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
 		\add_action( 'friends_suggest_display_name', array( $this, 'suggest_display_name' ), 10, 2 );
-		\add_action( 'friends_feed_parser_activitypub_follow', array( $this, 'activitypub_follow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_unfollow', array( $this, 'activitypub_unfollow_user' ), 10, 2 );
 		\add_action( 'friends_feed_parser_activitypub_like', array( $this, 'activitypub_like_post' ), 10, 3 );
 		\add_action( 'friends_feed_parser_activitypub_unlike', array( $this, 'activitypub_unlike_post' ), 10, 3 );
@@ -1856,68 +1855,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$queued = $this->queue(
-			'friends_feed_parser_activitypub_follow',
-			array( $user_feed->get_url() ),
-			'friends_feed_parser_activitypub_unfollow'
-		);
+		$queued = \Activitypub\follow( $user_feed->get_url(), self::get_activitypub_actor_id( null ) );
 
 		if ( $queued ) {
 			$user_feed->update_last_log( __( 'Queued follow request.', 'friends' ) );
 		}
 
 		return $queued;
-	}
-
-	/**
-	 * Follow a user via ActivityPub at a URL.
-	 *
-	 * @param      string $url    The url.
-	 * @param      int    $user_id   The current user id.
-	 */
-	public function activitypub_follow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
-		$meta = $this->get_metadata( $url );
-		$user_feed = User_Feed::get_by_url( $url );
-		if ( is_wp_error( $meta ) ) {
-			if ( $user_feed instanceof User_Feed ) {
-				$user_feed->update_last_log(
-					sprintf(
-						// translators: %s an error message.
-						__( 'Error: %s', 'friends' ),
-						$meta->get_error_code() . ' ' . $meta->get_error_message()
-					)
-				);
-			}
-			return $meta;
-		}
-		$to = $meta['id'];
-		$type = 'Follow';
-		$inbox = self::get_inbox_by_actor( $to, $type );
-		if ( is_wp_error( $inbox ) ) {
-			return $inbox;
-		}
-
-		$activity = new \Activitypub\Activity\Activity();
-		$activity->set_type( $type );
-		$activity->set_to( null );
-		$activity->set_cc( null );
-		$activity->set_actor( $actor );
-		$activity->set_object( $to );
-		$activity->set_id( $actor . '#follow-' . \preg_replace( '~^https?://~', '', $to ) );
-		$activity = $activity->to_json();
-		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
-
-		if ( $user_feed instanceof User_Feed ) {
-			$user_feed->update_last_log(
-				sprintf(
-				// translators: %s is the response from the remote server.
-					__( 'Sent follow request with response: %s', 'friends' ),
-					wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response )
-				)
-			);
-		}
 	}
 
 	/**

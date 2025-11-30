@@ -1523,7 +1523,7 @@ class Migration {
 			if ( $ap_actor_id ) {
 				$feed->set_ap_actor_id( $ap_actor_id );
 				if ( $feed->get_active() ) {
-					self::ensure_activitypub_following( $ap_actor_id );
+					self::ensure_activitypub_following( $actor_url );
 				}
 				++$linked;
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -1547,7 +1547,7 @@ class Migration {
 				if ( $ap_actor_id ) {
 					$feed->set_ap_actor_id( $ap_actor_id );
 					if ( $feed->get_active() ) {
-						self::ensure_activitypub_following( $ap_actor_id );
+						self::ensure_activitypub_following( $actor_url );
 					}
 					++$linked;
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
@@ -1585,33 +1585,24 @@ class Migration {
 	}
 
 	/**
-	 * Ensure the main Friends user is following the given ap_actor in the ActivityPub plugin.
+	 * Ensure the main Friends user is following the given actor in the ActivityPub plugin.
 	 *
-	 * @param int $ap_actor_id The ap_actor post ID.
+	 * @param string $actor_url The actor URL.
 	 */
-	private static function ensure_activitypub_following( $ap_actor_id ) {
-		if ( ! class_exists( '\Activitypub\Collection\Following' ) ) {
+	private static function ensure_activitypub_following( $actor_url ) {
+		if ( ! function_exists( '\Activitypub\follow' ) ) {
 			return;
 		}
 
 		$user_id = Feed_Parser_ActivityPub::get_activitypub_actor_id( null );
 
-		// Check if already following.
-		$status = \Activitypub\Collection\Following::check_status( $user_id, $ap_actor_id );
-		if ( $status ) {
-			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( sprintf( 'Friends Migration: Already following ap_actor %d (status: %s)', $ap_actor_id, $status ) );
-			return;
-		}
-
-		// Trigger a follow.
-		$result = \Activitypub\Collection\Following::follow( $ap_actor_id, $user_id );
+		$result = \Activitypub\follow( $actor_url, $user_id );
 		if ( is_wp_error( $result ) ) {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( sprintf( 'Friends Migration: Failed to follow ap_actor %d: %s', $ap_actor_id, $result->get_error_message() ) );
+			error_log( sprintf( 'Friends Migration: Failed to follow %s: %s', $actor_url, $result->get_error_message() ) );
 		} else {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log( sprintf( 'Friends Migration: Sent follow request for ap_actor %d', $ap_actor_id ) );
+			error_log( sprintf( 'Friends Migration: Sent follow request for %s', $actor_url ) );
 		}
 	}
 
