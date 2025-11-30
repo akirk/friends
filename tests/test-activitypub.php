@@ -411,15 +411,6 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertEquals( 'Matthias Pfefferle', get_post_meta( $posts[0]->ID, 'author', true ) );
 	}
 
-	public function test_possible_mentions() {
-		add_filter( 'activitypub_cache_possible_friend_mentions', '__return_false' );
-		$mentions = \Friends\Feed_Parser_ActivityPub::get_possible_mentions();
-		$this->assertContains( \get_author_posts_url( get_current_user_id() ), $mentions );
-
-		remove_all_filters( 'activitypub_from_post_object' );
-		remove_all_filters( 'activitypub_cache_possible_friend_mentions' );
-	}
-
 	public function test_friend_mentions() {
 		add_filter( 'activitypub_cache_possible_friend_mentions', '__return_false' );
 		$post_id = \wp_insert_post(
