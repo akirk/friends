@@ -1036,10 +1036,22 @@ class Admin_ActivityPub_Sync {
 						}
 					} else {
 						add_post_meta( $actor_post->ID, '_activitypub_followed_by', $user_id );
-						// Store the Friends feed URL for future lookups if it differs from the actor's canonical URL.
-						if ( $feed_url !== $actor_post->guid ) {
+
+						// Update the Friends feed URL to the canonical actor URL if they differ.
+						$canonical_url = $actor_post->guid;
+						if ( $feed_url !== $canonical_url && ! empty( $canonical_url ) ) {
+							wp_update_term(
+								$user_feed->get_id(),
+								User_Feed::TAXONOMY,
+								array(
+									'name' => $canonical_url,
+									'slug' => sanitize_title( $canonical_url ),
+								)
+							);
+							// Store the old URL for reference.
 							update_post_meta( $actor_post->ID, '_friends_feed_url', $feed_url );
 						}
+
 						$this->clear_sync_failures( $user_feed );
 						++$exported;
 					}
