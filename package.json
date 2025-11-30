@@ -1,6 +1,5 @@
 {
 	"devDependencies": {
-		"@wordpress/eslint-plugin": "^13.7.0",
 		"@wordpress/scripts": "^25.0.0",
 		"lerna": "^6.1.0",
 		"spectre.css": "^0.5.9",
