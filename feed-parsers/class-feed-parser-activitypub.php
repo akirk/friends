@@ -3184,22 +3184,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	private static function convert_actor_to_mastodon_handle( $actor ) {
-		$data = \Activitypub\Webfinger::get_data( $actor );
-		if ( ! is_wp_error( $data ) && isset( $data['subject'] ) ) {
-			$subject = $data['subject'];
-			if ( 'acct:' === substr( $data['subject'], 0, 5 ) ) {
-				$subject = substr( $data['subject'], 5 );
-			} elseif ( isset( $data['aliases'] ) ) {
-				foreach ( $data['aliases'] as $alias ) {
-					if ( 'acct:' === substr( $alias, 0, 5 ) ) {
-						$subject = substr( $alias, 5 );
-						break;
-					}
+		// Try to get from ActivityPub plugin's stored actors first (no network request).
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$remote_actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor );
+			if ( ! is_wp_error( $remote_actor ) ) {
+				// Only use stored meta, don't trigger Webfinger fallback in get_acct().
+				$acct = get_post_meta( $remote_actor->ID, '_activitypub_acct', true );
+				if ( $acct ) {
+					return $acct;
 				}
 			}
-			return $subject;
 		}
-		// Construct from the URL as fallback.
+
+		// Construct from the URL as fallback (no network request).
 		$p = wp_parse_url( $actor );
 		if ( $p ) {
 			if ( isset( $p['host'] ) ) {
