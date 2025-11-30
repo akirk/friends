@@ -333,6 +333,11 @@ h2#page-title a.dashicons {
 			background: #3a3a3a;
 			color: $link-color-dark;
 		}
+
+		.menu .divider[data-content]::after {
+			background: #2a2a2a;
+			color: #888;
+		}
 	}
 
 	.d-none {
