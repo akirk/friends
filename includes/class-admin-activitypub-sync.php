@@ -735,9 +735,13 @@ class Admin_ActivityPub_Sync {
 		}
 
 		// Get Friends feeds - the feed URL is already the ActivityPub actor URL.
+		// Only include active feeds.
 		$friends_feeds = array();         // Keyed by feed URL.
 		$friends_feed_objects = array();  // Original User_Feed objects keyed by feed URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
+			if ( ! $user_feed->is_active() ) {
+				continue;
+			}
 			$feed_url = $user_feed->get_url();
 			$friends_feeds[ $feed_url ] = $user_feed;
 			$friends_feed_objects[ $feed_url ] = array(
@@ -925,6 +929,9 @@ class Admin_ActivityPub_Sync {
 		$errors = array();
 
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
+			if ( ! $user_feed->is_active() ) {
+				continue;
+			}
 			$feed_url = $user_feed->get_url();
 
 			// Fetch metadata to get the canonical actor URL.
@@ -1007,8 +1014,12 @@ class Admin_ActivityPub_Sync {
 		}
 
 		// Get Friends feeds - the feed URL is already the ActivityPub actor URL.
+		// Only include active feeds.
 		$friends_feeds = array();           // Keyed by feed URL.
 		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
+			if ( ! $user_feed->is_active() ) {
+				continue;
+			}
 			$feed_url = $user_feed->get_url();
 			$friends_feeds[ $feed_url ] = $user_feed;
 		}
