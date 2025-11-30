@@ -120,6 +120,20 @@ class Admin_ActivityPub_Sync {
 				</div>
 			<?php endif; ?>
 
+			<?php if ( isset( $_GET['urls_updated'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+				<div class="notice notice-success is-dismissible">
+					<p>
+						<?php
+						printf(
+							/* translators: %d: number of feed URLs updated */
+							esc_html__( 'Feed URLs updated! Changed %d feeds to use canonical ActivityPub actor URLs.', 'friends' ),
+							absint( wp_unslash( $_GET['urls_updated'] ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+						);
+						?>
+					</p>
+				</div>
+			<?php endif; ?>
+
 			<?php if ( isset( $_GET['dry_run'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
 				<?php
 				$imported_count = isset( $_GET['imported'] ) ? absint( wp_unslash( $_GET['imported'] ) ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -303,6 +317,14 @@ class Admin_ActivityPub_Sync {
 					<input type="hidden" name="backfill_urls" value="1">
 					<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
 					<?php submit_button( __( 'Backfill URLs (update existing)', 'friends' ), 'secondary', 'submit', false ); ?>
+				</form>
+			<?php endif; ?>
+			<?php if ( $sync_status['only_friends_count'] > 0 ) : ?>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="display: inline-block; margin-left: 10px;">
+					<input type="hidden" name="action" value="friends_activitypub_sync">
+					<input type="hidden" name="update_feed_urls" value="1">
+					<?php wp_nonce_field( 'friends-activitypub-sync' ); ?>
+					<?php submit_button( __( 'Update Feed URLs', 'friends' ), 'secondary', 'submit', false ); ?>
 				</form>
 			<?php endif; ?>
 
@@ -783,9 +805,20 @@ class Admin_ActivityPub_Sync {
 		$dry_run = isset( $_POST['dry_run'] ) && '1' === $_POST['dry_run']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$export_only = isset( $_POST['export_only'] ) && '1' === $_POST['export_only']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$backfill_urls = isset( $_POST['backfill_urls'] ) && '1' === $_POST['backfill_urls']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$update_feed_urls = isset( $_POST['update_feed_urls'] ) && '1' === $_POST['update_feed_urls']; // phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$user_id = Feed_Parser_ActivityPub::get_activitypub_actor_id( Friends::get_main_friend_user_id() );
 
-		if ( $backfill_urls ) {
+		if ( $update_feed_urls ) {
+			$result = $this->update_feed_urls();
+			$redirect_args = array(
+				'page'         => 'friends-activitypub-sync',
+				'urls_updated' => $result['updated'],
+			);
+			if ( ! empty( $result['errors'] ) ) {
+				set_transient( 'friends_activitypub_sync_errors', $result['errors'], 60 );
+				$redirect_args['has_errors'] = 1;
+			}
+		} elseif ( $backfill_urls ) {
 			$result = $this->backfill_friends_urls( $user_id );
 			$redirect_args = array(
 				'page'       => 'friends-activitypub-sync',
@@ -877,6 +910,58 @@ class Admin_ActivityPub_Sync {
 		}
 
 		return array( 'updated' => $updated );
+	}
+
+	/**
+	 * Update Friends feed URLs to canonical ActivityPub actor URLs.
+	 *
+	 * Fetches metadata for each ActivityPub feed and updates the stored URL
+	 * to the canonical actor URL if they differ.
+	 *
+	 * @return array Results with updated count and errors.
+	 */
+	private function update_feed_urls() {
+		$updated = 0;
+		$errors = array();
+
+		foreach ( User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG ) as $user_feed ) {
+			$feed_url = $user_feed->get_url();
+
+			// Fetch metadata to get the canonical actor URL.
+			if ( ! function_exists( '\Activitypub\get_remote_metadata_by_actor' ) ) {
+				$errors[] = 'ActivityPub plugin function not available';
+				break;
+			}
+
+			$meta = \Activitypub\get_remote_metadata_by_actor( $feed_url );
+			if ( is_wp_error( $meta ) ) {
+				$errors[] = sprintf( '%s: %s', $feed_url, $meta->get_error_message() );
+				continue;
+			}
+
+			if ( ! is_array( $meta ) || empty( $meta['id'] ) ) {
+				$errors[] = sprintf( '%s: No valid actor ID in metadata', $feed_url );
+				continue;
+			}
+
+			$canonical_url = $meta['id'];
+			if ( $feed_url !== $canonical_url ) {
+				wp_update_term(
+					$user_feed->get_id(),
+					User_Feed::TAXONOMY,
+					array(
+						'name' => $canonical_url,
+						'slug' => sanitize_title( $canonical_url ),
+					)
+				);
+				++$updated;
+			}
+		}
+
+		return array(
+			'updated' => $updated,
+			'errors'  => $errors,
+		);
 	}
 
 	/**
