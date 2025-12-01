@@ -439,7 +439,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		require_once __DIR__ . '/activitypub/class-activitypub-transformer-message.php';
 
-		$user_id = $this->get_activitypub_actor_id( get_current_user_id() );
+		$user_id = self::get_activitypub_actor_id( get_current_user_id() );
 		$actor = $this->get_activitypub_actor( $user_id );
 		if ( ! $actor ) {
 			return $post_id;
@@ -813,10 +813,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function get_activitypub_actor( $user_id ) {
-		return \Activitypub\Collection\Actors::get_by_id( $this->get_activitypub_actor_id( $user_id ) );
+		return \Activitypub\Collection\Actors::get_by_id( self::get_activitypub_actor_id( $user_id ) );
 	}
 
-	public function get_activitypub_actor_id( $user_id ) {
+	public static function get_activitypub_actor_id( $user_id ) {
 		if ( null !== $user_id && ! \Activitypub\user_can_activitypub( $user_id ) ) {
 			$user_id = null;
 		}
@@ -1675,68 +1675,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$queued = $this->queue(
-			'friends_feed_parser_activitypub_follow',
-			array( $user_feed->get_url() ),
-			'friends_feed_parser_activitypub_unfollow'
-		);
+		$queued = \Activitypub\follow( $user_feed->get_url(), self::get_activitypub_actor_id() );
 
 		if ( $queued ) {
 			$user_feed->update_last_log( __( 'Queued follow request.', 'friends' ) );
 		}
 
 		return $queued;
-	}
-
-	/**
-	 * Follow a user via ActivityPub at a URL.
-	 *
-	 * @param      string $url    The url.
-	 * @param      int    $user_id   The current user id.
-	 */
-	public function activitypub_follow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
-		$actor = $this->get_activitypub_actor( $user_id );
-		$meta = $this->get_metadata( $url );
-		$user_feed = User_Feed::get_by_url( $url );
-		if ( is_wp_error( $meta ) ) {
-			if ( $user_feed instanceof User_Feed ) {
-				$user_feed->update_last_log(
-					sprintf(
-						// translators: %s an error message.
-						__( 'Error: %s', 'friends' ),
-						$meta->get_error_code() . ' ' . $meta->get_error_message()
-					)
-				);
-			}
-			return $meta;
-		}
-		$to = $meta['id'];
-		$type = 'Follow';
-		$inbox = self::get_inbox_by_actor( $to, $type );
-		if ( is_wp_error( $inbox ) ) {
-			return $inbox;
-		}
-
-		$activity = new \Activitypub\Activity\Activity();
-		$activity->set_type( $type );
-		$activity->set_to( null );
-		$activity->set_cc( null );
-		$activity->set_actor( $actor );
-		$activity->set_object( $to );
-		$activity->set_id( $actor . '#follow-' . \preg_replace( '~^https?://~', '', $to ) );
-		$activity = $activity->to_json();
-		$response = \Activitypub\safe_remote_post( $inbox, $activity, $user_id );
-
-		if ( $user_feed instanceof User_Feed ) {
-			$user_feed->update_last_log(
-				sprintf(
-				// translators: %s is the response from the remote server.
-					__( 'Sent follow request with response: %s', 'friends' ),
-					wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_response_message( $response )
-				)
-			);
-		}
 	}
 
 	/**
@@ -1771,7 +1716,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      int    $user_id   The current user id.
 	 */
 	public function activitypub_unfollow_user( $url, $user_id = null ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 		$meta = $this->get_metadata( $url );
 		$user_feed = User_Feed::get_by_url( $url );
@@ -2285,7 +2230,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_like_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -2421,7 +2366,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_unlike_post( $url, $external_post_id, $user_id ) {
 		$type = 'Like';
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -2677,7 +2622,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_announce( $url, $user_id ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -2765,7 +2710,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param      id     $user_id  The user id.
 	 */
 	public function activitypub_unannounce( $url, $user_id ) {
-		$user_id = $this->get_activitypub_actor_id( $user_id );
+		$user_id = self::get_activitypub_actor_id( $user_id );
 		$actor = $this->get_activitypub_actor( $user_id );
 
 		$activity = new \Activitypub\Activity\Activity();
