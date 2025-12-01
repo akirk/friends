@@ -1644,7 +1644,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function author_avatar_url( $avatar_url, $friend_user, $post_id ) {
 		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
+		if ( ! $meta || ! isset( $meta['reblog'] ) || ! isset( $meta['attributedTo'] ) ) {
 			return $avatar_url;
 		}
 		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
