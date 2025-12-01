@@ -607,10 +607,10 @@ class Feed {
 			}
 
 			$post_id = null;
-			if ( isset( $remote_post_ids[ $item->post_id ] ) ) {
+			if ( $item->post_id && isset( $remote_post_ids[ $item->post_id ] ) ) {
 				$post_id = $remote_post_ids[ $item->post_id ];
 			}
-			if ( is_null( $post_id ) && isset( $remote_post_ids[ $item->permalink ] ) ) {
+			if ( is_null( $post_id ) && $item->permalink && isset( $remote_post_ids[ $item->permalink ] ) ) {
 				$post_id = $remote_post_ids[ $item->permalink ];
 			}
 

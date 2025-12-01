@@ -174,8 +174,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public static function determine_mastodon_api_user( $user_id ) {
 		static $user_id_map = array();
-		if ( isset( $user_id_map[ $user_id ] ) ) {
-			return $user_id_map[ $user_id ];
+		if ( null === $user_id ) {
+			return false;
+		}
+		$cache_key = is_scalar( $user_id ) ? $user_id : '';
+		if ( $cache_key && isset( $user_id_map[ $cache_key ] ) ) {
+			return $user_id_map[ $cache_key ];
 		}
 		$user = false;
 		if ( is_string( $user_id ) && ! is_numeric( $user_id ) ) {
@@ -193,7 +197,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$user = User::get_user_by_id( 1e10 + $user_id );
 			}
 		}
-		$user_id_map[ $user_id ] = $user;
+		if ( $cache_key ) {
+			$user_id_map[ $cache_key ] = $user;
+		}
 		return $user;
 	}
 
@@ -1320,21 +1326,28 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			self::SLUG     => array(),
 		);
 
+		// Set author for all posts from attributedTo.
+		if ( isset( $activity['attributedTo'] ) ) {
+			$meta = $this->get_metadata( $activity['attributedTo'] );
+			$this->log( 'Attributed to ' . $activity['attributedTo'], compact( 'meta' ) );
+
+			if ( $meta && ! is_wp_error( $meta ) ) {
+				if ( isset( $meta['name'] ) ) {
+					$data['author'] = $meta['name'];
+				} elseif ( isset( $meta['preferredUsername'] ) ) {
+					$data['author'] = $meta['preferredUsername'];
+				}
+			}
+		}
+
 		if ( isset( $activity['reblog'] ) && $activity['reblog'] ) {
 			$data[ self::SLUG ]['reblog'] = $activity['reblog'];
 
-			// Only store attributedTo for reblogs (boosts) where the original author differs from the feed.
+			// Only store attributedTo metadata for reblogs (boosts) where the original author differs from the feed.
 			if ( isset( $activity['attributedTo'] ) ) {
-				$meta = $this->get_metadata( $activity['attributedTo'] );
-				$this->log( 'Attributed to ' . $activity['attributedTo'], compact( 'meta' ) );
+				$meta = isset( $meta ) ? $meta : $this->get_metadata( $activity['attributedTo'] );
 
 				if ( $meta && ! is_wp_error( $meta ) ) {
-					if ( isset( $meta['name'] ) ) {
-						$data['author'] = $meta['name'];
-					} elseif ( isset( $meta['preferredUsername'] ) ) {
-						$data['author'] = $meta['preferredUsername'];
-					}
-
 					// Store the ap_actor_id reference; metadata is fetched via Remote_Actors API.
 					$actor_url = isset( $meta['id'] ) ? $meta['id'] : $activity['attributedTo'];
 					$data[ self::SLUG ]['attributedTo'] = array( 'id' => $actor_url );
