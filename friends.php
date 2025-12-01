@@ -48,6 +48,7 @@ require_once __DIR__ . '/includes/class-frontend.php';
 require_once __DIR__ . '/includes/class-import.php';
 require_once __DIR__ . '/includes/class-logging.php';
 require_once __DIR__ . '/includes/class-messages.php';
+require_once __DIR__ . '/includes/class-migration.php';
 require_once __DIR__ . '/includes/class-notifications.php';
 require_once __DIR__ . '/includes/class-plugin-installer.php';
 require_once __DIR__ . '/includes/class-reactions.php';
