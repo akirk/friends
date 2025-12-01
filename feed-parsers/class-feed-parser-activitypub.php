@@ -1318,27 +1318,28 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( isset( $activity['reblog'] ) && $activity['reblog'] ) {
 			$data[ self::SLUG ]['reblog'] = $activity['reblog'];
-		}
 
-		if ( isset( $activity['attributedTo'] ) ) {
-			$meta = $this->get_metadata( $activity['attributedTo'] );
-			$this->log( 'Attributed to ' . $activity['attributedTo'], compact( 'meta' ) );
+			// Only store attributedTo for reblogs (boosts) where the original author differs from the feed.
+			if ( isset( $activity['attributedTo'] ) ) {
+				$meta = $this->get_metadata( $activity['attributedTo'] );
+				$this->log( 'Attributed to ' . $activity['attributedTo'], compact( 'meta' ) );
 
-			if ( $meta && ! is_wp_error( $meta ) ) {
-				if ( isset( $meta['name'] ) ) {
-					$data['author'] = $meta['name'];
-				} elseif ( isset( $meta['preferredUsername'] ) ) {
-					$data['author'] = $meta['preferredUsername'];
-				}
+				if ( $meta && ! is_wp_error( $meta ) ) {
+					if ( isset( $meta['name'] ) ) {
+						$data['author'] = $meta['name'];
+					} elseif ( isset( $meta['preferredUsername'] ) ) {
+						$data['author'] = $meta['preferredUsername'];
+					}
 
-				// Store the ap_actor_id reference; metadata is fetched via Remote_Actors API.
-				$actor_url = isset( $meta['id'] ) ? $meta['id'] : $activity['attributedTo'];
-				$data[ self::SLUG ]['attributedTo'] = array( 'id' => $actor_url );
+					// Store the ap_actor_id reference; metadata is fetched via Remote_Actors API.
+					$actor_url = isset( $meta['id'] ) ? $meta['id'] : $activity['attributedTo'];
+					$data[ self::SLUG ]['attributedTo'] = array( 'id' => $actor_url );
 
-				if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-					$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
-					if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
-						$data[ self::SLUG ]['attributedTo']['ap_actor_id'] = $actor_post->ID;
+					if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+						if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+							$data[ self::SLUG ]['attributedTo']['ap_actor_id'] = $actor_post->ID;
+						}
 					}
 				}
 			}
