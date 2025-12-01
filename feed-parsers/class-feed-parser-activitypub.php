@@ -215,63 +215,67 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $status;
 		}
 
-		$account = false;
 		$meta = get_post_meta( $post_id, self::SLUG, true );
-		$attributed_to_url = isset( $meta['attributedTo'] ) ? self::get_actor_url_from_attributed_to( $meta['attributedTo'] ) : null;
-		if ( $attributed_to_url ) {
-			if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
-				$status->reblog = clone $status;
-				$status->reblog->account = clone $status->account;
-				$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
-			}
-			$friend_user = User::get_post_author( get_post( $post_id ) );
-			$external_user = $this->get_external_user();
-			$is_external_user = get_class( $external_user ) === get_class( $friend_user ) && $external_user->get_object_id() === $friend_user->get_object_id();
-			if ( $is_external_user ) {
-				$feed_url = get_post_meta( $post_id, 'feed_url', true );
-				if ( $feed_url ) {
-					$actor = self::convert_actor_to_mastodon_handle( $feed_url );
-					$account = new Entity_Account();
-					$account->id             = $feed_url;
-					$account->username       = strtok( $actor, '@' );
-					$account->acct           = $actor;
-					$account->display_name   = $friend_user->display_name;
-					$account->url            = $feed_url;
-					$account->note = $friend_user->description;
-					if ( ! $account->note ) {
-						$account->note = '';
-					}
 
-					$account->avatar = $friend_user->avatar;
-					if ( ! $account->avatar ) {
-						$account->avatar = '';
-					}
+		// Only process reblogs with attributedTo.
+		if ( ! isset( $meta['reblog'] ) || ! $meta['reblog'] || ! isset( $meta['attributedTo'] ) ) {
+			return $status;
+		}
 
-					$account->avatar_static = $account->avatar;
-					$account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
-					if ( isset( $meta['attributedTo'] ) ) {
-						$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
-						if ( isset( $actor_metadata['header'] ) ) {
-							$account->header = $actor_metadata['header'];
-						}
-					}
-					$account->header_static = $account->header;
-					$account->created_at = $status->created_at;
+		$attributed_to_url = self::get_actor_url_from_attributed_to( $meta['attributedTo'] );
+		if ( ! $attributed_to_url ) {
+			return $status;
+		}
+
+		$status->reblog = clone $status;
+		$status->reblog->account = clone $status->account;
+		$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
+
+		$account = false;
+		$friend_user = User::get_post_author( get_post( $post_id ) );
+		$external_user = $this->get_external_user();
+		$is_external_user = get_class( $external_user ) === get_class( $friend_user ) && $external_user->get_object_id() === $friend_user->get_object_id();
+
+		if ( $is_external_user ) {
+			$feed_url = get_post_meta( $post_id, 'feed_url', true );
+			if ( $feed_url ) {
+				$actor = self::convert_actor_to_mastodon_handle( $feed_url );
+				$account = new Entity_Account();
+				$account->id             = $feed_url;
+				$account->username       = strtok( $actor, '@' );
+				$account->acct           = $actor;
+				$account->display_name   = $friend_user->display_name;
+				$account->url            = $feed_url;
+				$account->note = $friend_user->description;
+				if ( ! $account->note ) {
+					$account->note = '';
 				}
-			} elseif ( $friend_user instanceof User ) {
-				$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID, null, $post_id );
-			}
 
-			if ( $account instanceof Entity_Account ) {
-				$status->account = $account;
-				if ( isset( $meta['reblog'] ) && $meta['reblog'] ) {
-					$reblog_account = apply_filters( 'mastodon_api_account', null, $attributed_to_url );
-					if ( $reblog_account instanceof Entity_Account ) {
-						$status->reblog->account = $reblog_account;
-					} else {
-						$status->reblog->account->id = $attributed_to_url;
-					}
+				$account->avatar = $friend_user->avatar;
+				if ( ! $account->avatar ) {
+					$account->avatar = '';
 				}
+
+				$account->avatar_static = $account->avatar;
+				$account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+				$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+				if ( ! empty( $actor_metadata['header'] ) ) {
+					$account->header = $actor_metadata['header'];
+				}
+				$account->header_static = $account->header;
+				$account->created_at = $status->created_at;
+			}
+		} elseif ( $friend_user instanceof User ) {
+			$account = apply_filters( 'mastodon_api_account', null, $friend_user->ID, null, $post_id );
+		}
+
+		if ( $account instanceof Entity_Account ) {
+			$status->account = $account;
+			$reblog_account = apply_filters( 'mastodon_api_account', null, $attributed_to_url );
+			if ( $reblog_account instanceof Entity_Account ) {
+				$status->reblog->account = $reblog_account;
+			} else {
+				$status->reblog->account->id = $attributed_to_url;
 			}
 		}
 
