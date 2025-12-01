@@ -248,10 +248,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					}
 
 					$account->avatar_static = $account->avatar;
-					if ( isset( $meta['attributedTo']['header'] ) ) {
-						$account->header = $meta['attributedTo']['header'];
-					} else {
-						$account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+					$account->header = 'https://files.mastodon.social/media_attachments/files/003/134/405/original/04060b07ddf7bb0b.png';
+					if ( isset( $meta['attributedTo'] ) ) {
+						$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+						if ( isset( $actor_metadata['header'] ) ) {
+							$account->header = $actor_metadata['header'];
+						}
 					}
 					$account->header_static = $account->header;
 					$account->created_at = $status->created_at;
@@ -836,110 +838,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
-	 * Get or create a remote actor post ID for the given actor URL.
-	 *
-	 * This uses the ActivityPub plugin's Remote_Actors collection to
-	 * fetch or create an ap_actor post for the given actor URL.
-	 *
-	 * @param string $actor_url The ActivityPub actor URL.
-	 * @return int|null The ap_actor post ID, or null if not available.
-	 */
-	public static function get_or_create_remote_actor_id( $actor_url ) {
-		// Only do local lookup to avoid blocking page loads with network requests.
-		// Use fetch_remote_actor_id() explicitly when you need to make network requests.
-		return self::get_remote_actor_id_local( $actor_url );
-	}
-
-	/**
-	 * Fetch a remote actor post ID by URL, making a network request if needed.
-	 * This should only be called when you explicitly want to make a network request.
-	 *
-	 * @param string $actor_url The actor URL.
-	 * @return int|null The ap_actor post ID, or null if not available.
-	 */
-	public static function fetch_remote_actor_id( $actor_url ) {
-		if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
-			return null;
-		}
-
-		// Check if the Remote_Actors class is available (ActivityPub plugin 7.x+).
-		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			return null;
-		}
-
-		// Use fetch_by_various which handles both URLs and webfinger lookups.
-		// This is important because feed URLs like https://example.com/@user
-		// need webfinger to resolve to the actual actor URI https://example.com/users/user
-		$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_various( $actor_url );
-		if ( is_wp_error( $actor_post ) || ! $actor_post instanceof \WP_Post ) {
-			return null;
-		}
-
-		return $actor_post->ID;
-	}
-
-	/**
-	 * Get a remote actor post ID by URL without making network requests.
-	 * This only looks up actors that already exist locally.
-	 *
-	 * @param string $actor_url The actor URL.
-	 * @return int|null The ap_actor post ID, or null if not found locally.
-	 */
-	public static function get_remote_actor_id_local( $actor_url ) {
-		if ( empty( $actor_url ) || ! is_string( $actor_url ) ) {
-			return null;
-		}
-
-		global $wpdb;
-
-		// Look up by guid (the actor URL is stored in guid).
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$post_id = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'ap_actor' AND guid = %s LIMIT 1",
-				$actor_url
-			)
-		);
-
-		if ( $post_id ) {
-			return (int) $post_id;
-		}
-
-		// Try alternative URL formats without network requests.
-		// Mastodon profile URLs like https://example.com/@user map to https://example.com/users/user
-		if ( preg_match( '#^(https?://[^/]+)/@([^/]+)$#', $actor_url, $matches ) ) {
-			$canonical_url = $matches[1] . '/users/' . $matches[2];
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$post_id = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'ap_actor' AND guid = %s LIMIT 1",
-					$canonical_url
-				)
-			);
-			if ( $post_id ) {
-				return (int) $post_id;
-			}
-		}
-
-		// Also try the reverse: https://example.com/users/user -> https://example.com/@user
-		if ( preg_match( '#^(https?://[^/]+)/users/([^/]+)$#', $actor_url, $matches ) ) {
-			$profile_url = $matches[1] . '/@' . $matches[2];
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$post_id = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'ap_actor' AND guid = %s LIMIT 1",
-					$profile_url
-				)
-			);
-			if ( $post_id ) {
-				return (int) $post_id;
-			}
-		}
-
-		return null;
-	}
-
-	/**
 	 * Get the actor URL from a remote actor post ID.
 	 *
 	 * @param int $ap_actor_id The ap_actor post ID.
@@ -987,6 +885,82 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get actor metadata from attributedTo.
+	 *
+	 * Returns actor metadata (name, icon, summary, preferredUsername, header) using the
+	 * ActivityPub plugin's Remote_Actors API for the new format, or from legacy inline data.
+	 *
+	 * @param array $attributed_to The attributedTo metadata array.
+	 * @return array Actor metadata with keys: url, name, icon, summary, preferredUsername, header.
+	 */
+	public static function get_actor_metadata_from_attributed_to( $attributed_to ) {
+		$metadata = array(
+			'url'               => null,
+			'name'              => '',
+			'icon'              => '',
+			'header'            => '',
+			'summary'           => '',
+			'preferredUsername' => '',
+		);
+
+		if ( ! is_array( $attributed_to ) ) {
+			return $metadata;
+		}
+
+		// New format: fetch from ap_actor using ActivityPub plugin API.
+		if ( isset( $attributed_to['ap_actor_id'] ) && $attributed_to['ap_actor_id'] ) {
+			$ap_actor_id = $attributed_to['ap_actor_id'];
+
+			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				$actor = \Activitypub\Collection\Remote_Actors::get_actor( $ap_actor_id );
+
+				if ( $actor && ! is_wp_error( $actor ) ) {
+					$metadata['url'] = $actor->get_id();
+					$metadata['name'] = $actor->get_name() ?? '';
+					$metadata['summary'] = $actor->get_summary() ?? '';
+					$metadata['preferredUsername'] = $actor->get_preferred_username() ?? '';
+					$metadata['icon'] = \Activitypub\Collection\Remote_Actors::get_avatar_url( $ap_actor_id );
+
+					$image = $actor->get_image();
+					if ( $image ) {
+						$metadata['header'] = \Activitypub\object_to_uri( $image );
+					}
+
+					return $metadata;
+				}
+			}
+
+			// Fallback: try to get URL from the post directly.
+			$url = self::get_actor_url_from_remote_actor_id( $ap_actor_id );
+			if ( $url ) {
+				$metadata['url'] = $url;
+			}
+		}
+
+		// Legacy format: use inline data.
+		if ( isset( $attributed_to['id'] ) ) {
+			$metadata['url'] = $attributed_to['id'];
+		}
+		if ( isset( $attributed_to['name'] ) ) {
+			$metadata['name'] = $attributed_to['name'];
+		}
+		if ( isset( $attributed_to['icon'] ) ) {
+			$metadata['icon'] = $attributed_to['icon'];
+		}
+		if ( isset( $attributed_to['header'] ) ) {
+			$metadata['header'] = $attributed_to['header'];
+		}
+		if ( isset( $attributed_to['summary'] ) ) {
+			$metadata['summary'] = $attributed_to['summary'];
+		}
+		if ( isset( $attributed_to['preferredUsername'] ) ) {
+			$metadata['preferredUsername'] = $attributed_to['preferredUsername'];
+		}
+
+		return $metadata;
 	}
 
 	/**
@@ -1357,32 +1331,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$data['author'] = $meta['preferredUsername'];
 				}
 
-				$data[ self::SLUG ]['attributedTo'] = array();
-
-				// Try to store the ap_actor post ID instead of the URL.
+				// Store the ap_actor_id reference; metadata is fetched via Remote_Actors API.
 				$actor_url = isset( $meta['id'] ) ? $meta['id'] : $activity['attributedTo'];
-				$ap_actor_id = self::get_or_create_remote_actor_id( $actor_url );
-				if ( $ap_actor_id ) {
-					$data[ self::SLUG ]['attributedTo']['ap_actor_id'] = $ap_actor_id;
-				} else {
-					// Fallback to storing the URL directly if ap_actor is not available.
-					$data[ self::SLUG ]['attributedTo']['id'] = $actor_url;
-				}
+				$data[ self::SLUG ]['attributedTo'] = array( 'id' => $actor_url );
 
-				if ( ! empty( $meta['icon']['url'] ) ) {
-					$data[ self::SLUG ]['attributedTo']['icon'] = $meta['icon']['url'];
-				}
-
-				if ( ! empty( $meta['summary'] ) ) {
-					$data[ self::SLUG ]['attributedTo']['summary'] = $meta['summary'];
-				}
-
-				if ( ! empty( $meta['preferredUsername'] ) ) {
-					$data[ self::SLUG ]['attributedTo']['preferredUsername'] = $meta['preferredUsername'];
-				}
-
-				if ( ! empty( $meta['name'] ) ) {
-					$data[ self::SLUG ]['attributedTo']['name'] = $meta['name'];
+				if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+					$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+					if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+						$data[ self::SLUG ]['attributedTo']['ap_actor_id'] = $actor_post->ID;
+					}
 				}
 			}
 		}
@@ -1686,11 +1643,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function author_avatar_url( $avatar_url, $friend_user, $post_id ) {
 		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( ! $meta ) {
+		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
 			return $avatar_url;
 		}
-		if ( isset( $meta['attributedTo']['icon'] ) ) {
-			return $meta['attributedTo']['icon'];
+		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+		if ( ! empty( $actor_metadata['icon'] ) ) {
+			return $actor_metadata['icon'];
 		}
 		return $avatar_url;
 	}
@@ -1920,7 +1878,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$user_login = sanitize_title( $meta['preferredUsername'] . '.' . $host );
 
 		// Get the ap_actor post ID.
-		$ap_actor_id = self::get_or_create_remote_actor_id( $actor_url );
+		$ap_actor_id = null;
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+			if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+				$ap_actor_id = $actor_post->ID;
+			}
+		}
 
 		// Check if user already exists.
 		$existing_user = get_user_by( 'login', $user_login );
@@ -3236,27 +3200,23 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		$attributed_to_url = isset( $meta['attributedTo'] ) ? self::get_actor_url_from_attributed_to( $meta['attributedTo'] ) : null;
-		if ( ! $attributed_to_url ) {
+		if ( ! isset( $meta['attributedTo'] ) ) {
 			return;
 		}
 
-		if ( empty( $meta['attributedTo']['summary'] ) ) {
-			$meta['attributedTo']['summary'] = '';
-		}
-
-		if ( empty( $meta['attributedTo']['name'] ) ) {
-			$meta['attributedTo']['name'] = '';
+		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+		if ( ! $actor_metadata['url'] ) {
+			return;
 		}
 
 		Friends::template_loader()->get_template_part(
 			'frontend/parts/activitypub/follow-link',
 			null,
 			array(
-				'url'     => $attributed_to_url,
-				'name'    => $meta['attributedTo']['name'],
-				'handle'  => self::convert_actor_to_mastodon_handle( $attributed_to_url ),
-				'summary' => wp_strip_all_tags( $meta['attributedTo']['summary'] ),
+				'url'     => $actor_metadata['url'],
+				'name'    => $actor_metadata['name'],
+				'handle'  => self::convert_actor_to_mastodon_handle( $actor_metadata['url'] ),
+				'summary' => wp_strip_all_tags( $actor_metadata['summary'] ),
 			)
 		);
 	}

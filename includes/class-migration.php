@@ -1338,7 +1338,13 @@ class Migration {
 			$actor_url = $meta['attributedTo']['id'];
 
 			// Try to get or create the ap_actor post ID.
-			$ap_actor_id = Feed_Parser_ActivityPub::get_or_create_remote_actor_id( $actor_url );
+			$ap_actor_id = null;
+			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+				if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+					$ap_actor_id = $actor_post->ID;
+				}
+			}
 
 			if ( $ap_actor_id ) {
 				// Update to new format.
@@ -1517,8 +1523,18 @@ class Migration {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( sprintf( 'Friends Migration: Processing feed %d/%d: %s', $processed, count( $activitypub_feeds ), $actor_url ) );
 
-			// First try local lookup to avoid network request if possible.
-			$ap_actor_id = Feed_Parser_ActivityPub::get_remote_actor_id_local( $actor_url );
+			// Store current URL for crash recovery before network request.
+			update_option( 'friends_ap_feeds_link_migration_current_url', $actor_url, false );
+
+			// Fetch or create the ap_actor using ActivityPub plugin API.
+			$ap_actor_id = null;
+			$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+			if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+				$ap_actor_id = $actor_post->ID;
+			}
+
+			// Clear crash recovery marker.
+			delete_option( 'friends_ap_feeds_link_migration_current_url' );
 
 			if ( $ap_actor_id ) {
 				$feed->set_ap_actor_id( $ap_actor_id );
@@ -1527,42 +1543,17 @@ class Migration {
 				}
 				++$linked;
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( sprintf( 'Friends Migration: Linked %s to ap_actor %d (local)', $actor_url, $ap_actor_id ) );
+				error_log( sprintf( 'Friends Migration: Linked %s to ap_actor %d', $actor_url, $ap_actor_id ) );
 			} else {
-				// Not found locally - store current URL for crash recovery before network request.
-				update_option( 'friends_ap_feeds_link_migration_current_url', $actor_url, false );
-
+				++$failed;
+				$failed_urls[] = array(
+					'url'    => $actor_url,
+					'time'   => time(),
+					'feed'   => $feed->get_friend_user()->display_name ?? 'Unknown',
+					'reason' => 'could_not_resolve',
+				);
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( sprintf( 'Friends Migration: About to call fetch_remote_actor_id for %s', $actor_url ) );
-
-				// Try to fetch from network (explicit network request).
-				$ap_actor_id = Feed_Parser_ActivityPub::fetch_remote_actor_id( $actor_url );
-
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( sprintf( 'Friends Migration: Returned from fetch_remote_actor_id: %s', $ap_actor_id ? $ap_actor_id : 'null' ) );
-
-				// Clear crash recovery marker.
-				delete_option( 'friends_ap_feeds_link_migration_current_url' );
-
-				if ( $ap_actor_id ) {
-					$feed->set_ap_actor_id( $ap_actor_id );
-					if ( $feed->get_active() ) {
-						self::ensure_activitypub_following( $actor_url );
-					}
-					++$linked;
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( sprintf( 'Friends Migration: Linked %s to ap_actor %d (fetched)', $actor_url, $ap_actor_id ) );
-				} else {
-					++$failed;
-					$failed_urls[] = array(
-						'url'    => $actor_url,
-						'time'   => time(),
-						'feed'   => $feed->get_friend_user()->display_name ?? 'Unknown',
-						'reason' => 'could_not_resolve',
-					);
-					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log( sprintf( 'Friends Migration: Failed to link %s - could not resolve actor', $actor_url ) );
-				}
+				error_log( sprintf( 'Friends Migration: Failed to link %s - could not resolve actor', $actor_url ) );
 			}
 		}
 
