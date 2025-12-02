@@ -118,6 +118,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 10, 2 );
 		add_action( 'mastodon_api_account', array( $this, 'mastodon_api_account' ), 9, 2 );
+		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_external_user' ), 15, 4 );
 		add_action( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
 		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 6 );
 
@@ -408,6 +409,71 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$user_data->following_count = count( User_Feed::get_by_parser( self::SLUG ) );
 
 		return $user_data;
+	}
+
+	/**
+	 * Filter the Mastodon API account for posts from the External user.
+	 *
+	 * When a post is from an external user (someone you don't follow who mentioned you),
+	 * extract the actual actor information from the feed_url post meta.
+	 *
+	 * @param Entity_Account|null $account The current account object.
+	 * @param int                 $user_id The user ID.
+	 * @param mixed               $request The request object.
+	 * @param \WP_Post|null       $post    The post object.
+	 * @return Entity_Account|null The filtered account.
+	 */
+	public function mastodon_api_account_external_user( $account, $user_id, $request = null, $post = null ) {
+		if ( ! $post instanceof \WP_Post ) {
+			return $account;
+		}
+
+		if ( Friends::CPT !== $post->post_type ) {
+			return $account;
+		}
+
+		$meta = get_post_meta( $post->ID, self::SLUG, true );
+
+		// Check if this post has attributedTo metadata (ActivityPub post).
+		if ( ! is_array( $meta ) || ! isset( $meta['attributedTo'] ) ) {
+			return $account;
+		}
+
+		$attributed_to = $meta['attributedTo'];
+		if ( is_array( $attributed_to ) && isset( $attributed_to['id'] ) ) {
+			$attributed_to = $attributed_to['id'];
+		}
+
+		if ( ! is_string( $attributed_to ) || empty( $attributed_to ) ) {
+			return $account;
+		}
+
+		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+
+		$actor = self::convert_actor_to_mastodon_handle( $attributed_to );
+		$account = new Entity_Account();
+		$account->id           = $attributed_to;
+		$account->username     = strtok( $actor, '@' );
+		$account->acct         = $actor;
+		$account->url          = $attributed_to;
+		$account->created_at   = new \DateTime( $post->post_date_gmt );
+		$account->display_name = '';
+		$account->note         = '';
+		$account->avatar       = '';
+		$account->avatar_static = '';
+
+		if ( ! empty( $actor_metadata['name'] ) ) {
+			$account->display_name = $actor_metadata['name'];
+		}
+		if ( ! empty( $actor_metadata['icon'] ) ) {
+			$account->avatar = $actor_metadata['icon'];
+			$account->avatar_static = $actor_metadata['icon'];
+		}
+		if ( ! empty( $actor_metadata['summary'] ) ) {
+			$account->note = $actor_metadata['summary'];
+		}
+
+		return $account;
 	}
 
 	public function friends_message_form_accounts( $accounts, User $friend_user ) {
