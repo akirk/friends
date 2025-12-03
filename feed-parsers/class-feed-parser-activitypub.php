@@ -903,8 +903,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( null === $user_id ) {
 			$user_id = Friends::get_main_friend_user_id();
 			if ( \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
-				$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', ACTIVITYPUB_ACTOR_MODE );
-				if ( ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode ) {
+				$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', \ACTIVITYPUB_ACTOR_MODE );
+				if ( \ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode ) {
 					$user_id = \Activitypub\Collection\Actors::BLOG_USER_ID;
 				}
 			}
