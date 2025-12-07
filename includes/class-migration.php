@@ -1377,8 +1377,8 @@ class Migration {
 	 * Link existing ActivityPub feeds to their ap_actor posts (version 4.1.0)
 	 *
 	 * This migration finds all User_Feed entries with parser='activitypub'
-	 * and links them to their corresponding ap_actor posts by setting
-	 * the ap-actor-id term meta.
+	 * and links them to their corresponding ap_actor posts by assigning
+	 * the User_Feed taxonomy term to the ap_actor post.
 	 */
 	public static function link_activitypub_feeds_to_actors() {
 		// Check if the Remote_Actors class is available (ActivityPub plugin 7.x+).

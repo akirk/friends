@@ -282,7 +282,28 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( $reblog_account instanceof Entity_Account ) {
 				$status->reblog->account = $reblog_account;
 			} else {
+				// Build account from attributedTo metadata.
+				$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
 				$status->reblog->account->id = $attributed_to_url;
+				if ( ! empty( $actor_metadata['preferredUsername'] ) ) {
+					$status->reblog->account->username = $actor_metadata['preferredUsername'];
+					$status->reblog->account->acct = self::convert_actor_to_mastodon_handle( $attributed_to_url );
+				}
+				if ( ! empty( $actor_metadata['name'] ) ) {
+					$status->reblog->account->display_name = $actor_metadata['name'];
+				}
+				if ( ! empty( $actor_metadata['summary'] ) ) {
+					$status->reblog->account->note = $actor_metadata['summary'];
+				}
+				if ( ! empty( $actor_metadata['icon'] ) ) {
+					$status->reblog->account->avatar = $actor_metadata['icon'];
+					$status->reblog->account->avatar_static = $actor_metadata['icon'];
+				}
+				if ( ! empty( $actor_metadata['header'] ) ) {
+					$status->reblog->account->header = $actor_metadata['header'];
+					$status->reblog->account->header_static = $actor_metadata['header'];
+				}
+				$status->reblog->account->url = $attributed_to_url;
 			}
 		}
 
@@ -1206,11 +1227,21 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$actor_url = $activity['actor'];
 		$user_feed = false;
-		if ( Friends::check_url( $actor_url ) ) {
-			// Let's check if we follow this actor. If not it might be a different URL representation.
+
+		// First try to find by ap_actor_id (more robust for URL variations).
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) && Friends::check_url( $actor_url ) ) {
+			$ap_actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor_url );
+			if ( ! is_wp_error( $ap_actor_post ) ) {
+				$user_feed = User_Feed::get_by_ap_actor_id( $ap_actor_post->ID );
+			}
+		}
+
+		// Fall back to URL-based lookup.
+		if ( ( ! $user_feed || is_wp_error( $user_feed ) ) && Friends::check_url( $actor_url ) ) {
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
 
+		// If both failed and URL might need resolution, try metadata lookup.
 		if ( is_wp_error( $user_feed ) || ! Friends::check_url( $actor_url ) ) {
 			$meta = $this->get_metadata( $actor_url );
 			if ( ! $meta || is_wp_error( $meta ) || ! isset( $meta['url'] ) ) {
@@ -1228,7 +1259,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$this->log( 'Received invalid meta url for ' . $actor_url );
 				return false;
 			}
-			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
+
+			// Try ap_actor_id lookup with resolved URL first.
+			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				$ap_actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor_url );
+				if ( ! is_wp_error( $ap_actor_post ) ) {
+					$user_feed = User_Feed::get_by_ap_actor_id( $ap_actor_post->ID );
+				}
+			}
+
+			// Fall back to URL-based lookup with resolved URL.
+			if ( ! $user_feed || is_wp_error( $user_feed ) ) {
+				$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
+			}
 		}
 
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {

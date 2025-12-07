@@ -734,8 +734,6 @@ class Feed {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
 
-			wp_set_object_terms( $post_id, $user_feed->get_id(), User_Feed::POST_TAXONOMY );
-
 			if ( ! get_option( 'friends_disable_auto_tagging' ) && isset( $item->friend_tags ) && ! empty( $item->friend_tags ) && is_array( $item->friend_tags ) ) {
 				wp_set_post_terms( $post_id, $item->friend_tags, Friends::TAG_TAXONOMY, true );
 			}

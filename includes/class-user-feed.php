@@ -21,7 +21,6 @@ use WP_Error;
  */
 class User_Feed {
 	const TAXONOMY = 'friend-user-feed';
-	const POST_TAXONOMY = 'friend-post-feed';
 	const INTERVAL_BACKTRACK = 600;
 
 	/**
@@ -207,8 +206,16 @@ class User_Feed {
 	 * @return int|null The ap_actor post ID, or null if not linked.
 	 */
 	public function get_ap_actor_id() {
-		$ap_actor_id = get_metadata( 'term', $this->term->term_id, 'ap-actor-id', true );
-		return $ap_actor_id ? absint( $ap_actor_id ) : null;
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			return null;
+		}
+
+		$object_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
+		if ( is_wp_error( $object_ids ) || empty( $object_ids ) ) {
+			return null;
+		}
+
+		return (int) $object_ids[0];
 	}
 
 	/**
@@ -232,7 +239,7 @@ class User_Feed {
 		}
 
 		$ap_actor = get_post( $ap_actor_id );
-		if ( ! $ap_actor || 'ap_actor' !== $ap_actor->post_type ) {
+		if ( ! $ap_actor ) {
 			return null;
 		}
 
@@ -243,10 +250,10 @@ class User_Feed {
 	 * Sets the linked ActivityPub actor post ID.
 	 *
 	 * @param int $ap_actor_id The ap_actor post ID.
-	 * @return bool True on success, false on failure.
+	 * @return array|false|\WP_Error Array of term taxonomy IDs on success, false or WP_Error on failure.
 	 */
 	public function set_ap_actor_id( $ap_actor_id ) {
-		return $this->update_metadata( 'ap-actor-id', absint( $ap_actor_id ) );
+		return wp_set_object_terms( absint( $ap_actor_id ), $this->term->term_id, self::TAXONOMY );
 	}
 
 	/**
@@ -461,36 +468,25 @@ class User_Feed {
 	 */
 	public static function register_taxonomy() {
 		$args = array(
-			'labels'            => array(
-				'name'          => _x( 'Posts from Feed', 'taxonomy general name', 'friends' ),
-				'singular_name' => _x( 'Post from Feed', 'taxonomy singular name', 'friends' ),
-				'menu_name'     => __( 'Post from Feed', 'friends' ),
-			),
-			'hierarchical'      => false,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'rewrite'           => false,
-			'public'            => false,
-		);
-		register_taxonomy( self::POST_TAXONOMY, 'post', $args );
-		register_taxonomy_for_object_type( self::POST_TAXONOMY, 'post' );
-
-		$args = array(
-			'labels'            => array(
+			'labels'                => array(
 				'name'          => _x( 'Feed URL', 'taxonomy general name', 'friends' ),
 				'singular_name' => _x( 'Feed URL', 'taxonomy singular name', 'friends' ),
 				'menu_name'     => __( 'Feed URL', 'friends' ),
 			),
-			'hierarchical'      => false,
-			'show_ui'           => true,
-			'show_admin_column' => true,
-			'query_var'         => true,
-			'rewrite'           => false,
-			'public'            => false,
+			'hierarchical'          => false,
+			'show_ui'               => false,
+			'show_admin_column'     => false,
+			'query_var'             => true,
+			'rewrite'               => false,
+			'public'                => false,
+			'update_count_callback' => '_update_generic_term_count',
 		);
-		register_taxonomy( self::TAXONOMY, 'user', $args );
-		register_taxonomy_for_object_type( self::TAXONOMY, 'user' );
+		register_taxonomy( self::TAXONOMY, array(), $args );
+
+		// Register for ap_actor post type if ActivityPub plugin is active.
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			register_taxonomy_for_object_type( self::TAXONOMY, \Activitypub\Collection\Remote_Actors::POST_TYPE );
+		}
 
 		register_term_meta(
 			self::TAXONOMY,
@@ -589,16 +585,6 @@ class User_Feed {
 				'type'              => 'string',
 				'single'            => true,
 				'sanitize_callback' => array( __CLASS__, 'validate_poll_date' ),
-			)
-		);
-
-		register_term_meta(
-			self::TAXONOMY,
-			'ap-actor-id',
-			array(
-				'type'              => 'integer',
-				'single'            => true,
-				'sanitize_callback' => 'absint',
 			)
 		);
 
@@ -782,6 +768,21 @@ class User_Feed {
 		);
 		foreach ( $term_query->get_terms() as $term ) {
 			return new self( $term );
+		}
+
+		return new \WP_Error( 'term_not_found' );
+	}
+
+	/**
+	 * Get the feed linked to a specific ap_actor post ID.
+	 *
+	 * @param int $ap_actor_id The ap_actor post ID.
+	 * @return User_Feed|\WP_Error A User_Feed object or WP_Error if not found.
+	 */
+	public static function get_by_ap_actor_id( $ap_actor_id ) {
+		$terms = get_the_terms( $ap_actor_id, self::TAXONOMY );
+		if ( $terms && ! is_wp_error( $terms ) ) {
+			return new self( $terms[0] );
 		}
 
 		return new \WP_Error( 'term_not_found' );
