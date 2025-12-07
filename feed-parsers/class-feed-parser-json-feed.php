@@ -23,6 +23,19 @@ class Feed_Parser_JSON_Feed extends Feed_Parser_V2 {
 	const SLUG = 'jsonfeed';
 
 	/**
+	 * Get the badge for JSON feeds.
+	 *
+	 * @return array Badge info.
+	 */
+	public function get_badge() {
+		return array(
+			'label' => 'JSON',
+			'color' => '#5b9a68',
+			'title' => __( 'JSON Feed', 'friends' ),
+		);
+	}
+
+	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
 	 * @param      string      $url        The url.

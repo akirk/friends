@@ -43,6 +43,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_add_friend_form_top', array( $this, 'friends_add_friend_form_top' ) );
 
 		\add_action( 'activitypub_inbox_create', array( $this, 'handle_received_create' ), 15, 2 );
+		\add_filter( 'friends_feed_badge', array( $this, 'friends_feed_badge' ), 10, 3 );
 		\add_action( 'activitypub_inbox_delete', array( $this, 'handle_received_delete' ), 15, 2 );
 		\add_action( 'activitypub_inbox_announce', array( $this, 'handle_received_announce' ), 15, 2 );
 		\add_action( 'activitypub_inbox_like', array( $this, 'handle_received_like' ), 15, 2 );
@@ -308,6 +309,39 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $status;
+	}
+
+	/**
+	 * Get the badge for ActivityPub feeds.
+	 *
+	 * @return array Badge info.
+	 */
+	public function get_badge() {
+		return array(
+			'label' => 'AP',
+			'color' => '#f6ad55',
+			'title' => __( 'ActivityPub', 'friends' ),
+		);
+	}
+
+	/**
+	 * Filter the feed badge for ActivityPub feeds to add extra info.
+	 *
+	 * @param array|null $badge     The badge array.
+	 * @param User_Feed  $user_feed The user feed.
+	 * @param string     $parser    The parser slug.
+	 * @return array|null The badge array.
+	 */
+	public function friends_feed_badge( $badge, $user_feed, $parser ) {
+		if ( 'activitypub' !== $parser ) {
+			return $badge;
+		}
+
+		if ( $user_feed && $user_feed->get_ap_actor_id() ) {
+			$badge['title'] = __( 'Linked to ActivityPub plugin', 'friends' );
+		}
+
+		return $badge;
 	}
 
 	public function suggest_display_name( $display_name, $url ) {

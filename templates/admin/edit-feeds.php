@@ -23,57 +23,92 @@ $has_last_log = false;
 					<?php endif; ?>
 					<ul class="feeds <?php echo empty( $active_feeds ) ? ' hidden' : ''; ?>">
 						<?php
+						$friends_feed = Friends\Friends::get_instance()->feed;
 						foreach ( $_feeds as $term_id => $feed ) :
 							if ( $feed->get_last_log() ) {
 								$has_last_log = true;
 								$last_log = $feed->get_last_log();
 							}
 							$is_activitypub_feed = $feed->is_activitypub_feed();
+							$ap_actor_id = null;
+							$ap_actor_post = null;
+							$ap_actor_acct = '';
+							if ( $is_activitypub_feed ) {
+								$ap_actor_id = $feed->get_ap_actor_id();
+								$ap_actor_post = $ap_actor_id ? get_post( $ap_actor_id ) : null;
+								$ap_actor_acct = $ap_actor_id && class_exists( '\Activitypub\Collection\Remote_Actors' ) ? \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id ) : '';
+							}
+							$feed_title = $feed->get_title();
+							if ( ! $feed_title && $ap_actor_post ) {
+								$feed_title = $ap_actor_post->post_title;
+							}
+							$feed_badge = $friends_feed->get_feed_badge( $feed );
+							$parser_slug = $feed->get_parser();
 							?>
-							<li class="<?php echo esc_attr( $feed->get_active() ? 'active' : 'inactive hidden' ); ?><?php echo $is_activitypub_feed ? ' activitypub-feed' : ''; ?>">
+							<li class="<?php echo esc_attr( $feed->get_active() ? 'active' : 'inactive hidden' ); ?> feed-parser-<?php echo esc_attr( $parser_slug ); ?>">
 								<details>
 									<summary>
-										<?php echo esc_attr( $feed->get_title() ); ?>
-										<a href="<?php echo esc_url( $feed->get_url() ); ?>"><?php echo esc_url( $feed->get_url() ); ?></a>
-										<?php if ( $is_activitypub_feed ) : ?>
-											<span class="activitypub-badge" title="<?php esc_attr_e( 'Linked to ActivityPub plugin', 'friends' ); ?>">AP</span>
+										<?php if ( $feed_badge ) : ?>
+											<span class="feed-badge" style="background-color: <?php echo esc_attr( $feed_badge['color'] ); ?>;" title="<?php echo esc_attr( $feed_badge['title'] ); ?>"><?php echo esc_html( $feed_badge['label'] ); ?></span>
 										<?php endif; ?>
+										<?php if ( $feed_title ) : ?>
+											<span class="feed-title"><?php echo esc_html( $feed_title ); ?></span>
+										<?php endif; ?>
+										<a class="feed-url" href="<?php echo esc_url( $feed->get_url() ); ?>"><?php echo esc_html( $feed->get_url() ); ?></a>
 									</summary>
+									<div class="feed-content">
+										<?php if ( $is_activitypub_feed ) : ?>
+										<div class="activitypub-plugin-data">
+											<div class="ap-section-header"><?php esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></div>
+											<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" />
+											<?php if ( $ap_actor_post ) : ?>
+											<div class="ap-data-grid">
+												<span class="ap-data-label"><?php esc_html_e( 'Actor', 'friends' ); ?></span>
+												<span class="ap-data-value">
+													<span class="ap-actor-name"><?php echo esc_html( $ap_actor_post->post_title ); ?></span>
+													<?php if ( $ap_actor_acct ) : ?>
+														<span class="ap-actor-acct">@<?php echo esc_html( $ap_actor_acct ); ?></span>
+													<?php endif; ?>
+												</span>
+												<span class="ap-data-label"><?php esc_html_e( 'Profile', 'friends' ); ?></span>
+												<span class="ap-data-value">
+													<a href="<?php echo esc_url( $ap_actor_post->guid ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $ap_actor_post->guid ); ?></a>
+												</span>
+												<span class="ap-data-label"><?php esc_html_e( 'Actor Post', 'friends' ); ?></span>
+												<span class="ap-data-value">
+													<code>ap_actor</code>
+													<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $ap_actor_id . '&action=edit' ) ); ?>">ID <?php echo esc_html( $ap_actor_id ); ?></a>
+												</span>
+											</div>
+											<?php endif; ?>
+											<div class="ap-section-footer">
+												<?php
+												echo wp_kses(
+													sprintf(
+														/* translators: %s is a link to the ActivityPub following list. */
+														__( 'Managed by the <a href="%s">ActivityPub plugin</a>.', 'friends' ),
+														esc_url( admin_url( 'users.php?page=activitypub-following-list' ) )
+													),
+													array( 'a' => array( 'href' => array() ) )
+												);
+												?>
+											</div>
+										</div>
+										<?php endif; ?>
 									<table class="form-table">
 										<tbody>
-											<?php if ( $is_activitypub_feed ) : ?>
-											<tr>
-												<td colspan="2">
-													<p class="description activitypub-notice">
-														<?php
-														echo wp_kses(
-															sprintf(
-																/* translators: %s is a link to the ActivityPub following list. */
-																__( 'This feed is synced with the ActivityPub plugin. The URL is managed by the <a href="%s">ActivityPub following</a>.', 'friends' ),
-																esc_url( admin_url( 'users.php?page=activitypub-following-list' ) )
-															),
-															array( 'a' => array( 'href' => array() ) )
-														);
-														?>
-													</p>
-												</td>
-											</tr>
-											<?php endif; ?>
 											<tr>
 												<th><?php esc_html_e( 'Active', 'friends' ); ?></th>
 												<td><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></td>
 											</tr>
+											<?php if ( ! $is_activitypub_feed ) : ?>
 											<tr>
 												<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
 												<td>
-													<?php if ( $is_activitypub_feed ) : ?>
-														<code><?php echo esc_html( $feed->get_url() ); ?></code>
-														<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" />
-													<?php else : ?>
-														<input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" />
-													<?php endif; ?>
+													<input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" />
 												</td>
 											</tr>
+											<?php endif; ?>
 											<tr>
 												<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
 												<td>
@@ -133,7 +168,8 @@ $has_last_log = false;
 										<?php do_action( 'friends_feed_list_item', $feed, $term_id ); ?>
 									</tbody>
 								</table>
-							</details>
+									</div>
+								</details>
 							<?php if ( $feed->get_last_log() ) : ?>
 								<p class="lastlog hidden notice">
 									<?php
@@ -152,40 +188,47 @@ $has_last_log = false;
 						</li>
 						<?php endforeach; ?>
 						<li class="template hidden">
-								<table class="form-table">
-									<tbody>
-										<tr>
-											<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
-											<td><input type="text" name="feeds[new][url]" value="" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
-										</tr>
-										<tr>
-											<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
-											<td>
-												<select name="feeds[new][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
-												<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
-													<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( wp_strip_all_tags( $parser_name ) ); ?></option>
-												<?php endforeach; ?>
-											</select>
-											<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend&parser=&preview=' ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
-										</td>
-									</tr>
-									<tr>
-										<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
-										<td>
-											<select name="feeds[new][post-format]" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Post Format' ); ?>">
-											<?php foreach ( $args['post_formats'] as $format => $_title ) : ?>
-												<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( $_title ); ?></option>
-											<?php endforeach; ?>
-											</select>
-										</td>
-									</tr>
-									<tr>
-										<th><?php esc_html_e( 'Remarks', 'friends' ); ?></th>
-										<td><input type="text" name="feeds[new][title]" value="" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
-									</tr>
-									<?php do_action( 'friends_feed_list_item', isset( $feed ) ? $feed : array(), 'new' ); ?>
-								</tbody>
-							</table>
+							<details open>
+								<summary>
+									<span class="feed-title"><?php esc_html_e( 'New Feed', 'friends' ); ?></span>
+								</summary>
+								<div class="feed-content">
+									<table class="form-table">
+										<tbody>
+											<tr>
+												<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
+												<td><input type="text" name="feeds[new][url]" value="" size="30" aria-label="<?php esc_attr_e( 'Feed URL', 'friends' ); ?>" class="url" /></td>
+											</tr>
+											<tr>
+												<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
+												<td>
+													<select name="feeds[new][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
+													<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
+														<option value="<?php echo esc_attr( $slug ); ?>"><?php echo esc_html( wp_strip_all_tags( $parser_name ) ); ?></option>
+													<?php endforeach; ?>
+													</select>
+													<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=add-friend&parser=&preview=' ) ), 'preview-feed' ) ); ?>" class="preview-parser" target="_blank" rel="noopener noreferrer"><?php esc_attr_e( 'Preview', 'friends' ); ?></a>
+												</td>
+											</tr>
+											<tr>
+												<th><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */  esc_html_e( 'Post Format' ); ?></th>
+												<td>
+													<select name="feeds[new][post-format]" aria-label="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Post Format' ); ?>">
+													<?php foreach ( $args['post_formats'] as $format => $_title ) : ?>
+														<option value="<?php echo esc_attr( $format ); ?>"><?php echo esc_html( $_title ); ?></option>
+													<?php endforeach; ?>
+													</select>
+												</td>
+											</tr>
+											<tr>
+												<th><?php esc_html_e( 'Remarks', 'friends' ); ?></th>
+												<td><input type="text" name="feeds[new][title]" value="" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
+											</tr>
+											<?php do_action( 'friends_feed_list_item', isset( $feed ) ? $feed : array(), 'new' ); ?>
+										</tbody>
+									</table>
+								</div>
+							</details>
 						</li>
 					</ul>
 

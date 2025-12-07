@@ -1321,4 +1321,39 @@ class Feed {
 		}
 		return $parsers;
 	}
+
+	/**
+	 * Get a parser instance by slug.
+	 *
+	 * @param string $slug The parser slug.
+	 * @return Feed_Parser|null The parser instance or null.
+	 */
+	public function get_parser_by_slug( $slug ) {
+		return isset( $this->parsers[ $slug ] ) ? $this->parsers[ $slug ] : null;
+	}
+
+	/**
+	 * Get the badge for a feed based on its parser.
+	 *
+	 * @param User_Feed $user_feed The user feed.
+	 * @return array|null Badge info array or null.
+	 */
+	public function get_feed_badge( $user_feed ) {
+		$parser_slug = $user_feed->get_parser();
+		$parser = $this->get_parser_by_slug( $parser_slug );
+
+		$badge = null;
+		if ( $parser && method_exists( $parser, 'get_badge' ) ) {
+			$badge = $parser->get_badge();
+		}
+
+		/**
+		 * Filter the badge displayed for a feed.
+		 *
+		 * @param array|null $badge     The badge array with 'label', 'color', 'title' keys, or null.
+		 * @param User_Feed  $user_feed The user feed.
+		 * @param string     $parser    The parser slug.
+		 */
+		return apply_filters( 'friends_feed_badge', $badge, $user_feed, $parser_slug );
+	}
 }
