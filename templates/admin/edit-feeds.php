@@ -29,21 +29,18 @@ $has_last_log = false;
 								$has_last_log = true;
 								$last_log = $feed->get_last_log();
 							}
-							$is_activitypub_feed = $feed->is_activitypub_feed();
-							$ap_actor_id = null;
-							$ap_actor_post = null;
-							$ap_actor_acct = '';
-							if ( $is_activitypub_feed ) {
-								$ap_actor_id = $feed->get_ap_actor_id();
-								$ap_actor_post = $ap_actor_id ? get_post( $ap_actor_id ) : null;
-								$ap_actor_acct = $ap_actor_id && class_exists( '\Activitypub\Collection\Remote_Actors' ) ? \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id ) : '';
-							}
-							$feed_title = $feed->get_title();
-							if ( ! $feed_title && $ap_actor_post ) {
-								$feed_title = $ap_actor_post->post_title;
-							}
-							$feed_badge = $friends_feed->get_feed_badge( $feed );
 							$parser_slug = $feed->get_parser();
+							$feed_badge = $friends_feed->get_feed_badge( $feed );
+							$feed_title = $feed->get_title();
+
+							/**
+							 * Filter the feed title displayed in the feed list.
+							 *
+							 * @param string    $feed_title The feed title.
+							 * @param User_Feed $feed       The feed object.
+							 * @param string    $parser     The parser slug.
+							 */
+							$feed_title = apply_filters( 'friends_feed_list_title', $feed_title, $feed, $parser_slug );
 							?>
 							<li class="<?php echo esc_attr( $feed->get_active() ? 'active' : 'inactive hidden' ); ?> feed-parser-<?php echo esc_attr( $parser_slug ); ?>"<?php echo $feed_badge ? ' style="--feed-color: ' . esc_attr( $feed_badge['color'] ) . ';"' : ''; ?>>
 								<details>
@@ -57,51 +54,23 @@ $has_last_log = false;
 										<a class="feed-url" href="<?php echo esc_url( $feed->get_url() ); ?>"><?php echo esc_html( $feed->get_url() ); ?></a>
 									</summary>
 									<div class="feed-content">
-										<?php if ( $is_activitypub_feed ) : ?>
-										<div class="activitypub-plugin-data">
-											<div class="ap-section-header"><?php esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></div>
-											<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][url]" value="<?php echo esc_attr( $feed->get_url() ); ?>" />
-											<?php if ( $ap_actor_post ) : ?>
-											<div class="ap-data-grid">
-												<span class="ap-data-label"><?php esc_html_e( 'Actor', 'friends' ); ?></span>
-												<span class="ap-data-value">
-													<span class="ap-actor-name"><?php echo esc_html( $ap_actor_post->post_title ); ?></span>
-													<?php if ( $ap_actor_acct ) : ?>
-														<span class="ap-actor-acct">@<?php echo esc_html( $ap_actor_acct ); ?></span>
-													<?php endif; ?>
-												</span>
-												<span class="ap-data-label"><?php esc_html_e( 'Profile', 'friends' ); ?></span>
-												<span class="ap-data-value">
-													<a href="<?php echo esc_url( $ap_actor_post->guid ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $ap_actor_post->guid ); ?></a>
-												</span>
-												<span class="ap-data-label"><?php esc_html_e( 'Actor Post', 'friends' ); ?></span>
-												<span class="ap-data-value">
-													<code>ap_actor</code>
-													<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $ap_actor_id . '&action=edit' ) ); ?>">ID <?php echo esc_html( $ap_actor_id ); ?></a>
-												</span>
-											</div>
-											<?php endif; ?>
-											<div class="ap-section-footer">
-												<?php
-												echo wp_kses(
-													sprintf(
-														/* translators: %s is a link to the ActivityPub following list. */
-														__( 'Managed by the <a href="%s">ActivityPub plugin</a>.', 'friends' ),
-														esc_url( admin_url( 'users.php?page=activitypub-following-list' ) )
-													),
-													array( 'a' => array( 'href' => array() ) )
-												);
-												?>
-											</div>
-										</div>
-										<?php endif; ?>
+										<?php
+										/**
+										 * Action to add content at the top of the feed edit section.
+										 *
+										 * @param User_Feed $feed      The feed being edited.
+										 * @param int       $term_id   The term ID of the feed.
+										 * @param string    $parser    The parser slug.
+										 */
+										do_action( 'friends_edit_feed_content_top', $feed, $term_id, $parser_slug );
+										?>
 									<table class="form-table">
 										<tbody>
 											<tr>
 												<th><?php esc_html_e( 'Active', 'friends' ); ?></th>
 												<td><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></td>
 											</tr>
-											<?php if ( ! $is_activitypub_feed ) : ?>
+											<?php if ( ! $feed->is_activitypub_feed() ) : ?>
 											<tr>
 												<th><?php esc_html_e( 'Feed URL', 'friends' ); ?></th>
 												<td>
@@ -112,7 +81,7 @@ $has_last_log = false;
 											<tr>
 												<th><?php esc_html_e( 'Parser', 'friends' ); ?></th>
 												<td>
-													<?php if ( $is_activitypub_feed ) : ?>
+													<?php if ( $feed->is_activitypub_feed() ) : ?>
 														<strong><?php esc_html_e( 'ActivityPub', 'friends' ); ?></strong>
 														<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" value="activitypub" />
 													<?php else : ?>
@@ -157,7 +126,7 @@ $has_last_log = false;
 										<tr>
 											<th><?php esc_html_e( 'Actions', 'friends' ); ?></th>
 											<td>
-												<?php if ( $is_activitypub_feed ) : ?>
+												<?php if ( $feed->is_activitypub_feed() ) : ?>
 													<a href="#" class="delete-feed activitypub-unfollow"><?php esc_html_e( 'Unfollow &amp; Remove', 'friends' ); ?></a>
 													<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][ap-actor-id]" value="<?php echo esc_attr( $feed->get_ap_actor_id() ); ?>" />
 												<?php else : ?>

@@ -44,6 +44,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		\add_action( 'activitypub_inbox_create', array( $this, 'handle_received_create' ), 15, 2 );
 		\add_filter( 'friends_feed_badge', array( $this, 'friends_feed_badge' ), 10, 3 );
+		\add_filter( 'friends_feed_list_title', array( $this, 'friends_feed_list_title' ), 10, 3 );
+		\add_action( 'friends_edit_feed_content_top', array( $this, 'render_feed_edit_content' ), 10, 3 );
 		\add_action( 'activitypub_inbox_delete', array( $this, 'handle_received_delete' ), 15, 2 );
 		\add_action( 'activitypub_inbox_announce', array( $this, 'handle_received_announce' ), 15, 2 );
 		\add_action( 'activitypub_inbox_like', array( $this, 'handle_received_like' ), 15, 2 );
@@ -325,6 +327,32 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Filter the feed title to use actor name as fallback for ActivityPub feeds.
+	 *
+	 * @param string    $title  The feed title.
+	 * @param User_Feed $feed   The feed object.
+	 * @param string    $parser The parser slug.
+	 * @return string The feed title.
+	 */
+	public function friends_feed_list_title( $title, $feed, $parser ) {
+		if ( 'activitypub' !== $parser || $title ) {
+			return $title;
+		}
+
+		$ap_actor_id = $feed->get_ap_actor_id();
+		if ( ! $ap_actor_id ) {
+			return $title;
+		}
+
+		$ap_actor_post = \get_post( $ap_actor_id );
+		if ( $ap_actor_post ) {
+			return $ap_actor_post->post_title;
+		}
+
+		return $title;
+	}
+
+	/**
 	 * Filter the feed badge for ActivityPub feeds to add extra info.
 	 *
 	 * @param array|null $badge     The badge array.
@@ -342,6 +370,70 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $badge;
+	}
+
+	/**
+	 * Render extra content in the feed edit section for ActivityPub feeds.
+	 *
+	 * @param User_Feed $feed      The feed being edited.
+	 * @param int       $term_id   The term ID of the feed.
+	 * @param string    $parser    The parser slug.
+	 */
+	public function render_feed_edit_content( $feed, $term_id, $parser ) {
+		if ( 'activitypub' !== $parser ) {
+			return;
+		}
+
+		$ap_actor_id = $feed->get_ap_actor_id();
+		if ( ! $ap_actor_id ) {
+			return;
+		}
+
+		$ap_actor_post = \get_post( $ap_actor_id );
+		if ( ! $ap_actor_post ) {
+			return;
+		}
+
+		$ap_actor_acct = '';
+		if ( \class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$ap_actor_acct = \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id );
+		}
+		?>
+		<div class="activitypub-plugin-data">
+			<div class="ap-section-header"><?php \esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></div>
+			<input type="hidden" name="feeds[<?php echo \esc_attr( $term_id ); ?>][url]" value="<?php echo \esc_attr( $feed->get_url() ); ?>" />
+			<div class="ap-data-grid">
+				<span class="ap-data-label"><?php \esc_html_e( 'Actor', 'friends' ); ?></span>
+				<span class="ap-data-value">
+					<span class="ap-actor-name"><?php echo \esc_html( $ap_actor_post->post_title ); ?></span>
+					<?php if ( $ap_actor_acct ) : ?>
+						<span class="ap-actor-acct">@<?php echo \esc_html( $ap_actor_acct ); ?></span>
+					<?php endif; ?>
+				</span>
+				<span class="ap-data-label"><?php \esc_html_e( 'Profile', 'friends' ); ?></span>
+				<span class="ap-data-value">
+					<a href="<?php echo \esc_url( $ap_actor_post->guid ); ?>" target="_blank" rel="noopener noreferrer"><?php echo \esc_html( $ap_actor_post->guid ); ?></a>
+				</span>
+				<span class="ap-data-label"><?php \esc_html_e( 'Actor Post', 'friends' ); ?></span>
+				<span class="ap-data-value">
+					<code>ap_actor</code>
+					<a href="<?php echo \esc_url( \admin_url( 'post.php?post=' . $ap_actor_id . '&action=edit' ) ); ?>">ID <?php echo \esc_html( $ap_actor_id ); ?></a>
+				</span>
+			</div>
+			<div class="ap-section-footer">
+				<?php
+				echo \wp_kses(
+					\sprintf(
+						/* translators: %s is a link to the ActivityPub following list. */
+						\__( 'Managed by the <a href="%s">ActivityPub plugin</a>.', 'friends' ),
+						\esc_url( \admin_url( 'users.php?page=activitypub-following-list' ) )
+					),
+					array( 'a' => array( 'href' => array() ) )
+				);
+				?>
+			</div>
+		</div>
+		<?php
 	}
 
 	public function suggest_display_name( $display_name, $url ) {
