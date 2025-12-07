@@ -195,23 +195,16 @@ ul.feeds li.inactive summary .feed-title {
 }
 
 ul.feeds li.active summary {
-	border-left: 3px solid #4ab866;
+	border-left: 3px solid var(--feed-color, #4ab866);
 }
 
 ul.feeds li.inactive summary {
 	border-left: 3px solid #dc3232;
 }
 
-ul.feeds li.feed-parser-activitypub.active summary {
-	border-left: 3px solid #f6ad55;
-}
-
-ul.feeds li.feed-parser-simplepie.active summary {
-	border-left: 3px solid #ee802f;
-}
-
 ul.feeds li summary .feed-badge {
 	display: inline-block;
+	background-color: var(--feed-color, #888);
 	color: #fff;
 	font-size: 10px;
 	font-weight: 600;

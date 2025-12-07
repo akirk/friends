@@ -46,7 +46,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	public function get_badge() {
 		return array(
 			'label' => 'RSS',
-			'color' => '#ee802f',
+			'color' => '#5b9a68',
 			'title' => __( 'RSS/Atom Feed', 'friends' ),
 		);
 	}

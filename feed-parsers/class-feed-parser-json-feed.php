@@ -30,7 +30,7 @@ class Feed_Parser_JSON_Feed extends Feed_Parser_V2 {
 	public function get_badge() {
 		return array(
 			'label' => 'JSON',
-			'color' => '#5b9a68',
+			'color' => '#ee802f',
 			'title' => __( 'JSON Feed', 'friends' ),
 		);
 	}

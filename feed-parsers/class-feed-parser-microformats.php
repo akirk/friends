@@ -30,7 +30,7 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 	public function get_badge() {
 		return array(
 			'label' => 'mf2',
-			'color' => '#e0144c',
+			'color' => '#2271b1',
 			'title' => __( 'Microformats', 'friends' ),
 		);
 	}

@@ -45,11 +45,11 @@ $has_last_log = false;
 							$feed_badge = $friends_feed->get_feed_badge( $feed );
 							$parser_slug = $feed->get_parser();
 							?>
-							<li class="<?php echo esc_attr( $feed->get_active() ? 'active' : 'inactive hidden' ); ?> feed-parser-<?php echo esc_attr( $parser_slug ); ?>">
+							<li class="<?php echo esc_attr( $feed->get_active() ? 'active' : 'inactive hidden' ); ?> feed-parser-<?php echo esc_attr( $parser_slug ); ?>"<?php echo $feed_badge ? ' style="--feed-color: ' . esc_attr( $feed_badge['color'] ) . ';"' : ''; ?>>
 								<details>
 									<summary>
 										<?php if ( $feed_badge ) : ?>
-											<span class="feed-badge" style="background-color: <?php echo esc_attr( $feed_badge['color'] ); ?>;" title="<?php echo esc_attr( $feed_badge['title'] ); ?>"><?php echo esc_html( $feed_badge['label'] ); ?></span>
+											<span class="feed-badge" title="<?php echo esc_attr( $feed_badge['title'] ); ?>"><?php echo esc_html( $feed_badge['label'] ); ?></span>
 										<?php endif; ?>
 										<?php if ( $feed_title ) : ?>
 											<span class="feed-title"><?php echo esc_html( $feed_title ); ?></span>
