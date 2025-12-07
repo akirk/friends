@@ -339,13 +339,20 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $title;
 		}
 
-		$ap_actor_id = $feed->get_ap_actor_id();
-		if ( ! $ap_actor_id ) {
+		if ( ! \class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 			return $title;
 		}
 
-		$ap_actor_post = \get_post( $ap_actor_id );
-		if ( $ap_actor_post ) {
+		// Try to get actor by post ID first.
+		$ap_actor_id = $feed->get_ap_actor_id();
+		$ap_actor_post = $ap_actor_id ? \get_post( $ap_actor_id ) : null;
+
+		// Fallback: look up by URL.
+		if ( ! $ap_actor_post || 'ap_actor' !== $ap_actor_post->post_type ) {
+			$ap_actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $feed->get_url() );
+		}
+
+		if ( $ap_actor_post && ! is_wp_error( $ap_actor_post ) ) {
 			return $ap_actor_post->post_title;
 		}
 
@@ -384,20 +391,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
+		if ( ! \class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			return;
+		}
+
+		// Try to get actor by post ID first, then by URL.
 		$ap_actor_id = $feed->get_ap_actor_id();
-		if ( ! $ap_actor_id ) {
+		$ap_actor_post = $ap_actor_id ? \get_post( $ap_actor_id ) : null;
+		$ap_actor_source = $ap_actor_id ? 'taxonomy' : null;
+
+		// Fallback: look up by URL if we have the post type but not a valid post.
+		if ( ! $ap_actor_post || 'ap_actor' !== $ap_actor_post->post_type ) {
+			$ap_actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $feed->get_url() );
+			if ( $ap_actor_post && ! is_wp_error( $ap_actor_post ) ) {
+				$ap_actor_id = $ap_actor_post->ID;
+				$ap_actor_source = 'url_lookup';
+			}
+		}
+
+		if ( ! $ap_actor_post || is_wp_error( $ap_actor_post ) ) {
 			return;
 		}
 
-		$ap_actor_post = \get_post( $ap_actor_id );
-		if ( ! $ap_actor_post ) {
-			return;
-		}
-
-		$ap_actor_acct = '';
-		if ( \class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			$ap_actor_acct = \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id );
-		}
+		$ap_actor_acct = \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id );
 		?>
 		<div class="activitypub-plugin-data">
 			<div class="ap-section-header"><?php \esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></div>
@@ -418,6 +434,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				<span class="ap-data-value">
 					<code>ap_actor</code>
 					<a href="<?php echo \esc_url( \admin_url( 'post.php?post=' . $ap_actor_id . '&action=edit' ) ); ?>">ID <?php echo \esc_html( $ap_actor_id ); ?></a>
+					<em style="color: <?php echo 'taxonomy' === $ap_actor_source ? 'green' : 'orange'; ?>;">(<?php echo \esc_html( $ap_actor_source ); ?>)</em>
 				</span>
 			</div>
 			<div class="ap-section-footer">
@@ -1994,6 +2011,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				}
 			} else {
 				$new_feed = $friend->save_feed( $feed['url'], $feed );
+			}
+
+			// Link the new feed to the ap_actor post for the new URL.
+			if ( $new_feed instanceof User_Feed && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $feed['url'] );
+				if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+					$new_feed->set_ap_actor_id( $actor_post->ID );
+				}
 			}
 
 			// Since the URL has changed, the above will create a new feed, therefore we need to delete the old one.

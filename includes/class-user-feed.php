@@ -215,7 +215,13 @@ class User_Feed {
 			return null;
 		}
 
-		return (int) $object_ids[0];
+		foreach ( $object_ids as $object_id ) {
+			if ( 'ap_actor' === get_post_type( $object_id ) ) {
+				return (int) $object_id;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -253,6 +259,11 @@ class User_Feed {
 	 * @return array|false|\WP_Error Array of term taxonomy IDs on success, false or WP_Error on failure.
 	 */
 	public function set_ap_actor_id( $ap_actor_id ) {
+		// Ensure taxonomy is registered for ap_actor post type (may not be during cron).
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			register_taxonomy_for_object_type( self::TAXONOMY, \Activitypub\Collection\Remote_Actors::POST_TYPE );
+		}
+
 		return wp_set_object_terms( absint( $ap_actor_id ), $this->term->term_id, self::TAXONOMY );
 	}
 

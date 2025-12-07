@@ -1416,6 +1416,8 @@ class Migration {
 		update_option( 'friends_ap_feeds_link_migration_failed_urls', array(), false );
 
 		// Clear any previous run's stats.
+		delete_option( 'friends_ap_feeds_linked_count' );
+		delete_option( 'friends_ap_feeds_skipped_count' );
 		delete_option( 'friends_ap_feeds_failed_count' );
 		delete_option( 'friends_ap_feeds_failed_urls' );
 
@@ -1537,13 +1539,25 @@ class Migration {
 			delete_option( 'friends_ap_feeds_link_migration_current_url' );
 
 			if ( $ap_actor_id ) {
-				$feed->set_ap_actor_id( $ap_actor_id );
-				if ( $feed->get_active() ) {
-					self::ensure_activitypub_following( $actor_url );
+				$result = $feed->set_ap_actor_id( $ap_actor_id );
+				if ( is_wp_error( $result ) || false === $result ) {
+					++$failed;
+					$failed_urls[] = array(
+						'url'    => $actor_url,
+						'time'   => time(),
+						'feed'   => $feed->get_friend_user()->display_name ?? 'Unknown',
+						'reason' => is_wp_error( $result ) ? $result->get_error_message() : 'set_ap_actor_id_failed',
+					);
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( sprintf( 'Friends Migration: Failed to link %s - set_ap_actor_id failed', $actor_url ) );
+				} else {
+					if ( $feed->get_active() ) {
+						self::ensure_activitypub_following( $actor_url );
+					}
+					++$linked;
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( sprintf( 'Friends Migration: Linked %s to ap_actor %d', $actor_url, $ap_actor_id ) );
 				}
-				++$linked;
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( sprintf( 'Friends Migration: Linked %s to ap_actor %d', $actor_url, $ap_actor_id ) );
 			} else {
 				++$failed;
 				$failed_urls[] = array(
@@ -1641,21 +1655,39 @@ class Migration {
 	 */
 	public function debug_link_activitypub_feeds_to_actors( $status ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		$failed_urls = get_option( 'friends_ap_feeds_failed_urls', array() );
-		$failed_count = get_option( 'friends_ap_feeds_failed_count', 0 );
-		$linked_count = get_option( 'friends_ap_feeds_linked_count', 0 );
-		$skipped_count = get_option( 'friends_ap_feeds_skipped_count', 0 );
+		$failed_count = (int) get_option( 'friends_ap_feeds_failed_count', 0 );
+		$linked_count = (int) get_option( 'friends_ap_feeds_linked_count', 0 );
+		$skipped_count = (int) get_option( 'friends_ap_feeds_skipped_count', 0 );
 
-		// Also check in-progress failed URLs.
+		// Also check in-progress stats.
+		$in_progress_linked = (int) get_option( 'friends_ap_feeds_link_migration_linked', 0 );
+		$in_progress_skipped = (int) get_option( 'friends_ap_feeds_link_migration_skipped', 0 );
 		$in_progress_failed = get_option( 'friends_ap_feeds_link_migration_failed_urls', array() );
+
+		$linked_count += $in_progress_linked;
+		$skipped_count += $in_progress_skipped;
+		$failed_count += count( $in_progress_failed );
+
 		if ( ! empty( $in_progress_failed ) ) {
 			$failed_urls = array_merge( $failed_urls, $in_progress_failed );
 		}
 
 		echo '<div class="migration-debug-content" style="padding: 15px; background: #f9f9f9;">';
 
+		// Calculate live counts.
+		$activitypub_feeds = User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG );
+		$actually_linked = 0;
+		$total_feeds = count( $activitypub_feeds );
+		foreach ( $activitypub_feeds as $feed ) {
+			if ( $feed->get_ap_actor_id() ) {
+				++$actually_linked;
+			}
+		}
+
 		echo '<h4>' . esc_html__( 'Migration Statistics', 'friends' ) . '</h4>';
 		echo '<ul>';
-		echo '<li><strong>' . esc_html__( 'Linked:', 'friends' ) . '</strong> ' . esc_html( $linked_count ) . '</li>';
+		echo '<li><strong>' . esc_html__( 'Linked (stored):', 'friends' ) . '</strong> ' . esc_html( $linked_count ) . '</li>';
+		echo '<li><strong>' . esc_html__( 'Actually linked (live):', 'friends' ) . '</strong> <span style="color: green;">' . esc_html( $actually_linked ) . '</span> / ' . esc_html( $total_feeds ) . '</li>';
 		echo '<li><strong>' . esc_html__( 'Already linked (skipped):', 'friends' ) . '</strong> ' . esc_html( $skipped_count ) . '</li>';
 		echo '<li><strong>' . esc_html__( 'Failed:', 'friends' ) . '</strong> ' . esc_html( $failed_count ) . '</li>';
 		echo '</ul>';
