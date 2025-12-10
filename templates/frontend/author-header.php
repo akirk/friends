@@ -81,7 +81,11 @@ if ( empty( $user_description ) && $activitypub_summary ) {
 	$user_description = $activitypub_summary;
 }
 
-?><div id="author-header" class="mb-2<?php echo $header_image_url ? ' has-header-image' : ''; ?>"<?php if ( $header_image_url ) : ?> style="background-image: url('<?php echo esc_url( $header_image_url ); ?>');"<?php endif; ?>>
+?><div id="author-header" class="mb-2<?php echo $header_image_url ? ' has-header-image' : ''; ?>"
+<?php
+if ( $header_image_url ) :
+	?>
+	style="background-image: url('<?php echo esc_url( $header_image_url ); ?>');"<?php endif; ?>>
 <h2 id="page-title">
 	<?php if ( $args['friend_user']->is_starred() ) : ?>
 		<a href="" class="dashicons dashicons-star-filled starred" data-id="<?php echo esc_attr( $args['friend_user']->user_login ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->user_login ) ); ?>"></a>
