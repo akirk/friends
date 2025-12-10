@@ -1697,11 +1697,51 @@ class Migration {
 	}
 
 	/**
+	 * Render the admin migrations page.
+	 */
+	public static function render_admin_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'friends' ) );
+		}
+
+		// Handle version update form submission.
+		if ( isset( $_POST['update_version'] ) && check_admin_referer( 'friends-update-version' ) ) {
+			$new_version = isset( $_POST['stored_version'] ) ? sanitize_text_field( wp_unslash( $_POST['stored_version'] ) ) : '';
+			if ( empty( $new_version ) ) {
+				delete_option( 'friends_plugin_version' );
+				$message = __( 'Stored version cleared. Migrations will run on next page load.', 'friends' );
+			} else {
+				update_option( 'friends_plugin_version', $new_version );
+				$message = sprintf(
+					/* translators: %s is a version number */
+					__( 'Stored version updated to %s.', 'friends' ),
+					$new_version
+				);
+			}
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+		}
+
+		$statuses = self::get_all_statuses();
+		Friends::template_loader()->get_template_part(
+			'admin/migrations',
+			null,
+			array(
+				'statuses' => $statuses,
+			)
+		);
+	}
+
+	/**
 	 * Debug output hook for the link_activitypub_feeds_to_actors migration.
 	 *
 	 * @param array $status The migration status (unused but required by hook signature).
 	 */
 	public function debug_link_activitypub_feeds_to_actors( $status ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		if ( ! class_exists( '\Feed_Parser_ActivityPub' ) ) {
+			echo '<p>' . esc_html__( 'ActivityPub plugin not detected. Migration cannot proceed.', 'friends' ) . '</p>';
+			return;
+		}
+
 		$failed_urls = get_option( 'friends_ap_feeds_failed_urls', array() );
 		$failed_count = (int) get_option( 'friends_ap_feeds_failed_count', 0 );
 		$linked_count = (int) get_option( 'friends_ap_feeds_linked_count', 0 );
