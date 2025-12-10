@@ -11,9 +11,10 @@ $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 $hidden_post_count = $args['friend_user']->get_post_in_trash_count();
 
-// Get ActivityPub feeds and their data (header image, profile URLs).
+// Get ActivityPub feeds and their data (header image, profile URLs, summary).
 $activitypub_feeds = array();
 $header_image_url = null;
+$activitypub_summary = null;
 foreach ( $args['friend_user']->get_active_feeds() as $feed ) {
 	// Check if this is an ActivityPub feed (parser is 'activitypub').
 	if ( 'activitypub' !== $feed->get_parser() ) {
@@ -37,7 +38,7 @@ foreach ( $args['friend_user']->get_active_feeds() as $feed ) {
 		'header' => null,
 	);
 
-	// Try to get actor metadata including header image.
+	// Try to get actor metadata including header image and summary.
 	if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 		$actor = null;
 
@@ -60,10 +61,24 @@ foreach ( $args['friend_user']->get_active_feeds() as $feed ) {
 					$header_image_url = $feed_data['header'];
 				}
 			}
+
+			// Get summary/bio if we don't have one yet.
+			if ( ! $activitypub_summary ) {
+				$summary = $actor->get_summary();
+				if ( $summary ) {
+					$activitypub_summary = $summary;
+				}
+			}
 		}
 	}
 
 	$activitypub_feeds[] = $feed_data;
+}
+
+// Use ActivityPub summary as fallback for user description.
+$user_description = $args['friend_user']->description;
+if ( empty( $user_description ) && $activitypub_summary ) {
+	$user_description = $activitypub_summary;
 }
 
 ?><div id="author-header" class="mb-2<?php echo $header_image_url ? ' has-header-image' : ''; ?>"<?php if ( $header_image_url ) : ?> style="background-image: url('<?php echo esc_url( $header_image_url ); ?>');"<?php endif; ?>>
@@ -96,11 +111,11 @@ if ( $args['friends']->frontend->reaction ) {
 </a>
 </h2>
 
-<?php if ( $args['friend_user']->description ) : ?>
+<?php if ( $user_description ) : ?>
 	<p>
 	<?php
 	echo wp_kses(
-		make_clickable( str_replace( '</p>', '<br/>', $args['friend_user']->description ) ),
+		make_clickable( str_replace( '</p>', '<br/>', $user_description ) ),
 		array(
 			'a'    => array( 'href' => array() ),
 			'span' => array( 'class' => array() ),
