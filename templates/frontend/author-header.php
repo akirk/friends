@@ -11,7 +11,62 @@ $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 $hidden_post_count = $args['friend_user']->get_post_in_trash_count();
 
-?><div id="author-header" class="mb-2">
+// Get ActivityPub feeds and their data (header image, profile URLs).
+$activitypub_feeds = array();
+$header_image_url = null;
+foreach ( $args['friend_user']->get_active_feeds() as $feed ) {
+	// Check if this is an ActivityPub feed (parser is 'activitypub').
+	if ( 'activitypub' !== $feed->get_parser() ) {
+		continue;
+	}
+
+	$ap_actor_id = $feed->get_ap_actor_id();
+	$ap_actor_url = $feed->get_ap_actor_url();
+
+	// If no actor URL from linked actor, use the feed URL as the actor URL.
+	if ( ! $ap_actor_url ) {
+		$ap_actor_url = $feed->get_url();
+	}
+
+	if ( ! $ap_actor_url ) {
+		continue;
+	}
+
+	$feed_data = array(
+		'url'    => $ap_actor_url,
+		'header' => null,
+	);
+
+	// Try to get actor metadata including header image.
+	if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+		$actor = null;
+
+		// First try using the linked actor ID.
+		if ( $ap_actor_id ) {
+			$actor = \Activitypub\Collection\Remote_Actors::get_actor( $ap_actor_id );
+		}
+
+		// If no linked actor or it failed, try fetching by URL.
+		if ( ( ! $actor || is_wp_error( $actor ) ) && method_exists( '\Activitypub\Collection\Remote_Actors', 'get_by_uri' ) ) {
+			$actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $ap_actor_url );
+		}
+
+		if ( $actor && ! is_wp_error( $actor ) ) {
+			$image = $actor->get_image();
+			if ( $image ) {
+				$feed_data['header'] = \Activitypub\object_to_uri( $image );
+				// Use the first header image found.
+				if ( ! $header_image_url ) {
+					$header_image_url = $feed_data['header'];
+				}
+			}
+		}
+	}
+
+	$activitypub_feeds[] = $feed_data;
+}
+
+?><div id="author-header" class="mb-2<?php echo $header_image_url ? ' has-header-image' : ''; ?>"<?php if ( $header_image_url ) : ?> style="background-image: url('<?php echo esc_url( $header_image_url ); ?>');"<?php endif; ?>>
 <h2 id="page-title">
 	<?php if ( $args['friend_user']->is_starred() ) : ?>
 		<a href="" class="dashicons dashicons-star-filled starred" data-id="<?php echo esc_attr( $args['friend_user']->user_login ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'star-' . $args['friend_user']->user_login ) ); ?>"></a>
@@ -84,6 +139,31 @@ if ( ! empty( $args['friend_user']->user_url ) ) {
 		<?php
 	}
 }
+?>
+
+<?php
+// Display ActivityPub profile links.
+foreach ( $activitypub_feeds as $ap_feed ) :
+	$ap_url_parts = wp_parse_url( $ap_feed['url'] );
+	if ( isset( $ap_url_parts['host'] ) ) :
+		$ap_hostname = $ap_url_parts['host'];
+		if ( substr( $ap_hostname, 0, 4 ) === 'www.' ) {
+			$ap_hostname = substr( $ap_hostname, 4 );
+		}
+		// Extract @username for Mastodon-style URLs like /@username.
+		$ap_display = $ap_hostname;
+		if ( isset( $ap_url_parts['path'] ) && preg_match( '#^/@([^/]+)#', $ap_url_parts['path'], $matches ) ) {
+			$ap_display = '@' . $matches[1] . '@' . $ap_hostname;
+		} elseif ( isset( $ap_url_parts['path'] ) && preg_match( '#^/users/([^/]+)#i', $ap_url_parts['path'], $matches ) ) {
+			$ap_display = '@' . $matches[1] . '@' . $ap_hostname;
+		}
+		?>
+		<a class="chip activitypub-profile" href="<?php echo esc_url( $ap_feed['url'] ); ?>" target="_blank" rel="noopener" title="<?php esc_attr_e( 'ActivityPub Profile', 'friends' ); ?>">
+			<span class="dashicons dashicons-rss" style="font-size: 14px; width: 14px; height: 14px; margin-right: 4px; vertical-align: text-bottom;"></span><?php echo esc_html( $ap_display ); ?>
+		</a>
+		<?php
+	endif;
+endforeach;
 ?>
 
 <?php foreach ( $args['friend_user']->get_post_count_by_post_format() as $post_format => $count ) : ?>
