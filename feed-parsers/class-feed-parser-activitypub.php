@@ -54,6 +54,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_update', array( $this, 'handle_received_update' ), 15, 2 );
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
 		\add_action( 'activitypub_interactions_follow_url', array( $this, 'activitypub_interactions_follow_url' ), 10, 2 );
+		\add_filter( 'activitypub_comment_post_id', array( $this, 'activitypub_comment_post_id' ), 10, 3 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
@@ -1334,6 +1335,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
+		// Check if this is a reply to an existing Friends post - if so, let the ActivityPub plugin handle it as a comment.
+		if ( 'create' === $type && ! empty( $activity['object']['inReplyTo'] ) ) {
+			$in_reply_to = $activity['object']['inReplyTo'];
+			if ( is_array( $in_reply_to ) ) {
+				$in_reply_to = reset( $in_reply_to );
+			}
+			$reply_to_post_id = Feed::url_to_postid( $in_reply_to );
+			if ( $reply_to_post_id ) {
+				// This is a reply to an existing Friends post - skip processing and let ActivityPub handle it as a comment.
+				return false;
+			}
+		}
+
 		if ( 'undo' === $type ) {
 			if ( ! isset( $activity['object'] ) ) {
 				return false;
@@ -2518,6 +2532,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function check_url_to_postid( $post_id, $url ) {
+		if ( ! $post_id ) {
+			$post_id = \Friends\Feed::url_to_postid( $url );
+		}
+		return $post_id;
+	}
+
+	/**
+	 * Resolve a URL to a Friends post ID for ActivityPub comment handling.
+	 *
+	 * This allows the ActivityPub plugin to create comments on friend_post_cache posts
+	 * instead of the Friends plugin creating new posts for replies.
+	 *
+	 * @param int    $post_id  The post ID (0 if not found).
+	 * @param string $url      The target URL being resolved.
+	 * @param array  $activity The activity object.
+	 * @return int The post ID.
+	 */
+	public function activitypub_comment_post_id( $post_id, $url, $activity ) {
 		if ( ! $post_id ) {
 			$post_id = \Friends\Feed::url_to_postid( $url );
 		}
