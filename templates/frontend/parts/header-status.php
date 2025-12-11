@@ -44,19 +44,32 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
  * ```
  */
 $avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, get_the_id() );
+
+/**
+ * Allows modifying the author URL for a post.
+ *
+ * @param string $author_url The author URL.
+ * @param User   $friend_user The friend user if any.
+ * @param int    $post_id The post ID.
+ */
+$author_url = apply_filters( 'friends_author_url', $friend_user->get_local_friends_page_url(), $friend_user, get_the_id() );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2">
 		<?php if ( ! $avatar && in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
-			<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>" class="author-avatar">
+			<a href="<?php echo esc_attr( $author_url ); ?>" class="author-avatar">
 				<?php echo get_avatar( $args['friend_user']->user_login, 36 ); ?>
 			</a>
 		<?php else : ?>
+			<?php
+			$activitypub_meta = get_post_meta( get_the_id(), 'activitypub', true );
+			$is_reblog        = is_array( $activitypub_meta ) && ! empty( $activitypub_meta['reblog'] );
+			?>
 			<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
-				<?php if ( $avatar !== $args['avatar'] ) : ?>
+				<?php if ( $is_reblog && $avatar !== $args['avatar'] ) : ?>
 					<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
 					<img src="<?php echo esc_url( $args['avatar'] ); ?>" width="20" height="20" class="avatar avatar-overlay" />
 				<?php else : ?>
-					<img src="<?php echo esc_url( $args['avatar'] ); ?>" width="36" height="36" class="avatar" />
+					<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
 				<?php endif; ?>
 			</a>
 		<?php endif; ?>
@@ -64,8 +77,17 @@ $avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, get
 	<div class="post-meta">
 		<div class="author">
 			<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
-				<a href="<?php echo esc_attr( $friend_user->get_local_friends_page_url() ); ?>">
-					<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
+				<a href="<?php echo esc_attr( $author_url ); ?>">
+					<?php
+					// If there's an override author that differs from the friend's display name,
+					// and it's not already part of the display name, show only the override name.
+					$names_differ = $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name;
+					if ( $names_differ ) :
+						?>
+						<strong><?php echo esc_html( $override_author_name ); ?></strong>
+					<?php else : ?>
+						<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
+					<?php endif; ?>
 				</a>
 				<?php do_action( 'friends_post_author_meta', $friend_user ); ?>
 			<?php else : ?>

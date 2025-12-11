@@ -189,6 +189,25 @@ class Migration {
 				),
 			)
 		);
+
+		self::register(
+			array(
+				'id'            => 'backfill_external_attributed_to',
+				'version'       => '4.0.0',
+				'title'         => 'Backfill External Post Authors',
+				'description'   => 'Fetches actor information for External user posts from their original permalinks. Runs in batches.',
+				'method'        => 'backfill_external_attributed_to',
+				'status_option' => 'friends_external_attributed_to_backfill_completed',
+				'batched'       => true,
+				'batch_method'  => 'backfill_external_attributed_to_batch',
+				'cron_hook'     => 'friends_backfill_external_attributed_to_batch',
+				'progress'      => array(
+					'in_progress' => 'friends_external_attributed_to_backfill_in_progress',
+					'total'       => 'friends_external_attributed_to_backfill_total',
+					'processed'   => 'friends_external_attributed_to_backfill_processed',
+				),
+			)
+		);
 	}
 
 	/**
@@ -1864,5 +1883,211 @@ class Migration {
 		}
 
 		echo '</div>';
+	}
+
+	/**
+	 * Backfill attributedTo for External user posts (version 4.0.0)
+	 *
+	 * This migration fetches actor information from the original permalink
+	 * for posts belonging to the External user that don't have attributedTo set.
+	 */
+	public static function backfill_external_attributed_to() {
+		// Check if the Remote_Actors class is available (ActivityPub plugin 7.x+).
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			return;
+		}
+
+		// Check if migration is already in progress.
+		if ( get_option( 'friends_external_attributed_to_backfill_in_progress' ) ) {
+			return;
+		}
+
+		// Check if migration has already been completed.
+		if ( get_option( 'friends_external_attributed_to_backfill_completed' ) ) {
+			return;
+		}
+
+		// Get the External user.
+		$external_user = User::get_by_username( Feed_Parser_ActivityPub::EXTERNAL_USERNAME );
+		if ( ! $external_user || is_wp_error( $external_user ) ) {
+			update_option( 'friends_external_attributed_to_backfill_completed', true, false );
+			return;
+		}
+
+		// Count posts using WP_Query with the same logic as the External page.
+		$query = new \WP_Query();
+		$query->set( 'post_type', Friends::CPT );
+		$query->set( 'post_status', array( 'publish', 'private' ) );
+		$query->set( 'posts_per_page', -1 );
+		$query->set( 'fields', 'ids' );
+		$query->set(
+			'meta_query',
+			array(
+				'relation' => 'OR',
+				array(
+					'key'     => Feed_Parser_ActivityPub::SLUG,
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => Feed_Parser_ActivityPub::SLUG,
+					'value'   => 'attributedTo',
+					'compare' => 'NOT LIKE',
+				),
+			)
+		);
+		$external_user->modify_query_by_author( $query );
+
+		$post_ids = $query->get_posts();
+		$total_posts = count( $post_ids );
+
+		if ( ! $total_posts ) {
+			update_option( 'friends_external_attributed_to_backfill_completed', true, false );
+			return;
+		}
+
+		// Set migration progress tracking (not autoloaded).
+		update_option( 'friends_external_attributed_to_backfill_in_progress', true, false );
+		update_option( 'friends_external_attributed_to_backfill_total', $total_posts, false );
+		update_option( 'friends_external_attributed_to_backfill_processed', 0, false );
+
+		// Schedule the first batch.
+		wp_schedule_single_event( time(), 'friends_backfill_external_attributed_to_batch' );
+	}
+
+	/**
+	 * Process a single batch of External user attributedTo backfill.
+	 */
+	public static function backfill_external_attributed_to_batch() {
+		// Check if the Remote_Actors class is available.
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			self::finalize_external_attributed_to_backfill();
+			return;
+		}
+
+		// Get the External user.
+		$external_user = User::get_by_username( Feed_Parser_ActivityPub::EXTERNAL_USERNAME );
+		if ( ! $external_user || is_wp_error( $external_user ) ) {
+			self::finalize_external_attributed_to_backfill();
+			return;
+		}
+
+		// Reduce HTTP timeout to avoid PHP max_execution_time issues.
+		add_filter( 'activitypub_remote_get_timeout', array( __CLASS__, 'reduce_activitypub_timeout' ) );
+
+		$batch_size = apply_filters( 'friends_external_attributed_to_batch_size', 5 );
+
+		// Use WP_Query with the same logic as the External page.
+		$query = new \WP_Query();
+		$query->set( 'post_type', Friends::CPT );
+		$query->set( 'post_status', array( 'publish', 'private' ) );
+		$query->set( 'posts_per_page', $batch_size );
+		$query->set( 'orderby', 'ID' );
+		$query->set( 'order', 'ASC' );
+		$query->set(
+			'meta_query',
+			array(
+				'relation' => 'OR',
+				array(
+					'key'     => Feed_Parser_ActivityPub::SLUG,
+					'compare' => 'NOT EXISTS',
+				),
+				array(
+					'key'     => Feed_Parser_ActivityPub::SLUG,
+					'value'   => 'attributedTo',
+					'compare' => 'NOT LIKE',
+				),
+			)
+		);
+		$external_user->modify_query_by_author( $query );
+
+		$posts_to_process = $query->get_posts();
+
+		if ( empty( $posts_to_process ) ) {
+			self::finalize_external_attributed_to_backfill();
+			return;
+		}
+
+		$processed = (int) get_option( 'friends_external_attributed_to_backfill_processed', 0 );
+
+		foreach ( $posts_to_process as $post ) {
+			++$processed;
+
+			// The guid contains the ActivityPub object URL.
+			$object_url = $post->guid;
+			if ( empty( $object_url ) || ! filter_var( $object_url, FILTER_VALIDATE_URL ) ) {
+				continue;
+			}
+
+			// Fetch the ActivityPub object to get the attributedTo.
+			$response = \Activitypub\safe_remote_get( $object_url, 0 );
+			if ( is_wp_error( $response ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: Failed to fetch object %s for post %d: %s', $object_url, $post->ID, $response->get_error_message() ) );
+				continue;
+			}
+			$body = wp_remote_retrieve_body( $response );
+			$object = json_decode( $body, true );
+			if ( ! is_array( $object ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: Invalid response for object %s for post %d', $object_url, $post->ID ) );
+				continue;
+			}
+
+			$actor_url = null;
+			if ( isset( $object['attributedTo'] ) ) {
+				if ( is_string( $object['attributedTo'] ) ) {
+					$actor_url = $object['attributedTo'];
+				} elseif ( is_array( $object['attributedTo'] ) && isset( $object['attributedTo']['id'] ) ) {
+					$actor_url = $object['attributedTo']['id'];
+				}
+			}
+
+			if ( empty( $actor_url ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: No attributedTo found in object %s for post %d', $object_url, $post->ID ) );
+				continue;
+			}
+
+			// Fetch/create the ap_actor for this actor URL.
+			$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+			if ( is_wp_error( $actor_post ) || ! $actor_post instanceof \WP_Post ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: Failed to fetch actor %s for post %d', $actor_url, $post->ID ) );
+				continue;
+			}
+
+			// Update the post meta with attributedTo.
+			$meta = get_post_meta( $post->ID, Feed_Parser_ActivityPub::SLUG, true );
+			if ( ! is_array( $meta ) ) {
+				$meta = array();
+			}
+
+			$meta['attributedTo'] = array( 'ap_actor_id' => $actor_post->ID );
+
+			update_post_meta( $post->ID, Feed_Parser_ActivityPub::SLUG, $meta );
+
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			error_log( sprintf( 'Friends Migration: Updated post %d with attributedTo %s (ap_actor %d)', $post->ID, $actor_url, $actor_post->ID ) );
+		}
+
+		// Update progress.
+		update_option( 'friends_external_attributed_to_backfill_processed', $processed, false );
+
+		// Schedule next batch.
+		wp_schedule_single_event( time() + 1, 'friends_backfill_external_attributed_to_batch' );
+	}
+
+	/**
+	 * Finalize the External user attributedTo backfill migration.
+	 */
+	private static function finalize_external_attributed_to_backfill() {
+		$processed = (int) get_option( 'friends_external_attributed_to_backfill_processed', 0 );
+
+		delete_option( 'friends_external_attributed_to_backfill_in_progress' );
+		update_option( 'friends_external_attributed_to_backfill_completed', true, false );
+		update_option( 'friends_external_attributed_to_backfill_count', $processed, false );
+
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( sprintf( 'Friends Migration: External attributedTo backfill completed - processed %d posts', $processed ) );
 	}
 }
