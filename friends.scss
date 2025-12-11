@@ -1030,6 +1030,129 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	// When author-header has a header image, the parent navbar needs to handle
+	// positioning so the search box can be placed inside the header image area.
+	header.navbar:has(#author-header.has-header-image) {
+		position: relative;
+
+		section.navbar-section.author {
+			width: 100%;
+			flex: none;
+		}
+
+		section.navbar-section.search {
+			position: absolute;
+			top: 1rem;
+			right: 1rem;
+			z-index: 2;
+			max-width: 300px;
+
+			.form-autocomplete-input,
+			.form-input {
+				background-color: rgba(255, 255, 255, 0.95);
+				backdrop-filter: blur(4px);
+				border-color: rgba(255, 255, 255, 0.5);
+				color: #333;
+
+				&::placeholder {
+					color: #666;
+				}
+			}
+
+			.btn.btn-primary {
+				background-color: $primary-color;
+				border-color: $primary-color;
+				color: #fff;
+			}
+
+			@media (max-width: $off-canvas-breakpoint) {
+				position: static;
+				max-width: none;
+				margin-top: 0.5rem;
+			}
+		}
+	}
+
+	#author-header {
+		&.has-header-image {
+			background-size: cover;
+			background-position: center;
+			padding: 1rem;
+			padding-right: 320px; // Make room for search box
+			border-radius: 10px;
+			position: relative;
+			margin-bottom: 1rem;
+			min-height: 120px;
+
+			@media (max-width: $off-canvas-breakpoint) {
+				padding-right: 1rem;
+			}
+
+			// Add a semi-transparent overlay for better text readability.
+			&::before {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7));
+				border-radius: 10px;
+				z-index: 0;
+			}
+
+			// Ensure all content is above the overlay.
+			> * {
+				position: relative;
+				z-index: 1;
+			}
+
+			#page-title,
+			#page-title a,
+			p {
+				color: #fff;
+				text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.5);
+			}
+
+			p a {
+				color: #fff;
+				text-decoration: underline;
+			}
+
+			.chip {
+				color: #fff;
+				text-shadow: none;
+				background-color: rgba(0, 0, 0, 0.4);
+				backdrop-filter: blur(4px);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+
+				&:hover {
+					background-color: rgba(0, 0, 0, 0.6);
+					color: #fff;
+				}
+			}
+
+			a.dashicons-star-filled,
+			a.dashicons-star-empty {
+				color: #fff;
+				text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+			}
+
+			img.avatar {
+				border: 2px solid rgba(255, 255, 255, 0.5);
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+			}
+		}
+
+		.chip.activitypub-profile .dashicons {
+			color: #f16529;
+		}
+
+		&.has-header-image .chip.activitypub-profile .dashicons {
+			color: #fff;
+		}
+	}
+
 	/* to support mastodon style tags */
 	.invisible {
 		font-size: 0;
