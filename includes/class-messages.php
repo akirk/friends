@@ -67,7 +67,6 @@ class Messages {
 		add_filter( 'mastodon_api_conversation_mark_read', array( $this, 'mastodon_api_conversation_mark_read' ), 10 );
 		add_filter( 'mastodon_api_conversation_delete', array( $this, 'delete_conversation' ), 10 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status' ), 20, 2 );
-		add_filter( 'mastodon_api_get_notifications_query_args', array( $this, 'mastodon_api_get_notifications_query_args' ), 20, 2 );
 	}
 
 	/**
@@ -944,31 +943,5 @@ class Messages {
 			$status->in_reply_to_account_id = strval( get_current_user_id() );
 		}
 		return $status;
-	}
-
-	public function mastodon_api_get_notifications_query_args( $args, $type ) {
-		if ( 'mention' !== $type ) {
-			return $args;
-		}
-		if ( ! isset( $args['post_type'] ) ) {
-			$args['post_type'] = array();
-		} elseif ( ! is_array( $args['post_type'] ) ) {
-			$args['post_type'] = array( $args['post_type'] );
-		}
-		$args['post_type'][] = self::CPT;
-
-		if ( ! isset( $args['post_status'] ) ) {
-			$args['post_status'] = array();
-		} elseif ( ! is_array( $args['post_status'] ) ) {
-			$args['post_status'] = array( $args['post_status'] );
-		}
-		if ( ! in_array( 'friends_unread', $args['post_status'] ) ) {
-			$args['post_status'][] = 'friends_unread';
-		}
-		if ( ! in_array( 'friends_read', $args['post_status'] ) ) {
-			$args['post_status'][] = 'friends_read';
-		}
-
-		return $args;
 	}
 }

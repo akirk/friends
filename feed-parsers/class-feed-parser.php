@@ -14,6 +14,22 @@ namespace Friends;
  */
 abstract class Feed_Parser {
 	/**
+	 * Get the badge to display for this parser type.
+	 *
+	 * Return an array with badge info:
+	 *  array(
+	 *      'label' => 'RSS',          // Short text to display
+	 *      'color' => '#ee802f',      // Background color
+	 *      'title' => 'RSS/Atom Feed' // Tooltip text
+	 *  )
+	 *
+	 * @return array|null Badge info array, or null for no badge.
+	 */
+	public function get_badge() {
+		return null;
+	}
+
+	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
 	 * @param      string      $url        The url.

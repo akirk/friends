@@ -42,6 +42,7 @@ class Migration {
 		add_action( 'wp_ajax_friends_process_migration_batch', array( $this, 'ajax_process_migration_batch' ) );
 		add_action( 'wp_ajax_friends_get_migration_debug', array( $this, 'ajax_get_migration_debug' ) );
 		add_action( 'wp_ajax_friends_clear_failed_url', array( $this, 'ajax_clear_failed_url' ) );
+		add_action( 'wp_ajax_friends_deactivate_feed_by_url', array( $this, 'ajax_deactivate_feed_by_url' ) );
 
 		// Register debug output hooks for migrations.
 		add_action( 'friends_migration_debug_link_activitypub_feeds_to_actors', array( $this, 'debug_link_activitypub_feeds_to_actors' ) );
@@ -436,6 +437,53 @@ class Migration {
 		delete_option( 'friends_ap_feeds_linked_to_actors' );
 
 		wp_send_json_success( 'URL cleared: ' . $url );
+	}
+
+	/**
+	 * AJAX handler for deactivating a feed by URL.
+	 */
+	public function ajax_deactivate_feed_by_url() {
+		check_ajax_referer( 'friends_deactivate_feed' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Unauthorized' );
+		}
+
+		$url = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
+		if ( empty( $url ) ) {
+			wp_send_json_error( 'No URL provided' );
+		}
+
+		// Find the feed by URL.
+		$feed = User_Feed::get_by_url( $url );
+		if ( ! $feed ) {
+			wp_send_json_error( 'Feed not found: ' . $url );
+		}
+
+		// Deactivate the feed.
+		$feed->update_metadata( 'active', false );
+
+		// Also clear from failed URLs list.
+		$failed_urls = get_option( 'friends_ap_feeds_failed_urls', array() );
+		$failed_urls = array_filter(
+			$failed_urls,
+			function ( $item ) use ( $url ) {
+				return $item['url'] !== $url;
+			}
+		);
+		update_option( 'friends_ap_feeds_failed_urls', array_values( $failed_urls ), false );
+		update_option( 'friends_ap_feeds_failed_count', count( $failed_urls ), false );
+
+		$in_progress_failed = get_option( 'friends_ap_feeds_link_migration_failed_urls', array() );
+		$in_progress_failed = array_filter(
+			$in_progress_failed,
+			function ( $item ) use ( $url ) {
+				return $item['url'] !== $url;
+			}
+		);
+		update_option( 'friends_ap_feeds_link_migration_failed_urls', array_values( $in_progress_failed ), false );
+
+		wp_send_json_success( 'Feed deactivated: ' . $url );
 	}
 
 	/**
@@ -1377,8 +1425,8 @@ class Migration {
 	 * Link existing ActivityPub feeds to their ap_actor posts (version 4.1.0)
 	 *
 	 * This migration finds all User_Feed entries with parser='activitypub'
-	 * and links them to their corresponding ap_actor posts by setting
-	 * the ap-actor-id term meta.
+	 * and links them to their corresponding ap_actor posts by assigning
+	 * the User_Feed taxonomy term to the ap_actor post.
 	 */
 	public static function link_activitypub_feeds_to_actors() {
 		// Check if the Remote_Actors class is available (ActivityPub plugin 7.x+).
@@ -1416,6 +1464,8 @@ class Migration {
 		update_option( 'friends_ap_feeds_link_migration_failed_urls', array(), false );
 
 		// Clear any previous run's stats.
+		delete_option( 'friends_ap_feeds_linked_count' );
+		delete_option( 'friends_ap_feeds_skipped_count' );
 		delete_option( 'friends_ap_feeds_failed_count' );
 		delete_option( 'friends_ap_feeds_failed_urls' );
 
@@ -1537,13 +1587,25 @@ class Migration {
 			delete_option( 'friends_ap_feeds_link_migration_current_url' );
 
 			if ( $ap_actor_id ) {
-				$feed->set_ap_actor_id( $ap_actor_id );
-				if ( $feed->get_active() ) {
-					self::ensure_activitypub_following( $actor_url );
+				$result = $feed->set_ap_actor_id( $ap_actor_id );
+				if ( is_wp_error( $result ) || false === $result ) {
+					++$failed;
+					$failed_urls[] = array(
+						'url'    => $actor_url,
+						'time'   => time(),
+						'feed'   => $feed->get_friend_user()->display_name ?? 'Unknown',
+						'reason' => is_wp_error( $result ) ? $result->get_error_message() : 'set_ap_actor_id_failed',
+					);
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( sprintf( 'Friends Migration: Failed to link %s - set_ap_actor_id failed', $actor_url ) );
+				} else {
+					if ( $feed->get_active() ) {
+						self::ensure_activitypub_following( $actor_url );
+					}
+					++$linked;
+					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					error_log( sprintf( 'Friends Migration: Linked %s to ap_actor %d', $actor_url, $ap_actor_id ) );
 				}
-				++$linked;
-				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log( sprintf( 'Friends Migration: Linked %s to ap_actor %d', $actor_url, $ap_actor_id ) );
 			} else {
 				++$failed;
 				$failed_urls[] = array(
@@ -1635,27 +1697,85 @@ class Migration {
 	}
 
 	/**
+	 * Render the admin migrations page.
+	 */
+	public static function render_admin_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'friends' ) );
+		}
+
+		// Handle version update form submission.
+		if ( isset( $_POST['update_version'] ) && check_admin_referer( 'friends-update-version' ) ) {
+			$new_version = isset( $_POST['stored_version'] ) ? sanitize_text_field( wp_unslash( $_POST['stored_version'] ) ) : '';
+			if ( empty( $new_version ) ) {
+				delete_option( 'friends_plugin_version' );
+				$message = __( 'Stored version cleared. Migrations will run on next page load.', 'friends' );
+			} else {
+				update_option( 'friends_plugin_version', $new_version );
+				$message = sprintf(
+					/* translators: %s is a version number */
+					__( 'Stored version updated to %s.', 'friends' ),
+					$new_version
+				);
+			}
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html( $message ) . '</p></div>';
+		}
+
+		$statuses = self::get_all_statuses();
+		Friends::template_loader()->get_template_part(
+			'admin/migrations',
+			null,
+			array(
+				'statuses' => $statuses,
+			)
+		);
+	}
+
+	/**
 	 * Debug output hook for the link_activitypub_feeds_to_actors migration.
 	 *
 	 * @param array $status The migration status (unused but required by hook signature).
 	 */
 	public function debug_link_activitypub_feeds_to_actors( $status ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
-		$failed_urls = get_option( 'friends_ap_feeds_failed_urls', array() );
-		$failed_count = get_option( 'friends_ap_feeds_failed_count', 0 );
-		$linked_count = get_option( 'friends_ap_feeds_linked_count', 0 );
-		$skipped_count = get_option( 'friends_ap_feeds_skipped_count', 0 );
+		if ( ! class_exists( '\Feed_Parser_ActivityPub' ) ) {
+			echo '<p>' . esc_html__( 'ActivityPub plugin not detected. Migration cannot proceed.', 'friends' ) . '</p>';
+			return;
+		}
 
-		// Also check in-progress failed URLs.
+		$failed_urls = get_option( 'friends_ap_feeds_failed_urls', array() );
+		$failed_count = (int) get_option( 'friends_ap_feeds_failed_count', 0 );
+		$linked_count = (int) get_option( 'friends_ap_feeds_linked_count', 0 );
+		$skipped_count = (int) get_option( 'friends_ap_feeds_skipped_count', 0 );
+
+		// Also check in-progress stats.
+		$in_progress_linked = (int) get_option( 'friends_ap_feeds_link_migration_linked', 0 );
+		$in_progress_skipped = (int) get_option( 'friends_ap_feeds_link_migration_skipped', 0 );
 		$in_progress_failed = get_option( 'friends_ap_feeds_link_migration_failed_urls', array() );
+
+		$linked_count += $in_progress_linked;
+		$skipped_count += $in_progress_skipped;
+		$failed_count += count( $in_progress_failed );
+
 		if ( ! empty( $in_progress_failed ) ) {
 			$failed_urls = array_merge( $failed_urls, $in_progress_failed );
 		}
 
 		echo '<div class="migration-debug-content" style="padding: 15px; background: #f9f9f9;">';
 
+		// Calculate live counts.
+		$activitypub_feeds = User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG );
+		$actually_linked = 0;
+		$total_feeds = count( $activitypub_feeds );
+		foreach ( $activitypub_feeds as $feed ) {
+			if ( $feed->get_ap_actor_id() ) {
+				++$actually_linked;
+			}
+		}
+
 		echo '<h4>' . esc_html__( 'Migration Statistics', 'friends' ) . '</h4>';
 		echo '<ul>';
-		echo '<li><strong>' . esc_html__( 'Linked:', 'friends' ) . '</strong> ' . esc_html( $linked_count ) . '</li>';
+		echo '<li><strong>' . esc_html__( 'Linked (stored):', 'friends' ) . '</strong> ' . esc_html( $linked_count ) . '</li>';
+		echo '<li><strong>' . esc_html__( 'Actually linked (live):', 'friends' ) . '</strong> <span style="color: green;">' . esc_html( $actually_linked ) . '</span> / ' . esc_html( $total_feeds ) . '</li>';
 		echo '<li><strong>' . esc_html__( 'Already linked (skipped):', 'friends' ) . '</strong> ' . esc_html( $skipped_count ) . '</li>';
 		echo '<li><strong>' . esc_html__( 'Failed:', 'friends' ) . '</strong> ' . esc_html( $failed_count ) . '</li>';
 		echo '</ul>';
@@ -1672,16 +1792,22 @@ class Migration {
 
 		if ( ! empty( $failed_urls ) ) {
 			echo '<h4>' . esc_html__( 'Failed URLs', 'friends' ) . '</h4>';
-			$nonce = wp_create_nonce( 'friends_clear_failed_url' );
+			$retry_nonce = wp_create_nonce( 'friends_clear_failed_url' );
+			$deactivate_nonce = wp_create_nonce( 'friends_deactivate_feed' );
 			echo '<script>
 			function clearFailedUrl(url) {
-				jQuery.post(ajaxurl, {action: "friends_clear_failed_url", url: url, _wpnonce: "' . esc_js( $nonce ) . '"}, function(r) { location.reload(); });
+				jQuery.post(ajaxurl, {action: "friends_clear_failed_url", url: url, _wpnonce: "' . esc_js( $retry_nonce ) . '"}, function(r) { location.reload(); });
 			}
 			function clearAllFailedUrls() {
-				jQuery.post(ajaxurl, {action: "friends_clear_failed_url", url: "__all__", _wpnonce: "' . esc_js( $nonce ) . '"}, function(r) { location.reload(); });
+				jQuery.post(ajaxurl, {action: "friends_clear_failed_url", url: "__all__", _wpnonce: "' . esc_js( $retry_nonce ) . '"}, function(r) { location.reload(); });
+			}
+			function deactivateFeed(url) {
+				if (confirm("' . esc_js( __( 'Deactivate this feed?', 'friends' ) ) . '")) {
+					jQuery.post(ajaxurl, {action: "friends_deactivate_feed_by_url", url: url, _wpnonce: "' . esc_js( $deactivate_nonce ) . '"}, function(r) { location.reload(); });
+				}
 			}
 			</script>';
-			echo '<p><button type="button" class="button" onclick="clearAllFailedUrls()">' . esc_html__( 'Clear All Failed URLs', 'friends' ) . '</button></p>';
+			echo '<p><button type="button" class="button" onclick="clearAllFailedUrls()">' . esc_html__( 'Clear All & Retry', 'friends' ) . '</button></p>';
 			echo '<table class="widefat" style="margin-top: 10px;">';
 			echo '<thead><tr><th>' . esc_html__( 'Feed/User', 'friends' ) . '</th><th>' . esc_html__( 'URL', 'friends' ) . '</th><th>' . esc_html__( 'Reason', 'friends' ) . '</th><th>' . esc_html__( 'Time', 'friends' ) . '</th><th>' . esc_html__( 'Actions', 'friends' ) . '</th></tr></thead>';
 			echo '<tbody>';
@@ -1693,7 +1819,10 @@ class Migration {
 				echo '<td><code style="word-break: break-all;">' . esc_html( $item['url'] ) . '</code></td>';
 				echo '<td>' . esc_html( $reason_label ) . '</td>';
 				echo '<td>' . esc_html( isset( $item['time'] ) ? human_time_diff( $item['time'] ) . ' ago' : 'N/A' ) . '</td>';
-				echo '<td><button type="button" class="button button-small" onclick="clearFailedUrl(\'' . esc_js( $item['url'] ) . '\')">' . esc_html__( 'Retry', 'friends' ) . '</button></td>';
+				echo '<td>';
+				echo '<button type="button" class="button button-small" onclick="clearFailedUrl(\'' . esc_js( $item['url'] ) . '\')">' . esc_html__( 'Retry', 'friends' ) . '</button> ';
+				echo '<button type="button" class="button button-small" style="color: #b32d2e; border-color: #b32d2e;" onclick="deactivateFeed(\'' . esc_js( $item['url'] ) . '\')">' . esc_html__( 'Deactivate', 'friends' ) . '</button>';
+				echo '</td>';
 				echo '</tr>';
 			}
 			echo '</tbody></table>';
@@ -1701,11 +1830,11 @@ class Migration {
 			echo '<p><em>' . esc_html__( 'No failed URLs recorded.', 'friends' ) . '</em></p>';
 		}
 
-		// Show feeds that still need linking.
-		$activitypub_feeds = User_Feed::get_by_parser( Feed_Parser_ActivityPub::SLUG );
+		// Show feeds that still need linking (excluding those already shown in failed URLs).
+		$failed_url_list = array_column( $failed_urls, 'url' );
 		$unlinked = array();
 		foreach ( $activitypub_feeds as $feed ) {
-			if ( ! $feed->get_ap_actor_id() ) {
+			if ( ! $feed->get_ap_actor_id() && ! in_array( $feed->get_url(), $failed_url_list, true ) ) {
 				$unlinked[] = array(
 					'url'  => $feed->get_url(),
 					'user' => $feed->get_friend_user()->display_name ?? 'Unknown',
@@ -1715,19 +1844,21 @@ class Migration {
 
 		if ( ! empty( $unlinked ) ) {
 			// translators: %d is the number of unlinked feeds.
-			echo '<h4>' . sprintf( esc_html__( 'Feeds Still Unlinked (%d)', 'friends' ), count( $unlinked ) ) . '</h4>';
+			echo '<h4>' . sprintf( esc_html__( 'Other Unlinked Feeds (%d)', 'friends' ), count( $unlinked ) ) . '</h4>';
+			echo '<p><em>' . esc_html__( 'These feeds are not linked and not in the failed list. They may need manual investigation.', 'friends' ) . '</em></p>';
 			echo '<table class="widefat" style="margin-top: 10px;">';
-			echo '<thead><tr><th>' . esc_html__( 'User', 'friends' ) . '</th><th>' . esc_html__( 'Feed URL', 'friends' ) . '</th></tr></thead>';
+			echo '<thead><tr><th>' . esc_html__( 'User', 'friends' ) . '</th><th>' . esc_html__( 'Feed URL', 'friends' ) . '</th><th>' . esc_html__( 'Actions', 'friends' ) . '</th></tr></thead>';
 			echo '<tbody>';
 			foreach ( array_slice( $unlinked, 0, 20 ) as $item ) {
 				echo '<tr>';
 				echo '<td>' . esc_html( $item['user'] ) . '</td>';
 				echo '<td><code style="word-break: break-all;">' . esc_html( $item['url'] ) . '</code></td>';
+				echo '<td><button type="button" class="button button-small" style="color: #b32d2e; border-color: #b32d2e;" onclick="deactivateFeed(\'' . esc_js( $item['url'] ) . '\')">' . esc_html__( 'Deactivate', 'friends' ) . '</button></td>';
 				echo '</tr>';
 			}
 			if ( count( $unlinked ) > 20 ) {
 				// translators: %d is the number of additional items not shown.
-				echo '<tr><td colspan="2"><em>' . sprintf( esc_html__( '... and %d more', 'friends' ), count( $unlinked ) - 20 ) . '</em></td></tr>';
+				echo '<tr><td colspan="3"><em>' . sprintf( esc_html__( '... and %d more', 'friends' ), count( $unlinked ) - 20 ) . '</em></td></tr>';
 			}
 			echo '</tbody></table>';
 		}

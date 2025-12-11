@@ -607,10 +607,10 @@ class Feed {
 			}
 
 			$post_id = null;
-			if ( isset( $remote_post_ids[ $item->post_id ] ) ) {
+			if ( $item->post_id && isset( $remote_post_ids[ $item->post_id ] ) ) {
 				$post_id = $remote_post_ids[ $item->post_id ];
 			}
-			if ( is_null( $post_id ) && isset( $remote_post_ids[ $item->permalink ] ) ) {
+			if ( is_null( $post_id ) && $item->permalink && isset( $remote_post_ids[ $item->permalink ] ) ) {
 				$post_id = $remote_post_ids[ $item->permalink ];
 			}
 
@@ -733,8 +733,6 @@ class Feed {
 			if ( is_numeric( $item->post_id ) ) {
 				update_post_meta( $post_id, 'remote_post_id', $item->{'post-id'} );
 			}
-
-			wp_set_object_terms( $post_id, $user_feed->get_id(), User_Feed::POST_TAXONOMY );
 
 			if ( ! get_option( 'friends_disable_auto_tagging' ) && isset( $item->friend_tags ) && ! empty( $item->friend_tags ) && is_array( $item->friend_tags ) ) {
 				wp_set_post_terms( $post_id, $item->friend_tags, Friends::TAG_TAXONOMY, true );
@@ -1322,5 +1320,40 @@ class Feed {
 			$parsers[ $slug ] = $name;
 		}
 		return $parsers;
+	}
+
+	/**
+	 * Get a parser instance by slug.
+	 *
+	 * @param string $slug The parser slug.
+	 * @return Feed_Parser|null The parser instance or null.
+	 */
+	public function get_parser_by_slug( $slug ) {
+		return isset( $this->parsers[ $slug ] ) ? $this->parsers[ $slug ] : null;
+	}
+
+	/**
+	 * Get the badge for a feed based on its parser.
+	 *
+	 * @param User_Feed $user_feed The user feed.
+	 * @return array|null Badge info array or null.
+	 */
+	public function get_feed_badge( $user_feed ) {
+		$parser_slug = $user_feed->get_parser();
+		$parser = $this->get_parser_by_slug( $parser_slug );
+
+		$badge = null;
+		if ( $parser && method_exists( $parser, 'get_badge' ) ) {
+			$badge = $parser->get_badge();
+		}
+
+		/**
+		 * Filter the badge displayed for a feed.
+		 *
+		 * @param array|null $badge     The badge array with 'label', 'color', 'title' keys, or null.
+		 * @param User_Feed  $user_feed The user feed.
+		 * @param string     $parser    The parser slug.
+		 */
+		return apply_filters( 'friends_feed_badge', $badge, $user_feed, $parser_slug );
 	}
 }

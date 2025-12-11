@@ -1657,7 +1657,6 @@ class Friends {
 	public static function uninstall_plugin() {
 		$taxonomies = array(
 			User_Feed::TAXONOMY,
-			User_Feed::POST_TAXONOMY,
 			Subscription::TAXONOMY,
 			self::TAG_TAXONOMY,
 		);

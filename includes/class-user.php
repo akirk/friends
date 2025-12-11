@@ -318,7 +318,7 @@ class User extends \WP_User {
 	 * @return User|false The friend user or false.
 	 */
 	public static function get_user_by_id( $user_id ) {
-		if ( $user_id > 1e10 ) {
+		if ( is_numeric( $user_id ) && $user_id > 1e10 ) {
 			$term = get_term( $user_id - 1e10, Subscription::TAXONOMY );
 			if ( $term && ! is_wp_error( $term ) ) {
 				return new Subscription( $term );

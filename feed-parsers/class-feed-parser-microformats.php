@@ -23,6 +23,19 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 	const SLUG = 'microformats';
 
 	/**
+	 * Get the badge for Microformats feeds.
+	 *
+	 * @return array Badge info.
+	 */
+	public function get_badge() {
+		return array(
+			'label' => 'mf2',
+			'color' => '#2271b1',
+			'title' => __( 'Microformats', 'friends' ),
+		);
+	}
+
+	/**
 	 * Determines if this is a supported feed and to what degree we feel it's supported.
 	 *
 	 * @param      string      $url        The url.
