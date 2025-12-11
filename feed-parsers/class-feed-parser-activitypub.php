@@ -70,6 +70,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'friends_potential_avatars', array( $this, 'friends_potential_avatars' ), 10, 2 );
 		\add_filter( 'friends_suggest_user_login', array( $this, 'suggest_user_login_from_url' ), 10, 2 );
 		\add_filter( 'friends_author_avatar_url', array( $this, 'author_avatar_url' ), 10, 3 );
+		\add_filter( 'friends_author_url', array( $this, 'author_url' ), 10, 3 );
 
 		\add_action( 'template_redirect', array( $this, 'cache_reply_to_boost' ) );
 		\add_filter( 'the_content', array( $this, 'the_content' ), 99, 2 );
@@ -1589,29 +1590,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				} elseif ( isset( $meta['preferredUsername'] ) ) {
 					$data['author'] = $meta['preferredUsername'];
 				}
+
+				// Store attributedTo for avatar/author URL display.
+				$actor_url = isset( $meta['id'] ) ? $meta['id'] : $activity['attributedTo'];
+
+				if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+					$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+					if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+						$data[ self::SLUG ]['attributedTo'] = array( 'ap_actor_id' => $actor_post->ID );
+					} else {
+						$data[ self::SLUG ]['attributedTo'] = array( 'id' => $actor_url );
+					}
+				} else {
+					$data[ self::SLUG ]['attributedTo'] = array( 'id' => $actor_url );
+				}
 			}
 		}
 
 		if ( isset( $activity['reblog'] ) && $activity['reblog'] ) {
 			$data[ self::SLUG ]['reblog'] = $activity['reblog'];
-
-			// Only store attributedTo metadata for reblogs (boosts) where the original author differs from the feed.
-			if ( isset( $activity['attributedTo'] ) ) {
-				$meta = isset( $meta ) ? $meta : $this->get_metadata( $activity['attributedTo'] );
-
-				if ( $meta && ! is_wp_error( $meta ) ) {
-					// Store the ap_actor_id reference; metadata is fetched via Remote_Actors API.
-					$actor_url = isset( $meta['id'] ) ? $meta['id'] : $activity['attributedTo'];
-					$data[ self::SLUG ]['attributedTo'] = array( 'id' => $actor_url );
-
-					if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-						$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
-						if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
-							$data[ self::SLUG ]['attributedTo']['ap_actor_id'] = $actor_post->ID;
-						}
-					}
-				}
-			}
 		}
 
 		if ( isset( $activity['application'] ) && $activity['application'] ) {
@@ -1913,7 +1910,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function author_avatar_url( $avatar_url, $friend_user, $post_id ) {
 		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( ! $meta || ! isset( $meta['reblog'] ) || ! isset( $meta['attributedTo'] ) ) {
+		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
 			return $avatar_url;
 		}
 		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
@@ -1921,6 +1918,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $actor_metadata['icon'];
 		}
 		return $avatar_url;
+	}
+
+	/**
+	 * Filter the author URL for a post.
+	 *
+	 * @param string $author_url The author URL.
+	 * @param User   $friend_user The friend user.
+	 * @param int    $post_id The post ID.
+	 * @return string The filtered author URL.
+	 */
+	public function author_url( $author_url, $friend_user, $post_id ) {
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
+			return $author_url;
+		}
+		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+		if ( ! empty( $actor_metadata['url'] ) ) {
+			return $actor_metadata['url'];
+		}
+		return $author_url;
 	}
 
 
