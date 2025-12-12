@@ -2131,20 +2131,25 @@ class Migration {
 
 		global $wpdb;
 
-		// Count posts linked to ActivityPub feeds.
+		// Count posts linked to ActivityPub feeds OR with mention-* tags (External mentions).
+		$mention_like = 'mention-%';
 		$total_posts = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(DISTINCT p.ID)
 				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-				INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-				INNER JOIN {$wpdb->termmeta} tm ON tt.term_id = tm.term_id
+				LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+				LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				LEFT JOIN {$wpdb->termmeta} tm ON tt.term_id = tm.term_id AND tm.meta_key = 'parser'
+				LEFT JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
 				WHERE p.post_type = %s
-				AND tt.taxonomy = %s
-				AND tm.meta_key = 'parser'
-				AND tm.meta_value = 'activitypub'",
+				AND p.post_status = 'publish'
+				AND (
+					(tt.taxonomy = %s AND tm.meta_value = 'activitypub')
+					OR (tt.taxonomy = 'friend_tag' AND t.slug LIKE %s)
+				)",
 				Friends::CPT,
-				User_Feed::TAXONOMY
+				User_Feed::TAXONOMY,
+				$mention_like
 			)
 		);
 
@@ -2200,22 +2205,27 @@ class Migration {
 			delete_option( 'friends_replies_current_post' );
 		}
 
-		// Get next batch of posts.
+		// Get next batch of posts (ActivityPub feeds OR with mention-* tags).
+		$mention_like = 'mention-%';
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT DISTINCT p.ID, p.guid, p.post_author, p.post_content, p.post_date_gmt
 				FROM {$wpdb->posts} p
-				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
-				INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-				INNER JOIN {$wpdb->termmeta} tm ON tt.term_id = tm.term_id
+				LEFT JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+				LEFT JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				LEFT JOIN {$wpdb->termmeta} tm ON tt.term_id = tm.term_id AND tm.meta_key = 'parser'
+				LEFT JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
 				WHERE p.post_type = %s
-				AND tt.taxonomy = %s
-				AND tm.meta_key = 'parser'
-				AND tm.meta_value = 'activitypub'
+				AND p.post_status = 'publish'
+				AND (
+					(tt.taxonomy = %s AND tm.meta_value = 'activitypub')
+					OR (tt.taxonomy = 'friend_tag' AND t.slug LIKE %s)
+				)
 				ORDER BY p.ID ASC
 				LIMIT %d OFFSET %d",
 				Friends::CPT,
 				User_Feed::TAXONOMY,
+				$mention_like,
 				$batch_size,
 				$processed
 			)
@@ -2322,6 +2332,18 @@ class Migration {
 		// Store redirect meta on the post before trashing.
 		update_post_meta( $post->ID, '_redirects_to_comment', $comment_id );
 		update_post_meta( $post->ID, '_redirect_post_id', $root_post_id );
+
+		// Check if the original post was a mention (has mention-* tag).
+		$mention_terms = wp_get_post_terms( $post->ID, 'friend_tag', array( 'fields' => 'slugs' ) );
+		if ( ! is_wp_error( $mention_terms ) ) {
+			foreach ( $mention_terms as $slug ) {
+				if ( 0 === strpos( $slug, 'mention-' ) ) {
+					// Mark the root post as having a mention in comments.
+					update_post_meta( $root_post_id, '_has_mention_in_comments', true );
+					break;
+				}
+			}
+		}
 
 		// Trash the original reply post (keep for URL redirects).
 		wp_trash_post( $post->ID );
