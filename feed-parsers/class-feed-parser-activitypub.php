@@ -1929,6 +1929,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return string The filtered author URL.
 	 */
 	public function author_url( $author_url, $friend_user, $post_id ) {
+		// Only override the URL for the External user.
+		// Regular subscriptions should link to their local friends page.
+		if ( self::EXTERNAL_USERNAME !== $friend_user->user_login ) {
+			return $author_url;
+		}
+
 		$meta = get_post_meta( $post_id, self::SLUG, true );
 		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
 			return $author_url;
