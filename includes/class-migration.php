@@ -2275,7 +2275,7 @@ class Migration {
 	 * @param object $post The post object.
 	 * @return string Result: 'converted', 'skipped', or error reason.
 	 */
-	private static function process_potential_reply_post( $post ) {
+	public static function process_potential_reply_post( $post ) {
 		// Get the ActivityPub object URL from the post's GUID.
 		$object_url = $post->guid;
 
@@ -2317,8 +2317,14 @@ class Migration {
 			return 'comment_failed: ' . $comment_result->get_error_message();
 		}
 
-		// Delete the original reply post.
-		wp_delete_post( $post->ID, true );
+		$comment_id = $comment_result;
+
+		// Store redirect meta on the post before trashing.
+		update_post_meta( $post->ID, '_redirects_to_comment', $comment_id );
+		update_post_meta( $post->ID, '_redirect_post_id', $root_post_id );
+
+		// Trash the original reply post (keep for URL redirects).
+		wp_trash_post( $post->ID );
 
 		return 'converted';
 	}
@@ -2396,11 +2402,11 @@ class Migration {
 	/**
 	 * Ensure a root post exists, creating it if necessary.
 	 *
-	 * @param string $url    The URL of the root post.
-	 * @param array  $object The ActivityPub object.
+	 * @param string $url         The URL of the root post.
+	 * @param array  $ap_object   The ActivityPub object.
 	 * @return array|\WP_Error Result with post_id and created flag, or WP_Error.
 	 */
-	private static function ensure_root_post_exists( $url, $object ) {
+	private static function ensure_root_post_exists( $url, $ap_object ) {
 		// Check if post already exists.
 		$existing_post_id = Feed::url_to_postid( $url );
 		if ( $existing_post_id ) {
@@ -2413,7 +2419,7 @@ class Migration {
 
 		// Need to create the root post.
 		// Find the appropriate user feed for the author.
-		$actor_url = $object['attributedTo'] ?? $object['actor'] ?? null;
+		$actor_url = $ap_object['attributedTo'] ?? $ap_object['actor'] ?? null;
 		if ( ! $actor_url ) {
 			return new \WP_Error( 'no_actor', 'Cannot determine actor for root post' );
 		}
@@ -2431,7 +2437,7 @@ class Migration {
 		}
 
 		// Create feed item from the object.
-		$permalink = $object['url'] ?? $url;
+		$permalink = $ap_object['url'] ?? $url;
 		if ( is_array( $permalink ) ) {
 			foreach ( $permalink as $p ) {
 				if ( is_string( $p ) ) {
@@ -2446,12 +2452,12 @@ class Migration {
 		}
 
 		$item_data = array(
-			'permalink'    => $permalink,
-			'content'      => $object['content'] ?? '',
-			'title'        => $object['name'] ?? '',
-			'date'         => $object['published'] ?? gmdate( 'Y-m-d H:i:s' ),
-			'post_format'  => 'status',
-			'_external_id' => $object['id'] ?? $url,
+			'permalink'                   => $permalink,
+			'content'                     => $ap_object['content'] ?? '',
+			'title'                       => $ap_object['name'] ?? '',
+			'date'                        => $ap_object['published'] ?? gmdate( 'Y-m-d H:i:s' ),
+			'post_format'                 => 'status',
+			'_external_id'                => $ap_object['id'] ?? $url,
 			Feed_Parser_ActivityPub::SLUG => array(),
 		);
 
@@ -2462,7 +2468,7 @@ class Migration {
 				$item_data[ Feed_Parser_ActivityPub::SLUG ]['attributedTo'] = array( 'ap_actor_id' => $actor_post->ID );
 				$actor = \Activitypub\Collection\Remote_Actors::get_actor( $actor_post->ID );
 				if ( $actor ) {
-					$item_data['author'] = $actor->get_name() ?: $actor->get_preferred_username();
+					$item_data['author'] = $actor->get_name() ? $actor->get_name() : $actor->get_preferred_username();
 				}
 			}
 		}
@@ -2480,8 +2486,8 @@ class Migration {
 		if ( ! $post_id ) {
 			$post_id = Feed::url_to_postid( $url );
 		}
-		if ( ! $post_id && isset( $object['id'] ) ) {
-			$post_id = Feed::url_to_postid( $object['id'] );
+		if ( ! $post_id && isset( $ap_object['id'] ) ) {
+			$post_id = Feed::url_to_postid( $ap_object['id'] );
 		}
 
 		if ( $post_id ) {
@@ -2500,12 +2506,12 @@ class Migration {
 	 *
 	 * @param object $post         The post object to convert.
 	 * @param int    $root_post_id The root post ID.
-	 * @param array  $object       The ActivityPub object.
+	 * @param array  $ap_object    The ActivityPub object.
 	 * @return int|\WP_Error The comment ID or WP_Error.
 	 */
-	private static function convert_post_to_comment( $post, $root_post_id, $object ) {
+	private static function convert_post_to_comment( $post, $root_post_id, $ap_object ) {
 		// Get actor information.
-		$actor_url = $object['attributedTo'] ?? $object['actor'] ?? null;
+		$actor_url = $ap_object['attributedTo'] ?? $ap_object['actor'] ?? null;
 		if ( is_array( $actor_url ) ) {
 			$actor_url = $actor_url['id'] ?? reset( $actor_url );
 		}
@@ -2522,8 +2528,8 @@ class Migration {
 				$remote_actor_id = $actor_post->ID;
 				$actor = \Activitypub\Collection\Remote_Actors::get_actor( $actor_post->ID );
 				if ( $actor ) {
-					$comment_author = $actor->get_name() ?: $actor->get_preferred_username();
-					$comment_author_url = $actor->get_url() ?: $actor_url;
+					$comment_author = $actor->get_name() ? $actor->get_name() : $actor->get_preferred_username();
+					$comment_author_url = $actor->get_url() ? $actor->get_url() : $actor_url;
 				}
 			}
 
@@ -2538,7 +2544,8 @@ class Migration {
 
 		// Fallback to post meta.
 		if ( empty( $comment_author ) ) {
-			$comment_author = get_post_meta( $post->ID, 'author', true ) ?: __( 'Unknown', 'friends' );
+			$author_meta = get_post_meta( $post->ID, 'author', true );
+			$comment_author = $author_meta ? $author_meta : __( 'Unknown', 'friends' );
 		}
 
 		// Prepare comment data.
@@ -2554,9 +2561,10 @@ class Migration {
 			'comment_approved'     => 1,
 			'comment_parent'       => 0, // Flat comments, no threading.
 			'comment_meta'         => array(
-				'source_id'  => $post->guid,
-				'source_url' => $post->guid,
-				'protocol'   => 'activitypub',
+				'source_id'           => $post->guid,
+				'source_url'          => $post->guid,
+				'protocol'            => 'activitypub',
+				'_original_post_guid' => $post->guid,
 			),
 		);
 
@@ -2589,6 +2597,9 @@ class Migration {
 			}
 		);
 
+		// Pre-approve comment (bypass Akismet and other moderation).
+		add_filter( 'pre_comment_approved', '__return_true', 100 );
+
 		// Allow p and br tags.
 		add_filter( 'wp_kses_allowed_html', array( __CLASS__, 'allowed_comment_html' ), 10, 2 );
 
@@ -2596,6 +2607,7 @@ class Migration {
 
 		// Restore filters.
 		remove_filter( 'wp_kses_allowed_html', array( __CLASS__, 'allowed_comment_html' ) );
+		remove_filter( 'pre_comment_approved', '__return_true', 100 );
 		remove_filter( 'pre_option_require_name_email', '__return_false' );
 		add_action( 'check_comment_flood', 'check_comment_flood_db', 10, 4 );
 

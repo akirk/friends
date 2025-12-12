@@ -1224,7 +1224,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $user;
 	}
 
-	private function get_external_mentions_feed() {
+	public function get_external_mentions_feed() {
 		require_once __DIR__ . '/activitypub/class-virtual-user-feed.php';
 		$user = $this->get_external_user();
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
@@ -1454,6 +1454,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( $item instanceof Feed_Item ) {
 			$i = $this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
+
+			// If this is a reply to something not in our database, queue for background conversion.
+			if ( 'create' === $type && ! empty( $activity['object']['inReplyTo'] ) ) {
+				$post_id = Feed::url_to_postid( $item->permalink );
+				if ( $post_id ) {
+					wp_schedule_single_event( time() + 30, 'friends_convert_single_reply', array( $post_id ) );
+				}
+			}
+
 			return $item;
 		}
 
