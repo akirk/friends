@@ -81,7 +81,9 @@ $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_frien
 					<?php
 					// If there's an override author that differs from the friend's display name,
 					// and it's not already part of the display name, show only the override name.
-					$names_differ = $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name;
+					// Only apply this for the External user - for regular subscriptions, always use friend_user display name.
+					$is_external_user = 'external' === $friend_user->user_login;
+					$names_differ     = $is_external_user && $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name;
 					if ( $names_differ ) :
 						?>
 						<strong><?php echo esc_html( $override_author_name ); ?></strong>
