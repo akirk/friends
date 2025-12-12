@@ -208,6 +208,25 @@ class Migration {
 				),
 			)
 		);
+
+		self::register(
+			array(
+				'id'            => 'convert_replies_to_comments',
+				'version'       => '4.2.0',
+				'title'         => 'Convert Reply Posts to Comments',
+				'description'   => 'Converts ActivityPub reply posts to comments on conversation root posts. Runs in batches.',
+				'method'        => 'convert_replies_to_comments',
+				'status_option' => 'friends_replies_to_comments_completed',
+				'batched'       => true,
+				'batch_method'  => 'convert_replies_to_comments_batch',
+				'cron_hook'     => 'friends_convert_replies_batch',
+				'progress'      => array(
+					'in_progress' => 'friends_replies_to_comments_in_progress',
+					'total'       => 'friends_replies_to_comments_total',
+					'processed'   => 'friends_replies_to_comments_processed',
+				),
+			)
+		);
 	}
 
 	/**
@@ -2089,5 +2108,553 @@ class Migration {
 
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		error_log( sprintf( 'Friends Migration: External attributedTo backfill completed - processed %d posts', $processed ) );
+	}
+
+	/**
+	 * Convert ActivityPub reply posts to comments on conversation root posts.
+	 *
+	 * This migration finds posts that are replies (have inReplyTo) and converts
+	 * them to WordPress comments on the conversation root post.
+	 */
+	public static function convert_replies_to_comments() {
+		if ( get_option( 'friends_replies_to_comments_in_progress' ) ) {
+			return;
+		}
+		if ( get_option( 'friends_replies_to_comments_completed' ) ) {
+			return;
+		}
+
+		// Check for ActivityPub plugin.
+		if ( ! class_exists( '\Activitypub\Http' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// Count posts linked to ActivityPub feeds.
+		$total_posts = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT COUNT(DISTINCT p.ID)
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->termmeta} tm ON tt.term_id = tm.term_id
+				WHERE p.post_type = %s
+				AND tt.taxonomy = %s
+				AND tm.meta_key = 'parser'
+				AND tm.meta_value = 'activitypub'",
+				Friends::CPT,
+				User_Feed::TAXONOMY
+			)
+		);
+
+		if ( ! $total_posts ) {
+			update_option( 'friends_replies_to_comments_completed', true, false );
+			return;
+		}
+
+		// Initialize progress tracking.
+		update_option( 'friends_replies_to_comments_in_progress', true, false );
+		update_option( 'friends_replies_to_comments_total', $total_posts, false );
+		update_option( 'friends_replies_to_comments_processed', 0, false );
+		update_option( 'friends_replies_to_comments_converted', 0, false );
+		update_option( 'friends_replies_to_comments_skipped', 0, false );
+		update_option( 'friends_replies_to_comments_failed', 0, false );
+		update_option( 'friends_replies_to_comments_failed_posts', array(), false );
+
+		// Schedule the first batch.
+		wp_schedule_single_event( time(), 'friends_convert_replies_batch' );
+	}
+
+	/**
+	 * Process a batch of reply posts to convert to comments.
+	 */
+	public static function convert_replies_to_comments_batch() {
+		if ( ! class_exists( '\Activitypub\Http' ) ) {
+			self::finalize_replies_to_comments_migration();
+			return;
+		}
+
+		// Reduce HTTP timeout.
+		add_filter( 'activitypub_remote_get_timeout', array( __CLASS__, 'reduce_activitypub_timeout' ) );
+
+		// Process one at a time due to network operations.
+		$batch_size = apply_filters( 'friends_replies_batch_size', 1 );
+
+		global $wpdb;
+		$processed = (int) get_option( 'friends_replies_to_comments_processed', 0 );
+
+		// Check for crash recovery.
+		$current_post = get_option( 'friends_replies_current_post' );
+		if ( $current_post ) {
+			// Previous batch crashed, skip this post.
+			$failed_posts = get_option( 'friends_replies_to_comments_failed_posts', array() );
+			$failed_posts[] = array(
+				'post_id' => $current_post,
+				'reason'  => 'timeout_or_crash',
+				'time'    => time(),
+			);
+			update_option( 'friends_replies_to_comments_failed_posts', $failed_posts, false );
+			$failed = (int) get_option( 'friends_replies_to_comments_failed', 0 );
+			update_option( 'friends_replies_to_comments_failed', $failed + 1, false );
+			delete_option( 'friends_replies_current_post' );
+		}
+
+		// Get next batch of posts.
+		$posts = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT DISTINCT p.ID, p.guid, p.post_author, p.post_content, p.post_date_gmt
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->term_relationships} tr ON p.ID = tr.object_id
+				INNER JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				INNER JOIN {$wpdb->termmeta} tm ON tt.term_id = tm.term_id
+				WHERE p.post_type = %s
+				AND tt.taxonomy = %s
+				AND tm.meta_key = 'parser'
+				AND tm.meta_value = 'activitypub'
+				ORDER BY p.ID ASC
+				LIMIT %d OFFSET %d",
+				Friends::CPT,
+				User_Feed::TAXONOMY,
+				$batch_size,
+				$processed
+			)
+		);
+
+		if ( empty( $posts ) ) {
+			self::finalize_replies_to_comments_migration();
+			return;
+		}
+
+		// Track stats.
+		$converted = (int) get_option( 'friends_replies_to_comments_converted', 0 );
+		$skipped = (int) get_option( 'friends_replies_to_comments_skipped', 0 );
+		$failed = (int) get_option( 'friends_replies_to_comments_failed', 0 );
+		$failed_posts = get_option( 'friends_replies_to_comments_failed_posts', array() );
+
+		foreach ( $posts as $post ) {
+			++$processed;
+
+			// Crash recovery: store current post ID.
+			update_option( 'friends_replies_current_post', $post->ID, false );
+
+			$result = self::process_potential_reply_post( $post );
+
+			// Clear crash recovery marker.
+			delete_option( 'friends_replies_current_post' );
+
+			if ( 'converted' === $result ) {
+				++$converted;
+			} elseif ( 'skipped' === $result ) {
+				++$skipped;
+			} else {
+				++$failed;
+				$failed_posts[] = array(
+					'post_id' => $post->ID,
+					'guid'    => $post->guid,
+					'reason'  => $result,
+					'time'    => time(),
+				);
+			}
+		}
+
+		// Update progress.
+		update_option( 'friends_replies_to_comments_processed', $processed, false );
+		update_option( 'friends_replies_to_comments_converted', $converted, false );
+		update_option( 'friends_replies_to_comments_skipped', $skipped, false );
+		update_option( 'friends_replies_to_comments_failed', $failed, false );
+		update_option( 'friends_replies_to_comments_failed_posts', $failed_posts, false );
+
+		// Schedule next batch.
+		wp_schedule_single_event( time() + 1, 'friends_convert_replies_batch' );
+	}
+
+	/**
+	 * Process a potential reply post and convert it to a comment if needed.
+	 *
+	 * @param object $post The post object.
+	 * @return string Result: 'converted', 'skipped', or error reason.
+	 */
+	private static function process_potential_reply_post( $post ) {
+		// Get the ActivityPub object URL from the post's GUID.
+		$object_url = $post->guid;
+
+		// Fetch the ActivityPub object.
+		$object = \Activitypub\Http::get_remote_object( $object_url, true );
+
+		if ( is_wp_error( $object ) ) {
+			return 'fetch_failed: ' . $object->get_error_message();
+		}
+
+		if ( ! is_array( $object ) ) {
+			return 'invalid_object';
+		}
+
+		// Check if this is a reply.
+		if ( empty( $object['inReplyTo'] ) ) {
+			// Not a reply, skip.
+			return 'skipped';
+		}
+
+		$in_reply_to = $object['inReplyTo'];
+		if ( is_array( $in_reply_to ) ) {
+			$in_reply_to = reset( $in_reply_to );
+		}
+
+		// Find the conversation root by walking up the chain.
+		$root_result = self::find_conversation_root( $in_reply_to, 10 );
+
+		if ( is_wp_error( $root_result ) ) {
+			return 'root_failed: ' . $root_result->get_error_message();
+		}
+
+		$root_post_id = $root_result['post_id'];
+
+		// Convert the reply post to a comment.
+		$comment_result = self::convert_post_to_comment( $post, $root_post_id, $object );
+
+		if ( is_wp_error( $comment_result ) ) {
+			return 'comment_failed: ' . $comment_result->get_error_message();
+		}
+
+		// Delete the original reply post.
+		wp_delete_post( $post->ID, true );
+
+		return 'converted';
+	}
+
+	/**
+	 * Walk up the inReplyTo chain to find the conversation root.
+	 *
+	 * @param string $url       The URL to start from.
+	 * @param int    $max_depth Maximum depth to walk.
+	 * @return array|\WP_Error Result with post_id and root_url, or WP_Error.
+	 */
+	private static function find_conversation_root( $url, $max_depth ) {
+		$current_url = $url;
+		$chain = array( $url );
+		$earliest_available = null;
+
+		for ( $depth = 0; $depth < $max_depth; ++$depth ) {
+			// Check if we already have this post locally.
+			$existing_post_id = Feed::url_to_postid( $current_url );
+			if ( $existing_post_id ) {
+				// We have this post, use it as the root.
+				return array(
+					'post_id'  => $existing_post_id,
+					'root_url' => $current_url,
+					'created'  => false,
+				);
+			}
+
+			// Fetch the remote object.
+			$object = \Activitypub\Http::get_remote_object( $current_url, true );
+
+			if ( is_wp_error( $object ) || ! is_array( $object ) ) {
+				// Cannot fetch, use earliest available in chain as fallback.
+				break;
+			}
+
+			// Remember this as a valid point in the chain.
+			$earliest_available = array(
+				'url'    => $current_url,
+				'object' => $object,
+			);
+
+			// Check if this has inReplyTo.
+			if ( empty( $object['inReplyTo'] ) ) {
+				// This is the root!
+				return self::ensure_root_post_exists( $current_url, $object );
+			}
+
+			// Move up the chain.
+			$parent_url = $object['inReplyTo'];
+			if ( is_array( $parent_url ) ) {
+				$parent_url = reset( $parent_url );
+			}
+
+			// Prevent infinite loops.
+			if ( in_array( $parent_url, $chain, true ) ) {
+				break;
+			}
+
+			$chain[] = $parent_url;
+			$current_url = $parent_url;
+		}
+
+		// Use earliest available as fallback root.
+		if ( $earliest_available ) {
+			return self::ensure_root_post_exists(
+				$earliest_available['url'],
+				$earliest_available['object']
+			);
+		}
+
+		return new \WP_Error( 'no_root_found', 'Could not find conversation root' );
+	}
+
+	/**
+	 * Ensure a root post exists, creating it if necessary.
+	 *
+	 * @param string $url    The URL of the root post.
+	 * @param array  $object The ActivityPub object.
+	 * @return array|\WP_Error Result with post_id and created flag, or WP_Error.
+	 */
+	private static function ensure_root_post_exists( $url, $object ) {
+		// Check if post already exists.
+		$existing_post_id = Feed::url_to_postid( $url );
+		if ( $existing_post_id ) {
+			return array(
+				'post_id'  => $existing_post_id,
+				'root_url' => $url,
+				'created'  => false,
+			);
+		}
+
+		// Need to create the root post.
+		// Find the appropriate user feed for the author.
+		$actor_url = $object['attributedTo'] ?? $object['actor'] ?? null;
+		if ( ! $actor_url ) {
+			return new \WP_Error( 'no_actor', 'Cannot determine actor for root post' );
+		}
+
+		if ( is_array( $actor_url ) ) {
+			$actor_url = $actor_url['id'] ?? reset( $actor_url );
+		}
+
+		// Use the External mentions feed.
+		$feed_parser = new Feed_Parser_ActivityPub( Friends::get_instance()->feed );
+		$user_feed = $feed_parser->get_external_mentions_feed();
+
+		if ( ! $user_feed ) {
+			return new \WP_Error( 'no_feed', 'Cannot find appropriate feed for root post' );
+		}
+
+		// Create feed item from the object.
+		$permalink = $object['url'] ?? $url;
+		if ( is_array( $permalink ) ) {
+			foreach ( $permalink as $p ) {
+				if ( is_string( $p ) ) {
+					$permalink = $p;
+					break;
+				}
+				if ( is_array( $p ) && isset( $p['href'] ) ) {
+					$permalink = $p['href'];
+					break;
+				}
+			}
+		}
+
+		$item_data = array(
+			'permalink'    => $permalink,
+			'content'      => $object['content'] ?? '',
+			'title'        => $object['name'] ?? '',
+			'date'         => $object['published'] ?? gmdate( 'Y-m-d H:i:s' ),
+			'post_format'  => 'status',
+			'_external_id' => $object['id'] ?? $url,
+			Feed_Parser_ActivityPub::SLUG => array(),
+		);
+
+		// Set author if available.
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
+			if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+				$item_data[ Feed_Parser_ActivityPub::SLUG ]['attributedTo'] = array( 'ap_actor_id' => $actor_post->ID );
+				$actor = \Activitypub\Collection\Remote_Actors::get_actor( $actor_post->ID );
+				if ( $actor ) {
+					$item_data['author'] = $actor->get_name() ?: $actor->get_preferred_username();
+				}
+			}
+		}
+
+		$item = new Feed_Item( $item_data );
+
+		// Process through the feed system.
+		$new_posts = Friends::get_instance()->feed->process_incoming_feed_items(
+			array( $item ),
+			$user_feed
+		);
+
+		// Try to find the post we just created.
+		$post_id = Feed::url_to_postid( $permalink );
+		if ( ! $post_id ) {
+			$post_id = Feed::url_to_postid( $url );
+		}
+		if ( ! $post_id && isset( $object['id'] ) ) {
+			$post_id = Feed::url_to_postid( $object['id'] );
+		}
+
+		if ( $post_id ) {
+			return array(
+				'post_id'  => $post_id,
+				'root_url' => $url,
+				'created'  => true,
+			);
+		}
+
+		return new \WP_Error( 'create_failed', 'Failed to create root post' );
+	}
+
+	/**
+	 * Convert a post to a comment on the root post.
+	 *
+	 * @param object $post         The post object to convert.
+	 * @param int    $root_post_id The root post ID.
+	 * @param array  $object       The ActivityPub object.
+	 * @return int|\WP_Error The comment ID or WP_Error.
+	 */
+	private static function convert_post_to_comment( $post, $root_post_id, $object ) {
+		// Get actor information.
+		$actor_url = $object['attributedTo'] ?? $object['actor'] ?? null;
+		if ( is_array( $actor_url ) ) {
+			$actor_url = $actor_url['id'] ?? reset( $actor_url );
+		}
+
+		// Build comment author info.
+		$comment_author = '';
+		$comment_author_url = '';
+		$comment_author_email = '';
+		$remote_actor_id = null;
+
+		if ( $actor_url && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor_url );
+			if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+				$remote_actor_id = $actor_post->ID;
+				$actor = \Activitypub\Collection\Remote_Actors::get_actor( $actor_post->ID );
+				if ( $actor ) {
+					$comment_author = $actor->get_name() ?: $actor->get_preferred_username();
+					$comment_author_url = $actor->get_url() ?: $actor_url;
+				}
+			}
+
+			// Try to get webfinger for email field.
+			if ( class_exists( '\Activitypub\Webfinger' ) ) {
+				$webfinger = \Activitypub\Webfinger::uri_to_acct( $actor_url );
+				if ( ! is_wp_error( $webfinger ) ) {
+					$comment_author_email = str_replace( 'acct:', '', $webfinger );
+				}
+			}
+		}
+
+		// Fallback to post meta.
+		if ( empty( $comment_author ) ) {
+			$comment_author = get_post_meta( $post->ID, 'author', true ) ?: __( 'Unknown', 'friends' );
+		}
+
+		// Prepare comment data.
+		$comment_data = array(
+			'comment_post_ID'      => $root_post_id,
+			'comment_author'       => $comment_author,
+			'comment_author_url'   => $comment_author_url,
+			'comment_author_email' => $comment_author_email,
+			'comment_content'      => $post->post_content,
+			'comment_date_gmt'     => $post->post_date_gmt,
+			'comment_date'         => get_date_from_gmt( $post->post_date_gmt ),
+			'comment_type'         => 'comment',
+			'comment_approved'     => 1,
+			'comment_parent'       => 0, // Flat comments, no threading.
+			'comment_meta'         => array(
+				'source_id'  => $post->guid,
+				'source_url' => $post->guid,
+				'protocol'   => 'activitypub',
+			),
+		);
+
+		// Store reference to remote actor if available.
+		if ( $remote_actor_id ) {
+			$comment_data['comment_meta']['_activitypub_remote_actor_id'] = $remote_actor_id;
+		}
+
+		return self::persist_comment( $comment_data );
+	}
+
+	/**
+	 * Persist a comment with ActivityPub-compatible settings.
+	 *
+	 * @param array $comment_data The comment data.
+	 * @return int|\WP_Error The comment ID or WP_Error.
+	 */
+	private static function persist_comment( $comment_data ) {
+		// Disable flood control.
+		remove_action( 'check_comment_flood', 'check_comment_flood_db' );
+
+		// Do not require email.
+		add_filter( 'pre_option_require_name_email', '__return_false' );
+
+		// Disable Akismet nonce check.
+		add_filter(
+			'akismet_comment_nonce',
+			function () {
+				return 'inactive';
+			}
+		);
+
+		// Allow p and br tags.
+		add_filter( 'wp_kses_allowed_html', array( __CLASS__, 'allowed_comment_html' ), 10, 2 );
+
+		$comment_id = wp_new_comment( $comment_data, true );
+
+		// Restore filters.
+		remove_filter( 'wp_kses_allowed_html', array( __CLASS__, 'allowed_comment_html' ) );
+		remove_filter( 'pre_option_require_name_email', '__return_false' );
+		add_action( 'check_comment_flood', 'check_comment_flood_db', 10, 4 );
+
+		return $comment_id;
+	}
+
+	/**
+	 * Allow additional HTML tags in comments.
+	 *
+	 * @param array  $allowed_tags The allowed tags.
+	 * @param string $context      The context.
+	 * @return array The modified allowed tags.
+	 */
+	public static function allowed_comment_html( $allowed_tags, $context = '' ) {
+		if ( 'pre_comment_content' !== $context ) {
+			return $allowed_tags;
+		}
+
+		if ( ! array_key_exists( 'br', $allowed_tags ) ) {
+			$allowed_tags['br'] = array();
+		}
+		if ( ! array_key_exists( 'p', $allowed_tags ) ) {
+			$allowed_tags['p'] = array();
+		}
+
+		return $allowed_tags;
+	}
+
+	/**
+	 * Finalize the reply to comments migration.
+	 */
+	private static function finalize_replies_to_comments_migration() {
+		$converted = (int) get_option( 'friends_replies_to_comments_converted', 0 );
+		$skipped = (int) get_option( 'friends_replies_to_comments_skipped', 0 );
+		$failed = (int) get_option( 'friends_replies_to_comments_failed', 0 );
+		$failed_posts = get_option( 'friends_replies_to_comments_failed_posts', array() );
+
+		// Clean up progress options.
+		delete_option( 'friends_replies_to_comments_in_progress' );
+		delete_option( 'friends_replies_to_comments_total' );
+		delete_option( 'friends_replies_to_comments_processed' );
+		delete_option( 'friends_replies_current_post' );
+
+		// Keep final stats.
+		update_option( 'friends_replies_to_comments_completed', true, false );
+		update_option( 'friends_replies_converted_count', $converted, false );
+		update_option( 'friends_replies_skipped_count', $skipped, false );
+		update_option( 'friends_replies_failed_count', $failed, false );
+		if ( ! empty( $failed_posts ) ) {
+			update_option( 'friends_replies_failed_posts_final', $failed_posts, false );
+		}
+
+		// Clean up batch stats.
+		delete_option( 'friends_replies_to_comments_converted' );
+		delete_option( 'friends_replies_to_comments_skipped' );
+		delete_option( 'friends_replies_to_comments_failed' );
+		delete_option( 'friends_replies_to_comments_failed_posts' );
+
+		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+		error_log( sprintf( 'Friends Migration: Reply to comments completed - Converted %d, Skipped %d, Failed %d', $converted, $skipped, $failed ) );
 	}
 }

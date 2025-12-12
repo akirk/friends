@@ -208,6 +208,7 @@ class Friends {
 		add_action( 'friends_migrate_ap_attributed_to_batch', array( $this, 'cron_migrate_ap_attributed_to_batch' ) );
 		add_action( 'friends_link_ap_feeds_batch', array( $this, 'cron_link_ap_feeds_batch' ) );
 		add_action( 'friends_backfill_external_attributed_to_batch', array( $this, 'cron_backfill_external_attributed_to_batch' ) );
+		add_action( 'friends_convert_replies_batch', array( $this, 'cron_convert_replies_batch' ) );
 		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
@@ -1514,6 +1515,15 @@ class Friends {
 	public function cron_backfill_external_attributed_to_batch() {
 		require_once __DIR__ . '/class-migration.php';
 		Migration::backfill_external_attributed_to_batch();
+	}
+
+	/**
+	 * Cron function to process converting reply posts to comments batches.
+	 * Ensures the Migration class is loaded before calling the batch method.
+	 */
+	public function cron_convert_replies_batch() {
+		require_once __DIR__ . '/class-migration.php';
+		Migration::convert_replies_to_comments_batch();
 	}
 
 	/**
