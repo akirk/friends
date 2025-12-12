@@ -360,7 +360,7 @@
 	} );
 
 	$document.on( 'click', 'a.collapse-post, .collapsed.card, .all-collapsed .card:not(.uncollapsed)', function ( e ) {
-		if ( e.target.closest( '.friends-dropdown' ) || e.target.closest( 'a:not(.collapse-post)' ) ) {
+		if ( e.target.closest( '.friends-dropdown' ) || e.target.closest( 'a:not(.collapse-post)' ) || e.target.closest( 'form' ) || e.target.closest( 'textarea' ) || e.target.closest( 'input' ) || e.target.closest( 'button' ) || e.target.closest( 'label' ) ) {
 			return true;
 		}
 
@@ -403,7 +403,10 @@
 	$document.on(
 		'dblclick',
 		'section.all-collapsed article, article.collapsed, article.uncollapsed',
-		function () {
+		function ( e ) {
+			if ( e.target.closest( 'form' ) || e.target.closest( 'textarea' ) || e.target.closest( 'input' ) || e.target.closest( 'button' ) || e.target.closest( 'label' ) ) {
+				return true;
+			}
 			$( this ).closest( 'article' ).find( 'a.collapse-post' ).trigger( 'click' );
 			return false;
 		}

@@ -3591,9 +3591,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$mentions[ $attributed_to_url ] = $attributed_to_url;
 		}
 
+		// Exclude the current user's own actor URL from mentions.
+		$current_user_actor_url = null;
+		if ( is_user_logged_in() && class_exists( '\Activitypub\Collection\Actors' ) ) {
+			$actor_id = self::get_activitypub_actor_id( get_current_user_id() );
+			$actor = \Activitypub\Collection\Actors::get_by_id( $actor_id );
+			if ( $actor && ! is_wp_error( $actor ) ) {
+				$current_user_actor_url = $actor->get_id();
+			}
+		}
+		if ( $current_user_actor_url ) {
+			unset( $mentions[ $current_user_actor_url ] );
+		}
+
 		$comment_content = '';
 		if ( $mentions ) {
-			$comment_content = '@' . implode( ' @', array_map( array( self::class, 'convert_actor_to_mastodon_handle' ), array_keys( $mentions ) ) ) . ' ';
+			$handles = array_filter( array_map( array( self::class, 'convert_actor_to_mastodon_handle' ), array_keys( $mentions ) ) );
+			if ( $handles ) {
+				$comment_content = '@' . implode( ' @', $handles ) . ' ';
+			}
 		}
 		$html5 = current_theme_supports( 'html5', 'comment-form' ) ? 'html5' : 'xhtml';
 		$required_attribute = ( $html5 ? ' required' : ' required="required"' );
@@ -3668,12 +3684,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		// Construct from the URL as fallback (no network request).
 		$p = wp_parse_url( $actor );
 		if ( $p ) {
-			if ( isset( $p['host'] ) ) {
-				$domain = $p['host'];
-			}
+			$domain = isset( $p['host'] ) ? $p['host'] : '';
+			$username = '';
 			if ( isset( $p['path'] ) ) {
 				$path_parts = explode( '/', trim( $p['path'], '/' ) );
 				$username = ltrim( array_pop( $path_parts ), '@' );
+			}
+			// Skip if we don't have a valid username (e.g., just a domain like gatherpress.org).
+			if ( empty( $username ) || empty( $domain ) ) {
+				return '';
 			}
 			return $username . '@' . $domain;
 		}
