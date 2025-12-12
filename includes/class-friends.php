@@ -208,6 +208,10 @@ class Friends {
 		add_action( 'friends_migrate_ap_attributed_to_batch', array( $this, 'cron_migrate_ap_attributed_to_batch' ) );
 		add_action( 'friends_link_ap_feeds_batch', array( $this, 'cron_link_ap_feeds_batch' ) );
 		add_action( 'friends_backfill_external_attributed_to_batch', array( $this, 'cron_backfill_external_attributed_to_batch' ) );
+		add_action( 'friends_convert_replies_batch', array( $this, 'cron_convert_replies_batch' ) );
+		add_action( 'friends_convert_single_reply', array( $this, 'convert_single_reply_to_comment' ) );
+		add_action( 'template_redirect', array( $this, 'redirect_trashed_reply_to_comment' ), 4 );
+		add_action( 'template_redirect', array( $this, 'fallback_redirect_via_comment_meta' ), 4 );
 		add_action( 'template_redirect', array( $this, 'disable_friends_author_page' ) );
 
 		add_action( 'comment_form_defaults', array( $this, 'comment_form_defaults' ) );
@@ -1514,6 +1518,112 @@ class Friends {
 	public function cron_backfill_external_attributed_to_batch() {
 		require_once __DIR__ . '/class-migration.php';
 		Migration::backfill_external_attributed_to_batch();
+	}
+
+	/**
+	 * Cron function to process converting reply posts to comments batches.
+	 * Ensures the Migration class is loaded before calling the batch method.
+	 */
+	public function cron_convert_replies_batch() {
+		require_once __DIR__ . '/class-migration.php';
+		Migration::convert_replies_to_comments_batch();
+	}
+
+	/**
+	 * Convert a single reply post to a comment.
+	 * This is scheduled as a single cron event when a new reply post is created.
+	 *
+	 * @param int $post_id The post ID to convert.
+	 */
+	public function convert_single_reply_to_comment( $post_id ) {
+		$post = get_post( $post_id );
+		if ( ! $post || self::CPT !== $post->post_type ) {
+			return;
+		}
+
+		// Skip if already trashed (already processed).
+		if ( 'trash' === $post->post_status ) {
+			return;
+		}
+
+		require_once __DIR__ . '/class-migration.php';
+
+		// Create a simple object for the process method.
+		$post_obj = (object) array(
+			'ID'            => $post->ID,
+			'guid'          => $post->guid,
+			'post_author'   => $post->post_author,
+			'post_content'  => $post->post_content,
+			'post_date_gmt' => $post->post_date_gmt,
+		);
+
+		Migration::process_potential_reply_post( $post_obj );
+	}
+
+	/**
+	 * Redirect trashed reply posts to their comment equivalents.
+	 * When a reply post has been converted to a comment and trashed,
+	 * visitors to the old post URL are redirected to the comment.
+	 */
+	public function redirect_trashed_reply_to_comment() {
+		// Only handle single posts.
+		if ( ! is_singular( self::CPT ) ) {
+			return;
+		}
+
+		$post = get_queried_object();
+		if ( ! $post || 'trash' !== $post->post_status ) {
+			return;
+		}
+
+		$comment_id = get_post_meta( $post->ID, '_redirects_to_comment', true );
+		$redirect_post_id = get_post_meta( $post->ID, '_redirect_post_id', true );
+
+		if ( ! $comment_id || ! $redirect_post_id ) {
+			return;
+		}
+
+		$redirect_url = get_permalink( $redirect_post_id ) . '#comment-' . $comment_id;
+		wp_safe_redirect( $redirect_url, 301 );
+		exit;
+	}
+
+	/**
+	 * Fallback redirect for reply posts that have been permanently deleted.
+	 * Looks up the comment by its original post GUID stored in comment meta.
+	 */
+	public function fallback_redirect_via_comment_meta() {
+		// Only on 404.
+		if ( ! is_404() ) {
+			return;
+		}
+
+		// Get the requested URL.
+		$requested_url = home_url( add_query_arg( array() ) );
+
+		// Search for a comment that has this URL as its original post GUID.
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$comment = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT c.comment_ID, c.comment_post_ID
+				 FROM {$wpdb->comments} c
+				 INNER JOIN {$wpdb->commentmeta} cm ON c.comment_ID = cm.comment_id
+				 WHERE cm.meta_key = '_original_post_guid'
+				 AND cm.meta_value = %s
+				 LIMIT 1",
+				$requested_url
+			)
+		);
+
+		if ( ! $comment ) {
+			return;
+		}
+
+		$redirect_url = get_permalink( $comment->comment_post_ID ) . '#comment-' . $comment->comment_ID;
+		wp_safe_redirect( $redirect_url, 301 );
+		exit;
 	}
 
 	/**

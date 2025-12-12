@@ -54,6 +54,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_update', array( $this, 'handle_received_update' ), 15, 2 );
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
 		\add_action( 'activitypub_interactions_follow_url', array( $this, 'activitypub_interactions_follow_url' ), 10, 2 );
+		\add_filter( 'activitypub_comment_post_id', array( $this, 'activitypub_comment_post_id' ), 10, 3 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
@@ -1223,7 +1224,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $user;
 	}
 
-	private function get_external_mentions_feed() {
+	public function get_external_mentions_feed() {
 		require_once __DIR__ . '/activitypub/class-virtual-user-feed.php';
 		$user = $this->get_external_user();
 		return new Virtual_User_Feed( $user, __( 'External Mentions', 'friends' ) );
@@ -1334,6 +1335,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
+		// Check if this is a reply to an existing Friends post - if so, let the ActivityPub plugin handle it as a comment.
+		if ( 'create' === $type && ! empty( $activity['object']['inReplyTo'] ) ) {
+			$in_reply_to = $activity['object']['inReplyTo'];
+			if ( is_array( $in_reply_to ) ) {
+				$in_reply_to = reset( $in_reply_to );
+			}
+			$reply_to_post_id = Feed::url_to_postid( $in_reply_to );
+			if ( $reply_to_post_id ) {
+				// This is a reply to an existing Friends post - skip processing and let ActivityPub handle it as a comment.
+				return false;
+			}
+		}
+
 		if ( 'undo' === $type ) {
 			if ( ! isset( $activity['object'] ) ) {
 				return false;
@@ -1440,6 +1454,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( $item instanceof Feed_Item ) {
 			$i = $this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
+
+			// If this is a reply to something not in our database, queue for background conversion.
+			if ( 'create' === $type && ! empty( $activity['object']['inReplyTo'] ) ) {
+				$post_id = Feed::url_to_postid( $item->permalink );
+				if ( $post_id ) {
+					wp_schedule_single_event( time() + 30, 'friends_convert_single_reply', array( $post_id ) );
+				}
+			}
+
 			return $item;
 		}
 
@@ -2524,6 +2547,24 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $post_id;
 	}
 
+	/**
+	 * Resolve a URL to a Friends post ID for ActivityPub comment handling.
+	 *
+	 * This allows the ActivityPub plugin to create comments on friend_post_cache posts
+	 * instead of the Friends plugin creating new posts for replies.
+	 *
+	 * @param int    $post_id  The post ID (0 if not found).
+	 * @param string $url      The target URL being resolved.
+	 * @param array  $activity The activity object.
+	 * @return int The post ID.
+	 */
+	public function activitypub_comment_post_id( $post_id, $url, $activity ) {
+		if ( ! $post_id ) {
+			$post_id = \Friends\Feed::url_to_postid( $url );
+		}
+		return $post_id;
+	}
+
 	public function the_content( $the_content ) {
 		if ( ! Friends::on_frontend() ) {
 			return $the_content;
@@ -3550,9 +3591,25 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$mentions[ $attributed_to_url ] = $attributed_to_url;
 		}
 
+		// Exclude the current user's own actor URL from mentions.
+		$current_user_actor_url = null;
+		if ( is_user_logged_in() && class_exists( '\Activitypub\Collection\Actors' ) ) {
+			$actor_id = self::get_activitypub_actor_id( get_current_user_id() );
+			$actor = \Activitypub\Collection\Actors::get_by_id( $actor_id );
+			if ( $actor && ! is_wp_error( $actor ) ) {
+				$current_user_actor_url = $actor->get_id();
+			}
+		}
+		if ( $current_user_actor_url ) {
+			unset( $mentions[ $current_user_actor_url ] );
+		}
+
 		$comment_content = '';
 		if ( $mentions ) {
-			$comment_content = '@' . implode( ' @', array_map( array( self::class, 'convert_actor_to_mastodon_handle' ), array_keys( $mentions ) ) ) . ' ';
+			$handles = array_filter( array_map( array( self::class, 'convert_actor_to_mastodon_handle' ), array_keys( $mentions ) ) );
+			if ( $handles ) {
+				$comment_content = '@' . implode( ' @', $handles ) . ' ';
+			}
 		}
 		$html5 = current_theme_supports( 'html5', 'comment-form' ) ? 'html5' : 'xhtml';
 		$required_attribute = ( $html5 ? ' required' : ' required="required"' );
@@ -3627,12 +3684,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		// Construct from the URL as fallback (no network request).
 		$p = wp_parse_url( $actor );
 		if ( $p ) {
-			if ( isset( $p['host'] ) ) {
-				$domain = $p['host'];
-			}
+			$domain = isset( $p['host'] ) ? $p['host'] : '';
+			$username = '';
 			if ( isset( $p['path'] ) ) {
 				$path_parts = explode( '/', trim( $p['path'], '/' ) );
 				$username = ltrim( array_pop( $path_parts ), '@' );
+			}
+			// Skip if we don't have a valid username (e.g., just a domain like gatherpress.org).
+			if ( empty( $username ) || empty( $domain ) ) {
+				return '';
 			}
 			return $username . '@' . $domain;
 		}
