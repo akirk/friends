@@ -92,6 +92,9 @@ $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_frien
 					<?php endif; ?>
 				</a>
 				<?php do_action( 'friends_post_author_meta', $friend_user ); ?>
+				<?php if ( get_post_meta( get_the_ID(), '_has_mention_in_comments', true ) ) : ?>
+					<span class="mention-indicator" title="<?php esc_attr_e( 'You were mentioned in a comment', 'friends' ); ?>">@</span>
+				<?php endif; ?>
 			<?php else : ?>
 				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">
 					<strong><?php the_author(); ?></strong>
