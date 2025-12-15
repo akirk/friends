@@ -69,7 +69,7 @@ class Admin {
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
 		add_filter( 'friends_create_and_follow', array( $this, 'create_and_follow' ), 10, 4 );
 		add_filter( 'friends_admin_tabs', array( $this, 'maybe_remove_friendship_settings' ) );
-
+		add_filter( 'plugin_action_links_' . FRIENDS_PLUGIN_BASENAME, array( $this, 'plugin_action_links' ) );
 		if ( ! get_option( 'permalink_structure' ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
 		}
@@ -3707,5 +3707,29 @@ class Admin {
 		$query = $author->modify_query_by_author( $query );
 
 		return $query;
+	}
+
+	public function output_ask_why_deactivate_dialog() {
+		Friends::template_loader()->get_template_part( 'admin/dialog-ask-why-deactivate' );
+	}
+
+	public function plugin_action_links( $links ) {
+		$links[] = '<a href="' . self_admin_url( 'admin.php?page=friends-settings' ) . '">' . esc_html__( 'Settings', 'friends' ) . '</a>';
+
+		if ( isset( $links['deactivate'] ) && 0 === strpos( $links['deactivate'], '<a' ) ) {
+			// get the link to deactivate the plugin.
+			$tags = new \WP_HTML_Tag_Processor( $links['deactivate'] );
+			if ( $tags->next_tag( 'a' ) ) {
+				$deactivate_link = $tags->get_attribute( 'href', true );
+				$text = __( 'Deactivate and let us know why', 'friends' );
+				add_action( 'admin_footer', array( $this, 'output_ask_why_deactivate_dialog' ) );
+				array_unshift(
+					$links,
+					'<a href="x' . esc_url( $deactivate_link ) . '" class="friends-ask-why-deactivate">' . esc_html( $text ) . '</a>'
+				);
+			}
+		}
+
+		return $links;
 	}
 }
