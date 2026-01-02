@@ -131,7 +131,7 @@ class Enable_Mastodon_Apps {
 		// Add tax_query to filter for mention tags for the current user.
 		$current_user = wp_get_current_user();
 		if ( $current_user && $current_user->ID ) {
-			$mention_tag = 'mention-' . $current_user->user_login;
+			$mention_tag = Friend_Tag::mention_tag( $current_user->user_login );
 
 			$mention_query = array(
 				'taxonomy' => Friends::TAG_TAXONOMY,

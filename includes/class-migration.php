@@ -1244,8 +1244,7 @@ class Migration {
 				// Look up the URL in our pre-built lookup table.
 				if ( isset( $local_user_urls[ $activitypub_url ] ) ) {
 					$username = $local_user_urls[ $activitypub_url ];
-					$mention_tag = 'mention-' . $username;
-					$mention_tags[] = $mention_tag;
+					$mention_tags[] = Friend_Tag::mention_tag( $username );
 				}
 			}
 		}
@@ -2306,6 +2305,11 @@ class Migration {
 			return 'skipped';
 		}
 
+		// Only convert to comment if the user was mentioned in this post.
+		if ( ! Friend_Tag::has_mention( $post->ID ) ) {
+			return 'skipped';
+		}
+
 		$in_reply_to = $object['inReplyTo'];
 		if ( is_array( $in_reply_to ) ) {
 			$in_reply_to = reset( $in_reply_to );
@@ -2334,15 +2338,9 @@ class Migration {
 		update_post_meta( $post->ID, '_redirect_post_id', $root_post_id );
 
 		// Check if the original post was a mention (has mention-* tag).
-		$mention_terms = wp_get_post_terms( $post->ID, 'friend_tag', array( 'fields' => 'slugs' ) );
-		if ( ! is_wp_error( $mention_terms ) ) {
-			foreach ( $mention_terms as $slug ) {
-				if ( 0 === strpos( $slug, 'mention-' ) ) {
-					// Mark the root post as having a mention in comments.
-					update_post_meta( $root_post_id, '_has_mention_in_comments', true );
-					break;
-				}
-			}
+		if ( Friend_Tag::has_mention( $post->ID ) ) {
+			// Mark the root post as having a mention in comments.
+			update_post_meta( $root_post_id, '_has_mention_in_comments', true );
 		}
 
 		// Trash the original reply post (keep for URL redirects).
