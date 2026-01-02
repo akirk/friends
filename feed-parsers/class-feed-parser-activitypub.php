@@ -1458,10 +1458,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( $item instanceof Feed_Item ) {
 			$i = $this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
 
-			// If this is a reply that mentions the site owner, queue for background conversion.
+			// If this is a reply and the user was mentioned, queue for background conversion to comment.
 			if ( 'create' === $type && ! empty( $activity['object']['inReplyTo'] ) && ! empty( $item->friend_mention_tags ) ) {
 				$post_id = Feed::url_to_postid( $item->permalink );
-				if ( $post_id ) {
+				if ( $post_id && Friend_Tag::has_mention( $post_id ) ) {
 					wp_schedule_single_event( time() + 30, 'friends_convert_single_reply', array( $post_id ) );
 				}
 			}
@@ -1491,7 +1491,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( in_array( $my_activitypub_id, (array) $activity['cc'], true ) ) {
 				$local_user = get_userdata( $user_id );
 				if ( $local_user ) {
-					$mention_tags[] = 'mention-' . $local_user->user_login;
+					$mention_tags[] = Friend_Tag::mention_tag( $local_user->user_login );
 				}
 			}
 		}
