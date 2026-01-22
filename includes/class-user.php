@@ -72,6 +72,9 @@ class User extends \WP_User {
 	 * @return     User|\WP_Error  The created user or an error.
 	 */
 	public static function create( $user_login, $role, $url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
+		// Sanitize the username to prevent special characters like apostrophes.
+		$user_login = self::sanitize_username( $user_login );
+
 		if ( 'subscription' === $role && ! $subscription_override ) {
 			return Subscription::create( $user_login, $role, $url, $display_name, $avatar_url, $description );
 		}
