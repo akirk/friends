@@ -129,6 +129,7 @@ class Frontend {
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
 		add_filter( 'friends_friend_posts_query_viewable', array( $this, 'expose_opml' ), 10, 2 );
+		add_filter( 'get_comment_link', array( $this, 'friend_post_comment_link' ), 10, 2 );
 	}
 
 	/**
@@ -1160,6 +1161,27 @@ class Frontend {
 			return get_the_guid( $post );
 		}
 		return $post_link;
+	}
+
+	/**
+	 * Link friend post comments to the local friends page.
+	 *
+	 * @param string      $link    The comment permalink.
+	 * @param \WP_Comment $comment The comment object.
+	 * @return string The overriden comment link.
+	 */
+	public function friend_post_comment_link( $link, \WP_Comment $comment ) {
+		// Don't override external ActivityPub comments - they should link to their source.
+		if ( 'activitypub' === $comment->comment_type || 'activitypub' === get_comment_meta( $comment->comment_ID, 'protocol', true ) ) {
+			return $link;
+		}
+
+		$post = get_post( $comment->comment_post_ID );
+		if ( $post && in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
+			$friend_user = User::get_post_author( $post );
+			return $friend_user->get_local_friends_page_url( $post->ID ) . '#comment-' . $comment->comment_ID;
+		}
+		return $link;
 	}
 
 	/**

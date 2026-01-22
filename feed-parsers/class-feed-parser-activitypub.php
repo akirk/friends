@@ -3663,9 +3663,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $location;
 		}
 		$post = get_post( $comment->comment_post_ID );
+		if ( ! $post || ! in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
+			// Only redirect for friend posts.
+			return $location;
+		}
 		$user = User::get_post_author( $post );
 
-		return $user->get_local_friends_page_url( $post->ID );
+		return $user->get_local_friends_page_url( $post->ID ) . '#comment-' . $comment->comment_ID;
 	}
 
 	private static function convert_actor_to_mastodon_handle( $actor ) {
