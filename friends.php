@@ -4,7 +4,7 @@
  * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
  * Version: 4.0.0-alpha1
- * Requires PHP: 7.2
+ * Requires PHP: 7.4
  *
  * Description: Follow others via RSS and ActivityPub and read their posts on your own WordPress.
  *
