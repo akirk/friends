@@ -774,12 +774,7 @@ class FeedTest extends \WP_UnitTestCase {
 			)
 		);
 
-		// Use reflection to access private method
-		$reflection = new \ReflectionClass( $parser );
-		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-
-
-		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+		$tags = $parser->extract_hashtags( $feed_item );
 
 		$this->assertContains( 'hashtag', $tags );
 		$this->assertContains( 'testing', $tags );
@@ -800,12 +795,7 @@ class FeedTest extends \WP_UnitTestCase {
 			)
 		);
 
-		// Use reflection to access private method
-		$reflection = new \ReflectionClass( $parser );
-		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-
-
-		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+		$tags = $parser->extract_hashtags( $feed_item );
 
 		$this->assertContains( 'duplicate', $tags );
 		$this->assertEquals( 1, array_count_values( $tags )['duplicate'] ); // Should appear only once
@@ -825,11 +815,7 @@ class FeedTest extends \WP_UnitTestCase {
 		);
 
 		// Use reflection to access private method  
-		$reflection = new \ReflectionClass( $parser );
-		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-
-
-		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+		$tags = $parser->extract_hashtags( $feed_item );
 
 		$this->assertNotContains( 'a', $tags );
 		$this->assertNotContains( 'b', $tags );
@@ -873,10 +859,7 @@ class FeedTest extends \WP_UnitTestCase {
 		
 		// Simulate SimplePie parser hashtag extraction
 		$parser = new Feed_Parser_SimplePie( Friends::get_instance()->feed );
-		$reflection = new \ReflectionClass( $parser );
-		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-
-		$extracted_tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+		$extracted_tags = $parser->extract_hashtags( $feed_item );
 		$feed_item->friend_tags = $extracted_tags;
 		
 		$feed_items = array( $feed_item );
@@ -929,10 +912,7 @@ class FeedTest extends \WP_UnitTestCase {
 		
 		// Simulate SimplePie parser hashtag extraction
 		$parser = new Feed_Parser_SimplePie( Friends::get_instance()->feed );
-		$reflection = new \ReflectionClass( $parser );
-		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-
-		$extracted_tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
+		$extracted_tags = $parser->extract_hashtags( $feed_item );
 		$feed_item->friend_tags = $extracted_tags;
 		$feed_item->friend_mention_tags = array( 'mention-testuser' );
 

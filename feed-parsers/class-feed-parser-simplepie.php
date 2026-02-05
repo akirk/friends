@@ -393,7 +393,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	 * @param Feed_Item $feed_item The feed item.
 	 * @return array Array of hashtag strings
 	 */
-	private function extract_hashtags( $feed_item ) {
+	public function extract_hashtags( $feed_item ) {
 		$tags = array();
 
 		$text = '';
