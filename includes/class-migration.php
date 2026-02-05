@@ -133,7 +133,7 @@ class Migration {
 		self::register(
 			array(
 				'id'            => 'backfill_mention_tags',
-				'version'       => '4.1.0',
+				'version'       => '4.0.0',
 				'title'         => 'Backfill Mention Tags',
 				'description'   => 'Extracts mention tags from Mastodon HTML content in existing posts.',
 				'method'        => 'backfill_mention_tags_from_mastodon_html',
@@ -144,7 +144,7 @@ class Migration {
 		self::register(
 			array(
 				'id'            => 'activitypub_attributed_to',
-				'version'       => '4.1.0',
+				'version'       => '4.0.0',
 				'title'         => 'Migrate ActivityPub AttributedTo',
 				'description'   => 'Converts attributedTo URLs to ap_actor post IDs for better reliability. Runs in batches.',
 				'method'        => 'migrate_activitypub_attributed_to',
@@ -163,7 +163,7 @@ class Migration {
 		self::register(
 			array(
 				'id'            => 'import_activitypub_followings',
-				'version'       => '4.1.0',
+				'version'       => '4.0.0',
 				'title'         => 'Import ActivityPub Followings',
 				'description'   => 'Imports existing ActivityPub plugin followings as Friends subscriptions.',
 				'method'        => 'import_activitypub_followings',
@@ -174,7 +174,7 @@ class Migration {
 		self::register(
 			array(
 				'id'            => 'link_activitypub_feeds_to_actors',
-				'version'       => '4.1.0',
+				'version'       => '4.0.0',
 				'title'         => 'Link ActivityPub Feeds to Actors',
 				'description'   => 'Links existing ActivityPub feeds to their ap_actor posts for URL synchronization. Runs in batches.',
 				'method'        => 'link_activitypub_feeds_to_actors',
@@ -212,7 +212,7 @@ class Migration {
 		self::register(
 			array(
 				'id'            => 'convert_replies_to_comments',
-				'version'       => '4.2.0',
+				'version'       => '4.0.0',
 				'title'         => 'Convert Reply Posts to Comments',
 				'description'   => 'Converts ActivityPub reply posts to comments on conversation root posts. Runs in batches.',
 				'method'        => 'convert_replies_to_comments',

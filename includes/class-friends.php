@@ -576,9 +576,6 @@ class Friends {
 
 		if ( version_compare( $previous_version, '4.0.0', '<' ) ) {
 			Migration::migrate_post_tags_to_friend_tags();
-		}
-
-		if ( version_compare( $previous_version, '4.1.0', '<' ) ) {
 			Migration::migrate_activitypub_attributed_to();
 			Migration::import_activitypub_followings();
 			Migration::link_activitypub_feeds_to_actors();

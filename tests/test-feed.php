@@ -777,7 +777,7 @@ class FeedTest extends \WP_UnitTestCase {
 		// Use reflection to access private method
 		$reflection = new \ReflectionClass( $parser );
 		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-		$extract_method->setAccessible( true );
+
 
 		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
 
@@ -803,7 +803,7 @@ class FeedTest extends \WP_UnitTestCase {
 		// Use reflection to access private method
 		$reflection = new \ReflectionClass( $parser );
 		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-		$extract_method->setAccessible( true );
+
 
 		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
 
@@ -827,7 +827,7 @@ class FeedTest extends \WP_UnitTestCase {
 		// Use reflection to access private method  
 		$reflection = new \ReflectionClass( $parser );
 		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-		$extract_method->setAccessible( true );
+
 
 		$tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
 
@@ -875,7 +875,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$parser = new Feed_Parser_SimplePie( Friends::get_instance()->feed );
 		$reflection = new \ReflectionClass( $parser );
 		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-		$extract_method->setAccessible( true );
+
 		$extracted_tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
 		$feed_item->friend_tags = $extracted_tags;
 		
@@ -931,7 +931,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$parser = new Feed_Parser_SimplePie( Friends::get_instance()->feed );
 		$reflection = new \ReflectionClass( $parser );
 		$extract_method = $reflection->getMethod( 'extract_hashtags' );
-		$extract_method->setAccessible( true );
+
 		$extracted_tags = $extract_method->invokeArgs( $parser, array( $feed_item ) );
 		$feed_item->friend_tags = $extracted_tags;
 		$feed_item->friend_mention_tags = array( 'mention-testuser' );
