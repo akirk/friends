@@ -7,22 +7,22 @@ jobs:
       matrix:
         include:
           - php: "7.4"
-            phpunit: "8.5.53"
+            phpunit: "8.5.52"
             wordpress: "trunk"
           - php: "8.0"
-            phpunit: "9.6.22"
+            phpunit: "9.6.33"
             wordpress: "trunk"
           - php: "8.1"
-            phpunit: "9.6.22"
+            phpunit: "9.6.33"
             wordpress: "trunk"
           - php: "8.2"
-            phpunit: "9.6.22"
+            phpunit: "9.6.33"
             wordpress: "trunk"
           - php: "8.3"
-            phpunit: "9.6.22"
+            phpunit: "9.6.33"
             wordpress: "trunk"
           - php: "8.4"
-            phpunit: "9.6.22"
+            phpunit: "9.6.33"
             wordpress: "trunk"
 
     services:
