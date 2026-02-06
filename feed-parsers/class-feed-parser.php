@@ -91,6 +91,121 @@ abstract class Feed_Parser {
 	}
 
 	/**
+	 * Strip tracking parameters from a URL.
+	 *
+	 * @param      string $url  The URL to clean.
+	 *
+	 * @return     string  The URL without tracking parameters.
+	 */
+	public static function strip_tracking_parameters( $url ) {
+		$parsed = wp_parse_url( $url );
+		if ( ! $parsed || empty( $parsed['query'] ) ) {
+			return $url;
+		}
+
+		parse_str( $parsed['query'], $params );
+
+		/**
+		 * Filter the list of tracking parameter prefixes to strip from URLs.
+		 *
+		 * @param array $prefixes List of parameter prefixes to strip (e.g., 'utm_' matches utm_source, utm_medium, etc.).
+		 */
+		$tracking_prefixes = apply_filters(
+			'friends_tracking_parameter_prefixes',
+			array(
+				'utm_',      // Google Analytics.
+				'mtm_',      // Matomo.
+				'pk_',       // Piwik/Matomo.
+			)
+		);
+
+		/**
+		 * Filter the list of exact tracking parameters to strip from URLs.
+		 *
+		 * @param array $params List of exact parameter names to strip.
+		 */
+		$tracking_params = apply_filters(
+			'friends_tracking_parameters',
+			array(
+				'fbclid',    // Facebook.
+				'gclid',     // Google Ads.
+				'gclsrc',    // Google Ads.
+				'dclid',     // Google Display Network.
+				'gbraid',    // Google Ads (iOS).
+				'wbraid',    // Google Ads (web-to-app).
+				'msclkid',   // Microsoft Ads.
+				'twclid',    // Twitter.
+				'igshid',    // Instagram.
+				'mc_eid',    // Mailchimp.
+				'mc_cid',    // Mailchimp.
+				'oly_enc_id', // Omeda.
+				'oly_anon_id', // Omeda.
+				'vero_id',   // Vero.
+				'_hsenc',    // HubSpot.
+				'_hsmi',     // HubSpot.
+				'hsCtaTracking', // HubSpot.
+				'ref',       // Generic referrer.
+				'ref_src',   // Generic referrer.
+				'ref_url',   // Generic referrer.
+			)
+		);
+
+		$cleaned_params = array();
+		foreach ( $params as $key => $value ) {
+			$is_tracking = false;
+
+			// Check exact matches.
+			if ( in_array( $key, $tracking_params, true ) ) {
+				$is_tracking = true;
+			}
+
+			// Check prefix matches.
+			if ( ! $is_tracking ) {
+				foreach ( $tracking_prefixes as $prefix ) {
+					if ( str_starts_with( $key, $prefix ) ) {
+						$is_tracking = true;
+						break;
+					}
+				}
+			}
+
+			if ( ! $is_tracking ) {
+				$cleaned_params[ $key ] = $value;
+			}
+		}
+
+		// Rebuild the URL.
+		$clean_url = '';
+		if ( ! empty( $parsed['scheme'] ) ) {
+			$clean_url .= $parsed['scheme'] . '://';
+		}
+		if ( ! empty( $parsed['host'] ) ) {
+			if ( ! empty( $parsed['user'] ) ) {
+				$clean_url .= $parsed['user'];
+				if ( ! empty( $parsed['pass'] ) ) {
+					$clean_url .= ':' . $parsed['pass'];
+				}
+				$clean_url .= '@';
+			}
+			$clean_url .= $parsed['host'];
+			if ( ! empty( $parsed['port'] ) ) {
+				$clean_url .= ':' . $parsed['port'];
+			}
+		}
+		if ( ! empty( $parsed['path'] ) ) {
+			$clean_url .= $parsed['path'];
+		}
+		if ( ! empty( $cleaned_params ) ) {
+			$clean_url .= '?' . http_build_query( $cleaned_params );
+		}
+		if ( ! empty( $parsed['fragment'] ) ) {
+			$clean_url .= '#' . $parsed['fragment'];
+		}
+
+		return $clean_url;
+	}
+
+	/**
 	 * Convert relative URLs to absolute ones in incoming content.
 	 *
 	 * @param      string $html   The html.
@@ -125,8 +240,10 @@ abstract class Feed_Parser {
 					return $m[0];
 				}
 
-				// Convert relative URLs to absolute ones.
-				return str_replace( $m[2], Mf2\resolveUrl( $permalink, $m[2] ), $m[0] );
+				// Convert relative URLs to absolute ones and strip tracking parameters.
+				$absolute_url = Mf2\resolveUrl( $permalink, $m[2] );
+				$clean_url = self::strip_tracking_parameters( $absolute_url );
+				return str_replace( $m[2], $clean_url, $m[0] );
 			},
 			$html
 		);
