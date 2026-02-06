@@ -874,7 +874,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$feed_details['additional-info'] = 'You will follow as <tt>' . $actor->get_webfinger() . '</tt>';
 		}
 
-		$feed_details['suggested-username'] = str_replace( ' ', '-', sanitize_user( $meta['name'] ) );
+		if ( ! empty( $meta['preferredUsername'] ) ) {
+			$host = wp_parse_url( $feed_details['url'], PHP_URL_HOST );
+			$feed_details['suggested-username'] = User::sanitize_username( $meta['preferredUsername'] . '.' . $host );
+		}
 
 		return $feed_details;
 	}
