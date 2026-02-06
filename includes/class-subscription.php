@@ -623,6 +623,9 @@ class Subscription extends User {
 	 * @return     Subscription|\WP_Error  The created subscription or an error.
 	 */
 	public static function create( $user_login, $role, $user_url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
+		// Sanitize the username to prevent special characters like apostrophes.
+		$user_login = User::sanitize_username( $user_login );
+
 		$term = term_exists( $user_login, self::TAXONOMY );
 
 		if ( ! $term || ! isset( $term['term_id'] ) ) {

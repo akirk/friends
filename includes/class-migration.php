@@ -227,6 +227,17 @@ class Migration {
 				),
 			)
 		);
+
+		self::register(
+			array(
+				'id'            => 'sanitize_usernames',
+				'version'       => '4.0.0',
+				'title'         => 'Sanitize Friend Usernames',
+				'description'   => 'Removes special characters like apostrophes from friend usernames to prevent URL issues.',
+				'method'        => 'sanitize_friend_usernames',
+				'status_option' => null,
+			)
+		);
 	}
 
 	/**
@@ -2688,5 +2699,69 @@ class Migration {
 
 		// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		error_log( sprintf( 'Friends Migration: Reply to comments completed - Converted %d, Skipped %d, Failed %d', $converted, $skipped, $failed ) );
+	}
+
+	/**
+	 * Sanitize friend usernames (version 4.0.0)
+	 * Removes special characters like apostrophes from friend usernames to prevent URL issues.
+	 */
+	public static function sanitize_friend_usernames() {
+		global $wpdb;
+
+		// Get all WordPress users that are Friends plugin users.
+		$users = User_Query::all_associated_users();
+		foreach ( $users->get_results() as $user ) {
+			if ( $user instanceof Subscription ) {
+				// Skip subscriptions - they use taxonomy terms and will be handled separately.
+				continue;
+			}
+
+			$old_username = $user->user_login;
+			$new_username = User::sanitize_username( $old_username );
+
+			// Only update if the username needs sanitization.
+			if ( $old_username !== $new_username && ! username_exists( $new_username ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+				$wpdb->update(
+					$wpdb->users,
+					array( 'user_login' => $new_username ),
+					array( 'ID' => $user->ID ),
+					array( '%s' ),
+					array( '%d' )
+				);
+				clean_user_cache( $user->ID );
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: Sanitized username from "%s" to "%s"', $old_username, $new_username ) );
+			}
+		}
+
+		// Get all Subscription users (virtual users stored as taxonomy terms).
+		$term_query = new \WP_Term_Query(
+			array(
+				'taxonomy'   => Subscription::TAXONOMY,
+				'hide_empty' => false,
+			)
+		);
+
+		foreach ( $term_query->get_terms() as $term ) {
+			$old_slug = $term->slug;
+			$old_name = $term->name;
+			$new_slug = User::sanitize_username( $old_slug );
+			$new_name = User::sanitize_username( $old_name );
+
+			// Only update if the term needs sanitization.
+			if ( ( $old_slug !== $new_slug || $old_name !== $new_name ) && ! term_exists( $new_slug, Subscription::TAXONOMY ) ) {
+				wp_update_term(
+					$term->term_id,
+					Subscription::TAXONOMY,
+					array(
+						'slug' => $new_slug,
+						'name' => $new_name,
+					)
+				);
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: Sanitized subscription username from "%s" to "%s"', $old_slug, $new_slug ) );
+			}
+		}
 	}
 }
