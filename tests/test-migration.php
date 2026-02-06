@@ -808,6 +808,174 @@ class MigrationTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test that batch migration processes ALL posts, not just the first batch_size.
+	 * This verifies the offset pagination fix: with 150+ posts and batch_size of 100,
+	 * all posts should be migrated, not just the first 100.
+	 */
+	public function test_migrate_post_tags_batch_boundary() {
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+
+		$this->setup_pre_migration_environment();
+
+		// Create 150 Friends posts with tags (more than the default batch_size of 100).
+		$post_ids = array();
+		$tag = wp_insert_term( 'boundary-test-tag', 'post_tag' );
+		$this->assertNotWPError( $tag );
+
+		for ( $i = 0; $i < 150; $i++ ) {
+			$post_id = $this->factory->post->create( array(
+				'post_type'   => Friends::CPT,
+				'post_title'  => 'Batch Boundary Post ' . $i,
+				'post_status' => 'publish',
+			) );
+			wp_set_post_terms( $post_id, array( $tag['term_id'] ), 'post_tag' );
+			$post_ids[] = $post_id;
+		}
+
+		$this->setup_post_migration_environment();
+
+		// Run migration.
+		Migration::migrate_post_tags_to_friend_tags();
+		$batches = 0;
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+			++$batches;
+			if ( $batches > 10 ) {
+				$this->fail( 'Migration did not complete within expected number of batches.' );
+			}
+		}
+
+		// Should take at least 2 batches.
+		$this->assertGreaterThanOrEqual( 2, $batches );
+
+		// Verify ALL 150 posts have friend_tags.
+		$migrated_count = 0;
+		foreach ( $post_ids as $post_id ) {
+			$friend_tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
+			if ( in_array( 'boundary-test-tag', $friend_tags, true ) ) {
+				++$migrated_count;
+			}
+		}
+		$this->assertEquals( 150, $migrated_count, 'All 150 posts should have been migrated, not just the first batch.' );
+
+		// Verify no post_tag relationships remain.
+		foreach ( $post_ids as $post_id ) {
+			$remaining = wp_get_post_terms( $post_id, 'post_tag', array( 'fields' => 'names' ) );
+			$this->assertEmpty( $remaining, "Post $post_id should have no remaining post_tag terms." );
+		}
+	}
+
+	/**
+	 * Test undo functionality for post tags migration.
+	 */
+	public function test_undo_post_tags_migration() {
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+
+		$this->setup_pre_migration_environment();
+
+		$post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Undo Test Post',
+			'post_status' => 'publish',
+		) );
+
+		$test_tags = array( 'undo-tag-1', 'undo-tag-2' );
+		$tag_ids = array();
+		foreach ( $test_tags as $tag_name ) {
+			$tag = wp_insert_term( $tag_name, 'post_tag' );
+			$this->assertNotWPError( $tag );
+			$tag_ids[] = $tag['term_id'];
+		}
+		wp_set_post_terms( $post_id, $tag_ids, 'post_tag' );
+
+		$this->setup_post_migration_environment();
+
+		// Run migration.
+		Migration::migrate_post_tags_to_friend_tags();
+		while ( get_option( 'friends_tag_migration_in_progress' ) ) {
+			Migration::migrate_post_tags_batch();
+		}
+
+		// Verify migration completed.
+		$friend_tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
+		$this->assertCount( 2, $friend_tags );
+		$remaining_post_tags = wp_get_post_terms( $post_id, 'post_tag', array( 'fields' => 'names' ) );
+		$this->assertEmpty( $remaining_post_tags );
+
+		// Verify recovery data exists.
+		$recovery = get_option( 'friends_tag_migration_recovery', array() );
+		$this->assertNotEmpty( $recovery );
+		$this->assertArrayHasKey( $post_id, $recovery );
+
+		// Undo the migration.
+		$result = Migration::undo_post_tags_migration();
+		$this->assertIsArray( $result );
+		$this->assertEquals( 1, $result['restored'] );
+
+		// Verify post_tag terms are restored.
+		$restored_tags = wp_get_post_terms( $post_id, 'post_tag', array( 'fields' => 'names' ) );
+		$this->assertEqualSets( $test_tags, $restored_tags );
+
+		// Verify recovery data is cleaned up.
+		$this->assertEmpty( get_option( 'friends_tag_migration_recovery', array() ) );
+
+		// Verify completion status is reset.
+		$this->assertFalse( get_option( 'friends_tag_migration_completed' ) );
+	}
+
+	/**
+	 * Test the full upgrade path from 3.6.0 to current version.
+	 */
+	public function test_full_upgrade_path_from_3_6_0() {
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+
+		$this->setup_pre_migration_environment();
+
+		// Create pre-migration state: posts with post_tags.
+		$post_id = $this->factory->post->create( array(
+			'post_type'   => Friends::CPT,
+			'post_title'  => 'Upgrade Path Test',
+			'post_status' => 'publish',
+		) );
+
+		$tag = wp_insert_term( 'upgrade-test-tag', 'post_tag' );
+		$this->assertNotWPError( $tag );
+		wp_set_post_terms( $post_id, array( $tag['term_id'] ), 'post_tag' );
+
+		$this->setup_post_migration_environment();
+
+		// Simulate upgrade from 3.6.0.
+		update_option( 'friends_plugin_version', '3.6.0' );
+		Friends::upgrade_plugin(
+			null,
+			array(
+				'action'  => 'update',
+				'plugins' => array( FRIENDS_PLUGIN_BASENAME ),
+				'type'    => 'plugin',
+			)
+		);
+
+		// Run all scheduled batches to completion.
+		$max_iterations = 20;
+		$iterations = 0;
+		while ( get_option( 'friends_tag_migration_in_progress' ) && $iterations < $max_iterations ) {
+			Migration::migrate_post_tags_batch();
+			++$iterations;
+		}
+
+		// Verify tag migration completed.
+		$this->assertTrue( (bool) get_option( 'friends_tag_migration_completed' ), 'Tag migration should be completed.' );
+
+		// Verify the post was migrated.
+		$friend_tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY, array( 'fields' => 'names' ) );
+		$this->assertContains( 'upgrade-test-tag', $friend_tags );
+
+		// Verify post_tag was removed.
+		$remaining = wp_get_post_terms( $post_id, 'post_tag', array( 'fields' => 'names' ) );
+		$this->assertEmpty( $remaining );
+	}
+
+	/**
 	 * Test orphaned post tags display with many tags
 	 */
 	public function test_post_tag_cleanup_site_health_with_many_tags() {

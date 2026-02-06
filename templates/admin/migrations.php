@@ -48,6 +48,11 @@ namespace Friends;
 							<?php esc_html_e( 'Run', 'friends' ); ?>
 						</button>
 					<?php endif; ?>
+					<?php if ( ! empty( $migration_status['completed'] ) && Migration::can_undo_migration( $migration_id ) ) : ?>
+						<button type="button" class="button button-small undo-migration" data-migration-id="<?php echo esc_attr( $migration_id ); ?>">
+							<?php esc_html_e( 'Undo', 'friends' ); ?>
+						</button>
+					<?php endif; ?>
 					<?php if ( has_action( 'friends_migration_debug_' . $migration_id ) ) : ?>
 						<button type="button" class="button button-small toggle-debug" data-migration-id="<?php echo esc_attr( $migration_id ); ?>">
 							<?php esc_html_e( 'Debug', 'friends' ); ?>
@@ -169,6 +174,35 @@ jQuery(document).ready(function($) {
 		}).fail(function() {
 			alert('<?php echo esc_js( __( 'Request failed.', 'friends' ) ); ?>');
 			$button.prop('disabled', false).text('<?php echo esc_js( __( 'Process Batch Now', 'friends' ) ); ?>');
+		});
+	});
+
+	$(document).on('click', '.undo-migration', function() {
+		var $button = $(this);
+		var $row = $button.closest('tr');
+		var migrationId = $button.data('migration-id');
+
+		if (!confirm('<?php echo esc_js( __( 'Are you sure you want to undo this migration?', 'friends' ) ); ?>')) {
+			return;
+		}
+
+		$button.prop('disabled', true).text('<?php echo esc_js( __( 'Undoing...', 'friends' ) ); ?>');
+
+		$.post(ajaxurl, {
+			action: 'friends_undo_migration',
+			migration_id: migrationId,
+			_wpnonce: '<?php echo esc_js( wp_create_nonce( 'friends-undo-migration' ) ); ?>'
+		}, function(response) {
+			if (response.success) {
+				$row.find('.migration-status').html(response.data.html);
+				$button.remove();
+			} else {
+				alert(response.data.message || '<?php echo esc_js( __( 'Undo failed.', 'friends' ) ); ?>');
+				$button.prop('disabled', false).text('<?php echo esc_js( __( 'Undo', 'friends' ) ); ?>');
+			}
+		}).fail(function() {
+			alert('<?php echo esc_js( __( 'Request failed.', 'friends' ) ); ?>');
+			$button.prop('disabled', false).text('<?php echo esc_js( __( 'Undo', 'friends' ) ); ?>');
 		});
 	});
 
