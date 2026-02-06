@@ -1455,8 +1455,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( $item instanceof Feed_Item ) {
 			$i = $this->friends_feed->process_incoming_feed_items( array( $item ), $user_feed );
 
-			// If this is a reply to something not in our database, queue for background conversion.
-			if ( 'create' === $type && ! empty( $activity['object']['inReplyTo'] ) ) {
+			// If this is a reply that mentions the site owner, queue for background conversion.
+			if ( 'create' === $type && ! empty( $activity['object']['inReplyTo'] ) && ! empty( $item->friend_mention_tags ) ) {
 				$post_id = Feed::url_to_postid( $item->permalink );
 				if ( $post_id ) {
 					wp_schedule_single_event( time() + 30, 'friends_convert_single_reply', array( $post_id ) );
