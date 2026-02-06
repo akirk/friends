@@ -500,6 +500,93 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertEquals( 'https://mastodon.local/users/akirk', $details['url'] );
 		$this->assertEquals( 'Alex Kirk', $details['title'] );
 		$this->assertEquals( 'https://mastodon.local/users/akirk.png', $details['avatar'] );
+		$this->assertEquals( 'akirk.mastodon.local', $details['suggested-username'] );
+	}
+
+	public function test_feed_details_suggested_username_with_emoji_display_name() {
+		$actor_url = 'https://mastodon.local/users/dcoder';
+		self::$users[ $actor_url ] = array(
+			'id'                => $actor_url,
+			'url'               => $actor_url,
+			'name'              => 'DCoder 🇱🇹❤🇺🇦',
+			'preferredUsername' => 'dcoder',
+			'icon'              => array(
+				'type' => 'Image',
+				'url'  => $actor_url . '.png',
+			),
+		);
+
+		$friends = Friends::get_instance();
+		$friend = new User( $this->friend_id );
+		$feeds = $friend->get_feeds();
+		$feed = array_pop( $feeds );
+		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
+
+		$details = $parser->update_feed_details(
+			array(
+				'url' => $actor_url,
+			)
+		);
+
+		$this->assertEquals( 'DCoder 🇱🇹❤🇺🇦', $details['title'] );
+		$this->assertEquals( 'dcoder.mastodon.local', $details['suggested-username'] );
+	}
+
+	public function test_feed_details_suggested_username_with_cyrillic_display_name() {
+		$actor_url = 'https://mastodon.local/users/roskomsvoboda';
+		self::$users[ $actor_url ] = array(
+			'id'                => $actor_url,
+			'url'               => $actor_url,
+			'name'              => 'РосКомСвобода',
+			'preferredUsername' => 'roskomsvoboda',
+			'icon'              => array(
+				'type' => 'Image',
+				'url'  => $actor_url . '.png',
+			),
+		);
+
+		$friends = Friends::get_instance();
+		$friend = new User( $this->friend_id );
+		$feeds = $friend->get_feeds();
+		$feed = array_pop( $feeds );
+		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
+
+		$details = $parser->update_feed_details(
+			array(
+				'url' => $actor_url,
+			)
+		);
+
+		$this->assertEquals( 'РосКомСвобода', $details['title'] );
+		$this->assertEquals( 'roskomsvoboda.mastodon.local', $details['suggested-username'] );
+	}
+
+	public function test_feed_details_suggested_username_with_special_chars_display_name() {
+		$actor_url = 'https://mastodon.local/users/sidler';
+		self::$users[ $actor_url ] = array(
+			'id'                => $actor_url,
+			'url'               => $actor_url,
+			'name'              => 'D:\\side\\>:idle:',
+			'preferredUsername' => 'sidler',
+			'icon'              => array(
+				'type' => 'Image',
+				'url'  => $actor_url . '.png',
+			),
+		);
+
+		$friends = Friends::get_instance();
+		$friend = new User( $this->friend_id );
+		$feeds = $friend->get_feeds();
+		$feed = array_pop( $feeds );
+		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
+
+		$details = $parser->update_feed_details(
+			array(
+				'url' => $actor_url,
+			)
+		);
+
+		$this->assertEquals( 'sidler.mastodon.local', $details['suggested-username'] );
 	}
 
 	/**
