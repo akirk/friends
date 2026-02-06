@@ -57,6 +57,7 @@ require_once __DIR__ . '/includes/class-site-health.php';
 require_once __DIR__ . '/includes/class-shortcodes.php';
 require_once __DIR__ . '/includes/class-template-loader.php';
 require_once __DIR__ . '/includes/class-third-parties.php';
+require_once __DIR__ . '/includes/class-friend-tag.php';
 require_once __DIR__ . '/includes/class-friends.php';
 
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );

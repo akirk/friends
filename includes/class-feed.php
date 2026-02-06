@@ -735,11 +735,11 @@ class Feed {
 			}
 
 			if ( ! get_option( 'friends_disable_auto_tagging' ) && isset( $item->friend_tags ) && ! empty( $item->friend_tags ) && is_array( $item->friend_tags ) ) {
-				wp_set_post_terms( $post_id, $item->friend_tags, Friends::TAG_TAXONOMY, true );
+				Friend_Tag::add_tags( $post_id, $item->friend_tags );
 			}
 
 			if ( isset( $item->friend_mention_tags ) && ! empty( $item->friend_mention_tags ) && is_array( $item->friend_mention_tags ) ) {
-				wp_set_post_terms( $post_id, $item->friend_mention_tags, Friends::TAG_TAXONOMY, true );
+				Friend_Tag::add_tags( $post_id, $item->friend_mention_tags );
 			}
 
 			update_post_meta( $post_id, 'parser', $user_feed->get_parser() );

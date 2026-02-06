@@ -18,7 +18,7 @@ namespace Friends;
 class Friends {
 	const VERSION       = FRIENDS_VERSION;
 	const CPT           = 'friend_post_cache';
-	const TAG_TAXONOMY  = 'friend_tag';
+	const TAG_TAXONOMY  = Friend_Tag::TAXONOMY;
 	const FEED_URL      = 'friends-feed-url';
 	const PLUGIN_URL    = 'https://wordpress.org/plugins/friends/';
 	const REQUIRED_ROLE = 'edit_private_posts';
@@ -226,31 +226,7 @@ class Friends {
 	 * Register the friend tag taxonomy
 	 */
 	public function register_friend_tag_taxonomy() {
-		$labels = array(
-			'name'          => __( 'Friend Tags', 'friends' ),
-			'singular_name' => __( 'Friend Tag', 'friends' ),
-			'search_items'  => __( 'Search Friend Tags', 'friends' ),
-			'all_items'     => __( 'All Friend Tags', 'friends' ),
-			'edit_item'     => __( 'Edit Friend Tag', 'friends' ),
-			'update_item'   => __( 'Update Friend Tag', 'friends' ),
-			'add_new_item'  => __( 'Add New Friend Tag', 'friends' ),
-			'new_item_name' => __( 'New Friend Tag Name', 'friends' ),
-			'menu_name'     => __( 'Friend Tags', 'friends' ),
-		);
-
-		$args = array(
-			'hierarchical'       => false,
-			'labels'             => $labels,
-			'show_ui'            => true,
-			'show_admin_column'  => true,
-			'query_var'          => true,
-			'rewrite'            => array( 'slug' => 'friend-tag' ),
-			'public'             => false,
-			'publicly_queryable' => false,
-			'show_in_rest'       => true,
-		);
-
-		register_taxonomy( self::TAG_TAXONOMY, self::CPT, $args );
+		Friend_Tag::register();
 	}
 
 	/**
@@ -1750,22 +1726,7 @@ class Friends {
 	 * Clean up orphaned friend tags that have no posts.
 	 */
 	public function cleanup_orphaned_friend_tags() {
-		$terms = get_terms(
-			array(
-				'taxonomy'   => self::TAG_TAXONOMY,
-				'hide_empty' => false,
-			)
-		);
-
-		if ( is_wp_error( $terms ) ) {
-			return;
-		}
-
-		foreach ( $terms as $term ) {
-			if ( 0 === $term->count ) {
-				wp_delete_term( $term->term_id, self::TAG_TAXONOMY );
-			}
-		}
+		Friend_Tag::cleanup_orphaned();
 	}
 
 	/**
