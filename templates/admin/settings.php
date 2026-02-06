@@ -311,5 +311,17 @@ do_action( 'friends_settings_before_form' );
 		</p>
 	<?php endif; ?>
 </form>
+<?php if ( current_user_can( 'manage_options' ) ) : ?>
+<h2><?php esc_html_e( 'Advanced', 'friends' ); ?></h2>
+<p>
+	<?php
+	printf(
+		/* translators: %s is a link to the migrations page. */
+		esc_html__( 'Database migrations can be managed on the %s page.', 'friends' ),
+		'<a href="' . esc_url( admin_url( 'admin.php?page=friends-migrations' ) ) . '">' . esc_html__( 'Migrations', 'friends' ) . '</a>'
+	);
+	?>
+</p>
+<?php endif; ?>
 <?php
 do_action( 'friends_settings_after_form' );

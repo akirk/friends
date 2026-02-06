@@ -1865,6 +1865,23 @@ class Migration {
 			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'friends' ) );
 		}
 
+		add_filter(
+			'friends_admin_tabs',
+			function ( $tabs ) {
+				$tabs[ __( 'Migrations', 'friends' ) ] = 'friends-migrations';
+				return $tabs;
+			}
+		);
+
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-migrations',
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
+
 		// Handle version update form submission.
 		if ( isset( $_POST['update_version'] ) && check_admin_referer( 'friends-update-version' ) ) {
 			$new_version = isset( $_POST['stored_version'] ) ? sanitize_text_field( wp_unslash( $_POST['stored_version'] ) ) : '';

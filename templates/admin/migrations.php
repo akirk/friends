@@ -7,8 +7,8 @@
 
 namespace Friends;
 
-?><div class="wrap">
-	<h1><?php esc_html_e( 'Friends Migrations', 'friends' ); ?></h1>
+?>
+	<h2><?php esc_html_e( 'Migrations', 'friends' ); ?></h2>
 	<p class="description">
 		<?php esc_html_e( 'This page shows all migrations and allows you to run them manually if needed.', 'friends' ); ?>
 		<?php esc_html_e( 'Migrations run automatically when upgrading from a version lower than the one shown.', 'friends' ); ?>
@@ -103,7 +103,6 @@ namespace Friends;
 	 */
 	do_action( 'friends_migrations_debug', $args['statuses'] );
 	?>
-</div>
 
 <script>
 jQuery(document).ready(function($) {
