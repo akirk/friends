@@ -231,7 +231,7 @@ class Migration {
 		self::register(
 			array(
 				'id'            => 'sanitize_usernames',
-				'version'       => '4.2.1',
+				'version'       => '4.0.0',
 				'title'         => 'Sanitize Friend Usernames',
 				'description'   => 'Removes special characters like apostrophes from friend usernames to prevent URL issues.',
 				'method'        => 'sanitize_friend_usernames',
@@ -2719,7 +2719,7 @@ class Migration {
 	}
 
 	/**
-	 * Sanitize friend usernames (version 4.2.1)
+	 * Sanitize friend usernames (version 4.0.0)
 	 * Removes special characters like apostrophes from friend usernames to prevent URL issues.
 	 */
 	public static function sanitize_friend_usernames() {
