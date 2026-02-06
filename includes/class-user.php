@@ -33,6 +33,8 @@ class User extends \WP_User {
 	public static $feed_catch_all = array();
 
 	public static function get_by_username( $username ) {
+		$username = self::sanitize_username( $username );
+
 		$subscription = Subscription::get_by_username( $username );
 		if ( $subscription && ! is_wp_error( $subscription ) ) {
 			return $subscription;
