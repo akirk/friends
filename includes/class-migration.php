@@ -2306,6 +2306,21 @@ class Migration {
 			return 'skipped';
 		}
 
+		// Only convert replies that mention the site owner.
+		$mention_terms = wp_get_post_terms( $post->ID, Friends::TAG_TAXONOMY, array( 'fields' => 'slugs' ) );
+		$has_mention = false;
+		if ( ! is_wp_error( $mention_terms ) ) {
+			foreach ( $mention_terms as $slug ) {
+				if ( 0 === strpos( $slug, 'mention-' ) ) {
+					$has_mention = true;
+					break;
+				}
+			}
+		}
+		if ( ! $has_mention ) {
+			return 'skipped_no_mention';
+		}
+
 		$in_reply_to = $object['inReplyTo'];
 		if ( is_array( $in_reply_to ) ) {
 			$in_reply_to = reset( $in_reply_to );
