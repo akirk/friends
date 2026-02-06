@@ -795,6 +795,29 @@ class Frontend {
 	}
 
 	/**
+	 * Filter comment links to use ActivityPub source URL in AJAX context.
+	 *
+	 * The ActivityPub plugin skips its filter when is_admin() is true,
+	 * but AJAX requests go through admin-ajax.php where is_admin() returns true.
+	 *
+	 * @param string     $comment_link The comment permalink.
+	 * @param WP_Comment $comment      The comment object.
+	 * @return string The filtered comment link.
+	 */
+	public function activitypub_comment_link( $comment_link, $comment ) {
+		if ( ! $comment || 'comment' !== $comment->comment_type ) {
+			return $comment_link;
+		}
+
+		$source_url = get_comment_meta( $comment->comment_ID, 'source_url', true );
+		if ( $source_url ) {
+			return $source_url;
+		}
+
+		return $comment_link;
+	}
+
+	/**
 	 * The Ajax function to load comments.
 	 */
 	public function ajax_load_comments() {
@@ -824,6 +847,10 @@ class Frontend {
 
 		remove_all_filters( 'comment_form_before' );
 		remove_all_filters( 'comment_form_after' );
+
+		// Add filter to fix ActivityPub comment links in AJAX context.
+		add_filter( 'get_comment_link', array( $this, 'activitypub_comment_link' ), 20, 2 );
+
 		if ( empty( $comments ) ) {
 			$content = apply_filters( 'friends_no_comments_feed_available', __( 'No comments yet.', 'friends' ), $post_id, $friend_user, $user_feed );
 		} else {
@@ -847,6 +874,8 @@ class Frontend {
 			$content = ob_get_contents();
 			ob_end_clean();
 		}
+
+		remove_filter( 'get_comment_link', array( $this, 'activitypub_comment_link' ), 20 );
 
 		$content = apply_filters( 'friends_comments_content', $content, $post_id, $friend_user, $user_feed );
 
