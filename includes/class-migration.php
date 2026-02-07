@@ -38,6 +38,7 @@ class Migration {
 	 */
 	private function register_hooks() {
 		add_action( 'wp_ajax_friends_run_migration', array( $this, 'ajax_run_migration' ) );
+		add_action( 'wp_ajax_friends_undo_migration', array( $this, 'ajax_undo_migration' ) );
 		add_action( 'wp_ajax_friends_get_migration_status', array( $this, 'ajax_get_migration_status' ) );
 		add_action( 'wp_ajax_friends_process_migration_batch', array( $this, 'ajax_process_migration_batch' ) );
 		add_action( 'wp_ajax_friends_get_migration_debug', array( $this, 'ajax_get_migration_debug' ) );
@@ -122,6 +123,7 @@ class Migration {
 				'batched'       => true,
 				'batch_method'  => 'migrate_post_tags_batch',
 				'cron_hook'     => 'friends_migrate_post_tags_batch',
+				'undo_method'   => 'undo_post_tags_migration',
 				'progress'      => array(
 					'in_progress' => 'friends_tag_migration_in_progress',
 					'total'       => 'friends_tag_migration_total',
@@ -220,6 +222,7 @@ class Migration {
 				'batched'       => true,
 				'batch_method'  => 'convert_replies_to_comments_batch',
 				'cron_hook'     => 'friends_convert_replies_batch',
+				'undo_method'   => 'undo_replies_to_comments',
 				'progress'      => array(
 					'in_progress' => 'friends_replies_to_comments_in_progress',
 					'total'       => 'friends_replies_to_comments_total',
@@ -249,6 +252,7 @@ class Migration {
 		$defaults = array(
 			'batched'      => false,
 			'batch_method' => null,
+			'undo_method'  => null,
 			'progress'     => array(),
 		);
 		self::$registry[ $migration['id'] ] = array_merge( $defaults, $migration );
@@ -562,6 +566,122 @@ class Migration {
 	}
 
 	/**
+	 * AJAX handler for undoing a migration.
+	 */
+	public function ajax_undo_migration() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'friends' ) ) );
+		}
+
+		if ( ! check_ajax_referer( 'friends-undo-migration', '_wpnonce', false ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid nonce.', 'friends' ) ) );
+		}
+
+		$migration_id = isset( $_POST['migration_id'] ) ? sanitize_key( $_POST['migration_id'] ) : '';
+		if ( empty( $migration_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'No migration ID provided.', 'friends' ) ) );
+		}
+
+		$result = self::undo_migration( $migration_id );
+
+		if ( $result['success'] ) {
+			$status = self::get_migration_status_by_id( $migration_id );
+
+			ob_start();
+			self::render_status_badge( $status );
+			$html = ob_get_clean();
+
+			$result['html'] = $html;
+			wp_send_json_success( $result );
+		} else {
+			wp_send_json_error( $result );
+		}
+	}
+
+	/**
+	 * Undo a specific migration.
+	 *
+	 * @param string $id The migration ID.
+	 * @return array Result of the undo.
+	 */
+	public static function undo_migration( $id ) {
+		$migration = self::get_migration( $id );
+		if ( ! $migration ) {
+			return array(
+				'success' => false,
+				'message' => 'Migration not found: ' . $id,
+			);
+		}
+
+		if ( empty( $migration['undo_method'] ) ) {
+			return array(
+				'success' => false,
+				'message' => 'Migration does not support undo: ' . $id,
+			);
+		}
+
+		$undo_method = $migration['undo_method'];
+		if ( ! method_exists( __CLASS__, $undo_method ) ) {
+			return array(
+				'success' => false,
+				'message' => 'Undo method not found: ' . $undo_method,
+			);
+		}
+
+		$result = self::$undo_method();
+
+		if ( is_wp_error( $result ) ) {
+			return array(
+				'success' => false,
+				'message' => $result->get_error_message(),
+			);
+		}
+
+		// Reset completion status.
+		if ( $migration['status_option'] ) {
+			delete_option( $migration['status_option'] );
+		}
+
+		return array(
+			'success' => true,
+			'message' => 'Migration undone: ' . $migration['title'],
+			'details' => $result,
+		);
+	}
+
+	/**
+	 * Check if a migration can be undone.
+	 *
+	 * @param string $id The migration ID.
+	 * @return bool Whether the migration can be undone.
+	 */
+	public static function can_undo_migration( $id ) {
+		$migration = self::get_migration( $id );
+		if ( ! $migration || empty( $migration['undo_method'] ) ) {
+			return false;
+		}
+
+		if ( 'post_tags_to_friend_tags' === $id ) {
+			$recovery = get_option( 'friends_tag_migration_recovery', array() );
+			return ! empty( $recovery );
+		}
+
+		if ( 'convert_replies_to_comments' === $id ) {
+			global $wpdb;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$count = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s",
+					'_redirects_to_comment'
+				)
+			);
+			return $count > 0;
+		}
+
+		return false;
+	}
+
+	/**
 	 * AJAX handler for getting migration status.
 	 */
 	public function ajax_get_migration_status() {
@@ -834,7 +954,7 @@ class Migration {
 		update_option( 'friends_tag_migration_in_progress', true, false );
 		update_option( 'friends_tag_migration_total', $total_posts, false );
 		update_option( 'friends_tag_migration_processed', 0, false );
-		update_option( 'friends_tag_migration_offset', 0, false );
+		update_option( 'friends_tag_migration_recovery', array(), false );
 
 		// Schedule the first batch.
 		wp_schedule_single_event( time(), 'friends_migrate_post_tags_batch' );
@@ -850,9 +970,9 @@ class Migration {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		$batch_size = apply_filters( 'friends_tag_migration_batch_size', 100 );
-		$offset = (int) get_option( 'friends_tag_migration_offset', 0 );
 
-		// Get a batch of Friends CPT posts that have post_tag terms.
+		// Always query from offset 0: processed relationships are deleted each batch,
+		// so the next unprocessed batch is always at the start of the result set.
 		$friends_posts_with_tags = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT p.ID, tr.term_taxonomy_id, t.term_id, t.name, t.slug
@@ -862,10 +982,9 @@ class Migration {
 				INNER JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
 				WHERE p.post_type = %s AND tt.taxonomy = 'post_tag'
 				ORDER BY p.ID, t.term_id
-				LIMIT %d OFFSET %d",
+				LIMIT %d OFFSET 0",
 				Friends::CPT,
-				$batch_size,
-				$offset
+				$batch_size
 			)
 		);
 
@@ -901,6 +1020,13 @@ class Migration {
 			wp_set_post_terms( $post_id, $tag_names, Friends::TAG_TAXONOMY, true );
 		}
 
+		// Store recovery data before deleting relationships.
+		$recovery = get_option( 'friends_tag_migration_recovery', array() );
+		foreach ( $posts_by_id as $post_id => $post_tags ) {
+			$recovery[ $post_id ] = wp_list_pluck( $post_tags, 'name' );
+		}
+		update_option( 'friends_tag_migration_recovery', $recovery, false );
+
 		// Bulk delete post_tag relationships for this batch of Friends posts.
 		if ( ! empty( $term_taxonomy_ids ) ) {
 			$processed_post_ids = array_keys( $posts_by_id );
@@ -925,7 +1051,6 @@ class Migration {
 		$processed = (int) get_option( 'friends_tag_migration_processed', 0 );
 		$processed += count( $posts_by_id );
 		update_option( 'friends_tag_migration_processed', $processed, false );
-		update_option( 'friends_tag_migration_offset', $offset + $batch_size, false );
 
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
@@ -981,7 +1106,6 @@ class Migration {
 		delete_option( 'friends_tag_migration_in_progress' );
 		delete_option( 'friends_tag_migration_total' );
 		delete_option( 'friends_tag_migration_processed' );
-		delete_option( 'friends_tag_migration_offset' );
 
 		// Mark migration as completed (not autoloaded).
 		update_option( 'friends_tag_migration_completed', time(), false );
@@ -1371,7 +1495,6 @@ class Migration {
 		update_option( 'friends_ap_attributed_to_migration_in_progress', true, false );
 		update_option( 'friends_ap_attributed_to_migration_total', $total_posts, false );
 		update_option( 'friends_ap_attributed_to_migration_processed', 0, false );
-		update_option( 'friends_ap_attributed_to_migration_offset', 0, false );
 
 		// Schedule the first batch.
 		wp_schedule_single_event( time(), 'friends_migrate_ap_attributed_to_batch' );
@@ -1393,9 +1516,9 @@ class Migration {
 		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 
 		$batch_size = apply_filters( 'friends_ap_attributed_to_migration_batch_size', 50 );
-		$offset = (int) get_option( 'friends_ap_attributed_to_migration_offset', 0 );
 
-		// Get a batch of posts that need migration.
+		// Always query from offset 0: successfully migrated posts gain ap_actor_id and
+		// drop out of the NOT LIKE filter. Failed posts get ap_actor_id=0 as sentinel.
 		$posts_to_migrate = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT post_id, meta_value
@@ -1404,12 +1527,11 @@ class Migration {
 				AND meta_value LIKE %s
 				AND meta_value NOT LIKE %s
 				ORDER BY post_id
-				LIMIT %d OFFSET %d",
+				LIMIT %d OFFSET 0",
 				Feed_Parser_ActivityPub::SLUG,
 				'%"attributedTo"%"id"%',
 				'%"ap_actor_id"%',
-				$batch_size,
-				$offset
+				$batch_size
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
@@ -1446,15 +1568,17 @@ class Migration {
 				// Update to new format.
 				$meta['attributedTo']['ap_actor_id'] = $ap_actor_id;
 				unset( $meta['attributedTo']['id'] );
-				update_post_meta( $row->post_id, Feed_Parser_ActivityPub::SLUG, $meta );
+			} else {
+				// Store sentinel so this post is excluded from future queries.
+				$meta['attributedTo']['ap_actor_id'] = 0;
 			}
+			update_post_meta( $row->post_id, Feed_Parser_ActivityPub::SLUG, $meta );
 
 			++$processed;
 		}
 
 		// Update progress.
 		update_option( 'friends_ap_attributed_to_migration_processed', $processed, false );
-		update_option( 'friends_ap_attributed_to_migration_offset', $offset + $batch_size, false );
 
 		// Schedule next batch.
 		wp_schedule_single_event( time() + 1, 'friends_migrate_ap_attributed_to_batch' );
@@ -1465,7 +1589,6 @@ class Migration {
 	 */
 	private static function finalize_ap_attributed_to_migration() {
 		delete_option( 'friends_ap_attributed_to_migration_in_progress' );
-		delete_option( 'friends_ap_attributed_to_migration_offset' );
 		update_option( 'friends_ap_attributed_to_migration_completed', true, false );
 	}
 
@@ -1751,6 +1874,23 @@ class Migration {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'Sorry, you are not allowed to access this page.', 'friends' ) );
 		}
+
+		add_filter(
+			'friends_admin_tabs',
+			function ( $tabs ) {
+				$tabs[ __( 'Migrations', 'friends' ) ] = 'friends-migrations';
+				return $tabs;
+			}
+		);
+
+		Friends::template_loader()->get_template_part(
+			'admin/settings-header',
+			null,
+			array(
+				'active' => 'friends-migrations',
+				'title'  => __( 'Friends', 'friends' ),
+			)
+		);
 
 		// Handle version update form submission.
 		if ( isset( $_POST['update_version'] ) && check_admin_referer( 'friends-update-version' ) ) {
@@ -2215,7 +2355,8 @@ class Migration {
 			delete_option( 'friends_replies_current_post' );
 		}
 
-		// Get next batch of posts (ActivityPub feeds OR with mention-* tags).
+		// Always query from offset 0: converted posts are trashed (removed from results)
+		// and all processed posts are marked with _friends_reply_checked meta.
 		$mention_like = 'mention-%';
 		$posts = $wpdb->get_results(
 			$wpdb->prepare(
@@ -2231,13 +2372,16 @@ class Migration {
 					(tt.taxonomy = %s AND tm.meta_value = 'activitypub')
 					OR (tt.taxonomy = 'friend_tag' AND t.slug LIKE %s)
 				)
+				AND NOT EXISTS (
+					SELECT 1 FROM {$wpdb->postmeta} pm2
+					WHERE pm2.post_id = p.ID AND pm2.meta_key = '_friends_reply_checked'
+				)
 				ORDER BY p.ID ASC
-				LIMIT %d OFFSET %d",
+				LIMIT %d OFFSET 0",
 				Friends::CPT,
 				User_Feed::TAXONOMY,
 				$mention_like,
-				$batch_size,
-				$processed
+				$batch_size
 			)
 		);
 
@@ -2276,6 +2420,9 @@ class Migration {
 					'time'    => time(),
 				);
 			}
+
+			// Mark as checked so it's excluded from future queries.
+			update_post_meta( $post->ID, '_friends_reply_checked', 1 );
 		}
 
 		// Update progress.
@@ -2668,13 +2815,105 @@ class Migration {
 	}
 
 	/**
+	 * Undo the post tags migration by restoring post_tag terms from recovery data.
+	 *
+	 * @return array|WP_Error Result details or error.
+	 */
+	public static function undo_post_tags_migration() {
+		$recovery = get_option( 'friends_tag_migration_recovery', array() );
+		if ( empty( $recovery ) ) {
+			return new \WP_Error( 'no_recovery_data', 'No recovery data found for post tag migration.' );
+		}
+
+		$restored = 0;
+		foreach ( $recovery as $post_id => $tag_names ) {
+			if ( ! get_post( $post_id ) ) {
+				continue;
+			}
+			wp_set_post_terms( (int) $post_id, $tag_names, 'post_tag', true );
+			++$restored;
+		}
+
+		delete_option( 'friends_tag_migration_recovery' );
+		delete_option( 'friends_tag_migration_completed' );
+
+		return array( 'restored' => $restored );
+	}
+
+	/**
+	 * Undo the replies-to-comments migration by untrashing posts and deleting created comments.
+	 *
+	 * @return array|WP_Error Result details or error.
+	 */
+	public static function undo_replies_to_comments() {
+		global $wpdb;
+
+		// Find all trashed posts with _redirects_to_comment meta.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT p.ID AS post_id, pm.meta_value AS comment_id
+				FROM {$wpdb->posts} p
+				INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+				WHERE p.post_status = 'trash'
+				AND pm.meta_key = %s",
+				'_redirects_to_comment'
+			)
+		);
+
+		if ( empty( $rows ) ) {
+			return new \WP_Error( 'no_recovery_data', 'No trashed reply posts found to restore.' );
+		}
+
+		$restored = 0;
+		$comments_deleted = 0;
+		foreach ( $rows as $row ) {
+			// Delete the created comment.
+			if ( $row->comment_id && get_comment( $row->comment_id ) ) {
+				wp_delete_comment( $row->comment_id, true );
+				++$comments_deleted;
+			}
+
+			// Untrash the post.
+			wp_untrash_post( $row->post_id );
+
+			// Clean up migration meta.
+			delete_post_meta( $row->post_id, '_redirects_to_comment' );
+			delete_post_meta( $row->post_id, '_redirect_post_id' );
+
+			++$restored;
+		}
+
+		// Clean up _has_mention_in_comments meta.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => '_has_mention_in_comments' ) );
+
+		delete_option( 'friends_replies_to_comments_completed' );
+		delete_option( 'friends_replies_converted_count' );
+		delete_option( 'friends_replies_skipped_count' );
+		delete_option( 'friends_replies_failed_count' );
+		delete_option( 'friends_replies_failed_posts_final' );
+
+		return array(
+			'restored'         => $restored,
+			'comments_deleted' => $comments_deleted,
+		);
+	}
+
+	/**
 	 * Finalize the reply to comments migration.
 	 */
 	private static function finalize_replies_to_comments_migration() {
+		global $wpdb;
+
 		$converted = (int) get_option( 'friends_replies_to_comments_converted', 0 );
 		$skipped = (int) get_option( 'friends_replies_to_comments_skipped', 0 );
 		$failed = (int) get_option( 'friends_replies_to_comments_failed', 0 );
 		$failed_posts = get_option( 'friends_replies_to_comments_failed_posts', array() );
+
+		// Clean up _friends_reply_checked meta markers.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => '_friends_reply_checked' ) );
 
 		// Clean up progress options.
 		delete_option( 'friends_replies_to_comments_in_progress' );
