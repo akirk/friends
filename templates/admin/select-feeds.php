@@ -52,6 +52,9 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 				<?php if ( ! empty( $args['friends_multisite_display_name'] ) ) : ?>
 					<?php echo esc_html( $args['friends_multisite_display_name'] ); ?>
 					<input type="hidden" id="display_name" name="display_name" value="<?php echo esc_attr( $args['friend_display_name'] ); ?>" />
+					<p class="description">
+						<?php esc_html_e( 'This user already exists on your WordPress network. Their display name cannot be changed here.', 'friends' ); ?>
+					</p>
 				<?php else : ?>
 					<input type="text" id="display_name" name="display_name" value="<?php echo esc_attr( $args['friend_display_name'] ); ?>" required placeholder="" class="regular-text" />
 				<?php endif; ?>
@@ -63,6 +66,9 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 					<?php if ( ! empty( $args['friends_multisite_user_login'] ) ) : ?>
 						<?php echo esc_html( $args['friends_multisite_user_login'] ); ?>
 						<input type="hidden" id="user_login" name="user_login" value="<?php echo esc_attr( $args['friends_multisite_user_login'] ); ?>" />
+						<p class="description">
+							<?php esc_html_e( 'This user already exists on your WordPress network. Their username cannot be changed here.', 'friends' ); ?>
+						</p>
 					<?php else : ?>
 						<input type="text" id="user_login" name="user_login" value="<?php echo esc_attr( $args['friend_user_login'] ); ?>" data-original="<?php echo esc_attr( $args['friend_user_login'] ); ?>" required placeholder="" class="regular-text" />
 					<?php endif; ?>

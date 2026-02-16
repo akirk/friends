@@ -1,9 +1,10 @@
 <?php
 /**
  * Plugin name: Friends
- * Plugin author: Alex Kirk
  * Plugin URI: https://github.com/akirk/friends
  * Version: 4.0.0-alpha1
+ * Author: Alex Kirk
+ * Author URI: https://alex.kirk.at/
  * Requires PHP: 7.4
  *
  * Description: Follow others via RSS and ActivityPub and read their posts on your own WordPress.
