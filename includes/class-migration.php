@@ -139,7 +139,7 @@ class Migration {
 				'title'         => 'Backfill Mention Tags',
 				'description'   => 'Extracts mention tags from Mastodon HTML content in existing posts.',
 				'method'        => 'backfill_mention_tags_from_mastodon_html',
-				'status_option' => null,
+				'status_option' => 'friends_backfill_mention_tags_completed',
 			)
 		);
 
@@ -1271,7 +1271,8 @@ class Migration {
 		$local_user_urls = self::build_local_user_activitypub_lookup();
 
 		if ( empty( $local_user_urls ) ) {
-			return; // No local users to check for mentions.
+			update_option( 'friends_backfill_mention_tags_completed', true, false );
+			return;
 		}
 
 		// Get all Friends posts that might contain Mastodon mentions in HTML.
@@ -1288,6 +1289,7 @@ class Migration {
 		);
 
 		if ( empty( $posts_with_html ) ) {
+			update_option( 'friends_backfill_mention_tags_completed', true, false );
 			return;
 		}
 
@@ -1312,6 +1314,8 @@ class Migration {
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 			error_log( sprintf( 'Friends Migration: Processed %d posts, added %d mention tags', $processed_count, $mention_tags_added ) );
 		}
+
+		update_option( 'friends_backfill_mention_tags_completed', true, false );
 	}
 
 	/**
