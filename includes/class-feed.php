@@ -68,7 +68,7 @@ class Feed {
 		add_action( 'rss2_ns', array( $this, 'additional_feed_namespaces' ) );
 
 		add_action( 'cron_friends_refresh_feeds', array( $this, 'cron_friends_refresh_feeds' ) );
-		add_action( 'friends_retrieve_user_feeds', array( $this, 'friends_retrieve_user_feeds' ) );
+		add_action( 'friends_retrieve_user_feeds', array( $this, 'friends_retrieve_user_feeds' ), 10, 2 );
 
 		add_action( 'wp_loaded', array( $this, 'friends_add_friend_redirect' ), 100 );
 		add_action( 'wp_feed_options', array( $this, 'wp_feed_options' ), 90 );
@@ -128,10 +128,14 @@ class Feed {
 	 *
 	 * @param      int $user_id  The user id.
 	 */
-	public function friends_retrieve_user_feeds( $user_id ) {
+	public function friends_retrieve_user_feeds( $user_id, $suppress_notifications = false ) {
 		$friend_user = User::get_user_by_id( $user_id );
 		if ( ! $friend_user ) {
 			return;
+		}
+
+		if ( $suppress_notifications ) {
+			add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 		}
 
 		foreach ( $friend_user->get_active_feeds() as $feed ) {
@@ -141,6 +145,10 @@ class Feed {
 				$this->retrieve_feed( $feed );
 				$feed->was_polled();
 			}
+		}
+
+		if ( $suppress_notifications ) {
+			remove_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 		}
 	}
 

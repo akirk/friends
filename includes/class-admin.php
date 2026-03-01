@@ -1795,9 +1795,7 @@ class Admin {
 			}
 		}
 
-		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-
-		wp_schedule_single_event( time(), 'friends_retrieve_user_feeds', array( $friend_user->ID ) );
+		wp_schedule_single_event( time(), 'friends_retrieve_user_feeds', array( $friend_user->ID, true ) );
 
 		if ( isset( $vars['errors'] ) ) {
 			$this->display_errors( $vars['errors'] );
