@@ -605,12 +605,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $account;
 		}
 
-		$attributed_to = $meta['attributedTo'];
-		if ( is_array( $attributed_to ) && isset( $attributed_to['id'] ) ) {
-			$attributed_to = $attributed_to['id'];
-		}
-
-		if ( ! is_string( $attributed_to ) || empty( $attributed_to ) ) {
+		$attributed_to = self::get_actor_url_from_attributed_to( $meta['attributedTo'] );
+		if ( ! $attributed_to ) {
 			return $account;
 		}
 
@@ -3676,34 +3672,44 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	private static function convert_actor_to_mastodon_handle( $actor ) {
-		// Try to get from ActivityPub plugin's stored actors first (no network request).
+		static $cache = array();
+		if ( isset( $cache[ $actor ] ) ) {
+			return $cache[ $actor ];
+		}
+
+		// For known ActivityPub URL schemes, parse the handle directly (no DB query).
+		// Covers Mastodon, GoToSocial, Pleroma, Akkoma (/users/), and @-prefixed paths.
+		$p = wp_parse_url( $actor );
+		if ( $p && ! empty( $p['host'] ) && ! empty( $p['path'] ) ) {
+			if ( preg_match( '#^/(?:users/|@)([^/]+)$#', $p['path'], $m ) ) {
+				$cache[ $actor ] = ltrim( $m[1], '@' ) . '@' . $p['host'];
+				return $cache[ $actor ];
+			}
+		}
+
+		// For other URLs, look up the canonical handle via the ActivityPub plugin.
 		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 			$remote_actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor );
 			if ( ! is_wp_error( $remote_actor ) ) {
-				// Only use stored meta, don't trigger Webfinger fallback in get_acct().
 				$acct = get_post_meta( $remote_actor->ID, '_activitypub_acct', true );
 				if ( $acct ) {
+					$cache[ $actor ] = $acct;
 					return $acct;
 				}
 			}
 		}
 
-		// Construct from the URL as fallback (no network request).
-		$p = wp_parse_url( $actor );
-		if ( $p ) {
-			$domain = isset( $p['host'] ) ? $p['host'] : '';
-			$username = '';
-			if ( isset( $p['path'] ) ) {
-				$path_parts = explode( '/', trim( $p['path'], '/' ) );
-				$username = ltrim( array_pop( $path_parts ), '@' );
+		// Last resort: construct from URL path.
+		if ( $p && ! empty( $p['host'] ) && ! empty( $p['path'] ) ) {
+			$path_parts = explode( '/', trim( $p['path'], '/' ) );
+			$username = ltrim( array_pop( $path_parts ), '@' );
+			if ( ! empty( $username ) ) {
+				$cache[ $actor ] = $username . '@' . $p['host'];
+				return $cache[ $actor ];
 			}
-			// Skip if we don't have a valid username (e.g., just a domain like gatherpress.org).
-			if ( empty( $username ) || empty( $domain ) ) {
-				return '';
-			}
-			return $username . '@' . $domain;
 		}
 
+		$cache[ $actor ] = $actor;
 		return $actor;
 	}
 
