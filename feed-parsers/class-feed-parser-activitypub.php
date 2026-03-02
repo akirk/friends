@@ -283,17 +283,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( $account instanceof Entity_Account ) {
 			$status->account = $account;
-			$reblog_account = apply_filters( 'mastodon_api_account', null, $attributed_to_url );
-			if ( $reblog_account instanceof Entity_Account ) {
-				$status->reblog->account = $reblog_account;
-			} else {
-				// Build account from attributedTo metadata.
-				$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+
+			// Try to build reblog account from attributedTo metadata first (fast path).
+			$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
+			if ( ! empty( $actor_metadata['preferredUsername'] ) ) {
 				$status->reblog->account->id = $attributed_to_url;
-				if ( ! empty( $actor_metadata['preferredUsername'] ) ) {
-					$status->reblog->account->username = $actor_metadata['preferredUsername'];
-					$status->reblog->account->acct = self::convert_actor_to_mastodon_handle( $attributed_to_url );
-				}
+				$status->reblog->account->username = $actor_metadata['preferredUsername'];
+				$status->reblog->account->acct = self::convert_actor_to_mastodon_handle( $attributed_to_url );
 				if ( ! empty( $actor_metadata['name'] ) ) {
 					$status->reblog->account->display_name = $actor_metadata['name'];
 				}
@@ -309,6 +305,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$status->reblog->account->header_static = $actor_metadata['header'];
 				}
 				$status->reblog->account->url = $attributed_to_url;
+			} else {
+				// Fall back to filter chain if metadata is insufficient.
+				$reblog_account = apply_filters( 'mastodon_api_account', null, $attributed_to_url );
+				if ( $reblog_account instanceof Entity_Account ) {
+					$status->reblog->account = $reblog_account;
+				}
 			}
 		}
 
@@ -612,7 +614,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
 
-		$actor = self::convert_actor_to_mastodon_handle( $attributed_to );
+		// Use cached acct from AP plugin when available (avoids slow guid query).
+		$actor = null;
+		if ( ! empty( $meta['attributedTo']['ap_actor_id'] ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor = \Activitypub\Collection\Remote_Actors::get_acct( $meta['attributedTo']['ap_actor_id'] );
+		}
+		if ( ! $actor ) {
+			$actor = self::convert_actor_to_mastodon_handle( $attributed_to );
+		}
 		$account = new Entity_Account();
 		$account->id           = $attributed_to;
 		$account->username     = strtok( $actor, '@' );
@@ -3671,40 +3680,62 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $user->get_local_friends_page_url( $post->ID ) . '#comment-' . $comment->comment_ID;
 	}
 
+	/**
+	 * Check if a host is a known ActivityPub instance.
+	 *
+	 * Loads all ap_actor guids once per request and extracts their hosts.
+	 *
+	 * @param string $host The hostname to check.
+	 * @return bool Whether the host is known.
+	 */
+	private static function is_known_activitypub_host( $host ) {
+		static $known_hosts = null;
+
+		if ( null === $known_hosts ) {
+			$known_hosts = array();
+			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				global $wpdb;
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$guids = $wpdb->get_col(
+					$wpdb->prepare(
+						"SELECT guid FROM $wpdb->posts WHERE post_type = %s",
+						'ap_actor'
+					)
+				);
+				foreach ( $guids as $guid ) {
+					$guid_host = wp_parse_url( $guid, PHP_URL_HOST );
+					if ( $guid_host ) {
+						$known_hosts[ $guid_host ] = true;
+					}
+				}
+			}
+		}
+
+		return isset( $known_hosts[ $host ] );
+	}
+
 	private static function convert_actor_to_mastodon_handle( $actor ) {
 		static $cache = array();
 		if ( isset( $cache[ $actor ] ) ) {
 			return $cache[ $actor ];
 		}
 
-		// For known ActivityPub URL schemes, parse the handle directly (no DB query).
-		// Covers Mastodon, GoToSocial, Pleroma, Akkoma (/users/), and @-prefixed paths.
 		$p = wp_parse_url( $actor );
 		if ( $p && ! empty( $p['host'] ) && ! empty( $p['path'] ) ) {
-			if ( preg_match( '#^/(?:users/|@)([^/]+)$#', $p['path'], $m ) ) {
-				$cache[ $actor ] = ltrim( $m[1], '@' ) . '@' . $p['host'];
-				return $cache[ $actor ];
-			}
-		}
-
-		// For other URLs, look up the canonical handle via the ActivityPub plugin.
-		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			$remote_actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor );
-			if ( ! is_wp_error( $remote_actor ) ) {
-				$acct = get_post_meta( $remote_actor->ID, '_activitypub_acct', true );
-				if ( $acct ) {
-					$cache[ $actor ] = $acct;
-					return $acct;
-				}
-			}
-		}
-
-		// Last resort: construct from URL path.
-		if ( $p && ! empty( $p['host'] ) && ! empty( $p['path'] ) ) {
+			$host       = $p['host'];
 			$path_parts = explode( '/', trim( $p['path'], '/' ) );
-			$username = ltrim( array_pop( $path_parts ), '@' );
-			if ( ! empty( $username ) ) {
-				$cache[ $actor ] = $username . '@' . $p['host'];
+			$username   = null;
+
+			if ( 1 === count( $path_parts ) && str_starts_with( $path_parts[0], '@' ) ) {
+				// /@username — ActivityPub-specific, safe on any domain.
+				$username = ltrim( $path_parts[0], '@' );
+			} elseif ( 2 === count( $path_parts ) && self::is_known_activitypub_host( $host ) ) {
+				// /users/username, /activitypub/username, etc. on known fediverse hosts.
+				$username = $path_parts[1];
+			}
+
+			if ( $username ) {
+				$cache[ $actor ] = $username . '@' . $host;
 				return $cache[ $actor ];
 			}
 		}
