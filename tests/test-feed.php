@@ -103,6 +103,12 @@ class FeedTest extends \WP_UnitTestCase {
 		fetch_feed( '' ); // load SimplePie.
 	}
 
+	public function tear_down() {
+		// Reset mock time to real current time to prevent test pollution.
+		time( '@' . \time() );
+		parent::tear_down();
+	}
+
 	/**
 	 * From the core unit tests, a way to get the RSS2 feed. Modified to make sure any accidential output is included.
 	 *
