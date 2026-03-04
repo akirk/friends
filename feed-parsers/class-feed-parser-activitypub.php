@@ -1071,7 +1071,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function get_activitypub_actor_id( $user_id ) {
-		if ( null !== $user_id && ! \Activitypub\user_can_activitypub( $user_id ) ) {
+		if ( null !== $user_id && \function_exists( '\Activitypub\user_can_activitypub' ) && ! \Activitypub\user_can_activitypub( $user_id ) ) {
 			$user_id = null;
 		}
 		if ( null === $user_id ) {
@@ -1266,6 +1266,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function extract_html_mentions( $content ) {
+		if ( ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
+			return $content;
+		}
+
 		$tags = new \WP_HTML_Tag_Processor( $content );
 		$mentions = array();
 		while ( $tags->next_tag(
@@ -2574,7 +2578,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function the_content( $the_content ) {
-		if ( ! Friends::on_frontend() ) {
+		if ( ! Friends::on_frontend() || ! class_exists( '\WP_HTML_Tag_Processor' ) ) {
 			return $the_content;
 		}
 
