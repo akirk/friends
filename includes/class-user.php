@@ -1300,10 +1300,6 @@ class User extends \WP_User {
 					break;
 				}
 			}
-
-			if ( $user->has_cap( 'friend' ) ) {
-				$relationship->followed_by = true;
-			}
 		}
 		return $relationship;
 	}

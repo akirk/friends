@@ -68,19 +68,11 @@
 					),
 				);
 
-				if ( $friend_user->has_cap( 'friend_request' ) ) {
-					$actions['unfriend'] = sprintf(
-						'<a href="%s">%s</a>',
-						esc_url( Friends\Admin::get_unfriend_link( $friend_user ) ),
-						esc_html__( 'Delete', 'friends' )
-					);
-				} else {
-					$actions['unfriend'] = sprintf(
-						'<a href="%s">%s</a>',
-						esc_url( Friends\Admin::get_unfriend_link( $friend_user ) ),
-						esc_html__( 'Unfriend', 'friends' )
-					);
-				}
+				$actions['unfriend'] = sprintf(
+					'<a href="%s">%s</a>',
+					esc_url( Friends\Admin::get_unfriend_link( $friend_user ) ),
+					esc_html__( 'Unfriend', 'friends' )
+				);
 
 				$sep = '';
 				foreach ( Friends\Admin::user_row_actions( $actions, $friend_user ) as $key => $_action ) {

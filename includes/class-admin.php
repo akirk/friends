@@ -301,8 +301,6 @@ class Admin {
 			'copy_text'                       => __( 'Copy', 'friends' ),
 			'copied_text'                     => __( 'Copied!', 'friends' ),
 			'delete_feed_question'            => __( 'Delete the feed? You need to click "Save Changes" to really delete it.', 'friends' ),
-			'role_friend'                     => __( 'Friend', 'friends' ),
-			'role_acquaintance'               => __( 'Acquaintance', 'friends' ),
 			'role_subscription'               => __( 'Following', 'friends' ),
 			'role_connection'                 => __( 'Connection', 'friends' ),
 			'role_contact'                    => __( 'Contact', 'friends' ),
@@ -685,10 +683,7 @@ class Admin {
 			wp_die( esc_html__( 'Invalid username.', 'friends' ) );
 		}
 
-		if (
-			! $friend->has_cap( 'friend' ) &&
-			! $friend->has_cap( 'subscription' )
-		) {
+		if ( ! $friend->has_cap( 'subscription' ) ) {
 			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
 		}
 
@@ -895,20 +890,7 @@ class Admin {
 		$arg       = 'updated';
 		$arg_value = 1;
 
-		if ( isset( $_GET['convert-to-user'] ) && wp_verify_nonce( sanitize_key( $_GET['convert-to-user'] ), 'convert-to-user-' . $friend->user_login ) ) {
-			if ( $friend instanceof Subscription ) {
-				Subscription::convert_to_user( $friend );
-			}
-		} elseif ( isset( $_GET['convert-from-user'] ) && wp_verify_nonce( sanitize_key( $_GET['convert-from-user'] ), 'convert-from-user-' . $friend->user_login ) ) {
-			if ( $friend instanceof User && ! $friend instanceof Subscription ) {
-				if ( $friend->has_cap( 'friends_plugin' ) ) {
-					Subscription::convert_from_user( $friend );
-				} else {
-					$arg = 'error';
-					$arg_value = __( 'A friend cannot be converted to a virtual user.', 'friends' );
-				}
-			}
-		} elseif ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-' . $friend->user_login ) ) {
+		if ( isset( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_POST['_wpnonce'] ), 'edit-friend-' . $friend->user_login ) ) {
 			if ( isset( $_POST['friends_display_name'] ) ) {
 				$friends_display_name = trim( sanitize_text_field( wp_unslash( $_POST['friends_display_name'] ) ) );
 				if ( $friends_display_name ) {
@@ -1576,13 +1558,7 @@ class Admin {
 		);
 		$this->check_admin_settings();
 
-		$friend_users = new User_Query(
-			array(
-				'role__in' => array( 'friend', 'acquaintance', 'subscription' ),
-				'orderby'  => 'display_name',
-				'order'    => 'ASC',
-			)
-		);
+		$friend_users = User_Query::all_subscriptions();
 
 		$hide_from_friends_page = get_user_option( 'friends_hide_from_friends_page' );
 		if ( ! $hide_from_friends_page ) {
@@ -1732,12 +1708,7 @@ class Admin {
 			wp_die( esc_html__( 'Invalid username.', 'friends' ) );
 		}
 
-		if (
-			! $friend->has_cap( 'friend_request' ) &&
-			! $friend->has_cap( 'pending_friend_request' ) &&
-			! $friend->has_cap( 'friend' ) &&
-			! $friend->has_cap( 'subscription' )
-		) {
+		if ( ! $friend->has_cap( 'subscription' ) ) {
 			wp_die( esc_html__( 'This is not a user related to this plugin.', 'friends' ) );
 		}
 
@@ -1899,22 +1870,6 @@ class Admin {
 		);
 
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
-	}
-
-	/**
-	 * Gets the friend roles.
-	 *
-	 * @return     array  The friend roles.
-	 */
-	public function get_friend_roles() {
-		$roles = new \WP_Roles();
-		$friend_roles = array();
-		foreach ( $roles->roles as $role => $data ) {
-			if ( isset( $data['capabilities']['friend'] ) ) {
-				$friend_roles[ $role ] = $data['name'];
-			}
-		}
-		return $friend_roles;
 	}
 
 	/**
@@ -2083,12 +2038,7 @@ class Admin {
 		$only_friends_affiliated = true;
 		foreach ( $userids as $user_id ) {
 			$user = new \WP_User( $user_id );
-			if (
-				! $user->has_cap( 'friend_request' ) &&
-				! $user->has_cap( 'pending_friend_request' ) &&
-				! $user->has_cap( 'friend' ) &&
-				! $user->has_cap( 'subscription' )
-			) {
+			if ( ! $user->has_cap( 'subscription' ) ) {
 				$only_friends_affiliated = false;
 				break;
 			}

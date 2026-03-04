@@ -548,10 +548,6 @@ class Friends {
 			update_option( 'friends_private_rss_key', wp_generate_password( 128, false ) );
 		}
 
-		if ( false === get_option( 'friends_default_friend_role' ) ) {
-			update_option( 'friends_default_friend_role', 'friend' );
-		}
-
 		if ( ! wp_next_scheduled( 'cron_friends_refresh_feeds' ) ) {
 			wp_schedule_event( time(), 'fifteen-minutes', 'cron_friends_refresh_feeds' );
 		}
