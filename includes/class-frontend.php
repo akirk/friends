@@ -343,11 +343,12 @@ class Frontend {
 
 	public function dequeue_scripts() {
 		if ( is_user_logged_in() && Friends::on_frontend() ) {
-			// Dequeue theme styles so taht they don't interact with the Friends frontend.
+			// Dequeue theme styles so that they don't interact with the Friends frontend,
+			// but keep the friends theme's own styles.
 			$wp_styles = wp_styles();
 			foreach ( $wp_styles->queue as $style ) {
 				$src = $wp_styles->registered[ $style ]->src;
-				if ( 'global-styles' === $style || false !== strpos( $src, '/themes/' ) ) {
+				if ( false !== strpos( $src, '/themes/' ) && false === strpos( $src, '/themes/friends/' ) ) {
 					wp_dequeue_style( $style );
 				}
 			}
@@ -1003,7 +1004,7 @@ class Frontend {
 		if ( wp_is_block_theme() ) {
 			return $template;
 		}
-		
+
 		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', 'expanded' );
 		$args['blocks-everywhere']     = false;
 
