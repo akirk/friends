@@ -557,57 +557,6 @@ class Subscription extends User {
 		return $subscription;
 	}
 
-	public static function convert_to_user( Subscription $subscription ) {
-		$user = User::create( $subscription->user_login, $subscription->roles[0], $subscription->user_url, $subscription->display_name, $subscription->get_avatar_url(), $subscription->description, $subscription->user_registered, true );
-
-		if ( is_wp_error( $user ) ) {
-			return $user;
-		}
-
-		$query = new \WP_Query();
-		$query->set( 'post_type', apply_filters( 'friends_frontend_post_types', array() ) );
-		$query->set( 'post_status', array( 'publish', 'private', 'draft', 'trashed' ) );
-		$query->set( 'posts_per_page', -1 );
-		$query = $subscription->modify_query_by_author( $query );
-
-		foreach ( $query->get_posts() as $post ) {
-			$post->post_author = $user->ID;
-			wp_update_post( $post );
-			wp_remove_object_terms( $post->ID, $subscription->get_term_id(), self::TAXONOMY );
-		}
-
-		global $wpdb;
-		// Convert feeds.
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-				sprintf(
-					'UPDATE %s
-					JOIN %s
-					ON %s.term_taxonomy_id = %s.term_taxonomy_id
-					SET object_id = %%d
-					WHERE object_id = %%d
-					AND %s.taxonomy = %%s',
-					$wpdb->term_relationships,
-					$wpdb->term_taxonomy,
-					$wpdb->term_relationships,
-					$wpdb->term_taxonomy,
-					$wpdb->term_taxonomy
-				),
-				$user->ID,
-				$subscription->get_term_id(),
-				User_Feed::TAXONOMY
-			)
-		);
-
-		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
-			$user->update_user_option( $option_name, $subscription->get_user_option( $option_name ) );
-		}
-
-		$subscription->delete();
-
-		return $user;
-	}
-
 	/**
 	 * Create a Subscription (virtual user).
 	 *

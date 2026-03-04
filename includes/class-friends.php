@@ -200,6 +200,7 @@ class Friends {
 		add_action( 'friends_link_ap_feeds_batch', array( $this, 'cron_link_ap_feeds_batch' ) );
 		add_action( 'friends_backfill_external_attributed_to_batch', array( $this, 'cron_backfill_external_attributed_to_batch' ) );
 		add_action( 'friends_convert_replies_batch', array( $this, 'cron_convert_replies_batch' ) );
+		add_action( 'friends_convert_friend_users_batch', array( $this, 'cron_convert_friend_users_batch' ) );
 		add_action( 'friends_convert_single_reply', array( $this, 'convert_single_reply_to_comment' ) );
 		add_action( 'template_redirect', array( $this, 'redirect_trashed_reply_to_comment' ), 4 );
 		add_action( 'template_redirect', array( $this, 'fallback_redirect_via_comment_meta' ), 4 );
@@ -335,20 +336,9 @@ class Friends {
 		$capabilities = array();
 
 		$capabilities['subscription'] = array(
-			'subscription' => true,
+			'subscription'   => true,
+			'friends_plugin' => true,
 		);
-
-		$capabilities['acquaintance'] = array(
-			'subscription' => true,
-		);
-
-		// Friend is an Acquaintance who can read private posts.
-		$capabilities['friend'] = $capabilities['acquaintance'];
-
-		// All roles belonging to this plugin have the friends_plugin capability.
-		foreach ( array_keys( $capabilities ) as $type ) {
-			$capabilities[ $type ]['friends_plugin'] = true;
-		}
 
 		if ( ! isset( $capabilities[ $role ] ) ) {
 			return array();
@@ -362,8 +352,6 @@ class Friends {
 	 */
 	private static function setup_roles() {
 		$default_roles = array(
-			'friend'       => _x( 'Friend', 'User role', 'friends' ),
-			'acquaintance' => _x( 'Acquaintance', 'User role', 'friends' ),
 			'subscription' => _x( 'Subscription', 'User role', 'friends' ),
 		);
 
@@ -401,8 +389,6 @@ class Friends {
 	 */
 	public static function translate_user_role( $translations, $text, $context, $domain ) {
 		$roles = array(
-			'Friend',
-			'Acquaintance',
 			'Subscription',
 		);
 
@@ -424,7 +410,7 @@ class Friends {
 	 * @return     array  The roles.
 	 */
 	public static function get_friends_plugin_roles() {
-		return apply_filters( 'friends_plugin_roles', array( 'friend', 'subscription' ) );
+		return apply_filters( 'friends_plugin_roles', array( 'subscription' ) );
 	}
 
 	/**
@@ -1402,6 +1388,15 @@ class Friends {
 	}
 
 	/**
+	 * Cron function to process converting friend WP users to virtual subscriptions.
+	 * Ensures the Migration class is loaded before calling the batch method.
+	 */
+	public function cron_convert_friend_users_batch() {
+		require_once __DIR__ . '/class-migration.php';
+		Migration::convert_friend_users_batch();
+	}
+
+	/**
 	 * Convert a single reply post to a comment.
 	 * This is scheduled as a single cron event when a new reply post is created.
 	 *
@@ -1638,7 +1633,7 @@ class Friends {
 			self::TAG_TAXONOMY,
 		);
 
-		$affected_users = new \WP_User_Query( array( 'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ) ) );
+		$affected_users = new \WP_User_Query( array( 'role__in' => array( 'subscription' ) ) );
 		foreach ( $affected_users as $user ) {
 			$in_token = get_user_option( 'friends_in_token', $user->ID );
 			delete_option( 'friends_in_token_' . $in_token );
@@ -1650,11 +1645,6 @@ class Friends {
 
 		delete_option( 'friends_main_user_id' );
 
-		// Remove the friend roles that were created for older versions of this plugin.
-		remove_role( 'friend' );
-		remove_role( 'acquaintance' );
-		remove_role( 'friend_request' );
-		remove_role( 'pending_friend_request' );
 		remove_role( 'subscription' );
 
 		$friend_posts = new \WP_Query(

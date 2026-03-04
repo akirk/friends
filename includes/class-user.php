@@ -89,15 +89,6 @@ class User extends \WP_User {
 			}
 		}
 
-		$friend_user = self::get_by_username( $user_login );
-		if ( $friend_user && ! is_wp_error( $friend_user ) && ! $subscription_override ) {
-			if ( $friend_user instanceof Subscription ) {
-				$friend_user = Subscription::convert_to_user( $friend_user );
-			}
-			$friend_user->set_role( $role );
-			return $friend_user;
-		}
-
 		$userdata = array(
 			'user_login'   => $user_login,
 			'display_name' => $display_name,
@@ -273,7 +264,7 @@ class User extends \WP_User {
 	 * @return     bool     True if the specified user is a friends plugin user, False otherwise.
 	 */
 	public static function is_friends_plugin_user( \WP_User $user ) {
-		return $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' );
+		return $user->has_cap( 'subscription' );
 	}
 
 	/**
@@ -310,7 +301,7 @@ class User extends \WP_User {
 
 		$user = get_user_by( 'ID', $user_id );
 		if ( $user ) {
-			if ( $user->has_cap( 'friend' ) || $user->has_cap( 'pending_friend_request' ) || $user->has_cap( 'friend_request' ) || $user->has_cap( 'subscription' ) ) {
+			if ( $user->has_cap( 'subscription' ) ) {
 				return new self( $user );
 			}
 
@@ -1051,17 +1042,7 @@ class User extends \WP_User {
 	 * @return     bool  True if able to refresh feeds, False otherwise.
 	 */
 	public function can_refresh_feeds() {
-		return $this->has_cap( 'subscription' ) ||
-			$this->has_cap( 'acquaintance' ) ||
-			$this->has_cap( 'friend' ) ||
-			$this->has_cap( 'pending_friend_request' );
-	}
-
-	/**
-	 * Convert a user to a friend
-	 */
-	public function make_friend() {
-		$this->set_role( get_option( 'friends_default_friend_role', 'friend' ) );
+		return $this->has_cap( 'subscription' );
 	}
 
 	/**
@@ -1073,15 +1054,10 @@ class User extends \WP_User {
 	 * @return     string  The role name.
 	 */
 	public function get_role_name( $group_subscriptions = false, $count = 1 ) {
-		// Friend roles from old plugin versions are handled like subscriptions.
-		if ( array_diff( array( 'friend', 'acquaintance', 'subscription' ), $this->roles ) ) {
-			return _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
-		}
-
 		$name = apply_filters( 'friend_user_role_name', false, $this );
 
 		if ( empty( $name ) ) {
-			$name = _x( 'Unknown', 'User role', 'friends' );
+			$name = _nx( 'Subscription', 'Subscriptions', $count, 'User role', 'friends' );
 		}
 
 		return $name;
