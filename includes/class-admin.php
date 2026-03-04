@@ -131,13 +131,17 @@ class Admin {
 		if (
 			in_array(
 				$current_page,
-				apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export' ) )
+				apply_filters( 'friends_admin_settings_slugs', array( 'friends-settings', 'friends-notification-manager', 'friends-wp-friendships', 'friends-import-export', 'friends-migrations' ) )
 			)
 		) {
 			add_submenu_page( 'friends', __( 'Friendships', 'friends' ), '- ' . __( 'Friendships', 'friends' ), $required_role, 'friends-wp-friendships', array( $this, 'render_admin_wp_friendship_settings' ) );
 			add_submenu_page( 'friends', __( 'Notifications', 'friends' ), '- ' . __( 'Notifications', 'friends' ), $required_role, 'friends-notification-manager', array( $this, 'render_admin_notification_manager' ) );
 			add_submenu_page( 'friends', __( 'Import/Export', 'friends' ), '- ' . __( 'Import/Export', 'friends' ), $required_role, 'friends-import-export', array( $this, 'render_admin_import_export' ) );
 			do_action( 'friends_admin_menu_settings', $page_type );
+		}
+
+		if ( 'friends-migrations' === $current_page && current_user_can( 'manage_options' ) ) {
+			add_submenu_page( 'friends', __( 'Migrations', 'friends' ), __( 'Migrations', 'friends' ), 'manage_options', 'friends-migrations', array( Migration::class, 'render_admin_page' ) );
 		}
 		add_action( 'load-' . $page_type . '_page_friends-notification-manager', array( $this, 'process_admin_notification_manager' ) );
 		add_action( 'load-' . $page_type . '_page_friends-import-export', array( $this, 'process_admin_import_export' ) );
@@ -218,11 +222,6 @@ class Admin {
 				add_submenu_page( 'friends', $title, $title, $required_role, 'unfriend', array( $this, 'render_admin_unfriend' ) );
 				add_action( 'load-' . $page_type . '_page_unfriend', array( $this, 'process_admin_unfriend' ) );
 			}
-		}
-
-		// Hidden migrations page - only visible when directly accessed.
-		if ( isset( $_GET['page'] ) && 'friends-migrations' === $_GET['page'] ) {
-			add_submenu_page( 'friends', __( 'Migrations', 'friends' ), __( 'Migrations', 'friends' ), 'manage_options', 'friends-migrations', array( Migration::class, 'render_admin_page' ) );
 		}
 	}
 
