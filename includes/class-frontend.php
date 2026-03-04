@@ -994,6 +994,16 @@ class Frontend {
 			$wp_query->is_404 = false;
 
 			status_header( 200 );
+
+			if ( wp_is_block_theme() ) {
+				$block_template_content = $this->get_block_template_content_for( $this->template );
+				if ( false !== $block_template_content ) {
+					global $_wp_current_template_content;
+					$_wp_current_template_content = $block_template_content;
+					return $template;
+				}
+			}
+
 			if ( 'frontend/index' === $this->template ) {
 				$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
 
@@ -1013,6 +1023,21 @@ class Frontend {
 		}
 
 		return Friends::template_loader()->get_template_part( 'frontend/index', $this->post_format, $args, false );
+	}
+
+	private function get_block_template_content_for( $template_path ) {
+		$map = array(
+			'frontend/followers'     => 'friends-followers',
+			'frontend/subscriptions' => 'friends-subscriptions',
+		);
+		if ( ! isset( $map[ $template_path ] ) ) {
+			return false;
+		}
+		$file = get_theme_file_path( 'templates/' . $map[ $template_path ] . '.html' );
+		if ( ! file_exists( $file ) ) {
+			return false;
+		}
+		return file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 	}
 
 	public function get_static_frontend_template( $path ) {
