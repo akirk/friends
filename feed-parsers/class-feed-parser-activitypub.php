@@ -1071,7 +1071,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public static function get_activitypub_actor_id( $user_id ) {
-		if ( null !== $user_id && ! \Activitypub\user_can_activitypub( $user_id ) ) {
+		if ( null !== $user_id && \function_exists( '\Activitypub\user_can_activitypub' ) && ! \Activitypub\user_can_activitypub( $user_id ) ) {
 			$user_id = null;
 		}
 		if ( null === $user_id ) {
