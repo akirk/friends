@@ -79,7 +79,7 @@ class FeedTest extends \WP_UnitTestCase {
 			array(
 				'user_login' => 'friend.local',
 				'user_email' => 'friend@example.org',
-				'role'       => 'friend',
+				'role'       => 'subscription',
 			)
 		);
 
