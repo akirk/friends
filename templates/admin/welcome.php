@@ -7,7 +7,7 @@
 
 $first_friend = array(
 	// translators: %s is Alex Kirk.
-	'display_name' => sprintf( __( 'Add %s, creator of the Friends plugin, as a friend now', 'friends' ), 'Alex Kirk' ),
+	'display_name' => sprintf( __( 'Subscribe to %s, creator of the Friends plugin', 'friends' ), 'Alex Kirk' ),
 	'url'          => 'https://alex.kirk.at/',
 );
 
@@ -30,8 +30,13 @@ $first_friend = array(
 	<li>
 		<span>
 		<?php
-		// translators: %s is the URL of the user's friends page.
-		echo wp_kses( sprintf( __( 'You can extend your network by <a href=%1$s>subscribing to web sites</a>, <a href=%1$s>sending friend requests</a> or <a href=%2$s>responding to received friend requests</a>.', 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"', '"' . admin_url( 'users.php?role=friend_request' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+		if ( class_exists( 'Activitypub\Activitypub' ) ) {
+			// translators: %s is the URL of the Add Friend page.
+			echo wp_kses( sprintf( __( 'You can extend your network by <a href=%s>subscribing to web sites</a> or following people on the Fediverse.', 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+		} else {
+			// translators: %s is the URL of the Add Friend page.
+			echo wp_kses( sprintf( __( 'You can extend your network by <a href=%s>subscribing to web sites</a> or, with the ActivityPub plugin, following people on the Fediverse.', 'friends' ), '"' . admin_url( 'admin.php?page=add-friend' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
+		}
 		?>
 
 		</span>
@@ -44,15 +49,6 @@ $first_friend = array(
 	</form>
 	</li>
 	<li>
-		<span><?php esc_html_e( 'A lot of the functionality you might know from other networks is provided by this plugin, just without outside dependencies.', 'friends' ); ?></span>
-		<span>
-		<?php
-		// translators: %s is the URL of the user's friends page.
-		echo wp_kses( sprintf( __( 'For example, when you take certain actions like subcribe to a new site, <a href=%1$s>automatic status posts</a> will be created but you decide when and if you want to publish them.', 'friends' ), '"' . admin_url( 'admin.php?page=automatic-status' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-		?>
-		</span>
-	</li>
-	<li>
 		<span>
 		<?php
 		// translators: %s is the URL of the user's friends page.
@@ -61,8 +57,16 @@ $first_friend = array(
 		</span>
 		<?php if ( ! isset( $args['plugin-list'] ) || $args['plugin-list'] ) : ?>
 		<ul>
+			<?php if ( class_exists( 'Activitypub\Activitypub' ) ) : ?>
+			<li><a href="<?php echo \esc_url_raw( \admin_url( 'options-general.php?page=activitypub' ) ); ?>"><?php \esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></a> (&#x2713;):<span><?php esc_html_e( 'Be part of the Fediverse!', 'friends' ); ?></span> <span><?php esc_html_e( 'People can follow your blog via ActivityPub (e.g. Mastodon) and you can follow people there.', 'friends' ); ?></span> </li>
+			<?php else : ?>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'plugin-install.php?tab=plugin-information&plugin=activitypub&TB_iframe=true' ) ); ?>" class="thickbox open-plugin-details-modal install-now" target="_blank"><?php \esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Be part of the Fediverse!', 'friends' ); ?></span> <span><?php esc_html_e( 'People can follow your blog via ActivityPub (e.g. Mastodon) and you can follow people there.', 'friends' ); ?></span> </li>
+			<?php endif; ?>
+			<?php if ( class_exists( 'Enable_Mastodon_Apps\Mastodon_API' ) ) : ?>
+			<li><a href="<?php echo \esc_url_raw( \admin_url( 'options-general.php?page=enable-mastodon-apps' ) ); ?>"><?php \esc_html_e( 'Enable Mastodon Apps Plugin', 'friends' ); ?></a> (&#x2713;): <span><?php esc_html_e( 'Enjoy the comfort of Mastodon apps!', 'friends' ); ?></span> <span><?php esc_html_e( 'With this plugin you can use your favorite Mastodon app like Tusky, Ivory, or others to stay up to date and publish new status posts.', 'friends' ); ?></span> </li>
+			<?php else : ?>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'plugin-install.php?tab=plugin-information&plugin=enable-mastodon-apps&TB_iframe=true' ) ); ?>" class="thickbox open-plugin-details-modal install-now" target="_blank"><?php \esc_html_e( 'Enable Mastodon Apps Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Enjoy the comfort of Mastodon apps!', 'friends' ); ?></span> <span><?php esc_html_e( 'With this plugin you can use your favorite Mastodon app like Tusky, Ivory, or others to stay up to date and publish new status posts.', 'friends' ); ?></span> </li>
+			<?php endif; ?>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'admin.php?page=friends-plugins' ) ); ?>"><?php \esc_html_e( 'Post Collection Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Collect posts from around the web and create feeds.', 'friends' ); ?></span> </li>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'admin.php?page=friends-plugins' ) ); ?>"><?php \esc_html_e( 'Send to E-Reader Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Send new articles directly to your e-reader via e-mail or download the ePub.', 'friends' ); ?></span> </li>
 		</ul>
