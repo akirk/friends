@@ -122,13 +122,14 @@ class Frontend {
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
 		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
+		add_action( 'friends_load_theme_block', array( $this, 'block_theme' ) );
+		add_action( 'friends_load_themes', array( $this, 'register_block_theme' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
 		add_action( 'wp_footer', array( $this, 'dequeue_scripts' ) );
 		add_action( 'the_post', array( $this, 'the_post' ), 10, 2 );
 		add_action( 'parse_query', array( $this, 'parse_query' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
-		add_filter( 'stylesheet', array( $this, 'stylesheet' ) );
 		add_filter( 'block_type_metadata_settings', array( $this, 'block_type_metadata_settings' ), 15 );
 		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
@@ -377,6 +378,14 @@ class Frontend {
 		}
 
 		return $classes;
+	}
+
+	public function register_block_theme( Frontend $friends_frontend ) {
+		$friends_frontend->register_theme( __( 'Block Theme', 'friends' ), 'block' );
+	}
+
+	public function block_theme() {
+		add_filter( 'stylesheet', array( $this, 'stylesheet' ) );
 	}
 
 	public function stylesheet( $stylesheet ) {
