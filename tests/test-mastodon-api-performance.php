@@ -16,12 +16,21 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 	private $posts = array();
 	private $token;
 
+	public static function known_test_activitypub_hosts( $is_known, $host ) {
+		// Recognize host patterns used in tests as known fediverse instances.
+		if ( str_ends_with( $host, '.social' ) || str_starts_with( $host, 'mastodon.' ) ) {
+			return true;
+		}
+		return $is_known;
+	}
+
 	public function set_up() {
 		if ( ! class_exists( '\Enable_Mastodon_Apps\Mastodon_API' ) ) {
 			return $this->markTestSkipped( 'The Enable Mastodon Apps plugin is not loaded.' );
 		}
 		parent::set_up();
 
+		add_filter( 'friends_is_known_activitypub_host', array( self::class, 'known_test_activitypub_hosts' ), 10, 2 );
 		add_filter( 'pre_option_mastodon_api_disable_ema_app_settings_changes', '__return_true' );
 		add_filter( 'pre_option_mastodon_api_disable_ema_announcements', '__return_true' );
 
@@ -44,6 +53,8 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 	}
 
 	public function tear_down() {
+		remove_filter( 'friends_is_known_activitypub_host', array( self::class, 'known_test_activitypub_hosts' ), 10, 2 );
+
 		foreach ( $this->posts as $post_id ) {
 			wp_delete_post( $post_id, true );
 		}

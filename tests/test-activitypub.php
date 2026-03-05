@@ -606,6 +606,15 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		remove_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8, 3 );
 	}
 
+	public static function is_known_activitypub_test_host( $is_known, $host ) {
+		// The test actor is on mastodon.local; recognize mastodon.* as known so
+		// convert_actor_to_mastodon_handle() resolves /users/username paths correctly.
+		if ( str_starts_with( $host, 'mastodon.' ) ) {
+			return true;
+		}
+		return $is_known;
+	}
+
 	public function set_up() {
 		if ( ! class_exists( '\Activitypub\Activitypub' ) ) {
 			return $this->markTestSkipped( 'The Activitypub plugin is not loaded.' );
@@ -613,6 +622,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		parent::set_up();
 
 		add_filter( 'activitypub_defer_signature_verification', '__return_true' );
+		add_filter( 'friends_is_known_activitypub_host', array( get_called_class(), 'is_known_activitypub_test_host' ), 10, 2 );
 		add_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		add_filter( 'activitypub_pre_http_get_remote_object', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
@@ -665,6 +675,8 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function tear_down() {
+		remove_filter( 'activitypub_defer_signature_verification', '__return_true' );
+		remove_filter( 'friends_is_known_activitypub_host', array( get_called_class(), 'is_known_activitypub_test_host' ), 10, 2 );
 		remove_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		remove_filter( 'activitypub_pre_http_get_remote_object', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		remove_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );

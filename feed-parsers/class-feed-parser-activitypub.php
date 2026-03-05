@@ -3687,7 +3687,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	/**
 	 * Check if a host is a known ActivityPub instance.
 	 *
-	 * Loads all ap_actor guids once per request and extracts their hosts.
+	 * Loads all ap_actor guids and activitypub user feed URLs once per request
+	 * and extracts their hosts. Use the friends_is_known_activitypub_host filter
+	 * to register additional known hosts or patterns.
 	 *
 	 * @param string $host The hostname to check.
 	 * @return bool Whether the host is known.
@@ -3713,9 +3715,33 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					}
 				}
 			}
+
+			// Also collect hosts from activitypub user feeds we follow.
+			$term_query = new \WP_Term_Query(
+				array(
+					'taxonomy'   => User_Feed::TAXONOMY,
+					'hide_empty' => false,
+					'meta_query' => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+						array(
+							'key'   => 'parser',
+							'value' => self::SLUG,
+						),
+					),
+				)
+			);
+			foreach ( $term_query->get_terms() as $term ) {
+				$feed_host = wp_parse_url( $term->slug, PHP_URL_HOST );
+				if ( $feed_host ) {
+					$known_hosts[ $feed_host ] = true;
+				}
+			}
 		}
 
-		return isset( $known_hosts[ $host ] );
+		if ( isset( $known_hosts[ $host ] ) ) {
+			return true;
+		}
+
+		return (bool) apply_filters( 'friends_is_known_activitypub_host', false, $host );
 	}
 
 	private static function convert_actor_to_mastodon_handle( $actor ) {
