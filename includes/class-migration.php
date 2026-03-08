@@ -45,6 +45,7 @@ class Migration {
 		add_action( 'wp_ajax_friends_clear_failed_url', array( $this, 'ajax_clear_failed_url' ) );
 		add_action( 'wp_ajax_friends_deactivate_feed_by_url', array( $this, 'ajax_deactivate_feed_by_url' ) );
 		add_action( 'friends_convert_friend_users_batch', array( __CLASS__, 'convert_friend_users_batch' ) );
+		add_action( 'friends_link_feeds_as_term_children_batch', array( __CLASS__, 'link_feeds_as_term_children_batch' ) );
 
 		// Register debug output hooks for migrations.
 		add_action( 'friends_migration_debug_link_activitypub_feeds_to_actors', array( $this, 'debug_link_activitypub_feeds_to_actors' ) );
@@ -258,6 +259,25 @@ class Migration {
 					'in_progress' => 'friends_friend_users_conversion_in_progress',
 					'total'       => 'friends_friend_users_conversion_total',
 					'processed'   => 'friends_friend_users_conversion_processed',
+				),
+			)
+		);
+
+		self::register(
+			array(
+				'id'            => 'link_feeds_as_term_children',
+				'version'       => '4.1.0',
+				'title'         => 'Link Feeds as Term Children',
+				'description'   => 'Migrates feed-to-subscription links from wp_term_relationships to the parent field in wp_term_taxonomy.',
+				'method'        => 'link_feeds_as_term_children',
+				'status_option' => 'friends_feeds_linked_as_term_children',
+				'batched'       => true,
+				'batch_method'  => 'link_feeds_as_term_children_batch',
+				'cron_hook'     => 'friends_link_feeds_as_term_children_batch',
+				'progress'      => array(
+					'in_progress' => 'friends_feeds_term_children_in_progress',
+					'total'       => 'friends_feeds_term_children_total',
+					'processed'   => 'friends_feeds_term_children_processed',
 				),
 			)
 		);
@@ -3100,5 +3120,108 @@ class Migration {
 		update_option( 'friends_friend_users_conversion_processed', $processed, false );
 
 		wp_schedule_single_event( time() + 1, 'friends_convert_friend_users_batch' );
+	}
+
+	/**
+	 * Initialize the migration to link feed terms as children of subscription terms.
+	 */
+	public static function link_feeds_as_term_children() {
+		if ( get_option( 'friends_feeds_term_children_in_progress' ) ) {
+			return;
+		}
+		if ( get_option( 'friends_feeds_linked_as_term_children' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$total = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT COUNT(*)
+				FROM {$wpdb->term_relationships} tr
+				JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				WHERE tt.taxonomy = %s
+				AND EXISTS (
+					SELECT 1 FROM {$wpdb->term_taxonomy} sub
+					WHERE sub.term_id = tr.object_id
+					AND sub.taxonomy = %s
+				)",
+				User_Feed::TAXONOMY,
+				Subscription::TAXONOMY
+			)
+		);
+
+		if ( ! $total ) {
+			update_option( 'friends_feeds_linked_as_term_children', true, false );
+			return;
+		}
+
+		update_option( 'friends_feeds_term_children_in_progress', true, false );
+		update_option( 'friends_feeds_term_children_total', $total, false );
+		update_option( 'friends_feeds_term_children_processed', 0, false );
+
+		wp_schedule_single_event( time(), 'friends_link_feeds_as_term_children_batch' );
+	}
+
+	/**
+	 * Process a batch of feed-to-subscription relationships, converting them to parent links.
+	 */
+	public static function link_feeds_as_term_children_batch() {
+		$batch_size = apply_filters( 'friends_feeds_term_children_batch_size', 50 );
+
+		global $wpdb;
+
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT tr.object_id AS subscription_term_id, tt.term_taxonomy_id AS feed_tt_id
+				FROM {$wpdb->term_relationships} tr
+				JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				WHERE tt.taxonomy = %s
+				AND EXISTS (
+					SELECT 1 FROM {$wpdb->term_taxonomy} sub
+					WHERE sub.term_id = tr.object_id
+					AND sub.taxonomy = %s
+				)
+				LIMIT %d OFFSET 0",
+				User_Feed::TAXONOMY,
+				Subscription::TAXONOMY,
+				$batch_size
+			)
+		);
+
+		if ( empty( $rows ) ) {
+			update_option( 'friends_feeds_linked_as_term_children', true, false );
+			delete_option( 'friends_feeds_term_children_in_progress' );
+			delete_option( 'friends_feeds_term_children_total' );
+			delete_option( 'friends_feeds_term_children_processed' );
+			return;
+		}
+
+		$processed = (int) get_option( 'friends_feeds_term_children_processed', 0 );
+
+		foreach ( $rows as $row ) {
+			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->term_taxonomy,
+				array( 'parent' => (int) $row->subscription_term_id ),
+				array( 'term_taxonomy_id' => (int) $row->feed_tt_id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+
+			$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->term_relationships,
+				array(
+					'object_id'        => (int) $row->subscription_term_id,
+					'term_taxonomy_id' => (int) $row->feed_tt_id,
+				),
+				array( '%d', '%d' )
+			);
+
+			++$processed;
+		}
+
+		update_option( 'friends_feeds_term_children_processed', $processed, false );
+
+		wp_schedule_single_event( time() + 1, 'friends_link_feeds_as_term_children_batch' );
 	}
 }

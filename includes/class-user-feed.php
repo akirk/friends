@@ -141,6 +141,14 @@ class User_Feed {
 	 * @return array(User) The associated users.
 	 */
 	public function get_all_friend_users() {
+		if ( $this->term->parent ) {
+			$term = get_term( $this->term->parent, Subscription::TAXONOMY );
+			if ( ! is_wp_error( $term ) && $term ) {
+				return array( new Subscription( $term ) );
+			}
+		}
+
+		// Fall back to object relationship lookup for legacy feed terms (parent not yet set).
 		$users = array();
 		$user_term_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
 		foreach ( $user_term_ids as $user_term_id ) {
@@ -157,7 +165,6 @@ class User_Feed {
 				$feeds = $user->get_feeds();
 				if ( isset( $feeds[ $this->term->term_id ] ) ) {
 					$users[] = $user;
-					continue;
 				}
 			}
 		}
@@ -621,49 +628,6 @@ class User_Feed {
 	 */
 	public function delete() {
 		wp_delete_term( $this->term->term_id, self::TAXONOMY );
-	}
-
-	/**
-	 * Saves multiple feeds for a user.
-	 *
-	 * See save() for possible options.
-	 *
-	 * @param      User  $friend_user  The associated user.
-	 * @param      array $feeds        The feeds in the format array( url => options ).
-	 *
-	 * @return     array      Array of the newly created terms.
-	 */
-	public static function save_multiple( User $friend_user, array $feeds ) {
-		$all_urls = array();
-		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
-			$all_urls[ $term->name ] = $term->term_id;
-		}
-
-		$term_ids = wp_set_object_terms( $friend_user->ID, array_keys( array_merge( $all_urls, $feeds ) ), self::TAXONOMY );
-		if ( is_wp_error( $term_ids ) ) {
-			return $term_ids;
-		}
-
-		foreach ( wp_get_object_terms( $friend_user->ID, self::TAXONOMY ) as $term ) {
-			$all_urls[ $term->name ] = $term->term_id;
-		}
-
-		foreach ( $feeds as $url => $options ) {
-			if ( ! isset( $all_urls[ $url ] ) ) {
-				continue;
-			}
-			$term_id = $all_urls[ $url ];
-			foreach ( $options as $key => $value ) {
-				if ( in_array( $key, array( 'active', 'parser', 'post-format', 'mime-type', 'title' ) ) ) {
-					if ( metadata_exists( 'term', $term_id, $key ) ) {
-						update_metadata( 'term', $term_id, $key, $value );
-					} else {
-						add_metadata( 'term', $term_id, $key, $value, true );
-					}
-				}
-			}
-		}
-		return $term_ids;
 	}
 
 	/**
