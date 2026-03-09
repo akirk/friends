@@ -3173,7 +3173,7 @@ class Migration {
 
 		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare(
-				"SELECT tr.object_id AS subscription_term_id, tt.term_taxonomy_id AS feed_tt_id
+				"SELECT tr.object_id AS subscription_term_id, tt.term_taxonomy_id AS feed_tt_id, tt.term_id AS feed_term_id
 				FROM {$wpdb->term_relationships} tr
 				JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
 				WHERE tt.taxonomy = %s
@@ -3220,8 +3220,7 @@ class Migration {
 			++$processed;
 		}
 
-		// Rebuild the term hierarchy cache after direct DB updates.
-		delete_option( User_Feed::TAXONOMY . '_children' );
+		clean_term_cache( wp_list_pluck( $rows, 'feed_term_id' ), User_Feed::TAXONOMY );
 
 		update_option( 'friends_feeds_term_children_processed', $processed, false );
 

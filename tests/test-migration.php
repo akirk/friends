@@ -997,4 +997,235 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'and 5 more', $result['description'] );
 	}
 
+	/**
+	 * Test converting a WP-user-backed friend/subscription to a virtual subscription.
+	 */
+	public function test_convert_friend_user_to_subscription() {
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		$user_id = $this->factory->user->create(
+			array(
+				'user_login' => 'old-friend',
+				'user_url'   => 'http://old-friend.local/',
+				'role'       => 'subscription',
+			)
+		);
+		$user = new User( $user_id );
+
+		// Add a feed using the old WP-user object_terms approach.
+		$feed_url = 'http://old-friend.local/feed';
+		$user->save_feed( $feed_url, array( 'parser' => 'simplepie', 'active' => true ) );
+
+		// Verify the old state: feed term is linked via object_id = WP user ID, no parent.
+		$feeds_before = wp_get_object_terms( $user_id, User_Feed::TAXONOMY );
+		$this->assertCount( 1, $feeds_before );
+		$this->assertEquals( 0, $feeds_before[0]->parent );
+
+		// Create a post attributed to the WP user.
+		$post_id = $this->factory->post->create(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_author' => $user_id,
+				'post_status' => 'publish',
+			)
+		);
+		$this->assertEquals( $user_id, get_post( $post_id )->post_author );
+
+		// Set a user option to verify it gets migrated.
+		update_user_option( $user_id, 'friends_starred', true );
+
+		// Convert.
+		$subscription = Subscription::convert_from_user( $user );
+		$this->assertNotWPError( $subscription );
+		$this->assertInstanceOf( Subscription::class, $subscription );
+		$this->assertEquals( 'old-friend', $subscription->user_login );
+
+		// WP user should be gone.
+		$this->assertFalse( get_user_by( 'id', $user_id ) );
+
+		$feeds = $subscription->get_feeds();
+		$this->assertCount( 1, $feeds );
+		$feed = reset( $feeds );
+		$this->assertEquals( $feed_url, $feed->get_url() );
+		$feed_term = get_term( $feed->get_id(), User_Feed::TAXONOMY );
+		$this->assertEquals( $subscription->get_term_id(), $feed_term->parent );
+
+		// Feed should resolve back to the subscription.
+		$friend_user = $feed->get_friend_user();
+		$this->assertInstanceOf( Subscription::class, $friend_user );
+		$this->assertEquals( $subscription->get_term_id(), $friend_user->get_term_id() );
+
+		// Post should have post_author = 0 and be linked via subscription taxonomy.
+		$post = get_post( $post_id );
+		$this->assertEquals( 0, $post->post_author );
+		$post_terms = wp_get_object_terms( $post_id, Subscription::TAXONOMY );
+		$this->assertCount( 1, $post_terms );
+		$this->assertEquals( $subscription->get_term_id(), $post_terms[0]->term_id );
+
+		// Post should be retrievable via the subscription.
+		$posts = get_posts( $subscription->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
+		$this->assertCount( 1, $posts );
+		$this->assertEquals( $post_id, $posts[0]->ID );
+
+		// User option should be migrated.
+		$this->assertTrue( (bool) $subscription->get_user_option( 'friends_starred' ) );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
+	/**
+	 * Test the batch migration that converts WP users with old friend roles to subscriptions.
+	 */
+	public function test_convert_friend_users_batch() {
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		// Register old roles temporarily.
+		add_role( 'friend', 'Friend', array( 'read' => true ) );
+		add_role( 'acquaintance', 'Acquaintance', array( 'read' => true ) );
+
+		$user1_id = $this->factory->user->create(
+			array(
+				'user_login' => 'old-friend-batch-1',
+				'user_url'   => 'http://old-friend-batch-1.local/',
+				'role'       => 'friend',
+			)
+		);
+		$user2_id = $this->factory->user->create(
+			array(
+				'user_login' => 'old-acquaintance',
+				'user_url'   => 'http://old-acquaintance.local/',
+				'role'       => 'acquaintance',
+			)
+		);
+
+		$user1 = new User( $user1_id );
+		$user1->save_feed( 'http://old-friend-batch-1.local/feed', array( 'parser' => 'simplepie', 'active' => true ) );
+
+		// Run the migration.
+		Migration::convert_friend_users_to_subscriptions();
+		$batches = 0;
+		while ( get_option( 'friends_friend_users_conversion_in_progress' ) ) {
+			Migration::convert_friend_users_batch();
+			if ( ++$batches > 10 ) {
+				$this->fail( 'Friend user conversion did not complete.' );
+			}
+		}
+
+		$this->assertTrue( (bool) get_option( 'friends_friend_users_converted' ) );
+
+		// Both WP users should be gone.
+		$this->assertFalse( get_user_by( 'id', $user1_id ) );
+		$this->assertFalse( get_user_by( 'id', $user2_id ) );
+
+		// Subscriptions should exist.
+		$sub1 = Subscription::get_by_username( 'old-friend-batch-1' );
+		$this->assertNotWPError( $sub1 );
+		$this->assertInstanceOf( Subscription::class, $sub1 );
+
+		$sub2 = Subscription::get_by_username( 'old-acquaintance' );
+		$this->assertNotWPError( $sub2 );
+
+		$feeds = $sub1->get_feeds();
+		$this->assertCount( 1, $feeds );
+
+		// Re-running should be a no-op.
+		delete_option( 'friends_friend_users_conversion_in_progress' );
+		Migration::convert_friend_users_to_subscriptions();
+		$this->assertFalse( (bool) get_option( 'friends_friend_users_conversion_in_progress' ) );
+
+		remove_role( 'friend' );
+		remove_role( 'acquaintance' );
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
+	/**
+	 * Test the migration that links feed terms as children of subscription terms,
+	 * converting from the old object_terms approach.
+	 */
+	public function test_link_feeds_as_term_children() {
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		// Create a subscription.
+		$subscription = Subscription::create( 'old-sub', 'subscription', 'http://old-sub.local/' );
+		$this->assertNotWPError( $subscription );
+		$subscription_term_id = $subscription->get_term_id();
+
+		// Simulate old approach: insert a feed term with no parent and create the
+		// object_terms relationship (object_id = subscription term_id).
+		$feed_url  = 'http://old-sub.local/feed';
+		$feed_term = wp_insert_term( $feed_url, User_Feed::TAXONOMY );
+		$this->assertNotWPError( $feed_term );
+		$feed_term_id = $feed_term['term_id'];
+
+		add_metadata( 'term', $feed_term_id, 'parser', 'simplepie', true );
+		add_metadata( 'term', $feed_term_id, 'active', true, true );
+
+		wp_set_object_terms( $subscription_term_id, $feed_term_id, User_Feed::TAXONOMY );
+
+		// Verify old state.
+		$term_before = get_term( $feed_term_id, User_Feed::TAXONOMY );
+		$this->assertEquals( 0, $term_before->parent );
+
+		global $wpdb;
+		$feed_tt_id    = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE term_id = %d AND taxonomy = %s",
+				$feed_term_id,
+				User_Feed::TAXONOMY
+			)
+		);
+		$rel_count_before = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->term_relationships} WHERE object_id = %d AND term_taxonomy_id = %d",
+				$subscription_term_id,
+				$feed_tt_id
+			)
+		);
+		$this->assertEquals( 1, $rel_count_before );
+
+		// Run the migration.
+		Migration::link_feeds_as_term_children();
+		$batches = 0;
+		while ( get_option( 'friends_feeds_term_children_in_progress' ) ) {
+			Migration::link_feeds_as_term_children_batch();
+			if ( ++$batches > 10 ) {
+				$this->fail( 'Feed term children linking did not complete.' );
+			}
+		}
+
+		$this->assertTrue( (bool) get_option( 'friends_feeds_linked_as_term_children' ) );
+
+		// Feed term should now have subscription as parent.
+		$term_after = get_term( $feed_term_id, User_Feed::TAXONOMY );
+		$this->assertEquals( $subscription_term_id, $term_after->parent );
+
+		// Object_terms relationship should be removed.
+		$rel_count_after = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM {$wpdb->term_relationships} WHERE object_id = %d AND term_taxonomy_id = %d",
+				$subscription_term_id,
+				$feed_tt_id
+			)
+		);
+		$this->assertEquals( 0, $rel_count_after );
+
+		// Subscription should now find the feed via get_feeds().
+		$feeds = $subscription->get_feeds();
+		$this->assertCount( 1, $feeds );
+		$feed = reset( $feeds );
+		$this->assertEquals( $feed_url, $feed->get_url() );
+
+		// Feed should resolve back to the subscription.
+		$friend_user = $feed->get_friend_user();
+		$this->assertInstanceOf( Subscription::class, $friend_user );
+		$this->assertEquals( $subscription_term_id, $friend_user->get_term_id() );
+
+		// Re-running should be a no-op.
+		delete_option( 'friends_feeds_term_children_in_progress' );
+		Migration::link_feeds_as_term_children();
+		$this->assertFalse( (bool) get_option( 'friends_feeds_term_children_in_progress' ) );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
 }

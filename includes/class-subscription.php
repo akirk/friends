@@ -669,23 +669,6 @@ class Subscription extends User {
 				User_Feed::TAXONOMY
 			)
 		);
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-				sprintf(
-					'DELETE tr FROM %s tr
-					JOIN %s tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-					WHERE tr.object_id = %%d
-					AND tt.taxonomy = %%s',
-					$wpdb->term_relationships,
-					$wpdb->term_taxonomy
-				),
-				$user->ID,
-				User_Feed::TAXONOMY
-			)
-		);
-
-		// Rebuild the term hierarchy cache after direct DB updates.
-		delete_option( User_Feed::TAXONOMY . '_children' );
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
