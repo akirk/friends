@@ -684,6 +684,9 @@ class Subscription extends User {
 			)
 		);
 
+		// Rebuild the term hierarchy cache after direct DB updates.
+		delete_option( User_Feed::TAXONOMY . '_children' );
+
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
 		}

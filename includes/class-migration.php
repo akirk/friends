@@ -3220,6 +3220,9 @@ class Migration {
 			++$processed;
 		}
 
+		// Rebuild the term hierarchy cache after direct DB updates.
+		delete_option( User_Feed::TAXONOMY . '_children' );
+
 		update_option( 'friends_feeds_term_children_processed', $processed, false );
 
 		wp_schedule_single_event( time() + 1, 'friends_link_feeds_as_term_children_batch' );

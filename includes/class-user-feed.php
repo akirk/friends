@@ -148,27 +148,7 @@ class User_Feed {
 			}
 		}
 
-		// Fall back to object relationship lookup for legacy feed terms (parent not yet set).
-		$users = array();
-		$user_term_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
-		foreach ( $user_term_ids as $user_term_id ) {
-			$user = User::get_user_by_id( $user_term_id );
-			if ( $user ) {
-				$feeds = $user->get_feeds();
-				if ( isset( $feeds[ $this->term->term_id ] ) ) {
-					$users[] = $user;
-					continue;
-				}
-			}
-			$user = User::get_user_by_id( 1e10 + $user_term_id );
-			if ( $user ) {
-				$feeds = $user->get_feeds();
-				if ( isset( $feeds[ $this->term->term_id ] ) ) {
-					$users[] = $user;
-				}
-			}
-		}
-		return $users;
+		return array();
 	}
 
 	/**
@@ -491,7 +471,7 @@ class User_Feed {
 				'singular_name' => _x( 'Feed URL', 'taxonomy singular name', 'friends' ),
 				'menu_name'     => __( 'Feed URL', 'friends' ),
 			),
-			'hierarchical'          => false,
+			'hierarchical'          => true,
 			'show_ui'               => false,
 			'show_admin_column'     => false,
 			'query_var'             => true,
@@ -737,8 +717,9 @@ class User_Feed {
 	public static function get_by_url( $url ) {
 		$term_query = new \WP_Term_Query(
 			array(
-				'taxonomy' => self::TAXONOMY,
-				'slug'     => $url,
+				'taxonomy'   => self::TAXONOMY,
+				'slug'       => $url,
+				'hide_empty' => false,
 			)
 		);
 		foreach ( $term_query->get_terms() as $term ) {
@@ -766,7 +747,8 @@ class User_Feed {
 	public static function get_all_users() {
 		$term_query = new \WP_Term_Query(
 			array(
-				'taxonomy' => self::TAXONOMY,
+				'taxonomy'   => self::TAXONOMY,
+				'hide_empty' => false,
 			)
 		);
 		$users = array();
@@ -792,6 +774,7 @@ class User_Feed {
 				'taxonomy'   => self::TAXONOMY,
 				'meta_key'   => 'active', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'meta_value' => true, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'hide_empty' => false,
 			)
 		);
 
@@ -828,6 +811,7 @@ class User_Feed {
 				'taxonomy'   => self::TAXONOMY,
 				'meta_key'   => 'parser', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'meta_value' => $parser, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'hide_empty' => false,
 			)
 		);
 		$feeds = array();
