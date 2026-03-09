@@ -567,11 +567,10 @@ class Subscription extends User {
 	 * @param      string $avatar_url      The user_icon_url URL.
 	 * @param      string $description   A description for the user.
 	 * @param      string $user_registered   When the user was registered.
-	 * @param      bool   $subscription_override  Whether to override the automatic creation of a subscription.
 	 *
 	 * @return     Subscription|\WP_Error  The created subscription or an error.
 	 */
-	public static function create( $user_login, $role, $user_url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
+	public static function create( $user_login, $role, $user_url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null ) {
 		// Sanitize the username to prevent special characters like apostrophes.
 		$user_login = User::sanitize_username( $user_login );
 

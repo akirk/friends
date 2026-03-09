@@ -67,51 +67,12 @@ class User extends \WP_User {
 	 * @param      string $avatar_url      The user_avatar_url URL.
 	 * @param      string $description   A description for the user.
 	 * @param      string $user_registered   When the user was registered.
-	 * @param      bool   $subscription_override  Whether to override the automatic creation of a subscription.
 	 *
 	 * @return     User|\WP_Error  The created user or an error.
 	 */
-	public static function create( $user_login, $role, $url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
-		// Sanitize the username to prevent special characters like apostrophes.
+	public static function create( $user_login, $role, $url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null ) {
 		$user_login = self::sanitize_username( $user_login );
-
-		$role = 'subscription'; // Only role supported after friendship removal.
-		if ( ! $subscription_override ) {
-			return Subscription::create( $user_login, $role, $url, $display_name, $avatar_url, $description );
-		}
-
-		if ( is_multisite() ) {
-			$user = get_user_by( 'login', $user_login );
-			if ( $user && ! self::is_friends_plugin_user( $user ) ) {
-				if ( ! is_user_member_of_blog( $user->ID, get_current_blog_id() ) ) {
-					add_user_to_blog( get_current_blog_id(), $user->ID, $role );
-				}
-			}
-		}
-
-		$userdata = array(
-			'user_login'   => $user_login,
-			'display_name' => $display_name,
-			'first_name'   => $display_name,
-			'nickname'     => $display_name,
-			'description'  => $description,
-			'user_url'     => $url,
-			'user_pass'    => wp_generate_password( 256 ),
-			'role'         => $role,
-		);
-
-		if ( $user_registered ) {
-			$userdata['user_registered'] = $user_registered;
-		}
-
-		$friend_id = wp_insert_user( $userdata );
-
-		$friend_user = new User( $friend_id );
-		$friend_user->update_user_option( 'friends_new_friend', true );
-		$friend_user->update_user_icon_url( $avatar_url );
-
-		do_action( 'friends_after_create_friend_user', $friend_user );
-		return $friend_user;
+		return Subscription::create( $user_login, $role, $url, $display_name, $avatar_url, $description, $user_registered );
 	}
 
 	public static function register_wrapper_hooks() {
