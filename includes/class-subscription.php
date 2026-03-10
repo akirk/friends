@@ -653,6 +653,7 @@ class Subscription extends User {
 		}
 
 		// Convert feeds: set parent to the subscription term_id and remove the object relationship.
+		$feed_term_ids = wp_get_object_terms( $user->ID, User_Feed::TAXONOMY, array( 'fields' => 'ids' ) );
 		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 				sprintf(
@@ -669,6 +670,9 @@ class Subscription extends User {
 				User_Feed::TAXONOMY
 			)
 		);
+		if ( ! empty( $feed_term_ids ) && ! is_wp_error( $feed_term_ids ) ) {
+			clean_term_cache( $feed_term_ids, User_Feed::TAXONOMY );
+		}
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
