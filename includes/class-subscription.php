@@ -670,9 +670,8 @@ class Subscription extends User {
 				User_Feed::TAXONOMY
 			)
 		);
-		if ( ! empty( $feed_term_ids ) && ! is_wp_error( $feed_term_ids ) ) {
-			clean_term_cache( $feed_term_ids, User_Feed::TAXONOMY );
-		}
+		// Remove old object_id-based relationships so the delete_user hook won't find and delete these feeds.
+		wp_remove_object_terms( $user->ID, $feed_term_ids, User_Feed::TAXONOMY );
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
