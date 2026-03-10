@@ -248,7 +248,7 @@ class Migration {
 				'id'            => 'convert_friend_users_to_subscriptions',
 				'version'       => '4.0.0',
 				'title'         => 'Convert Friend Users to Subscriptions',
-				'description'   => 'Converts WordPress users with friend/acquaintance roles to virtual subscriptions. Runs in batches.',
+				'description'   => 'Converts WordPress users with friend/acquaintance/subscription roles to virtual subscriptions. Runs in batches.',
 				'method'        => 'convert_friend_users_to_subscriptions',
 				'status_option' => 'friends_friend_users_converted',
 				'batched'       => true,
@@ -3029,7 +3029,7 @@ class Migration {
 	}
 
 	/**
-	 * Convert WordPress users with friend/acquaintance roles to virtual subscriptions.
+	 * Convert WordPress users with friend/acquaintance/subscription roles to virtual subscriptions.
 	 */
 	public static function convert_friend_users_to_subscriptions() {
 		if ( get_option( 'friends_friend_users_conversion_in_progress' ) ) {
@@ -3041,7 +3041,7 @@ class Migration {
 
 		$users = new \WP_User_Query(
 			array(
-				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request' ),
+				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ),
 				'number'   => -1,
 				'fields'   => 'ID',
 			)
@@ -3069,7 +3069,7 @@ class Migration {
 
 		$users = new \WP_User_Query(
 			array(
-				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request' ),
+				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ),
 				'number'   => $batch_size,
 				'offset'   => 0,
 			)
