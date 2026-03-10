@@ -527,14 +527,11 @@ class Subscription extends User {
 		// Migrate posts: add subscription term and set post_author to 0, all in bulk.
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		if ( ! empty( $post_types ) ) {
-			$type_placeholders = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
-
 			// Add subscription term relationship for all posts by this user.
 			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 					"INSERT IGNORE INTO {$wpdb->term_relationships} (object_id, term_taxonomy_id)
-					SELECT ID, %d FROM {$wpdb->posts} WHERE post_author = %d AND post_type IN ({$type_placeholders})",
+					SELECT ID, %d FROM {$wpdb->posts} WHERE post_author = %d AND post_type IN (" . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . ')',
 					array_merge( array( $subscription_tt_id, $user->ID ), $post_types )
 				)
 			);
@@ -542,8 +539,7 @@ class Subscription extends User {
 			// Update post_author to 0 for all posts by this user.
 			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->prepare(
-					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-					"UPDATE {$wpdb->posts} SET post_author = 0 WHERE post_author = %d AND post_type IN ({$type_placeholders})",
+					"UPDATE {$wpdb->posts} SET post_author = 0 WHERE post_author = %d AND post_type IN (" . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . ')',
 					array_merge( array( $user->ID ), $post_types )
 				)
 			);
