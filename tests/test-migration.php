@@ -1040,8 +1040,8 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertInstanceOf( Subscription::class, $subscription );
 		$this->assertEquals( 'old-friend', $subscription->user_login );
 
-		// WP user should be gone.
-		$this->assertFalse( get_user_by( 'id', $user_id ) );
+		// WP user should be gone (or removed from this blog in multisite).
+		$this->assertTrue( ! get_user_by( 'id', $user_id ) || ! is_user_member_of_blog( $user_id ) );
 
 		$feeds = $subscription->get_feeds();
 		$this->assertCount( 1, $feeds );
@@ -1113,9 +1113,9 @@ class MigrationTest extends \WP_UnitTestCase {
 
 		$this->assertTrue( (bool) get_option( 'friends_friend_users_converted' ) );
 
-		// Both WP users should be gone.
-		$this->assertFalse( get_user_by( 'id', $user1_id ) );
-		$this->assertFalse( get_user_by( 'id', $user2_id ) );
+		// Both WP users should be gone (or removed from this blog in multisite).
+		$this->assertTrue( ! get_user_by( 'id', $user1_id ) || ! is_user_member_of_blog( $user1_id ) );
+		$this->assertTrue( ! get_user_by( 'id', $user2_id ) || ! is_user_member_of_blog( $user2_id ) );
 
 		// Subscriptions should exist.
 		$sub1 = Subscription::get_by_username( 'old-friend-batch-1' );
