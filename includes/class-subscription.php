@@ -527,11 +527,21 @@ class Subscription extends User {
 		// Migrate posts: add subscription term and set post_author to 0, all in bulk.
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		if ( ! empty( $post_types ) ) {
+			$type_in = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
+
+			// Get affected post IDs for cache invalidation.
+			$affected_post_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts} WHERE post_author = %d AND post_type IN (" . $type_in . ')', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					array_merge( array( $user->ID ), $post_types )
+				)
+			);
+
 			// Add subscription term relationship for all posts by this user.
 			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-				$wpdb->prepare(
+				$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 					"INSERT IGNORE INTO {$wpdb->term_relationships} (object_id, term_taxonomy_id)
-					SELECT ID, %d FROM {$wpdb->posts} WHERE post_author = %d AND post_type IN (" . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . ')',
+					SELECT ID, %d FROM {$wpdb->posts} WHERE post_author = %d AND post_type IN (" . $type_in . ')', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 					array_merge( array( $subscription_tt_id, $user->ID ), $post_types )
 				)
 			);
@@ -539,10 +549,15 @@ class Subscription extends User {
 			// Update post_author to 0 for all posts by this user.
 			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 				$wpdb->prepare(
-					"UPDATE {$wpdb->posts} SET post_author = 0 WHERE post_author = %d AND post_type IN (" . implode( ',', array_fill( 0, count( $post_types ), '%s' ) ) . ')',
+					"UPDATE {$wpdb->posts} SET post_author = 0 WHERE post_author = %d AND post_type IN (" . $type_in . ')', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 					array_merge( array( $user->ID ), $post_types )
 				)
 			);
+
+			// Clean post caches after direct DB update.
+			foreach ( $affected_post_ids as $affected_post_id ) {
+				clean_post_cache( $affected_post_id );
+			}
 
 			// Update the term count.
 			wp_update_term_count_now( array( $subscription_tt_id ), self::TAXONOMY );
