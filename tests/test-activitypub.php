@@ -14,6 +14,7 @@ namespace Friends;
  */
 class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	public static $users = array();
+	protected $friend;
 	protected $friend_id;
 	protected $friend_name;
 	protected $friend_nicename;
@@ -35,16 +36,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_incoming_post() {
-		update_user_option( 'activitypub_friends_show_replies', '1', $this->friend_id );
+		$this->friend->update_user_option( 'activitypub_friends_show_replies', '1' );
 		$now = time() - 10;
 		$status_id = 123;
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$post_count = count( $posts );
 
@@ -85,17 +81,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$response = $this->receive_activity( get_current_user_id(), $activity_data, true );
 		$this->assertEquals( 202, $response->get_status() );
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
 		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
-		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
 
 		// Do another test post, this time with a URL that has an @-id.
 		$date = gmdate( \DATE_W3C, $now++ );
@@ -129,19 +119,13 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$this->assertEquals( $post_count + 2, count( $posts ) );
 		$this->assertEquals( $content, $posts[0]->post_content );
-		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
 		$this->assertEquals( $this->friend_name, get_post_meta( $posts[0]->ID, 'author', true ) );
 
-		delete_user_option( 'activitypub_friends_show_replies', $this->friend_id );
+		$this->friend->delete_user_option( 'activitypub_friends_show_replies' );
 	}
 
 	public function test_incoming_update_person() {
@@ -171,23 +155,18 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
 
-		$friend_user = $user_feed->get_friend_user();
+		$friend_user = User::get_user_by_id( $this->friend_id );
 
 		$this->assertNotEquals( $old_description, $new_description );
 		$this->assertEquals( $friend_user->description, $new_description );
 	}
 
 	public function test_incoming_update_post() {
-		update_user_option( 'activitypub_friends_show_replies', '1', $this->friend_id );
+		$this->friend->update_user_option( 'activitypub_friends_show_replies', '1' );
 		$now = time() - 10;
 		$status_id = 123;
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$post_count = count( $posts );
 
@@ -235,17 +214,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
 		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
-		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
 
 		// Update the post
 		$date = gmdate( \DATE_W3C, $now++ );
@@ -279,31 +252,20 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertEquals( $updated_content, $posts[0]->post_content );
-		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
 		$this->assertEquals( $this->friend_name, get_post_meta( $posts[0]->ID, 'author', true ) );
 
-		delete_user_option( 'activitypub_friends_show_replies', $this->friend_id );
+		$this->friend->delete_user_option( 'activitypub_friends_show_replies' );
 	}
 
 	public function test_incoming_mention_of_others() {
 		$now = time() - 10;
 		$status_id = 123;
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$post_count = count( $posts );
 
@@ -338,17 +300,10 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status() );
 
-		$posts = get_posts(
-			array(
-				'post_type'   => Friends::CPT,
-				'author'      => $this->friend_id,
-				'post_status' => 'trash',
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT, 'post_status' => 'trash' ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
-		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
 	}
 
 	public function test_incoming_announce() {
@@ -361,12 +316,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			'name' => 'Matthias Pfefferle',
 		);
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$post_count = count( $posts );
 
@@ -398,16 +348,10 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$object = json_decode( wp_remote_retrieve_body( json_decode( file_get_contents( $cache ), true ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringContainsString( 'Dezentrale Netzwerke', $posts[0]->post_content );
-		$this->assertEquals( $this->friend_id, $posts[0]->post_author );
 		$this->assertEquals( 'Matthias Pfefferle', get_post_meta( $posts[0]->ID, 'author', true ) );
 	}
 
@@ -485,7 +429,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	 */
 	public function test_feed_details() {
 		$friends = Friends::get_instance();
-		$friend = new User( $this->friend_id );
+		$friend = User::get_user_by_id( $this->friend_id );
 		$feeds = $friend->get_feeds();
 		$feed = array_pop( $feeds );
 
@@ -517,7 +461,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		);
 
 		$friends = Friends::get_instance();
-		$friend = new User( $this->friend_id );
+		$friend = User::get_user_by_id( $this->friend_id );
 		$feeds = $friend->get_feeds();
 		$feed = array_pop( $feeds );
 		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
@@ -546,7 +490,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		);
 
 		$friends = Friends::get_instance();
-		$friend = new User( $this->friend_id );
+		$friend = User::get_user_by_id( $this->friend_id );
 		$feeds = $friend->get_feeds();
 		$feed = array_pop( $feeds );
 		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
@@ -575,7 +519,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		);
 
 		$friends = Friends::get_instance();
-		$friend = new User( $this->friend_id );
+		$friend = User::get_user_by_id( $this->friend_id );
 		$feeds = $friend->get_feeds();
 		$feed = array_pop( $feeds );
 		$parser = $friends->feed->get_feed_parser( $feed->get_parser() );
@@ -640,7 +584,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$user_feed = User_Feed::get_by_url( $this->actor );
 		if ( is_wp_error( $user_feed ) ) {
-			$friend = User::create( 'akirk.blog', 'subscription', '', $this->friend_name, null, null, null, true );
+			$friend = User::create( 'akirk.blog', 'subscription', '', $this->friend_name );
 			$friend->save_feed(
 				$this->actor,
 				array(
@@ -652,6 +596,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			$friend = $user_feed->get_friend_user();
 		}
 
+		$this->friend = $friend;
 		$this->friend_id = $friend->ID;
 		$this->friend_nicename = $friend->user_nicename;
 		if ( ! $this->friend_nicename ) {
@@ -748,12 +693,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$now = time() - 10;
 		$status_id = 456;
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$post_count = count( $posts );
 
@@ -802,12 +742,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		
 		$response = $this->receive_activity( get_current_user_id(), $activity_data, true );
 
-		$new_posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$new_posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $new_posts ) );
 		$this->assertStringContainsString( $content, $new_posts[0]->post_content );
@@ -832,12 +767,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$local_user = get_current_user_id();
 		
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$post_count = count( $posts );
 
@@ -879,12 +809,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		
 		$response = $this->receive_activity( $local_user, $activity_data );
 
-		$posts = get_posts(
-			array(
-				'post_type' => Friends::CPT,
-				'author'    => $this->friend_id,
-			)
-		);
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 

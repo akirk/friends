@@ -513,20 +513,57 @@ class Subscription extends User {
 			return $subscription;
 		}
 
-		$query = new \WP_Query();
-		$query->set( 'post_type', apply_filters( 'friends_frontend_post_types', array() ) );
-		$query->set( 'post_status', array( 'publish', 'private', 'draft', 'trash' ) );
-		$query->set( 'posts_per_page', -1 );
-		$query = $user->modify_query_by_author( $query );
+		global $wpdb;
 
-		foreach ( $query->get_posts() as $post ) {
-			$post->post_author = 0;
-			wp_update_post( $post );
-			wp_set_object_terms( $post->ID, $subscription->get_term_id(), self::TAXONOMY );
+		// Get the term_taxonomy_id for the subscription term.
+		$subscription_tt_id = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT term_taxonomy_id FROM {$wpdb->term_taxonomy} WHERE term_id = %d AND taxonomy = %s",
+				$subscription->get_term_id(),
+				self::TAXONOMY
+			)
+		);
+
+		// Migrate posts: add subscription term and set post_author to 0, all in bulk.
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+		if ( ! empty( $post_types ) ) {
+			$type_in = implode( ',', array_fill( 0, count( $post_types ), '%s' ) );
+
+			// Get affected post IDs for cache invalidation.
+			$affected_post_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts} WHERE post_author = %d AND post_type IN (" . $type_in . ')', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					array_merge( array( $user->ID ), $post_types )
+				)
+			);
+
+			// Add subscription term relationship for all posts by this user.
+			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
+					"INSERT IGNORE INTO {$wpdb->term_relationships} (object_id, term_taxonomy_id)
+					SELECT ID, %d FROM {$wpdb->posts} WHERE post_author = %d AND post_type IN (" . $type_in . ')', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					array_merge( array( $subscription_tt_id, $user->ID ), $post_types )
+				)
+			);
+
+			// Update post_author to 0 for all posts by this user.
+			$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->prepare(
+					"UPDATE {$wpdb->posts} SET post_author = 0 WHERE post_author = %d AND post_type IN (" . $type_in . ')', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+					array_merge( array( $user->ID ), $post_types )
+				)
+			);
+
+			// Clean post caches after direct DB update.
+			foreach ( $affected_post_ids as $affected_post_id ) {
+				clean_post_cache( $affected_post_id );
+			}
+
+			// Update the term count.
+			wp_update_term_count_now( array( $subscription_tt_id ), self::TAXONOMY );
 		}
 
-		global $wpdb;
-		// Convert feeds.
+		// Convert feeds: set parent to the subscription term_id and remove the object relationship.
 		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
 				sprintf(
@@ -557,57 +594,6 @@ class Subscription extends User {
 		return $subscription;
 	}
 
-	public static function convert_to_user( Subscription $subscription ) {
-		$user = User::create( $subscription->user_login, $subscription->roles[0], $subscription->user_url, $subscription->display_name, $subscription->get_avatar_url(), $subscription->description, $subscription->user_registered, true );
-
-		if ( is_wp_error( $user ) ) {
-			return $user;
-		}
-
-		$query = new \WP_Query();
-		$query->set( 'post_type', apply_filters( 'friends_frontend_post_types', array() ) );
-		$query->set( 'post_status', array( 'publish', 'private', 'draft', 'trashed' ) );
-		$query->set( 'posts_per_page', -1 );
-		$query = $subscription->modify_query_by_author( $query );
-
-		foreach ( $query->get_posts() as $post ) {
-			$post->post_author = $user->ID;
-			wp_update_post( $post );
-			wp_remove_object_terms( $post->ID, $subscription->get_term_id(), self::TAXONOMY );
-		}
-
-		global $wpdb;
-		// Convert feeds.
-		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber
-				sprintf(
-					'UPDATE %s
-					JOIN %s
-					ON %s.term_taxonomy_id = %s.term_taxonomy_id
-					SET object_id = %%d
-					WHERE object_id = %%d
-					AND %s.taxonomy = %%s',
-					$wpdb->term_relationships,
-					$wpdb->term_taxonomy,
-					$wpdb->term_relationships,
-					$wpdb->term_taxonomy,
-					$wpdb->term_taxonomy
-				),
-				$user->ID,
-				$subscription->get_term_id(),
-				User_Feed::TAXONOMY
-			)
-		);
-
-		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
-			$user->update_user_option( $option_name, $subscription->get_user_option( $option_name ) );
-		}
-
-		$subscription->delete();
-
-		return $user;
-	}
-
 	/**
 	 * Create a Subscription (virtual user).
 	 *
@@ -618,11 +604,10 @@ class Subscription extends User {
 	 * @param      string $avatar_url      The user_icon_url URL.
 	 * @param      string $description   A description for the user.
 	 * @param      string $user_registered   When the user was registered.
-	 * @param      bool   $subscription_override  Whether to override the automatic creation of a subscription.
 	 *
 	 * @return     Subscription|\WP_Error  The created subscription or an error.
 	 */
-	public static function create( $user_login, $role, $user_url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null, $subscription_override = false ) {
+	public static function create( $user_login, $role, $user_url, $display_name = null, $avatar_url = null, $description = null, $user_registered = null ) {
 		// Sanitize the username to prevent special characters like apostrophes.
 		$user_login = User::sanitize_username( $user_login );
 

@@ -79,7 +79,7 @@ class FeedTest extends \WP_UnitTestCase {
 			array(
 				'user_login' => 'friend.local',
 				'user_email' => 'friend@example.org',
-				'role'       => 'friend',
+				'role'       => 'subscription',
 			)
 		);
 
@@ -257,51 +257,6 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( '’', $posts[0]->post_title );
 		$this->assertStringContainsString( '’', $posts[1]->post_title );
 		$this->assertStringContainsString( '’', $posts[2]->post_title );
-	}
-
-	/**
-	 * Fetch our own feed with a friend authentication.
-	 */
-	public function test_parse_own_feed_with_correct_friend_auth() {
-		$friends = Friends::get_instance();
-		$feed_url = $friends->access_control->append_auth( 'https://me.local/?feed=rss2', new User( $this->friend_id ) );
-		$this->assertStringContainsString( 'me=', $feed_url );
-		$feed = $this->get_rss2( $feed_url );
-		$xml  = xml_to_array( $feed );
-
-		// Get all the <item> child elements of the <channel> element.
-		$items = xml_find( $xml, 'rss', 'channel', 'item' );
-
-		// This should include private posts.
-		$this->assertCount( 2, $items );
-	}
-
-	/**
-	 * Fetch our own feed with an invalid friend authentication.
-	 */
-	public function test_parse_own_feed_with_incorrect_friend_auth() {
-		$feed = $this->get_rss2( 'https://me.local/?feed=rss2&friend=1' . $this->friends_in_token );
-		$xml  = xml_to_array( $feed );
-
-		// Get all the <item> child elements of the <channel> element.
-		$items = xml_find( $xml, 'rss', 'channel', 'item' );
-
-		// This should not include private posts.
-		$this->assertCount( 1, $items );
-	}
-
-	/**
-	 * Fetch our own feed with no friend authentication.
-	 */
-	public function test_parse_own_feed_with_no_friend_auth() {
-		$feed = $this->get_rss2( 'https://me.local/?feed=rss2' );
-		$xml  = xml_to_array( $feed );
-
-		// Get all the <item> child elements of the <channel> element.
-		$items = xml_find( $xml, 'rss', 'channel', 'item' );
-
-		// This should not include private posts.
-		$this->assertCount( 1, $items );
 	}
 
 	public function test_feed_item_revisions_modified_content() {

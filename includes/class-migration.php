@@ -44,6 +44,7 @@ class Migration {
 		add_action( 'wp_ajax_friends_get_migration_debug', array( $this, 'ajax_get_migration_debug' ) );
 		add_action( 'wp_ajax_friends_clear_failed_url', array( $this, 'ajax_clear_failed_url' ) );
 		add_action( 'wp_ajax_friends_deactivate_feed_by_url', array( $this, 'ajax_deactivate_feed_by_url' ) );
+		add_action( 'friends_convert_friend_users_batch', array( __CLASS__, 'convert_friend_users_batch' ) );
 
 		// Register debug output hooks for migrations.
 		add_action( 'friends_migration_debug_link_activitypub_feeds_to_actors', array( $this, 'debug_link_activitypub_feeds_to_actors' ) );
@@ -239,6 +240,25 @@ class Migration {
 				'description'   => 'Removes special characters like apostrophes from friend usernames to prevent URL issues.',
 				'method'        => 'sanitize_friend_usernames',
 				'status_option' => null,
+			)
+		);
+
+		self::register(
+			array(
+				'id'            => 'convert_friend_users_to_subscriptions',
+				'version'       => '4.0.0',
+				'title'         => 'Convert Friend Users to Subscriptions',
+				'description'   => 'Converts WordPress users with friend/acquaintance/subscription roles to virtual subscriptions. Runs in batches.',
+				'method'        => 'convert_friend_users_to_subscriptions',
+				'status_option' => 'friends_friend_users_converted',
+				'batched'       => true,
+				'batch_method'  => 'convert_friend_users_batch',
+				'cron_hook'     => 'friends_convert_friend_users_batch',
+				'progress'      => array(
+					'in_progress' => 'friends_friend_users_conversion_in_progress',
+					'total'       => 'friends_friend_users_conversion_total',
+					'processed'   => 'friends_friend_users_conversion_processed',
+				),
 			)
 		);
 	}
@@ -3006,5 +3026,79 @@ class Migration {
 				error_log( sprintf( 'Friends Migration: Sanitized subscription username from "%s" to "%s"', $old_slug, $new_slug ) );
 			}
 		}
+	}
+
+	/**
+	 * Convert WordPress users with friend/acquaintance/subscription roles to virtual subscriptions.
+	 */
+	public static function convert_friend_users_to_subscriptions() {
+		if ( get_option( 'friends_friend_users_conversion_in_progress' ) ) {
+			return;
+		}
+		if ( get_option( 'friends_friend_users_converted' ) ) {
+			return;
+		}
+
+		$users = new \WP_User_Query(
+			array(
+				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ),
+				'number'   => -1,
+				'fields'   => 'ID',
+			)
+		);
+
+		$total = $users->get_total();
+
+		if ( ! $total ) {
+			update_option( 'friends_friend_users_converted', true, false );
+			return;
+		}
+
+		update_option( 'friends_friend_users_conversion_in_progress', true, false );
+		update_option( 'friends_friend_users_conversion_total', $total, false );
+		update_option( 'friends_friend_users_conversion_processed', 0, false );
+
+		wp_schedule_single_event( time(), 'friends_convert_friend_users_batch' );
+	}
+
+	/**
+	 * Process a batch of friend users to convert to virtual subscriptions.
+	 */
+	public static function convert_friend_users_batch() {
+		$batch_size = apply_filters( 'friends_friend_user_conversion_batch_size', 20 );
+
+		$users = new \WP_User_Query(
+			array(
+				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ),
+				'number'   => $batch_size,
+				'offset'   => 0,
+			)
+		);
+
+		$results = $users->get_results();
+
+		if ( empty( $results ) ) {
+			update_option( 'friends_friend_users_converted', true, false );
+			delete_option( 'friends_friend_users_conversion_in_progress' );
+			delete_option( 'friends_friend_users_conversion_total' );
+			delete_option( 'friends_friend_users_conversion_processed' );
+			return;
+		}
+
+		$processed = (int) get_option( 'friends_friend_users_conversion_processed', 0 );
+
+		foreach ( $results as $wp_user ) {
+			$result = Subscription::convert_from_user( new User( $wp_user ) );
+			if ( is_wp_error( $result ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: Failed to convert user %d (%s): %s', $wp_user->ID, $wp_user->user_login, $result->get_error_message() ) );
+				continue;
+			}
+			++$processed;
+		}
+
+		update_option( 'friends_friend_users_conversion_processed', $processed, false );
+
+		wp_schedule_single_event( time() + 1, 'friends_convert_friend_users_batch' );
 	}
 }
