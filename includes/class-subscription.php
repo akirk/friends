@@ -671,7 +671,19 @@ class Subscription extends User {
 			)
 		);
 		// Remove old object_id-based relationships so the delete_user hook won't find and delete these feeds.
-		wp_remove_object_terms( $user->ID, $feed_term_ids, User_Feed::TAXONOMY );
+		// Use direct DB delete to avoid wp_remove_object_terms side effects (hook cascades, term count resets).
+		$wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"DELETE tr FROM {$wpdb->term_relationships} tr
+				JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				WHERE tr.object_id = %d AND tt.taxonomy = %s",
+				$user->ID,
+				User_Feed::TAXONOMY
+			)
+		);
+		if ( ! empty( $feed_term_ids ) && ! is_wp_error( $feed_term_ids ) ) {
+			clean_term_cache( $feed_term_ids, User_Feed::TAXONOMY );
+		}
 
 		foreach ( self::MIGRATE_USER_OPTIONS as $option_name ) {
 			$subscription->update_user_option( $option_name, $user->get_user_option( $option_name ) );
