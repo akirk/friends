@@ -53,15 +53,22 @@ class Widget_Friend_Stats extends \WP_Widget {
 				$show_followers = true;
 			}
 			if ( \ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
-				$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
-				$show_blog_followers = true;
+				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
+					$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
+					$show_blog_followers = true;
+				}
 			}
 		}
 		echo $args['before_widget'];
 
-		$open = Frontend::get_widget_open_state( $args['widget_id'] );
+		$open = true;
+		$widget_id = '';
+		if ( ! empty( $args['widget_id'] ) ) {
+			$widget_id = $args['widget_id'];
+			$open = Frontend::get_widget_open_state( $widget_id );
+		}
 		?>
-		<details class="accordion" <?php echo esc_attr( $open ); ?> data-id="<?php echo esc_attr( $args['widget_id'] ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_widget_state' ) ); ?>">
+		<details class="accordion" <?php echo esc_attr( $open ); ?> data-id="<?php echo esc_attr( $widget_id ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_widget_state' ) ); ?>">
 			<summary class="accordion-header">
 		<?php
 		echo $args['before_title'];
@@ -127,6 +134,7 @@ class Widget_Friend_Stats extends \WP_Widget {
 				</li>
 
 		</ul>
+		</details>
 		<?php
 
 		do_action( 'friends_widget_starred_friend_list_after', $this, $args );
