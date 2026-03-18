@@ -28,9 +28,6 @@ class Virtual_User_Feed extends User_Feed {
 	public function get_url() {
 		return null;
 	}
-	public function get_private_url( $validity = 3600 ) {
-		return null;
-	}
 	public function get_friend_user() {
 		return $this->friend_user;
 	}

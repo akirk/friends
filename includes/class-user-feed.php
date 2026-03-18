@@ -81,19 +81,6 @@ class User_Feed {
 		return $this->term->name;
 	}
 
-	/**
-	 * Get the private URL of the friend (= append authentication).
-	 *
-	 * @param      int $validity  The validity in seconds.
-	 *
-	 * @return     string  The (extended) URL.
-	 */
-	public function get_private_url( $validity = 3600 ) {
-		$feed_url = $this->get_url();
-		$friend_user = $this->get_friend_user();
-
-		return apply_filters( 'friends_friend_private_feed_url', $feed_url, $friend_user );
-	}
 
 	/**
 	 * Get the local feed URL. Dysfunctional at the moment.

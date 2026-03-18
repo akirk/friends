@@ -467,6 +467,52 @@ class FeedTest extends \WP_UnitTestCase {
 		}
 	}
 
+	public function test_cron_refresh_processes_feeds() {
+		$user = User::get_user_by_id( $this->friend_id );
+		$friends = Friends::get_instance();
+		$friends->feed->register_parser( 'local', new Feed_Parser_Local_File( $friends->feed ) );
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		$file = __DIR__ . '/data/friend-feed-1-private-post.rss';
+		$user_feed = $user->save_feed( $file, array( 'parser' => 'local', 'active' => true ) );
+		$this->assertNotWPError( $user_feed );
+
+		// Verify the feed is found as due and its friend user resolves via the parent term.
+		$due_feeds = User_Feed::get_all_due();
+		$found = false;
+		foreach ( $due_feeds as $feed ) {
+			if ( $feed->get_url() === $file ) {
+				$found = true;
+				$friend_user = $feed->get_friend_user();
+				$this->assertNotFalse( $friend_user, 'get_friend_user() must resolve for due feeds' );
+				$this->assertInstanceOf( Subscription::class, $friend_user );
+				break;
+			}
+		}
+		$this->assertTrue( $found, 'The saved feed should appear in get_all_due()' );
+
+		// Run the cron handler via its action hook to test the full hook chain.
+		do_action( 'cron_friends_refresh_feeds' );
+
+		$posts = get_posts(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'tax_query'   => array(
+					array(
+						'taxonomy' => Subscription::TAXONOMY,
+						'field'    => 'term_id',
+						'terms'    => $user->get_term_id(),
+					),
+				),
+			)
+		);
+		$this->assertGreaterThan( 0, count( $posts ), 'Cron feed refresh should create posts' );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
 	public function test_double_polling_prevention() {
 		$user = User::get_user_by_id( $this->alex );
 
