@@ -1,27 +1,8 @@
-:root {
-	color-scheme: light dark;
-}
-
 $body-bg: #f7f8f9;
-$body-bg-dark: #1a1a1a;
 
 $primary-color: #2e5bec;
-$primary-color-dark: #5b8aff;
-
 $dark-color: #3e396b;
-$dark-color-dark: #e0e0e0;
-
 $border-color-light: #eee;
-$border-color-dark: #333;
-
-$text-color-light: hsl(246, 30.487804878%, 37.1568627451%);
-$text-color-dark: #e0e0e0;
-
-$link-color-light: #2e5bec;
-$link-color-dark: #5b8aff;
-
-$card-bg-light: #fff;
-$card-bg-dark: #2a2a2a;
 
 div {
 	min-width: 0; // fixes overflowing <pre>
@@ -129,10 +110,6 @@ div {
 	background-color: $body-bg;
 	margin-top: 32px;
 	width: 12rem;
-
-	@media (prefers-color-scheme: dark) {
-		background-color: $body-bg-dark;
-	}
 }
 
 .off-canvas .off-canvas-content header.navbar #page-title {
@@ -158,13 +135,8 @@ h2#page-title a.dashicons {
 
 .friends-page {
 	background-color: $body-bg;
-	color: $text-color-light;
+	color: $body-font-color;
 	overflow-wrap: break-word;
-
-	@media (prefers-color-scheme: dark) {
-		background-color: $body-bg-dark;
-		color: $text-color-dark;
-	}
 
 	code,
 	pre {
@@ -174,11 +146,7 @@ h2#page-title a.dashicons {
 	min-height: 100vh;
 
 	a:visited {
-		color: $link-color-light;
-
-		@media (prefers-color-scheme: dark) {
-			color: $link-color-dark;
-		}
+		color: $link-color-dark;
 	}
 
 	a.off-canvas-toggle:visited {
@@ -190,19 +158,11 @@ h2#page-title a.dashicons {
 	a:hover,
 	a:focus,
 	a:active {
-		color: $link-color-light;
-
-		@media (prefers-color-scheme: dark) {
-			color: $link-color-dark;
-		}
+		color: $link-color;
 	}
 
 	summary.accordion-header {
-		color: $link-color-light;
-
-		@media (prefers-color-scheme: dark) {
-			color: $link-color-dark;
-		}
+		color: $link-color;
 		cursor: pointer;
 		white-space: nowrap;
 		text-overflow: ellipsis;
@@ -231,10 +191,6 @@ h2#page-title a.dashicons {
 		a:visited {
 			color: #333;
 			padding: .2rem;
-
-			@media (prefers-color-scheme: dark) {
-				color: #e0e0e0;
-			}
 		}
 
 		.menu-item+.menu-item {
@@ -275,69 +231,6 @@ h2#page-title a.dashicons {
 	button,
 	input {
 		min-height: auto;
-	}
-
-	// Dark mode overrides for form inputs
-	@media (prefers-color-scheme: dark) {
-		.form-input,
-		.form-select,
-		textarea.form-input,
-		input[type="text"],
-		input[type="email"],
-		input[type="password"],
-		input[type="search"],
-		input[type="url"] {
-			background: #2a2a2a;
-			color: #e0e0e0;
-			border-color: #444;
-		}
-
-		.form-input::placeholder {
-			color: #666;
-		}
-
-		.input-group .input-group-addon {
-			background: #2a2a2a;
-			border-color: #444;
-			color: #e0e0e0;
-		}
-
-		// Softer button text colors for dark mode
-		.btn.btn-primary,
-		.nav-links div a,
-		.nav-links div a:hover,
-		.btn:active,
-		.btn.active {
-			color: #e0e0e0;
-		}
-
-		.btn.btn-primary:hover,
-		.btn.btn-primary:focus,
-		.btn.btn-primary:active,
-		.btn.btn-primary.active {
-			color: #e0e0e0;
-		}
-
-		// Dark mode for menus
-		.menu {
-			background: #2a2a2a;
-			box-shadow: none;
-		}
-
-		.friends-dropdown .menu {
-			background: #2a2a2a;
-		}
-
-		.menu .menu-item > a:focus,
-		.menu .menu-item > a:hover {
-			background: #3a3a3a;
-			color: $link-color-dark;
-		}
-
-		.menu .divider[data-content]::after {
-			background: #2a2a2a;
-			color: #888;
-		}
 	}
 
 	.d-none {
@@ -418,12 +311,6 @@ h2#page-title a.dashicons {
 		padding: 0;
 		border: 0;
 		border-radius: 10px;
-		background-color: $card-bg-light;
-
-		@media (prefers-color-scheme: dark) {
-			box-shadow: 0 0 2px rgba(255, 255, 255, .1);
-			background-color: $card-bg-dark;
-		}
 
 		.card-body {
 
@@ -459,12 +346,6 @@ h2#page-title a.dashicons {
 				font-size: .8rem;
 				color: #666;
 				background-color: #f7f7f7;
-
-				@media (prefers-color-scheme: dark) {
-					border-left-color: #444;
-					color: #aaa;
-					background-color: #1f1f1f;
-				}
 			}
 		}
 
@@ -478,12 +359,6 @@ h2#page-title a.dashicons {
 
 				.card-body {
 					padding: 1rem;
-
-					button,
-					.btn {
-						white-space: normal;
-						margin-bottom: 1.2rem;
-					}
 				}
 
 				.card-title {
@@ -521,11 +396,7 @@ h2#page-title a.dashicons {
 			a,
 			a:visited,
 			a:active {
-				color: $link-color-light;
-
-				@media (prefers-color-scheme: dark) {
-					color: $link-color-dark;
-				}
+				color: $link-color;
 			}
 
 			h2 {
@@ -569,11 +440,6 @@ h2#page-title a.dashicons {
 			border-radius: 20px;
 			line-height: 20px;
 			vertical-align: bottom;
-
-			@media (prefers-color-scheme: dark) {
-				border-color: $primary-color-dark;
-				color: $primary-color-dark;
-			}
 		}
 	}
 
@@ -628,19 +494,11 @@ h2#page-title a.dashicons {
 	div.friends-main-widget h1 a {
 		color: #222;
 		text-decoration: none;
-
-		@media (prefers-color-scheme: dark) {
-			color: #e0e0e0;
-		}
 	}
 
 	div.friends-widget h4 a {
 		color: #222;
 		text-decoration: none;
-
-		@media (prefers-color-scheme: dark) {
-			color: #e0e0e0;
-		}
 	}
 
 	div.friends-widget a.open-requests {
@@ -660,10 +518,6 @@ h2#page-title a.dashicons {
 		font-weight: bold;
 		letter-spacing: 2px;
 		color: $primary-color;
-
-		@media (prefers-color-scheme: dark) {
-			color: $primary-color-dark;
-		}
 	}
 
 	section.posts {
@@ -777,7 +631,7 @@ h2#page-title a.dashicons {
 				div.teaser {
 					text-overflow: ellipsis;
 					overflow: hidden;
-					height: 1.5em;
+					white-space: nowrap;
 					display: inline-block;
 					margin-left: 60px;
 					margin-right: 2em;
@@ -800,15 +654,6 @@ h2#page-title a.dashicons {
 						display: block;
 						margin-left: 1em;
 					}
-				}
-			}
-
-			&.format-image {
-				div.card-body {
-					display: block;
-				}
-				header, h4.card-title {
-					display: none
 				}
 			}
 
@@ -837,11 +682,6 @@ h2#page-title a.dashicons {
 
 		footer.comments-content {
 			border-top: 1px solid $border-color-light;
-
-			@media (prefers-color-scheme: dark) {
-				border-top-color: $border-color-dark;
-			}
-
 			&.closed {
 				display: none;
 			}
@@ -861,10 +701,6 @@ h2#page-title a.dashicons {
 				margin-left: 0;
 				padding-left: 5px;
 				border-left: 3px solid #eee;
-
-				@media (prefers-color-scheme: dark) {
-					border-left-color: #444;
-				}
 			}
 
 			.comment-list .children>li {
@@ -937,50 +773,6 @@ h2#page-title a.dashicons {
 		margin-right: .3em;
 	}
 
-	a.explanation-friends-auth-link,
-	a.friends-auth-link,
-	a.friends-auth-link:link,
-	a.friends-auth-link:active,
-	a.friends-auth-link,
-	a.friends-auth-link:link,
-	a.friends-auth-link:active {
-		color: #333;
-
-		@media (prefers-color-scheme: dark) {
-			color: #e0e0e0;
-		}
-	}
-
-	a.friends-auth-link span.dashicons-admin-users {
-		display: inline;
-	}
-
-	a.friends-auth-link span.dashicons,
-	button.friends-auth-link span.dashicons {
-		color: #32c170;
-		margin-left: 6px;
-	}
-
-	a.explanation-friends-auth-link:hover,
-	a.friends-auth-link :hover,
-	a.friends-auth-link:hover,
-	a.friends-auth-link:hover span.dashicons,
-	button.friends-auth-link:hover span.dashicons {
-		color: #32c170;
-	}
-
-	a.explanation-friends-auth-link:hover,
-	a.friends-auth-link :hover,
-	a.friends-auth-link:hover {
-		text-decoration: underline;
-	}
-
-	a.explanation-friends-auth-link:hover span,
-	a.friends-auth-link :hover span,
-	a.friends-auth-link:hover span {
-		text-decoration: none;
-	}
-
 	.form-autocomplete .form-autocomplete-input .form-input {
 		width: auto;
 	}
@@ -993,10 +785,6 @@ h2#page-title a.dashicons {
 		border: 0;
 		cursor: pointer;
 		z-index: 999999;
-
-		@media (prefers-color-scheme: dark) {
-			background-color: #2a2a2a;
-		}
 	}
 
 	.friends-reaction-picker button:focus {
@@ -1015,142 +803,11 @@ h2#page-title a.dashicons {
 			max-width: 80%;
 			margin: 1em;
 			border-bottom: 1px solid $border-color-light;
-
-			@media (prefers-color-scheme: dark) {
-				border-bottom-color: $border-color-dark;
-			}
 		}
 	}
 
 	.chip {
 		background-color: #fff;
-
-		@media (prefers-color-scheme: dark) {
-			background-color: #2a2a2a;
-		}
-	}
-
-	// When author-header has a header image, the parent navbar needs to handle
-	// positioning so the search box can be placed inside the header image area.
-	header.navbar:has(#author-header.has-header-image) {
-		position: relative;
-
-		section.navbar-section.author {
-			width: 100%;
-			flex: none;
-		}
-
-		section.navbar-section.search {
-			position: absolute;
-			top: 1rem;
-			right: 1rem;
-			z-index: 2;
-			max-width: 300px;
-
-			.form-autocomplete-input,
-			.form-input {
-				background-color: rgba(255, 255, 255, 0.95);
-				backdrop-filter: blur(4px);
-				border-color: rgba(255, 255, 255, 0.5);
-				color: #333;
-
-				&::placeholder {
-					color: #666;
-				}
-			}
-
-			.btn.btn-primary {
-				background-color: $primary-color;
-				border-color: $primary-color;
-				color: #fff;
-			}
-
-			@media (max-width: $off-canvas-breakpoint) {
-				position: static;
-				max-width: none;
-				margin-top: 0.5rem;
-			}
-		}
-	}
-
-	#author-header {
-		&.has-header-image {
-			background-size: cover;
-			background-position: center;
-			padding: 1rem;
-			padding-right: 320px; // Make room for search box
-			border-radius: 10px;
-			position: relative;
-			margin-bottom: 1rem;
-			min-height: 120px;
-
-			@media (max-width: $off-canvas-breakpoint) {
-				padding-right: 1rem;
-			}
-
-			// Add a semi-transparent overlay for better text readability.
-			&::before {
-				content: '';
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7));
-				border-radius: 10px;
-				z-index: 0;
-			}
-
-			// Ensure all content is above the overlay.
-			> * {
-				position: relative;
-				z-index: 1;
-			}
-
-			#page-title,
-			#page-title a,
-			p {
-				color: #fff;
-				text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8), 0 0 8px rgba(0, 0, 0, 0.5);
-			}
-
-			p a {
-				color: #fff;
-				text-decoration: underline;
-			}
-
-			.chip {
-				color: #fff;
-				text-shadow: none;
-				background-color: rgba(0, 0, 0, 0.4);
-				backdrop-filter: blur(4px);
-				border: 1px solid rgba(255, 255, 255, 0.2);
-
-				&:hover {
-					background-color: rgba(0, 0, 0, 0.6);
-					color: #fff;
-				}
-			}
-
-			a.dashicons-star-filled,
-			a.dashicons-star-empty {
-				color: #fff;
-				text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-			}
-
-			img.avatar {
-				border: 2px solid rgba(255, 255, 255, 0.5);
-				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-			}
-		}
-
-		.chip.activitypub-profile .dashicons {
-			color: #f16529;
-		}
-
-		&.has-header-image .chip.activitypub-profile .dashicons {
-			color: #fff;
-		}
 	}
 
 	/* to support mastodon style tags */
@@ -1174,21 +831,5 @@ h2#page-title a.dashicons {
 
 	.ellipsis::after {
 		content: "…"
-	}
-
-	.mention-indicator {
-		display: inline-block;
-		background-color: $primary-color;
-		color: #fff;
-		font-size: 0.7em;
-		font-weight: bold;
-		padding: 0.1em 0.35em;
-		border-radius: 3px;
-		margin-left: 0.3em;
-		vertical-align: middle;
-
-		@media (prefers-color-scheme: dark) {
-			background-color: $primary-color-dark;
-		}
 	}
 }

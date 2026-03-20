@@ -44,13 +44,6 @@ class FeedTest extends \WP_UnitTestCase {
 	private $alex;
 
 	/**
-	 * Token for the friend at friend.local
-	 *
-	 * @var int
-	 */
-	private $friends_in_token;
-
-	/**
 	 * Setup the unit tests.
 	 */
 	public function set_up() {
@@ -75,30 +68,13 @@ class FeedTest extends \WP_UnitTestCase {
 			)
 		);
 
-		$this->friend_id = $this->factory->user->create(
-			array(
-				'user_login' => 'friend.local',
-				'user_email' => 'friend@example.org',
-				'role'       => 'friend',
-			)
-		);
+		$friend = User::create( 'friend.local', 'subscription', 'http://friend.local/' );
+		$this->friend_id = $friend->ID;
 
-		$this->alex = $this->factory->user->create(
-			array(
-				'user_login' => 'alex.kirk.at',
-				'user_email' => 'alex@example.org',
-				'role'       => 'subscription',
-			)
-		);
+		$alex = User::create( 'alex.kirk.at', 'subscription', 'http://alex.kirk.at/' );
+		$this->alex = $alex->ID;
 
 		update_option( 'home', 'http://friend.local' );
-		$this->friends_in_token = wp_generate_password( 128, false );
-
-		if ( update_user_option( $this->friend_id, 'friends_in_token', $this->friends_in_token ) ) {
-			update_option( 'friends_in_token_' . $this->friends_in_token, $this->friend_id );
-		}
-		// We're using the same in and out token here since we're faking this on a single install.
-		update_user_option( $this->friend_id, 'friends_out_token', $this->friends_in_token );
 
 		fetch_feed( '' ); // load SimplePie.
 	}
@@ -145,7 +121,7 @@ class FeedTest extends \WP_UnitTestCase {
 	 */
 	private function feed_parsing_test( $file, ?User $user = null ) {
 		if ( is_null( $user ) ) {
-			$user = new User( $this->friend_id );
+			$user = User::get_user_by_id( $this->friend_id );
 		}
 		$friends = Friends::get_instance();
 		$friends->feed->register_parser( 'local', new Feed_Parser_Local_File( $friends->feed ) );
@@ -241,72 +217,21 @@ class FeedTest extends \WP_UnitTestCase {
 	 * Test parsing a feed with identical posts after the fold.
 	 */
 	public function test_parse_feed_with_double_encoded_title() {
-		$matt_id = $this->factory->user->create(
-			array(
-				'user_login' => 'ma.tt',
-				'role'       => 'subscription',
-			)
-		);
-		$matt = new User( $matt_id );
+		$matt = User::create( 'ma.tt', 'subscription', 'http://ma.tt/' );
 
 		$photomatt_tumblr = __DIR__ . '/data/photomatt-tumblr-com.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $photomatt_tumblr, $matt );
 
 		$feed_parsing_test->current();
-		$posts = get_posts(array('author'=>$matt_id, 'post_type'=>Friends::CPT));
+		$posts = get_posts( $matt->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 		$this->assertStringContainsString( '’', $posts[0]->post_title );
 		$this->assertStringContainsString( '’', $posts[1]->post_title );
 		$this->assertStringContainsString( '’', $posts[2]->post_title );
 	}
 
-	/**
-	 * Fetch our own feed with a friend authentication.
-	 */
-	public function test_parse_own_feed_with_correct_friend_auth() {
-		$friends = Friends::get_instance();
-		$feed_url = $friends->access_control->append_auth( 'https://me.local/?feed=rss2', new User( $this->friend_id ) );
-		$this->assertStringContainsString( 'me=', $feed_url );
-		$feed = $this->get_rss2( $feed_url );
-		$xml  = xml_to_array( $feed );
-
-		// Get all the <item> child elements of the <channel> element.
-		$items = xml_find( $xml, 'rss', 'channel', 'item' );
-
-		// This should include private posts.
-		$this->assertCount( 2, $items );
-	}
-
-	/**
-	 * Fetch our own feed with an invalid friend authentication.
-	 */
-	public function test_parse_own_feed_with_incorrect_friend_auth() {
-		$feed = $this->get_rss2( 'https://me.local/?feed=rss2&friend=1' . $this->friends_in_token );
-		$xml  = xml_to_array( $feed );
-
-		// Get all the <item> child elements of the <channel> element.
-		$items = xml_find( $xml, 'rss', 'channel', 'item' );
-
-		// This should not include private posts.
-		$this->assertCount( 1, $items );
-	}
-
-	/**
-	 * Fetch our own feed with no friend authentication.
-	 */
-	public function test_parse_own_feed_with_no_friend_auth() {
-		$feed = $this->get_rss2( 'https://me.local/?feed=rss2' );
-		$xml  = xml_to_array( $feed );
-
-		// Get all the <item> child elements of the <channel> element.
-		$items = xml_find( $xml, 'rss', 'channel', 'item' );
-
-		// This should not include private posts.
-		$this->assertCount( 1, $items );
-	}
-
 	public function test_feed_item_revisions_modified_content() {
 		$feed_1_public_post = __DIR__ . '/data/friend-feed-1-public-post.rss';
-		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, User::get_user_by_id( $this->alex ) );
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 1, $new_items );
@@ -324,7 +249,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 	public function test_feed_item_revisions_modified_title() {
 		$feed_1_public_post = __DIR__ . '/data/friend-feed-1-public-post.rss';
-		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, User::get_user_by_id( $this->alex ) );
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 1, $new_items );
@@ -342,7 +267,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 	public function test_feed_item_revisions_modified_title_content() {
 		$feed_1_public_post = __DIR__ . '/data/friend-feed-1-public-post.rss';
-		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, new User( $this->alex ) );
+		$feed_parsing_test = $this->feed_parsing_test( $feed_1_public_post, User::get_user_by_id( $this->alex ) );
 
 		$new_items = $feed_parsing_test->current();
 		$this->assertCount( 1, $new_items );
@@ -374,7 +299,7 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	public function test_poll_interval() {
-		$user = new User( $this->alex );
+		$user = User::get_user_by_id( $this->alex );
 
 		// Stop the clock by using our mock function for the first time.
 		time();
@@ -459,7 +384,7 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	public function test_due_feeds() {
-		$user = new User( $this->alex );
+		$user = User::get_user_by_id( $this->alex );
 
 		// Stop the clock by using our mock function for the first time.
 		time();
@@ -542,8 +467,54 @@ class FeedTest extends \WP_UnitTestCase {
 		}
 	}
 
+	public function test_cron_refresh_processes_feeds() {
+		$user = User::get_user_by_id( $this->friend_id );
+		$friends = Friends::get_instance();
+		$friends->feed->register_parser( 'local', new Feed_Parser_Local_File( $friends->feed ) );
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		$file = __DIR__ . '/data/friend-feed-1-private-post.rss';
+		$user_feed = $user->save_feed( $file, array( 'parser' => 'local', 'active' => true ) );
+		$this->assertNotWPError( $user_feed );
+
+		// Verify the feed is found as due and its friend user resolves via the parent term.
+		$due_feeds = User_Feed::get_all_due();
+		$found = false;
+		foreach ( $due_feeds as $feed ) {
+			if ( $feed->get_url() === $file ) {
+				$found = true;
+				$friend_user = $feed->get_friend_user();
+				$this->assertNotFalse( $friend_user, 'get_friend_user() must resolve for due feeds' );
+				$this->assertInstanceOf( Subscription::class, $friend_user );
+				break;
+			}
+		}
+		$this->assertTrue( $found, 'The saved feed should appear in get_all_due()' );
+
+		// Run the cron handler via its action hook to test the full hook chain.
+		do_action( 'cron_friends_refresh_feeds' );
+
+		$posts = get_posts(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'tax_query'   => array(
+					array(
+						'taxonomy' => Subscription::TAXONOMY,
+						'field'    => 'term_id',
+						'terms'    => $user->get_term_id(),
+					),
+				),
+			)
+		);
+		$this->assertGreaterThan( 0, count( $posts ), 'Cron feed refresh should create posts' );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
 	public function test_double_polling_prevention() {
-		$user = new User( $this->alex );
+		$user = User::get_user_by_id( $this->alex );
 
 		// Stop the clock by using our mock function for the first time.
 		time();
@@ -586,7 +557,7 @@ class FeedTest extends \WP_UnitTestCase {
 
 	public function test_global_retention_count() {
 		$this->assertTrue( Friends::get_retention_number() > 10 );
-		$user = new User( $this->friend_id );
+		$user = User::get_user_by_id( $this->friend_id );
 
 		$feed = __DIR__ . '/data/friend-feed-10-posts.rss';
 		$feed_parsing_test = $this->feed_parsing_test( $feed, $user );
@@ -839,7 +810,7 @@ class FeedTest extends \WP_UnitTestCase {
 		delete_option( 'friends_disable_auto_tagging' );
 		
 		// Test that hashtags are processed and applied correctly
-		$user = new User( $this->alex );
+		$user = User::get_user_by_id( $this->alex );
 		
 		// Create a feed for the user if none exists
 		$feeds = $user->get_active_feeds();
@@ -892,7 +863,7 @@ class FeedTest extends \WP_UnitTestCase {
 		// Enable disable option
 		update_option( 'friends_disable_auto_tagging', true );
 
-		$user = new User( $this->alex );
+		$user = User::get_user_by_id( $this->alex );
 		
 		// Create a feed for the user if none exists
 		$feeds = $user->get_active_feeds();

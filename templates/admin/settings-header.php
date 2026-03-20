@@ -6,14 +6,15 @@
  */
 
 if ( empty( $args['menu'] ) ) {
-	$friends_tabs = array(
-		__( 'Welcome', 'friends' )       => 'friends',
-		__( 'Settings' )                 => 'friends-settings', // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		__( 'Friendships', 'friends' )   => 'friends-wp-friendships',
-		__( 'Notifications', 'friends' ) => 'friends-notification-manager',
-		__( 'Import/Export', 'friends' ) => 'friends-import-export',
+	$args['menu'] = apply_filters(
+		'friends_admin_tabs',
+		array(
+			__( 'Welcome', 'friends' )       => 'friends',
+			__( 'Settings' )                 => 'friends-settings', // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			__( 'Notifications', 'friends' ) => 'friends-notification-manager',
+			__( 'Import/Export', 'friends' ) => 'friends-import-export',
+		)
 	);
-	$args['menu'] = apply_filters( 'friends_admin_tabs', $friends_tabs );
 }
 
 if ( empty( $args['active'] ) ) {

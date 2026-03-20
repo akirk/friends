@@ -49,7 +49,10 @@ foreach ( $args['friend_user']->get_active_feeds() as $feed ) {
 
 		// If no linked actor or it failed, try fetching by URL.
 		if ( ( ! $actor || is_wp_error( $actor ) ) && method_exists( '\Activitypub\Collection\Remote_Actors', 'get_by_uri' ) ) {
-			$actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $ap_actor_url );
+			$actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $ap_actor_url );
+			if ( $actor_post instanceof \WP_Post ) {
+				$actor = \Activitypub\Collection\Remote_Actors::get_actor( $actor_post->ID );
+			}
 		}
 
 		if ( $actor && ! is_wp_error( $actor ) ) {

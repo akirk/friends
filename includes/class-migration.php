@@ -44,6 +44,8 @@ class Migration {
 		add_action( 'wp_ajax_friends_get_migration_debug', array( $this, 'ajax_get_migration_debug' ) );
 		add_action( 'wp_ajax_friends_clear_failed_url', array( $this, 'ajax_clear_failed_url' ) );
 		add_action( 'wp_ajax_friends_deactivate_feed_by_url', array( $this, 'ajax_deactivate_feed_by_url' ) );
+		add_action( 'friends_convert_friend_users_batch', array( __CLASS__, 'convert_friend_users_batch' ) );
+		add_action( 'friends_link_feeds_as_term_children_batch', array( __CLASS__, 'link_feeds_as_term_children_batch' ) );
 
 		// Register debug output hooks for migrations.
 		add_action( 'friends_migration_debug_link_activitypub_feeds_to_actors', array( $this, 'debug_link_activitypub_feeds_to_actors' ) );
@@ -239,6 +241,44 @@ class Migration {
 				'description'   => 'Removes special characters like apostrophes from friend usernames to prevent URL issues.',
 				'method'        => 'sanitize_friend_usernames',
 				'status_option' => null,
+			)
+		);
+
+		self::register(
+			array(
+				'id'            => 'convert_friend_users_to_subscriptions',
+				'version'       => '4.0.0',
+				'title'         => 'Convert Friend Users to Subscriptions',
+				'description'   => 'Converts WordPress users with friend/acquaintance/subscription roles to virtual subscriptions. Runs in batches.',
+				'method'        => 'convert_friend_users_to_subscriptions',
+				'status_option' => 'friends_friend_users_converted',
+				'batched'       => true,
+				'batch_method'  => 'convert_friend_users_batch',
+				'cron_hook'     => 'friends_convert_friend_users_batch',
+				'progress'      => array(
+					'in_progress' => 'friends_friend_users_conversion_in_progress',
+					'total'       => 'friends_friend_users_conversion_total',
+					'processed'   => 'friends_friend_users_conversion_processed',
+				),
+			)
+		);
+
+		self::register(
+			array(
+				'id'            => 'link_feeds_as_term_children',
+				'version'       => '4.1.0',
+				'title'         => 'Link Feeds as Term Children',
+				'description'   => 'Migrates feed-to-subscription links from wp_term_relationships to the parent field in wp_term_taxonomy.',
+				'method'        => 'link_feeds_as_term_children',
+				'status_option' => 'friends_feeds_linked_as_term_children',
+				'batched'       => true,
+				'batch_method'  => 'link_feeds_as_term_children_batch',
+				'cron_hook'     => 'friends_link_feeds_as_term_children_batch',
+				'progress'      => array(
+					'in_progress' => 'friends_feeds_term_children_in_progress',
+					'total'       => 'friends_feeds_term_children_total',
+					'processed'   => 'friends_feeds_term_children_processed',
+				),
 			)
 		);
 	}
@@ -3006,5 +3046,184 @@ class Migration {
 				error_log( sprintf( 'Friends Migration: Sanitized subscription username from "%s" to "%s"', $old_slug, $new_slug ) );
 			}
 		}
+	}
+
+	/**
+	 * Convert WordPress users with friend/acquaintance/subscription roles to virtual subscriptions.
+	 */
+	public static function convert_friend_users_to_subscriptions() {
+		if ( get_option( 'friends_friend_users_conversion_in_progress' ) ) {
+			return;
+		}
+		if ( get_option( 'friends_friend_users_converted' ) ) {
+			return;
+		}
+
+		$users = new \WP_User_Query(
+			array(
+				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ),
+				'number'   => -1,
+				'fields'   => 'ID',
+			)
+		);
+
+		$total = $users->get_total();
+
+		if ( ! $total ) {
+			update_option( 'friends_friend_users_converted', true, false );
+			return;
+		}
+
+		update_option( 'friends_friend_users_conversion_in_progress', true, false );
+		update_option( 'friends_friend_users_conversion_total', $total, false );
+		update_option( 'friends_friend_users_conversion_processed', 0, false );
+
+		wp_schedule_single_event( time(), 'friends_convert_friend_users_batch' );
+	}
+
+	/**
+	 * Process a batch of friend users to convert to virtual subscriptions.
+	 */
+	public static function convert_friend_users_batch() {
+		$batch_size = apply_filters( 'friends_friend_user_conversion_batch_size', 20 );
+
+		$users = new \WP_User_Query(
+			array(
+				'role__in' => array( 'friend', 'acquaintance', 'friend_request', 'pending_friend_request', 'subscription' ),
+				'number'   => $batch_size,
+				'offset'   => 0,
+			)
+		);
+
+		$results = $users->get_results();
+
+		if ( empty( $results ) ) {
+			update_option( 'friends_friend_users_converted', true, false );
+			delete_option( 'friends_friend_users_conversion_in_progress' );
+			delete_option( 'friends_friend_users_conversion_total' );
+			delete_option( 'friends_friend_users_conversion_processed' );
+			return;
+		}
+
+		$processed = (int) get_option( 'friends_friend_users_conversion_processed', 0 );
+
+		foreach ( $results as $wp_user ) {
+			$result = Subscription::convert_from_user( new User( $wp_user ) );
+			if ( is_wp_error( $result ) ) {
+				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+				error_log( sprintf( 'Friends Migration: Failed to convert user %d (%s): %s', $wp_user->ID, $wp_user->user_login, $result->get_error_message() ) );
+				continue;
+			}
+			++$processed;
+		}
+
+		update_option( 'friends_friend_users_conversion_processed', $processed, false );
+
+		wp_schedule_single_event( time() + 1, 'friends_convert_friend_users_batch' );
+	}
+
+	/**
+	 * Initialize the migration to link feed terms as children of subscription terms.
+	 */
+	public static function link_feeds_as_term_children() {
+		if ( get_option( 'friends_feeds_term_children_in_progress' ) ) {
+			return;
+		}
+		if ( get_option( 'friends_feeds_linked_as_term_children' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$total = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT COUNT(*)
+				FROM {$wpdb->term_relationships} tr
+				JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				WHERE tt.taxonomy = %s
+				AND EXISTS (
+					SELECT 1 FROM {$wpdb->term_taxonomy} sub
+					WHERE sub.term_id = tr.object_id
+					AND sub.taxonomy = %s
+				)",
+				User_Feed::TAXONOMY,
+				Subscription::TAXONOMY
+			)
+		);
+
+		if ( ! $total ) {
+			update_option( 'friends_feeds_linked_as_term_children', true, false );
+			return;
+		}
+
+		update_option( 'friends_feeds_term_children_in_progress', true, false );
+		update_option( 'friends_feeds_term_children_total', $total, false );
+		update_option( 'friends_feeds_term_children_processed', 0, false );
+
+		wp_schedule_single_event( time(), 'friends_link_feeds_as_term_children_batch' );
+	}
+
+	/**
+	 * Process a batch of feed-to-subscription relationships, converting them to parent links.
+	 */
+	public static function link_feeds_as_term_children_batch() {
+		$batch_size = apply_filters( 'friends_feeds_term_children_batch_size', 50 );
+
+		global $wpdb;
+
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT tr.object_id AS subscription_term_id, tt.term_taxonomy_id AS feed_tt_id, tt.term_id AS feed_term_id
+				FROM {$wpdb->term_relationships} tr
+				JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+				WHERE tt.taxonomy = %s
+				AND EXISTS (
+					SELECT 1 FROM {$wpdb->term_taxonomy} sub
+					WHERE sub.term_id = tr.object_id
+					AND sub.taxonomy = %s
+				)
+				LIMIT %d OFFSET 0",
+				User_Feed::TAXONOMY,
+				Subscription::TAXONOMY,
+				$batch_size
+			)
+		);
+
+		if ( empty( $rows ) ) {
+			update_option( 'friends_feeds_linked_as_term_children', true, false );
+			delete_option( 'friends_feeds_term_children_in_progress' );
+			delete_option( 'friends_feeds_term_children_total' );
+			delete_option( 'friends_feeds_term_children_processed' );
+			return;
+		}
+
+		$processed = (int) get_option( 'friends_feeds_term_children_processed', 0 );
+
+		foreach ( $rows as $row ) {
+			$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->term_taxonomy,
+				array( 'parent' => (int) $row->subscription_term_id ),
+				array( 'term_taxonomy_id' => (int) $row->feed_tt_id ),
+				array( '%d' ),
+				array( '%d' )
+			);
+
+			$wpdb->delete( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->term_relationships,
+				array(
+					'object_id'        => (int) $row->subscription_term_id,
+					'term_taxonomy_id' => (int) $row->feed_tt_id,
+				),
+				array( '%d', '%d' )
+			);
+
+			++$processed;
+		}
+
+		clean_term_cache( wp_list_pluck( $rows, 'feed_term_id' ), User_Feed::TAXONOMY );
+
+		update_option( 'friends_feeds_term_children_processed', $processed, false );
+
+		wp_schedule_single_event( time() + 1, 'friends_link_feeds_as_term_children_batch' );
 	}
 }

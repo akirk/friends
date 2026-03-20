@@ -67,24 +67,6 @@ class User_Query extends \WP_User_Query {
 	public function get_total() {
 		return $this->total_users;
 	}
-	/**
-	 * Gets all friends.
-	 *
-	 * @return     User_Query  The requested users.
-	 */
-	public static function all_friends() {
-		static $all_friends = array();
-		if ( ! self::$cache || ! isset( $all_friends[ get_current_blog_id() ] ) ) {
-			$all_friends[ get_current_blog_id() ] = new self(
-				array(
-					'capability' => 'friend',
-					'order'      => 'ASC',
-					'orderby'    => 'display_name',
-				)
-			);
-		}
-		return $all_friends[ get_current_blog_id() ];
-	}
 
 	/**
 	 * Gets all friends.
@@ -109,7 +91,7 @@ class User_Query extends \WP_User_Query {
 	}
 
 	public function add_virtual_subscriptions( $args = array() ) {
-		if ( isset( $args['meta_key'] ) && substr( $args['meta_key'], -8 ) === '_starred' ) {
+		if ( isset( $args['meta_key'] ) && substr( $args['meta_key'], -9 ) === '_starred' ) {
 			$args['meta_key'] = 'starred'; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		}
 		$searches = array();
@@ -177,20 +159,15 @@ class User_Query extends \WP_User_Query {
 		$cache_key = get_current_blog_id();
 
 		if ( ! self::$cache || ! isset( $starred_friends_subscriptions[ $cache_key ] ) ) {
-			global $wpdb;
-			$query = array(
-				'capability__in' => Friends::get_friends_plugin_roles(),
-			);
 			$meta = array(
-				'meta_key'     => $wpdb->get_blog_prefix() . 'friends_starred', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				// Using a meta_key EXISTS query is not slow, see https://github.com/WordPress/WordPress-Coding-Standards/issues/1871.
+				'meta_key'     => 'starred', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				'meta_compare' => 'EXISTS',
 			);
 			$sort = array(
 				'order'   => 'ASC',
 				'orderby' => 'display_name',
 			);
-			$starred_friends_subscriptions[ $cache_key ] = new self( array_merge( $query, $meta, $sort ) );
+			$starred_friends_subscriptions[ $cache_key ] = new self( array( 'number' => 0 ) );
 			$starred_friends_subscriptions[ $cache_key ]->add_virtual_subscriptions( $meta );
 			$starred_friends_subscriptions[ $cache_key ]->sort( $sort['orderby'], $sort['order'] );
 		}
@@ -209,7 +186,7 @@ class User_Query extends \WP_User_Query {
 		$cache_key = get_current_blog_id() . '_' . $limit;
 		if ( ! self::$cache || ! isset( $recent_friends_subscriptions[ $cache_key ] ) ) {
 			$query = array(
-				'capability__in' => array( 'friend', 'acquaintance', 'pending_friend_request', 'subscription' ),
+				'capability__in' => array( 'subscription' ),
 				'number'         => $limit,
 			);
 			$sort = array(
@@ -244,55 +221,10 @@ class User_Query extends \WP_User_Query {
 			'order'   => 'ASC',
 			'orderby' => 'display_name',
 		);
-		$search = new self(
-			array_merge(
-				array(
-					'capability__in' => Friends::get_friends_plugin_roles(),
-					'search_columns' => array( 'display_name' ),
-				),
-				$query,
-				$sort
-			)
-		);
-
+		$search = new self( array( 'number' => 0 ) );
 		$search->add_virtual_subscriptions( $query );
 		$search->sort( $sort['orderby'], $sort['order'] );
 		return $search;
-	}
-
-	/**
-	 * Gets all friend requests.
-	 */
-	public static function all_friend_requests() {
-		static $all_friend_requests = array();
-		if ( ! self::$cache || ! isset( $all_friend_requests[ get_current_blog_id() ] ) ) {
-			$all_friend_requests[ get_current_blog_id() ] = new self(
-				array(
-					'role'    => 'friexnd_request',
-					'order'   => 'ASC',
-					'orderby' => 'display_name',
-				)
-			);
-		}
-		return $all_friend_requests[ get_current_blog_id() ];
-	}
-
-	/**
-	 * Gets all friend requests.
-	 */
-	public static function all_pending_friend_requests() {
-		static $all_pending_friend_requests = array();
-		if ( ! self::$cache || ! isset( $all_pending_friend_requests[ get_current_blog_id() ] ) ) {
-
-			$all_pending_friend_requests[ get_current_blog_id() ] = new self(
-				array(
-					'capability__in' => array( 'pending_friend_request', 'friend_request' ),
-					'order'          => 'ASC',
-					'orderby'        => 'display_name',
-				)
-			);
-		}
-		return $all_pending_friend_requests[ get_current_blog_id() ];
 	}
 
 	/**
@@ -301,14 +233,11 @@ class User_Query extends \WP_User_Query {
 	public static function all_subscriptions() {
 		static $all_subscriptions = array();
 		if ( ! self::$cache || ! isset( $all_subscriptions[ get_current_blog_id() ] ) ) {
-			$query = array(
-				'capability__in' => array( 'pending_friend_request', 'subscription' ),
-			);
 			$sort = array(
 				'order'   => 'ASC',
 				'orderby' => 'display_name',
 			);
-			$all_subscriptions[ get_current_blog_id() ] = new self( array_merge( $query, $sort ) );
+			$all_subscriptions[ get_current_blog_id() ] = new self( array( 'number' => 0 ) );
 			$all_subscriptions[ get_current_blog_id() ]->add_virtual_subscriptions();
 			$all_subscriptions[ get_current_blog_id() ]->sort( $sort['orderby'], $sort['order'] );
 		}
