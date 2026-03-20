@@ -349,7 +349,9 @@ class Frontend {
 			$wp_styles = wp_styles();
 			foreach ( $wp_styles->queue as $style ) {
 				$src = $wp_styles->registered[ $style ]->src;
-				if ( false !== strpos( $src, '/themes/' ) && false === strpos( $src, '/themes/friends/' ) ) {
+				if ( 'block' !== $this->theme && 'global-styles' === $style ) {
+					wp_dequeue_style( $style );
+				} elseif ( false !== strpos( $src, '/themes/' ) && false === strpos( $src, '/themes/friends/' ) ) {
 					wp_dequeue_style( $style );
 				}
 			}
@@ -1004,7 +1006,7 @@ class Frontend {
 
 			status_header( 200 );
 
-			if ( wp_is_block_theme() ) {
+			if ( 'block' === $this->theme && wp_is_block_theme() ) {
 				$block_template_content = $this->get_block_template_content_for( $this->template );
 				if ( false !== $block_template_content ) {
 					global $_wp_current_template_content;
@@ -1020,11 +1022,11 @@ class Frontend {
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
 		}
 
-		if ( wp_is_block_theme() ) {
+		if ( 'block' === $this->theme && wp_is_block_theme() ) {
 			return $template;
 		}
 
-		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', 'expanded' );
+		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
 		$args['blocks-everywhere']     = false;
 
 		if ( isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
