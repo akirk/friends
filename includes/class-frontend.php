@@ -1334,7 +1334,7 @@ class Frontend {
 						if ( $only_public ) {
 							$xml_url = $feed->get_url();
 						} else {
-							$xml_url = $feed->get_private_url( YEAR_IN_SECONDS );
+							$xml_url = $feed->get_url();
 						}
 						if ( 'application/atom+xml' === $feed->get_mime_type() ) {
 							$type = 'atom';
