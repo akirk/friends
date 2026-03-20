@@ -48,6 +48,7 @@ class Blocks {
 		add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
 		add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
+		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_sidebar_blocks' ) );
 		add_action( 'init', array( $this, 'register_blocks' ) );
 	}
 
@@ -85,6 +86,34 @@ class Blocks {
 			'friends/followers',
 			array(
 				'render_callback' => array( $this, 'render_followers_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/stats',
+			array(
+				'render_callback' => array( $this, 'render_stats_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/refresh',
+			array(
+				'render_callback' => array( $this, 'render_refresh_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/post-formats',
+			array(
+				'render_callback' => array( $this, 'render_post_formats_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/add-subscription',
+			array(
+				'render_callback' => array( $this, 'render_add_subscription_block' ),
 			)
 		);
 	}
@@ -325,6 +354,103 @@ class Blocks {
 	}
 
 	/**
+	 * Render the friends/stats block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_stats_block() {
+		$subscriptions       = User_Query::all_subscriptions();
+		$subscriptions_count = $subscriptions->get_total();
+
+		$out = '<ul class="wp-block-friends-stats">';
+
+		if ( class_exists( '\ActivityPub\Collection\Followers' ) && \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
+			$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', \ACTIVITYPUB_ACTOR_MODE );
+			if ( \ACTIVITYPUB_ACTOR_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
+				$follower_count = \ActivityPub\Collection\Followers::count_followers( get_current_user_id() );
+				$out           .= '<li><a href="' . esc_url( home_url( '/friends/followers/' ) ) . '">';
+				$out           .= esc_html(
+					sprintf(
+						/* translators: %s: number of followers */
+						_n( '%s Follower', '%s Followers', $follower_count, 'friends' ),
+						$follower_count
+					)
+				);
+				$out .= '</a></li>';
+			}
+			if ( \ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
+				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
+					$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
+					$out                .= '<li><a href="' . esc_url( home_url( '/friends/blog-followers/' ) ) . '">';
+					$out                .= esc_html(
+						sprintf(
+							/* translators: %s: number of followers */
+							_n( '%s Blog Follower', '%s Blog Followers', $blog_follower_count, 'friends' ),
+							$blog_follower_count
+						)
+					);
+					$out .= '</a></li>';
+				}
+			}
+		}
+
+		$out .= '<li><a href="' . esc_url( home_url( '/friends/subscriptions/' ) ) . '">';
+		$out .= esc_html(
+			sprintf(
+				/* translators: %s: number of subscriptions */
+				_n( '%s Subscription', '%s Subscriptions', $subscriptions_count, 'friends' ),
+				$subscriptions_count
+			)
+		);
+		$out .= '</a></li>';
+		$out .= '</ul>';
+
+		return $out;
+	}
+
+	/**
+	 * Render the friends/refresh block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_refresh_block() {
+		return '<p class="wp-block-friends-refresh"><a href="' . esc_url( home_url( '/friends/?refresh' ) ) . '">' . esc_html__( 'Refresh', 'friends' ) . '</a></p>';
+	}
+
+	/**
+	 * Render the friends/post-formats block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_post_formats_block() {
+		$out  = '<ul class="wp-block-friends-post-formats">';
+		$out .= '<li><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html_x( 'All', 'all posts', 'friends' ) . '</a></li>';
+
+		$default_formats = array( 'standard', 'status', 'image', 'video' );
+		foreach ( get_post_format_strings() as $slug => $title ) {
+			if ( in_array( $slug, $default_formats, true ) ) {
+				$out .= '<li><a href="' . esc_url( home_url( '/friends/type/' . $slug . '/' ) ) . '">' . esc_html( $title ) . '</a></li>';
+			}
+		}
+
+		$out .= '</ul>';
+		return $out;
+	}
+
+	/**
+	 * Render the friends/add-subscription block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_add_subscription_block() {
+		$out  = '<div class="wp-block-friends-add-subscription">';
+		$out .= '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend' ) ) . '">';
+		$out .= esc_html__( 'Add Subscription', 'friends' );
+		$out .= '</a></div>';
+		return $out;
+	}
+
+	/**
 	 * Render the Friends List block
 	 *
 	 * @param  array $attributes Attributes set by Blocks.
@@ -529,6 +655,35 @@ class Blocks {
 			Friends::VERSION,
 			true
 		);
+	}
+
+	/**
+	 * Enqueue the sidebar blocks editor script and friends theme styles.
+	 */
+	public function enqueue_sidebar_blocks() {
+		wp_enqueue_script(
+			'friends-sidebar-blocks',
+			plugins_url( 'blocks/sidebar-blocks/index.js', FRIENDS_PLUGIN_FILE ),
+			array( 'wp-blocks', 'wp-element', 'wp-server-side-render' ),
+			Friends::VERSION,
+			true
+		);
+
+		// Enqueue friends theme and site theme styles for the site editor.
+		if ( get_current_screen() && 'site-editor' === get_current_screen()->id ) {
+			wp_enqueue_style(
+				'friends-block-theme',
+				plugins_url( 'themes/friends/style.css', FRIENDS_PLUGIN_FILE ),
+				array(),
+				Friends::VERSION
+			);
+			wp_enqueue_style(
+				'friends-site-theme',
+				get_stylesheet_uri(),
+				array(),
+				null // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
+			);
+		}
 	}
 
 	/**

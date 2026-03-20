@@ -94,7 +94,7 @@ class Frontend {
 	 * Register the WordPress hooks
 	 */
 	private function register_hooks() {
-		register_theme_directory( __DIR__ . '/../themes' );
+		register_theme_directory( FRIENDS_PLUGIN_DIR . 'themes' );
 
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
 		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 2 );
@@ -131,6 +131,8 @@ class Frontend {
 		add_action( 'parse_query', array( $this, 'parse_query' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 		add_filter( 'block_type_metadata_settings', array( $this, 'block_type_metadata_settings' ), 15 );
+		add_filter( 'pre_get_block_file_template', array( $this, 'get_friends_block_template' ), 10, 3 );
+		add_filter( 'pre_get_block_templates', array( $this, 'get_friends_block_templates' ), 10, 3 );
 		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
@@ -343,15 +345,12 @@ class Frontend {
 	}
 
 	public function dequeue_scripts() {
-		if ( is_user_logged_in() && Friends::on_frontend() ) {
-			// Dequeue theme styles so that they don't interact with the Friends frontend,
-			// but keep the friends theme's own styles.
+		if ( is_user_logged_in() && Friends::on_frontend() && 'block' !== $this->theme ) {
+			// Dequeue theme styles so that they don't interact with the Friends frontend.
 			$wp_styles = wp_styles();
 			foreach ( $wp_styles->queue as $style ) {
 				$src = $wp_styles->registered[ $style ]->src;
-				if ( 'block' !== $this->theme && 'global-styles' === $style ) {
-					wp_dequeue_style( $style );
-				} elseif ( false !== strpos( $src, '/themes/' ) && false === strpos( $src, '/themes/friends/' ) ) {
+				if ( 'global-styles' === $style || false !== strpos( $src, '/themes/' ) ) {
 					wp_dequeue_style( $style );
 				}
 			}
@@ -387,12 +386,21 @@ class Frontend {
 	}
 
 	public function block_theme() {
-		add_filter( 'stylesheet', array( $this, 'stylesheet' ) );
+		// Capture the site's theme stylesheet before swapping to the friends theme.
+		$site_stylesheet_uri = get_stylesheet_uri();
+
+		add_filter( 'stylesheet', array( $this, 'override_theme' ) );
+		add_filter( 'template', array( $this, 'override_theme' ) );
+
+		$handle = 'friends-block-theme';
+		$file   = 'themes/friends/style.css';
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), Friends::VERSION );
+		wp_enqueue_style( 'friends-site-theme', $site_stylesheet_uri, array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 	}
 
-	public function stylesheet( $stylesheet ) {
+	public function override_theme( $theme ) {
 		if ( ! Friends::on_frontend() ) {
-			return $stylesheet;
+			return $theme;
 		}
 
 		return 'friends';
@@ -437,6 +445,54 @@ class Frontend {
 		}
 		return $settings;
 	}
+	/**
+	 * Resolve block templates for the friends theme.
+	 *
+	 * @param WP_Block_Template|null $block_template The found block template.
+	 * @param string                 $id             Template unique identifier (example: 'friends//index').
+	 * @param string                 $template_type  Template type.
+	 * @return WP_Block_Template|null
+	 */
+	public function get_friends_block_template( $block_template, $id, $template_type ) {
+		$parts = explode( '//', $id, 2 );
+		if ( count( $parts ) < 2 || 'friends' !== $parts[0] ) {
+			return $block_template;
+		}
+
+		$slug = $parts[1];
+		$base = 'wp_template_part' === $template_type ? 'parts' : 'templates';
+		$file = FRIENDS_PLUGIN_DIR . 'themes/friends/' . $base . '/' . $slug . '.html';
+		if ( ! file_exists( $file ) ) {
+			return $block_template;
+		}
+
+		$template                 = new \WP_Block_Template();
+		$template->id             = $id;
+		$template->theme          = 'friends';
+		$template->slug           = $slug;
+		$template->source         = 'theme';
+		$template->type           = $template_type;
+		$template->title          = ucwords( str_replace( '-', ' ', $slug ) );
+		$template->status         = 'publish';
+		$template->has_theme_file = true;
+		$template->is_custom      = true;
+		$template->content        = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+
+		return $template;
+	}
+
+	/**
+	 * Add friends theme templates to block template queries.
+	 *
+	 * @param WP_Block_Template[]|null $templates Array of found templates.
+	 * @param array                    $query     Arguments to retrieve templates.
+	 * @param string                   $template_type  Template type.
+	 * @return WP_Block_Template[]|null
+	 */
+	public function get_friends_block_templates( $templates, $query, $template_type ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		return $templates;
+	}
+
 	public function tag_row_actions( $actions, $tag ) {
 		$actions['view-friends'] = sprintf(
 			'<a href="%s">%s</a>',
