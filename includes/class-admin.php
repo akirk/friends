@@ -65,6 +65,9 @@ class Admin {
 		if ( ! get_option( 'permalink_structure' ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
 		}
+		if ( get_option( 'friends_welcome_version' ) ) {
+			add_action( 'admin_notices', array( $this, 'admin_notice_welcome' ) );
+		}
 		add_filter( 'pre_get_posts', array( $this, 'admin_friend_posts_query' ) );
 	}
 
@@ -585,11 +588,104 @@ class Admin {
 	}
 
 	/**
-	 * Render the Friends Admin home page
+	 * Get the registry of news entries, newest first.
+	 *
+	 * Each entry has: version, title, template, and optionally migration_version
+	 * for entries that should show migration status.
+	 *
+	 * @return array
+	 */
+	public static function get_news_entries() {
+		return apply_filters(
+			'friends_news_entries',
+			array(
+				array(
+					'version'           => '4.0',
+					'title'             => __( '4.0: A Major Update', 'friends' ),
+					'template'          => 'admin/welcome-4-0',
+					'migration_version' => '4.0.0',
+				),
+				array(
+					'version'  => '3.3',
+					'title'    => __( '3.3: Styling Overhaul', 'friends' ),
+					'template' => 'admin/news-3-3',
+				),
+				array(
+					'version'  => '3.0',
+					'title'    => __( '3.0: Followers & Notifications', 'friends' ),
+					'template' => 'admin/news-3-0',
+				),
+				array(
+					'version'  => '2.4',
+					'title'    => __( '2.4: Mastodon Compatibility', 'friends' ),
+					'template' => 'admin/news-2-4',
+				),
+				array(
+					'version'  => '2.1',
+					'title'    => __( '2.1: Frontend & Plugins', 'friends' ),
+					'template' => 'admin/news-2-1',
+				),
+				array(
+					'version'  => '2.0',
+					'title'    => __( '2.0: Revisions & Site Health', 'friends' ),
+					'template' => 'admin/news-2-0',
+				),
+				array(
+					'version'  => '0',
+					'title'    => __( 'Welcome to the Friends Plugin!', 'friends' ),
+					'template' => 'admin/welcome',
+				),
+			)
+		);
+	}
+
+	/**
+	 * Get migration statuses for a specific version.
+	 *
+	 * @param string $migration_version The version to filter migrations for.
+	 * @return array With keys: statuses, all_complete, has_in_progress.
+	 */
+	public static function get_migration_data( $migration_version ) {
+		$all_statuses    = Migration::get_all_statuses();
+		$statuses        = array();
+		$all_complete    = true;
+		$has_in_progress = false;
+
+		foreach ( $all_statuses as $id => $status ) {
+			if ( $status['version'] !== $migration_version ) {
+				continue;
+			}
+			$statuses[ $id ] = $status;
+			if ( empty( $status['completed'] ) ) {
+				$all_complete = false;
+			}
+			if ( ! empty( $status['in_progress'] ) ) {
+				$has_in_progress = true;
+			}
+		}
+
+		return array(
+			'statuses'        => $statuses,
+			'all_complete'    => $all_complete,
+			'has_in_progress' => $has_in_progress,
+		);
+	}
+
+	/**
+	 * Render the Friends Admin home page.
+	 *
+	 * Shows the welcome page for new users (no subscriptions),
+	 * or a news/changelog view for existing users.
 	 */
 	public function render_admin_home() {
+		// Dismiss the update notice permanently when visiting this page.
+		if ( get_option( 'friends_welcome_version' ) ) {
+			delete_option( 'friends_welcome_version' );
+		}
+
 		$friends_subscriptions = User_Query::all_associated_users();
-		$has_friend_users = $friends_subscriptions->get_total() > 0;
+		$is_new_user           = 0 === $friends_subscriptions->get_total();
+
 		wp_enqueue_script( 'plugin-install' );
 		add_thickbox();
 		wp_enqueue_script( 'updates' );
@@ -602,9 +698,56 @@ class Admin {
 			)
 		);
 
-		Friends::template_loader()->get_template_part( 'admin/welcome', null, array( 'installed_plugins' => get_plugins() ) );
+		$news_entries = self::get_news_entries();
+
+		if ( $is_new_user ) {
+			// New users: welcome entry first, rest after.
+			$news_entries = array_reverse( $news_entries );
+		}
+
+		Friends::template_loader()->get_template_part(
+			'admin/news',
+			null,
+			array(
+				'entries' => $news_entries,
+			)
+		);
 
 		Friends::template_loader()->get_template_part( 'admin/settings-footer' );
+	}
+
+	/**
+	 * Display admin notice about a new version.
+	 */
+	public function admin_notice_welcome() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		if ( isset( $_GET['page'] ) && 'friends' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			return;
+		}
+
+		$version = get_option( 'friends_welcome_version' );
+		$url     = admin_url( 'admin.php?page=friends' );
+		?>
+		<div class="friends-notice notice notice-info">
+			<p>
+				<b><?php esc_html_e( 'Friends', 'friends' ); ?></b>
+				<?php
+				echo wp_kses(
+					sprintf(
+						// translators: %1$s is the version number, %2$s is a URL to the What's New page.
+						__( '&#151; You have been updated to version %1$s! <a href="%2$s">See what\'s new and check the migration status</a>.', 'friends' ),
+						esc_html( $version ),
+						esc_url( $url )
+					),
+					array( 'a' => array( 'href' => array() ) )
+				);
+				?>
+			</p>
+		</div>
+		<?php
 	}
 
 	/**

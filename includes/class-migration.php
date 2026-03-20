@@ -240,7 +240,7 @@ class Migration {
 				'title'         => 'Sanitize Friend Usernames',
 				'description'   => 'Removes special characters like apostrophes from friend usernames to prevent URL issues.',
 				'method'        => 'sanitize_friend_usernames',
-				'status_option' => null,
+				'status_option' => 'friends_usernames_sanitized',
 			)
 		);
 
@@ -266,10 +266,11 @@ class Migration {
 		self::register(
 			array(
 				'id'            => 'link_feeds_as_term_children',
-				'version'       => '4.1.0',
+				'version'       => '4.0.0',
 				'title'         => 'Link Feeds as Term Children',
 				'description'   => 'Migrates feed-to-subscription links from wp_term_relationships to the parent field in wp_term_taxonomy.',
 				'method'        => 'link_feeds_as_term_children',
+				'depends_on'    => 'convert_friend_users_to_subscriptions',
 				'status_option' => 'friends_feeds_linked_as_term_children',
 				'batched'       => true,
 				'batch_method'  => 'link_feeds_as_term_children_batch',
@@ -293,6 +294,7 @@ class Migration {
 			'batched'      => false,
 			'batch_method' => null,
 			'undo_method'  => null,
+			'depends_on'   => null,
 			'progress'     => array(),
 		);
 		self::$registry[ $migration['id'] ] = array_merge( $defaults, $migration );
@@ -338,6 +340,16 @@ class Migration {
 			'version'     => $migration['version'],
 			'batched'     => $migration['batched'],
 		);
+
+		// Check if dependency is met.
+		if ( ! empty( $migration['depends_on'] ) ) {
+			$dep_status = self::get_migration_status_by_id( $migration['depends_on'] );
+			if ( empty( $dep_status['completed'] ) ) {
+				$dep_migration             = self::get_migration( $migration['depends_on'] );
+				$status['waiting_for']     = $migration['depends_on'];
+				$status['waiting_for_title'] = $dep_migration ? $dep_migration['title'] : $migration['depends_on'];
+			}
+		}
 
 		// Check completion status.
 		if ( $migration['status_option'] ) {
@@ -400,6 +412,18 @@ class Migration {
 				'success' => false,
 				'message' => 'Migration not found: ' . $id,
 			);
+		}
+
+		// Check dependencies.
+		if ( ! empty( $migration['depends_on'] ) ) {
+			$dep_status = self::get_migration_status_by_id( $migration['depends_on'] );
+			if ( empty( $dep_status['completed'] ) ) {
+				$dep_migration = self::get_migration( $migration['depends_on'] );
+				return array(
+					'success' => false,
+					'message' => sprintf( 'Requires "%s" to complete first.', $dep_migration ? $dep_migration['title'] : $migration['depends_on'] ),
+				);
+			}
 		}
 
 		// Reset status for re-running.
@@ -3046,6 +3070,8 @@ class Migration {
 				error_log( sprintf( 'Friends Migration: Sanitized subscription username from "%s" to "%s"', $old_slug, $new_slug ) );
 			}
 		}
+
+		update_option( 'friends_usernames_sanitized', true, false );
 	}
 
 	/**

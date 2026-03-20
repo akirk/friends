@@ -6,10 +6,17 @@
  */
 
 if ( empty( $args['menu'] ) ) {
+	$friends_subscriptions = Friends\User_Query::all_associated_users();
+	if ( 0 === $friends_subscriptions->get_total() ) {
+		$home_label = __( 'Welcome', 'friends' );
+	} else {
+		$home_label = __( 'News', 'friends' );
+	}
+
 	$args['menu'] = apply_filters(
 		'friends_admin_tabs',
 		array(
-			__( 'Welcome', 'friends' )       => 'friends',
+			$home_label                      => 'friends',
 			__( 'Settings' )                 => 'friends-settings', // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 			__( 'Notifications', 'friends' ) => 'friends-notification-manager',
 			__( 'Import/Export', 'friends' ) => 'friends-import-export',
