@@ -131,6 +131,8 @@ class Frontend {
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
 		add_filter( 'block_type_metadata_settings', array( $this, 'block_type_metadata_settings' ), 15 );
 		add_filter( 'pre_render_block', array( $this, 'render_friends_template_part' ), 10, 2 );
+		add_filter( 'pre_get_block_file_template', array( $this, 'get_friends_block_file_template' ), 10, 3 );
+		add_filter( 'get_block_templates', array( $this, 'add_friends_template_parts' ), 10, 3 );
 		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
@@ -456,6 +458,102 @@ class Frontend {
 		$tag     = isset( $attrs['tagName'] ) ? $attrs['tagName'] : 'div';
 
 		return '<' . $tag . ' class="wp-block-template-part">' . do_blocks( $content ) . '</' . $tag . '>';
+	}
+
+	/**
+	 * Build a WP_Block_Template for a friends template part.
+	 *
+	 * @param string $slug The template part slug.
+	 * @param string $file The file path.
+	 * @return WP_Block_Template
+	 */
+	private function build_friends_template_part( $slug, $file ) {
+		$template                 = new \WP_Block_Template();
+		$template->id             = 'friends//' . $slug;
+		$template->theme          = 'friends';
+		$template->plugin         = 'friends';
+		$template->slug           = $slug;
+		$template->source         = 'plugin';
+		$template->origin         = 'plugin';
+		$template->type           = 'wp_template_part';
+		$template->title          = ucwords( str_replace( '-', ' ', $slug ) );
+		$template->status         = 'publish';
+		$template->has_theme_file = true;
+		$template->is_custom      = false;
+		$template->content        = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$template->area           = WP_TEMPLATE_PART_AREA_UNCATEGORIZED;
+
+		return $template;
+	}
+
+	/**
+	 * Resolve a friends template part by ID.
+	 *
+	 * @param WP_Block_Template|null $block_template The found block template.
+	 * @param string                 $id             Template unique identifier.
+	 * @param string                 $template_type  Template type.
+	 * @return WP_Block_Template|null
+	 */
+	public function get_friends_block_file_template( $block_template, $id, $template_type ) {
+		if ( 'wp_template_part' !== $template_type ) {
+			return $block_template;
+		}
+
+		$parts = explode( '//', $id, 2 );
+		if ( count( $parts ) < 2 || 'friends' !== $parts[0] ) {
+			return $block_template;
+		}
+
+		$slug = $parts[1];
+		$file = FRIENDS_PLUGIN_DIR . 'themes/friends/parts/' . $slug . '.html';
+		if ( ! file_exists( $file ) ) {
+			return $block_template;
+		}
+
+		return $this->build_friends_template_part( $slug, $file );
+	}
+
+	/**
+	 * Add friends template parts to block template queries.
+	 *
+	 * @param WP_Block_Template[] $query_result Array of found block templates.
+	 * @param array               $query        Arguments to retrieve templates.
+	 * @param string              $template_type Template type.
+	 * @return WP_Block_Template[]
+	 */
+	public function add_friends_template_parts( $query_result, $query, $template_type ) {
+		if ( 'wp_template_part' !== $template_type ) {
+			return $query_result;
+		}
+
+		$parts_dir = FRIENDS_PLUGIN_DIR . 'themes/friends/parts/';
+		if ( ! is_dir( $parts_dir ) ) {
+			return $query_result;
+		}
+
+		$slugs_to_include = isset( $query['slug__in'] ) ? $query['slug__in'] : array();
+
+		foreach ( glob( $parts_dir . '*.html' ) as $file ) {
+			$slug = basename( $file, '.html' );
+
+			if ( $slugs_to_include && ! in_array( $slug, $slugs_to_include, true ) ) {
+				continue;
+			}
+
+			// Don't add if already in results.
+			$exists = false;
+			foreach ( $query_result as $existing ) {
+				if ( $existing->slug === $slug && 'friends' === $existing->theme ) {
+					$exists = true;
+					break;
+				}
+			}
+			if ( ! $exists ) {
+				$query_result[] = $this->build_friends_template_part( $slug, $file );
+			}
+		}
+
+		return $query_result;
 	}
 
 	public function block_type_metadata_settings( $settings ) {
