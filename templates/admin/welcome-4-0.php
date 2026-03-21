@@ -48,7 +48,7 @@ $has_in_progress = isset( $args['has_in_progress'] ) ? $args['has_in_progress'] 
 
 		<div class="friends-news-change">
 			<h3><?php esc_html_e( 'Block Theme', 'friends' ); ?></h3>
-			<p><?php esc_html_e( 'A new block-based theme option for the Friends page that integrates with your site\'s active theme. Uses standard WordPress block templates that can be customized in the Site Editor. Select it under Friends > Settings.', 'friends' ); ?></p>
+			<p><?php esc_html_e( 'A new block-based theme option for the Friends page that integrates with your site\'s active theme. Select it under Friends > Settings. To customize the templates, visit your Friends page and click "Edit site" in the admin bar.', 'friends' ); ?></p>
 		</div>
 
 	</div>
