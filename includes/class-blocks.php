@@ -139,9 +139,9 @@ class Blocks {
 		);
 
 		register_block_type(
-			'friends/post-entry',
+			'friends/post-permalink',
 			array(
-				'render_callback' => array( $this, 'render_post_entry_block' ),
+				'render_callback' => array( $this, 'render_post_permalink_block' ),
 			)
 		);
 
@@ -617,11 +617,13 @@ class Blocks {
 	}
 
 	/**
-	 * Render the friends/post-entry block.
+	 * Render the friends/post-permalink block.
+	 *
+	 * Shows "X ago on domain.com Y min read" for each post.
 	 *
 	 * @return string The rendered block HTML.
 	 */
-	public function render_post_entry_block() {
+	public function render_post_permalink_block() {
 		global $post;
 		if ( ! $post ) {
 			return '';
@@ -630,14 +632,6 @@ class Blocks {
 		$friend_user = User::get_post_author( $post );
 		if ( ! $friend_user || is_wp_error( $friend_user ) ) {
 			return '';
-		}
-
-		$author_name = $friend_user->display_name;
-		$override    = apply_filters( 'friends_override_author_name', '', $author_name, $post->ID );
-
-		$display_name = $author_name;
-		if ( $override && trim( str_replace( $override, '', $author_name ) ) === $author_name ) {
-			$display_name .= ' &ndash; ' . esc_html( $override );
 		}
 
 		$author_url = $friend_user->get_local_friends_page_url();
@@ -656,23 +650,9 @@ class Blocks {
 			$read_time = _x( '< 1 min', 'reading time', 'friends' );
 		}
 
-		$out = '<article class="wp-block-friends-post-entry">';
-
-		// Author line.
-		$out .= '<div class="post-entry-author">';
-		$out .= '<a href="' . esc_url( $author_url ) . '"><strong>' . esc_html( $display_name ) . '</strong></a>';
-		$out .= '</div>';
-
-		// Title.
-		$out .= '<h3 class="post-entry-title"><a href="' . esc_url( $guid ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( get_the_title() ) . '</a></h3>';
-
-		// Content.
-		$out .= '<div class="post-entry-content">' . apply_filters( 'the_content', get_the_content() ) . '</div>';
-
-		// Permalink section.
 		/* translators: %s is a time span */
 		$time_ago = sprintf( __( '%s ago' ), human_time_diff( get_post_time( 'U', true ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		$out     .= '<div class="post-entry-permalink">';
+		$out      = '<div class="wp-block-friends-post-permalink">';
 		$out     .= sprintf(
 			// translators: %1$s is a date or relative time, %2$s is a site name or domain.
 			_x( '%1$s on %2$s', 'at-date-on-post', 'friends' ),
@@ -686,7 +666,6 @@ class Blocks {
 		}
 		$out .= '</div>';
 
-		$out .= '</article>';
 		return $out;
 	}
 
