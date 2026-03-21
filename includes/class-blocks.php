@@ -658,7 +658,7 @@ class Blocks {
 	}
 
 	/**
-	 * Enqueue the sidebar blocks editor script and friends theme styles.
+	 * Enqueue the sidebar blocks editor script.
 	 */
 	public function enqueue_sidebar_blocks() {
 		wp_enqueue_script(
@@ -668,22 +668,6 @@ class Blocks {
 			Friends::VERSION,
 			true
 		);
-
-		// Enqueue friends theme and site theme styles for the site editor.
-		if ( get_current_screen() && 'site-editor' === get_current_screen()->id ) {
-			wp_enqueue_style(
-				'friends-block-theme',
-				plugins_url( 'themes/friends/style.css', FRIENDS_PLUGIN_FILE ),
-				array(),
-				Friends::VERSION
-			);
-			wp_enqueue_style(
-				'friends-site-theme',
-				get_stylesheet_uri(),
-				array(),
-				null // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
-			);
-		}
 	}
 
 	/**
