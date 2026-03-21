@@ -118,6 +118,13 @@ class Blocks {
 		);
 
 		register_block_type(
+			'friends/starred-friends-list',
+			array(
+				'render_callback' => array( $this, 'render_starred_friends_list_block' ),
+			)
+		);
+
+		register_block_type(
 			'friends/search',
 			array(
 				'render_callback' => array( $this, 'render_search_block' ),
@@ -475,6 +482,33 @@ class Blocks {
 		$out .= '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend' ) ) . '">';
 		$out .= esc_html__( 'Add Subscription', 'friends' );
 		$out .= '</a></div>';
+		return $out;
+	}
+
+	/**
+	 * Render the friends/starred-friends-list block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_starred_friends_list_block() {
+		$starred = User_Query::starred_friends_subscriptions();
+		if ( ! $starred->get_total() ) {
+			return '';
+		}
+
+		$out  = '<h3>&#11088; ' . esc_html( _x( 'Starred', 'Starred Friends', 'friends' ) ) . '</h3>';
+		$out .= '<ul class="wp-block-friends-starred-friends-list">';
+		foreach ( $starred->get_results() as $friend_user ) {
+			if ( Friends::has_required_privileges() ) {
+				$url = $friend_user->get_local_friends_page_url();
+			} else {
+				$url = $friend_user->user_url;
+			}
+
+			$out .= '<li><a href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
+		}
+		$out .= '</ul>';
+
 		return $out;
 	}
 
