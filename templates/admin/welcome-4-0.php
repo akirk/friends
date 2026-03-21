@@ -46,6 +46,11 @@ $has_in_progress = isset( $args['has_in_progress'] ) ? $args['has_in_progress'] 
 			<p><?php esc_html_e( 'The Friends page now has a dark mode that follows your system preferences.', 'friends' ); ?></p>
 		</div>
 
+		<div class="friends-news-change">
+			<h3><?php esc_html_e( 'Block Theme', 'friends' ); ?></h3>
+			<p><?php esc_html_e( 'A new block-based theme option for the Friends page that integrates with your site\'s active theme. Uses standard WordPress block templates that can be customized in the Site Editor. Select it under Friends > Settings.', 'friends' ); ?></p>
+		</div>
+
 	</div>
 
 	<?php if ( ! empty( $statuses ) ) : ?>
