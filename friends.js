@@ -203,7 +203,7 @@
 
 	$( function () {
 		const standard_count = $( '.chip.post-count-standard' );
-		if ( standard_count.text().substr( 0, 3 ) === '...' ) {
+		if ( standard_count.text().substr( 0, 3 ) === '...' || standard_count.text().substr( 0, 1 ) === '…' ) {
 			wp.ajax.send( 'friends-get-post-counts', {
 				data: {
 					_ajax_nonce: standard_count.data( 'nonce' )
