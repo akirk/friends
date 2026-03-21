@@ -626,7 +626,7 @@ class Blocks {
 	public function render_post_permalink_block() {
 		global $post;
 		if ( ! $post ) {
-			return '';
+			return '<div class="wp-block-friends-post-permalink"><em>' . esc_html__( '3 days ago on example.com', 'friends' ) . ' <span class="reading-time">' . esc_html__( '2 min read', 'friends' ) . '</span></em></div>';
 		}
 
 		$friend_user = User::get_post_author( $post );
@@ -680,7 +680,7 @@ class Blocks {
 		$author   = $frontend->author;
 
 		if ( ! $author ) {
-			return '';
+			return '<div class="wp-block-friends-author-header"><h2>' . esc_html__( 'Author Header', 'friends' ) . '</h2><p><span class="chip">' . esc_html__( 'Subscription', 'friends' ) . '</span> <span class="chip">example.com</span> <span class="chip">' . esc_html__( 'Edit', 'friends' ) . '</span></p></div>';
 		}
 
 		$out = '<div class="wp-block-friends-author-header">';
