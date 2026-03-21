@@ -1238,7 +1238,7 @@ class Frontend {
 		return Friends::template_loader()->get_template_part( 'frontend/index', $this->post_format, $args, false );
 	}
 
-	private function get_block_template_content_for( $template_path ) {
+	public function get_block_template_content_for( $template_path ) {
 		$map = array(
 			'frontend/index'         => 'index',
 			'frontend/author-index'  => 'friends-author-index',

@@ -125,18 +125,16 @@ class BlockThemeTest extends \WP_UnitTestCase {
 	 */
 	public function test_get_block_template_content_for() {
 		$frontend = $this->friends->frontend;
-		$method   = new \ReflectionMethod( $frontend, 'get_block_template_content_for' );
-		$method->setAccessible( true );
 
 		// Valid mappings should return content.
-		$this->assertNotFalse( $method->invoke( $frontend, 'frontend/index' ) );
-		$this->assertNotFalse( $method->invoke( $frontend, 'frontend/author-index' ) );
-		$this->assertNotFalse( $method->invoke( $frontend, 'frontend/single' ) );
-		$this->assertNotFalse( $method->invoke( $frontend, 'frontend/followers' ) );
-		$this->assertNotFalse( $method->invoke( $frontend, 'frontend/subscriptions' ) );
+		$this->assertNotFalse( $frontend->get_block_template_content_for( 'frontend/index' ) );
+		$this->assertNotFalse( $frontend->get_block_template_content_for( 'frontend/author-index' ) );
+		$this->assertNotFalse( $frontend->get_block_template_content_for( 'frontend/single' ) );
+		$this->assertNotFalse( $frontend->get_block_template_content_for( 'frontend/followers' ) );
+		$this->assertNotFalse( $frontend->get_block_template_content_for( 'frontend/subscriptions' ) );
 
 		// Unknown template should return false.
-		$this->assertFalse( $method->invoke( $frontend, 'frontend/nonexistent' ) );
+		$this->assertFalse( $frontend->get_block_template_content_for( 'frontend/nonexistent' ) );
 	}
 
 	/**
@@ -271,6 +269,16 @@ class BlockThemeTest extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'wp-block-friends-author-header', $output );
 		$this->assertStringContainsString( 'Author Header', $output );
+	}
+
+	/**
+	 * Test the starred friends list block renders empty when none starred.
+	 */
+	public function test_render_starred_friends_list_block_empty() {
+		$blocks = new Blocks();
+		$output = $blocks->render_starred_friends_list_block();
+
+		$this->assertEmpty( $output );
 	}
 
 	/**
