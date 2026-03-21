@@ -471,6 +471,12 @@ class Friends {
 			Migration::migrate_activitypub_attributed_to();
 			Migration::import_activitypub_followings();
 			Migration::link_activitypub_feeds_to_actors();
+			Migration::link_feeds_as_term_children();
+
+			// Show the welcome/update screen if this is an upgrade (not a fresh install).
+			if ( $previous_version ) {
+				update_option( 'friends_welcome_version', '4.0' );
+			}
 		}
 
 		update_option( 'friends_plugin_version', Friends::VERSION );

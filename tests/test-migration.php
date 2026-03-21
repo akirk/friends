@@ -1145,6 +1145,10 @@ class MigrationTest extends \WP_UnitTestCase {
 	public function test_link_feeds_as_term_children() {
 		add_filter( 'friends_pre_check_url', '__return_true' );
 
+		// Reset migration state in case it ran during plugin activation.
+		delete_option( 'friends_feeds_linked_as_term_children' );
+		delete_option( 'friends_feeds_term_children_in_progress' );
+
 		// Create a subscription.
 		$subscription = Subscription::create( 'old-sub', 'subscription', 'http://old-sub.local/' );
 		$this->assertNotWPError( $subscription );
