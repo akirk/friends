@@ -139,6 +139,13 @@ class Blocks {
 		);
 
 		register_block_type(
+			'friends/post-content',
+			array(
+				'render_callback' => array( $this, 'render_post_content_block' ),
+			)
+		);
+
+		register_block_type(
 			'friends/post-permalink',
 			array(
 				'render_callback' => array( $this, 'render_post_permalink_block' ),
@@ -614,6 +621,26 @@ class Blocks {
 
 		$out .= '</div>';
 		return $out;
+	}
+
+	/**
+	 * Render the friends/post-content block.
+	 *
+	 * Renders friend post content directly without block parsing.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_post_content_block() {
+		global $post;
+		if ( ! $post ) {
+			return '<div class="wp-block-friends-post-content"><p><em>' . esc_html__( 'Post content will appear here.', 'friends' ) . '</em></p></div>';
+		}
+
+		$content = get_the_content();
+		$content = wp_kses_post( $content );
+		$content = wpautop( $content );
+
+		return '<div class="wp-block-friends-post-content">' . $content . '</div>';
 	}
 
 	/**

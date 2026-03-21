@@ -10,6 +10,7 @@
 		{ name: 'friends/starred-friends-list', title: 'Starred Friends', icon: 'star-filled' },
 		{ name: 'friends/search', title: 'Friends Search', icon: 'search' },
 		{ name: 'friends/feed-header', title: 'Feed Header', icon: 'admin-site-alt3' },
+		{ name: 'friends/post-content', title: 'Friend Post Content', icon: 'text-page' },
 		{ name: 'friends/post-permalink', title: 'Post Permalink', icon: 'admin-links' },
 		{ name: 'friends/author-header', title: 'Author Header', icon: 'businessperson' },
 	];
