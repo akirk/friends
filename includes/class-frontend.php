@@ -453,13 +453,35 @@ class Frontend {
 			return $pre_render;
 		}
 
-		$file = FRIENDS_PLUGIN_DIR . 'themes/friends/parts/' . $attrs['slug'] . '.html';
-		if ( ! file_exists( $file ) ) {
-			return $pre_render;
+		// Check for user-customized version in the database first.
+		$custom_query = new \WP_Query(
+			array(
+				'post_type'      => 'wp_template_part',
+				'post_status'    => 'publish',
+				'post_name__in'  => array( $attrs['slug'] ),
+				'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+					array(
+						'taxonomy' => 'wp_theme',
+						'field'    => 'name',
+						'terms'    => 'friends',
+					),
+				),
+				'posts_per_page' => 1,
+				'no_found_rows'  => true,
+			)
+		);
+
+		if ( $custom_query->have_posts() ) {
+			$content = $custom_query->posts[0]->post_content;
+		} else {
+			$file = FRIENDS_PLUGIN_DIR . 'themes/friends/parts/' . $attrs['slug'] . '.html';
+			if ( ! file_exists( $file ) ) {
+				return $pre_render;
+			}
+			$content = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		}
 
-		$content = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
-		$tag     = isset( $attrs['tagName'] ) ? $attrs['tagName'] : 'div';
+		$tag = isset( $attrs['tagName'] ) ? $attrs['tagName'] : 'div';
 
 		return '<' . $tag . ' class="wp-block-template-part">' . do_blocks( $content ) . '</' . $tag . '>';
 	}

@@ -496,7 +496,7 @@ class Blocks {
 			return '';
 		}
 
-		$out  = '<h3>&#11088; ' . esc_html( _x( 'Starred', 'Starred Friends', 'friends' ) ) . '</h3>';
+		$out  = '<h3 class="wp-block-heading">&#11088; ' . esc_html( _x( 'Starred', 'Starred Friends', 'friends' ) ) . '</h3>';
 		$out .= '<ul class="wp-block-friends-starred-friends-list">';
 		foreach ( $starred->get_results() as $friend_user ) {
 			if ( Friends::has_required_privileges() ) {
