@@ -7,6 +7,10 @@
 		{ name: 'friends/refresh', title: 'Friend Posts Refresh', icon: 'update' },
 		{ name: 'friends/post-formats', title: 'Post Formats', icon: 'filter' },
 		{ name: 'friends/add-subscription', title: 'Add Subscription', icon: 'plus-alt' },
+		{ name: 'friends/search', title: 'Friends Search', icon: 'search' },
+		{ name: 'friends/feed-header', title: 'Feed Header', icon: 'admin-site-alt3' },
+		{ name: 'friends/post-entry', title: 'Friend Post Entry', icon: 'format-aside' },
+		{ name: 'friends/author-header', title: 'Author Header', icon: 'businessperson' },
 	];
 
 	sidebarBlocks.forEach( function ( block ) {

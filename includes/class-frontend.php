@@ -404,6 +404,10 @@ class Frontend {
 				'title'   => __( 'Friends Feed', 'friends' ),
 				'content' => 'index',
 			),
+			'friends//friends-author-index'  => array(
+				'title'   => __( 'Friends Author Feed', 'friends' ),
+				'content' => 'friends-author-index',
+			),
 			'friends//friends-followers'     => array(
 				'title'   => __( 'Friends Followers', 'friends' ),
 				'content' => 'friends-followers',
@@ -843,7 +847,7 @@ class Frontend {
 	 *
 	 * @return     float  The read time in seconds.
 	 */
-	private static function calculate_read_time( $original_text ) {
+	public static function calculate_read_time( $original_text ) {
 		// from wp_trim_words().
 		$text = wp_strip_all_tags( $original_text );
 
@@ -1182,11 +1186,13 @@ class Frontend {
 		}
 
 		if ( 'block' === $this->theme ) {
-			$block_template_content = $this->get_block_template_content_for( 'frontend/index' );
+			$template_key = $this->author ? 'frontend/author-index' : 'frontend/index';
+			$template_id  = $this->author ? 'friends-author-index' : 'friends-index';
+			$block_template_content = $this->get_block_template_content_for( $template_key );
 			if ( false !== $block_template_content ) {
 				global $_wp_current_template_content, $_wp_current_template_id;
 				$_wp_current_template_content = $block_template_content;
-				$_wp_current_template_id      = get_stylesheet() . '//friends-index';
+				$_wp_current_template_id      = get_stylesheet() . '//' . $template_id;
 				return ABSPATH . WPINC . '/template-canvas.php';
 			}
 		}
@@ -1204,6 +1210,7 @@ class Frontend {
 	private function get_block_template_content_for( $template_path ) {
 		$map = array(
 			'frontend/index'         => 'index',
+			'frontend/author-index'  => 'friends-author-index',
 			'frontend/followers'     => 'friends-followers',
 			'frontend/subscriptions' => 'friends-subscriptions',
 		);

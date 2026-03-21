@@ -116,6 +116,34 @@ class Blocks {
 				'render_callback' => array( $this, 'render_add_subscription_block' ),
 			)
 		);
+
+		register_block_type(
+			'friends/search',
+			array(
+				'render_callback' => array( $this, 'render_search_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/feed-header',
+			array(
+				'render_callback' => array( $this, 'render_feed_header_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/post-entry',
+			array(
+				'render_callback' => array( $this, 'render_post_entry_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/author-header',
+			array(
+				'render_callback' => array( $this, 'render_author_header_block' ),
+			)
+		);
 	}
 
 	/**
@@ -447,6 +475,280 @@ class Blocks {
 		$out .= '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend' ) ) . '">';
 		$out .= esc_html__( 'Add Subscription', 'friends' );
 		$out .= '</a></div>';
+		return $out;
+	}
+
+	/**
+	 * Render the friends/search block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_search_block() {
+		$search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$out  = '<div class="wp-block-friends-search">';
+		$out .= '<form action="' . esc_url( home_url( '/friends/' ) ) . '">';
+		$out .= '<input type="text" name="s" placeholder="' . esc_attr__( 'Search or paste URL', 'friends' ) . '" value="' . esc_attr( $search ) . '" autocomplete="off" data-nonce="' . esc_attr( wp_create_nonce( 'friends-autocomplete' ) ) . '" />';
+		$out .= ' <button type="submit">' . esc_html__( 'Search', 'friends' ) . '</button>';
+		$out .= '</form></div>';
+		return $out;
+	}
+
+	/**
+	 * Render the friends/feed-header block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_feed_header_block() {
+		$friends  = Friends::get_instance();
+		$frontend = $friends->frontend;
+		$data     = $friends->get_main_header_data();
+
+		$hidden_post_count = 0;
+		if ( isset( $data['post_count_by_post_status']->trash ) ) {
+			$hidden_post_count = $data['post_count_by_post_status']->trash;
+		}
+
+		// Determine feed title.
+		$title = __( 'Main Feed', 'friends' );
+		$format_titles = array(
+			'standard' => _x( 'Post feed', 'Post format', 'friends' ),
+			'aside'    => _x( 'Aside feed', 'Post format', 'friends' ),
+			'chat'     => _x( 'Chat feed', 'Post format', 'friends' ),
+			'gallery'  => _x( 'Gallery feed', 'Post format', 'friends' ),
+			'link'     => _x( 'Link feed', 'Post format', 'friends' ),
+			'image'    => _x( 'Image feed', 'Post format', 'friends' ),
+			'quote'    => _x( 'Quote feed', 'Post format', 'friends' ),
+			'status'   => _x( 'Status feed', 'Post format', 'friends' ),
+			'video'    => _x( 'Video feed', 'Post format', 'friends' ),
+			'audio'    => _x( 'Audio feed', 'Post format', 'friends' ),
+		);
+		if ( $frontend->post_format && isset( $format_titles[ $frontend->post_format ] ) ) {
+			$title = $format_titles[ $frontend->post_format ];
+		}
+
+		if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$title = sprintf(
+				// translators: %s is a search term.
+				__( 'Search for "%s"', 'friends' ),
+				esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			);
+		}
+
+		// Build display title with reaction/tag context.
+		$display_title = $title;
+		if ( $frontend->reaction ) {
+			$display_title = sprintf(
+				// translators: %1$s is an emoji reaction, %2$s is a type of feed.
+				__( 'My %1$s reactions on %2$s', 'friends' ),
+				$frontend->reaction,
+				$title
+			);
+		} elseif ( $frontend->tag ) {
+			$display_title = sprintf(
+				// translators: %1$s is a hash tag, %2$s is a type of feed.
+				_x( '#%1$s on %2$s', '#tag on feed', 'friends' ),
+				$frontend->tag,
+				$title
+			);
+		}
+
+		$out = '<div class="wp-block-friends-feed-header">';
+		$out .= '<h2><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $display_title ) . '</a></h2>';
+
+		// Post count chips.
+		$nonce = wp_create_nonce( 'friends_post_counts' );
+		foreach ( $data['post_count_by_post_format'] as $post_format => $count ) {
+			$out .= '<a class="chip post-count-' . esc_attr( $post_format ) . '" data-nonce="' . esc_attr( $nonce ) . '" href="' . esc_url( home_url( '/friends/type/' . $post_format . '/' ) ) . '">' . esc_html( $friends->get_post_format_plural_string( $post_format, $count ) ) . '</a> ';
+		}
+
+		// Hidden items chip.
+		if ( isset( $_GET['show-hidden'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$out .= '<a class="chip" href="' . esc_url( remove_query_arg( 'show-hidden' ) ) . '">' . esc_html__( 'Hide hidden items', 'friends' ) . '</a> ';
+		} elseif ( $hidden_post_count > 0 ) {
+			$out .= '<a class="chip" href="' . esc_url( add_query_arg( 'show-hidden', 1 ) ) . '">';
+			$out .= esc_html( sprintf( /* translators: %s is the number of hidden posts */ _n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) );
+			$out .= '</a> ';
+		}
+
+		// Reaction chips.
+		if ( class_exists( __NAMESPACE__ . '\Reactions' ) ) {
+			foreach ( Reactions::get_available_emojis() as $slug => $reaction ) {
+				$out .= '<a class="chip" href="' . esc_url( home_url( '/friends/reaction' . $slug . '/' ) ) . '">';
+				$out .= esc_html( sprintf( /* translators: %s is an emoji */ __( 'Reacted with %s', 'friends' ), $reaction->char ) );
+				$out .= '</a> ';
+			}
+		}
+
+		$out .= '</div>';
+		return $out;
+	}
+
+	/**
+	 * Render the friends/post-entry block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_post_entry_block() {
+		global $post;
+		if ( ! $post ) {
+			return '';
+		}
+
+		$friend_user = User::get_post_author( $post );
+		if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+			return '';
+		}
+
+		$author_name = $friend_user->display_name;
+		$override    = apply_filters( 'friends_override_author_name', '', $author_name, $post->ID );
+
+		$display_name = $author_name;
+		if ( $override && trim( str_replace( $override, '', $author_name ) ) === $author_name ) {
+			$display_name .= ' &ndash; ' . esc_html( $override );
+		}
+
+		$author_url = $friend_user->get_local_friends_page_url();
+		$guid       = get_the_guid( $post );
+		$domain     = wp_parse_url( $guid, PHP_URL_HOST );
+		$local_url  = $author_url . $post->ID . '/';
+
+		// Reading time.
+		$read_time_seconds = Frontend::calculate_read_time( get_the_content() );
+		$read_time         = '';
+		if ( $read_time_seconds >= 60 ) {
+			$mins = ceil( $read_time_seconds / MINUTE_IN_SECONDS );
+			/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
+			$read_time = sprintf( _n( '%s min', '%s mins', $mins ), $mins ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		} elseif ( $read_time_seconds > 20 ) {
+			$read_time = _x( '< 1 min', 'reading time', 'friends' );
+		}
+
+		$out = '<article class="wp-block-friends-post-entry">';
+
+		// Author line.
+		$out .= '<div class="post-entry-author">';
+		$out .= '<a href="' . esc_url( $author_url ) . '"><strong>' . esc_html( $display_name ) . '</strong></a>';
+		$out .= '</div>';
+
+		// Title.
+		$out .= '<h3 class="post-entry-title"><a href="' . esc_url( $guid ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( get_the_title() ) . '</a></h3>';
+
+		// Content.
+		$out .= '<div class="post-entry-content">' . apply_filters( 'the_content', get_the_content() ) . '</div>';
+
+		// Permalink section.
+		/* translators: %s is a time span */
+		$time_ago = sprintf( __( '%s ago' ), human_time_diff( get_post_time( 'U', true ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		$out     .= '<div class="post-entry-permalink">';
+		$out     .= sprintf(
+			// translators: %1$s is a date or relative time, %2$s is a site name or domain.
+			_x( '%1$s on %2$s', 'at-date-on-post', 'friends' ),
+			'<a href="' . esc_url( $local_url ) . '" title="' . esc_attr( get_the_time( 'r' ) ) . '">' . esc_html( $time_ago ) . '</a>',
+			'<a href="' . esc_url( $guid ) . '" rel="noopener noreferrer" target="_blank">' . esc_html( $domain ) . '</a>'
+		);
+		if ( $read_time ) {
+			$out .= ' <span class="reading-time" title="' . esc_attr__( 'Estimated reading time', 'friends' ) . '">';
+			$out .= esc_html( sprintf( /* translators: %s is a timeframe */ __( '%s read', 'friends' ), $read_time ) );
+			$out .= '</span>';
+		}
+		$out .= '</div>';
+
+		$out .= '</article>';
+		return $out;
+	}
+
+	/**
+	 * Render the friends/author-header block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_author_header_block() {
+		$friends  = Friends::get_instance();
+		$frontend = $friends->frontend;
+		$author   = $frontend->author;
+
+		if ( ! $author ) {
+			return '';
+		}
+
+		$out = '<div class="wp-block-friends-author-header">';
+
+		// Avatar + name.
+		$avatar_url = $author->get_avatar_url();
+		$out       .= '<h2>';
+		if ( $avatar_url ) {
+			$out .= '<img src="' . esc_url( $avatar_url ) . '" width="36" height="36" class="avatar" /> ';
+		}
+		$out .= esc_html( $author->display_name );
+		$out .= '</h2>';
+
+		// Description.
+		if ( $author->description ) {
+			$out .= '<p>' . wp_kses( $author->description, array( 'a' => array( 'href' => array() ) ) ) . '</p>';
+		}
+
+		// Chips.
+		$out .= '<div class="author-header-chips">';
+
+		// Role chip.
+		$out .= '<span class="chip">' . esc_html( $author->get_role_name() ) . '</span> ';
+
+		// Since chip.
+		$out .= '<span class="chip">' . esc_html( sprintf( /* translators: %s is a date */ __( 'Since %s', 'friends' ), date_i18n( __( 'F j, Y' ), strtotime( $author->user_registered ) ) ) ) . '</span> '; // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+
+		// User URL chip.
+		if ( $author->user_url ) {
+			$domain = wp_parse_url( $author->user_url, PHP_URL_HOST );
+			if ( $domain ) {
+				$domain = preg_replace( '/^www\./', '', $domain );
+				$out   .= '<a class="chip" href="' . esc_url( $author->user_url ) . '">' . esc_html( $domain ) . '</a> ';
+			}
+		}
+
+		// Post count chips.
+		$post_counts = $author->get_post_count_by_post_format();
+		foreach ( $post_counts as $post_format => $count ) {
+			$out .= '<a class="chip" href="' . esc_url( $author->get_local_friends_page_url() . 'type/' . $post_format . '/' ) . '">' . esc_html( $friends->get_post_format_plural_string( $post_format, $count ) ) . '</a> ';
+		}
+
+		// Hidden items chip.
+		$hidden_post_count = $author->get_post_in_trash_count();
+		if ( $hidden_post_count > 0 ) {
+			$out .= '<span class="chip">';
+			$out .= esc_html( sprintf( /* translators: %s is the number of hidden posts */ _n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) );
+			$out .= '</span> ';
+		}
+
+		// Reaction chips.
+		if ( class_exists( __NAMESPACE__ . '\Reactions' ) ) {
+			foreach ( Reactions::get_available_emojis() as $slug => $reaction ) {
+				$out .= '<a class="chip" href="' . esc_url( $author->get_local_friends_page_url() . 'reaction' . $slug . '/' ) . '">';
+				$out .= esc_html( sprintf( /* translators: %s is an emoji */ __( 'Reacted with %s', 'friends' ), $reaction->char ) );
+				$out .= '</a> ';
+			}
+		}
+
+		// Feed count chip.
+		$active_feeds = count( $author->get_active_feeds() );
+		$total_feeds  = count( $author->get_feeds() );
+		if ( $active_feeds > 0 ) {
+			$out .= '<a class="chip" href="' . esc_url( admin_url( 'admin.php?page=edit-friend-feeds&user=' . $author->user_login ) ) . '">';
+			$out .= esc_html( sprintf( /* translators: %s is the number of feeds */ _n( '%s feed', '%s feeds', $active_feeds, 'friends' ), $active_feeds ) );
+			if ( $total_feeds > $active_feeds ) {
+				$extra = $total_feeds - $active_feeds;
+				$out  .= '&nbsp;<small>(+' . esc_html( $extra ) . ' ' . esc_html__( 'more', 'friends' ) . ')</small>';
+			}
+			$out .= '</a> ';
+		}
+
+		// Edit chip.
+		$out .= '<a class="chip" href="' . esc_url( admin_url( 'admin.php?page=edit-friend&user=' . $author->user_login ) ) . '">' . esc_html__( 'Edit', 'friends' ) . '</a> ';
+
+		// Refresh chip.
+		$out .= '<a class="chip" href="' . esc_url( wp_nonce_url( admin_url( 'admin.php?page=friends-refresh&user=' . $author->user_login ), 'friends-refresh' ) ) . '">' . esc_html__( 'Refresh', 'friends' ) . '</a> ';
+
+		$out .= '</div>';
+		$out .= '</div>';
 		return $out;
 	}
 
