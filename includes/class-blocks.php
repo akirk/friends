@@ -707,9 +707,15 @@ class Blocks {
 
 		$out = '<div class="wp-block-friends-author-header">';
 
-		// Avatar + name.
+		// Avatar + name + star.
 		$avatar_url = $author->get_avatar_url();
-		$out       .= '<h2>';
+		$out       .= '<h2 id="page-title">';
+
+		$starred     = $author->is_starred();
+		$star_class  = $starred ? 'dashicons-star-filled starred' : 'dashicons-star-empty not-starred';
+		$star_nonce  = wp_create_nonce( 'star-' . $author->user_login );
+		$out        .= '<a href="" class="dashicons ' . esc_attr( $star_class ) . '" data-id="' . esc_attr( $author->user_login ) . '" data-nonce="' . esc_attr( $star_nonce ) . '"></a> ';
+
 		if ( $avatar_url ) {
 			$out .= '<img src="' . esc_url( $avatar_url ) . '" width="36" height="36" class="avatar" /> ';
 		}
