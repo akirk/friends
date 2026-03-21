@@ -18,11 +18,6 @@
 			"title": "Header"
 		},
 		{
-			"area": "footer",
-			"name": "footer",
-			"title": "Footer"
-		},
-		{
 			"area": "uncategorized",
 			"name": "sidebar",
 			"title": "Sidebar"
