@@ -1186,8 +1186,17 @@ class Frontend {
 		}
 
 		if ( 'block' === $this->theme ) {
-			$template_key = $this->author ? 'frontend/author-index' : 'frontend/index';
-			$template_id  = $this->author ? 'friends-author-index' : 'friends-index';
+			global $wp_query;
+			if ( $wp_query->is_single ) {
+				$template_key = 'frontend/single';
+				$template_id  = 'friends-single';
+			} elseif ( $this->author ) {
+				$template_key = 'frontend/author-index';
+				$template_id  = 'friends-author-index';
+			} else {
+				$template_key = 'frontend/index';
+				$template_id  = 'friends-index';
+			}
 			$block_template_content = $this->get_block_template_content_for( $template_key );
 			if ( false !== $block_template_content ) {
 				global $_wp_current_template_content, $_wp_current_template_id;
@@ -1211,6 +1220,7 @@ class Frontend {
 		$map = array(
 			'frontend/index'         => 'index',
 			'frontend/author-index'  => 'friends-author-index',
+			'frontend/single'        => 'single-friend_post_cache',
 			'frontend/followers'     => 'friends-followers',
 			'frontend/subscriptions' => 'friends-subscriptions',
 		);
