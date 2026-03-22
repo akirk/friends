@@ -123,7 +123,9 @@ class Frontend {
 		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_load_theme_block', array( $this, 'block_theme' ) );
+		add_action( 'friends_load_theme_google-reader', array( $this, 'google_reader_theme' ) );
 		add_action( 'friends_load_themes', array( $this, 'register_block_theme' ) );
+		add_action( 'friends_load_themes', array( $this, 'register_google_reader_theme' ) );
 		add_action( 'init', array( $this, 'register_block_templates' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -382,6 +384,24 @@ class Frontend {
 		}
 
 		return $classes;
+	}
+
+	public function register_google_reader_theme( Frontend $friends_frontend ) {
+		$friends_frontend->register_theme( __( 'Google Reader', 'friends' ), 'google-reader' );
+	}
+
+	public function google_reader_theme() {
+		$handle  = 'friends-google-reader';
+		$file    = 'google-reader.css';
+		$version = Friends::VERSION;
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+
+		add_filter(
+			'friends_template_paths_theme_google-reader',
+			function () {
+				return array( FRIENDS_PLUGIN_DIR . 'templates/google-reader/' );
+			}
+		);
 	}
 
 	public function register_block_theme( Frontend $friends_frontend ) {

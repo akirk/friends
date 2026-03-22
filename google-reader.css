@@ -1,0 +1,436 @@
+/* Friends Google Reader Theme */
+
+.friends-page {
+	font-family: Arial, sans-serif;
+	font-size: 13px;
+	color: #333;
+	background: #fff;
+	line-height: 1.4;
+	min-height: 100vh;
+}
+
+.friends-page a {
+	color: #2200c1;
+	text-decoration: none;
+}
+
+.friends-page a:hover {
+	text-decoration: underline;
+}
+
+.friends-page a:visited {
+	color: #551a8b;
+}
+
+/* Sidebar */
+.friends-page .off-canvas-sidebar {
+	background: #fff;
+	border-right: 1px solid #ddd;
+	width: 14rem;
+	margin-top: 32px;
+	padding: 10px 0;
+	font-size: 13px;
+}
+
+.friends-page .off-canvas-sidebar h1 {
+	font-size: 20px;
+	font-weight: bold;
+	color: #c00;
+	padding: 8px 15px;
+	margin: 0;
+}
+
+.friends-page .off-canvas-sidebar h1 a {
+	color: #c00;
+}
+
+.friends-page .off-canvas-sidebar .accordion-header {
+	padding: 4px 15px;
+	font-size: 12px;
+	color: #666;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.friends-page .off-canvas-sidebar .accordion {
+	border: none;
+}
+
+.friends-page .off-canvas-sidebar .menu-nav {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .off-canvas-sidebar .menu-item a {
+	display: block;
+	padding: 3px 15px 3px 25px;
+	color: #333;
+	font-size: 13px;
+	line-height: 1.6;
+	text-decoration: none;
+}
+
+.friends-page .off-canvas-sidebar .menu-item a:hover {
+	background: #ddeeff;
+	text-decoration: none;
+}
+
+.friends-page .off-canvas-sidebar .friend-stats .menu-item a {
+	padding-left: 25px;
+}
+
+/* Main content */
+.friends-page .off-canvas-content {
+	background: #fff;
+	margin-top: 32px;
+	padding: 0 15px;
+}
+
+/* Header bar */
+.friends-page .off-canvas-content header.navbar {
+	background: #c1d5f0;
+	border-bottom: 1px solid #9fb8de;
+	padding: 4px 10px;
+	margin: 0 -15px 0;
+}
+
+.friends-page .off-canvas-content header.navbar h2#page-title {
+	font-size: 18px;
+	font-weight: normal;
+	color: #333;
+	margin: 0;
+}
+
+.friends-page .off-canvas-content header.navbar h2#page-title a {
+	color: #333;
+}
+
+/* Chips as Google Reader-style tags */
+.friends-page .chip {
+	display: inline-block;
+	background: #e8eef7;
+	border: 1px solid #c1d5f0;
+	border-radius: 2px;
+	padding: 1px 6px;
+	margin: 2px 2px;
+	font-size: 11px;
+	color: #2200c1;
+	text-decoration: none;
+	line-height: 1.6;
+}
+
+.friends-page .chip:hover {
+	background: #d0dff2;
+	text-decoration: none;
+}
+
+.friends-page span.chip {
+	color: #666;
+}
+
+/* Search */
+.friends-page .search input {
+	border: 1px solid #bbb;
+	border-radius: 1px;
+	padding: 4px 8px;
+	font-size: 13px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.friends-page .search .btn {
+	background: #ddd;
+	border: 1px solid #bbb;
+	padding: 4px 12px;
+	font-size: 12px;
+	cursor: pointer;
+	border-radius: 1px;
+}
+
+/* Posts list */
+.friends-page .posts {
+	padding: 0;
+}
+
+.friends-page .posts article.card {
+	border: none;
+	border-bottom: 1px solid #e5e5e5;
+	border-radius: 0;
+	padding: 8px 0;
+	margin: 0;
+	box-shadow: none;
+	background: transparent;
+}
+
+.friends-page .posts article.card:hover {
+	background: #f8f8f8;
+}
+
+/* Post header */
+.friends-page .posts .card-header {
+	padding: 0;
+}
+
+.friends-page .posts .card-header .post-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px;
+}
+
+.friends-page .posts .card-header .author a {
+	color: #2200c1;
+	font-weight: bold;
+	font-size: 13px;
+}
+
+.friends-page .posts .card-header .permalink {
+	font-size: 11px;
+	color: #999;
+}
+
+.friends-page .posts .card-header .permalink a {
+	color: #999;
+}
+
+.friends-page .posts .card-header .reading-time {
+	color: #999;
+	font-size: 11px;
+}
+
+/* Post title */
+.friends-page .posts .card-title a {
+	color: #2200c1;
+	font-size: 14px;
+	font-weight: normal;
+}
+
+.friends-page .posts .card-title a:visited {
+	color: #551a8b;
+}
+
+/* Post content */
+.friends-page .posts .card-body {
+	padding: 4px 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: #333;
+}
+
+.friends-page .posts .card-body img {
+	max-width: 100%;
+	height: auto;
+}
+
+/* Post footer - action buttons */
+.friends-page .posts .card-footer {
+	padding: 4px 0;
+	border-top: none;
+}
+
+.friends-page .posts .card-footer .btn-link {
+	color: #2200c1;
+	font-size: 11px;
+	text-decoration: none;
+	padding: 2px 6px;
+	background: none;
+	border: none;
+}
+
+.friends-page .posts .card-footer .btn-link:hover {
+	text-decoration: underline;
+}
+
+.friends-page .posts .card-footer button.friends-reaction,
+.friends-page .posts .card-footer button.friends-reaction-picker {
+	background: none;
+	border: 1px solid #ddd;
+	border-radius: 2px;
+	padding: 1px 6px;
+	font-size: 12px;
+	cursor: pointer;
+	margin-right: 3px;
+}
+
+.friends-page .posts .card-footer button.friends-reaction:hover,
+.friends-page .posts .card-footer button.friends-reaction-picker:hover {
+	background: #e8eef7;
+}
+
+.friends-page .posts .card-footer button.friends-reaction.pressed {
+	background: #d0dff2;
+	border-color: #9fb8de;
+}
+
+/* Comments section */
+.friends-page .comments-content {
+	padding: 8px 0 8px 20px;
+	border-left: 3px solid #c1d5f0;
+	margin: 4px 0;
+	font-size: 13px;
+}
+
+.friends-page .comments-content h5 {
+	font-size: 12px;
+	color: #666;
+	margin: 0 0 8px;
+}
+
+.friends-page .comments-content .comment-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .comments-content .comment {
+	padding: 4px 0;
+	border-bottom: 1px solid #eee;
+}
+
+/* Star icon */
+.friends-page h2#page-title a.dashicons {
+	color: #e8a400;
+	font-size: 16px;
+	vertical-align: baseline;
+}
+
+/* Avatar in posts */
+.friends-page .posts .avatar {
+	border-radius: 2px;
+}
+
+/* Collapsed/expanded */
+.friends-page .posts.all-collapsed .card-body,
+.friends-page .posts.all-collapsed .entry-content {
+	display: none;
+}
+
+/* Pagination */
+.friends-page .navigation {
+	padding: 10px 0;
+	font-size: 12px;
+}
+
+.friends-page .navigation a {
+	color: #2200c1;
+}
+
+/* Author header */
+.friends-page #main-header,
+.friends-page .author-header {
+	background: #c1d5f0;
+	border-bottom: 1px solid #9fb8de;
+	padding: 8px 10px;
+	margin: 0 -15px 10px;
+}
+
+.friends-page .author-header h2 {
+	font-size: 18px;
+	font-weight: normal;
+	margin: 0 0 4px;
+}
+
+.friends-page .author-header .description {
+	font-size: 12px;
+	color: #555;
+	margin: 0 0 4px;
+}
+
+/* Toggle compact */
+.friends-page .toggle-compact {
+	background: #f0f0f0;
+	border: 1px solid #ccc;
+	cursor: pointer;
+}
+
+/* Off-canvas toggle for mobile */
+.friends-page .off-canvas-toggle {
+	color: #c00;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+	.friends-page {
+		background: #1a1a1a;
+		color: #ddd;
+	}
+
+	.friends-page a {
+		color: #8ab4f8;
+	}
+
+	.friends-page a:visited {
+		color: #c58af9;
+	}
+
+	.friends-page .off-canvas-sidebar {
+		background: #222;
+		border-right-color: #444;
+	}
+
+	.friends-page .off-canvas-sidebar h1,
+	.friends-page .off-canvas-sidebar h1 a {
+		color: #ea4335;
+	}
+
+	.friends-page .off-canvas-sidebar .menu-item a {
+		color: #ddd;
+	}
+
+	.friends-page .off-canvas-sidebar .menu-item a:hover {
+		background: #333;
+	}
+
+	.friends-page .off-canvas-content header.navbar {
+		background: #2d3748;
+		border-bottom-color: #4a5568;
+	}
+
+	.friends-page .chip {
+		background: #2d3748;
+		border-color: #4a5568;
+		color: #8ab4f8;
+	}
+
+	.friends-page span.chip {
+		color: #999;
+	}
+
+	.friends-page .posts article.card {
+		border-bottom-color: #333;
+	}
+
+	.friends-page .posts article.card:hover {
+		background: #222;
+	}
+
+	.friends-page .posts .card-header .permalink,
+	.friends-page .posts .card-header .permalink a,
+	.friends-page .posts .card-header .reading-time {
+		color: #777;
+	}
+
+	.friends-page .posts .card-footer button.friends-reaction,
+	.friends-page .posts .card-footer button.friends-reaction-picker {
+		border-color: #444;
+		color: #ddd;
+	}
+
+	.friends-page .comments-content {
+		border-left-color: #4a5568;
+	}
+
+	.friends-page #main-header,
+	.friends-page .author-header {
+		background: #2d3748;
+		border-bottom-color: #4a5568;
+	}
+
+	.friends-page .search input {
+		background: #333;
+		border-color: #555;
+		color: #ddd;
+	}
+}
