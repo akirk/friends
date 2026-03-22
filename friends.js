@@ -622,7 +622,7 @@
 		return false;
 	} );
 
-	$document.on( 'mouseenter', 'h2#page-title a.dashicons', function () {
+	$document.on( 'mouseenter', 'h2#page-title a.dashicons, a.wp-block-friends-author-star.dashicons', function () {
 		if ( $( this ).hasClass( 'not-starred' ) ) {
 			if ( $( this ).hasClass( 'dashicons-star-empty' ) ) {
 				$( this )
@@ -638,7 +638,7 @@
 		}
 	} );
 
-	$document.on( 'mouseleave', 'h2#page-title a.dashicons', function () {
+	$document.on( 'mouseleave', 'h2#page-title a.dashicons, a.wp-block-friends-author-star.dashicons', function () {
 		if ( $( this ).hasClass( 'not-starred' ) ) {
 			if ( $( this ).hasClass( 'dashicons-star-filled' ) ) {
 				$( this )
@@ -656,7 +656,7 @@
 
 	$document.on(
 		'click',
-		'h2#page-title a.dashicons.starred, h2#page-title a.dashicons.not-starred',
+		'h2#page-title a.dashicons.starred, h2#page-title a.dashicons.not-starred, a.wp-block-friends-author-star.starred, a.wp-block-friends-author-star.not-starred',
 		function () {
 			let removeClass = 'dashicons-star-filled starred';
 			let addClass = 'dashicons-star-empty not-starred';
