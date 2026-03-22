@@ -143,14 +143,6 @@ class Blocks {
 		);
 
 		register_block_type(
-			'friends/starred-friends-list',
-			array(
-				'render_callback' => array( $this, 'render_starred_friends_list_block' ),
-				'supports'        => $list_supports,
-			)
-		);
-
-		register_block_type(
 			'friends/search',
 			array(
 				'render_callback' => array( $this, 'render_search_block' ),
@@ -584,33 +576,6 @@ class Blocks {
 	}
 
 	/**
-	 * Render the friends/starred-friends-list block.
-	 *
-	 * @param array $attributes Block attributes.
-	 * @return string The rendered block HTML.
-	 */
-	public function render_starred_friends_list_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
-		$starred = User_Query::starred_friends_subscriptions();
-		if ( ! $starred->get_total() ) {
-			return '';
-		}
-
-		$out = '<ul ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-starred-friends-list' ) ) . '>';
-		foreach ( $starred->get_results() as $friend_user ) {
-			if ( Friends::has_required_privileges() ) {
-				$url = $friend_user->get_local_friends_page_url();
-			} else {
-				$url = $friend_user->user_url;
-			}
-
-			$out .= '<li><a href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
-		}
-		$out .= '</ul>';
-
-		return $out;
-	}
-
-	/**
 	 * Render the friends/search block.
 	 *
 	 * @return string The rendered block HTML.
@@ -979,9 +944,13 @@ class Blocks {
 	 */
 	public function render_friends_list_block( $attributes ) {
 		if ( ! isset( $attributes['user_types'] ) ) {
-			$attributes['user_types'] = 'friends';
+			$attributes['user_types'] = 'subscriptions';
 		}
 		switch ( $attributes['user_types'] ) {
+			case 'starred':
+				$friends  = User_Query::starred_friends_subscriptions();
+				$no_users = '';
+				break;
 			default:
 			case 'subscriptions':
 				$friends  = User_Query::all_subscriptions();
@@ -990,19 +959,22 @@ class Blocks {
 		}
 
 		if ( $friends->get_total() === 0 ) {
-			return '<span class="wp-block-friends-friends-list no-users">' . $no_users . '</span>';
+			if ( ! $no_users ) {
+				return '';
+			}
+			return '<span ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . $no_users . '</span>';
 		}
 
-		if ( $attributes['users_inline'] ) {
+		if ( ! empty( $attributes['users_inline'] ) ) {
 			$out   = '';
 			$first = true;
 		} else {
-			$out = '<ul>';
+			$out = '<ul ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list' ) ) . '>';
 		}
 		$count = 0;
 		foreach ( $friends->get_results() as $friend_user ) {
 			++$count;
-			if ( $attributes['users_inline'] ) {
+			if ( ! empty( $attributes['users_inline'] ) ) {
 				if ( ! $first ) {
 					$out .= ', ';
 				}
@@ -1011,22 +983,22 @@ class Blocks {
 				$out .= '<li>';
 			}
 
-			if ( friends::has_required_privileges() ) {
+			if ( Friends::has_required_privileges() ) {
 				$url = $friend_user->get_local_friends_page_url();
 			} else {
 				$url = $friend_user->user_url;
 			}
 
 			$out .= sprintf(
-				'<a class="wp-block-friends-friends-list wp-user" href="%1$s">%2$s</a></li>',
+				'<a class="wp-user" href="%1$s">%2$s</a>',
 				esc_url( $url ),
 				esc_html( $friend_user->display_name )
 			);
-			if ( ! $attributes['users_inline'] ) {
+			if ( empty( $attributes['users_inline'] ) ) {
 				$out .= '</li>';
 			}
 		}
-		if ( ! $attributes['users_inline'] ) {
+		if ( empty( $attributes['users_inline'] ) ) {
 			$out .= '</ul>';
 		}
 

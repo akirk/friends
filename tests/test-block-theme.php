@@ -57,7 +57,6 @@ class BlockThemeTest extends \WP_UnitTestCase {
 			'friends/refresh',
 			'friends/post-formats',
 			'friends/add-subscription',
-			'friends/starred-friends-list',
 			'friends/search',
 			'friends/feed-title',
 			'friends/feed-chips',
@@ -298,17 +297,17 @@ class BlockThemeTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test the starred friends list block renders correctly.
+	 * Test the friends list block renders starred users.
 	 */
-	public function test_render_starred_friends_list_block() {
+	public function test_render_friends_list_block_starred() {
 		$blocks  = new Blocks();
-		$output  = $blocks->render_starred_friends_list_block();
+		$output  = $blocks->render_friends_list_block( array( 'user_types' => 'starred' ) );
 		$starred = User_Query::starred_friends_subscriptions();
 
 		if ( $starred->get_total() === 0 ) {
 			$this->assertEmpty( $output );
 		} else {
-			$this->assertStringContainsString( 'wp-block-friends-starred-friends-list', $output );
+			$this->assertStringContainsString( 'wp-block-friends-friends-list', $output );
 		}
 	}
 
@@ -361,7 +360,7 @@ class BlockThemeTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'wp:friends/stats', $sidebar );
 		$this->assertStringContainsString( 'wp:friends/refresh', $sidebar );
 		$this->assertStringContainsString( 'wp:friends/post-formats', $sidebar );
-		$this->assertStringContainsString( 'wp:friends/starred-friends-list', $sidebar );
+		$this->assertStringContainsString( '"user_types":"starred"', $sidebar );
 		$this->assertStringContainsString( 'wp:friends/friends-list', $sidebar );
 		$this->assertStringContainsString( 'wp:friends/add-subscription', $sidebar );
 	}

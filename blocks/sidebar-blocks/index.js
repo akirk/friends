@@ -24,7 +24,6 @@
 		{ name: 'friends/refresh', title: 'Friend Posts Refresh', icon: 'update', supports: listSupports },
 		{ name: 'friends/post-formats', title: 'Post Formats', icon: 'filter', supports: listSupports },
 		{ name: 'friends/add-subscription', title: 'Add Subscription', icon: 'plus-alt', supports: listSupports },
-		{ name: 'friends/starred-friends-list', title: 'Starred Friends', icon: 'star-filled', supports: listSupports },
 		{ name: 'friends/search', title: 'Friends Search', icon: 'search' },
 		{ name: 'friends/feed-title', title: 'Feed Title', icon: 'admin-site-alt3', supports: headingSupports },
 		{ name: 'friends/feed-chips', title: 'Feed Chips', icon: 'tag', supports: chipSupports },
