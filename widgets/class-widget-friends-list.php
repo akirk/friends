@@ -45,15 +45,45 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 			$widget_id = $args['widget_id'];
 		}
 
-		if ( 0 !== $subscriptions->get_total() ) {
-			echo $args['before_widget'];
-			$this->list_friends(
-				array_merge(
-					array(
-						'widget_id' => $widget_id . '-subscriptions',
+		if ( 0 === $subscriptions->get_total() ) {
+			do_action( 'friends_widget_friend_list_after', $this, $args );
+			return;
+		}
+
+		echo $args['before_widget'];
+
+		$folders = Subscription::get_folders();
+
+		if ( ! empty( $folders ) ) {
+			// Show folders with their subscriptions.
+			foreach ( $folders as $folder ) {
+				$folder_subs = User_Query::subscriptions_in_folder( $folder->term_id );
+				if ( $folder_subs->get_total() > 0 ) {
+					$this->list_friends(
+						array_merge( array( 'widget_id' => $widget_id . '-folder-' . $folder->term_id ), $args ),
+						'&#128193; ' . esc_html( $folder->name ) . ' <span class="subscription-count">' . $folder_subs->get_total() . '</span>',
+						$folder_subs
+					);
+				}
+			}
+
+			// Show unfoldered subscriptions.
+			$unfoldered = User_Query::unfoldered_subscriptions();
+			if ( $unfoldered->get_total() > 0 ) {
+				$this->list_friends(
+					array_merge( array( 'widget_id' => $widget_id . '-subscriptions' ), $args ),
+					'<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
+						// translators: %s is the number of subscriptions.
+						_n( 'Subscription %s', 'Subscriptions %s', $unfoldered->get_total(), 'friends' ),
+						'<span class="subscription-count">' . $unfoldered->get_total() . '</span>'
 					),
-					$args
-				),
+					$unfoldered
+				);
+			}
+		} else {
+			// No folders, show flat list.
+			$this->list_friends(
+				array_merge( array( 'widget_id' => $widget_id . '-subscriptions' ), $args ),
 				'<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
 					// translators: %s is the number of subscriptions.
 					_n( 'Subscription %s', 'Subscriptions %s', $subscriptions->get_total(), 'friends' ),
@@ -61,8 +91,9 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 				),
 				$subscriptions
 			);
-			echo $args['after_widget'];
 		}
+
+		echo $args['after_widget'];
 
 		do_action( 'friends_widget_friend_list_after', $this, $args );
 	}

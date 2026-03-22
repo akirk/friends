@@ -42,7 +42,7 @@ abstract class Widget_Base_Friends_List extends \WP_Widget {
 	 * @param string         $title            The list title.
 	 * @param \WP_User_Query $friends The friends to list.
 	 */
-	public function list_friends( $args, $title, \WP_User_Query $friends ) {
+	public function list_friends( $args, $title, $friends ) {
 		$open = true;
 		$widget_id = '';
 		if ( ! empty( $args['widget_id'] ) ) {
