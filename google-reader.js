@@ -114,11 +114,28 @@
 		}
 	} );
 
-	// Click on an item to make it current.
-	$( document ).on( 'click', 'section.posts article.card', function() {
+	// Click on an item: collapse all others, expand this one.
+	$( document ).on( 'click', 'section.posts.all-collapsed article.card', function( e ) {
+		// Don't intercept clicks on links, buttons, inputs.
+		if ( $( e.target ).closest( 'a:not(.collapse-post), button, input, textarea, form, label, .friends-dropdown' ).length ) {
+			return;
+		}
+
 		var items = getItems();
-		currentIndex = items.index( this );
+		var index = items.index( this );
+
+		// Collapse all others.
+		items.not( this ).removeClass( 'uncollapsed' );
+
+		// Toggle this one.
+		$( this ).toggleClass( 'uncollapsed' );
+
+		// Track current.
+		currentIndex = index;
 		items.removeClass( 'gr-current' );
 		$( this ).addClass( 'gr-current' );
+
+		e.stopPropagation();
+		return false;
 	} );
 } )( jQuery );
