@@ -183,34 +183,40 @@ class User_Query extends \WP_User_Query {
 	 * @return User_Query The matching subscriptions.
 	 */
 	public static function subscriptions_in_folder( $folder_term_id ) {
-		$all    = self::all_subscriptions();
-		$result = new self( array( 'number' => 0 ) );
+		$all = self::all_subscriptions();
+
+		$results     = array();
+		$total_users = 0;
 		foreach ( $all->get_results() as $subscription ) {
 			if ( $subscription instanceof Subscription && $subscription->get_folder() ) {
 				if ( $subscription->get_folder()->term_id === $folder_term_id ) {
-					$result->results[ $subscription->get_term_id() ] = $subscription;
-					++$result->total_users;
+					$results[ $subscription->get_term_id() ] = $subscription;
+					++$total_users;
 				}
 			}
 		}
-		return $result;
+
+		return new User_Query_Result( $results, $total_users );
 	}
 
 	/**
 	 * Gets subscriptions not in any folder (at root level).
 	 *
-	 * @return User_Query The matching subscriptions.
+	 * @return User_Query_Result The matching subscriptions.
 	 */
 	public static function unfoldered_subscriptions() {
-		$all    = self::all_subscriptions();
-		$result = new self( array( 'number' => 0 ) );
+		$all = self::all_subscriptions();
+
+		$results     = array();
+		$total_users = 0;
 		foreach ( $all->get_results() as $subscription ) {
 			if ( $subscription instanceof Subscription && ! $subscription->get_folder() ) {
-				$result->results[ $subscription->get_term_id() ] = $subscription;
-				++$result->total_users;
+				$results[ $subscription->get_term_id() ] = $subscription;
+				++$total_users;
 			}
 		}
-		return $result;
+
+		return new User_Query_Result( $results, $total_users );
 	}
 
 	/**

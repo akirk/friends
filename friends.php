@@ -33,6 +33,7 @@ require_once __DIR__ . '/libs/Mf2/Parser.php';
 require_once __DIR__ . '/includes/class-user.php';
 require_once __DIR__ . '/includes/class-user-feed.php';
 require_once __DIR__ . '/includes/class-user-query.php';
+require_once __DIR__ . '/includes/class-user-query-result.php';
 require_once __DIR__ . '/includes/class-subscription.php';
 
 // Classes to be implemented or used by parser plugins.
