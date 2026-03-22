@@ -322,16 +322,19 @@
 /* === Posts === */
 .friends-page section.posts {
 	padding: 0 16px;
+	margin-top: 4px;
+	border-top: 1px solid #e5e5e5;
 }
 
 .friends-page .posts article.card {
 	border: none;
 	border-bottom: 1px solid #e5e5e5;
 	border-radius: 0;
-	padding: 10px 0;
+	padding: 5px 0;
 	margin: 0;
 	background: transparent;
 	box-shadow: none;
+	line-height: 1.6;
 }
 
 /* Post header */
@@ -540,6 +543,30 @@
 
 .friends-page .posts article.card.collapsed .card-header {
 	cursor: pointer;
+}
+
+/* Hide reblog/boost metadata in collapsed mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblog-info,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblogged-by,
+.friends-page .posts article.card.collapsed .reblog-info,
+.friends-page .posts article.card.collapsed .reblogged-by {
+	display: none;
+}
+
+/* Sidebar description */
+.friends-page .off-canvas-sidebar .description,
+.friends-page .off-canvas-sidebar p {
+	font-size: 11px;
+	color: #999;
+	padding: 0 16px;
+	margin: 0 0 8px;
+	line-height: 1.4;
+}
+
+/* Author separator in compact mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author::after {
+	content: ' — ';
+	color: #999;
 }
 
 /* Current item highlight (keyboard navigation) */
