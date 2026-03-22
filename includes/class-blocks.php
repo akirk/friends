@@ -1226,10 +1226,10 @@ class Blocks {
 		$folders = Subscription::get_folders();
 
 		if ( $all->get_total() === 0 ) {
-			return '<span ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . esc_html__( "You don't have any subscriptions yet.", 'friends' ) . '</span>';
+			return '<span ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . esc_html__( "You don't have any subscriptions yet.", 'friends' ) . '</span>';
 		}
 
-		$out = '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list folders' ) ) . '>';
+		$out = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list folders' ) ) . '>';
 
 		// Render each folder as a collapsible details element.
 		foreach ( $folders as $folder ) {
