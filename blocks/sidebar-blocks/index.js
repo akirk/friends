@@ -9,10 +9,15 @@
 		{ name: 'friends/add-subscription', title: 'Add Subscription', icon: 'plus-alt' },
 		{ name: 'friends/starred-friends-list', title: 'Starred Friends', icon: 'star-filled' },
 		{ name: 'friends/search', title: 'Friends Search', icon: 'search' },
-		{ name: 'friends/feed-header', title: 'Feed Header', icon: 'admin-site-alt3' },
+		{ name: 'friends/feed-title', title: 'Feed Title', icon: 'admin-site-alt3' },
+		{ name: 'friends/feed-chips', title: 'Feed Chips', icon: 'tag' },
 		{ name: 'friends/post-content', title: 'Friend Post Content', icon: 'text-page' },
 		{ name: 'friends/post-permalink', title: 'Post Permalink', icon: 'admin-links' },
-		{ name: 'friends/author-header', title: 'Author Header', icon: 'businessperson' },
+		{ name: 'friends/author-star', title: 'Author Star', icon: 'star-empty' },
+		{ name: 'friends/author-avatar', title: 'Author Avatar', icon: 'admin-users' },
+		{ name: 'friends/author-name', title: 'Author Name', icon: 'nametag' },
+		{ name: 'friends/author-description', title: 'Author Description', icon: 'editor-paragraph' },
+		{ name: 'friends/author-chips', title: 'Author Chips', icon: 'tag' },
 	];
 
 	sidebarBlocks.forEach( function ( block ) {

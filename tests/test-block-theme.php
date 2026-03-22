@@ -59,10 +59,15 @@ class BlockThemeTest extends \WP_UnitTestCase {
 			'friends/add-subscription',
 			'friends/starred-friends-list',
 			'friends/search',
-			'friends/feed-header',
+			'friends/feed-title',
+			'friends/feed-chips',
 			'friends/post-content',
 			'friends/post-permalink',
-			'friends/author-header',
+			'friends/author-star',
+			'friends/author-avatar',
+			'friends/author-name',
+			'friends/author-description',
+			'friends/author-chips',
 			'friends/subscriptions-query',
 			'friends/subscription',
 			'friends/followers',
@@ -150,14 +155,25 @@ class BlockThemeTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test the feed header block renders title and chips.
+	 * Test the feed title block renders a heading.
 	 */
-	public function test_render_feed_header_block() {
+	public function test_render_feed_title_block() {
 		$blocks = new Blocks();
-		$output = $blocks->render_feed_header_block();
+		$output = $blocks->render_feed_title_block();
 
-		$this->assertStringContainsString( 'wp-block-friends-feed-header', $output );
+		$this->assertStringContainsString( 'wp-block-friends-feed-title', $output );
+		$this->assertStringContainsString( '<h2', $output );
 		$this->assertStringContainsString( '/friends/', $output );
+	}
+
+	/**
+	 * Test the feed chips block renders chips.
+	 */
+	public function test_render_feed_chips_block() {
+		$blocks = new Blocks();
+		$output = $blocks->render_feed_chips_block();
+
+		$this->assertStringContainsString( 'wp-block-friends-feed-chips', $output );
 		$this->assertStringContainsString( 'chip', $output );
 	}
 
@@ -261,14 +277,24 @@ class BlockThemeTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test the author header block renders placeholder without author context.
+	 * Test the author blocks render placeholders without author context.
 	 */
-	public function test_render_author_header_block_no_author() {
+	public function test_render_author_blocks_no_author() {
 		$blocks = new Blocks();
-		$output = $blocks->render_author_header_block();
 
-		$this->assertStringContainsString( 'wp-block-friends-author-header', $output );
-		$this->assertStringContainsString( 'Author Header', $output );
+		$star = $blocks->render_author_star_block();
+		$this->assertStringContainsString( 'wp-block-friends-author-star', $star );
+
+		$avatar = $blocks->render_author_avatar_block();
+		$this->assertStringContainsString( 'wp-block-friends-author-avatar', $avatar );
+
+		$name = $blocks->render_author_name_block();
+		$this->assertStringContainsString( 'wp-block-friends-author-name', $name );
+		$this->assertStringContainsString( 'Author Name', $name );
+
+		$chips = $blocks->render_author_chips_block();
+		$this->assertStringContainsString( 'wp-block-friends-author-chips', $chips );
+		$this->assertStringContainsString( 'chip', $chips );
 	}
 
 	/**
@@ -323,7 +349,7 @@ class BlockThemeTest extends \WP_UnitTestCase {
 		// Should have author name directly, not a template part header.
 		$this->assertStringContainsString( 'wp:post-author-name', $single );
 		$this->assertStringNotContainsString( 'slug":"header"', $single );
-		$this->assertStringNotContainsString( 'friends/feed-header', $single );
+		$this->assertStringNotContainsString( 'friends/feed-title', $single );
 	}
 
 	/**
@@ -346,7 +372,8 @@ class BlockThemeTest extends \WP_UnitTestCase {
 	public function test_header_has_search() {
 		$header = file_get_contents( FRIENDS_PLUGIN_DIR . 'themes/friends/parts/header.html' );
 
-		$this->assertStringContainsString( 'wp:friends/feed-header', $header );
+		$this->assertStringContainsString( 'wp:friends/feed-title', $header );
+		$this->assertStringContainsString( 'wp:friends/feed-chips', $header );
 		$this->assertStringContainsString( 'wp:friends/search', $header );
 		$this->assertStringContainsString( 'wp:columns', $header );
 	}

@@ -132,9 +132,16 @@ class Blocks {
 		);
 
 		register_block_type(
-			'friends/feed-header',
+			'friends/feed-title',
 			array(
-				'render_callback' => array( $this, 'render_feed_header_block' ),
+				'render_callback' => array( $this, 'render_feed_title_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/feed-chips',
+			array(
+				'render_callback' => array( $this, 'render_feed_chips_block' ),
 			)
 		);
 
@@ -153,9 +160,37 @@ class Blocks {
 		);
 
 		register_block_type(
-			'friends/author-header',
+			'friends/author-star',
 			array(
-				'render_callback' => array( $this, 'render_author_header_block' ),
+				'render_callback' => array( $this, 'render_author_star_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/author-avatar',
+			array(
+				'render_callback' => array( $this, 'render_author_avatar_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/author-name',
+			array(
+				'render_callback' => array( $this, 'render_author_name_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/author-description',
+			array(
+				'render_callback' => array( $this, 'render_author_description_block' ),
+			)
+		);
+
+		register_block_type(
+			'friends/author-chips',
+			array(
+				'render_callback' => array( $this, 'render_author_chips_block' ),
 			)
 		);
 	}
@@ -538,15 +573,14 @@ class Blocks {
 	 *
 	 * @return string The rendered block HTML.
 	 */
-	public function render_feed_header_block() {
+	/**
+	 * Render the friends/feed-title block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_feed_title_block() {
 		$friends  = Friends::get_instance();
 		$frontend = $friends->frontend;
-		$data     = $friends->get_main_header_data();
-
-		$hidden_post_count = 0;
-		if ( isset( $data['post_count_by_post_status']->trash ) ) {
-			$hidden_post_count = $data['post_count_by_post_status']->trash;
-		}
 
 		// Determine feed title.
 		$title = __( 'Main Feed', 'friends' );
@@ -592,8 +626,24 @@ class Blocks {
 			);
 		}
 
-		$out = '<div class="wp-block-friends-feed-header">';
-		$out .= '<h2><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $display_title ) . '</a></h2>';
+		return '<h2 class="wp-block-friends-feed-title"><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $display_title ) . '</a></h2>';
+	}
+
+	/**
+	 * Render the friends/feed-chips block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_feed_chips_block() {
+		$friends = Friends::get_instance();
+		$data    = $friends->get_main_header_data();
+
+		$hidden_post_count = 0;
+		if ( isset( $data['post_count_by_post_status']->trash ) ) {
+			$hidden_post_count = $data['post_count_by_post_status']->trash;
+		}
+
+		$out = '<div class="wp-block-friends-feed-chips">';
 
 		// Post count chips.
 		$nonce = wp_create_nonce( 'friends_post_counts' );
@@ -697,43 +747,96 @@ class Blocks {
 	}
 
 	/**
-	 * Render the friends/author-header block.
+	 * Get the current author from the frontend context.
+	 *
+	 * @return User|null
+	 */
+	private function get_frontend_author() {
+		$friends = Friends::get_instance();
+		return $friends->frontend->author;
+	}
+
+	/**
+	 * Render the friends/author-star block.
 	 *
 	 * @return string The rendered block HTML.
 	 */
-	public function render_author_header_block() {
-		$friends  = Friends::get_instance();
-		$frontend = $friends->frontend;
-		$author   = $frontend->author;
-
+	public function render_author_star_block() {
+		$author = $this->get_frontend_author();
 		if ( ! $author ) {
-			return '<div class="wp-block-friends-author-header"><h2>' . esc_html__( 'Author Header', 'friends' ) . '</h2><p><span class="chip">' . esc_html__( 'Subscription', 'friends' ) . '</span> <span class="chip">example.com</span> <span class="chip">' . esc_html__( 'Edit', 'friends' ) . '</span></p></div>';
+			return '<span class="wp-block-friends-author-star">&#9734;</span>';
 		}
 
-		$out = '<div class="wp-block-friends-author-header">';
+		$starred    = $author->is_starred();
+		$star_class = $starred ? 'dashicons-star-filled starred' : 'dashicons-star-empty not-starred';
+		$star_nonce = wp_create_nonce( 'star-' . $author->user_login );
 
-		// Avatar + name + star.
+		return '<a href="" class="wp-block-friends-author-star dashicons ' . esc_attr( $star_class ) . '" data-id="' . esc_attr( $author->user_login ) . '" data-nonce="' . esc_attr( $star_nonce ) . '"></a>';
+	}
+
+	/**
+	 * Render the friends/author-avatar block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_author_avatar_block() {
+		$author = $this->get_frontend_author();
+		if ( ! $author ) {
+			return '<span class="wp-block-friends-author-avatar"></span>';
+		}
+
 		$avatar_url = $author->get_avatar_url();
-		$out       .= '<h2 id="page-title">';
-
-		$starred     = $author->is_starred();
-		$star_class  = $starred ? 'dashicons-star-filled starred' : 'dashicons-star-empty not-starred';
-		$star_nonce  = wp_create_nonce( 'star-' . $author->user_login );
-		$out        .= '<a href="" class="dashicons ' . esc_attr( $star_class ) . '" data-id="' . esc_attr( $author->user_login ) . '" data-nonce="' . esc_attr( $star_nonce ) . '"></a> ';
-
-		if ( $avatar_url ) {
-			$out .= '<img src="' . esc_url( $avatar_url ) . '" width="36" height="36" class="avatar" /> ';
-		}
-		$out .= esc_html( $author->display_name );
-		$out .= '</h2>';
-
-		// Description.
-		if ( $author->description ) {
-			$out .= '<p>' . wp_kses( $author->description, array( 'a' => array( 'href' => array() ) ) ) . '</p>';
+		if ( ! $avatar_url ) {
+			return '<span class="wp-block-friends-author-avatar"></span>';
 		}
 
-		// Chips.
-		$out .= '<div class="author-header-chips">';
+		return '<img class="wp-block-friends-author-avatar" src="' . esc_url( $avatar_url ) . '" width="36" height="36" />';
+	}
+
+	/**
+	 * Render the friends/author-name block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_author_name_block() {
+		$author = $this->get_frontend_author();
+		if ( ! $author ) {
+			return '<h2 class="wp-block-friends-author-name" id="page-title">' . esc_html__( 'Author Name', 'friends' ) . '</h2>';
+		}
+
+		return '<h2 class="wp-block-friends-author-name" id="page-title">' . esc_html( $author->display_name ) . '</h2>';
+	}
+
+	/**
+	 * Render the friends/author-description block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_author_description_block() {
+		$author = $this->get_frontend_author();
+		if ( ! $author ) {
+			return '<p class="wp-block-friends-author-description"><em>' . esc_html__( 'Author description will appear here.', 'friends' ) . '</em></p>';
+		}
+		if ( ! $author->description ) {
+			return '';
+		}
+
+		return '<p class="wp-block-friends-author-description">' . wp_kses( $author->description, array( 'a' => array( 'href' => array() ) ) ) . '</p>';
+	}
+
+	/**
+	 * Render the friends/author-chips block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_author_chips_block() {
+		$friends = Friends::get_instance();
+		$author  = $this->get_frontend_author();
+		if ( ! $author ) {
+			return '<div class="wp-block-friends-author-chips"><span class="chip">' . esc_html__( 'Subscription', 'friends' ) . '</span> <span class="chip">example.com</span> <span class="chip">' . esc_html__( 'Edit', 'friends' ) . '</span></div>';
+		}
+
+		$out = '<div class="wp-block-friends-author-chips">';
 
 		// Role chip.
 		$out .= '<span class="chip">' . esc_html( $author->get_role_name() ) . '</span> ';
@@ -792,7 +895,6 @@ class Blocks {
 		// Refresh chip.
 		$out .= '<a class="chip" href="' . esc_url( wp_nonce_url( admin_url( 'admin.php?page=friends-refresh&user=' . $author->user_login ), 'friends-refresh' ) ) . '">' . esc_html__( 'Refresh', 'friends' ) . '</a> ';
 
-		$out .= '</div>';
 		$out .= '</div>';
 		return $out;
 	}
