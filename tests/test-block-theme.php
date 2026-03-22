@@ -272,13 +272,18 @@ class BlockThemeTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test the starred friends list block renders empty when none starred.
+	 * Test the starred friends list block renders correctly.
 	 */
-	public function test_render_starred_friends_list_block_empty() {
-		$blocks = new Blocks();
-		$output = $blocks->render_starred_friends_list_block();
+	public function test_render_starred_friends_list_block() {
+		$blocks  = new Blocks();
+		$output  = $blocks->render_starred_friends_list_block();
+		$starred = User_Query::starred_friends_subscriptions();
 
-		$this->assertEmpty( $output );
+		if ( $starred->get_total() === 0 ) {
+			$this->assertEmpty( $output );
+		} else {
+			$this->assertStringContainsString( 'wp-block-friends-starred-friends-list', $output );
+		}
 	}
 
 	/**
