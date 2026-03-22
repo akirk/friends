@@ -396,6 +396,8 @@ class Frontend {
 		$version = Friends::VERSION;
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
+		wp_enqueue_script( 'friends-google-reader', plugins_url( 'google-reader.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), $version, true );
+
 		add_filter(
 			'friends_template_paths_theme_google-reader',
 			function ( $file_paths ) {

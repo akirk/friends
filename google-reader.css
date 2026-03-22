@@ -542,6 +542,12 @@
 	cursor: pointer;
 }
 
+/* Current item highlight (keyboard navigation) */
+.friends-page .posts article.card.gr-current {
+	outline: 2px solid #4d90fe;
+	outline-offset: -2px;
+}
+
 /* Collapse toggle button - hidden, click handled by card */
 .friends-page .collapse-post { display: none; }
 .friends-page .overflow { display: none; }
@@ -672,6 +678,7 @@
 
 	.friends-page .posts article.card { border-bottom-color: #3c4043; }
 	.friends-page .posts.all-collapsed article.card.uncollapsed { background: #292a2d; }
+	.friends-page .posts article.card.gr-current { outline-color: #8ab4f8; }
 	.friends-page .posts .author a { color: #34a853; }
 	.friends-page .posts .permalink, .friends-page .posts .permalink a { color: #999; }
 	.friends-page .posts .card-body, .friends-page .posts .entry-content { color: #e8eaed; }
