@@ -29,6 +29,7 @@
 		{ name: 'friends/feed-chips', title: 'Feed Chips', icon: 'tag', supports: chipSupports },
 		{ name: 'friends/post-content', title: 'Friend Post Content', icon: 'text-page' },
 		{ name: 'friends/post-permalink', title: 'Post Permalink', icon: 'admin-links', supports: listSupports },
+		{ name: 'friends/post-footer', title: 'Post Footer', icon: 'megaphone' },
 		{ name: 'friends/author-star', title: 'Author Star', icon: 'star-empty' },
 		{ name: 'friends/author-avatar', title: 'Author Avatar', icon: 'admin-users' },
 		{ name: 'friends/author-name', title: 'Author Name', icon: 'nametag', supports: headingSupports },

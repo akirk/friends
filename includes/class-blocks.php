@@ -191,6 +191,13 @@ class Blocks {
 		);
 
 		register_block_type(
+			'friends/post-footer',
+			array(
+				'render_callback' => array( $this, 'render_post_footer_block' ),
+			)
+		);
+
+		register_block_type(
 			'friends/author-star',
 			array(
 				'render_callback' => array( $this, 'render_author_star_block' ),
@@ -775,6 +782,86 @@ class Blocks {
 	 *
 	 * @return User|null
 	 */
+	/**
+	 * Render the friends/post-footer block.
+	 *
+	 * Shows reblog, boost, reactions, and comments buttons.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_post_footer_block() {
+		global $post;
+		if ( ! $post ) {
+			return '<div class="wp-block-friends-post-footer"><em>' . esc_html_x( 'Reblog', 'button', 'friends' ) . ' | ⭐ | 💬 ' . esc_html__( 'Comments' ) . '</em></div>'; // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		}
+
+		$post_id     = get_the_ID();
+		$friend_user = User::get_post_author( $post );
+		$is_own_post = $friend_user && ! is_wp_error( $friend_user ) && get_current_user_id() === $friend_user->ID;
+
+		$out = '<div class="wp-block-friends-post-footer">';
+
+		// Reblog button.
+		if ( ! $is_own_post ) {
+			$reblog_nonce  = wp_create_nonce( 'friends-reblog' );
+			$reblog_status = get_post_meta( $post_id, 'reblogged', true ) ? ' dashicons-saved' : '';
+			$out          .= '<a tabindex="0" href="#" data-id="' . esc_attr( $post_id ) . '" data-nonce="' . esc_attr( $reblog_nonce ) . '" class="friends-reblog has-icon-right" title="' . esc_attr_x( 'Reblog', 'button', 'friends' ) . '">';
+			$out          .= '<i class="dashicons dashicons-controls-repeat"></i> <span class="text">' . esc_html_x( 'Reblog', 'button', 'friends' ) . '</span>';
+			$out          .= '<i class="friends-reblog-status dashicons' . esc_attr( $reblog_status ) . '"></i>';
+			$out          .= '</a> ';
+
+			// Boost button (only if ActivityPub is active).
+			if ( has_filter( 'friends_boost' ) || class_exists( '\Activitypub\Activitypub' ) ) {
+				$boost_nonce  = wp_create_nonce( 'friends-boost' );
+				$boost_status = get_post_meta( $post_id, 'boosted', true ) ? ' dashicons-saved' : '';
+				$out         .= '<a tabindex="0" href="#" data-id="' . esc_attr( $post_id ) . '" data-nonce="' . esc_attr( $boost_nonce ) . '" class="friends-boost has-icon-right" title="' . esc_attr_x( 'Boost', 'button', 'friends' ) . '">';
+				$out         .= '<i class="dashicons dashicons-controls-repeat"></i> <span class="text">' . esc_html_x( 'Boost', 'button', 'friends' ) . '</span>';
+				$out         .= '<i class="friends-boost-status dashicons' . esc_attr( $boost_status ) . '"></i>';
+				$out         .= '</a> ';
+			}
+		}
+
+		// Reaction buttons.
+		if ( class_exists( __NAMESPACE__ . '\Reactions' ) ) {
+			$reactions      = Reactions::get_post_reactions();
+			$reaction_nonce = wp_create_nonce( 'friends-reaction' );
+
+			foreach ( $reactions as $slug => $reaction ) {
+				$pressed = $reaction->user_reacted ? ' pressed' : '';
+				$out    .= '<button class="friends-reaction' . esc_attr( $pressed ) . '" data-id="' . esc_attr( $post_id ) . '" data-emoji="' . esc_attr( $slug ) . '" data-nonce="' . esc_attr( $reaction_nonce ) . '" title="' . esc_attr( $reaction->usernames ) . '">';
+				$out    .= '<span>' . esc_html( $reaction->emoji ) . '</span> ' . esc_html( $reaction->count );
+				$out    .= '</button> ';
+			}
+
+			// Add reaction picker.
+			$available = Reactions::get_available_emojis();
+			if ( $available ) {
+				$out .= '<span class="friends-dropdown">';
+				$out .= '<a class="new-reaction friends-dropdown-toggle" tabindex="0" title="' . esc_attr_x( 'Reaction', '+ Reaction', 'friends' ) . '">+ ' . esc_html_x( 'Reaction', '+ Reaction', 'friends' ) . '</a>';
+				$out .= '<ul class="menu friends-reactions-picker">';
+				foreach ( $available as $slug => $emoji ) {
+					$out .= '<li><button class="friends-reaction-picker" data-id="' . esc_attr( $post_id ) . '" data-emoji="' . esc_attr( $slug ) . '" data-nonce="' . esc_attr( $reaction_nonce ) . '">' . esc_html( $emoji->char ) . '</button></li>';
+				}
+				$out .= '</ul></span> ';
+			}
+		}
+
+		// Comments button.
+		$has_mention  = get_post_meta( $post_id, '_has_mention_in_comments', true );
+		$comment_icon = $has_mention ? 'format-status' : 'admin-comments';
+		$comment_text = $has_mention ? __( 'Comments (You were mentioned)', 'friends' ) : __( 'Comments' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		$out         .= '<a href="' . esc_url( get_comments_link() ) . '" class="comments" data-id="' . esc_attr( $post_id ) . '" data-cnonce="' . esc_attr( wp_create_nonce( 'comments-' . $post_id ) ) . '">';
+		$out         .= '<i class="dashicons dashicons-' . esc_attr( $comment_icon ) . '"></i> <span class="text">' . esc_html( $comment_text ) . '</span>';
+		$out         .= '</a>';
+
+		$out .= '</div>';
+
+		// Comments content container (populated by AJAX).
+		$out .= '<div class="comments-content closed"></div>';
+
+		return $out;
+	}
+
 	private function get_frontend_author() {
 		$friends = Friends::get_instance();
 		return $friends->frontend->author;
