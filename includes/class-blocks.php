@@ -18,12 +18,6 @@ namespace Friends;
  * @author Alex Kirk
  */
 class Blocks {
-	/**
-	 * Whether an excerpt is currently being generated.
-	 *
-	 * @var        int
-	 */
-	private $current_excerpt = null;
 
 	/**
 	 * Constructor
@@ -44,10 +38,6 @@ class Blocks {
 		}
 		add_action( 'admin_enqueue_scripts', array( $this, 'language_data' ) );
 		add_filter( 'render_block', array( $this, 'render_friends_block_visibility' ), 10, 2 );
-		add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_start' ), 9, 2 );
-		add_filter( 'get_the_excerpt', array( $this, 'current_excerpt_end' ), 11, 2 );
-		add_filter( 'wp_loaded', array( $this, 'add_block_visibility_attribute' ), 10, 2 );
-		add_action( 'enqueue_block_editor_assets', array( $this, 'register_friends_block_visibility' ) );
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_sidebar_blocks' ) );
 		add_action( 'init', array( $this, 'register_blocks' ) );
 	}
@@ -1168,27 +1158,6 @@ class Blocks {
 	}
 
 	/**
-	 * Register the Block Visibility script.
-	 */
-	public function register_friends_block_visibility() {
-		wp_enqueue_script(
-			'friends-block-visibility',
-			plugins_url( 'blocks/block-visibility/build/index.js', FRIENDS_PLUGIN_FILE ),
-			array( 'wp-blocks', 'wp-element', 'wp-i18n' ),
-			Friends::VERSION,
-			true
-		);
-
-		wp_enqueue_style(
-			'friends-blocks',
-			plugins_url( 'friends-blocks.css', FRIENDS_PLUGIN_FILE ),
-			array(),
-			Friends::VERSION,
-			true
-		);
-	}
-
-	/**
 	 * Enqueue the sidebar blocks editor script.
 	 */
 	public function enqueue_sidebar_blocks() {
@@ -1202,101 +1171,27 @@ class Blocks {
 	}
 
 	/**
-	 * Adds a block visibility attribute.
-	 */
-	public function add_block_visibility_attribute() {
-		$registered_blocks = \WP_Block_Type_Registry::get_instance()->get_all_registered();
-
-		foreach ( $registered_blocks as $block ) {
-			$block->attributes['friendsVisibility'] = array(
-				'type'    => 'string',
-				'default' => '',
-			);
-		}
-	}
-
-	/**
-	 * Render the "Only visible for friends" Blocks block
+	 * Hide blocks that were marked as "only visible for friends".
 	 *
-	 * @param  string $content    The content provided by the user.
-	 * @param  object $block      Attributes for the block.
-	 * @return string             The rendered content.
+	 * Since the friendship feature was removed, "only-friends" content
+	 * stays hidden to prevent accidental exposure. "not-friends" content
+	 * is shown to everyone.
+	 *
+	 * @param  string $content The content provided by the user.
+	 * @param  array  $block   Attributes for the block.
+	 * @return string          The rendered content.
 	 */
 	public function render_friends_block_visibility( $content, $block ) {
-		$css_class = ( empty( $block['attrs'] ) || empty( $block['attrs']['className'] ) ) ? 'default' : $block['attrs']['className'];
-		$visibility = '';
+		$css_class = ( empty( $block['attrs'] ) || empty( $block['attrs']['className'] ) ) ? '' : $block['attrs']['className'];
+
 		if ( preg_match( '/\bonly-friends\b/', $css_class ) ) {
-			$visibility = 'only-friends';
-		} elseif ( preg_match( '/\bnot-friends\b/', $css_class ) ) {
-			$visibility = 'not-friends';
-		}
-
-		if ( ! $visibility ) {
-			return $content;
-		}
-		$class_only_friends = ' class="only-friends" style="background-color: #efe; padding-left: .5em;"';
-		$class_not_friends = ' class="not-friends" style="background-color: #fee; padding-left: .5em;"';
-		$class_watermark = ' class="watermark" style="float: right; padding-top: .5em; padding-right: .5em; font-size: 80%; color: #ccc;"';
-
-		switch ( $visibility ) {
-			case 'only-friends':
-				if ( Friends::has_required_privileges() ) {
-					if ( $this->current_excerpt ) {
-						return $content;
-					}
-					return '<div' . $class_only_friends . '><span' . $class_watermark . '>' . __( 'Only friends', 'friends' ) . '</span>' . $content . '</div>';
-				}
-				if ( current_user_can( 'friend' ) ) {
-					return $content;
-				}
+			// Content meant only for friends stays hidden since friendships were removed.
+			if ( ! Friends::has_required_privileges() ) {
 				return '';
-
-			case 'not-friends':
-				if ( Friends::has_required_privileges() ) {
-					if ( $this->current_excerpt ) {
-						return $content;
-					}
-
-					return '<div' . $class_not_friends . '><span' . $class_watermark . '>' . __( 'Not friends', 'friends' ) . '</span>' . $content . '</span></div>';
-				}
-				if ( current_user_can( 'friend' ) ) {
-					return '';
-				}
-				return $content;
-
+			}
 		}
 
 		return $content;
-	}
-
-	/**
-	 * Remember the current post being excerpted. With this we can change the visibility rendering.
-	 *
-	 * @param      string   $text   The text.
-	 * @param      \WP_Post $post   The post.
-	 *
-	 * @return     string  The text.
-	 */
-	public function current_excerpt_start( $text = '', $post = null ) {
-		if ( $post ) {
-			$this->current_excerpt = $post->ID;
-		}
-		return $text;
-	}
-
-	/**
-	 * Stop remembering the current post being excerpted.
-	 *
-	 * @param      string   $text   The text.
-	 * @param      \WP_Post $post   The post.
-	 *
-	 * @return     string  The text.
-	 */
-	public function current_excerpt_end( $text = '', $post = null ) {
-		if ( $post && $this->current_excerpt === $post->ID ) {
-			$this->current_excerpt = null;
-		}
-		return $text;
 	}
 
 	/**
