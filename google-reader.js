@@ -114,8 +114,8 @@
 		}
 	} );
 
-	// When a card is clicked, collapse all others first (before the Friends JS handler expands it).
-	$( document ).on( 'click', 'section.posts.all-collapsed article.card', function() {
+	// When a collapsed card is clicked, collapse all others first (Friends JS handler will expand it).
+	$( document ).on( 'click', 'section.posts.all-collapsed article.card:not(.uncollapsed)', function() {
 		var items = getItems();
 		var index = items.index( this );
 
@@ -128,5 +128,18 @@
 		$( this ).addClass( 'gr-current' );
 
 		// Don't stop propagation — let the Friends JS handler toggle this item.
+	} );
+
+	// When an expanded card's header is clicked, collapse it.
+	$( document ).on( 'click', 'section.posts.all-collapsed article.card.uncollapsed .card-header', function( e ) {
+		if ( $( e.target ).closest( 'a, button, input, textarea, form' ).length ) {
+			return;
+		}
+
+		var $card = $( this ).closest( 'article' );
+		$card.removeClass( 'uncollapsed' );
+
+		e.stopPropagation();
+		return false;
 	} );
 } )( jQuery );
