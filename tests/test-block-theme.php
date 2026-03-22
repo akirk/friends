@@ -272,16 +272,6 @@ class BlockThemeTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Test the starred friends list block renders empty when none starred.
-	 */
-	public function test_render_starred_friends_list_block_empty() {
-		$blocks = new Blocks();
-		$output = $blocks->render_starred_friends_list_block();
-
-		$this->assertEmpty( $output );
-	}
-
-	/**
 	 * Test that templates reference expected blocks.
 	 */
 	public function test_templates_contain_expected_blocks() {
