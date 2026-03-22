@@ -29,6 +29,10 @@
 		"user_types": {
 			"type": "string",
 			"default": "subscriptions"
+		},
+		"folder": {
+			"type": "number",
+			"default": 0
 		}
 	},
 	"example": {

@@ -1052,6 +1052,14 @@ class Blocks {
 		// Role chip.
 		$out .= '<span class="chip">' . esc_html( $author->get_role_name() ) . '</span> ';
 
+		// Folder chip.
+		if ( $author instanceof Subscription ) {
+			$folder = $author->get_folder();
+			if ( $folder ) {
+				$out .= '<span class="chip">&#128193; ' . esc_html( $folder->name ) . '</span> ';
+			}
+		}
+
 		// Since chip.
 		$out .= '<span class="chip">' . esc_html( sprintf( /* translators: %s is a date */ __( 'Since %s', 'friends' ), date_i18n( __( 'F j, Y' ), strtotime( $author->user_registered ) ) ) ) . '</span> '; // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 
@@ -1120,16 +1128,22 @@ class Blocks {
 		if ( ! isset( $attributes['user_types'] ) ) {
 			$attributes['user_types'] = 'subscriptions';
 		}
-		switch ( $attributes['user_types'] ) {
-			case 'starred':
-				$friends  = User_Query::starred_friends_subscriptions();
-				$no_users = '';
-				break;
-			default:
-			case 'subscriptions':
-				$friends  = User_Query::all_subscriptions();
-				$no_users = __( "You don't have any subscriptions yet.", 'friends' );
-				break;
+
+		if ( ! empty( $attributes['folder'] ) ) {
+			$friends  = User_Query::subscriptions_in_folder( intval( $attributes['folder'] ) );
+			$no_users = '';
+		} else {
+			switch ( $attributes['user_types'] ) {
+				case 'starred':
+					$friends  = User_Query::starred_friends_subscriptions();
+					$no_users = '';
+					break;
+				default:
+				case 'subscriptions':
+					$friends  = User_Query::all_subscriptions();
+					$no_users = __( "You don't have any subscriptions yet.", 'friends' );
+					break;
+			}
 		}
 
 		if ( $friends->get_total() === 0 ) {
@@ -1314,6 +1328,17 @@ class Blocks {
 			Friends::VERSION,
 			true
 		);
+
+		// Pass folder data to the editor for the friends-list block.
+		$folders = Subscription::get_folders();
+		$folder_data = array();
+		foreach ( $folders as $folder ) {
+			$folder_data[] = array(
+				'term_id' => $folder->term_id,
+				'name'    => $folder->name,
+			);
+		}
+		wp_localize_script( 'friends-sidebar-blocks', 'friendsFolders', $folder_data );
 	}
 
 	/**

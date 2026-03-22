@@ -175,6 +175,45 @@ class User_Query extends \WP_User_Query {
 	}
 
 	/**
+	 * Gets subscriptions in a specific folder.
+	 *
+	 * Filters the cached all_subscriptions list by parent term ID.
+	 *
+	 * @param int $folder_term_id The folder term ID.
+	 * @return User_Query The matching subscriptions.
+	 */
+	public static function subscriptions_in_folder( $folder_term_id ) {
+		$all    = self::all_subscriptions();
+		$result = new self( array( 'number' => 0 ) );
+		foreach ( $all->get_results() as $subscription ) {
+			if ( $subscription instanceof Subscription && $subscription->get_folder() ) {
+				if ( $subscription->get_folder()->term_id === $folder_term_id ) {
+					$result->results[ $subscription->get_term_id() ] = $subscription;
+					++$result->total_users;
+				}
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Gets subscriptions not in any folder (at root level).
+	 *
+	 * @return User_Query The matching subscriptions.
+	 */
+	public static function unfoldered_subscriptions() {
+		$all    = self::all_subscriptions();
+		$result = new self( array( 'number' => 0 ) );
+		foreach ( $all->get_results() as $subscription ) {
+			if ( $subscription instanceof Subscription && ! $subscription->get_folder() ) {
+				$result->results[ $subscription->get_term_id() ] = $subscription;
+				++$result->total_users;
+			}
+		}
+		return $result;
+	}
+
+	/**
 	 * Gets the recent friends.
 	 *
 	 * @param      int $limit  The limit.

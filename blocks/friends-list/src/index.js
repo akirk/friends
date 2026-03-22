@@ -7,6 +7,20 @@ import ServerSideRender from '@wordpress/server-side-render';
 registerBlockType( 'friends/friends-list', {
 	edit: function( { attributes, setAttributes } ) {
 		const blockProps = useBlockProps();
+
+		// Build folder options from localized data.
+		var folderOptions = [
+			{ label: __( '— None —', 'friends' ), value: 0 },
+		];
+		if ( window.friendsFolders && window.friendsFolders.length ) {
+			window.friendsFolders.forEach( function( folder ) {
+				folderOptions.push( {
+					label: folder.name,
+					value: folder.term_id,
+				} );
+			} );
+		}
+
 		return (
 			<>
 				<InspectorControls>
@@ -18,7 +32,7 @@ registerBlockType( 'friends/friends-list', {
 						/>
 						<SelectControl
 							label={ __( 'User Types', 'friends' ) }
-							onChange={ user_types => setAttributes( { user_types } ) }
+							onChange={ user_types => setAttributes( { user_types, folder: 0 } ) }
 							value={ attributes.user_types }
 							options={ [
 								{
@@ -31,6 +45,14 @@ registerBlockType( 'friends/friends-list', {
 								},
 							] }
 						/>
+						{ folderOptions.length > 1 && (
+							<SelectControl
+								label={ __( 'Folder', 'friends' ) }
+								onChange={ folder => setAttributes( { folder: parseInt( folder, 10 ), user_types: folder ? 'folder' : 'subscriptions' } ) }
+								value={ attributes.folder }
+								options={ folderOptions }
+							/>
+						) }
 					</PanelBody>
 				</InspectorControls>
 				<div {...blockProps}>
