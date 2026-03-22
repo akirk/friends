@@ -18,7 +18,7 @@
 }
 
 .friends-page a { color: #1a0dab; text-decoration: none; }
-.friends-page a:visited { color: #609; }
+.friends-page a:visited { color: #1a0dab; }
 .friends-page a:hover { text-decoration: underline; }
 .friends-page img { max-width: 100%; height: auto; }
 .friends-page h1, .friends-page h2, .friends-page h3, .friends-page h4 { margin: 0; font-weight: normal; }
@@ -381,7 +381,7 @@
 	font-weight: normal;
 }
 
-.friends-page .posts .card-title a:visited { color: #609; }
+.friends-page .posts .card-title a:visited { color: #1a0dab; }
 
 .friends-page .posts h4 a {
 	font-size: 14px;
@@ -673,8 +673,7 @@
 		background: #202124;
 		color: #e8eaed;
 	}
-	.friends-page a { color: #8ab4f8; }
-	.friends-page a:visited { color: #c58af9; }
+	.friends-page a, .friends-page a:visited { color: #8ab4f8; }
 
 	.friends-page .off-canvas-sidebar {
 		background: #292a2d;
@@ -693,9 +692,9 @@
 	}
 	.friends-page h2#page-title, .friends-page h2#page-title a { color: #e8eaed; }
 
-	.friends-page .chip { background: #3c4043; border-color: #5f6368; color: #8ab4f8; }
-	.friends-page span.chip { color: #999; }
-	.friends-page .chip:hover { background: #4a4d51; }
+	.friends-page .chip, .friends-page .chip:visited { background: #3c4043; border-color: #5f6368; color: #bdc1c6; }
+	.friends-page span.chip { color: #bdc1c6; }
+	.friends-page .chip:hover { background: #4a4d51; color: #e8eaed; }
 
 	.friends-page .form-input, .friends-page input[type="text"] {
 		background: #3c4043; border-color: #5f6368; color: #e8eaed;

@@ -1,8 +1,8 @@
 /**
  * Google Reader keyboard shortcuts for the Friends plugin.
  *
- * j/k     - Next/previous item
- * o/Enter - Open/close current item
+ * j/k     - Next/previous item (expands it, collapses previous)
+ * o/Enter - Toggle open/close current item
  * s       - Star/unstar current item
  * v       - Open original link in new tab
  * r       - Refresh feeds
@@ -23,22 +23,38 @@
 		}, 150 );
 	}
 
-	function highlightItem( index ) {
-		var items = getItems();
-		items.removeClass( 'gr-current' );
-		if ( index >= 0 && index < items.length ) {
-			currentIndex = index;
-			var $item = items.eq( index );
-			$item.addClass( 'gr-current' );
-			scrollToItem( $item );
+	function expandItem( $item ) {
+		if ( ! $item.hasClass( 'uncollapsed' ) ) {
+			$item.click();
 		}
 	}
 
-	function toggleCurrent() {
-		var items = getItems();
-		if ( currentIndex >= 0 && currentIndex < items.length ) {
-			items.eq( currentIndex ).click();
+	function collapseItem( $item ) {
+		if ( $item.hasClass( 'uncollapsed' ) ) {
+			$item.click();
 		}
+	}
+
+	function navigateTo( index ) {
+		var items = getItems();
+		if ( index < 0 || index >= items.length ) {
+			return;
+		}
+
+		// Collapse previous.
+		if ( currentIndex >= 0 && currentIndex < items.length && currentIndex !== index ) {
+			collapseItem( items.eq( currentIndex ) );
+		}
+
+		currentIndex = index;
+		var $item = items.eq( index );
+
+		items.removeClass( 'gr-current' );
+		$item.addClass( 'gr-current' );
+		scrollToItem( $item );
+
+		// Expand new.
+		expandItem( $item );
 	}
 
 	$( document ).on( 'keydown', function( e ) {
@@ -55,36 +71,30 @@
 		switch ( e.key ) {
 			case 'j': // Next item.
 				e.preventDefault();
-				if ( currentIndex < items.length - 1 ) {
-					highlightItem( currentIndex + 1 );
-				}
+				navigateTo( currentIndex + 1 );
 				break;
 
 			case 'k': // Previous item.
 				e.preventDefault();
 				if ( currentIndex > 0 ) {
-					highlightItem( currentIndex - 1 );
+					navigateTo( currentIndex - 1 );
 				}
 				break;
 
-			case 'o': // Open/close current item.
+			case 'o': // Toggle current item.
 			case 'Enter':
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
-					toggleCurrent();
+					items.eq( currentIndex ).click();
 				}
 				break;
 
 			case 's': // Star current item.
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
-					var $star = items.eq( currentIndex ).find( '.dashicons-star-filled, .dashicons-star-empty' ).first();
-					if ( ! $star.length ) {
-						// Navigate to the author page to star.
-						var authorLink = items.eq( currentIndex ).find( '.author a' ).attr( 'href' );
-						if ( authorLink ) {
-							window.location.href = authorLink;
-						}
+					var authorLink = items.eq( currentIndex ).find( '.author a' ).attr( 'href' );
+					if ( authorLink ) {
+						window.location.href = authorLink;
 					}
 				}
 				break;
