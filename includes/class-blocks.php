@@ -833,16 +833,13 @@ class Blocks {
 				$out    .= '</button> ';
 			}
 
-			// Add reaction picker.
+			// Render available emojis as inline buttons for reactions not yet used.
 			$available = Reactions::get_available_emojis();
-			if ( $available ) {
-				$out .= '<span class="friends-dropdown">';
-				$out .= '<a class="new-reaction friends-dropdown-toggle" tabindex="0" title="' . esc_attr_x( 'Reaction', '+ Reaction', 'friends' ) . '">+ ' . esc_html_x( 'Reaction', '+ Reaction', 'friends' ) . '</a>';
-				$out .= '<ul class="menu friends-reactions-picker">';
-				foreach ( $available as $slug => $emoji ) {
-					$out .= '<li><button class="friends-reaction-picker" data-id="' . esc_attr( $post_id ) . '" data-emoji="' . esc_attr( $slug ) . '" data-nonce="' . esc_attr( $reaction_nonce ) . '">' . esc_html( $emoji->char ) . '</button></li>';
+			foreach ( $available as $slug => $emoji ) {
+				if ( isset( $reactions[ $slug ] ) ) {
+					continue;
 				}
-				$out .= '</ul></span> ';
+				$out .= '<button class="friends-reaction-picker" data-id="' . esc_attr( $post_id ) . '" data-emoji="' . esc_attr( $slug ) . '" data-nonce="' . esc_attr( $reaction_nonce ) . '">' . esc_html( $emoji->char ) . '</button> ';
 			}
 		}
 
