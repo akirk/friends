@@ -1,7 +1,6 @@
 {
   "packages": [
-    "blocks/friends-list",
-    "blocks/message"
+    "blocks/friends-list"
   ],
   "version": "independent"
 }
