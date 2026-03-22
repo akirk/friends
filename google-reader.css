@@ -577,6 +577,16 @@
 	outline-offset: -2px;
 }
 
+/* Follow button: hidden by default on boosted posts, shown on hover */
+.friends-page .posts .boosted .follow-button,
+.friends-page .posts .boosted .follow-button span.name {
+	display: none;
+}
+
+.friends-page .posts .boosted:hover .follow-button {
+	display: inline;
+}
+
 /* Collapse toggle button - hidden, click handled by card */
 .friends-page .collapse-post { display: none; }
 .friends-page .overflow { display: none; }
