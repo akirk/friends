@@ -1,11 +1,13 @@
 /**
- * Google Reader keyboard shortcuts for the Friends plugin.
+ * Google Reader theme JS for the Friends plugin.
  *
- * j/k     - Next/previous item (expands it, collapses previous)
- * o/Enter - Toggle open/close current item
- * s       - Star/unstar current item
- * v       - Open original link in new tab
- * r       - Refresh feeds
+ * Accordion behavior: only one item expanded at a time.
+ * Keyboard shortcuts:
+ *   j/k     - Next/previous item (expands it, collapses previous)
+ *   o/Enter - Toggle open/close current item
+ *   s       - Navigate to author page (to star)
+ *   v       - Open original link in new tab
+ *   r       - Refresh feeds
  */
 ( function( $ ) {
 	var currentIndex = -1;
@@ -33,30 +35,28 @@
 		$item.removeClass( 'uncollapsed' );
 	}
 
+	function collapseAll() {
+		getItems().removeClass( 'uncollapsed' );
+	}
+
 	function navigateTo( index ) {
 		var items = getItems();
 		if ( index < 0 || index >= items.length ) {
 			return;
 		}
 
-		// Collapse previous.
-		if ( currentIndex >= 0 && currentIndex < items.length && currentIndex !== index ) {
-			collapseItem( items.eq( currentIndex ) );
-		}
-
+		collapseAll();
 		currentIndex = index;
-		var $item = items.eq( index );
 
+		var $item = items.eq( index );
 		items.removeClass( 'gr-current' );
 		$item.addClass( 'gr-current' );
 		scrollToItem( $item );
-
-		// Expand new.
 		expandItem( $item );
 	}
 
+	// Keyboard shortcuts.
 	$( document ).on( 'keydown', function( e ) {
-		// Don't intercept when typing in inputs.
 		if ( $( e.target ).is( 'input, textarea, select, [contenteditable]' ) ) {
 			return;
 		}
@@ -67,27 +67,33 @@
 		}
 
 		switch ( e.key ) {
-			case 'j': // Next item.
+			case 'j':
 				e.preventDefault();
 				navigateTo( currentIndex + 1 );
 				break;
 
-			case 'k': // Previous item.
+			case 'k':
 				e.preventDefault();
 				if ( currentIndex > 0 ) {
 					navigateTo( currentIndex - 1 );
 				}
 				break;
 
-			case 'o': // Toggle current item.
+			case 'o':
 			case 'Enter':
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
-					items.eq( currentIndex ).click();
+					var $item = items.eq( currentIndex );
+					if ( $item.hasClass( 'uncollapsed' ) ) {
+						collapseItem( $item );
+					} else {
+						collapseAll();
+						expandItem( $item );
+					}
 				}
 				break;
 
-			case 's': // Star current item.
+			case 's':
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
 					var authorLink = items.eq( currentIndex ).find( '.author a' ).attr( 'href' );
@@ -97,7 +103,7 @@
 				}
 				break;
 
-			case 'v': // Open original in new tab.
+			case 'v':
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
 					var $link = items.eq( currentIndex ).find( '.card-title a, h4 a' ).first();
@@ -107,37 +113,33 @@
 				}
 				break;
 
-			case 'r': // Refresh.
+			case 'r':
 				e.preventDefault();
 				window.location.href = window.location.pathname + '?refresh';
 				break;
 		}
 	} );
 
-	// When a collapsed card is clicked, collapse all others first (Friends JS handler will expand it).
-	$( document ).on( 'click', 'section.posts.all-collapsed article.card:not(.uncollapsed)', function() {
+	// Accordion click: collapse all others, let the clicked item toggle.
+	$( document ).on( 'click', 'section.posts.all-collapsed article.card', function( e ) {
+		if ( $( e.target ).closest( 'a, button, input, textarea, form, label, .friends-dropdown' ).length ) {
+			return;
+		}
+
 		var items = getItems();
 		var index = items.index( this );
-
-		// Collapse all others.
-		items.not( this ).removeClass( 'uncollapsed' );
+		var $card = $( this );
 
 		// Track current.
 		currentIndex = index;
 		items.removeClass( 'gr-current' );
-		$( this ).addClass( 'gr-current' );
+		$card.addClass( 'gr-current' );
 
-		// Don't stop propagation — let the Friends JS handler toggle this item.
-	} );
+		// Collapse all others.
+		items.not( this ).removeClass( 'uncollapsed' );
 
-	// When an expanded card's header is clicked, collapse it.
-	$( document ).on( 'click', 'section.posts.all-collapsed article.card.uncollapsed .card-header', function( e ) {
-		if ( $( e.target ).closest( 'a, button, input, textarea, form' ).length ) {
-			return;
-		}
-
-		var $card = $( this ).closest( 'article' );
-		$card.removeClass( 'uncollapsed' );
+		// Toggle this one.
+		$card.toggleClass( 'uncollapsed' );
 
 		e.stopPropagation();
 		return false;

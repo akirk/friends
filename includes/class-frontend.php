@@ -301,6 +301,8 @@ class Frontend {
 		$file = 'friends.css';
 		$version = Friends::VERSION;
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+
+		wp_enqueue_script( 'friends-default-theme', plugins_url( 'friends-default-theme.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $version, true );
 	}
 
 	/**
