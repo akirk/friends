@@ -25,14 +25,12 @@
 
 	function expandItem( $item ) {
 		if ( ! $item.hasClass( 'uncollapsed' ) ) {
-			$item.click();
+			$item.addClass( 'uncollapsed' );
 		}
 	}
 
 	function collapseItem( $item ) {
-		if ( $item.hasClass( 'uncollapsed' ) ) {
-			$item.click();
-		}
+		$item.removeClass( 'uncollapsed' );
 	}
 
 	function navigateTo( index ) {
