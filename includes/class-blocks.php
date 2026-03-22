@@ -43,6 +43,23 @@ class Blocks {
 	}
 
 	/**
+	 * Safely get block wrapper attributes, returning a fallback when not in a block context.
+	 *
+	 * @param array $extra_attributes Extra attributes to add.
+	 * @return string The wrapper attributes string.
+	 */
+	private function get_wrapper_attributes( $extra_attributes = array() ) {
+		if ( function_exists( 'get_block_wrapper_attributes' ) && \WP_Block_Supports::$block_to_render ) {
+			return get_block_wrapper_attributes( $extra_attributes );
+		}
+		$attrs = '';
+		foreach ( $extra_attributes as $key => $value ) {
+			$attrs .= ' ' . $key . '="' . esc_attr( $value ) . '"';
+		}
+		return $attrs;
+	}
+
+	/**
 	 * Register our blocks.
 	 */
 	public function register_blocks() {
@@ -508,11 +525,11 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_stats_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function render_stats_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		$subscriptions       = User_Query::all_subscriptions();
 		$subscriptions_count = $subscriptions->get_total();
 
-		$out = '<ul ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-stats' ) ) . '>';
+		$out = '<ul ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-stats' ) ) . '>';
 
 		if ( class_exists( '\ActivityPub\Collection\Followers' ) && \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
 			$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', \ACTIVITYPUB_ACTOR_MODE );
@@ -564,8 +581,8 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_refresh_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
-		return '<p ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-refresh' ) ) . '><a href="' . esc_url( home_url( '/friends/?refresh' ) ) . '">' . esc_html__( 'Refresh', 'friends' ) . '</a></p>';
+	public function render_refresh_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		return '<p ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-refresh' ) ) . '><a href="' . esc_url( home_url( '/friends/?refresh' ) ) . '">' . esc_html__( 'Refresh', 'friends' ) . '</a></p>';
 	}
 
 	/**
@@ -574,8 +591,8 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_post_formats_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
-		$out  = '<ul ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-post-formats' ) ) . '>';
+	public function render_post_formats_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		$out  = '<ul ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-post-formats' ) ) . '>';
 		$out .= '<li><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html_x( 'All', 'all posts', 'friends' ) . '</a></li>';
 
 		$default_formats = array( 'standard', 'status', 'image', 'video' );
@@ -595,8 +612,8 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_add_subscription_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
-		$out  = '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-add-subscription' ) ) . '>';
+	public function render_add_subscription_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		$out  = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-add-subscription' ) ) . '>';
 		$out .= '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend' ) ) . '">';
 		$out .= esc_html__( 'Add Subscription', 'friends' );
 		$out .= '</a></div>';
@@ -676,7 +693,7 @@ class Blocks {
 			);
 		}
 
-		return '<h2 ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-feed-title' ) ) . '><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $display_title ) . '</a></h2>';
+		return '<h2 ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-feed-title' ) ) . '><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $display_title ) . '</a></h2>';
 	}
 
 	/**
@@ -685,7 +702,7 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_feed_chips_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function render_feed_chips_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		$friends = Friends::get_instance();
 		$data    = $friends->get_main_header_data();
 
@@ -694,7 +711,7 @@ class Blocks {
 			$hidden_post_count = $data['post_count_by_post_status']->trash;
 		}
 
-		$out = '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-feed-chips' ) ) . '>';
+		$out = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-feed-chips' ) ) . '>';
 
 		// Post count chips.
 		$nonce = wp_create_nonce( 'friends_post_counts' );
@@ -752,10 +769,10 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_post_permalink_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function render_post_permalink_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		global $post;
 		if ( ! $post ) {
-			return '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-post-permalink' ) ) . '><em>' . esc_html__( '3 days ago on example.com', 'friends' ) . ' <span class="reading-time">' . esc_html__( '2 min read', 'friends' ) . '</span></em></div>';
+			return '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-post-permalink' ) ) . '><em>' . esc_html__( '3 days ago on example.com', 'friends' ) . ' <span class="reading-time">' . esc_html__( '2 min read', 'friends' ) . '</span></em></div>';
 		}
 
 		$friend_user = User::get_post_author( $post );
@@ -781,7 +798,7 @@ class Blocks {
 
 		/* translators: %s is a time span */
 		$time_ago = sprintf( __( '%s ago' ), human_time_diff( get_post_time( 'U', true ) ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		$out      = '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-post-permalink' ) ) . '>';
+		$out      = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-post-permalink' ) ) . '>';
 		$out     .= sprintf(
 			// translators: %1$s is a date or relative time, %2$s is a site name or domain.
 			_x( '%1$s on %2$s', 'at-date-on-post', 'friends' ),
@@ -980,10 +997,10 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_author_name_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function render_author_name_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		$author = $this->get_frontend_author();
 		if ( ! $author ) {
-			return '<h2 ' . get_block_wrapper_attributes(
+			return '<h2 ' . $this->get_wrapper_attributes(
 				array(
 					'class' => 'wp-block-friends-author-name',
 					'id'    => 'page-title',
@@ -991,7 +1008,7 @@ class Blocks {
 			) . '>' . esc_html__( 'Author Name', 'friends' ) . '</h2>';
 		}
 
-		return '<h2 ' . get_block_wrapper_attributes(
+		return '<h2 ' . $this->get_wrapper_attributes(
 			array(
 				'class' => 'wp-block-friends-author-name',
 				'id'    => 'page-title',
@@ -1005,16 +1022,16 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_author_description_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function render_author_description_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		$author = $this->get_frontend_author();
 		if ( ! $author ) {
-			return '<p ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-author-description' ) ) . '><em>' . esc_html__( 'Author description will appear here.', 'friends' ) . '</em></p>';
+			return '<p ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-author-description' ) ) . '><em>' . esc_html__( 'Author description will appear here.', 'friends' ) . '</em></p>';
 		}
 		if ( ! $author->description ) {
 			return '';
 		}
 
-		return '<p ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-author-description' ) ) . '>' . wp_kses( $author->description, array( 'a' => array( 'href' => array() ) ) ) . '</p>';
+		return '<p ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-author-description' ) ) . '>' . wp_kses( $author->description, array( 'a' => array( 'href' => array() ) ) ) . '</p>';
 	}
 
 	/**
@@ -1023,14 +1040,14 @@ class Blocks {
 	 * @param array $attributes Block attributes.
 	 * @return string The rendered block HTML.
 	 */
-	public function render_author_chips_block( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+	public function render_author_chips_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		$friends = Friends::get_instance();
 		$author  = $this->get_frontend_author();
 		if ( ! $author ) {
-			return '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-author-chips' ) ) . '><span class="chip">' . esc_html__( 'Subscription', 'friends' ) . '</span> <span class="chip">example.com</span> <span class="chip">' . esc_html__( 'Edit', 'friends' ) . '</span></div>';
+			return '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-author-chips' ) ) . '><span class="chip">' . esc_html__( 'Subscription', 'friends' ) . '</span> <span class="chip">example.com</span> <span class="chip">' . esc_html__( 'Edit', 'friends' ) . '</span></div>';
 		}
 
-		$out = '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-author-chips' ) ) . '>';
+		$out = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-author-chips' ) ) . '>';
 
 		// Role chip.
 		$out .= '<span class="chip">' . esc_html( $author->get_role_name() ) . '</span> ';
@@ -1099,7 +1116,7 @@ class Blocks {
 	 * @param  array $attributes Attributes set by Blocks.
 	 * @return string The new block content.
 	 */
-	public function render_friends_list_block( $attributes ) {
+	public function render_friends_list_block( $attributes = array() ) {
 		if ( ! isset( $attributes['user_types'] ) ) {
 			$attributes['user_types'] = 'subscriptions';
 		}
@@ -1119,14 +1136,14 @@ class Blocks {
 			if ( ! $no_users ) {
 				return '';
 			}
-			return '<span ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . $no_users . '</span>';
+			return '<span ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . $no_users . '</span>';
 		}
 
 		if ( ! empty( $attributes['users_inline'] ) ) {
 			$out   = '';
 			$first = true;
 		} else {
-			$out = '<ul ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list' ) ) . '>';
+			$out = '<ul ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list' ) ) . '>';
 		}
 		$count = 0;
 		foreach ( $friends->get_results() as $friend_user ) {
@@ -1168,7 +1185,7 @@ class Blocks {
 	 * @param  array $attributes Attributes set by Blocks.
 	 * @return string The new block content.
 	 */
-	public function render_friend_posts_block( $attributes ) {
+	public function render_friend_posts_block( $attributes = array() ) {
 		$date_formats = array(
 			'Y m d H' => 'human',
 			'Y m d'   => 'H:i',
