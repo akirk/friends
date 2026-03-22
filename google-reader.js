@@ -114,28 +114,19 @@
 		}
 	} );
 
-	// Click on an item: collapse all others, expand this one.
-	$( document ).on( 'click', 'section.posts.all-collapsed article.card', function( e ) {
-		// Don't intercept clicks on links, buttons, inputs.
-		if ( $( e.target ).closest( 'a:not(.collapse-post), button, input, textarea, form, label, .friends-dropdown' ).length ) {
-			return;
-		}
-
+	// When a card is clicked, collapse all others first (before the Friends JS handler expands it).
+	$( document ).on( 'click', 'section.posts.all-collapsed article.card', function() {
 		var items = getItems();
 		var index = items.index( this );
 
 		// Collapse all others.
 		items.not( this ).removeClass( 'uncollapsed' );
 
-		// Toggle this one.
-		$( this ).toggleClass( 'uncollapsed' );
-
 		// Track current.
 		currentIndex = index;
 		items.removeClass( 'gr-current' );
 		$( this ).addClass( 'gr-current' );
 
-		e.stopPropagation();
-		return false;
+		// Don't stop propagation — let the Friends JS handler toggle this item.
 	} );
 } )( jQuery );
