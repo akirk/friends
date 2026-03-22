@@ -917,13 +917,12 @@ class Blocks {
 		$comment_icon = $has_mention ? 'format-status' : 'admin-comments';
 		$comment_text = $has_mention ? __( 'Comments (You were mentioned)', 'friends' ) : __( 'Comments' ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 
-		$out  = '<span class="wp-block-friends-post-comments">';
-		$out .= '<a href="' . esc_url( get_comments_link() ) . '" class="comments" data-id="' . esc_attr( $post_id ) . '" data-cnonce="' . esc_attr( wp_create_nonce( 'comments-' . $post_id ) ) . '">';
+		$out  = '<div class="wp-block-friends-post-comments">';
+		$out .= '<a href="#" class="comments" data-id="' . esc_attr( $post_id ) . '" data-cnonce="' . esc_attr( wp_create_nonce( 'comments-' . $post_id ) ) . '">';
 		$out .= '<i class="dashicons dashicons-' . esc_attr( $comment_icon ) . '"></i> <span class="text">' . esc_html( $comment_text ) . '</span>';
-		$out .= '</a></span>';
-
-		// Comments content container (populated by AJAX).
+		$out .= '</a>';
 		$out .= '<div class="comments-content closed"></div>';
+		$out .= '</div>';
 
 		return $out;
 	}

@@ -358,7 +358,13 @@
 
 	function loadComments( commentsLink, callback ) {
 		const $this = $( commentsLink );
-		const content = $this.closest( 'article' ).find( '.comments-content' );
+		let content = $this.closest( 'article' ).find( '.comments-content' );
+		if ( ! content.length ) {
+			content = $this.closest( '.wp-block-friends-post-comments' ).find( '.comments-content' );
+		}
+		if ( ! content.length ) {
+			content = $this.closest( 'li' ).find( '.comments-content' );
+		}
 		if ( content.data( 'loaded' ) ) {
 			content.toggle();
 		} else {
@@ -389,7 +395,7 @@
 		}
 	}
 
-	$document.on( 'click', 'article a.comments', function ( e ) {
+	$document.on( 'click', 'article a.comments, .wp-block-friends-post-comments a.comments', function ( e ) {
 		if ( e.metaKey || e.altKey || e.shiftKey ) {
 			return;
 		}
@@ -714,11 +720,16 @@
 		card.click();
 		$( this ).closest( '.friends-dropdown' ).hide();
 		openMenu = null;
-		const comments = $( this ).closest( '.card' ).find( '.comments' );
+		let comments = $( this ).closest( '.card' ).find( '.comments' );
+		if ( ! comments.length ) {
+			comments = $( this ).closest( 'li' ).find( '.comments' );
+		}
 
-		$( 'html, body' ).animate( {
-			scrollTop: comments.offset().top - 100,
-		}, 500 );
+		if ( comments.length ) {
+			$( 'html, body' ).animate( {
+				scrollTop: comments.offset().top - 100,
+			}, 500 );
+		}
 
 		loadComments( comments, function() {
 			// focus #comment textarea but put the cursor at the end
