@@ -391,15 +391,20 @@ class Frontend {
 	}
 
 	public function google_reader_theme() {
+		// Load the base theme CSS first, then override with Google Reader styles.
+		$this->default_theme();
+
 		$handle  = 'friends-google-reader';
 		$file    = 'google-reader.css';
 		$version = Friends::VERSION;
-		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'friends' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
 		add_filter(
 			'friends_template_paths_theme_google-reader',
-			function () {
-				return array( FRIENDS_PLUGIN_DIR . 'templates/google-reader/' );
+			function ( $file_paths ) {
+				// Add Google Reader templates at highest priority (lowest number), fall back to defaults.
+				$file_paths[0] = FRIENDS_PLUGIN_DIR . 'templates/google-reader/';
+				return $file_paths;
 			}
 		);
 	}
