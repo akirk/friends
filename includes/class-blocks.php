@@ -1108,6 +1108,24 @@ class Blocks {
 			$out .= '</a> ';
 		}
 
+		// Folder selector.
+		if ( $author instanceof Subscription ) {
+			$folders        = Subscription::get_folders();
+			$current_folder = $author->get_folder();
+			$current_id     = $current_folder ? $current_folder->term_id : 0;
+			$nonce          = wp_create_nonce( 'friends-move-to-folder' );
+
+			$out .= '<span class="chip friends-folder-selector">';
+			$out .= '&#128193; <select class="friends-move-to-folder" data-id="' . esc_attr( $author->user_login ) . '" data-nonce="' . esc_attr( $nonce ) . '">';
+			$out .= '<option value="0"' . selected( $current_id, 0, false ) . '>' . esc_html__( 'No folder', 'friends' ) . '</option>';
+			foreach ( $folders as $folder ) {
+				$out .= '<option value="' . esc_attr( $folder->term_id ) . '"' . selected( $current_id, $folder->term_id, false ) . '>' . esc_html( $folder->name ) . '</option>';
+			}
+			$out .= '<option value="new">' . esc_html__( '+ New folder', 'friends' ) . '</option>';
+			$out .= '</select>';
+			$out .= '</span> ';
+		}
+
 		// Edit chip.
 		$out .= '<a class="chip" href="' . esc_url( admin_url( 'admin.php?page=edit-friend&user=' . $author->user_login ) ) . '">' . esc_html__( 'Edit', 'friends' ) . '</a> ';
 
@@ -1127,6 +1145,10 @@ class Blocks {
 	public function render_friends_list_block( $attributes = array() ) {
 		if ( ! isset( $attributes['user_types'] ) ) {
 			$attributes['user_types'] = 'subscriptions';
+		}
+
+		if ( 'folders' === $attributes['user_types'] ) {
+			return $this->render_friends_list_by_folder( $attributes );
 		}
 
 		if ( ! empty( $attributes['folder'] ) ) {
@@ -1190,6 +1212,62 @@ class Blocks {
 			$out .= '</ul>';
 		}
 
+		return $out;
+	}
+
+	/**
+	 * Render the friends list grouped by folder hierarchy.
+	 *
+	 * @param array $attributes Block attributes.
+	 * @return string The rendered block HTML.
+	 */
+	private function render_friends_list_by_folder( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		$all     = User_Query::all_subscriptions();
+		$folders = Subscription::get_folders();
+
+		if ( $all->get_total() === 0 ) {
+			return '<span ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . esc_html__( "You don't have any subscriptions yet.", 'friends' ) . '</span>';
+		}
+
+		$out = '<div ' . get_block_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list folders' ) ) . '>';
+
+		// Render each folder as a collapsible details element.
+		foreach ( $folders as $folder ) {
+			$folder_subs = User_Query::subscriptions_in_folder( $folder->term_id );
+			if ( $folder_subs->get_total() === 0 ) {
+				continue;
+			}
+
+			$out .= '<details class="friends-folder" open>';
+			$out .= '<summary>&#128193; ' . esc_html( $folder->name ) . ' <small>(' . $folder_subs->get_total() . ')</small></summary>';
+			$out .= '<ul>';
+			foreach ( $folder_subs->get_results() as $friend_user ) {
+				$url  = Friends::has_required_privileges() ? $friend_user->get_local_friends_page_url() : $friend_user->user_url;
+				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
+			}
+			$out .= '</ul>';
+			$out .= '</details>';
+		}
+
+		// Render unfoldered subscriptions.
+		$unfoldered = User_Query::unfoldered_subscriptions();
+		if ( $unfoldered->get_total() > 0 ) {
+			if ( ! empty( $folders ) ) {
+				$out .= '<details class="friends-folder" open>';
+				$out .= '<summary>' . esc_html__( 'Uncategorized', 'friends' ) . ' <small>(' . $unfoldered->get_total() . ')</small></summary>';
+			}
+			$out .= '<ul>';
+			foreach ( $unfoldered->get_results() as $friend_user ) {
+				$url  = Friends::has_required_privileges() ? $friend_user->get_local_friends_page_url() : $friend_user->user_url;
+				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
+			}
+			$out .= '</ul>';
+			if ( ! empty( $folders ) ) {
+				$out .= '</details>';
+			}
+		}
+
+		$out .= '</div>';
 		return $out;
 	}
 

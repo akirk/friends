@@ -43,6 +43,10 @@ registerBlockType( 'friends/friends-list', {
 									label: __( 'Starred', 'friends' ),
 									value: 'starred',
 								},
+								{
+									label: __( 'Grouped by Folder', 'friends' ),
+									value: 'folders',
+								},
 							] }
 						/>
 						{ folderOptions.length > 1 && (

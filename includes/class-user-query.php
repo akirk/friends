@@ -121,7 +121,7 @@ class User_Query extends \WP_User_Query {
 			);
 
 			foreach ( $term_query->get_terms() as $term ) {
-				if ( ! isset( $this->results[ $term->term_id ] ) ) {
+				if ( ! isset( $this->results[ $term->term_id ] ) && ! Subscription::is_folder( $term->term_id ) ) {
 					$this->results[ $term->term_id ] = new Subscription( $term );
 					$this->total_users += 1;
 				}

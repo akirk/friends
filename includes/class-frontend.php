@@ -343,6 +343,7 @@ class Frontend {
 
 		// translators: %s is a user handle.
 		$variables['text_confirm_delete_follower'] = __( 'Do you really want to delete the follower %s?', 'friends' );
+		$variables['text_new_folder']              = __( 'Folder name:', 'friends' );
 		wp_localize_script( 'friends', 'friends', $variables );
 	}
 
@@ -1188,7 +1189,7 @@ class Frontend {
 			exit;
 		}
 
-		check_ajax_referer( 'friends-create-folder' );
+		check_ajax_referer( 'friends-move-to-folder' );
 
 		$name      = sanitize_text_field( wp_unslash( $_POST['name'] ) );
 		$parent_id = isset( $_POST['parent_id'] ) ? intval( $_POST['parent_id'] ) : 0;
