@@ -155,13 +155,6 @@
 				}
 				break;
 
-			case 'A': // Shift-A: mark all as read (not implemented, show hint).
-				if ( e.shiftKey ) {
-					e.preventDefault();
-					// Could implement trash-all here in the future.
-				}
-				break;
-
 			case 'u': // Toggle sidebar.
 				e.preventDefault();
 				$( '.off-canvas-sidebar' ).toggle();
