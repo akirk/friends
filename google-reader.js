@@ -120,6 +120,14 @@
 		}
 	} );
 
+	// Block link clicks on collapsed items' post-meta — just expand instead.
+	$( document ).on( 'click', 'section.posts.all-collapsed article.card:not(.uncollapsed) .post-meta a', function( e ) {
+		e.preventDefault();
+		e.stopPropagation();
+		$( this ).closest( 'article.card' ).trigger( 'click' );
+		return false;
+	} );
+
 	// Accordion click: collapse all others, let the clicked item toggle.
 	$( document ).on( 'click', 'section.posts.all-collapsed article.card', function( e ) {
 		if ( $( e.target ).closest( 'a, button, input, textarea, form, label, .friends-dropdown' ).length ) {
