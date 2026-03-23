@@ -118,13 +118,21 @@ class Frontend {
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
+		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
+		add_action( 'friends_load_theme_block', array( $this, 'block_theme' ) );
+		add_action( 'friends_load_themes', array( $this, 'register_block_theme' ) );
+		add_action( 'init', array( $this, 'register_block_templates' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
 		add_action( 'wp_footer', array( $this, 'dequeue_scripts' ) );
 		add_action( 'the_post', array( $this, 'the_post' ), 10, 2 );
 		add_action( 'parse_query', array( $this, 'parse_query' ) );
 		add_filter( 'body_class', array( $this, 'add_body_class' ) );
+		add_filter( 'block_type_metadata_settings', array( $this, 'block_type_metadata_settings' ), 15 );
+		add_filter( 'pre_render_block', array( $this, 'render_friends_template_part' ), 10, 2 );
+		add_filter( 'pre_get_block_file_template', array( $this, 'get_friends_block_file_template' ), 10, 3 );
+		add_filter( 'get_block_templates', array( $this, 'add_friends_template_parts' ), 10, 3 );
 		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
@@ -337,8 +345,8 @@ class Frontend {
 	}
 
 	public function dequeue_scripts() {
-		if ( is_user_logged_in() && Friends::on_frontend() ) {
-			// Dequeue theme styles so taht they don't interact with the Friends frontend.
+		if ( is_user_logged_in() && Friends::on_frontend() && 'block' !== $this->theme ) {
+			// Dequeue theme styles so that they don't interact with the Friends frontend.
 			$wp_styles = wp_styles();
 			foreach ( $wp_styles->queue as $style ) {
 				$src = $wp_styles->registered[ $style ]->src;
@@ -366,11 +374,253 @@ class Frontend {
 	public function add_body_class( $classes ) {
 		if ( $this->friends->on_frontend() ) {
 			$classes[] = 'friends-page';
+			$classes[] = 'off-canvas';
+			$classes[] = 'off-canvas-sidebar-show';
 		}
 
 		return $classes;
 	}
 
+	public function register_block_theme( Frontend $friends_frontend ) {
+		$friends_frontend->register_theme( __( 'Block Theme', 'friends' ), 'block' );
+	}
+
+	public function block_theme() {
+		// No theme swap needed — templates are registered as plugin templates
+		// and injected via template_override.
+	}
+
+	/**
+	 * Register Friends block templates as plugin templates.
+	 */
+	public function register_block_templates() {
+		if ( ! wp_is_block_theme() || ! class_exists( 'WP_Block_Templates_Registry' ) ) {
+			return;
+		}
+
+		$registry  = \WP_Block_Templates_Registry::get_instance();
+		$templates = array(
+			'friends//friends-index'         => array(
+				'title'   => __( 'Friends Feed', 'friends' ),
+				'content' => 'index',
+			),
+			'friends//friends-author-index'  => array(
+				'title'   => __( 'Friends Author Feed', 'friends' ),
+				'content' => 'friends-author-index',
+			),
+			'friends//friends-followers'     => array(
+				'title'   => __( 'Friends Followers', 'friends' ),
+				'content' => 'friends-followers',
+			),
+			'friends//friends-subscriptions' => array(
+				'title'   => __( 'Friends Subscriptions', 'friends' ),
+				'content' => 'friends-subscriptions',
+			),
+			'friends//friends-single'        => array(
+				'title'   => __( 'Friends Single Post', 'friends' ),
+				'content' => 'single-friend_post_cache',
+			),
+		);
+
+		foreach ( $templates as $name => $args ) {
+			$file = FRIENDS_PLUGIN_DIR . 'themes/friends/templates/' . $args['content'] . '.html';
+			if ( file_exists( $file ) ) {
+				$registry->register(
+					$name,
+					array(
+						'title'   => $args['title'],
+						'content' => file_get_contents( $file ), // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+					)
+				);
+			}
+		}
+	}
+
+	/**
+	 * Render template parts for the friends plugin.
+	 *
+	 * @param string|null $pre_render The pre-rendered content.
+	 * @param array       $parsed_block The parsed block.
+	 * @return string|null The rendered content or null.
+	 */
+	public function render_friends_template_part( $pre_render, $parsed_block ) {
+		if ( 'core/template-part' !== $parsed_block['blockName'] ) {
+			return $pre_render;
+		}
+
+		$attrs = $parsed_block['attrs'];
+		if ( ! isset( $attrs['theme'] ) || 'friends' !== $attrs['theme'] || ! isset( $attrs['slug'] ) ) {
+			return $pre_render;
+		}
+
+		// Check for user-customized version in the database first.
+		$custom_query = new \WP_Query(
+			array(
+				'post_type'      => 'wp_template_part',
+				'post_status'    => 'publish',
+				'post_name__in'  => array( $attrs['slug'] ),
+				'tax_query'      => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+					array(
+						'taxonomy' => 'wp_theme',
+						'field'    => 'name',
+						'terms'    => 'friends',
+					),
+				),
+				'posts_per_page' => 1,
+				'no_found_rows'  => true,
+			)
+		);
+
+		if ( $custom_query->have_posts() ) {
+			$content = $custom_query->posts[0]->post_content;
+		} else {
+			$file = FRIENDS_PLUGIN_DIR . 'themes/friends/parts/' . $attrs['slug'] . '.html';
+			if ( ! file_exists( $file ) ) {
+				return $pre_render;
+			}
+			$content = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		}
+
+		$tag = isset( $attrs['tagName'] ) ? $attrs['tagName'] : 'div';
+
+		return '<' . $tag . ' class="wp-block-template-part">' . do_blocks( $content ) . '</' . $tag . '>';
+	}
+
+	/**
+	 * Build a WP_Block_Template for a friends template part.
+	 *
+	 * @param string $slug The template part slug.
+	 * @param string $file The file path.
+	 * @return WP_Block_Template
+	 */
+	private function build_friends_template_part( $slug, $file ) {
+		$template                 = new \WP_Block_Template();
+		$template->id             = 'friends//' . $slug;
+		$template->theme          = 'friends';
+		$template->plugin         = 'friends';
+		$template->slug           = $slug;
+		$template->source         = 'plugin';
+		$template->origin         = 'plugin';
+		$template->type           = 'wp_template_part';
+		$template->title          = ucwords( str_replace( '-', ' ', $slug ) );
+		$template->status         = 'publish';
+		$template->has_theme_file = true;
+		$template->is_custom      = false;
+		$template->content        = file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$template->area           = WP_TEMPLATE_PART_AREA_UNCATEGORIZED;
+
+		return $template;
+	}
+
+	/**
+	 * Resolve a friends template part by ID.
+	 *
+	 * @param WP_Block_Template|null $block_template The found block template.
+	 * @param string                 $id             Template unique identifier.
+	 * @param string                 $template_type  Template type.
+	 * @return WP_Block_Template|null
+	 */
+	public function get_friends_block_file_template( $block_template, $id, $template_type ) {
+		if ( 'wp_template_part' !== $template_type ) {
+			return $block_template;
+		}
+
+		$parts = explode( '//', $id, 2 );
+		if ( count( $parts ) < 2 || 'friends' !== $parts[0] ) {
+			return $block_template;
+		}
+
+		$slug = $parts[1];
+		$file = FRIENDS_PLUGIN_DIR . 'themes/friends/parts/' . $slug . '.html';
+		if ( ! file_exists( $file ) ) {
+			return $block_template;
+		}
+
+		return $this->build_friends_template_part( $slug, $file );
+	}
+
+	/**
+	 * Add friends template parts to block template queries.
+	 *
+	 * @param WP_Block_Template[] $query_result Array of found block templates.
+	 * @param array               $query        Arguments to retrieve templates.
+	 * @param string              $template_type Template type.
+	 * @return WP_Block_Template[]
+	 */
+	public function add_friends_template_parts( $query_result, $query, $template_type ) {
+		if ( 'wp_template_part' !== $template_type ) {
+			return $query_result;
+		}
+
+		$parts_dir = FRIENDS_PLUGIN_DIR . 'themes/friends/parts/';
+		if ( ! is_dir( $parts_dir ) ) {
+			return $query_result;
+		}
+
+		$slugs_to_include = isset( $query['slug__in'] ) ? $query['slug__in'] : array();
+
+		foreach ( glob( $parts_dir . '*.html' ) as $file ) {
+			$slug = basename( $file, '.html' );
+
+			if ( $slugs_to_include && ! in_array( $slug, $slugs_to_include, true ) ) {
+				continue;
+			}
+
+			// Don't add if already in results.
+			$exists = false;
+			foreach ( $query_result as $existing ) {
+				if ( $existing->slug === $slug && 'friends' === $existing->theme ) {
+					$exists = true;
+					break;
+				}
+			}
+			if ( ! $exists ) {
+				$query_result[] = $this->build_friends_template_part( $slug, $file );
+			}
+		}
+
+		return $query_result;
+	}
+
+	public function block_type_metadata_settings( $settings ) {
+		if ( ! Friends::on_frontend() || ! isset( $settings['name'] ) ) {
+			return $settings;
+		}
+		if ( 'core/post-author-name' === $settings['name'] ) {
+			$settings['render_callback'] = function ( $attributes, $content, $block ) {
+				if ( isset( $block->context['postId'] ) ) {
+					$author = User::get_post_author( get_post( $block->context['postId'] ) );
+				} else {
+					return '';
+				}
+				if ( empty( $author ) ) {
+					return '';
+				}
+
+				$author_name = $author->display_name;
+				$override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, $block->context['postId'] );
+				if ( isset( $attributes['isLink'] ) && $attributes['isLink'] ) {
+					$author_name = sprintf( '<a href="%1$s" target="%2$s" class="wp-block-post-author-name__link">%3$s</a>', $author->get_local_friends_page_url(), esc_attr( $attributes['linkTarget'] ), $author_name );
+				}
+
+				if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) {
+					$author_name .= ' – ' . esc_html( $override_author_name );
+				}
+
+				$classes = array();
+				if ( isset( $attributes['textAlign'] ) ) {
+					$classes[] = 'has-text-align-' . $attributes['textAlign'];
+				}
+				if ( isset( $attributes['style']['elements']['link']['color']['text'] ) ) {
+					$classes[] = 'has-link-color';
+				}
+				$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => implode( ' ', $classes ) ) );
+
+				return sprintf( '<div %1$s>%2$s</div>', $wrapper_attributes, $author_name );
+			};
+		}
+		return $settings;
+	}
 	public function tag_row_actions( $actions, $tag ) {
 		$actions['view-friends'] = sprintf(
 			'<a href="%s">%s</a>',
@@ -619,7 +869,7 @@ class Frontend {
 	 *
 	 * @return     float  The read time in seconds.
 	 */
-	private static function calculate_read_time( $original_text ) {
+	public static function calculate_read_time( $original_text ) {
 		// from wp_trim_words().
 		$text = wp_strip_all_tags( $original_text );
 
@@ -939,11 +1189,43 @@ class Frontend {
 			$wp_query->is_404 = false;
 
 			status_header( 200 );
+
+			if ( 'block' === $this->theme ) {
+				$block_template_content = $this->get_block_template_content_for( $this->template );
+				if ( false !== $block_template_content ) {
+					global $_wp_current_template_content, $_wp_current_template_id;
+					$_wp_current_template_content = $block_template_content;
+					$_wp_current_template_id      = get_stylesheet() . '//friends-' . basename( $this->template );
+					return ABSPATH . WPINC . '/template-canvas.php';
+				}
+			}
+
 			if ( 'frontend/index' === $this->template ) {
 				$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
 
 			}
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
+		}
+
+		if ( 'block' === $this->theme ) {
+			global $wp_query;
+			if ( $wp_query->is_single ) {
+				$template_key = 'frontend/single';
+				$template_id  = 'friends-single';
+			} elseif ( $this->author ) {
+				$template_key = 'frontend/author-index';
+				$template_id  = 'friends-author-index';
+			} else {
+				$template_key = 'frontend/index';
+				$template_id  = 'friends-index';
+			}
+			$block_template_content = $this->get_block_template_content_for( $template_key );
+			if ( false !== $block_template_content ) {
+				global $_wp_current_template_content, $_wp_current_template_id;
+				$_wp_current_template_content = $block_template_content;
+				$_wp_current_template_id      = get_stylesheet() . '//' . $template_id;
+				return ABSPATH . WPINC . '/template-canvas.php';
+			}
 		}
 
 		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
@@ -954,6 +1236,24 @@ class Frontend {
 		}
 
 		return Friends::template_loader()->get_template_part( 'frontend/index', $this->post_format, $args, false );
+	}
+
+	public function get_block_template_content_for( $template_path ) {
+		$map = array(
+			'frontend/index'         => 'index',
+			'frontend/author-index'  => 'friends-author-index',
+			'frontend/single'        => 'single-friend_post_cache',
+			'frontend/followers'     => 'friends-followers',
+			'frontend/subscriptions' => 'friends-subscriptions',
+		);
+		if ( ! isset( $map[ $template_path ] ) ) {
+			return false;
+		}
+		$file = FRIENDS_PLUGIN_DIR . 'themes/friends/templates/' . $map[ $template_path ] . '.html';
+		if ( ! file_exists( $file ) ) {
+			return false;
+		}
+		return file_get_contents( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 	}
 
 	public function get_static_frontend_template( $path ) {
@@ -1544,6 +1844,8 @@ class Frontend {
 		$query->is_friends_page = true;
 		$query->is_singular = false;
 		$query->is_single = false;
+		$query->is_category = false;
+		$query->is_archive = false;
 		$query->queried_object = null;
 		$query->queried_object_id = null;
 		$post_types = apply_filters( 'friends_frontend_post_types', array() );

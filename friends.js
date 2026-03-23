@@ -203,7 +203,7 @@
 
 	$( function () {
 		const standard_count = $( '.chip.post-count-standard' );
-		if ( standard_count.text().substr( 0, 3 ) === '...' ) {
+		if ( standard_count.text().substr( 0, 3 ) === '...' || standard_count.text().substr( 0, 1 ) === '…' ) {
 			wp.ajax.send( 'friends-get-post-counts', {
 				data: {
 					_ajax_nonce: standard_count.data( 'nonce' )
@@ -358,7 +358,13 @@
 
 	function loadComments( commentsLink, callback ) {
 		const $this = $( commentsLink );
-		const content = $this.closest( 'article' ).find( '.comments-content' );
+		let content = $this.closest( 'article' ).find( '.comments-content' );
+		if ( ! content.length ) {
+			content = $this.closest( '.wp-block-friends-post-comments' ).find( '.comments-content' );
+		}
+		if ( ! content.length ) {
+			content = $this.closest( 'li' ).find( '.comments-content' );
+		}
 		if ( content.data( 'loaded' ) ) {
 			content.toggle();
 		} else {
@@ -389,7 +395,7 @@
 		}
 	}
 
-	$document.on( 'click', 'article a.comments', function ( e ) {
+	$document.on( 'click', 'article a.comments, .wp-block-friends-post-comments a.comments', function ( e ) {
 		if ( e.metaKey || e.altKey || e.shiftKey ) {
 			return;
 		}
@@ -622,7 +628,7 @@
 		return false;
 	} );
 
-	$document.on( 'mouseenter', 'h2#page-title a.dashicons', function () {
+	$document.on( 'mouseenter', 'h2#page-title a.dashicons, a.wp-block-friends-author-star.dashicons', function () {
 		if ( $( this ).hasClass( 'not-starred' ) ) {
 			if ( $( this ).hasClass( 'dashicons-star-empty' ) ) {
 				$( this )
@@ -638,7 +644,7 @@
 		}
 	} );
 
-	$document.on( 'mouseleave', 'h2#page-title a.dashicons', function () {
+	$document.on( 'mouseleave', 'h2#page-title a.dashicons, a.wp-block-friends-author-star.dashicons', function () {
 		if ( $( this ).hasClass( 'not-starred' ) ) {
 			if ( $( this ).hasClass( 'dashicons-star-filled' ) ) {
 				$( this )
@@ -656,7 +662,7 @@
 
 	$document.on(
 		'click',
-		'h2#page-title a.dashicons.starred, h2#page-title a.dashicons.not-starred',
+		'h2#page-title a.dashicons.starred, h2#page-title a.dashicons.not-starred, a.wp-block-friends-author-star.starred, a.wp-block-friends-author-star.not-starred',
 		function () {
 			let removeClass = 'dashicons-star-filled starred';
 			let addClass = 'dashicons-star-empty not-starred';
@@ -714,11 +720,16 @@
 		card.click();
 		$( this ).closest( '.friends-dropdown' ).hide();
 		openMenu = null;
-		const comments = $( this ).closest( '.card' ).find( '.comments' );
+		let comments = $( this ).closest( '.card' ).find( '.comments' );
+		if ( ! comments.length ) {
+			comments = $( this ).closest( 'li' ).find( '.comments' );
+		}
 
-		$( 'html, body' ).animate( {
-			scrollTop: comments.offset().top - 100,
-		}, 500 );
+		if ( comments.length ) {
+			$( 'html, body' ).animate( {
+				scrollTop: comments.offset().top - 100,
+			}, 500 );
+		}
 
 		loadComments( comments, function() {
 			// focus #comment textarea but put the cursor at the end

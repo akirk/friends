@@ -1,11 +1,10 @@
 import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { CheckboxControl, PanelBody, SelectControl, TextControl } from '@wordpress/components';
+import { CheckboxControl, PanelBody, SelectControl } from '@wordpress/components';
 import ServerSideRender from '@wordpress/server-side-render';
 
 registerBlockType( 'friends/friends-list', {
-	apiVersion: 2,
 	edit: function( { attributes, setAttributes } ) {
 		const blockProps = useBlockProps();
 		return (
@@ -23,8 +22,12 @@ registerBlockType( 'friends/friends-list', {
 							value={ attributes.user_types }
 							options={ [
 								{
-									label: __( 'Friends + Subscriptions', 'friends' ),
-									value: 'friends_subscriptions',
+									label: __( 'Subscriptions', 'friends' ),
+									value: 'subscriptions',
+								},
+								{
+									label: __( 'Starred', 'friends' ),
+									value: 'starred',
 								},
 							] }
 						/>

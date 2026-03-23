@@ -6,18 +6,34 @@
 	"category": "widgets",
 	"textdomain": "friends",
 	"icon": "groups",
+	"supports": {
+		"color": {
+			"background": true,
+			"text": true,
+			"link": true
+		},
+		"typography": {
+			"fontSize": true,
+			"lineHeight": true
+		},
+		"spacing": {
+			"padding": true,
+			"margin": true
+		}
+	},
 	"attributes": {
 		"users_inline": {
 			"type": "boolean",
 			"default": false
 		},
 		"user_types": {
-			"type": "string"
+			"type": "string",
+			"default": "subscriptions"
 		}
 	},
 	"example": {
 		"attributes": {
-			"user_types": "friends"
+			"user_types": "subscriptions"
 		}
 	},
 	"editorScript": "file:./build/index.js"
