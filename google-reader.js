@@ -114,8 +114,10 @@
 				break;
 
 			case 'r':
-				e.preventDefault();
-				window.location.href = window.location.pathname + '?refresh';
+				if ( e.shiftKey ) {
+					e.preventDefault();
+					window.location.href = window.location.pathname + '?refresh';
+				}
 				break;
 		}
 	} );
