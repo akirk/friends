@@ -360,9 +360,18 @@
 	color: light-dark(#093, #34a853);
 	font-weight: bold;
 	font-size: 13px;
+	display: inline;
 }
 
 .friends-page .posts .author a strong { font-weight: bold; }
+
+/* Hide trailing whitespace/text in author link when collapsed */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author a {
+	font-size: 0;
+}
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author a strong {
+	font-size: 13px;
+}
 
 .friends-page .posts .permalink {
 	font-size: 11px;
@@ -485,21 +494,41 @@
 
 /* === Google Reader accordion behavior === */
 /* In all-collapsed mode (default for Google Reader), posts are compact */
-.friends-page .posts.all-collapsed article.card .card-body,
-.friends-page .posts.all-collapsed article.card .entry-content,
-.friends-page .posts.all-collapsed article.card footer.entry-meta {
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) footer.entry-meta {
 	display: none;
 }
 
-.friends-page .posts.all-collapsed article.card .card-header {
-	cursor: pointer;
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .permalink {
+	display: inline;
+	font-size: 11px;
 }
 
-.friends-page .posts.all-collapsed article.card .card-title {
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title {
 	display: inline;
 }
 
-.friends-page .posts.all-collapsed article.card .card-title a {
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser {
+	display: inline;
+	font-size: 12px;
+	color: light-dark(#666, #9aa0a6);
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header {
+	cursor: pointer;
+	display: inline;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .post-meta {
+	display: inline;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author {
+	display: inline;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title a {
 	font-size: 13px;
 }
 
