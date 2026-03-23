@@ -135,12 +135,12 @@
 				}
 				break;
 
-			case 's': // Star: navigate to author page.
+			case 's': // Star: toggle ⭐ reaction on current post.
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
-					var authorLink = items.eq( currentIndex ).find( '.author a' ).attr( 'href' );
-					if ( authorLink ) {
-						window.location.href = authorLink;
+					var $star = items.eq( currentIndex ).find( 'button.friends-reaction[data-emoji="2b50"], button.friends-reaction-picker[data-emoji="2b50"]' ).first();
+					if ( $star.length ) {
+						$star.trigger( 'click' );
 					}
 				}
 				break;
@@ -176,7 +176,7 @@
 						'<tr><td style="padding:2px 12px 2px 0"><b>space</b></td><td>Page down or next item</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>shift-space</b></td><td>Page up</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>o / enter</b></td><td>Open / close item</td></tr>' +
-						'<tr><td style="padding:2px 12px 2px 0"><b>s</b></td><td>Go to author (star)</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>s</b></td><td>Toggle ⭐ reaction</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>v</b></td><td>Open original in new tab</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>u</b></td><td>Toggle sidebar</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>?</b></td><td>Show this help</td></tr>' +
