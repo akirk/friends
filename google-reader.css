@@ -601,6 +601,7 @@
 .friends-page .posts article.card.gr-current {
 	outline: 2px solid #4d90fe;
 	outline-offset: -2px;
+	background: light-dark(#edf2fc, #2a2d35);
 }
 
 /* Follow button: hidden by default on boosted posts, shown on hover */
