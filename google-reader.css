@@ -365,13 +365,6 @@
 
 .friends-page .posts .author a strong { font-weight: bold; }
 
-/* Hide trailing whitespace/text in author link when collapsed */
-.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author a {
-	font-size: 0;
-}
-.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author a strong {
-	font-size: 13px;
-}
 
 .friends-page .posts .permalink {
 	font-size: 11px;
@@ -530,6 +523,10 @@
 
 .friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title a {
 	font-size: 13px;
+}
+
+.friends-page .posts.all-collapsed article.card.uncollapsed div.teaser {
+	display: none;
 }
 
 /* Expanded item in collapsed list */
