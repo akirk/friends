@@ -613,6 +613,11 @@
 	display: inline;
 }
 
+/* Sidebar toggle (u key) */
+.friends-page .off-canvas-content.gr-sidebar-hidden {
+	margin-left: 0;
+}
+
 /* Collapse toggle button - hidden, click handled by card */
 .friends-page .collapse-post { display: none; }
 .friends-page .overflow { display: none; }

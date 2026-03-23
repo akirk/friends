@@ -1,13 +1,17 @@
 /**
  * Google Reader theme JS for the Friends plugin.
  *
- * Accordion behavior: only one item expanded at a time.
  * Keyboard shortcuts:
- *   j/k     - Next/previous item (expands it, collapses previous)
- *   o/Enter - Toggle open/close current item
- *   s       - Navigate to author page (to star)
- *   v       - Open original link in new tab
- *   r       - Refresh feeds
+ *   j/k           - Select next/previous item (expands it)
+ *   n/p           - Select next/previous item without opening
+ *   space         - Page down, or next item if at bottom of current
+ *   shift-space   - Page up
+ *   o/enter       - Toggle open/close current item
+ *   s             - Star (navigate to author page)
+ *   v             - Open original in new tab
+ *   shift-a       - Mark all as read (trash all visible)
+ *   u             - Toggle sidebar
+ *   ?             - Show keyboard shortcuts help
  */
 ( function( $ ) {
 	var currentIndex = -1;
@@ -39,20 +43,32 @@
 		getItems().removeClass( 'uncollapsed' );
 	}
 
-	function navigateTo( index ) {
+	function selectItem( index, expand ) {
 		var items = getItems();
 		if ( index < 0 || index >= items.length ) {
 			return;
 		}
 
-		collapseAll();
-		currentIndex = index;
+		if ( expand ) {
+			collapseAll();
+		}
 
+		currentIndex = index;
 		var $item = items.eq( index );
+
 		items.removeClass( 'gr-current' );
 		$item.addClass( 'gr-current' );
 		scrollToItem( $item );
-		expandItem( $item );
+
+		if ( expand ) {
+			expandItem( $item );
+		}
+	}
+
+	function isItemBottomVisible( $item ) {
+		var itemBottom = $item.offset().top + $item.outerHeight();
+		var viewBottom = $( window ).scrollTop() + $( window ).height();
+		return itemBottom <= viewBottom;
 	}
 
 	// Keyboard shortcuts.
@@ -62,24 +78,50 @@
 		}
 
 		var items = getItems();
-		if ( ! items.length ) {
+		if ( ! items.length && e.key !== '?' && e.key !== 'u' ) {
 			return;
 		}
 
 		switch ( e.key ) {
-			case 'j':
+			case 'j': // Next item, expand.
 				e.preventDefault();
-				navigateTo( currentIndex + 1 );
+				selectItem( currentIndex + 1, true );
 				break;
 
-			case 'k':
+			case 'k': // Previous item, expand.
 				e.preventDefault();
 				if ( currentIndex > 0 ) {
-					navigateTo( currentIndex - 1 );
+					selectItem( currentIndex - 1, true );
 				}
 				break;
 
-			case 'o':
+			case 'n': // Next item, don't expand.
+				e.preventDefault();
+				selectItem( currentIndex + 1, false );
+				break;
+
+			case 'p': // Previous item, don't expand.
+				e.preventDefault();
+				if ( currentIndex > 0 ) {
+					selectItem( currentIndex - 1, false );
+				}
+				break;
+
+			case ' ': // Space: page down or next item.
+				e.preventDefault();
+				if ( e.shiftKey ) {
+					// Page up.
+					window.scrollBy( 0, -$( window ).height() * 0.8 );
+				} else if ( currentIndex >= 0 && items.eq( currentIndex ).hasClass( 'uncollapsed' ) && ! isItemBottomVisible( items.eq( currentIndex ) ) ) {
+					// Page down within current expanded item.
+					window.scrollBy( 0, $( window ).height() * 0.8 );
+				} else {
+					// Move to next item.
+					selectItem( currentIndex + 1, true );
+				}
+				break;
+
+			case 'o': // Toggle current item.
 			case 'Enter':
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
@@ -93,7 +135,7 @@
 				}
 				break;
 
-			case 's':
+			case 's': // Star: navigate to author page.
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
 					var authorLink = items.eq( currentIndex ).find( '.author a' ).attr( 'href' );
@@ -103,7 +145,7 @@
 				}
 				break;
 
-			case 'v':
+			case 'v': // Open original in new tab.
 				if ( currentIndex >= 0 ) {
 					e.preventDefault();
 					var $link = items.eq( currentIndex ).find( '.card-title a, h4 a' ).first();
@@ -113,10 +155,52 @@
 				}
 				break;
 
+			case 'A': // Shift-A: mark all as read (not implemented, show hint).
+				if ( e.shiftKey ) {
+					e.preventDefault();
+					// Could implement trash-all here in the future.
+				}
+				break;
+
+			case 'u': // Toggle sidebar.
+				e.preventDefault();
+				$( '.off-canvas-sidebar' ).toggle();
+				$( '.off-canvas-content' ).toggleClass( 'gr-sidebar-hidden' );
+				break;
+
+			case '?': // Show shortcuts help.
+				e.preventDefault();
+				var $help = $( '#gr-shortcuts-help' );
+				if ( $help.length ) {
+					$help.toggle();
+				} else {
+					$( 'body' ).append(
+						'<div id="gr-shortcuts-help" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:light-dark(#fff,#292a2d);border:1px solid light-dark(#d4d4d4,#3c4043);border-radius:4px;padding:20px;z-index:10000;max-width:500px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.3)">' +
+						'<h3 style="margin:0 0 12px;font-size:16px">Keyboard Shortcuts</h3>' +
+						'<table style="width:100%;border-collapse:collapse">' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>j / k</b></td><td>Next / previous item</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>n / p</b></td><td>Next / previous without opening</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>space</b></td><td>Page down or next item</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>shift-space</b></td><td>Page up</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>o / enter</b></td><td>Open / close item</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>s</b></td><td>Go to author (star)</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>v</b></td><td>Open original in new tab</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>u</b></td><td>Toggle sidebar</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>?</b></td><td>Show this help</td></tr>' +
+						'</table>' +
+						'<p style="margin:12px 0 0;color:light-dark(#999,#666);font-size:11px">Press any key to close</p>' +
+						'</div>'
+					);
+					// Close on any key or click.
+					$( document ).one( 'keydown click', function() {
+						$( '#gr-shortcuts-help' ).remove();
+					} );
+				}
+				return; // Don't let the one() handler fire immediately.
 		}
 	} );
 
-	// Block link clicks on collapsed items' post-meta — just expand instead.
+	// Block link clicks on collapsed items — expand instead.
 	$( document ).on( 'click', 'section.posts.all-collapsed article.card:not(.uncollapsed) .post-meta a', function( e ) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -124,7 +208,7 @@
 		return false;
 	} );
 
-	// Accordion click: collapse all others, let the clicked item toggle.
+	// Accordion click: collapse all others, toggle clicked item.
 	$( document ).on( 'click', 'section.posts.all-collapsed article.card', function( e ) {
 		if ( $( e.target ).closest( 'a, button, input, textarea, form, label, .friends-dropdown' ).length ) {
 			return;
@@ -134,7 +218,6 @@
 		var index = items.index( this );
 		var $card = $( this );
 
-		// Track current.
 		currentIndex = index;
 		items.removeClass( 'gr-current' );
 		$card.addClass( 'gr-current' );
