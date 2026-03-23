@@ -113,12 +113,6 @@
 				}
 				break;
 
-			case 'r':
-				if ( e.shiftKey ) {
-					e.preventDefault();
-					window.location.href = window.location.pathname + '?refresh';
-				}
-				break;
 		}
 	} );
 
