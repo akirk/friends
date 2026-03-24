@@ -120,10 +120,13 @@ class Frontend {
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_theme_switcher' ), 100 );
 		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_load_theme_block', array( $this, 'block_theme' ) );
+		add_action( 'friends_load_theme_google-reader', array( $this, 'google_reader_theme' ) );
 		add_action( 'friends_load_themes', array( $this, 'register_block_theme' ) );
+		add_action( 'friends_load_themes', array( $this, 'register_google_reader_theme' ) );
 		add_action( 'init', array( $this, 'register_block_templates' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -264,6 +267,15 @@ class Frontend {
 		if ( ! is_user_logged_in() || ! Friends::on_frontend() ) {
 			return;
 		}
+		// Handle theme switching via GET parameter.
+		if ( isset( $_GET['friends_theme'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$new_theme = sanitize_text_field( wp_unslash( $_GET['friends_theme'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$themes    = self::get_themes();
+			if ( isset( $themes[ $new_theme ] ) ) {
+				update_user_option( get_current_user_id(), 'friends_frontend_theme', $new_theme );
+			}
+		}
+
 		$theme = 'default';
 		$default_theme = get_user_option( 'friends_frontend_theme', get_current_user_id() );
 		if ( $default_theme ) {
@@ -299,6 +311,8 @@ class Frontend {
 		$file = 'friends.css';
 		$version = Friends::VERSION;
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+
+		wp_enqueue_script( 'friends-default-theme', plugins_url( 'friends-default-theme.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $version, true );
 	}
 
 	/**
@@ -382,6 +396,73 @@ class Frontend {
 		}
 
 		return $classes;
+	}
+
+	public function register_google_reader_theme( Frontend $friends_frontend ) {
+		$friends_frontend->register_theme( __( 'Google Reader', 'friends' ), 'google-reader' );
+	}
+
+	public function google_reader_theme() {
+		$handle  = 'friends-google-reader';
+		$file    = 'google-reader.css';
+		$version = Friends::VERSION;
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+
+		wp_enqueue_script( 'friends-google-reader', plugins_url( 'google-reader.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), $version, true );
+
+		add_filter(
+			'friends_template_paths_theme_google-reader',
+			function ( $file_paths ) {
+				// Add Google Reader templates at highest priority (lowest number), fall back to defaults.
+				$file_paths[0] = FRIENDS_PLUGIN_DIR . 'templates/google-reader/';
+				return $file_paths;
+			}
+		);
+	}
+
+	/**
+	 * Add a theme switcher submenu to the Friends admin bar menu.
+	 *
+	 * @param \WP_Admin_Bar $wp_admin_bar The admin bar instance.
+	 */
+	public function admin_bar_theme_switcher( $wp_admin_bar ) {
+		if ( ! is_user_logged_in() || ! Friends::on_frontend() ) {
+			return;
+		}
+
+		$current_theme = get_user_option( 'friends_frontend_theme', get_current_user_id() );
+		if ( ! $current_theme ) {
+			$current_theme = 'default';
+		}
+
+		$themes = self::get_themes();
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => 'friends-menu',
+				'id'     => 'friends-theme',
+				'title'  => esc_html__( 'Theme', 'friends' ),
+				'href'   => admin_url( 'admin.php?page=friends-settings' ),
+			)
+		);
+
+		$wp_admin_bar->add_group(
+			array(
+				'parent' => 'friends-theme',
+				'id'     => 'friends-theme-list',
+			)
+		);
+
+		foreach ( $themes as $slug => $name ) {
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'friends-theme-list',
+					'id'     => 'friends-theme-' . $slug,
+					'title'  => ( $slug === $current_theme ? '✓ ' : '' ) . esc_html( $name ),
+					'href'   => add_query_arg( 'friends_theme', $slug, home_url( '/friends/' ) ),
+				)
+			);
+		}
 	}
 
 	public function register_block_theme( Frontend $friends_frontend ) {

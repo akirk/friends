@@ -1,0 +1,726 @@
+/* Friends Google Reader Theme - Standalone */
+
+/* === Reset & Base === */
+.friends-page {
+	margin: 0;
+	padding: 0;
+	font-family: Arial, sans-serif;
+	font-size: 13px;
+	line-height: 1.4;
+	color-scheme: light dark;
+	color: light-dark(#222, #e8eaed);
+	background: light-dark(#fff, #202124);
+	min-height: 100vh;
+	overflow-wrap: break-word;
+}
+
+.friends-page *, .friends-page *::before, .friends-page *::after {
+	box-sizing: border-box;
+}
+
+.friends-page a { color: light-dark(#1a0dab, #8ab4f8); text-decoration: none; }
+.friends-page a:visited { color: light-dark(#1a0dab, #8ab4f8); }
+.friends-page a:hover { text-decoration: underline; }
+.friends-page img { max-width: 100%; height: auto; }
+.friends-page h1, .friends-page h2, .friends-page h3, .friends-page h4 { margin: 0; font-weight: normal; }
+.friends-page ul, .friends-page ol { margin: 0; padding: 0; }
+.friends-page p { margin: 0 0 .5em; }
+.friends-page code, .friends-page pre { overflow: auto; font-size: 12px; }
+
+/* === Off-Canvas Layout === */
+.friends-page.off-canvas {
+	display: flex;
+	min-height: 100vh;
+}
+
+.friends-page .off-canvas-sidebar {
+	width: 268px;
+	flex-shrink: 0;
+	background: light-dark(#fff, #292a2d);
+	border-right: 1px solid light-dark(#d4d4d4, #3c4043);
+	margin-top: 32px;
+	overflow-y: auto;
+	padding: 0;
+	position: fixed;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 10;
+}
+
+.friends-page .off-canvas-content {
+	flex: 1;
+	margin-left: 268px;
+	margin-top: 32px;
+	min-width: 0;
+	background: light-dark(#fff, #202124);
+}
+
+.friends-page .off-canvas-overlay { display: none; }
+
+.friends-page .off-canvas-toggle {
+	display: none;
+}
+
+@media (max-width: 960px) {
+	.friends-page .off-canvas-sidebar {
+		transform: translateX(-100%);
+		transition: transform .2s;
+	}
+	.friends-page .off-canvas-sidebar:target {
+		transform: translateX(0);
+	}
+	.friends-page .off-canvas-content {
+		margin-left: 0;
+	}
+	.friends-page .off-canvas-toggle {
+		display: inline-block;
+	}
+	.friends-page .off-canvas-overlay {
+		display: block;
+		position: fixed;
+		inset: 0;
+		z-index: 5;
+		background: rgba(0,0,0,.3);
+		opacity: 0;
+		pointer-events: none;
+	}
+	.friends-page .off-canvas-sidebar:target ~ .off-canvas-overlay {
+		opacity: 1;
+		pointer-events: auto;
+	}
+}
+
+/* === Sidebar === */
+.friends-page .friends-brand {
+	padding: 14px 16px 10px;
+	border-bottom: 1px solid light-dark(#d4d4d4, #3c4043);
+	margin-bottom: 8px;
+}
+
+.friends-page .friends-brand h2 {
+	font-size: 22px;
+	font-weight: bold;
+	color: light-dark(#dd4b39, #ea4335);
+	margin: 0;
+}
+
+.friends-page .friends-brand a { color: light-dark(#dd4b39, #ea4335); }
+.friends-page .friends-brand a:hover { text-decoration: none; }
+
+.friends-page .friends-sidebar-customize {
+	font-size: 11px;
+	color: light-dark(#999, #9aa0a6);
+	display: block;
+	margin-top: 4px;
+}
+
+.friends-page .friends-nav {
+	padding: 4px 0;
+}
+
+/* Accordion/details widgets */
+.friends-page .accordion {
+	border: none;
+	margin: 0;
+}
+
+.friends-page .accordion summary,
+.friends-page .accordion .accordion-header {
+	display: block;
+	padding: 6px 16px;
+	font-size: 11px;
+	font-weight: bold;
+	color: light-dark(#555, #bdc1c6);
+	text-transform: uppercase;
+	letter-spacing: .3px;
+	cursor: pointer;
+	list-style: none;
+}
+
+.friends-page .accordion summary::-webkit-details-marker { display: none; }
+.friends-page .accordion summary::marker { display: none; content: ''; }
+
+.friends-page .accordion summary .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	vertical-align: text-bottom;
+}
+
+/* Menu lists in sidebar */
+.friends-page .menu, .friends-page .menu-nav {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .menu-item a,
+.friends-page .friend-list .menu-item a {
+	display: block;
+	padding: 2px 16px 2px 28px;
+	color: light-dark(#222, #e8eaed);
+	font-size: 13px;
+	line-height: 1.8;
+	text-decoration: none;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.friends-page .menu-item a:hover {
+	background: light-dark(#c2dbff, #3c4043);
+	text-decoration: none;
+}
+
+.friends-page .friend-stats .menu-item a {
+	padding-left: 28px;
+	font-size: 13px;
+}
+
+/* === Header / Navbar === */
+.friends-page header.navbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: light-dark(#f1f1f1, #292a2d);
+	border-bottom: 1px solid light-dark(#d4d4d4, #3c4043);
+	padding: 4px 16px;
+	margin-bottom: 0;
+}
+
+.friends-page header.navbar.no-bottom-margin { margin-bottom: 0; }
+
+.friends-page .navbar-section.author {
+	flex: 1;
+	min-width: 0;
+}
+
+.friends-page .navbar-section.search {
+	flex-shrink: 0;
+	margin-left: 12px;
+}
+
+.friends-page h2#page-title {
+	font-size: 16px;
+	font-weight: bold;
+	color: light-dark(#222, #e8eaed);
+	margin: 2px 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.friends-page h2#page-title a { color: light-dark(#222, #e8eaed); }
+.friends-page h2#page-title a:hover { text-decoration: none; }
+
+.friends-page h2#page-title a.dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	color: #c90;
+	vertical-align: baseline;
+	margin-right: 4px;
+}
+
+/* === Chips === */
+.friends-page .chip {
+	display: inline-block;
+	background: light-dark(#e3ecf8, #3c4043);
+	border: 1px solid light-dark(#bcd, #5f6368);
+	border-radius: 2px;
+	padding: 0 5px;
+	margin: 1px;
+	font-size: 11px;
+	color: light-dark(#555, #bdc1c6);
+	line-height: 1.8;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.friends-page a.chip:visited { color: light-dark(#555, #bdc1c6); }
+.friends-page .chip:hover { background: light-dark(#d0e0f5, #4a4d51); text-decoration: none; }
+.friends-page span.chip { color: light-dark(#666, #bdc1c6); cursor: default; }
+.friends-page span.chip:hover { background: light-dark(#e3ecf8, #3c4043); }
+
+/* === Search === */
+.friends-page .form-input,
+.friends-page input[type="text"] {
+	border: 1px solid light-dark(#d4d4d4, #3c4043);
+	border-radius: 1px;
+	padding: 4px 8px;
+	font-size: 13px;
+	font-family: Arial, sans-serif;
+	outline: none;
+}
+
+.friends-page .form-input:focus,
+.friends-page input[type="text"]:focus {
+	border-color: #4d90fe;
+	box-shadow: inset 0 1px 2px rgba(0,0,0,.1);
+}
+
+.friends-page .btn,
+.friends-page button {
+	background: light-dark(#f5f5f5, #3c4043);
+	border: 1px solid light-dark(#dcdcdc, #5f6368);
+	border-radius: 2px;
+	padding: 4px 12px;
+	font-size: 11px;
+	font-family: Arial, sans-serif;
+	color: light-dark(#444, #bdc1c6);
+	cursor: pointer;
+	line-height: 1.6;
+}
+
+.friends-page .btn:hover { background: #e8e8e8; box-shadow: 0 1px 1px rgba(0,0,0,.1); }
+
+.friends-page .btn-primary {
+	background: #4d90fe;
+	border-color: #3079ed;
+	color: #fff;
+}
+
+.friends-page .btn-primary:hover { background: #357ae8; }
+
+.friends-page .input-group {
+	display: flex;
+}
+
+.friends-page .input-group .form-input,
+.friends-page .input-group input[type="text"] {
+	flex: 1;
+	border-right: 0;
+}
+
+.friends-page .input-group .input-group-btn,
+.friends-page .input-group .btn {
+	border-radius: 0 2px 2px 0;
+}
+
+.friends-page .form-autocomplete {
+	position: relative;
+}
+
+.friends-page .form-autocomplete .menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: light-dark(#fff, #292a2d);
+	border: 1px solid light-dark(#d4d4d4, #3c4043);
+	z-index: 100;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.friends-page .has-icon-right { position: relative; }
+.friends-page .has-icon-right .form-icon {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+/* === Content sections === */
+.friends-page section.subscriptions,
+.friends-page section.followers {
+	padding: 12px 16px;
+}
+
+.friends-page section.followers ul {
+	list-style: none;
+}
+
+/* === Posts === */
+.friends-page section.posts {
+	padding: 0 16px;
+	margin-top: 4px;
+}
+
+.friends-page .posts article.card {
+	border: none;
+	border-bottom: 1px solid light-dark(#e5e5e5, #3c4043);
+	border-radius: 0;
+	padding: 5px 0;
+	margin: 0;
+	background: transparent;
+	box-shadow: none;
+	line-height: 1.6;
+}
+
+/* Post header */
+.friends-page .posts .card-header {
+	padding: 0;
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.friends-page .posts .card-header .avatar {
+	display: none;
+}
+
+.friends-page .posts .post-meta {
+	display: contents;
+}
+
+.friends-page .posts .author a {
+	color: light-dark(#093, #34a853);
+	font-weight: bold;
+	font-size: 13px;
+	display: inline;
+}
+
+.friends-page .posts .author a strong { font-weight: bold; }
+
+
+.friends-page .posts .permalink {
+	font-size: 11px;
+	color: light-dark(#666, #9aa0a6);
+}
+
+.friends-page .posts .permalink a { color: light-dark(#666, #9aa0a6); }
+.friends-page .posts .reading-time { color: light-dark(#999, #9aa0a6); font-size: 11px; }
+
+/* Post title */
+.friends-page .posts .card-title {
+	padding: 2px 0;
+}
+
+.friends-page .posts .card-title a {
+	color: light-dark(#1a0dab, #8ab4f8);
+	font-size: 16px;
+	font-weight: normal;
+}
+
+.friends-page .posts .card-title a:visited { color: light-dark(#1a0dab, #8ab4f8); }
+
+.friends-page .posts h4 a {
+	font-size: 14px;
+}
+
+/* Post content */
+.friends-page .posts .card-body,
+.friends-page .posts .entry-content {
+	padding: 4px 0;
+	font-size: 13px;
+	line-height: 1.5;
+	color: light-dark(#222, #e8eaed);
+}
+
+/* Post footer */
+.friends-page .posts .card-footer,
+.friends-page .posts footer.entry-meta {
+	padding: 4px 0;
+	border-top: none;
+	background: transparent;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.friends-page .posts .card-footer a,
+.friends-page .posts .card-footer .btn-link {
+	color: light-dark(#1a0dab, #8ab4f8);
+	font-size: 11px;
+	text-decoration: none;
+	padding: 2px 6px;
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+
+.friends-page .posts .card-footer a:hover,
+.friends-page .posts .card-footer .btn-link:hover {
+	text-decoration: underline;
+}
+
+.friends-page .posts .card-footer .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	vertical-align: text-bottom;
+}
+
+/* Reaction buttons */
+.friends-page button.friends-reaction,
+.friends-page button.friends-reaction-picker {
+	background: light-dark(#fff, #292a2d);
+	border: 1px solid light-dark(#dcdcdc, #5f6368);
+	border-radius: 2px;
+	padding: 1px 6px;
+	font-size: 12px;
+	cursor: pointer;
+}
+
+.friends-page button.friends-reaction:hover,
+.friends-page button.friends-reaction-picker:hover {
+	background: light-dark(#f5f5f5, #3c4043);
+}
+
+.friends-page button.friends-reaction.pressed {
+	background: light-dark(#e3ecf8, #3c4043);
+	border-color: #bcd;
+}
+
+/* Comments */
+.friends-page .comments-content {
+	padding: 8px 0 8px 16px;
+	border-left: 2px solid #4d90fe;
+	margin: 8px 0;
+	font-size: 13px;
+}
+
+.friends-page .comments-content.closed { display: none; }
+.friends-page .comments-content.open { display: block; }
+
+.friends-page .comments-content h5 {
+	font-size: 12px;
+	font-weight: bold;
+	color: light-dark(#666, #9aa0a6);
+	margin: 0 0 8px;
+}
+
+.friends-page .comments-content .comment-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .comments-content .comment {
+	padding: 4px 0;
+	border-bottom: 1px solid #eee;
+}
+
+/* === Google Reader accordion behavior === */
+/* In all-collapsed mode (default for Google Reader), posts are compact */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) footer.entry-meta {
+	display: none;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .permalink {
+	display: inline;
+	font-size: 11px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title {
+	display: inline;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser {
+	display: inline;
+	font-size: 12px;
+	color: light-dark(#666, #9aa0a6);
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header {
+	cursor: pointer;
+	display: inline;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .post-meta {
+	display: inline;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author {
+	display: inline;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title a {
+	font-size: 13px;
+}
+
+.friends-page .posts.all-collapsed article.card.uncollapsed div.teaser {
+	display: none;
+}
+
+/* Expanded item in collapsed list */
+.friends-page .posts.all-collapsed article.card.uncollapsed .card-body,
+.friends-page .posts.all-collapsed article.card.uncollapsed .entry-content {
+	display: block;
+}
+
+.friends-page .posts.all-collapsed article.card.uncollapsed footer.entry-meta {
+	display: flex;
+}
+
+.friends-page .posts.all-collapsed article.card.uncollapsed {
+	background: light-dark(#f6f7f8, #292a2d);
+	padding: 10px 12px;
+	margin: 0 -12px;
+}
+
+.friends-page .posts.all-collapsed article.card.uncollapsed .card-title {
+	display: block;
+	padding: 4px 0;
+}
+
+.friends-page .posts.all-collapsed article.card.uncollapsed .card-title a {
+	font-size: 16px;
+}
+
+/* Non-collapsed individual items */
+.friends-page .posts article.card.collapsed .card-body,
+.friends-page .posts article.card.collapsed .entry-content,
+.friends-page .posts article.card.collapsed footer.entry-meta {
+	display: none;
+}
+
+.friends-page .posts article.card.collapsed .card-title {
+	display: inline;
+}
+
+.friends-page .posts article.card.collapsed .card-title a {
+	font-size: 13px;
+}
+
+.friends-page .posts article.card.collapsed .card-header {
+	cursor: pointer;
+}
+
+/* Hide reblog/boost metadata in collapsed mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblog-info,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblogged-by,
+.friends-page .posts article.card.collapsed .reblog-info,
+.friends-page .posts article.card.collapsed .reblogged-by {
+	display: none;
+}
+
+/* Sidebar description */
+.friends-page .off-canvas-sidebar .description,
+.friends-page .off-canvas-sidebar p {
+	font-size: 11px;
+	color: light-dark(#999, #9aa0a6);
+	padding: 0 16px;
+	margin: 0 0 8px;
+	line-height: 1.4;
+}
+
+/* Author separator in compact mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author::after {
+	content: ' — ';
+	color: light-dark(#999, #9aa0a6);
+}
+
+/* Current item highlight (keyboard navigation) */
+.friends-page .posts article.card.gr-current {
+	outline: 2px solid #4d90fe;
+	outline-offset: -2px;
+	background: light-dark(#edf2fc, #2a2d35);
+}
+
+/* Follow button: hidden by default on boosted posts, shown on hover */
+.friends-page .posts .boosted .follow-button,
+.friends-page .posts .boosted .follow-button span.name {
+	display: none;
+}
+
+.friends-page .posts .boosted:hover .follow-button {
+	display: inline;
+}
+
+/* Sidebar toggle (u key) */
+.friends-page .off-canvas-content.gr-sidebar-hidden {
+	margin-left: 0;
+}
+
+/* Collapse toggle button - hidden, click handled by card */
+.friends-page .collapse-post { display: none; }
+.friends-page .overflow { display: none; }
+
+/* Toggle compact chip */
+.friends-page .toggle-compact {
+	cursor: pointer;
+}
+
+/* === Author header === */
+.friends-page #main-header,
+.friends-page .author-header {
+	padding: 0;
+}
+
+.friends-page .author-header .description {
+	font-size: 12px;
+	color: light-dark(#666, #9aa0a6);
+	margin-bottom: 4px;
+}
+
+.friends-page .author-header .avatar {
+	border-radius: 2px;
+	vertical-align: middle;
+	margin-right: 4px;
+}
+
+/* === Dropdown menus === */
+.friends-page .friends-dropdown {
+	position: relative;
+	display: inline-block;
+}
+
+.friends-page .friends-dropdown .menu {
+	display: none;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	background: light-dark(#fff, #292a2d);
+	border: 1px solid light-dark(#d4d4d4, #3c4043);
+	box-shadow: 0 2px 4px rgba(0,0,0,.15);
+	z-index: 100;
+	min-width: 150px;
+}
+
+.friends-page .friends-dropdown.active .menu,
+.friends-page .friends-dropdown .menu:hover {
+	display: block;
+}
+
+.friends-page .friends-dropdown-right .menu {
+	left: auto;
+	right: 0;
+}
+
+/* === Pagination === */
+.friends-page .navigation {
+	padding: 12px 16px;
+	font-size: 12px;
+}
+
+.friends-page .navigation a { color: light-dark(#1a0dab, #8ab4f8); }
+
+/* === Loading indicator === */
+.friends-page .loading {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	border: 2px solid light-dark(#d4d4d4, #3c4043);
+	border-top-color: #4d90fe;
+	border-radius: 50%;
+	animation: friends-spin .6s linear infinite;
+}
+
+@keyframes friends-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* === Utility === */
+.friends-page .d-hide { display: none !important; }
+.friends-page .mb-2 { margin-bottom: 8px; }
+.friends-page .ml-1 { margin-left: 4px; }
+.friends-page .mr-2 { margin-right: 8px; }
+.friends-page .text { font-size: 11px; }
+.friends-page .btn-link { background: none; border: none; cursor: pointer; padding: 2px; }
+
+/* Mention indicator */
+.friends-page .mention-indicator {
+	color: light-dark(#dd4b39, #ea4335);
+	font-weight: bold;
+}
+
+/* === Dark Mode === */
+/* Dark mode handled entirely by light-dark() above.
+   The color-scheme: light dark on .friends-page enables it. */
