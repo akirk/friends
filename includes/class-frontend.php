@@ -125,8 +125,10 @@ class Frontend {
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_load_theme_block', array( $this, 'block_theme' ) );
 		add_action( 'friends_load_theme_google-reader', array( $this, 'google_reader_theme' ) );
+		add_action( 'friends_load_theme_mastodon', array( $this, 'mastodon_theme' ) );
 		add_action( 'friends_load_themes', array( $this, 'register_block_theme' ) );
 		add_action( 'friends_load_themes', array( $this, 'register_google_reader_theme' ) );
+		add_action( 'friends_load_themes', array( $this, 'register_mastodon_theme' ) );
 		add_action( 'init', array( $this, 'register_block_templates' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -402,6 +404,27 @@ class Frontend {
 		$friends_frontend->register_theme( __( 'Google Reader', 'friends' ), 'google-reader' );
 	}
 
+	public function register_mastodon_theme( Frontend $friends_frontend ) {
+		$friends_frontend->register_theme( __( 'Mastodon', 'friends' ), 'mastodon' );
+	}
+
+	public function mastodon_theme() {
+		$handle  = 'friends-mastodon';
+		$file    = 'mastodon.css';
+		$version = Friends::VERSION;
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+
+		wp_enqueue_script( 'friends-mastodon', plugins_url( 'mastodon.js', FRIENDS_PLUGIN_FILE ), array(), $version, true );
+
+		add_filter(
+			'friends_template_paths_theme_mastodon',
+			function ( $file_paths ) {
+				$file_paths[0] = FRIENDS_PLUGIN_DIR . 'templates/mastodon/';
+				return $file_paths;
+			}
+		);
+	}
+
 	public function google_reader_theme() {
 		$handle  = 'friends-google-reader';
 		$file    = 'google-reader.css';
@@ -459,7 +482,7 @@ class Frontend {
 					'parent' => 'friends-theme-list',
 					'id'     => 'friends-theme-' . $slug,
 					'title'  => ( $slug === $current_theme ? '✓ ' : '' ) . esc_html( $name ),
-					'href'   => add_query_arg( 'friends_theme', $slug, home_url( '/friends/' ) ),
+					'href'   => add_query_arg( 'friends_theme', $slug ),
 				)
 			);
 		}
