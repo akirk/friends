@@ -276,7 +276,7 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 								$content .= '<img src="' . esc_url( $el ) . '" />';
 								break;
 							case 'video':
-								$content .= '<video src="' . esc_url( $el ) . '" />';
+								$content .= '<video controls src="' . esc_url( $el ) . '"></video>';
 								break;
 						}
 						$content .= '</a>';

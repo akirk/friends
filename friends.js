@@ -437,7 +437,19 @@
 					reaction: $this.data( 'emoji' ),
 				},
 				success() {
-					window.location.reload();
+					$this.removeClass( 'loading' );
+					var isPressed = $this.hasClass( 'pressed' );
+					$this.toggleClass( 'pressed' );
+					var textNodes = $this.contents().filter( function () {
+						return this.nodeType === 3;
+					} );
+					var count = parseInt( textNodes.last().text().trim(), 10 ) || 0;
+					var newCount = isPressed ? count - 1 : count + 1;
+					if ( newCount <= 0 ) {
+						$this.remove();
+					} else {
+						textNodes.last().replaceWith( ' ' + newCount );
+					}
 				},
 				error() {
 					$this.removeClass( 'loading' );
@@ -448,19 +460,33 @@
 
 		$( '.friends-reaction-picker' ).on( 'click', 'button', function () {
 			const $this = $( this );
+			const $picker = $this.closest( '.friends-reaction-picker' );
 			$this.addClass( 'loading' );
 			wp.ajax.send( 'friends-toggle-react', {
 				data: {
-					_ajax_nonce: $this
-						.closest( '.friends-reaction-picker' )
-						.data( 'nonce' ),
-					post_id: $this
-						.closest( '.friends-reaction-picker' )
-						.data( 'id' ),
+					_ajax_nonce: $picker.data( 'nonce' ),
+					post_id: $picker.data( 'id' ),
 					reaction: $this.data( 'emoji' ),
 				},
 				success() {
-					window.location.reload();
+					$this.removeClass( 'loading' );
+					var postId = $picker.data( 'id' );
+					var emoji = $this.data( 'emoji' );
+					var emojiChar = $this.text().trim();
+					var $footer = $picker.closest( '.card-footer, .entry-meta, .friends-post-footer, footer' );
+					var $existing = $footer.find( 'button.friends-reaction[data-emoji="' + emoji + '"]' );
+					if ( $existing.length ) {
+						var textNodes = $existing.contents().filter( function () {
+							return this.nodeType === 3;
+						} );
+						var count = parseInt( textNodes.last().text().trim(), 10 ) || 0;
+						textNodes.last().replaceWith( ' ' + ( count + 1 ) );
+						$existing.addClass( 'pressed' );
+					} else {
+						var nonce = $picker.data( 'nonce' );
+						var $btn = $( '<button class="btn btn-link ml-1 friends-action friends-reaction pressed" data-id="' + postId + '" data-emoji="' + emoji + '" data-nonce="' + nonce + '"><span>' + emojiChar + '</span> 1</button>' );
+						$picker.closest( '.friends-dropdown' ).before( $btn );
+					}
 				},
 				error() {
 					$this.removeClass( 'loading' );

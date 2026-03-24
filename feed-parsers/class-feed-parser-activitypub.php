@@ -1754,7 +1754,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				} elseif ( strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
 					$data['content'] .= PHP_EOL;
 					$data['content'] .= '<!-- wp:video -->';
-					$data['content'] .= '<figure class="wp-block-video"><video src="' . esc_url( $attachment['url'] ) . '" type="' . esc_attr( $attachment['mediaType'] ) . '">';
+					$data['content'] .= '<figure class="wp-block-video"><video controls src="' . esc_url( $attachment['url'] ) . '" type="' . esc_attr( $attachment['mediaType'] ) . '">';
+					$data['content'] .= '</video>';
 					if ( ! empty( $attachment['name'] ) ) {
 						$data['content'] .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
 					}
