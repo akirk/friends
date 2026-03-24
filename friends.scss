@@ -730,7 +730,11 @@ h2#page-title a.dashicons {
 		}
 	}
 
-	section.followers {
+	section.followers,
+	section.subscriptions {
+		ul {
+			padding-left: 0;
+		}
 		ul li {
 			list-style: none;
 			.already-following {
@@ -765,6 +769,57 @@ h2#page-title a.dashicons {
 					border-bottom: 0;
 				}
 			}
+		}
+	}
+
+	section.subscriptions {
+		.subscription-item {
+			padding: 8px 0;
+			border-bottom: 1px solid #e8e8e8;
+			display: grid;
+			grid-template-columns: 40px 1fr;
+			grid-template-rows: auto auto auto;
+			column-gap: 8px;
+			row-gap: 2px;
+			align-items: center;
+			&:last-child {
+				border-bottom: none;
+			}
+		}
+		.subscription-link {
+			display: contents;
+			text-decoration: none;
+			.avatar {
+				border-radius: 50%;
+				grid-row: 1 / 3;
+			}
+		}
+		.subscription-info {
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			flex-wrap: wrap;
+		}
+		.starred {
+			color: #f5a623;
+		}
+		.subscription-folder {
+			font-size: 0.8em;
+			background: #e8e8e8;
+			padding: 1px 6px;
+			border-radius: 3px;
+			color: #666;
+		}
+		.subscription-meta {
+			grid-column: 2;
+			font-size: 0.85em;
+			color: #888;
+		}
+		.subscription-description {
+			grid-column: 2;
+			font-size: 0.85em;
+			color: #666;
+			margin: 0;
 		}
 	}
 
