@@ -321,6 +321,16 @@
 	transform: translateY(-50%);
 }
 
+/* === Content sections === */
+.friends-page section.subscriptions,
+.friends-page section.followers {
+	padding: 12px 16px;
+}
+
+.friends-page section.followers ul {
+	list-style: none;
+}
+
 /* === Posts === */
 .friends-page section.posts {
 	padding: 0 16px;
