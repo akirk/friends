@@ -1298,9 +1298,11 @@ class Blocks {
 		}
 
 		if ( ! empty( $attributes['folder'] ) ) {
-			$friends  = User_Query::subscriptions_in_folder( intval( $attributes['folder'] ) );
-			$no_users = '';
+			$friends     = User_Query::subscriptions_in_folder( intval( $attributes['folder'] ) );
+			$folder_term = get_term( intval( $attributes['folder'] ), Subscription::TAXONOMY );
+			$no_users    = '';
 		} else {
+			$folder_term = null;
 			switch ( $attributes['user_types'] ) {
 				case 'starred':
 					$friends  = User_Query::starred_friends_subscriptions();
@@ -1321,11 +1323,16 @@ class Blocks {
 			return '<span ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . $no_users . '</span>';
 		}
 
+		$heading = '';
+		if ( $folder_term && ! is_wp_error( $folder_term ) ) {
+			$heading = '<h3>&#128193; ' . esc_html( $folder_term->name ) . '</h3>';
+		}
+
 		if ( ! empty( $attributes['users_inline'] ) ) {
-			$out   = '';
+			$out   = $heading;
 			$first = true;
 		} else {
-			$out = '<ul ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list' ) ) . '>';
+			$out = $heading . '<ul ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list' ) ) . '>';
 		}
 		$count = 0;
 		foreach ( $friends->get_results() as $friend_user ) {

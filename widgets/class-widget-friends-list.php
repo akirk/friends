@@ -38,7 +38,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 	public function defaults() {
 		return array(
 			'title'      => '',
-			'user_types' => 'subscriptions',
+			'user_types' => 'folders',
 			'folder'     => 0,
 		);
 	}
@@ -53,7 +53,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 	public function update( $new_instance, $old_instance ) {
 		$instance                = $this->defaults();
 		$instance['title']       = sanitize_text_field( $new_instance['title'] );
-		$instance['user_types']  = in_array( $new_instance['user_types'], array( 'subscriptions', 'starred', 'folders' ), true ) ? $new_instance['user_types'] : 'subscriptions';
+		$instance['user_types']  = in_array( $new_instance['user_types'], array( 'subscriptions', 'starred', 'folders' ), true ) ? $new_instance['user_types'] : 'folders';
 		$instance['folder']      = intval( $new_instance['folder'] );
 		return $instance;
 	}
@@ -128,7 +128,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 				$folder_subs = User_Query::subscriptions_in_folder( $f->term_id );
 				if ( $folder_subs->get_total() > 0 ) {
 					$this->list_friends(
-						array_merge( array( 'widget_id' => $widget_id . '-folder-' . $f->term_id ), $args ),
+						array_merge( $args, array( 'widget_id' => $widget_id . '-folder-' . $f->term_id ) ),
 						'&#128193; ' . esc_html( $f->name ) . ' <span class="subscription-count">' . $folder_subs->get_total() . '</span>',
 						$folder_subs
 					);
@@ -137,7 +137,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 			$unfoldered = User_Query::unfoldered_subscriptions();
 			if ( $unfoldered->get_total() > 0 ) {
 				$this->list_friends(
-					array_merge( array( 'widget_id' => $widget_id . '-subscriptions' ), $args ),
+					array_merge( $args, array( 'widget_id' => $widget_id . '-subscriptions' ) ),
 					'<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
 						// translators: %s is the number of subscriptions.
 						_n( 'Subscription %s', 'Subscriptions %s', $unfoldered->get_total(), 'friends' ),
@@ -147,13 +147,19 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 				);
 			}
 		} else {
-			$this->list_friends(
-				array_merge( array( 'widget_id' => $widget_id . '-subscriptions' ), $args ),
-				'<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
+			$folder_term = $folder > 0 ? get_term( $folder, Subscription::TAXONOMY ) : null;
+			if ( $folder_term && ! is_wp_error( $folder_term ) ) {
+				$title = '&#128193; ' . esc_html( $folder_term->name ) . ' <span class="subscription-count">' . $users->get_total() . '</span>';
+			} else {
+				$title = '<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
 					// translators: %s is the number of subscriptions.
 					_n( 'Subscription %s', 'Subscriptions %s', $users->get_total(), 'friends' ),
 					'<span class="subscription-count">' . $users->get_total() . '</span>'
-				),
+				);
+			}
+			$this->list_friends(
+				array_merge( $args, array( 'widget_id' => $widget_id . '-subscriptions' ) ),
+				$title,
 				$users
 			);
 		}
