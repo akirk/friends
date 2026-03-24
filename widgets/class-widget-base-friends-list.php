@@ -83,6 +83,9 @@ abstract class Widget_Base_Friends_List extends \WP_Widget {
 	 */
 	public function get_list_items( $users ) {
 		foreach ( $users as $friend_user ) {
+			if ( $friend_user instanceof Subscription && Subscription::is_folder( $friend_user->get_term_id() ) ) {
+				continue;
+			}
 			if ( Friends::has_required_privileges() ) {
 				if ( $this->friends->frontend->post_format ) {
 					$url = $friend_user->get_local_friends_page_post_format_url( $this->friends->frontend->post_format );
@@ -92,8 +95,9 @@ abstract class Widget_Base_Friends_List extends \WP_Widget {
 			} else {
 				$url = $friend_user->user_url;
 			}
+			$display_name = $friend_user->display_name ? $friend_user->display_name : $friend_user->user_login;
 			?>
-			<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $friend_user->display_name ); ?></a></li>
+			<li class="menu-item"><a href="<?php echo esc_url( $url ); ?>" style="display: inline-block"><?php echo esc_html( $display_name ); ?></a></li>
 			<?php
 		}
 	}

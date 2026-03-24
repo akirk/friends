@@ -1243,7 +1243,7 @@ class Blocks {
 			$out .= '<ul>';
 			foreach ( $folder_subs->get_results() as $friend_user ) {
 				$url  = Friends::has_required_privileges() ? $friend_user->get_local_friends_page_url() : $friend_user->user_url;
-				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
+				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ? $friend_user->display_name : $friend_user->user_login ) . '</a></li>';
 			}
 			$out .= '</ul>';
 			$out .= '</details>';
@@ -1259,7 +1259,7 @@ class Blocks {
 			$out .= '<ul>';
 			foreach ( $unfoldered->get_results() as $friend_user ) {
 				$url  = Friends::has_required_privileges() ? $friend_user->get_local_friends_page_url() : $friend_user->user_url;
-				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ) . '</a></li>';
+				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ? $friend_user->display_name : $friend_user->user_login ) . '</a></li>';
 			}
 			$out .= '</ul>';
 			if ( ! empty( $folders ) ) {
