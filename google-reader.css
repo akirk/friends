@@ -238,6 +238,7 @@
 	white-space: nowrap;
 }
 
+.friends-page a.chip:visited { color: light-dark(#555, #bdc1c6); }
 .friends-page .chip:hover { background: light-dark(#d0e0f5, #4a4d51); text-decoration: none; }
 .friends-page span.chip { color: light-dark(#666, #bdc1c6); cursor: default; }
 .friends-page span.chip:hover { background: light-dark(#e3ecf8, #3c4043); }
