@@ -1399,6 +1399,7 @@ class Frontend {
 
 		switch ( $path ) {
 			case 'subscriptions':
+				$friends_args = array();
 				$path = 'frontend/subscriptions';
 				break;
 

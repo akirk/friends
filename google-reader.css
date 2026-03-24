@@ -328,8 +328,67 @@
 	padding: 12px 16px;
 }
 
-.friends-page section.followers ul {
+.friends-page section.followers ul,
+.friends-page section.subscriptions ul {
 	list-style: none;
+	padding-left: 0;
+}
+
+.friends-page section.subscriptions .subscription-item {
+	padding: 8px 0;
+	border-bottom: 1px solid #e8e8e8;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 4px 12px;
+}
+
+.friends-page section.subscriptions .subscription-item:last-child {
+	border-bottom: none;
+}
+
+.friends-page section.subscriptions .subscription-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	text-decoration: none;
+}
+
+.friends-page section.subscriptions .subscription-link .avatar {
+	border-radius: 50%;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
+.friends-page section.subscriptions .subscription-info {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	flex-wrap: wrap;
+}
+
+.friends-page section.subscriptions .starred {
+	color: #f5a623;
+}
+
+.friends-page section.subscriptions .subscription-folder {
+	font-size: 0.8em;
+	background: #e8e8e8;
+	padding: 1px 6px;
+	border-radius: 3px;
+	color: #666;
+}
+
+.friends-page section.subscriptions .subscription-meta {
+	font-size: 0.85em;
+	color: #888;
+}
+
+.friends-page section.subscriptions .subscription-description {
+	width: 100%;
+	margin: 2px 0 0 48px;
+	font-size: 0.85em;
+	color: #666;
 }
 
 /* === Posts === */
