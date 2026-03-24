@@ -120,6 +120,7 @@ class Frontend {
 		add_action( 'wp_untrash_post_status', array( $this, 'untrash_post_status' ), 10, 2 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'template_redirect', array( $this, 'load_theme' ) );
+		add_action( 'admin_bar_menu', array( $this, 'admin_bar_theme_switcher' ), 100 );
 		add_action( 'customize_loaded_components', array( $this, 'ensure_widget_editing' ) );
 		add_action( 'friends_load_theme_default', array( $this, 'default_theme' ) );
 		add_action( 'friends_load_theme_block', array( $this, 'block_theme' ) );
@@ -266,6 +267,15 @@ class Frontend {
 		if ( ! is_user_logged_in() || ! Friends::on_frontend() ) {
 			return;
 		}
+		// Handle theme switching via GET parameter.
+		if ( isset( $_GET['friends_theme'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$new_theme = sanitize_text_field( wp_unslash( $_GET['friends_theme'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$themes    = self::get_themes();
+			if ( isset( $themes[ $new_theme ] ) ) {
+				update_user_option( get_current_user_id(), 'friends_frontend_theme', $new_theme );
+			}
+		}
+
 		$theme = 'default';
 		$default_theme = get_user_option( 'friends_frontend_theme', get_current_user_id() );
 		if ( $default_theme ) {
@@ -408,6 +418,51 @@ class Frontend {
 				return $file_paths;
 			}
 		);
+	}
+
+	/**
+	 * Add a theme switcher submenu to the Friends admin bar menu.
+	 *
+	 * @param \WP_Admin_Bar $wp_admin_bar The admin bar instance.
+	 */
+	public function admin_bar_theme_switcher( $wp_admin_bar ) {
+		if ( ! is_user_logged_in() || ! Friends::on_frontend() ) {
+			return;
+		}
+
+		$current_theme = get_user_option( 'friends_frontend_theme', get_current_user_id() );
+		if ( ! $current_theme ) {
+			$current_theme = 'default';
+		}
+
+		$themes = self::get_themes();
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => 'friends-menu',
+				'id'     => 'friends-theme',
+				'title'  => esc_html__( 'Theme', 'friends' ),
+				'href'   => admin_url( 'admin.php?page=friends-settings' ),
+			)
+		);
+
+		$wp_admin_bar->add_group(
+			array(
+				'parent' => 'friends-theme',
+				'id'     => 'friends-theme-list',
+			)
+		);
+
+		foreach ( $themes as $slug => $name ) {
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => 'friends-theme-list',
+					'id'     => 'friends-theme-' . $slug,
+					'title'  => ( $slug === $current_theme ? '✓ ' : '' ) . esc_html( $name ),
+					'href'   => add_query_arg( 'friends_theme', $slug, home_url( '/friends/' ) ),
+				)
+			);
+		}
 	}
 
 	public function register_block_theme( Frontend $friends_frontend ) {
