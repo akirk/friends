@@ -482,7 +482,7 @@ class Frontend {
 					'parent' => 'friends-theme-list',
 					'id'     => 'friends-theme-' . $slug,
 					'title'  => ( $slug === $current_theme ? '✓ ' : '' ) . esc_html( $name ),
-					'href'   => add_query_arg( 'friends_theme', $slug, home_url( '/friends/' ) ),
+					'href'   => add_query_arg( 'friends_theme', $slug ),
 				)
 			);
 		}
