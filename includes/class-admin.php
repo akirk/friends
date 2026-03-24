@@ -1304,7 +1304,7 @@ class Admin {
 				$widgets = array();
 			}
 			foreach ( $widgets as $k => $widget ) {
-				if ( $widget['friend'] === $friend->user_login ) {
+				if ( ! empty( $widget['friend'] ) && $widget['friend'] === $friend->user_login ) {
 					$already_on_dashboard = true;
 					if ( ! $show_on_dashboard ) {
 						unset( $widgets[ $k ] );
