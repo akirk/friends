@@ -534,7 +534,7 @@ class Blocks {
 		if ( class_exists( '\ActivityPub\Collection\Followers' ) && \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
 			$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', \ACTIVITYPUB_ACTOR_MODE );
 			if ( \ACTIVITYPUB_ACTOR_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
-				$follower_count = \ActivityPub\Collection\Followers::count_followers( get_current_user_id() );
+				$follower_count = Feed_Parser_ActivityPub::count_followers( get_current_user_id() );
 				$out           .= '<li><a href="' . esc_url( home_url( '/friends/followers/' ) ) . '">';
 				$out           .= esc_html(
 					sprintf(
@@ -547,7 +547,7 @@ class Blocks {
 			}
 			if ( \ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
 				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
-					$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
+					$blog_follower_count = Feed_Parser_ActivityPub::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
 					$out                .= '<li><a href="' . esc_url( home_url( '/friends/blog-followers/' ) ) . '">';
 					$out                .= esc_html(
 						sprintf(
@@ -1052,6 +1052,14 @@ class Blocks {
 		// Role chip.
 		$out .= '<span class="chip">' . esc_html( $author->get_role_name() ) . '</span> ';
 
+		// Folder chip.
+		if ( $author instanceof Subscription ) {
+			$folder = $author->get_folder();
+			if ( $folder ) {
+				$out .= '<span class="chip">&#128193; ' . esc_html( $folder->name ) . '</span> ';
+			}
+		}
+
 		// Since chip.
 		$out .= '<span class="chip">' . esc_html( sprintf( /* translators: %s is a date */ __( 'Since %s', 'friends' ), date_i18n( __( 'F j, Y' ), strtotime( $author->user_registered ) ) ) ) . '</span> '; // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 
@@ -1100,6 +1108,24 @@ class Blocks {
 			$out .= '</a> ';
 		}
 
+		// Folder selector.
+		if ( $author instanceof Subscription ) {
+			$folders        = Subscription::get_folders();
+			$current_folder = $author->get_folder();
+			$current_id     = $current_folder ? $current_folder->term_id : 0;
+			$nonce          = wp_create_nonce( 'friends-move-to-folder' );
+
+			$out .= '<span class="chip friends-folder-selector">';
+			$out .= '&#128193; <select class="friends-move-to-folder" data-id="' . esc_attr( $author->user_login ) . '" data-nonce="' . esc_attr( $nonce ) . '">';
+			$out .= '<option value="0"' . selected( $current_id, 0, false ) . '>' . esc_html__( 'No folder', 'friends' ) . '</option>';
+			foreach ( $folders as $folder ) {
+				$out .= '<option value="' . esc_attr( $folder->term_id ) . '"' . selected( $current_id, $folder->term_id, false ) . '>' . esc_html( $folder->name ) . '</option>';
+			}
+			$out .= '<option value="new">' . esc_html__( '+ New folder', 'friends' ) . '</option>';
+			$out .= '</select>';
+			$out .= '</span> ';
+		}
+
 		// Edit chip.
 		$out .= '<a class="chip" href="' . esc_url( admin_url( 'admin.php?page=edit-friend&user=' . $author->user_login ) ) . '">' . esc_html__( 'Edit', 'friends' ) . '</a> ';
 
@@ -1120,16 +1146,26 @@ class Blocks {
 		if ( ! isset( $attributes['user_types'] ) ) {
 			$attributes['user_types'] = 'subscriptions';
 		}
-		switch ( $attributes['user_types'] ) {
-			case 'starred':
-				$friends  = User_Query::starred_friends_subscriptions();
-				$no_users = '';
-				break;
-			default:
-			case 'subscriptions':
-				$friends  = User_Query::all_subscriptions();
-				$no_users = __( "You don't have any subscriptions yet.", 'friends' );
-				break;
+
+		if ( 'folders' === $attributes['user_types'] ) {
+			return $this->render_friends_list_by_folder( $attributes );
+		}
+
+		if ( ! empty( $attributes['folder'] ) ) {
+			$friends  = User_Query::subscriptions_in_folder( intval( $attributes['folder'] ) );
+			$no_users = '';
+		} else {
+			switch ( $attributes['user_types'] ) {
+				case 'starred':
+					$friends  = User_Query::starred_friends_subscriptions();
+					$no_users = '';
+					break;
+				default:
+				case 'subscriptions':
+					$friends  = User_Query::all_subscriptions();
+					$no_users = __( "You don't have any subscriptions yet.", 'friends' );
+					break;
+			}
 		}
 
 		if ( $friends->get_total() === 0 ) {
@@ -1176,6 +1212,62 @@ class Blocks {
 			$out .= '</ul>';
 		}
 
+		return $out;
+	}
+
+	/**
+	 * Render the friends list grouped by folder hierarchy.
+	 *
+	 * @param array $attributes Block attributes.
+	 * @return string The rendered block HTML.
+	 */
+	private function render_friends_list_by_folder( $attributes ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
+		$all     = User_Query::all_subscriptions();
+		$folders = Subscription::get_folders();
+
+		if ( $all->get_total() === 0 ) {
+			return '<span ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . esc_html__( "You don't have any subscriptions yet.", 'friends' ) . '</span>';
+		}
+
+		$out = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list folders' ) ) . '>';
+
+		// Render each folder as a collapsible details element.
+		foreach ( $folders as $folder ) {
+			$folder_subs = User_Query::subscriptions_in_folder( $folder->term_id );
+			if ( $folder_subs->get_total() === 0 ) {
+				continue;
+			}
+
+			$out .= '<details class="friends-folder" open>';
+			$out .= '<summary>&#128193; ' . esc_html( $folder->name ) . ' <small>(' . $folder_subs->get_total() . ')</small></summary>';
+			$out .= '<ul>';
+			foreach ( $folder_subs->get_results() as $friend_user ) {
+				$url  = Friends::has_required_privileges() ? $friend_user->get_local_friends_page_url() : $friend_user->user_url;
+				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ? $friend_user->display_name : $friend_user->user_login ) . '</a></li>';
+			}
+			$out .= '</ul>';
+			$out .= '</details>';
+		}
+
+		// Render unfoldered subscriptions.
+		$unfoldered = User_Query::unfoldered_subscriptions();
+		if ( $unfoldered->get_total() > 0 ) {
+			if ( ! empty( $folders ) ) {
+				$out .= '<details class="friends-folder" open>';
+				$out .= '<summary>' . esc_html__( 'Uncategorized', 'friends' ) . ' <small>(' . $unfoldered->get_total() . ')</small></summary>';
+			}
+			$out .= '<ul>';
+			foreach ( $unfoldered->get_results() as $friend_user ) {
+				$url  = Friends::has_required_privileges() ? $friend_user->get_local_friends_page_url() : $friend_user->user_url;
+				$out .= '<li><a class="wp-user" href="' . esc_url( $url ) . '">' . esc_html( $friend_user->display_name ? $friend_user->display_name : $friend_user->user_login ) . '</a></li>';
+			}
+			$out .= '</ul>';
+			if ( ! empty( $folders ) ) {
+				$out .= '</details>';
+			}
+		}
+
+		$out .= '</div>';
 		return $out;
 	}
 
@@ -1314,6 +1406,17 @@ class Blocks {
 			Friends::VERSION,
 			true
 		);
+
+		// Pass folder data to the editor for the friends-list block.
+		$folders = Subscription::get_folders();
+		$folder_data = array();
+		foreach ( $folders as $folder ) {
+			$folder_data[] = array(
+				'term_id' => $folder->term_id,
+				'name'    => $folder->name,
+			);
+		}
+		wp_localize_script( 'friends-sidebar-blocks', 'friendsFolders', $folder_data );
 	}
 
 	/**

@@ -83,7 +83,7 @@ class Subscription extends User {
 				'singular_name' => _x( 'Virtual User', 'taxonomy singular name', 'friends' ),
 				'menu_name'     => __( 'Virtual User', 'friends' ),
 			),
-			'hierarchical'      => false,
+			'hierarchical'      => true,
 			'show_ui'           => true,
 			'show_admin_column' => true,
 			'query_var'         => true,
@@ -569,6 +569,94 @@ class Subscription extends User {
 
 		delete_metadata( 'term', $this->get_term_id(), 'starred' );
 		return false;
+	}
+
+	/**
+	 * Get the folder (parent term) this subscription belongs to.
+	 *
+	 * @return \WP_Term|null The folder term, or null if at root.
+	 */
+	public function get_folder() {
+		if ( $this->term->parent ) {
+			$parent = get_term( $this->term->parent, self::TAXONOMY );
+			if ( $parent && ! is_wp_error( $parent ) ) {
+				return $parent;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Move this subscription to a folder.
+	 *
+	 * @param int $folder_term_id The folder term ID, or 0 for root.
+	 * @return bool True on success.
+	 */
+	public function move_to_folder( $folder_term_id ) {
+		$result = wp_update_term(
+			$this->get_term_id(),
+			self::TAXONOMY,
+			array( 'parent' => $folder_term_id )
+		);
+		if ( ! is_wp_error( $result ) ) {
+			$this->term->parent = $folder_term_id;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Create a folder in the subscription taxonomy.
+	 *
+	 * @param string $name      The folder name.
+	 * @param int    $parent_id Optional parent folder ID.
+	 * @return \WP_Term|\WP_Error The created folder term or error.
+	 */
+	public static function create_folder( $name, $parent_id = 0 ) {
+		$result = wp_insert_term(
+			$name,
+			self::TAXONOMY,
+			array(
+				'parent' => $parent_id,
+				'slug'   => sanitize_title( 'folder-' . $name ),
+			)
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		$term = get_term( $result['term_id'], self::TAXONOMY );
+		update_term_meta( $term->term_id, 'is_folder', true );
+		return $term;
+	}
+
+	/**
+	 * Get all folders.
+	 *
+	 * @param int $parent_id Optional parent folder ID.
+	 * @return \WP_Term[] Array of folder terms.
+	 */
+	public static function get_folders( $parent_id = null ) {
+		$args = array(
+			'taxonomy'   => self::TAXONOMY,
+			'hide_empty' => false,
+			'meta_key'   => 'is_folder', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			'meta_value' => '1', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+		);
+		if ( null !== $parent_id ) {
+			$args['parent'] = $parent_id;
+		}
+		$query = new \WP_Term_Query( $args );
+		return $query->get_terms();
+	}
+
+	/**
+	 * Check if a term is a folder.
+	 *
+	 * @param int $term_id The term ID.
+	 * @return bool
+	 */
+	public static function is_folder( $term_id ) {
+		return (bool) get_term_meta( $term_id, 'is_folder', true );
 	}
 
 	public function delete() {

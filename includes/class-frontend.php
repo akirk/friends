@@ -110,6 +110,8 @@ class Frontend {
 		add_action( 'wp_ajax_friends-get-post-counts', array( $this, 'ajax_get_post_counts' ) );
 		add_action( 'friends_search_autocomplete', array( $this, 'autocomplete_user_search' ), 10, 2 );
 		add_action( 'wp_ajax_friends-star', array( $this, 'ajax_star_friend_user' ) );
+		add_action( 'wp_ajax_friends-move-to-folder', array( $this, 'ajax_move_to_folder' ) );
+		add_action( 'wp_ajax_friends-create-folder', array( $this, 'ajax_create_folder' ) );
 		add_action( 'wp_ajax_friends-load-comments', array( $this, 'ajax_load_comments' ) );
 		add_action( 'wp_ajax_friends-reblog', array( $this, 'wp_ajax_reblog' ) );
 		add_action( 'friends_post_footer_first', array( $this, 'reblog_button' ) );
@@ -341,6 +343,7 @@ class Frontend {
 
 		// translators: %s is a user handle.
 		$variables['text_confirm_delete_follower'] = __( 'Do you really want to delete the follower %s?', 'friends' );
+		$variables['text_new_folder']              = __( 'Folder name:', 'friends' );
 		wp_localize_script( 'friends', 'friends', $variables );
 	}
 
@@ -1149,6 +1152,58 @@ class Frontend {
 		wp_send_json_success(
 			array(
 				'starred' => $friend_user->get_starred(),
+			)
+		);
+	}
+
+	/**
+	 * Ajax handler to move a subscription to a folder.
+	 */
+	public function ajax_move_to_folder() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) || ! isset( $_POST['friend_id'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		check_ajax_referer( 'friends-move-to-folder' );
+
+		$friend_id = sanitize_text_field( wp_unslash( $_POST['friend_id'] ) );
+		$folder_id = isset( $_POST['folder_id'] ) ? intval( $_POST['folder_id'] ) : 0;
+
+		$friend_user = User::get_by_username( $friend_id );
+		if ( ! $friend_user || is_wp_error( $friend_user ) || ! ( $friend_user instanceof Subscription ) ) {
+			wp_send_json_error( 'invalid-user' );
+			exit;
+		}
+
+		$result = $friend_user->move_to_folder( $folder_id );
+		wp_send_json_success( array( 'moved' => $result ) );
+	}
+
+	/**
+	 * Ajax handler to create a new folder.
+	 */
+	public function ajax_create_folder() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) || ! isset( $_POST['name'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		check_ajax_referer( 'friends-move-to-folder' );
+
+		$name      = sanitize_text_field( wp_unslash( $_POST['name'] ) );
+		$parent_id = isset( $_POST['parent_id'] ) ? intval( $_POST['parent_id'] ) : 0;
+
+		$folder = Subscription::create_folder( $name, $parent_id );
+		if ( is_wp_error( $folder ) ) {
+			wp_send_json_error( $folder->get_error_message() );
+			exit;
+		}
+
+		wp_send_json_success(
+			array(
+				'term_id' => $folder->term_id,
+				'name'    => $folder->name,
 			)
 		);
 	}

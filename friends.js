@@ -696,6 +696,54 @@
 		}
 	);
 
+	// Folder selector for subscriptions.
+	$document.on( 'change', '.friends-move-to-folder', function () {
+		const $select = $( this );
+		const friendId = $select.data( 'id' );
+		const nonce = $select.data( 'nonce' );
+		let folderId = $select.val();
+
+		if ( 'new' === folderId ) {
+			const name = prompt( friends.text_new_folder || 'Folder name:' );
+			if ( ! name ) {
+				$select.val( $select.data( 'current' ) || 0 );
+				return;
+			}
+			wp.ajax.send( 'friends-create-folder', {
+				data: {
+					name: name,
+					_ajax_nonce: nonce,
+				},
+				success( r ) {
+					// Add the new option and select it.
+					$select.find( 'option[value="new"]' ).before(
+						'<option value="' + r.term_id + '">' + r.name + '</option>'
+					);
+					$select.val( r.term_id );
+					$select.data( 'current', r.term_id );
+					// Now move the subscription to it.
+					wp.ajax.send( 'friends-move-to-folder', {
+						data: {
+							friend_id: friendId,
+							folder_id: r.term_id,
+							_ajax_nonce: nonce,
+						},
+					} );
+				},
+			} );
+			return;
+		}
+
+		$select.data( 'current', folderId );
+		wp.ajax.send( 'friends-move-to-folder', {
+			data: {
+				friend_id: friendId,
+				folder_id: folderId,
+				_ajax_nonce: nonce,
+			},
+		} );
+	} );
+
 	function getAcct( href ) {
 		const url = new URL( href );
 		const username = url.pathname.replace( /\/$/, '' ).split( '/' ).pop();

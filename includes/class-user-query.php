@@ -121,7 +121,7 @@ class User_Query extends \WP_User_Query {
 			);
 
 			foreach ( $term_query->get_terms() as $term ) {
-				if ( ! isset( $this->results[ $term->term_id ] ) ) {
+				if ( ! isset( $this->results[ $term->term_id ] ) && ! Subscription::is_folder( $term->term_id ) ) {
 					$this->results[ $term->term_id ] = new Subscription( $term );
 					$this->total_users += 1;
 				}
@@ -172,6 +172,51 @@ class User_Query extends \WP_User_Query {
 			$starred_friends_subscriptions[ $cache_key ]->sort( $sort['orderby'], $sort['order'] );
 		}
 		return $starred_friends_subscriptions[ $cache_key ];
+	}
+
+	/**
+	 * Gets subscriptions in a specific folder.
+	 *
+	 * Filters the cached all_subscriptions list by parent term ID.
+	 *
+	 * @param int $folder_term_id The folder term ID.
+	 * @return User_Query The matching subscriptions.
+	 */
+	public static function subscriptions_in_folder( $folder_term_id ) {
+		$all = self::all_subscriptions();
+
+		$results     = array();
+		$total_users = 0;
+		foreach ( $all->get_results() as $subscription ) {
+			if ( $subscription instanceof Subscription && $subscription->get_folder() ) {
+				if ( $subscription->get_folder()->term_id === $folder_term_id ) {
+					$results[ $subscription->get_term_id() ] = $subscription;
+					++$total_users;
+				}
+			}
+		}
+
+		return new User_Query_Result( $results, $total_users );
+	}
+
+	/**
+	 * Gets subscriptions not in any folder (at root level).
+	 *
+	 * @return User_Query_Result The matching subscriptions.
+	 */
+	public static function unfoldered_subscriptions() {
+		$all = self::all_subscriptions();
+
+		$results     = array();
+		$total_users = 0;
+		foreach ( $all->get_results() as $subscription ) {
+			if ( $subscription instanceof Subscription && ! $subscription->get_folder() ) {
+				$results[ $subscription->get_term_id() ] = $subscription;
+				++$total_users;
+			}
+		}
+
+		return new User_Query_Result( $results, $total_users );
 	}
 
 	/**

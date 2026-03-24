@@ -178,6 +178,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 
+	public static function count_followers( $user_id ) {
+		if ( method_exists( '\ActivityPub\Collection\Followers', 'count' ) ) {
+			return \ActivityPub\Collection\Followers::count( $user_id );
+		}
+		return \ActivityPub\Collection\Followers::count_followers( $user_id );
+	}
+
 	public static function determine_mastodon_api_user( $user_id ) {
 		static $user_id_map = array();
 		if ( null === $user_id ) {

@@ -49,12 +49,12 @@ class Widget_Friend_Stats extends \WP_Widget {
 		if ( class_exists( '\ActivityPub\Collection\Followers' ) && \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
 			$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', \ACTIVITYPUB_ACTOR_MODE );
 			if ( \ACTIVITYPUB_ACTOR_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
-				$follower_count = \ActivityPub\Collection\Followers::count_followers( get_current_user_id() );
+				$follower_count = Feed_Parser_ActivityPub::count_followers( get_current_user_id() );
 				$show_followers = true;
 			}
 			if ( \ACTIVITYPUB_BLOG_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
 				if ( class_exists( '\ActivityPub\Collection\Actors' ) ) {
-					$blog_follower_count = \ActivityPub\Collection\Followers::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
+					$blog_follower_count = Feed_Parser_ActivityPub::count_followers( \ActivityPub\Collection\Actors::BLOG_USER_ID );
 					$show_blog_followers = true;
 				}
 			}

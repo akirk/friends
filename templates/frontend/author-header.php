@@ -236,6 +236,24 @@ endforeach;
 <a class="chip" href="<?php echo esc_attr( $edit_user_link ); ?>"><?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_html_e( 'Edit' ); ?></a>
 <?php endif; ?>
 
+<?php if ( $args['friend_user'] instanceof \Friends\Subscription ) : ?>
+	<?php
+	$_folders        = \Friends\Subscription::get_folders();
+	$_current_folder = $args['friend_user']->get_folder();
+	$_current_id     = $_current_folder ? $_current_folder->term_id : 0;
+	$_folder_nonce   = wp_create_nonce( 'friends-move-to-folder' );
+	?>
+	<span class="chip friends-folder-selector">
+		&#128193; <select class="friends-move-to-folder" data-id="<?php echo esc_attr( $args['friend_user']->user_login ); ?>" data-nonce="<?php echo esc_attr( $_folder_nonce ); ?>">
+			<option value="0"<?php selected( $_current_id, 0 ); ?>><?php esc_html_e( 'No folder', 'friends' ); ?></option>
+			<?php foreach ( $_folders as $_folder ) : ?>
+				<option value="<?php echo esc_attr( $_folder->term_id ); ?>"<?php selected( $_current_id, $_folder->term_id ); ?>><?php echo esc_html( $_folder->name ); ?></option>
+			<?php endforeach; ?>
+			<option value="new"><?php esc_html_e( '+ New folder', 'friends' ); ?></option>
+		</select>
+	</span>
+<?php endif; ?>
+
 <?php if ( $args['friend_user']->can_refresh_feeds() && apply_filters( 'friends_debug', false ) ) : ?>
 <a class="chip" href="<?php echo esc_url( wp_nonce_url( add_query_arg( 'user', $args['friend_user']->user_login, self_admin_url( 'admin.php?page=friends-refresh' ) ), 'friends-refresh' ) ); ?>"><?php esc_html_e( 'Refresh', 'friends' ); ?></a>
 <?php endif; ?>
