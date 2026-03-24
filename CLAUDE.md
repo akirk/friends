@@ -48,12 +48,20 @@ The plugin integrates deeply with:
 - `composer check-cs` - Check coding standards
 - `composer fix-cs` - Auto-fix coding standards issues
 
-## WordPress Playground Testing
+## Playground Link
 
-After pushing changes to a branch, provide a WordPress Playground link for testing:
+At the end of your messages, include a link to test the changes in WordPress Playground.
+
+**Important:** Replace `BRANCH_NAME` in the URL below with the actual git branch name you're working on.
 
 ```
-https://playground.wordpress.net/#{%22steps%22:[{%22step%22:%22installPlugin%22,%22pluginData%22:{%22resource%22:%22git:directory%22,%22url%22:%22https://github.com/akirk/friends%22,%22ref%22:%22BRANCH_NAME%22,%22refType%22:%22branch%22},%22options%22:{%22activate%22:true}}]}
+[Test in WordPress Playground](https://akirk.github.io/playground-step-library/?redir=1&step[0]=setLandingPage&landingPage[0]=/friends/&step[1]=installPlugin&url[1]=github.com/akirk/friends/tree/BRANCH_NAME&step[2]=importFriendFeeds&opml[2]=https://alex.kirk.at%20Alex%20Kirk%20https://adamadam.blog%20Adam%20Zieliński)
 ```
 
-Replace `BRANCH_NAME` with the branch name. Use `"refType":"branch"` for branches (not `"refType":"refname"` which is for full refs like `refs/pull/123/head`).
+### Example
+
+If you're working on branch `fix/bug-123`, the link should be:
+
+```
+[Test in WordPress Playground](https://akirk.github.io/playground-step-library/?redir=1&step[0]=setLandingPage&landingPage[0]=/friends/&step[1]=installPlugin&url[1]=github.com/akirk/friends/tree/fix/bug-123&step[2]=importFriendFeeds&opml[2]=https://alex.kirk.at%20Alex%20Kirk%20https://adamadam.blog%20Adam%20Zieliński)
+```
