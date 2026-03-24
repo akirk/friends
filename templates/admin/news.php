@@ -101,8 +101,18 @@ jQuery(document).ready(function($) {
 	border-radius: 4px;
 	padding: 16px;
 }
-.friends-news-change h3 {
+.friends-news-changes > h3 {
+	grid-column: 1 / -1;
+	margin: 8px 0 0;
+	padding-bottom: 4px;
+	border-bottom: 1px solid #c3c4c7;
+}
+.friends-news-changes > h3:first-child {
 	margin-top: 0;
+}
+.friends-news-change h4 {
+	margin-top: 0;
+	font-size: 1.3em;
 }
 .friends-news-change p {
 	margin-bottom: 0;

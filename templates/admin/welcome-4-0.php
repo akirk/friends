@@ -16,39 +16,60 @@ $has_in_progress = isset( $args['has_in_progress'] ) ? $args['has_in_progress'] 
 	<h2><?php esc_html_e( 'Friends 4.0: A Major Update', 'friends' ); ?></h2>
 
 	<div class="friends-news-changes">
+		<h3><?php esc_html_e( 'Themes', 'friends' ); ?></h3>
+
 		<div class="friends-news-change">
-			<h3><?php esc_html_e( 'Friendship Functionality Removed', 'friends' ); ?></h3>
+			<h4><?php esc_html_e( 'Dark Mode', 'friends' ); ?></h4>
+			<p><?php esc_html_e( 'The default Friends theme now has a dark mode that follows your system preferences.', 'friends' ); ?></p>
+		</div>
+
+		<div class="friends-news-change">
+			<h4><?php esc_html_e( 'Block Theme', 'friends' ); ?></h4>
+			<p><?php esc_html_e( 'A block-based theme that integrates with your site\'s active theme, letting you customize the Friends page templates via the Site Editor.', 'friends' ); ?></p>
+		</div>
+
+		<div class="friends-news-change">
+			<h4><?php esc_html_e( 'Google Reader Theme', 'friends' ); ?></h4>
+			<p><?php esc_html_e( 'A Google Reader-inspired theme with a compact list view where posts expand accordion-style. Includes keyboard shortcuts (j/k to navigate, s to star, v to open original, ? to see all shortcuts) and full dark mode support.', 'friends' ); ?></p>
+		</div>
+
+		<div class="friends-news-change">
+			<h4><?php esc_html_e( 'Mastodon Theme', 'friends' ); ?></h4>
+			<p><?php esc_html_e( 'A Mastodon-style theme with a 3-column layout: user info and search on the left, timeline in the center, and navigation on the right. Features card-based posts with avatars, collapsible filter chips, and full light/dark mode support.', 'friends' ); ?></p>
+		</div>
+
+		<h3><?php esc_html_e( 'Subscriptions', 'friends' ); ?></h3>
+
+		<div class="friends-news-change">
+			<h4><?php esc_html_e( 'Subscription Folders', 'friends' ); ?></h4>
+			<p><?php esc_html_e( 'Organize your subscriptions into folders. You can move subscriptions into folders from the author page. The friends list can be grouped by folder with collapsible sections. Starred subscriptions are shown separately for quick access.', 'friends' ); ?></p>
+		</div>
+
+		<div class="friends-news-change">
+			<h4><?php esc_html_e( 'Improved Subscriptions and Followers Pages', 'friends' ); ?></h4>
+			<p><?php esc_html_e( 'The subscriptions and followers pages now have filtering, sorting, and pagination. Browse subscriptions by starred or folder, sort by name, date, or post count, and navigate large lists with ease.', 'friends' ); ?></p>
+		</div>
+
+		<h3><?php esc_html_e( 'Compatibility', 'friends' ); ?></h3>
+
+		<div class="friends-news-change">
+			<h4><?php esc_html_e( 'Friendship Functionality Removed', 'friends' ); ?></h4>
 			<p><?php esc_html_e( 'The two-way friendship functionality has been removed. It only worked between WordPress sites with the Friends plugin installed. Your existing friends are now subscriptions. Similar functionality could be implemented via ActivityPub in the future, which would work across the whole Fediverse.', 'friends' ); ?></p>
 		</div>
 
 		<div class="friends-news-change">
-			<h3><?php esc_html_e( 'Friend Tags', 'friends' ); ?></h3>
+			<h4><?php esc_html_e( 'Friend Tags', 'friends' ); ?></h4>
 			<p><?php esc_html_e( 'Posts from friends now use a dedicated taxonomy instead of sharing post tags with your blog. This prevents other people\'s tags from polluting your own tag list.', 'friends' ); ?></p>
 		</div>
 
 		<div class="friends-news-change">
-			<h3><?php esc_html_e( 'ActivityPub 7.0 Compatibility', 'friends' ); ?></h3>
+			<h4><?php esc_html_e( 'ActivityPub 7.0 Compatibility', 'friends' ); ?></h4>
 			<p><?php esc_html_e( 'ActivityPub feeds are now linked to actor records from the ActivityPub plugin, improving reliability and enabling better URL synchronization.', 'friends' ); ?></p>
 		</div>
 
 		<div class="friends-news-change">
-			<h3><?php esc_html_e( 'Improved Conversations', 'friends' ); ?></h3>
-			<p><?php esc_html_e( 'ActivityPub replies are now stored as comments on the original post, creating proper conversation threads instead of cluttering your feed.', 'friends' ); ?></p>
-		</div>
-
-		<div class="friends-news-change">
-			<h3><?php esc_html_e( 'Header Images', 'friends' ); ?></h3>
+			<h4><?php esc_html_e( 'Header Images', 'friends' ); ?></h4>
 			<p><?php esc_html_e( 'The ActivityPub header image is now used if available, giving friend profiles a richer look.', 'friends' ); ?></p>
-		</div>
-
-		<div class="friends-news-change">
-			<h3><?php esc_html_e( 'Dark Mode', 'friends' ); ?></h3>
-			<p><?php esc_html_e( 'The Friends page now has a dark mode that follows your system preferences.', 'friends' ); ?></p>
-		</div>
-
-		<div class="friends-news-change">
-			<h3><?php esc_html_e( 'Block Theme', 'friends' ); ?></h3>
-			<p><?php esc_html_e( 'A new block-based theme option for the Friends page that integrates with your site\'s active theme. Select it under Friends > Settings. To customize the templates, visit your Friends page and click "Edit site" in the admin bar.', 'friends' ); ?></p>
 		</div>
 
 	</div>
