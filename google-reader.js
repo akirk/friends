@@ -224,4 +224,17 @@
 		e.stopPropagation();
 		return false;
 	} );
+
+	// Toggle compact/expanded mode.
+	$( document ).on( 'click', 'a.toggle-compact', function() {
+		$( 'section.posts' ).toggleClass( 'all-collapsed' );
+		if ( $( 'section.posts' ).is( '.all-collapsed' ) ) {
+			$( 'a.toggle-compact' ).text( friends.text_expanded_mode );
+			// Collapse all when switching to compact.
+			getItems().removeClass( 'uncollapsed' );
+		} else {
+			$( 'a.toggle-compact' ).text( friends.text_compact_mode );
+		}
+		return false;
+	} );
 } )( jQuery );

@@ -335,7 +335,6 @@
 .friends-page section.posts {
 	padding: 0 16px;
 	margin-top: 4px;
-	border-top: 1px solid light-dark(#e5e5e5, #3c4043);
 }
 
 .friends-page .posts article.card {
