@@ -430,6 +430,21 @@ class Friends {
 		}
 	}
 
+	public static function has_pending_migrations() {
+		$status = get_option( 'friends_migration_status' );
+		if ( ! $status || 'completed' === $status ) {
+			return false;
+		}
+		if ( is_numeric( $status ) && ( time() - intval( $status ) ) < 2 * DAY_IN_SECONDS ) {
+			return false;
+		}
+		require_once __DIR__ . '/class-migration.php';
+		if ( ! Migration::has_pending_tracked_migrations() ) {
+			return false;
+		}
+		return true;
+	}
+
 	public static function upgrade_plugin() {
 		$previous_version = get_option( 'friends_plugin_version' );
 
@@ -476,6 +491,11 @@ class Friends {
 			// Show the welcome/update screen if this is an upgrade (not a fresh install).
 			if ( $previous_version ) {
 				update_option( 'friends_welcome_version', '4.0' );
+				if ( Migration::has_pending_tracked_migrations() ) {
+					update_option( 'friends_migration_status', 'pending', false );
+				} else {
+					update_option( 'friends_migration_status', 'completed', false );
+				}
 			}
 		}
 

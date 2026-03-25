@@ -142,6 +142,9 @@ class Frontend {
 		add_filter( 'get_block_templates', array( $this, 'add_friends_template_parts' ), 10, 3 );
 		add_filter( 'tag_row_actions', array( $this, 'tag_row_actions' ), 10, 2 );
 
+		add_action( 'friends_after_header', array( $this, 'migration_notification' ) );
+		add_action( 'wp_ajax_friends_dismiss_migration_notification', array( $this, 'ajax_dismiss_migration_notification' ) );
+
 		add_filter( 'friends_override_author_name', array( $this, 'override_author_name' ), 10, 3 );
 		add_filter( 'friends_friend_posts_query_viewable', array( $this, 'expose_opml' ), 10, 2 );
 		add_filter( 'get_comment_link', array( $this, 'friend_post_comment_link' ), 10, 2 );
@@ -374,6 +377,47 @@ class Frontend {
 				}
 			}
 		}
+	}
+
+	public function migration_notification() {
+		if ( ! Friends::on_frontend() ) {
+			return;
+		}
+		if ( ! Friends::has_pending_migrations() ) {
+			return;
+		}
+		?>
+		<div class="friends-migration-notification">
+			<?php esc_html_e( 'Welcome to Friends 4.0!', 'friends' ); ?>
+			<?php esc_html_e( 'Some data migrations are still pending.', 'friends' ); ?>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=friends' ) ); ?>"><?php esc_html_e( "Learn what's new \u{2192}", 'friends' ); ?></a>
+			<span class="friends-migration-notification-meta">
+				<small class="friends-migration-reappear" hidden><?php esc_html_e( 'Will reappear in 2 days.', 'friends' ); ?></small>
+				<button id="friends-dismiss-migration-notification" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-dismiss-migration-notification' ) ); ?>"><?php esc_html_e( 'Dismiss', 'friends' ); ?></button>
+			</span>
+		</div>
+		<script>
+		document.getElementById( 'friends-dismiss-migration-notification' ).addEventListener( 'click', function() {
+			var btn = this;
+			var notification = btn.closest( '.friends-migration-notification' );
+			btn.hidden = true;
+			notification.querySelector( '.friends-migration-reappear' ).hidden = false;
+			fetch( <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: 'action=friends_dismiss_migration_notification&_ajax_nonce=' + encodeURIComponent( btn.dataset.nonce ),
+			} ).then( function() {
+				notification.remove();
+			} );
+		} );
+		</script>
+		<?php
+	}
+
+	public function ajax_dismiss_migration_notification() {
+		check_ajax_referer( 'friends-dismiss-migration-notification' );
+		update_option( 'friends_migration_status', time(), false );
+		wp_send_json_success();
 	}
 
 	public function the_post( $post, $query ) {

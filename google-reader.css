@@ -115,6 +115,10 @@
 	margin-top: 4px;
 }
 
+.friends-page .friends-widget {
+	padding: 0 16px;
+}
+
 .friends-page .friends-nav {
 	padding: 4px 0;
 }
@@ -128,7 +132,7 @@
 .friends-page .accordion summary,
 .friends-page .accordion .accordion-header {
 	display: block;
-	padding: 6px 16px;
+	padding: 6px 0;
 	font-size: 11px;
 	font-weight: bold;
 	color: light-dark(#555, #bdc1c6);
@@ -141,7 +145,7 @@
 .friends-page .accordion summary::-webkit-details-marker { display: none; }
 .friends-page .accordion summary::marker { display: none; content: ''; }
 
-.friends-page .accordion summary .dashicons {
+.friends-page .friends-widget .dashicons {
 	font-size: 14px;
 	width: 14px;
 	height: 14px;
@@ -158,7 +162,7 @@
 .friends-page .menu-item a,
 .friends-page .friend-list .menu-item a {
 	display: block;
-	padding: 2px 16px 2px 28px;
+	padding: 2px 0 2px 12px;
 	color: light-dark(#222, #e8eaed);
 	font-size: 13px;
 	line-height: 1.8;
@@ -171,10 +175,12 @@
 .friends-page .menu-item a:hover {
 	background: light-dark(#c2dbff, #3c4043);
 	text-decoration: none;
+	margin: 0 -16px;
+	padding-left: 28px;
+	padding-right: 16px;
 }
 
 .friends-page .friend-stats .menu-item a {
-	padding-left: 28px;
 	font-size: 13px;
 }
 
@@ -783,3 +789,32 @@
 /* === Dark Mode === */
 /* Dark mode handled entirely by light-dark() above.
    The color-scheme: light dark on .friends-page enables it. */
+
+/* Migration notification */
+.friends-page .friends-migration-notification {
+	display: flex;
+	align-items: center;
+	gap: .4rem;
+	padding: 6px 16px;
+	background: light-dark(#fef9e7, #2a2410);
+	border-bottom: 1px solid light-dark(#e8c840, #5a4a00);
+	font-size: .85rem;
+	white-space: nowrap;
+	overflow: hidden;
+}
+.friends-page .friends-migration-notification .friends-migration-notification-meta {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+	white-space: nowrap;
+	opacity: .75;
+}
+.friends-page .friends-migration-notification button {
+	background: none;
+	border: 1px solid currentColor;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: .8rem;
+	padding: 1px 6px;
+}
