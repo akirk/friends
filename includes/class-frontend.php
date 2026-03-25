@@ -454,11 +454,11 @@ class Frontend {
 
 	public function mastodon_theme() {
 		$handle  = 'friends-mastodon';
-		$file    = 'mastodon.css';
+		$file    = 'templates/mastodon/mastodon.css';
 		$version = Friends::VERSION;
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
-		wp_enqueue_script( 'friends-mastodon', plugins_url( 'mastodon.js', FRIENDS_PLUGIN_FILE ), array(), $version, true );
+		wp_enqueue_script( 'friends-mastodon', plugins_url( 'templates/mastodon/mastodon.js', FRIENDS_PLUGIN_FILE ), array(), $version, true );
 
 		add_filter(
 			'friends_template_paths_theme_mastodon',
@@ -471,11 +471,11 @@ class Frontend {
 
 	public function google_reader_theme() {
 		$handle  = 'friends-google-reader';
-		$file    = 'google-reader.css';
+		$file    = 'templates/google-reader/google-reader.css';
 		$version = Friends::VERSION;
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
-		wp_enqueue_script( 'friends-google-reader', plugins_url( 'google-reader.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), $version, true );
+		wp_enqueue_script( 'friends-google-reader', plugins_url( 'templates/google-reader/google-reader.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), $version, true );
 
 		add_filter(
 			'friends_template_paths_theme_google-reader',
