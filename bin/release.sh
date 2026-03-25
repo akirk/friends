@@ -1,10 +1,16 @@
 #!/bin/bash
 cd "$(dirname "$0")/.."
-FRIENDS_VERSION=$(grep -E define...FRIENDS_VERSION friends.php | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+")
+FRIENDS_VERSION=$(grep -E "define.*FRIENDS_VERSION" friends.php | grep -Eo "[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)*")
 
 echo Friends Release $FRIENDS_VERSION
 echo "====================="
 echo
+
+if echo "$FRIENDS_VERSION" | grep -qE "\-"; then
+	echo -ne "\033[31m✘\033[0m "
+	echo "Version $FRIENDS_VERSION has a pre-release suffix. Please update the version in friends.php first."
+	exit 1
+fi
 
 svn info | grep ^URL: | grep -q plugins.svn.wordpress.org/friends/trunk
 if [ $? -eq 1 ]; then

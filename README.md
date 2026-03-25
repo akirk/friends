@@ -3,9 +3,9 @@
 - Contributors: akirk
 - Tags: friends, rss, decentralized, social-network, own-your-data
 - Requires PHP: 7.2
-- Tested up to: 6.8
+- Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 3.6.0
+- Stable tag: 4.0.0
 
 Follow others via RSS and ActivityPub and read their posts on your own WordPress.
 
@@ -95,6 +95,33 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 4.0.0
+- Remove Friendship functionality ([#515])
+- Provide a block theme for the Friends page ([#362])
+- Move post_tag to a friend_tag taxonomy ([#559])
+- Implement Dark Mode for Friends Page ([#571])
+- Improve Compatibility with ActivityPub 7.0 ([#574])
+- Improve ActivityPub integration and migration UI ([#575])
+- Use the ActivityPub header image if available ([#576])
+- Fix the external actor display ([#577], [#578])
+- Improve external mention behavior ([#579])
+- Fix the links for ActivityPub comments ([#580])
+- Prevent apostrophes in friend usernames and migrate existing ones ([#581])
+- Refactor Friend Tag ([#583])
+- Use preferredUsername instead of display name for ActivityPub suggested-username ([#585])
+- Don't convert replies to comments without mentions ([#586])
+- Fix batch pagination bug in migrations and add undo support ([#587])
+- Optimize Mastodon API performance ([#592])
+- Don't assume WP_HTML_Tag_Processor is available ([#553])
+- Add News page with update announcements and migration improvements ([#598])
+- Add subscription folders ([#599])
+- Fix followers page and add filtering, sorting, and pagination ([#600])
+- Add Google Reader theme ([#601])
+- Add subscriptions page with filtering, sorting, and pagination ([#603])
+- Fix video controls, reaction scroll loss, and PHP warning ([#604])
+- Add Mastodon-style theme ([#605])
+- Fix folder support in friend-list widget and block ([#607])
 
 ### 3.6.0
 - Add support for PeerTube ([#546])
@@ -439,3 +466,34 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#544]: https://github.com/akirk/friends/pull/544
 [#545]: https://github.com/akirk/friends/pull/545
 [#546]: https://github.com/akirk/friends/pull/546
+[#362]: https://github.com/akirk/friends/pull/362
+[#515]: https://github.com/akirk/friends/pull/515
+[#547]: https://github.com/akirk/friends/pull/547
+[#551]: https://github.com/akirk/friends/pull/551
+[#553]: https://github.com/akirk/friends/pull/553
+[#559]: https://github.com/akirk/friends/pull/559
+[#562]: https://github.com/akirk/friends/pull/562
+[#566]: https://github.com/akirk/friends/pull/566
+[#567]: https://github.com/akirk/friends/pull/567
+[#571]: https://github.com/akirk/friends/pull/571
+[#574]: https://github.com/akirk/friends/pull/574
+[#575]: https://github.com/akirk/friends/pull/575
+[#576]: https://github.com/akirk/friends/pull/576
+[#577]: https://github.com/akirk/friends/pull/577
+[#578]: https://github.com/akirk/friends/pull/578
+[#579]: https://github.com/akirk/friends/pull/579
+[#580]: https://github.com/akirk/friends/pull/580
+[#581]: https://github.com/akirk/friends/pull/581
+[#583]: https://github.com/akirk/friends/pull/583
+[#585]: https://github.com/akirk/friends/pull/585
+[#586]: https://github.com/akirk/friends/pull/586
+[#587]: https://github.com/akirk/friends/pull/587
+[#592]: https://github.com/akirk/friends/pull/592
+[#598]: https://github.com/akirk/friends/pull/598
+[#599]: https://github.com/akirk/friends/pull/599
+[#600]: https://github.com/akirk/friends/pull/600
+[#601]: https://github.com/akirk/friends/pull/601
+[#603]: https://github.com/akirk/friends/pull/603
+[#604]: https://github.com/akirk/friends/pull/604
+[#605]: https://github.com/akirk/friends/pull/605
+[#607]: https://github.com/akirk/friends/pull/607
