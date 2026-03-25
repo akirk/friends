@@ -386,6 +386,30 @@ class Migration {
 	}
 
 	/**
+	 * Check whether any tracked migrations are still pending.
+	 *
+	 * Uses the friends_migration_status option as a fast gate: if it is already
+	 * 'completed' this returns false immediately without touching any other options.
+	 * When every tracked migration has finished it writes 'completed' to that option
+	 * so subsequent calls are a single cheap get_option().
+	 *
+	 * @return bool True if at least one tracked migration has not yet completed.
+	 */
+	public static function has_pending_tracked_migrations() {
+		if ( 'completed' === get_option( 'friends_migration_status' ) ) {
+			return false;
+		}
+		self::register_migrations();
+		foreach ( self::$registry as $migration ) {
+			if ( $migration['status_option'] && ! get_option( $migration['status_option'] ) ) {
+				return true;
+			}
+		}
+		update_option( 'friends_migration_status', 'completed', false );
+		return false;
+	}
+
+	/**
 	 * Get status of all migrations.
 	 *
 	 * @return array Status information for all migrations.

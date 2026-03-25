@@ -1232,4 +1232,89 @@ class MigrationTest extends \WP_UnitTestCase {
 		remove_filter( 'friends_pre_check_url', '__return_true' );
 	}
 
+	private function get_all_tracked_status_options() {
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		Migration::register_migrations();
+		$status_options = array();
+		foreach ( Migration::get_registry() as $migration ) {
+			if ( $migration['status_option'] ) {
+				$status_options[] = $migration['status_option'];
+			}
+		}
+		return $status_options;
+	}
+
+	private function mark_all_migrations_complete() {
+		foreach ( $this->get_all_tracked_status_options() as $option ) {
+			update_option( $option, time() );
+		}
+	}
+
+	private function clear_all_migration_status_options() {
+		foreach ( $this->get_all_tracked_status_options() as $option ) {
+			delete_option( $option );
+		}
+		delete_option( 'friends_migration_status' );
+	}
+
+	public function test_has_pending_migrations_false_when_no_option() {
+		$this->clear_all_migration_status_options();
+		$this->assertFalse( Friends::has_pending_migrations() );
+	}
+
+	public function test_has_pending_migrations_false_when_completed() {
+		update_option( 'friends_migration_status', 'completed', false );
+		$this->assertFalse( Friends::has_pending_migrations() );
+	}
+
+	public function test_has_pending_migrations_true_when_pending() {
+		$this->clear_all_migration_status_options();
+		update_option( 'friends_migration_status', 'pending', false );
+		$this->assertTrue( Friends::has_pending_migrations() );
+	}
+
+	public function test_has_pending_migrations_marks_completed_when_all_done() {
+		$this->mark_all_migrations_complete();
+		update_option( 'friends_migration_status', 'pending', false );
+		$this->assertFalse( Friends::has_pending_migrations() );
+		$this->assertSame( 'completed', get_option( 'friends_migration_status' ) );
+	}
+
+	public function test_has_pending_migrations_false_when_dismissed_recently() {
+		$this->clear_all_migration_status_options();
+		update_option( 'friends_migration_status', time() - HOUR_IN_SECONDS, false );
+		$this->assertFalse( Friends::has_pending_migrations() );
+	}
+
+	public function test_has_pending_migrations_true_when_dismiss_expired() {
+		$this->clear_all_migration_status_options();
+		update_option( 'friends_migration_status', time() - ( 3 * DAY_IN_SECONDS ), false );
+		$this->assertTrue( Friends::has_pending_migrations() );
+	}
+
+	public function test_upgrade_plugin_sets_pending_when_migrating_from_before_4_0() {
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		$this->setup_pre_migration_environment();
+		$this->setup_post_migration_environment();
+		$this->clear_all_migration_status_options();
+
+		update_option( 'friends_plugin_version', '3.6.0' );
+		Friends::upgrade_plugin();
+
+		$this->assertSame( 'pending', get_option( 'friends_migration_status' ) );
+	}
+
+	public function test_upgrade_plugin_no_migration_status_on_fresh_install() {
+		$this->clear_all_migration_status_options();
+		delete_option( 'friends_plugin_version' );
+		Friends::upgrade_plugin();
+		$this->assertFalse( get_option( 'friends_migration_status' ) );
+	}
+
+	public function test_upgrade_plugin_does_not_reset_status_on_bugfix_release() {
+		update_option( 'friends_migration_status', 'completed', false );
+		update_option( 'friends_plugin_version', '4.0.0' );
+		Friends::upgrade_plugin();
+		$this->assertSame( 'completed', get_option( 'friends_migration_status' ) );
+	}
 }
