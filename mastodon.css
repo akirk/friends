@@ -708,7 +708,7 @@ body.friends-page {
 .friends-page .accordion summary::-webkit-details-marker { display: none; }
 .friends-page .accordion summary::marker { display: none; content: ''; }
 
-.friends-page .accordion summary .dashicons {
+.friends-page .friends-widget .dashicons {
 	font-size: 14px;
 	width: 14px;
 	height: 14px;
@@ -945,3 +945,32 @@ body.friends-page {
 .friends-page .mention-indicator { color: light-dark(#563acc, #c4bbff); font-weight: 700; }
 .friends-page .toggle-compact { cursor: pointer; }
 .friends-page .overflow { display: none; }
+
+/* Migration notification */
+.friends-page .friends-migration-notification {
+	display: flex;
+	align-items: center;
+	gap: .4rem;
+	padding: .5rem 1rem;
+	background: light-dark(#fef9e7, #2a2410);
+	border-bottom: 1px solid light-dark(#e8c840, #5a4a00);
+	font-size: .85rem;
+	white-space: nowrap;
+	overflow: hidden;
+}
+.friends-page .friends-migration-notification .friends-migration-notification-meta {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+	white-space: nowrap;
+	opacity: .75;
+}
+.friends-page .friends-migration-notification button {
+	background: none;
+	border: 1px solid currentColor;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: .8rem;
+	padding: 1px 6px;
+}

@@ -387,26 +387,27 @@ class Frontend {
 			return;
 		}
 		?>
-		<div class="card friends-migration-notification">
-			<div class="card-body">
-				<p>
-					<?php esc_html_e( 'Welcome to Friends 4.0!', 'friends' ); ?>
-					<?php esc_html_e( 'Some data migrations are still pending &mdash; your data may not be fully up to date yet.', 'friends' ); ?>
-					<a href="<?php echo esc_url( admin_url( 'admin.php?page=friends' ) ); ?>"><?php esc_html_e( "Learn what's new \u{2192}", 'friends' ); ?></a>
-				</p>
-				<p><small><?php esc_html_e( 'This notice will reappear in 2 days if migrations are still pending.', 'friends' ); ?></small>
-				<button class="btn btn-link" id="friends-dismiss-migration-notification" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-dismiss-migration-notification' ) ); ?>"><?php esc_html_e( 'Dismiss', 'friends' ); ?></button></p>
-			</div>
+		<div class="friends-migration-notification">
+			<?php esc_html_e( 'Welcome to Friends 4.0!', 'friends' ); ?>
+			<?php esc_html_e( 'Some data migrations are still pending.', 'friends' ); ?>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=friends' ) ); ?>"><?php esc_html_e( "Learn what's new \u{2192}", 'friends' ); ?></a>
+			<span class="friends-migration-notification-meta">
+				<small class="friends-migration-reappear" hidden><?php esc_html_e( 'Will reappear in 2 days.', 'friends' ); ?></small>
+				<button id="friends-dismiss-migration-notification" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-dismiss-migration-notification' ) ); ?>"><?php esc_html_e( 'Dismiss', 'friends' ); ?></button>
+			</span>
 		</div>
 		<script>
 		document.getElementById( 'friends-dismiss-migration-notification' ).addEventListener( 'click', function() {
 			var btn = this;
+			var notification = btn.closest( '.friends-migration-notification' );
+			btn.hidden = true;
+			notification.querySelector( '.friends-migration-reappear' ).hidden = false;
 			fetch( <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
 				body: 'action=friends_dismiss_migration_notification&_ajax_nonce=' + encodeURIComponent( btn.dataset.nonce ),
 			} ).then( function() {
-				btn.closest( '.friends-migration-notification' ).remove();
+				notification.remove();
 			} );
 		} );
 		</script>
