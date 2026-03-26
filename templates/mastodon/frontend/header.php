@@ -75,7 +75,7 @@ $mastodon_current_user = wp_get_current_user();
 				}
 				?>
 			</div>
-			<?php if ( ! is_single() ) : ?>
+			<?php if ( ! is_single() && empty( $args['no-bottom-margin'] ) ) : ?>
 			<div class="mastodon-chips-area">
 				<?php
 				if ( $args['friend_user'] && $args['friend_user'] instanceof Friends\User ) {

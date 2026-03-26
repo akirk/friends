@@ -1506,6 +1506,17 @@ class Frontend {
 				$friends_args['user_id'] = \Activitypub\Collection\Actors::BLOG_USER_ID;
 				$path = 'frontend/followers';
 				break;
+			case 'mutual':
+				if ( ! class_exists( '\Activitypub\Collection\Followers' ) ) {
+					return 'frontend/index';
+				}
+
+				$friends_args            = array();
+				$friends_args['title']  = __( 'Friends', 'friends' );
+				$friends_args['filter'] = 'following';
+				$friends_args['user_id'] = get_current_user_id();
+				$path                    = 'frontend/followers';
+				break;
 
 			default:
 				return 'frontend/index';

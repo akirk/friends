@@ -88,6 +88,11 @@ class Widget_Friend_Stats extends \WP_Widget {
 		</summary>
 		<ul class="friend-stats menu menu-nav">
 			<?php if ( $show_followers ) : ?>
+			<li class="friend-stats-mutual menu-item">
+				<a href="<?php echo esc_url( home_url( '/friends/mutual/' ) ); ?>">
+				<?php esc_html_e( 'Friends', 'friends' ); ?>
+				</a>
+			</li>
 				<li class="friend-stats-followers menu-item">
 					<a class="followers" href="<?php echo esc_url( home_url( '/friends/followers/' ) ); ?>">
 					<?php
