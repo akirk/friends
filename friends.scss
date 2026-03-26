@@ -925,6 +925,8 @@ header.has-header-image {
 	background-position: center;
 	position: relative;
 	flex-wrap: wrap;
+	border-radius: $border-radius;
+	overflow: hidden;
 
 	&::before {
 		content: '';
