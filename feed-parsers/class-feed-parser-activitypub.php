@@ -1862,6 +1862,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return array Actor metadata with keys: url, name, icon, summary, preferredUsername, header.
 	 */
 	public static function get_actor_metadata_from_attributed_to( $attributed_to ) {
+		static $cache = array();
+
 		$metadata = array(
 			'url'               => null,
 			'name'              => '',
@@ -1873,6 +1875,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( ! is_array( $attributed_to ) ) {
 			return $metadata;
+		}
+
+		// Build a cache key from the attributed_to data.
+		$cache_key = null;
+		if ( isset( $attributed_to['ap_actor_id'] ) && $attributed_to['ap_actor_id'] ) {
+			$cache_key = 'ap_' . $attributed_to['ap_actor_id'];
+		} elseif ( isset( $attributed_to['id'] ) ) {
+			$cache_key = 'id_' . $attributed_to['id'];
+		}
+		if ( $cache_key && isset( $cache[ $cache_key ] ) ) {
+			return $cache[ $cache_key ];
 		}
 
 		// New format: fetch from ap_actor using ActivityPub plugin API.
@@ -1894,6 +1907,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						$metadata['header'] = \Activitypub\object_to_uri( $image );
 					}
 
+					if ( $cache_key ) {
+						$cache[ $cache_key ] = $metadata;
+					}
 					return $metadata;
 				}
 			}
@@ -1925,6 +1941,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$metadata['preferredUsername'] = $attributed_to['preferredUsername'];
 		}
 
+		if ( $cache_key ) {
+			$cache[ $cache_key ] = $metadata;
+		}
 		return $metadata;
 	}
 

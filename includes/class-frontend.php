@@ -1071,6 +1071,11 @@ class Frontend {
 	 */
 	public static function have_posts() {
 		$friends = Friends::get_instance();
+		$known_author = $friends->frontend->author;
+		$known_avatar = null;
+		if ( $known_author instanceof User ) {
+			$known_avatar = $known_author->get_avatar_url();
+		}
 		while ( have_posts() ) {
 			global $post;
 			the_post();
@@ -1078,8 +1083,13 @@ class Frontend {
 				'friends' => $friends,
 			);
 
-			$args['friend_user'] = User::get_post_author( $post );
-			$args['avatar'] = $args['friend_user']->get_avatar_url();
+			if ( $known_author ) {
+				$args['friend_user'] = $known_author;
+				$args['avatar'] = $known_avatar;
+			} else {
+				$args['friend_user'] = User::get_post_author( $post );
+				$args['avatar'] = $args['friend_user']->get_avatar_url();
+			}
 
 			$read_time = self::calculate_read_time( get_the_content() );
 			if ( $read_time >= 60 ) {

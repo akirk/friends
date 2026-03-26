@@ -662,7 +662,7 @@ class User extends \WP_User {
 	 *
 	 * @return     array  The post counts.
 	 */
-	public function get_post_count_by_post_format() {
+	public function get_post_count_by_post_format( $force_fetching = false ) {
 		$cache_key = 'get_post_count_by_post_format_' . $this->ID;
 
 		$counts = wp_cache_get( $cache_key, 'friends' );
@@ -671,6 +671,10 @@ class User extends \WP_User {
 		}
 		$counts = get_transient( $cache_key );
 		if ( false !== $counts ) {
+			return $counts;
+		} elseif ( ! $force_fetching ) {
+			$post_formats = get_post_format_slugs();
+			$counts = array_fill_keys( $post_formats, '...' );
 			return $counts;
 		}
 		$counts = array();
@@ -951,6 +955,10 @@ class User extends \WP_User {
 	 * @return array An array of User_Feed items.
 	 */
 	public function get_feeds() {
+		if ( isset( $this->cached_feeds ) ) {
+			return $this->cached_feeds;
+		}
+
 		$term_query = new \WP_Term_Query(
 			array(
 				'taxonomy'   => User_Feed::TAXONOMY,
@@ -963,6 +971,7 @@ class User extends \WP_User {
 			$feeds[ $term->term_id ] = new User_Feed( $term, $this );
 		}
 
+		$this->cached_feeds = $feeds;
 		return $feeds;
 	}
 
