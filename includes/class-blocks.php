@@ -680,8 +680,15 @@ class Blocks {
 		if ( class_exists( '\ActivityPub\Collection\Followers' ) && \defined( 'ACTIVITYPUB_ACTOR_MODE' ) ) {
 			$activitypub_actor_mode = \get_option( 'activitypub_actor_mode', \ACTIVITYPUB_ACTOR_MODE );
 			if ( \ACTIVITYPUB_ACTOR_MODE === $activitypub_actor_mode || \ACTIVITYPUB_ACTOR_AND_BLOG_MODE === $activitypub_actor_mode ) {
-				$out .= '<li><a href="' . esc_url( home_url( '/friends/mutual/' ) ) . '">';
-				$out .= esc_html__( 'Friends', 'friends' );
+				$mutual_count = Feed_Parser_ActivityPub::count_mutual_followers( get_current_user_id() );
+				$out         .= '<li><a href="' . esc_url( home_url( '/friends/mutual/' ) ) . '">';
+				$out         .= esc_html(
+					sprintf(
+						/* translators: %s: number of mutual friends */
+						_n( '%s Friend', '%s Friends', $mutual_count, 'friends' ),
+						$mutual_count
+					)
+				);
 				$out .= '</a></li>';
 
 				$follower_count = Feed_Parser_ActivityPub::count_followers( get_current_user_id() );

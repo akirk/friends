@@ -90,7 +90,16 @@ class Widget_Friend_Stats extends \WP_Widget {
 			<?php if ( $show_followers ) : ?>
 			<li class="friend-stats-mutual menu-item">
 				<a href="<?php echo esc_url( home_url( '/friends/mutual/' ) ); ?>">
-				<?php esc_html_e( 'Friends', 'friends' ); ?>
+				<?php
+				$mutual_count = Feed_Parser_ActivityPub::count_mutual_followers( get_current_user_id() );
+				echo esc_html(
+					sprintf(
+						/* translators: %s: number of mutual friends */
+						_n( '%s Friend', '%s Friends', $mutual_count, 'friends' ),
+						$mutual_count
+					)
+				);
+				?>
 				</a>
 			</li>
 				<li class="friend-stats-followers menu-item">
