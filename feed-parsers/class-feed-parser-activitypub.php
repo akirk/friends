@@ -1102,9 +1102,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$result['follow_status'] = $follow_status;
 
 			if ( false === $follow_status ) {
-				$result['status']     = 'error';
-				$result['messages'][] = __( 'You are not following this actor. Posts will not be delivered to your inbox.', 'friends' );
-				return $result;
+				$result['status']     = 'warning';
+				$result['messages'][] = __( 'The ActivityPub plugin is not managing this subscription. You may need to re-follow this actor.', 'friends' );
 			}
 
 			if ( 'pending' === $follow_status ) {
@@ -1115,6 +1114,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( 'accepted' === $follow_status ) {
 				$result['messages'][] = __( 'Your follow request has been accepted.', 'friends' );
 			}
+		} else {
+			$result['status']     = 'warning';
+			$result['messages'][] = __( 'The ActivityPub plugin is not active. ActivityPub subscriptions require it to receive new posts.', 'friends' );
 		}
 
 		// Fetch the outbox to check for newer posts than what we have locally.
