@@ -74,14 +74,9 @@ $mastodon_current_user = wp_get_current_user();
 					echo '<h2 id="page-title"><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $_title ) . '</a></h2>';
 				}
 				?>
-				<?php if ( ! is_single() ) : ?>
-				<button class="mastodon-chips-toggle" aria-expanded="false" title="<?php esc_attr_e( 'Show filters', 'friends' ); ?>">
-					<span class="dashicons dashicons-arrow-down-alt2"></span>
-				</button>
-				<?php endif; ?>
 			</div>
 			<?php if ( ! is_single() ) : ?>
-			<div class="mastodon-chips-area" hidden>
+			<div class="mastodon-chips-area">
 				<?php
 				if ( $args['friend_user'] && $args['friend_user'] instanceof Friends\User ) {
 					Friends\Friends::template_loader()->get_template_part(

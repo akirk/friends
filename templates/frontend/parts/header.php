@@ -43,6 +43,7 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
  * }, 10, 3 );
  * ```
  */
+$avatar = apply_filters( 'friends_author_avatar_url', $avatar, $friend_user, get_the_id() );
 
 /**
  * Allows modifying the author URL for a post.
@@ -54,12 +55,12 @@ $override_author_name = apply_filters( 'friends_override_author_name', '', $auth
 $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_friends_page_url(), $friend_user, get_the_id() );
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2 translator-exclude">
-		<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
+		<?php if ( ! $avatar && in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
 			<a href="<?php echo esc_attr( $author_url ); ?>" class="author-avatar">
-				<?php echo get_avatar( $args['friend_user']->ID, 36 ); ?>
+				<?php echo get_avatar( $args['friend_user']->user_login, 36 ); ?>
 			</a>
 		<?php else : ?>
-			<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
+			<a href="<?php echo esc_url( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ? $author_url : get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
 				<img src="<?php echo esc_url( $avatar ? $avatar : get_avatar_url( get_the_author_meta( 'ID' ) ) ); ?>" width="36" height="36" class="avatar" />
 			</a>
 		<?php endif; ?>
