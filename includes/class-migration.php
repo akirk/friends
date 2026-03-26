@@ -464,6 +464,14 @@ class Migration {
 		$method = $migration['method'];
 		if ( method_exists( __CLASS__, $method ) ) {
 			self::$method();
+
+			// If the method returned without setting the status option
+			// (e.g. nothing to migrate, or required plugin not active),
+			// mark the migration as completed.
+			if ( $migration['status_option'] && ! get_option( $migration['status_option'] ) ) {
+				update_option( $migration['status_option'], true, false );
+			}
+
 			return array(
 				'success' => true,
 				'message' => 'Migration started: ' . $migration['title'],
@@ -1487,7 +1495,7 @@ class Migration {
 	 */
 	public static function import_activitypub_followings() {
 		// Check if the Following class is available (ActivityPub plugin 7.x+).
-		if ( ! class_exists( '\Activitypub\Collection\Following' ) ) {
+		if ( ! class_exists( '\Activitypub\Collection\Following' ) || ! class_exists( __NAMESPACE__ . '\Feed_Parser_ActivityPub' ) ) {
 			return;
 		}
 
@@ -1543,8 +1551,7 @@ class Migration {
 	 */
 	public static function migrate_activitypub_attributed_to() {
 		// Check if the Remote_Actors class is available (ActivityPub plugin 7.x+).
-		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			// Cannot migrate without the Remote_Actors class.
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) || ! class_exists( __NAMESPACE__ . '\Feed_Parser_ActivityPub' ) ) {
 			return;
 		}
 
@@ -1693,7 +1700,7 @@ class Migration {
 	 */
 	public static function link_activitypub_feeds_to_actors() {
 		// Check if the Remote_Actors class is available (ActivityPub plugin 7.x+).
-		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) || ! class_exists( __NAMESPACE__ . '\Feed_Parser_ActivityPub' ) ) {
 			return;
 		}
 
@@ -2154,7 +2161,7 @@ class Migration {
 	 */
 	public static function backfill_external_attributed_to() {
 		// Check if the Remote_Actors class is available (ActivityPub plugin 7.x+).
-		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) || ! class_exists( __NAMESPACE__ . '\Feed_Parser_ActivityPub' ) ) {
 			return;
 		}
 
