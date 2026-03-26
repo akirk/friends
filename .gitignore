@@ -7,7 +7,6 @@ emoji-rankings.json
 vendor
 .idea
 node_modules
-.sass-cache
 readme.txt
 yarn.lock
 .phpunit.result.cache
