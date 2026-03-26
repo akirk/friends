@@ -262,3 +262,17 @@ endforeach;
 
 <?php do_action( 'friends_author_header', $args['friend_user'], $args ); ?>
 </div>
+<?php if ( $header_image_url ) : ?>
+<script>
+( function() {
+	var header = document.getElementById( 'author-header' );
+	if ( ! header ) return;
+	var navbar = header.closest( 'header' );
+	if ( ! navbar ) return;
+	navbar.classList.add( 'has-header-image' );
+	navbar.style.backgroundImage = header.style.backgroundImage;
+	header.style.backgroundImage = '';
+	header.classList.remove( 'has-header-image' );
+} )();
+</script>
+<?php endif; ?>
