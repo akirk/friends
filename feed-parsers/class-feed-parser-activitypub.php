@@ -120,6 +120,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'comments_open', array( self::class, 'enable_comments_form' ), 10, 2 );
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
+		add_action( 'wp_ajax_friends_check_activitypub_subscription', array( $this, 'ajax_check_subscription' ) );
+		add_action( 'wp_ajax_friends_relink_activitypub_actor', array( $this, 'ajax_relink_actor' ) );
+		add_action( 'wp_ajax_friends_refollow_activitypub', array( $this, 'ajax_refollow' ) );
+		add_action( 'friends_edit_feed_content_top', array( $this, 'render_subscription_check_button' ), 10, 3 );
 
 		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 10, 2 );
 		add_action( 'mastodon_api_account', array( $this, 'mastodon_api_account' ), 9, 2 );
@@ -407,15 +411,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		// Try to get actor by post ID first, then by URL.
-		$ap_actor_id = $feed->get_ap_actor_id();
-		$ap_actor_post = $ap_actor_id ? \get_post( $ap_actor_id ) : null;
+		$ap_actor_id     = $feed->get_ap_actor_id();
+		$ap_actor_post   = $ap_actor_id ? \get_post( $ap_actor_id ) : null;
 		$ap_actor_source = $ap_actor_id ? 'taxonomy' : null;
 
 		// Fallback: look up by URL if we have the post type but not a valid post.
 		if ( ! $ap_actor_post || 'ap_actor' !== $ap_actor_post->post_type ) {
 			$ap_actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $feed->get_url() );
 			if ( $ap_actor_post && ! is_wp_error( $ap_actor_post ) ) {
-				$ap_actor_id = $ap_actor_post->ID;
+				$ap_actor_id     = $ap_actor_post->ID;
 				$ap_actor_source = 'url_lookup';
 			}
 		}
@@ -425,11 +429,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$ap_actor_acct = \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id );
+		$follow_status = null;
+		if ( \class_exists( '\Activitypub\Collection\Following' ) ) {
+			$follow_status = \Activitypub\Collection\Following::check_status( self::get_activitypub_actor_id( null ), $ap_actor_id );
+		}
 		?>
-		<div class="activitypub-plugin-data">
+		<div class="activitypub-plugin-data" data-feed-id="<?php echo \esc_attr( $term_id ); ?>">
 			<div class="ap-section-header"><?php \esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></div>
 			<input type="hidden" name="feeds[<?php echo \esc_attr( $term_id ); ?>][url]" value="<?php echo \esc_attr( $feed->get_url() ); ?>" />
-			<div class="ap-data-grid">
+			<div class="ap-data-grid subscription-status">
 				<span class="ap-data-label"><?php \esc_html_e( 'Actor', 'friends' ); ?></span>
 				<span class="ap-data-value">
 					<span class="ap-actor-name"><?php echo \esc_html( $ap_actor_post->post_title ); ?></span>
@@ -447,6 +455,38 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					<a href="<?php echo \esc_url( \admin_url( 'post.php?post=' . $ap_actor_id . '&action=edit' ) ); ?>">ID <?php echo \esc_html( $ap_actor_id ); ?></a>
 					<em style="color: <?php echo 'taxonomy' === $ap_actor_source ? 'green' : 'orange'; ?>;">(<?php echo \esc_html( $ap_actor_source ); ?>)</em>
 				</span>
+				<?php if ( 'url_lookup' === $ap_actor_source ) : ?>
+					<span class="ap-data-label"></span>
+					<span class="ap-data-value">
+						<button type="button" class="button button-small relink-actor-btn"
+							data-nonce="<?php echo \esc_attr( \wp_create_nonce( 'friends-relink-actor' ) ); ?>">
+							<?php \esc_html_e( 'Re-link actor', 'friends' ); ?>
+						</button>
+					</span>
+				<?php endif; ?>
+				<span class="ap-data-label"><?php \esc_html_e( 'Follow status', 'friends' ); ?></span>
+				<span class="ap-data-value">
+					<?php if ( 'accepted' === $follow_status ) : ?>
+						<em style="color: green;"><?php \esc_html_e( 'accepted', 'friends' ); ?></em>
+					<?php elseif ( 'pending' === $follow_status ) : ?>
+						<em style="color: orange;"><?php \esc_html_e( 'pending', 'friends' ); ?></em>
+					<?php elseif ( false === $follow_status ) : ?>
+						<em style="color: orange;"><?php \esc_html_e( 'not managed by ActivityPub plugin', 'friends' ); ?></em>
+						<button type="button" class="button button-small refollow-btn"
+							data-nonce="<?php echo \esc_attr( \wp_create_nonce( 'friends-refollow-activitypub' ) ); ?>">
+							<?php \esc_html_e( 'Re-follow', 'friends' ); ?>
+						</button>
+					<?php else : ?>
+						<em><?php \esc_html_e( 'unknown', 'friends' ); ?></em>
+					<?php endif; ?>
+				</span>
+				<span class="ap-data-label"></span>
+				<span class="ap-data-value">
+					<button type="button" class="button button-small check-subscription-btn">
+						<?php \esc_html_e( 'Check Subscription', 'friends' ); ?>
+					</button>
+					<span class="spinner" style="float: none;"></span>
+				</span>
 			</div>
 			<div class="ap-section-footer">
 				<?php
@@ -461,6 +501,132 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				?>
 			</div>
 		</div>
+		<?php $friend_login = ( $feed->get_friend_user() ) ? $feed->get_friend_user()->user_login : ''; ?>
+		<script>
+		jQuery( function( $ ) {
+			var $container = $( '.activitypub-plugin-data[data-feed-id="<?php echo \esc_js( $term_id ); ?>"]' );
+			if ( $container.data( 'bound' ) ) return;
+			$container.data( 'bound', true );
+
+			$container.on( 'click', '.relink-actor-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+				var $grid    = $container.find( '.subscription-status' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_relink_activitypub_actor',
+					feed_id:     <?php echo \intval( $term_id ); ?>,
+					_ajax_nonce: $btn.data( 'nonce' )
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					if ( response.success ) {
+						$grid.find( '.relink-actor-btn' ).closest( 'span.ap-data-value' ).prev().addBack().remove();
+						$grid.find( '[style*="url_lookup"]' ).text( '(taxonomy)' ).css( 'color', 'green' );
+					} else {
+						$btn.prop( 'disabled', false );
+					}
+				} );
+			} );
+
+			$container.on( 'click', '.refollow-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+				var $grid    = $container.find( '.subscription-status' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_refollow_activitypub',
+					feed_id:     <?php echo \intval( $term_id ); ?>,
+					_ajax_nonce: $btn.data( 'nonce' )
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					if ( response.success ) {
+						$btn.replaceWith( '<em style="color:green;">' + response.data.message + '</em>' );
+					} else {
+						$btn.prop( 'disabled', false );
+					}
+				} );
+			} );
+
+			$container.on( 'click', '.check-subscription-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+				var $grid    = $container.find( '.subscription-status' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_check_activitypub_subscription',
+					feed_id:     <?php echo \intval( $term_id ); ?>,
+					_ajax_nonce: '<?php echo \esc_js( \wp_create_nonce( 'friends-check-subscription' ) ); ?>'
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					$btn.prop( 'disabled', false );
+
+					// Remove rows from any previous check.
+					$grid.find( '.ap-check-result' ).remove();
+
+					if ( ! response.success ) {
+						$btn.closest( 'span.ap-data-value' ).prev( 'span.ap-data-label' ).before(
+							'<span class="ap-data-label ap-check-result"></span>'
+							+ '<span class="ap-data-value ap-check-result" style="color:red;">' + response.data + '</span>'
+						);
+						return;
+					}
+
+					var data  = response.data;
+					var color = data.status === 'ok' ? 'green' : ( data.status === 'error' ? 'red' : 'orange' );
+					var rows  = '<span class="ap-data-label ap-check-result"><?php echo \esc_js( __( 'Status', 'friends' ) ); ?></span>'
+						+ '<span class="ap-data-value ap-check-result"><em style="color:' + color + ';">' + data.messages.join( '<br>' ) + '</em></span>';
+
+					if ( data.latest_remote ) {
+						rows += '<span class="ap-data-label ap-check-result"><?php echo \esc_js( __( 'Latest remote post', 'friends' ) ); ?></span>'
+							+ '<span class="ap-data-value ap-check-result">' + data.latest_remote + '</span>';
+					}
+					if ( data.latest_local ) {
+						rows += '<span class="ap-data-label ap-check-result"><?php echo \esc_js( __( 'Latest local post', 'friends' ) ); ?></span>'
+							+ '<span class="ap-data-value ap-check-result">' + data.latest_local + '</span>';
+					}
+
+					if ( data.can_fetch ) {
+						rows += '<span class="ap-data-label ap-check-result"></span>'
+							+ '<span class="ap-data-value ap-check-result"><button type="button" class="button button-small fetch-posts-btn">'
+							+ '<?php echo \esc_js( __( 'Fetch posts', 'friends' ) ); ?></button></span>';
+					}
+
+					// Insert before the label of the Check Subscription button row (once, not twice).
+					$btn.closest( 'span.ap-data-value' ).prev( 'span.ap-data-label' ).before( rows );
+				} );
+			} );
+
+			$container.on( 'click', '.fetch-posts-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_fetch_feeds',
+					friend:      '<?php echo \esc_js( $friend_login ); ?>',
+					_ajax_nonce: '<?php echo \esc_js( \wp_create_nonce( 'fetch-feeds-' . $friend_login ) ); ?>'
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					if ( response.success ) {
+						$btn.replaceWith( '<em style="color:green;"><?php echo \esc_js( __( 'Posts fetched.', 'friends' ) ); ?></em>' );
+					} else {
+						$btn.prop( 'disabled', false );
+					}
+				} );
+			} );
+		} );
+		</script>
 		<?php
 	}
 
@@ -1071,6 +1237,548 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private function disable_polling( User_Feed $user_feed ) {
 		$user_feed->update_metadata( 'interval', YEAR_IN_SECONDS );
 		$user_feed->update_metadata( 'next-poll', gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS ) );
+	}
+
+	/**
+	 * Check the subscription status for an ActivityPub feed.
+	 *
+	 * @param User_Feed $user_feed The user feed.
+	 * @return array The subscription status with keys: status, message, latest_remote, latest_local, missing_posts.
+	 */
+	public function check_subscription_status( User_Feed $user_feed ) {
+		$result = array(
+			'status'        => 'unknown',
+			'messages'      => array(),
+			'follow_status' => null,
+		);
+
+		$ap_actor_id = $user_feed->get_ap_actor_id();
+		if ( ! $ap_actor_id ) {
+			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				$actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $user_feed->get_url() );
+				if ( $actor_post && ! is_wp_error( $actor_post ) && 'ap_actor' === get_post_type( $actor_post ) ) {
+					$result['status']         = 'warning';
+					$result['messages'][]     = __( 'The feed is not linked to its ActivityPub actor. You can re-link it without needing to re-follow.', 'friends' );
+					$result['can_relink']     = true;
+					$result['found_actor_id'] = $actor_post->ID;
+				} else {
+					$result['status']        = 'warning';
+					$result['messages'][]    = __( 'No linked ActivityPub actor found for this feed. You can send a new follow request.', 'friends' );
+					$result['can_refollow']  = true;
+				}
+			} else {
+				$result['status']       = 'warning';
+				$result['messages'][]   = __( 'No linked ActivityPub actor found for this feed. The ActivityPub plugin may not be managing this subscription.', 'friends' );
+				$result['can_refollow'] = true;
+			}
+		}
+
+		// Check local follow status via ActivityPub plugin.
+		if ( $ap_actor_id ) {
+			if ( class_exists( '\Activitypub\Collection\Following' ) ) {
+				$user_id = self::get_activitypub_actor_id( null );
+				$follow_status = \Activitypub\Collection\Following::check_status( $user_id, $ap_actor_id );
+				$result['follow_status'] = $follow_status;
+
+				if ( false === $follow_status ) {
+					$result['status']     = 'warning';
+					$result['messages'][] = __( 'The ActivityPub plugin is not managing this subscription. You may need to re-follow this actor.', 'friends' );
+				}
+
+				if ( 'pending' === $follow_status ) {
+					$result['status']     = 'warning';
+					$result['messages'][] = __( 'Your follow request is still pending. The remote server has not yet accepted it.', 'friends' );
+				}
+
+				if ( 'accepted' === $follow_status ) {
+					$result['messages'][] = __( 'Your follow request has been accepted.', 'friends' );
+				}
+			} else {
+				$result['status']     = 'warning';
+				$result['messages'][] = __( 'The ActivityPub plugin is not active. ActivityPub subscriptions require it to receive new posts.', 'friends' );
+			}
+		}
+
+		// Fetch the outbox to check for newer posts than what we have locally.
+		$url = $user_feed->get_url();
+		$meta = self::get_metadata( $url );
+		if ( is_wp_error( $meta ) || ! isset( $meta['outbox'] ) ) {
+			if ( 'unknown' === $result['status'] ) {
+				$result['status'] = 'warning';
+			}
+			$result['messages'][] = __( 'Could not fetch the remote actor metadata.', 'friends' );
+			return $result;
+		}
+
+		$response = \Activitypub\safe_remote_get( $meta['outbox'] );
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			if ( 'unknown' === $result['status'] ) {
+				$result['status'] = 'warning';
+			}
+			$result['messages'][] = __( 'Could not fetch the remote outbox.', 'friends' );
+			return $result;
+		}
+
+		$outbox = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// Get the first page if needed.
+		if ( ! isset( $outbox['orderedItems'] ) && isset( $outbox['first'] ) ) {
+			$response = \Activitypub\safe_remote_get( $outbox['first'] );
+			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+				$outbox = json_decode( wp_remote_retrieve_body( $response ), true );
+			}
+		}
+
+		if ( isset( $outbox['orderedItems'] ) && ! empty( $outbox['orderedItems'] ) ) {
+			// Find the latest post date in the outbox.
+			$latest_remote = null;
+			foreach ( $outbox['orderedItems'] as $item ) {
+				$published = null;
+				if ( isset( $item['published'] ) ) {
+					$published = $item['published'];
+				} elseif ( isset( $item['object']['published'] ) ) {
+					$published = $item['object']['published'];
+				}
+				if ( $published ) {
+					$date = strtotime( $published );
+					if ( ! $latest_remote || $date > $latest_remote ) {
+						$latest_remote = $date;
+					}
+				}
+			}
+
+			if ( $latest_remote ) {
+				$result['latest_remote'] = gmdate( 'Y-m-d H:i:s', $latest_remote );
+
+				// Get the latest local post for this user.
+				$friend_user = $user_feed->get_friend_user();
+				if ( $friend_user ) {
+					$latest_local_post = new \WP_Query(
+						array(
+							'post_type'      => Friends::CPT,
+							'post_status'    => array( 'publish', 'private' ),
+							'posts_per_page' => 1,
+							'orderby'        => 'date',
+							'order'          => 'DESC',
+							'author'         => $friend_user->ID,
+						)
+					);
+
+					if ( $latest_local_post->have_posts() ) {
+						$result['latest_local'] = $latest_local_post->posts[0]->post_date_gmt;
+
+						$local_time = strtotime( $result['latest_local'] );
+						$diff_hours = ( $latest_remote - $local_time ) / 3600;
+
+						if ( $diff_hours > 24 ) {
+							$result['status']     = 'warning';
+							$result['messages'][] = sprintf(
+								// translators: %s is a time difference like "3 days".
+								__( 'The remote outbox has posts up to %s newer than your latest local post. New posts may not be reaching your inbox.', 'friends' ),
+								human_time_diff( $local_time, $latest_remote )
+							);
+						} elseif ( 'accepted' === ( $result['follow_status'] ?? null ) ) {
+							$result['status'] = 'ok';
+							$result['messages'][] = __( 'Your subscription appears to be working correctly.', 'friends' );
+						}
+					} else {
+						$result['status']     = 'warning';
+						$result['messages'][] = __( 'No local posts found for this subscription, but the remote outbox has posts available.', 'friends' );
+						$result['can_fetch']  = true;
+					}
+				}
+			}
+		}
+
+		if ( 'unknown' === $result['status'] ) {
+			$result['status'] = 'ok';
+		}
+
+		return $result;
+	}
+
+	/**
+	 * AJAX handler for checking an ActivityPub subscription.
+	 */
+	public function ajax_check_subscription() {
+		if ( ! isset( $_POST['feed_id'] ) ) {
+			wp_send_json_error( 'missing-parameters' );
+		}
+
+		check_ajax_referer( 'friends-check-subscription' );
+
+		$feed = User_Feed::get_by_id( intval( $_POST['feed_id'] ) );
+		if ( is_wp_error( $feed ) ) {
+			wp_send_json_error( 'invalid-feed' );
+		}
+
+		if ( 'activitypub' !== $feed->get_parser() ) {
+			wp_send_json_error( 'not-activitypub' );
+		}
+
+		$result = $this->check_subscription_status( $feed );
+		wp_send_json_success( $result );
+	}
+
+	/**
+	 * AJAX handler for re-linking an ActivityPub actor to a feed.
+	 */
+	public function ajax_relink_actor() {
+		if ( ! isset( $_POST['feed_id'] ) ) {
+			wp_send_json_error( 'missing-parameters' );
+		}
+
+		check_ajax_referer( 'friends-relink-actor' );
+
+		$feed = User_Feed::get_by_id( intval( $_POST['feed_id'] ) );
+		if ( is_wp_error( $feed ) ) {
+			wp_send_json_error( 'invalid-feed' );
+		}
+
+		if ( 'activitypub' !== $feed->get_parser() ) {
+			wp_send_json_error( 'not-activitypub' );
+		}
+
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			wp_send_json_error( 'activitypub-plugin-not-active' );
+		}
+
+		$actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $feed->get_url() );
+		if ( ! $actor_post || is_wp_error( $actor_post ) || 'ap_actor' !== get_post_type( $actor_post ) ) {
+			wp_send_json_error( 'actor-not-found' );
+		}
+
+		$result = $feed->set_ap_actor_id( $actor_post->ID );
+		if ( is_wp_error( $result ) ) {
+			wp_send_json_error( $result->get_error_message() );
+		}
+
+		wp_send_json_success( array( 'message' => __( 'The feed has been successfully re-linked to its ActivityPub actor.', 'friends' ) ) );
+	}
+
+	/**
+	 * AJAX handler for re-sending a follow request for an ActivityPub feed.
+	 */
+	public function ajax_refollow() {
+		if ( ! isset( $_POST['feed_id'] ) ) {
+			wp_send_json_error( 'missing-parameters' );
+		}
+
+		check_ajax_referer( 'friends-refollow-activitypub' );
+
+		$feed = User_Feed::get_by_id( intval( $_POST['feed_id'] ) );
+		if ( is_wp_error( $feed ) ) {
+			wp_send_json_error( 'invalid-feed' );
+		}
+
+		if ( 'activitypub' !== $feed->get_parser() ) {
+			wp_send_json_error( 'not-activitypub' );
+		}
+
+		// Fetch and link the actor first so author data is available immediately,
+		// even on dev machines where the follow confirmation can never come back.
+		$actor_post = null;
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $feed->get_url() );
+			if ( $actor_post && ! is_wp_error( $actor_post ) && 'ap_actor' === get_post_type( $actor_post ) ) {
+				$feed->set_ap_actor_id( $actor_post->ID );
+			} else {
+				$actor_post = null;
+			}
+		}
+
+		$queued = $this->queue_follow_user( $feed );
+		if ( ! $queued ) {
+			wp_send_json_error( __( 'Could not queue the follow request. Make sure the ActivityPub plugin is active.', 'friends' ) );
+		}
+
+		$message = $actor_post
+			? __( 'Follow request queued and actor data fetched. The feed will start updating once the remote server accepts it.', 'friends' )
+			: __( 'Follow request queued. The feed will start updating once the remote server accepts it.', 'friends' );
+
+		wp_send_json_success( array( 'message' => $message ) );
+	}
+
+	/**
+	 * Render the subscription status and check button in the edit feeds form.
+	 *
+	 * @param User_Feed $feed      The feed.
+	 * @param int       $term_id   The term ID.
+	 * @param string    $parser    The parser slug.
+	 */
+	public function render_subscription_check_button( $feed, $term_id, $parser ) {
+		if ( 'activitypub' !== $parser ) {
+			return;
+		}
+
+		// If render_feed_edit_content will handle this feed (actor found by ID or URL), skip.
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			if ( $feed->get_ap_actor_id() ) {
+				return;
+			}
+			$check = \Activitypub\Collection\Remote_Actors::get_by_uri( $feed->get_url() );
+			if ( $check && ! is_wp_error( $check ) && 'ap_actor' === get_post_type( $check ) ) {
+				return;
+			}
+		}
+
+		// Compute local status without any HTTP requests.
+		$ap_actor_id   = $feed->get_ap_actor_id();
+		$can_relink    = false;
+		$can_refollow  = false;
+		$follow_status = null;
+		$footer_note   = null;
+		$actor_post    = null;
+
+		if ( $ap_actor_id ) {
+			if ( class_exists( '\Activitypub\Collection\Following' ) ) {
+				$follow_status = \Activitypub\Collection\Following::check_status( self::get_activitypub_actor_id( null ), $ap_actor_id );
+				if ( false === $follow_status ) {
+					$can_refollow = true;
+				}
+			} else {
+				$footer_note = __( 'The ActivityPub plugin is not active. ActivityPub subscriptions require it to receive new posts.', 'friends' );
+			}
+		} elseif ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $feed->get_url() );
+			if ( $actor_post && ! is_wp_error( $actor_post ) && 'ap_actor' === get_post_type( $actor_post ) ) {
+				$can_relink = true;
+			} else {
+				$actor_post   = null;
+				$can_refollow = true;
+			}
+		} else {
+			$footer_note = __( 'The ActivityPub plugin is not active. ActivityPub subscriptions require it to receive new posts.', 'friends' );
+		}
+		?>
+		<div class="activitypub-subscription-check" data-feed-id="<?php echo esc_attr( $term_id ); ?>">
+			<div class="ap-section-header"><?php esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></div>
+			<div class="ap-data-grid subscription-status">
+				<?php if ( $ap_actor_id ) : ?>
+					<span class="ap-data-label"><?php esc_html_e( 'Follow status', 'friends' ); ?></span>
+					<span class="ap-data-value">
+						<?php if ( 'accepted' === $follow_status ) : ?>
+							<em style="color: green;"><?php esc_html_e( 'accepted', 'friends' ); ?></em>
+						<?php elseif ( 'pending' === $follow_status ) : ?>
+							<em style="color: orange;"><?php esc_html_e( 'pending', 'friends' ); ?></em>
+						<?php elseif ( false === $follow_status ) : ?>
+							<em style="color: orange;"><?php esc_html_e( 'not managed by ActivityPub plugin', 'friends' ); ?></em>
+						<?php else : ?>
+							<em><?php esc_html_e( 'unknown', 'friends' ); ?></em>
+						<?php endif; ?>
+					</span>
+				<?php else : ?>
+					<span class="ap-data-label"><?php esc_html_e( 'Actor', 'friends' ); ?></span>
+					<span class="ap-data-value">
+						<?php if ( $actor_post ) : ?>
+							<span class="ap-actor-name"><?php echo esc_html( $actor_post->post_title ); ?></span>
+							<?php $ap_actor_acct = \Activitypub\Collection\Remote_Actors::get_acct( $actor_post->ID ); ?>
+							<?php if ( $ap_actor_acct ) : ?>
+								<span class="ap-actor-acct">@<?php echo esc_html( $ap_actor_acct ); ?></span>
+							<?php endif; ?>
+						<?php else : ?>
+							<em style="color: orange;"><?php esc_html_e( 'not found', 'friends' ); ?></em>
+						<?php endif; ?>
+					</span>
+					<?php if ( $actor_post ) : ?>
+						<span class="ap-data-label"><?php esc_html_e( 'Profile', 'friends' ); ?></span>
+						<span class="ap-data-value">
+							<a href="<?php echo esc_url( $actor_post->guid ); ?>" target="_blank" rel="noopener noreferrer"><?php echo esc_html( $actor_post->guid ); ?></a>
+						</span>
+						<span class="ap-data-label"><?php esc_html_e( 'Actor Post', 'friends' ); ?></span>
+						<span class="ap-data-value">
+							<code>ap_actor</code>
+							<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $actor_post->ID . '&action=edit' ) ); ?>">ID <?php echo esc_html( $actor_post->ID ); ?></a>
+							<em style="color: orange;"><?php esc_html_e( '(not linked)', 'friends' ); ?></em>
+						</span>
+						<span class="ap-data-label"></span>
+						<span class="ap-data-value">
+							<button type="button" class="button button-small relink-actor-btn"
+								data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-relink-actor' ) ); ?>">
+								<?php esc_html_e( 'Re-link actor', 'friends' ); ?>
+							</button>
+						</span>
+					<?php else : ?>
+						<span class="ap-data-label"><?php esc_html_e( 'Actor Post', 'friends' ); ?></span>
+						<span class="ap-data-value">
+							<em style="color: orange;"><?php esc_html_e( 'not found', 'friends' ); ?></em>
+							<?php if ( $can_refollow ) : ?>
+								<button type="button" class="button button-small refollow-btn"
+									data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-refollow-activitypub' ) ); ?>">
+									<?php esc_html_e( 'Re-follow', 'friends' ); ?>
+								</button>
+							<?php endif; ?>
+						</span>
+					<?php endif; ?>
+				<?php endif; ?>
+				<?php if ( $ap_actor_id ) : ?>
+					<span class="ap-data-label"></span>
+					<span class="ap-data-value">
+						<button type="button" class="button button-small check-subscription-btn">
+							<?php esc_html_e( 'Check Subscription', 'friends' ); ?>
+						</button>
+						<span class="spinner" style="float: none;"></span>
+					</span>
+				<?php else : ?>
+					<span class="ap-data-label"></span>
+					<span class="ap-data-value"><span class="spinner" style="float: none;"></span></span>
+				<?php endif; ?>
+			</div>
+		</div>
+		<?php $friend_login = ( $feed->get_friend_user() ) ? $feed->get_friend_user()->user_login : ''; ?>
+		<script>
+		jQuery( function( $ ) {
+			var $container = $( '.activitypub-subscription-check[data-feed-id="<?php echo esc_js( $term_id ); ?>"]' );
+			if ( $container.data( 'bound' ) ) return;
+			$container.data( 'bound', true );
+
+			$container.on( 'click', '.relink-actor-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+				var $grid    = $container.find( '.subscription-status' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_relink_activitypub_actor',
+					feed_id:     <?php echo intval( $term_id ); ?>,
+					_ajax_nonce: $btn.data( 'nonce' )
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					if ( response.success ) {
+						$grid.html(
+							'<span class="ap-data-label"><?php echo esc_js( __( 'Actor', 'friends' ) ); ?></span>'
+							+ '<span class="ap-data-value"><em style="color:green;"><?php echo esc_js( __( 're-linked', 'friends' ) ); ?></em></span>'
+						);
+						$btn.remove();
+					} else {
+						$btn.prop( 'disabled', false );
+						$grid.append(
+							'<span class="ap-data-label"></span>'
+							+ '<span class="ap-data-value" style="color:red;">' + response.data + '</span>'
+						);
+					}
+				} );
+			} );
+
+			$container.on( 'click', '.refollow-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+				var $grid    = $container.find( '.subscription-status' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_refollow_activitypub',
+					feed_id:     <?php echo intval( $term_id ); ?>,
+					_ajax_nonce: $btn.data( 'nonce' )
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					if ( response.success ) {
+						$grid.append(
+							'<span class="ap-data-label"><?php echo esc_js( __( 'Re-follow', 'friends' ) ); ?></span>'
+							+ '<span class="ap-data-value"><em style="color:green;">' + response.data.message + '</em></span>'
+						);
+						$btn.remove();
+					} else {
+						$btn.prop( 'disabled', false );
+						$grid.append(
+							'<span class="ap-data-label"></span>'
+							+ '<span class="ap-data-value" style="color:red;">' + response.data + '</span>'
+						);
+					}
+				} );
+			} );
+
+			$container.on( 'click', '.check-subscription-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+				var $grid    = $container.find( '.subscription-status' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_check_activitypub_subscription',
+					feed_id:     <?php echo intval( $term_id ); ?>,
+					_ajax_nonce: '<?php echo esc_js( wp_create_nonce( 'friends-check-subscription' ) ); ?>'
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					$btn.prop( 'disabled', false );
+
+					if ( ! response.success ) {
+						$grid.append(
+							'<span class="ap-data-label"></span>'
+							+ '<span class="ap-data-value" style="color:red;">' + response.data + '</span>'
+						);
+						return;
+					}
+
+					var data  = response.data;
+					var color = data.status === 'ok' ? 'green' : ( data.status === 'error' ? 'red' : 'orange' );
+					var rows  = '';
+
+					rows += '<span class="ap-data-label"><?php echo esc_js( __( 'Status', 'friends' ) ); ?></span>'
+						+ '<span class="ap-data-value"><em style="color:' + color + ';">' + data.messages.join( '<br>' ) + '</em></span>';
+
+					if ( data.latest_remote ) {
+						rows += '<span class="ap-data-label"><?php echo esc_js( __( 'Latest remote post', 'friends' ) ); ?></span>'
+							+ '<span class="ap-data-value">' + data.latest_remote + '</span>';
+					}
+					if ( data.latest_local ) {
+						rows += '<span class="ap-data-label"><?php echo esc_js( __( 'Latest local post', 'friends' ) ); ?></span>'
+							+ '<span class="ap-data-value">' + data.latest_local + '</span>';
+					}
+
+					if ( data.can_relink ) {
+						rows += '<span class="ap-data-label"></span>'
+							+ '<span class="ap-data-value"><button type="button" class="button relink-actor-btn"'
+							+ ' data-nonce="<?php echo esc_js( wp_create_nonce( 'friends-relink-actor' ) ); ?>">'
+							+ '<?php echo esc_js( __( 'Re-link actor', 'friends' ) ); ?></button></span>';
+					}
+
+					if ( data.can_refollow ) {
+						rows += '<span class="ap-data-label"></span>'
+							+ '<span class="ap-data-value"><button type="button" class="button refollow-btn"'
+							+ ' data-nonce="<?php echo esc_js( wp_create_nonce( 'friends-refollow-activitypub' ) ); ?>">'
+							+ '<?php echo esc_js( __( 'Re-follow', 'friends' ) ); ?></button></span>';
+					}
+
+					if ( data.can_fetch ) {
+						rows += '<span class="ap-data-label"></span>'
+							+ '<span class="ap-data-value"><button type="button" class="button button-small fetch-posts-btn">'
+							+ '<?php echo esc_js( __( 'Fetch posts', 'friends' ) ); ?></button></span>';
+					}
+
+					$grid.html( rows );
+				} );
+			} );
+
+			$container.on( 'click', '.fetch-posts-btn', function() {
+				var $btn     = $( this );
+				var $spinner = $container.find( '.spinner' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+
+				$.post( ajaxurl, {
+					action:      'friends_fetch_feeds',
+					friend:      '<?php echo esc_js( $friend_login ); ?>',
+					_ajax_nonce: '<?php echo esc_js( wp_create_nonce( 'fetch-feeds-' . $friend_login ) ); ?>'
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					if ( response.success ) {
+						$btn.replaceWith( '<em style="color:green;"><?php echo esc_js( __( 'Posts fetched.', 'friends' ) ); ?></em>' );
+					} else {
+						$btn.prop( 'disabled', false );
+					}
+				} );
+			} );
+		} );
+		</script>
+		<?php
 	}
 
 	public function get_activitypub_actor( $user_id ) {

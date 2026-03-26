@@ -61,6 +61,7 @@ class Admin {
 		add_action( 'wp_ajax_friends_dashboard', array( $this, 'ajax_friends_dashboard' ) );
 		add_filter( 'site_status_test_php_modules', array( $this, 'site_status_test_php_modules' ) );
 		add_filter( 'friends_create_and_follow', array( $this, 'create_and_follow' ), 10, 4 );
+		add_action( 'friends_edit_feed_content_top', array( $this, 'maybe_render_activitypub_inactive_notice' ), 10, 3 );
 
 		if ( ! get_option( 'permalink_structure' ) ) {
 			add_action( 'admin_notices', array( $this, 'admin_notice_unsupported_permalink_structure' ) );
@@ -2498,5 +2499,48 @@ class Admin {
 		$query = $author->modify_query_by_author( $query );
 
 		return $query;
+	}
+
+	/**
+	 * Render an "ActivityPub plugin not active" notice for activitypub-parser feeds
+	 * when the ActivityPub plugin is not loaded (so Feed_Parser_ActivityPub never fires).
+	 *
+	 * @param User_Feed $feed      The feed.
+	 * @param int       $term_id   The term ID.
+	 * @param string    $parser    The parser slug.
+	 */
+	public function maybe_render_activitypub_inactive_notice( $feed, $term_id, $parser ) {
+		if ( 'activitypub' !== $parser ) {
+			return;
+		}
+
+		if ( class_exists( '\Activitypub\Activitypub' ) ) {
+			return;
+		}
+		?>
+		<div class="activitypub-subscription-check">
+			<div class="ap-section-header"><?php esc_html_e( 'ActivityPub Plugin', 'friends' ); ?></div>
+			<div class="ap-data-grid">
+				<span class="ap-data-label"><?php esc_html_e( 'Status', 'friends' ); ?></span>
+				<span class="ap-data-value"><em style="color: orange;"><?php esc_html_e( 'not active', 'friends' ); ?></em></span>
+			</div>
+			<div class="ap-section-footer">
+				<?php
+				if ( current_user_can( 'activate_plugins' ) ) {
+					echo wp_kses(
+						sprintf(
+							/* translators: %s is a link to the plugin search page */
+							__( 'The <a href="%s">ActivityPub plugin</a> is required to receive posts from this feed.', 'friends' ),
+							esc_url( admin_url( 'plugin-install.php?s=activitypub&tab=search&type=term' ) )
+						),
+						array( 'a' => array( 'href' => array() ) )
+					);
+				} else {
+					esc_html_e( 'The ActivityPub plugin is required to receive posts from this feed.', 'friends' );
+				}
+				?>
+			</div>
+		</div>
+		<?php
 	}
 }

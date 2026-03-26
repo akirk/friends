@@ -330,7 +330,8 @@ span#friends_enable_retention_number_line {
 
 /* ActivityPub feed styles */
 ul.feeds li.feed-parser-activitypub {
-	& .activitypub-plugin-data {
+	& .activitypub-plugin-data,
+	& .activitypub-subscription-check {
 		background: #fef9f3;
 		border-bottom: 1px solid #fde0c2;
 		margin: 0 -16px 16px -16px;
