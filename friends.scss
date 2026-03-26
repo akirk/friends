@@ -887,4 +887,35 @@ h2#page-title a.dashicons {
 	.ellipsis::after {
 		content: "…"
 	}
+
+	#author-header.has-header-image {
+		background-size: cover;
+		background-position: center;
+		position: relative;
+		padding: 40px 16px 16px;
+
+		&::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(to bottom, rgba(0,0,0,.3) 0%, rgba(0,0,0,.6) 100%);
+			border-radius: inherit;
+		}
+
+		> * {
+			position: relative;
+		}
+
+		h2,
+		p,
+		.chip,
+		a {
+			color: #fff;
+			text-shadow: 0 1px 3px rgba(0,0,0,.5);
+		}
+
+		.chip {
+			background: rgba(255,255,255,.2);
+		}
+	}
 }
