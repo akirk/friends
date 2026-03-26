@@ -1901,7 +1901,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$metadata['summary'] = $actor->get_summary() ?? '';
 					$metadata['preferredUsername'] = $actor->get_preferred_username() ?? '';
 					$icon = $actor->get_icon();
-				$metadata['icon'] = $icon ? \Activitypub\object_to_uri( $icon ) : '';
+					$metadata['icon'] = $icon ? \Activitypub\object_to_uri( $icon ) : '';
 
 					$image = $actor->get_image();
 					if ( $image ) {
