@@ -721,6 +721,92 @@
 	margin-right: 4px;
 }
 
+.friends-page #author-header.has-header-image {
+	background-size: cover;
+	background-position: center;
+	position: relative;
+	padding: 40px 16px 16px;
+}
+
+.friends-page #author-header.has-header-image::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to bottom, rgba(0,0,0,.3) 0%, rgba(0,0,0,.6) 100%);
+	border-radius: inherit;
+}
+
+.friends-page #author-header.has-header-image > * {
+	position: relative;
+}
+
+.friends-page #author-header.has-header-image h2,
+.friends-page #author-header.has-header-image p,
+.friends-page #author-header.has-header-image .chip,
+.friends-page #author-header.has-header-image a {
+	color: #fff;
+	text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+
+.friends-page #author-header.has-header-image .chip {
+	background: rgba(255,255,255,.2);
+}
+
+.friends-page header.has-header-image {
+	background-size: cover;
+	background-position: center;
+	position: relative;
+	flex-wrap: wrap;
+}
+
+.friends-page header.has-header-image::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to bottom, rgba(0,0,0,.3) 0%, rgba(0,0,0,.6) 100%);
+}
+
+.friends-page header.has-header-image > * {
+	position: relative;
+}
+
+.friends-page header.has-header-image #author-header {
+	padding: 16px;
+}
+
+.friends-page header.has-header-image #author-header h2,
+.friends-page header.has-header-image #author-header p,
+.friends-page header.has-header-image #author-header .chip,
+.friends-page header.has-header-image #author-header a {
+	color: #fff;
+	text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+
+.friends-page header.has-header-image #author-header .chip {
+	background: rgba(255,255,255,.2);
+}
+
+.friends-page header.has-header-image .search {
+	align-self: flex-start;
+	margin-top: 16px;
+}
+
+.friends-page header.has-header-image .search input {
+	background: rgba(255,255,255,.2);
+	border-color: rgba(255,255,255,.3);
+	color: #fff;
+}
+
+.friends-page header.has-header-image .search input::placeholder {
+	color: rgba(255,255,255,.7);
+}
+
+.friends-page header.has-header-image .search button {
+	background: rgba(255,255,255,.2);
+	border-color: rgba(255,255,255,.3);
+	color: #fff;
+}
+
 /* === Dropdown menus === */
 .friends-page .friends-dropdown {
 	position: relative;
