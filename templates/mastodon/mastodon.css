@@ -261,35 +261,7 @@ body.friends-page {
 	}
 }
 
-/* Filter toggle button */
-.mastodon-chips-toggle {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	background: none;
-	border: none;
-	border-radius: 100px;
-	padding: 6px;
-	color: light-dark(#606984, #9baec8);
-	cursor: pointer;
-	transition: color .1s, background .1s;
-	font-family: inherit;
-}
-
-.mastodon-chips-toggle:hover {
-	background: light-dark(rgba(86,58,204,.08), rgba(99,100,255,.12));
-	color: light-dark(#563acc, #6364ff);
-}
-
-.mastodon-chips-toggle .dashicons {
-	transition: transform .2s;
-}
-
-.mastodon-chips-toggle.is-open .dashicons {
-	transform: rotate(180deg);
-}
-
-/* Expandable chips area */
+/* Chips area */
 .mastodon-chips-area {
 	padding: 12px 16px 14px;
 	border-top: 1px solid light-dark(#d4dde8, #393f4f);
@@ -368,7 +340,7 @@ body.friends-page {
 }
 
 /* Avatar: absolute on the left */
-.friends-page .posts .card-header .avatar {
+.friends-page .posts .card-header > div.avatar {
 	position: absolute;
 	left: 16px;
 	top: 16px;
@@ -383,6 +355,7 @@ body.friends-page {
 .friends-page .posts .card-header .avatar img {
 	width: 46px;
 	height: 46px;
+	max-width: none;
 	border-radius: 8px;
 	display: block;
 }
