@@ -259,6 +259,9 @@ body.friends-page {
 		display: inline-flex;
 		align-items: center;
 	}
+	.mastodon-col-header {
+		position: static;
+	}
 }
 
 /* Chips area */
