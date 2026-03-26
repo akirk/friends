@@ -1900,7 +1900,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$metadata['name'] = $actor->get_name() ?? '';
 					$metadata['summary'] = $actor->get_summary() ?? '';
 					$metadata['preferredUsername'] = $actor->get_preferred_username() ?? '';
-					$metadata['icon'] = \Activitypub\Collection\Remote_Actors::get_avatar_url( $ap_actor_id );
+					$icon = $actor->get_icon();
+				$metadata['icon'] = $icon ? \Activitypub\object_to_uri( $icon ) : '';
 
 					$image = $actor->get_image();
 					if ( $image ) {
@@ -2683,10 +2684,28 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
 			return $avatar_url;
 		}
-		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
-		if ( ! empty( $actor_metadata['icon'] ) ) {
-			return $actor_metadata['icon'];
+		// Use a lightweight lookup that avoids triggering avatar caching (HTTP downloads).
+		$attributed_to = $meta['attributedTo'];
+		if ( ! is_array( $attributed_to ) ) {
+			return $avatar_url;
 		}
+
+		// Try inline icon first (legacy format, no DB/HTTP needed).
+		if ( ! empty( $attributed_to['icon'] ) ) {
+			return $attributed_to['icon'];
+		}
+
+		// For new format with ap_actor_id, get icon from actor JSON without triggering avatar cache.
+		if ( ! empty( $attributed_to['ap_actor_id'] ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$post = \get_post( $attributed_to['ap_actor_id'] );
+			if ( $post && ! empty( $post->post_content ) ) {
+				$actor_data = json_decode( $post->post_content, true );
+				if ( ! empty( $actor_data['icon'] ) ) {
+					return \Activitypub\object_to_uri( $actor_data['icon'] );
+				}
+			}
+		}
+
 		return $avatar_url;
 	}
 

@@ -48,12 +48,21 @@ class User extends \WP_User {
 	}
 
 	public static function get_post_author( \WP_Post $post ) {
+		static $cache = array();
+
 		$subscriptions = wp_get_object_terms( $post->ID, Subscription::TAXONOMY );
 		if ( empty( $subscriptions ) ) {
-			return new self( $post->post_author );
+			if ( ! isset( $cache[ 'u_' . $post->post_author ] ) ) {
+				$cache[ 'u_' . $post->post_author ] = new self( $post->post_author );
+			}
+			return $cache[ 'u_' . $post->post_author ];
 		}
 
-		return new Subscription( reset( $subscriptions ) );
+		$term = reset( $subscriptions );
+		if ( ! isset( $cache[ 't_' . $term->term_id ] ) ) {
+			$cache[ 't_' . $term->term_id ] = new Subscription( $term );
+		}
+		return $cache[ 't_' . $term->term_id ];
 	}
 
 	/**
