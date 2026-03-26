@@ -25,7 +25,7 @@ class Widget_Recent_Friends_List extends Widget_Base_Friends_List {
 			'friends-widget-recent-friend-list',
 			__( 'Recent Friend List', 'friends' ),
 			array(
-				'description' => __( 'Shows a list of your Recent friends and subscriptions.', 'friends' ),
+				'description' => __( 'Shows a list of your recent friends and people you follow.', 'friends' ),
 			)
 		);
 	}

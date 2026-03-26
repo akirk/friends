@@ -119,12 +119,12 @@ class Widget_Friend_Stats extends \WP_Widget {
 				<?php endif; ?>
 
 				<li class="friend-stats-subscriptions menu-item">
-					<a href="<?php echo esc_attr( home_url( '/friends/subscriptions/' ) ); ?>">
+					<a href="<?php echo esc_attr( home_url( '/friends/following/' ) ); ?>">
 						<?php
 							echo wp_kses(
 								sprintf(
 								/* translators: %s: number of subscriptions */
-									_n( '%s Subscription', '%s Subscriptions', $subscriptions_count, 'friends' ),
+									_n( '%s Following', '%s Following', $subscriptions_count, 'friends' ),
 									'<a class="subscriptions">' . $subscriptions_count . '</a>'
 								),
 								array( 'span' => array( 'class' => true ) )

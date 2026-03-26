@@ -9,7 +9,7 @@
 if ( ! empty( $friends_args ) && is_array( $friends_args ) ) {
 	$args = array_merge( $friends_args, $args );
 }
-$args['title'] = __( 'Your Subscriptions', 'friends' );
+$args['title'] = __( 'Following', 'friends' );
 $args['no-bottom-margin'] = true;
 
 $filter = isset( $_GET['filter'] ) ? sanitize_key( $_GET['filter'] ) : 'all'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -230,9 +230,9 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 		<p>
 		<?php
 		if ( 'all' === $filter ) {
-			esc_html_e( "You don't have any subscriptions yet.", 'friends' );
+			esc_html_e( "You're not following anyone yet.", 'friends' );
 		} else {
-			esc_html_e( 'No subscriptions match this filter.', 'friends' );
+			esc_html_e( 'No results match this filter.', 'friends' );
 		}
 		?>
 		</p>

@@ -564,7 +564,7 @@ class Frontend {
 				'content' => 'friends-followers',
 			),
 			'friends//friends-subscriptions' => array(
-				'title'   => __( 'Friends Subscriptions', 'friends' ),
+				'title'   => __( 'Friends Following', 'friends' ),
 				'content' => 'friends-subscriptions',
 			),
 			'friends//friends-single'        => array(
@@ -1466,8 +1466,12 @@ class Frontend {
 
 		switch ( $path ) {
 			case 'subscriptions':
+				wp_safe_redirect( home_url( '/friends/following/' ) );
+				exit;
+
+			case 'following':
 				$friends_args = array();
-				$path = 'frontend/subscriptions';
+				$path         = 'frontend/subscriptions';
 				break;
 
 			case 'followers':
@@ -1759,7 +1763,7 @@ class Frontend {
 		}
 
 		// translators: %s is a name.
-		$title = sprintf( __( "%s' Subscriptions", 'friends' ), $user->display_name );
+		$title = sprintf( __( '%s is following', 'friends' ), $user->display_name );
 		$filename = 'friends-';
 		if ( ! $only_public ) {
 			$title = __( 'My Friends', 'friends' );

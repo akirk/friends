@@ -17,7 +17,7 @@ Friends\Friends::template_loader()->get_template_part(
 ?><p class="note">
 	<span>
 	<?php
-	echo wp_kses( __( '<strong>Note:</strong> This box will go away as soon as you have added your first friend or subscription.', 'friends' ), array( 'strong' => array() ) );
+	echo wp_kses( __( '<strong>Note:</strong> This box will go away as soon as you follow someone.', 'friends' ), array( 'strong' => array() ) );
 	?>
 	</span>
 	<br>

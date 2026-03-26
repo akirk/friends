@@ -296,7 +296,7 @@ class Blocks {
 		$subscriptions = User_Query::all_subscriptions()->get_results();
 
 		if ( empty( $subscriptions ) ) {
-			return '<p>' . esc_html__( "You don't have any subscriptions yet.", 'friends' ) . '</p>';
+			return '<p>' . esc_html__( "You're not following anyone yet.", 'friends' ) . '</p>';
 		}
 
 		$items = '';
@@ -707,11 +707,11 @@ class Blocks {
 			}
 		}
 
-		$out .= '<li><a href="' . esc_url( home_url( '/friends/subscriptions/' ) ) . '">';
+		$out .= '<li><a href="' . esc_url( home_url( '/friends/following/' ) ) . '">';
 		$out .= esc_html(
 			sprintf(
 				/* translators: %s: number of subscriptions */
-				_n( '%s Subscription', '%s Subscriptions', $subscriptions_count, 'friends' ),
+				_n( '%s Following', '%s Following', $subscriptions_count, 'friends' ),
 				$subscriptions_count
 			)
 		);
@@ -761,7 +761,7 @@ class Blocks {
 	public function render_add_subscription_block( $attributes = array() ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter
 		$out  = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-add-subscription' ) ) . '>';
 		$out .= '<a href="' . esc_url( admin_url( 'admin.php?page=add-friend' ) ) . '">';
-		$out .= esc_html__( 'Add Subscription', 'friends' );
+		$out .= esc_html__( 'Follow', 'friends' );
 		$out .= '</a></div>';
 		return $out;
 	}
@@ -1190,7 +1190,7 @@ class Blocks {
 		$friends = Friends::get_instance();
 		$author  = $this->get_frontend_author();
 		if ( ! $author ) {
-			return '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-author-chips' ) ) . '><span class="chip">' . esc_html__( 'Subscription', 'friends' ) . '</span> <span class="chip">example.com</span> <span class="chip">' . esc_html__( 'Edit', 'friends' ) . '</span></div>';
+			return '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-author-chips' ) ) . '><span class="chip">' . esc_html__( 'Following', 'friends' ) . '</span> <span class="chip">example.com</span> <span class="chip">' . esc_html__( 'Edit', 'friends' ) . '</span></div>';
 		}
 
 		$out = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-author-chips' ) ) . '>';
@@ -1311,7 +1311,7 @@ class Blocks {
 				default:
 				case 'subscriptions':
 					$friends  = User_Query::all_subscriptions();
-					$no_users = __( "You don't have any subscriptions yet.", 'friends' );
+					$no_users = __( "You're not following anyone yet.", 'friends' );
 					break;
 			}
 		}
@@ -1379,7 +1379,7 @@ class Blocks {
 		$folders = Subscription::get_folders();
 
 		if ( $all->get_total() === 0 ) {
-			return '<span ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . esc_html__( "You don't have any subscriptions yet.", 'friends' ) . '</span>';
+			return '<span ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list no-users' ) ) . '>' . esc_html__( "You're not following anyone yet.", 'friends' ) . '</span>';
 		}
 
 		$out = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-friends-list folders' ) ) . '>';
