@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.0.0
+- Stable tag: 4.0.1
 
 Follow others via RSS and ActivityPub and read their posts on your own WordPress.
 
@@ -95,6 +95,19 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 4.0.1
+- Restore Add Friend admin page ([#622])
+- Rename Subscriptions to Following in the frontend ([#616])
+- Use Friends avatar for non-reblog posts ([#621])
+- Fix author page performance regression ([#617])
+- Make Mastodon theme header non-sticky on mobile ([#620])
+- Fix avatar rendering in Mastodon theme and always show filters ([#615])
+- Add ActivityPub subscription status check ([#613])
+- Remove Spectre CSS and Sass, use plain CSS with native nesting ([#614])
+- Add header image readability styling to all themes ([#612])
+- Fix fatal error and stuck Pending migrations ([#610])
+- Add new themes to the Friends plugin documentation
 
 ### 4.0.0
 - Remove Friendship functionality ([#515])
@@ -497,3 +510,14 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#604]: https://github.com/akirk/friends/pull/604
 [#605]: https://github.com/akirk/friends/pull/605
 [#607]: https://github.com/akirk/friends/pull/607
+
+[#610]: https://github.com/akirk/friends/pull/610
+[#612]: https://github.com/akirk/friends/pull/612
+[#613]: https://github.com/akirk/friends/pull/613
+[#614]: https://github.com/akirk/friends/pull/614
+[#615]: https://github.com/akirk/friends/pull/615
+[#616]: https://github.com/akirk/friends/pull/616
+[#617]: https://github.com/akirk/friends/pull/617
+[#620]: https://github.com/akirk/friends/pull/620
+[#621]: https://github.com/akirk/friends/pull/621
+[#622]: https://github.com/akirk/friends/pull/622
