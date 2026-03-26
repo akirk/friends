@@ -88,6 +88,20 @@ class Widget_Friend_Stats extends \WP_Widget {
 		</summary>
 		<ul class="friend-stats menu menu-nav">
 			<?php if ( $show_followers ) : ?>
+			<li class="friend-stats-mutual menu-item">
+				<a href="<?php echo esc_url( home_url( '/friends/mutual/' ) ); ?>">
+				<?php
+				$mutual_count = Feed_Parser_ActivityPub::count_mutual_followers( get_current_user_id() );
+				echo esc_html(
+					sprintf(
+						/* translators: %s: number of mutual friends */
+						_n( '%s Friend', '%s Friends', $mutual_count, 'friends' ),
+						$mutual_count
+					)
+				);
+				?>
+				</a>
+			</li>
 				<li class="friend-stats-followers menu-item">
 					<a class="followers" href="<?php echo esc_url( home_url( '/friends/followers/' ) ); ?>">
 					<?php
@@ -119,12 +133,12 @@ class Widget_Friend_Stats extends \WP_Widget {
 				<?php endif; ?>
 
 				<li class="friend-stats-subscriptions menu-item">
-					<a href="<?php echo esc_attr( home_url( '/friends/subscriptions/' ) ); ?>">
+					<a href="<?php echo esc_attr( home_url( '/friends/following/' ) ); ?>">
 						<?php
 							echo wp_kses(
 								sprintf(
 								/* translators: %s: number of subscriptions */
-									_n( '%s Subscription', '%s Subscriptions', $subscriptions_count, 'friends' ),
+									_n( '%s Following', '%s Following', $subscriptions_count, 'friends' ),
 									'<a class="subscriptions">' . $subscriptions_count . '</a>'
 								),
 								array( 'span' => array( 'class' => true ) )

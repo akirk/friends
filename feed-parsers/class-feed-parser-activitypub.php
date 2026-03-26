@@ -189,6 +189,41 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return \ActivityPub\Collection\Followers::count_followers( $user_id );
 	}
 
+	/**
+	 * Count mutual followers (followers you also follow back) with transient caching.
+	 *
+	 * @param int $user_id The user ID.
+	 * @return int The number of mutual followers.
+	 */
+	public static function count_mutual_followers( $user_id ) {
+		$cache_key = 'friends_mutual_count_' . $user_id;
+		$count     = get_transient( $cache_key );
+		if ( false !== $count ) {
+			return (int) $count;
+		}
+
+		$count = 0;
+		if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
+			$follower_data = \ActivityPub\Collection\Followers::query( $user_id );
+			foreach ( $follower_data['followers'] as $follower ) {
+				$url = $follower->guid;
+				if ( ! $url ) {
+					continue;
+				}
+				$is_following = User_Feed::get_by_url( $url );
+				if ( ! $is_following || is_wp_error( $is_following ) ) {
+					$is_following = User_Feed::get_by_url( str_replace( '@', 'users/', $url ) );
+				}
+				if ( $is_following && ! is_wp_error( $is_following ) ) {
+					++$count;
+				}
+			}
+		}
+
+		set_transient( $cache_key, $count, HOUR_IN_SECONDS );
+		return $count;
+	}
+
 	public static function determine_mastodon_api_user( $user_id ) {
 		static $user_id_map = array();
 		if ( null === $user_id ) {

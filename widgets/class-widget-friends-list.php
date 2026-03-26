@@ -76,7 +76,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'user_types' ) ); ?>"><?php esc_html_e( 'Display:', 'friends' ); ?></label>
 			<select class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'user_types' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'user_types' ) ); ?>">
-				<option value="subscriptions"<?php selected( $user_types, 'subscriptions' ); ?>><?php esc_html_e( 'Subscriptions', 'friends' ); ?></option>
+				<option value="subscriptions"<?php selected( $user_types, 'subscriptions' ); ?>><?php esc_html_e( 'Following', 'friends' ); ?></option>
 				<option value="starred"<?php selected( $user_types, 'starred' ); ?>><?php esc_html_e( 'Starred', 'friends' ); ?></option>
 				<option value="folders"<?php selected( $user_types, 'folders' ); ?>><?php esc_html_e( 'Grouped by Folder', 'friends' ); ?></option>
 			</select>
@@ -140,7 +140,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 					array_merge( $args, array( 'widget_id' => $widget_id . '-subscriptions' ) ),
 					'<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
 						// translators: %s is the number of subscriptions.
-						_n( 'Subscription %s', 'Subscriptions %s', $unfoldered->get_total(), 'friends' ),
+						_n( 'Following %s', 'Following %s', $unfoldered->get_total(), 'friends' ),
 						'<span class="subscription-count">' . $unfoldered->get_total() . '</span>'
 					),
 					$unfoldered
@@ -153,7 +153,7 @@ class Widget_Friends_List extends Widget_Base_Friends_List {
 			} else {
 				$title = '<span class="dashicons dashicons-admin-users"></span> ' . sprintf(
 					// translators: %s is the number of subscriptions.
-					_n( 'Subscription %s', 'Subscriptions %s', $users->get_total(), 'friends' ),
+					_n( 'Following %s', 'Following %s', $users->get_total(), 'friends' ),
 					'<span class="subscription-count">' . $users->get_total() . '</span>'
 				);
 			}

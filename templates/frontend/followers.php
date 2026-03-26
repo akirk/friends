@@ -8,12 +8,15 @@
 
 $args = array_merge( $friends_args, $args );
 $blog_followers = class_exists( '\ActivityPub\Collection\Actors' ) && \ActivityPub\Collection\Actors::BLOG_USER_ID === $args['user_id'];
-$args['title'] = __( 'Your Followers', 'friends' );
-if ( $blog_followers ) {
-	$args['title'] = __( 'Your Blog Followers', 'friends' );
+if ( ! isset( $args['title'] ) || ! $args['title'] ) {
+	$args['title'] = __( 'Your Followers', 'friends' );
+	if ( $blog_followers ) {
+		$args['title'] = __( 'Your Blog Followers', 'friends' );
+	}
 }
 
-$filter = isset( $_GET['filter'] ) ? sanitize_key( $_GET['filter'] ) : 'all'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$default_filter = isset( $args['filter'] ) ? $args['filter'] : 'all';
+$filter = isset( $_GET['filter'] ) ? sanitize_key( $_GET['filter'] ) : $default_filter; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 if ( ! in_array( $filter, array( 'all', 'following', 'not-following' ), true ) ) {
 	$filter = 'all';
 }
@@ -251,42 +254,63 @@ if ( $blog_followers ) {
 		<?php
 		foreach ( $display_followers as $follower ) {
 			?>
-			<li>
-				<details data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>" data-following="<?php echo esc_attr( $follower['following'] ); ?>" data-followers="<?php echo esc_attr( $follower['followers'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>"><summary><a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower<?php echo esc_attr( $follower['css_class'] ); ?>">
-					<img width="40" height="40" src="<?php echo esc_attr( $follower['icon']['url'] ); ?>" loading="lazy" class="avatar activitypub-avatar" />
-					<span class="activitypub-actor"><strong class="activitypub-name"><?php echo esc_html( $follower['name'] ); ?></strong> (<span class="activitypub-handle">@<?php echo esc_html( $follower['preferredUsername'] . '@' . $follower['server'] ); ?></span>)</span></a>
-				<span class="since">since <?php echo esc_html( $follower['published'] ); ?></span>
-				<span class="their-followers"></span>
-				<span class="their-following"></span>
-				&nbsp;&nbsp;
-			<?php if ( $follower['friend_user'] ) : ?>
-					<span class="follower" title="<?php esc_attr_e( 'Already following', 'friends' ); ?>">
-						<span class="ab-icon dashicons dashicons-businessperson" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-yes"></span></span>
-					</span>
-				<?php else : ?>
-					<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower follower-add">
-						<span class="ab-icon dashicons dashicons-businessperson" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-plus"></span></span>
+			<li class="follower-item">
+				<details class="follower-details" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-preview' ) ); ?>" data-following="<?php echo esc_attr( $follower['following'] ); ?>" data-followers="<?php echo esc_attr( $follower['followers'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>">
+				<summary>
+					<a href="<?php echo esc_url( $follower['url'] ); ?>" class="follower-link<?php echo esc_attr( $follower['css_class'] ); ?>">
+						<img width="40" height="40" src="<?php echo esc_attr( $follower['icon']['url'] ); ?>" loading="lazy" class="avatar activitypub-avatar" />
+						<span class="follower-info">
+							<strong class="follower-name"><?php echo esc_html( $follower['name'] ); ?></strong>
+							<span class="follower-handle">@<?php echo esc_html( $follower['preferredUsername'] . '@' . $follower['server'] ); ?></span>
+						</span>
 					</a>
-				<?php endif; ?>
-				<a href="<?php echo esc_url( $follower['remove_action_url'] ); ?>" class="follower follower-delete" title="<?php esc_attr_e( 'Remove follower', 'friends' ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-followers' ) ); ?>" data-handle="<?php echo esc_attr( $follower['preferredUsername'] . '@' . $follower['server'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>">
-					<span class="ab-icon dashicons dashicons-admin-users" style="vertical-align: middle;"><span class="ab-icon dashicons dashicons-no"></span></span>
-				</a>
-				<p class="description">
-					<?php
-					echo wp_kses(
-						$follower['summary'],
-						array(
-							'a' => array(
-								'href' => array(),
-							),
-						)
-					);
-					?>
+					<span class="follower-meta">
+						<span class="follower-since">
+						<?php
+						echo esc_html(
+							sprintf(
+								// translators: %s is a date.
+								__( 'since %s', 'friends' ),
+								$follower['published']
+							)
+						);
+						?>
+						</span>
+						<span class="their-followers"></span>
+						<span class="their-following"></span>
+					</span>
+					<span class="follower-actions">
+					<?php if ( $follower['friend_user'] ) : ?>
+						<span class="follower-status" title="<?php esc_attr_e( 'Already following', 'friends' ); ?>">
+							<span class="dashicons dashicons-yes-alt"></span> <?php esc_html_e( 'Following', 'friends' ); ?>
+						</span>
+					<?php else : ?>
+						<a href="<?php echo esc_url( $follower['action_url'] ); ?>" class="follower-action follower-add" title="<?php esc_attr_e( 'Follow back', 'friends' ); ?>">
+							<span class="dashicons dashicons-plus-alt"></span> <?php esc_html_e( 'Follow back', 'friends' ); ?>
+						</a>
+					<?php endif; ?>
+						<a href="<?php echo esc_url( $follower['remove_action_url'] ); ?>" class="follower-action follower-delete" title="<?php esc_attr_e( 'Remove follower', 'friends' ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-followers' ) ); ?>" data-handle="<?php echo esc_attr( $follower['preferredUsername'] . '@' . $follower['server'] ); ?>" data-id="<?php echo esc_attr( $follower['id'] ); ?>">
+							<span class="dashicons dashicons-dismiss"></span> <?php esc_html_e( 'Remove', 'friends' ); ?>
+						</a>
+					</span>
+					<p class="follower-description">
+						<?php
+						echo wp_kses(
+							$follower['summary'],
+							array(
+								'a' => array(
+									'href' => array(),
+								),
+							)
+						);
+						?>
+					</p>
+				</summary>
+				<p class="loading-posts">
+					<span><?php esc_html_e( 'Loading posts', 'friends' ); ?></span>
+					<i class="form-icon loading"></i>
 				</p>
-			</summary><p class="loading-posts">
-				<span><?php esc_html_e( 'Loading posts', 'friends' ); ?></span>
-				<i class="form-icon loading"></i>
-			</p></details>
+				</details>
 			</li>
 			<?php
 		}

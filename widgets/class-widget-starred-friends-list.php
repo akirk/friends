@@ -25,7 +25,7 @@ class Widget_Starred_Friends_List extends Widget_Base_Friends_List {
 			'friends-widget-starred-friend-list',
 			__( 'Starred Friends', 'friends' ),
 			array(
-				'description' => __( 'Shows a list of your starred friends and subscriptions.', 'friends' ),
+				'description' => __( 'Shows a list of your starred friends and people you follow.', 'friends' ),
 			)
 		);
 	}

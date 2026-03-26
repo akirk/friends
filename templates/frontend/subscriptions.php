@@ -9,7 +9,7 @@
 if ( ! empty( $friends_args ) && is_array( $friends_args ) ) {
 	$args = array_merge( $friends_args, $args );
 }
-$args['title'] = __( 'Your Subscriptions', 'friends' );
+$args['title'] = __( 'Following', 'friends' );
 $args['no-bottom-margin'] = true;
 
 $filter = isset( $_GET['filter'] ) ? sanitize_key( $_GET['filter'] ) : 'all'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -230,9 +230,9 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 		<p>
 		<?php
 		if ( 'all' === $filter ) {
-			esc_html_e( "You don't have any subscriptions yet.", 'friends' );
+			esc_html_e( "You're not following anyone yet.", 'friends' );
 		} else {
-			esc_html_e( 'No subscriptions match this filter.', 'friends' );
+			esc_html_e( 'No results match this filter.', 'friends' );
 		}
 		?>
 		</p>
@@ -247,6 +247,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 			$starred    = $subscription instanceof Friends\Subscription && $subscription->is_starred();
 			$folder     = $subscription instanceof Friends\Subscription ? $subscription->get_folder() : null;
 			$active_feeds = $subscription instanceof Friends\Subscription ? $subscription->get_active_feeds() : array();
+			$unfriend_link = Friends\Admin::get_unfriend_link( $subscription );
 			?>
 			<li class="subscription-item">
 				<a href="<?php echo esc_url( $page_url ); ?>" class="subscription-link">
@@ -303,6 +304,13 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 				</span>
 				<?php if ( $subscription->description ) : ?>
 					<p class="subscription-description"><?php echo esc_html( wp_trim_words( $subscription->description, 20 ) ); ?></p>
+				<?php endif; ?>
+				<?php if ( $unfriend_link ) : ?>
+				<span class="subscription-actions">
+					<a href="<?php echo esc_url( $unfriend_link ); ?>" class="subscription-action subscription-unfollow" title="<?php esc_attr_e( 'Unfollow', 'friends' ); ?>">
+						<span class="dashicons dashicons-dismiss"></span> <?php esc_html_e( 'Unfollow', 'friends' ); ?>
+					</a>
+				</span>
 				<?php endif; ?>
 			</li>
 			<?php
