@@ -120,6 +120,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'comments_open', array( self::class, 'enable_comments_form' ), 10, 2 );
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
+		add_action( 'wp_ajax_friends_check_activitypub_subscription', array( $this, 'ajax_check_subscription' ) );
+		add_action( 'friends_edit_feed_content_top', array( $this, 'render_subscription_check_button' ), 10, 3 );
 
 		add_action( 'mastodon_api_account_following', array( $this, 'mastodon_api_account_following' ), 10, 2 );
 		add_action( 'mastodon_api_account', array( $this, 'mastodon_api_account' ), 9, 2 );
@@ -1071,6 +1073,240 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private function disable_polling( User_Feed $user_feed ) {
 		$user_feed->update_metadata( 'interval', YEAR_IN_SECONDS );
 		$user_feed->update_metadata( 'next-poll', gmdate( 'Y-m-d H:i:s', time() + YEAR_IN_SECONDS ) );
+	}
+
+	/**
+	 * Check the subscription status for an ActivityPub feed.
+	 *
+	 * @param User_Feed $user_feed The user feed.
+	 * @return array The subscription status with keys: status, message, latest_remote, latest_local, missing_posts.
+	 */
+	public function check_subscription_status( User_Feed $user_feed ) {
+		$result = array(
+			'status'        => 'unknown',
+			'messages'      => array(),
+			'follow_status' => null,
+		);
+
+		$ap_actor_id = $user_feed->get_ap_actor_id();
+		if ( ! $ap_actor_id ) {
+			$result['status']     = 'error';
+			$result['messages'][] = __( 'No linked ActivityPub actor found for this feed.', 'friends' );
+			return $result;
+		}
+
+		// Check local follow status via ActivityPub plugin.
+		if ( class_exists( '\Activitypub\Collection\Following' ) ) {
+			$user_id = self::get_activitypub_actor_id( null );
+			$follow_status = \Activitypub\Collection\Following::check_status( $user_id, $ap_actor_id );
+			$result['follow_status'] = $follow_status;
+
+			if ( false === $follow_status ) {
+				$result['status']     = 'error';
+				$result['messages'][] = __( 'You are not following this actor. Posts will not be delivered to your inbox.', 'friends' );
+				return $result;
+			}
+
+			if ( 'pending' === $follow_status ) {
+				$result['status']     = 'warning';
+				$result['messages'][] = __( 'Your follow request is still pending. The remote server has not yet accepted it.', 'friends' );
+			}
+
+			if ( 'accepted' === $follow_status ) {
+				$result['messages'][] = __( 'Your follow request has been accepted.', 'friends' );
+			}
+		}
+
+		// Fetch the outbox to check for newer posts than what we have locally.
+		$url = $user_feed->get_url();
+		$meta = self::get_metadata( $url );
+		if ( is_wp_error( $meta ) || ! isset( $meta['outbox'] ) ) {
+			if ( 'unknown' === $result['status'] ) {
+				$result['status'] = 'warning';
+			}
+			$result['messages'][] = __( 'Could not fetch the remote actor metadata.', 'friends' );
+			return $result;
+		}
+
+		$response = \Activitypub\safe_remote_get( $meta['outbox'] );
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			if ( 'unknown' === $result['status'] ) {
+				$result['status'] = 'warning';
+			}
+			$result['messages'][] = __( 'Could not fetch the remote outbox.', 'friends' );
+			return $result;
+		}
+
+		$outbox = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		// Get the first page if needed.
+		if ( ! isset( $outbox['orderedItems'] ) && isset( $outbox['first'] ) ) {
+			$response = \Activitypub\safe_remote_get( $outbox['first'] );
+			if ( ! is_wp_error( $response ) && 200 === wp_remote_retrieve_response_code( $response ) ) {
+				$outbox = json_decode( wp_remote_retrieve_body( $response ), true );
+			}
+		}
+
+		if ( isset( $outbox['orderedItems'] ) && ! empty( $outbox['orderedItems'] ) ) {
+			// Find the latest post date in the outbox.
+			$latest_remote = null;
+			foreach ( $outbox['orderedItems'] as $item ) {
+				$published = null;
+				if ( isset( $item['published'] ) ) {
+					$published = $item['published'];
+				} elseif ( isset( $item['object']['published'] ) ) {
+					$published = $item['object']['published'];
+				}
+				if ( $published ) {
+					$date = strtotime( $published );
+					if ( ! $latest_remote || $date > $latest_remote ) {
+						$latest_remote = $date;
+					}
+				}
+			}
+
+			if ( $latest_remote ) {
+				$result['latest_remote'] = gmdate( 'Y-m-d H:i:s', $latest_remote );
+
+				// Get the latest local post for this user.
+				$friend_user = $user_feed->get_friend_user();
+				if ( $friend_user ) {
+					$latest_local_post = new \WP_Query(
+						array(
+							'post_type'      => Friends::CPT,
+							'post_status'    => array( 'publish', 'private' ),
+							'posts_per_page' => 1,
+							'orderby'        => 'date',
+							'order'          => 'DESC',
+							'author'         => $friend_user->ID,
+						)
+					);
+
+					if ( $latest_local_post->have_posts() ) {
+						$result['latest_local'] = $latest_local_post->posts[0]->post_date_gmt;
+
+						$local_time = strtotime( $result['latest_local'] );
+						$diff_hours = ( $latest_remote - $local_time ) / 3600;
+
+						if ( $diff_hours > 24 ) {
+							$result['status']     = 'warning';
+							$result['messages'][] = sprintf(
+								// translators: %s is a time difference like "3 days".
+								__( 'The remote outbox has posts up to %s newer than your latest local post. New posts may not be reaching your inbox.', 'friends' ),
+								human_time_diff( $local_time, $latest_remote )
+							);
+						} elseif ( 'accepted' === ( $result['follow_status'] ?? null ) ) {
+							$result['status'] = 'ok';
+							$result['messages'][] = __( 'Your subscription appears to be working correctly.', 'friends' );
+						}
+					} else {
+						$result['status']     = 'warning';
+						$result['messages'][] = __( 'No local posts found for this subscription, but the remote outbox has posts available.', 'friends' );
+					}
+				}
+			}
+		}
+
+		if ( 'unknown' === $result['status'] ) {
+			$result['status'] = 'ok';
+		}
+
+		return $result;
+	}
+
+	/**
+	 * AJAX handler for checking an ActivityPub subscription.
+	 */
+	public function ajax_check_subscription() {
+		if ( ! isset( $_POST['feed_id'] ) ) {
+			wp_send_json_error( 'missing-parameters' );
+		}
+
+		check_ajax_referer( 'friends-check-subscription' );
+
+		$feed = User_Feed::get_by_id( intval( $_POST['feed_id'] ) );
+		if ( is_wp_error( $feed ) ) {
+			wp_send_json_error( 'invalid-feed' );
+		}
+
+		if ( ! $feed->is_activitypub_feed() ) {
+			wp_send_json_error( 'not-activitypub' );
+		}
+
+		$result = $this->check_subscription_status( $feed );
+		wp_send_json_success( $result );
+	}
+
+	/**
+	 * Render the subscription check button in the edit feeds form.
+	 *
+	 * @param User_Feed $feed      The feed.
+	 * @param int       $term_id   The term ID.
+	 * @param string    $parser    The parser slug.
+	 */
+	public function render_subscription_check_button( $feed, $term_id, $parser ) {
+		if ( 'activitypub' !== $parser || ! $feed->is_activitypub_feed() ) {
+			return;
+		}
+		?>
+		<div class="activitypub-subscription-check" data-feed-id="<?php echo esc_attr( $term_id ); ?>">
+			<button type="button" class="button check-subscription-btn">
+				<?php esc_html_e( 'Check Subscription', 'friends' ); ?>
+			</button>
+			<span class="spinner" style="float: none;"></span>
+			<div class="subscription-status" style="display: none; margin-top: 8px;"></div>
+		</div>
+		<script>
+		jQuery( function( $ ) {
+			var $container = $( '.activitypub-subscription-check[data-feed-id="<?php echo esc_js( $term_id ); ?>"]' );
+			if ( $container.data( 'bound' ) ) return;
+			$container.data( 'bound', true );
+
+			$container.on( 'click', '.check-subscription-btn', function() {
+				var $btn = $( this );
+				var $spinner = $container.find( '.spinner' );
+				var $status = $container.find( '.subscription-status' );
+
+				$btn.prop( 'disabled', true );
+				$spinner.addClass( 'is-active' );
+				$status.hide();
+
+				$.post( ajaxurl, {
+					action: 'friends_check_activitypub_subscription',
+					feed_id: <?php echo intval( $term_id ); ?>,
+					_ajax_nonce: '<?php echo esc_js( wp_create_nonce( 'friends-check-subscription' ) ); ?>'
+				}, function( response ) {
+					$spinner.removeClass( 'is-active' );
+					$btn.prop( 'disabled', false );
+
+					if ( ! response.success ) {
+						$status.html( '<div class="notice notice-error inline"><p>' + response.data + '</p></div>' ).show();
+						return;
+					}
+
+					var data = response.data;
+					var noticeClass = 'notice-info';
+					if ( data.status === 'ok' ) noticeClass = 'notice-success';
+					if ( data.status === 'warning' ) noticeClass = 'notice-warning';
+					if ( data.status === 'error' ) noticeClass = 'notice-error';
+
+					var html = '<div class="notice ' + noticeClass + ' inline"><p>' + data.messages.join( '<br>' ) + '</p>';
+
+					if ( data.latest_remote ) {
+						html += '<p><strong><?php echo esc_js( __( 'Latest remote post:', 'friends' ) ); ?></strong> ' + data.latest_remote + '<br>';
+						if ( data.latest_local ) {
+							html += '<strong><?php echo esc_js( __( 'Latest local post:', 'friends' ) ); ?></strong> ' + data.latest_local;
+						}
+						html += '</p>';
+					}
+
+					html += '</div>';
+					$status.html( html ).show();
+				} );
+			} );
+		} );
+		</script>
+		<?php
 	}
 
 	public function get_activitypub_actor( $user_id ) {
