@@ -184,7 +184,7 @@ class BlockThemeTest extends \WP_UnitTestCase {
 		$output = $blocks->render_stats_block();
 
 		$this->assertStringContainsString( 'wp-block-friends-stats', $output );
-		$this->assertStringContainsString( '/friends/subscriptions/', $output );
+		$this->assertStringContainsString( '/friends/following/', $output );
 	}
 
 	/**
