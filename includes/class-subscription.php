@@ -304,7 +304,7 @@ class Subscription extends User {
 	 *
 	 * @return     array  The post counts.
 	 */
-	public function get_post_count_by_post_format( $force_fetching = false ) {
+	public function get_post_count_by_post_format() {
 		$cache_key = 'get_post_count_by_post_format_' . $this->ID;
 
 		$counts = wp_cache_get( $cache_key, 'friends' );
@@ -313,10 +313,6 @@ class Subscription extends User {
 		}
 		$counts = get_transient( $cache_key );
 		if ( false !== $counts ) {
-			return $counts;
-		} elseif ( ! $force_fetching ) {
-			$post_formats = get_post_format_slugs();
-			$counts = array_fill_keys( $post_formats, '...' );
 			return $counts;
 		}
 		$counts = array();
