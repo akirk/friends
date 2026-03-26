@@ -2686,6 +2686,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $meta || ! isset( $meta['attributedTo'] ) ) {
 			return $avatar_url;
 		}
+
+		// Only use ActivityPub actor metadata for reblogs where the original author differs.
+		if ( ! is_array( $meta ) || empty( $meta['reblog'] ) ) {
+			return $avatar_url;
+		}
+
 		$actor_metadata = self::get_actor_metadata_from_attributed_to( $meta['attributedTo'] );
 		if ( ! empty( $actor_metadata['icon'] ) ) {
 			return $actor_metadata['icon'];
