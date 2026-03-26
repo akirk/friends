@@ -1,13 +1,9 @@
 {
 	"devDependencies": {
-		"lerna": "^6.1.0",
-		"spectre.css": "^0.5.9",
-		"sass": "1.80.3"
+		"lerna": "^6.1.0"
 	},
 	"scripts": {
 		"build": "lerna run build",
-		"lint:js": "lerna run lint:js",
-		"sass:compile": "sass friends.scss:friends.css -s compressed",
-		"sass:watch": "sass friends.scss:friends.css -w -s compressed"
+		"lint:js": "lerna run lint:js"
 	}
 }
