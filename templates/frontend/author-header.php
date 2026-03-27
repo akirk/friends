@@ -133,8 +133,6 @@ if ( $args['friends']->frontend->reaction ) {
 	</p>
 <?php endif; ?>
 
-<span class="chip"><?php echo esc_html( $args['friend_user']->get_role_name() ); ?></span>
-
 <?php if ( apply_filters( 'friends_debug', false ) ) : ?>
 	<span class="chip"><?php echo esc_html( get_class( $args['friend_user'] ) ); ?></span>
 <?php endif; ?>
