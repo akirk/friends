@@ -533,8 +533,7 @@
 
 /* Comments */
 .friends-page .comments-content {
-	padding: 8px 0 8px 16px;
-	border-left: 2px solid #4d90fe;
+	padding: 8px 0;
 	margin: 8px 0;
 	font-size: 13px;
 }
