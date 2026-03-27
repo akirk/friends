@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.0.1
+- Stable tag: 4.0.2
 
 Follow others via RSS and ActivityPub and read their posts on your own WordPress.
 
@@ -95,6 +95,14 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 4.0.2
+- Clean up edit-friend UI: add username field, remove legacy roles ([#629])
+- Fix crash in admin_edit_user_link for virtual subscriptions ([#628])
+- Fix fatal error during feed discovery when content is null ([#627])
+- Strip style tags and convert iframe embeds during feed sanitization ([#624])
+- Defer theme name translations to avoid early textdomain loading ([#625])
+- Google Reader: expand single post view, remove comments border ([#623])
 
 ### 4.0.1
 - Restore Add Friend admin page ([#622])
@@ -521,3 +529,10 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#620]: https://github.com/akirk/friends/pull/620
 [#621]: https://github.com/akirk/friends/pull/621
 [#622]: https://github.com/akirk/friends/pull/622
+
+[#623]: https://github.com/akirk/friends/pull/623
+[#624]: https://github.com/akirk/friends/pull/624
+[#625]: https://github.com/akirk/friends/pull/625
+[#627]: https://github.com/akirk/friends/pull/627
+[#628]: https://github.com/akirk/friends/pull/628
+[#629]: https://github.com/akirk/friends/pull/629

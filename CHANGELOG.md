@@ -1,3 +1,11 @@
+### 4.0.2
+- Clean up edit-friend UI: add username field, remove legacy roles ([#629])
+- Fix crash in admin_edit_user_link for virtual subscriptions ([#628])
+- Fix fatal error during feed discovery when content is null ([#627])
+- Strip style tags and convert iframe embeds during feed sanitization ([#624])
+- Defer theme name translations to avoid early textdomain loading ([#625])
+- Google Reader: expand single post view, remove comments border ([#623])
+
 ### 4.0.1
 - Restore Add Friend admin page ([#622])
 - Rename Subscriptions to Following in the frontend ([#616])
@@ -780,3 +788,10 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#620]: https://github.com/akirk/friends/pull/620
 [#621]: https://github.com/akirk/friends/pull/621
 [#622]: https://github.com/akirk/friends/pull/622
+
+[#623]: https://github.com/akirk/friends/pull/623
+[#624]: https://github.com/akirk/friends/pull/624
+[#625]: https://github.com/akirk/friends/pull/625
+[#627]: https://github.com/akirk/friends/pull/627
+[#628]: https://github.com/akirk/friends/pull/628
+[#629]: https://github.com/akirk/friends/pull/629
