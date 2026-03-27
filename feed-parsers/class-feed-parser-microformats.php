@@ -86,6 +86,9 @@ class Feed_Parser_Microformats extends Feed_Parser_V2 {
 	 * @return     array  A list of supported feeds at the URL.
 	 */
 	public function discover_available_feeds( $content, $url ) {
+		if ( ! is_string( $content ) ) {
+			return array();
+		}
 		$discovered_feeds = array();
 		$mf = Mf2\parse( $content, $url );
 		if ( isset( $mf['rel-urls'] ) ) {
