@@ -445,11 +445,27 @@ class Frontend {
 	}
 
 	public function register_google_reader_theme( Frontend $friends_frontend ) {
-		$friends_frontend->register_theme( __( 'Google Reader', 'friends' ), 'google-reader' );
+		$friends_frontend->register_theme( 'Google Reader', 'google-reader' );
+		add_filter(
+			'friends_theme_name',
+			function ( $name, $slug ) {
+				return 'google-reader' === $slug ? __( 'Google Reader', 'friends' ) : $name;
+			},
+			10,
+			2
+		);
 	}
 
 	public function register_mastodon_theme( Frontend $friends_frontend ) {
-		$friends_frontend->register_theme( __( 'Mastodon', 'friends' ), 'mastodon' );
+		$friends_frontend->register_theme( 'Mastodon', 'mastodon' );
+		add_filter(
+			'friends_theme_name',
+			function ( $name, $slug ) {
+				return 'mastodon' === $slug ? __( 'Mastodon', 'friends' ) : $name;
+			},
+			10,
+			2
+		);
 	}
 
 	public function mastodon_theme() {
@@ -533,7 +549,15 @@ class Frontend {
 	}
 
 	public function register_block_theme( Frontend $friends_frontend ) {
-		$friends_frontend->register_theme( __( 'Block Theme', 'friends' ), 'block' );
+		$friends_frontend->register_theme( 'Block Theme', 'block' );
+		add_filter(
+			'friends_theme_name',
+			function ( $name, $slug ) {
+				return 'block' === $slug ? __( 'Block Theme', 'friends' ) : $name;
+			},
+			10,
+			2
+		);
 	}
 
 	public function block_theme() {
@@ -1063,6 +1087,10 @@ class Frontend {
 			),
 			self::$themes
 		);
+
+		foreach ( $themes as $slug => $name ) {
+			$themes[ $slug ] = apply_filters( 'friends_theme_name', $name, $slug );
+		}
 
 		return $themes;
 	}
