@@ -855,7 +855,22 @@ class Feed {
 			return $response;
 		}
 
-		if ( 200 === wp_remote_retrieve_response_code( $response ) ) {
+		$response_code = wp_remote_retrieve_response_code( $response );
+		if ( $response_code >= 300 && $response_code < 400 ) {
+			$location = wp_remote_retrieve_header( $response, 'location' );
+			if ( $location ) {
+				return new \WP_Error(
+					'redirect',
+					sprintf(
+						// translators: %s is a URL.
+						__( 'This URL redirects to %s — please use that URL instead.', 'friends' ),
+						'<a href="' . esc_url( admin_url( 'admin.php?page=add-friend&url=' . rawurlencode( $location ) ) ) . '">' . esc_html( $location ) . '</a>'
+					)
+				);
+			}
+		}
+
+		if ( 200 === $response_code ) {
 			$content = wp_remote_retrieve_body( $response );
 			$headers = wp_remote_retrieve_headers( $response );
 
