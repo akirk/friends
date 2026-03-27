@@ -163,6 +163,7 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		require_once __DIR__ . '/SimplePie/class-simplepie-file-accept-only-rss.php';
 		require_once __DIR__ . '/SimplePie/class-simplepie-misc.php';
 		require_once ABSPATH . WPINC . '/class-wp-simplepie-sanitize-kses.php';
+		require_once __DIR__ . '/SimplePie/class-simplepie-sanitize-kses.php';
 
 		// Workaround for SimplePie assuming that CURL is loaded.
 		if ( ! defined( 'CURLOPT_USERAGENT' ) ) {
@@ -171,11 +172,11 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 
 		$feed = new \SimplePie();
 
-		$feed->get_registry()->register( \SimplePie\Sanitize::class, '\WP_SimplePie_Sanitize_KSES', true );
+		$feed->get_registry()->register( \SimplePie\Sanitize::class, __NAMESPACE__ . '\SimplePie_Sanitize_KSES', true );
 
 		// We must manually overwrite $feed->sanitize because SimplePie's
 		// constructor sets it before we have a chance to set the sanitization class.
-		$feed->sanitize = new \WP_SimplePie_Sanitize_KSES();
+		$feed->sanitize = new SimplePie_Sanitize_KSES();
 
 		\SimplePie_Cache::register( 'wp_transient', '\WP_Feed_Cache_Transient' );
 		$feed->set_cache_location( 'wp_transient' );
