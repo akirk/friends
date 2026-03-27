@@ -434,6 +434,11 @@ class Admin {
 			}
 		}
 
+		if ( ! $user || is_wp_error( $user ) ) {
+			$cache[ $cache_key ] = false;
+			return $link;
+		}
+
 		if ( is_multisite() && is_super_admin( $user->ID ) ) {
 			$cache[ $cache_key ] = false;
 			return $link;
@@ -448,9 +453,16 @@ class Admin {
 	}
 
 	public static function get_edit_friend_link( $user ) {
-		if ( ! $user instanceof \WP_User ) {
-			$user = new \WP_User( $user );
+		if ( is_string( $user ) ) {
+			$user = User::get_by_username( $user );
+		} elseif ( ! $user instanceof User && ! $user instanceof Subscription ) {
+			$user = new User( $user );
 		}
+
+		if ( ! $user || is_wp_error( $user ) ) {
+			return '';
+		}
+
 		return apply_filters( 'get_edit_user_link', $user->user_url, $user->user_login );
 	}
 
