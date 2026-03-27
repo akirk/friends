@@ -1548,6 +1548,12 @@ class Admin {
 					$friend->user_url = $user_url;
 				}
 			}
+			if ( isset( $_POST['friends_user_login'] ) ) {
+				$new_user_login = User::sanitize_username( sanitize_text_field( wp_unslash( $_POST['friends_user_login'] ) ) );
+				if ( $new_user_login && $new_user_login !== $friend->user_login ) {
+					$friend->update_user_login( $new_user_login );
+				}
+			}
 			$friend->save();
 		} else {
 			return;
@@ -1555,11 +1561,8 @@ class Admin {
 
 		do_action( 'friends_edit_friend_after_form_submit', $friend );
 
-		if ( isset( $_GET['_wp_http_referer'] ) ) {
-			wp_safe_redirect( add_query_arg( $arg, rawurlencode( $arg_value ), wp_get_referer() ) );
-		} else {
-			wp_safe_redirect( add_query_arg( $arg, rawurlencode( $arg_value ), remove_query_arg( array( '_wp_http_referer', '_wpnonce' ) ) ) );
-		}
+		$redirect_url = self_admin_url( 'admin.php?page=edit-friend&user=' . $friend->user_login );
+		wp_safe_redirect( add_query_arg( $arg, rawurlencode( $arg_value ), $redirect_url ) );
 		exit;
 	}
 

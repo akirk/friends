@@ -55,54 +55,14 @@ $available_avatars = apply_filters( 'friends_potential_avatars', array(), $args[
 				<td><input type="text" name="user_url" value="<?php echo esc_attr( $args['friend']->user_url ); ?>" class="regular-text" /></td>
 			</tr>
 			<tr>
+				<th><label for="friends_user_login"><?php esc_html_e( 'Username', 'friends' ); ?></label></th>
+				<td><input type="text" name="friends_user_login" id="friends_user_login" value="<?php echo esc_attr( $args['friend']->user_login ); ?>" class="regular-text" /></td>
+			</tr>
+			<?php do_action( 'friends_edit_friend_table_end', $args['friend'] ); ?>
+			<tr>
 				<th><?php esc_html_e( 'Created', 'friends' ); ?></th>
 				<td><?php echo esc_html( date_i18n( /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ __( 'F j, Y g:i a' ), strtotime( $args['friend']->user_registered ) ) ); ?></td>
 			</tr>
-			<tr>
-				<th><label for="status"><?php echo esc_html( _x( 'Type', 'of user', 'friends' ) ); ?></label></th>
-				<td>
-					<?php esc_html_e( 'Virtual User', 'friends' ); ?>
-					<?php if ( apply_filters( 'friends_debug', false ) ) : ?>
-						<span class="info">ID: <?php echo esc_html( $args['friend']->get_term_id() ); ?></span>
-					<?php endif; ?>
-				</td>
-			</tr>
-			<tr>
-				<th><label for="status"><?php esc_html_e( 'Status', 'friends' ); ?></label></th>
-				<td>
-					<?php echo esc_html( $args['friend']->get_role_name() ); ?>
-					<?php if ( $args['friend']->has_cap( 'friend_request' ) ) : ?>
-						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', remove_query_arg( '_wp_http_referer' ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'accept-friend-request-' . $args['friend']->user_login, 'accept-friend-request' ) ); ?>"><?php esc_html_e( 'Accept Friend Request', 'friends' ); ?></a>
-						</p>
-					<?php elseif ( $args['friend']->has_cap( 'pending_friend_request' ) ) : ?>
-						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'add-friend-' . $args['friend']->user_login, 'add-friend' ) ); ?>"><?php esc_html_e( 'Resend Friend Request', 'friends' ); ?></a>
-						</p>
-					<?php elseif ( $args['friend']->has_cap( 'subscription' ) ) : ?>
-						<p class="description">
-							<a href="<?php echo esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'add-friend-' . $args['friend']->user_login, 'add-friend' ) ); ?>"><?php esc_html_e( 'Send Friend Request', 'friends' ); ?></a>
-						</p>
-					<?php elseif ( $args['friend']->has_cap( 'acquaintance' ) ) : ?>
-						<p class="description">
-							<?php
-							// translators: %s is a friend role.
-							echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'change-to-friend-' . $args['friend']->user_login, 'change-to-friend' ) ) . '">' . __( 'Friend', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
-							?>
-							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
-						</p>
-					<?php elseif ( $args['friend']->has_cap( 'friend' ) ) : ?>
-						<p class="description">
-						<?php
-							// translators: %s is a friend role.
-						echo wp_kses( sprintf( __( 'Change to %s.', 'friends' ), '<a href="' . esc_url( wp_nonce_url( add_query_arg( '_wp_http_referer', rawurlencode( remove_query_arg( '_wp_http_referer' ) ), self_admin_url( 'admin.php?page=edit-friend&user=' . $args['friend']->user_login ) ), 'change-to-restricted-friend-' . $args['friend']->user_login, 'change-to-restricted-friend' ) ) . '">' . __( 'Acquaintance', 'friends' ) . '</a>' ), array( 'a' => array( 'href' => array() ) ) );
-						?>
-							<?php esc_html_e( 'An Acquaintance has friend status but cannot read private posts.', 'friends' ); ?>
-						</p>
-					<?php endif; ?>
-				</td>
-			</tr>
-			<?php do_action( 'friends_edit_friend_table_end', $args['friend'] ); ?>
 		</tbody>
 	</table>
 	<?php do_action( 'friends_edit_friend_after_form', $args['friend'] ); ?>

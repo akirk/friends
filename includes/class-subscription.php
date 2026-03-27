@@ -74,6 +74,38 @@ class Subscription extends User {
 	}
 
 	/**
+	 * Update the user_login (term name) for this subscription.
+	 *
+	 * @param string $new_user_login The new user login.
+	 * @return bool True on success.
+	 */
+	public function update_user_login( $new_user_login ) {
+		$existing = term_exists( $new_user_login, self::TAXONOMY );
+		if ( $existing && (int) $existing['term_id'] !== $this->get_term_id() ) {
+			return false;
+		}
+
+		$result = wp_update_term(
+			$this->get_term_id(),
+			self::TAXONOMY,
+			array(
+				'name' => $new_user_login,
+				'slug' => $new_user_login,
+			)
+		);
+
+		if ( ! is_wp_error( $result ) ) {
+			$this->term->name       = $new_user_login;
+			$this->term->slug       = $new_user_login;
+			$this->data->user_login = $new_user_login;
+			$this->user_login       = $new_user_login;
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Registers the taxonomy
 	 */
 	public static function register_taxonomy() {
