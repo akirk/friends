@@ -1875,6 +1875,16 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	& section.subscriptions .subscribe-success {
+		margin-top: 1em;
+		display: flex;
+		align-items: center;
+		gap: .5em;
+
+		& .avatar { border-radius: 50%; }
+		& a { font-weight: bold; font-size: 1.1em; }
+	}
+
 	& section.subscriptions {
 		& .subscription-item {
 			padding: 8px 0;

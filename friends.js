@@ -858,6 +858,7 @@
 				url: url,
 			},
 			success( r ) {
+				$preview.data( 'feeds', r.feeds );
 				let html = '<div class="feed-preview">';
 				if ( r.avatar ) {
 					html += '<img src="' + r.avatar + '" class="avatar" width="48" height="48" /> ';
@@ -884,6 +885,7 @@
 				html += ( friends.text_follow || 'Follow' ) + '</button>';
 				html += '</div>';
 				$preview.html( html );
+				$preview.find( '.subscribe-btn' ).focus();
 			},
 			error( result ) {
 				$preview.html( '<p class="error">' + ( result && result.length ? result : ( friends.text_error || 'An error occurred.' ) ) + '</p>' );
@@ -894,13 +896,15 @@
 	$document.on( 'click', '.subscribe-btn', function () {
 		const $this = $( this );
 		const $preview = $( '#preview-subscription' );
+		const allFeeds = $preview.data( 'feeds' ) || {};
 		const feeds = {};
 		$preview.find( 'input[name="feed"]' ).each( function () {
 			const $input = $( this );
-			feeds[ $input.val() ] = {
-				url: $input.val(),
+			const feedUrl = $input.val();
+			feeds[ feedUrl ] = $.extend( {}, allFeeds[ feedUrl ] || {}, {
+				url: feedUrl,
 				selected: $input.is( ':checked' ),
-			};
+			} );
 		} );
 		wp.ajax.send( 'friends-subscribe-frontend', {
 			data: {
@@ -910,7 +914,14 @@
 				feeds: feeds,
 			},
 			success( r ) {
-				$preview.html( '<p class="success">' + r.message + '</p>' );
+				let html = '<div class="subscribe-success">';
+				const avatar = $preview.find( '.avatar' ).attr( 'src' );
+				if ( avatar ) {
+					html += '<img src="' + avatar + '" class="avatar" width="48" height="48" /> ';
+				}
+				html += '<a href="' + r.url + '">' + r.message + '</a>';
+				html += '</div>';
+				$preview.html( html );
 			},
 			error( result ) {
 				$preview.html( '<p class="error">' + result + '</p>' );
