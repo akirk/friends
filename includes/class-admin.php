@@ -55,7 +55,6 @@ class Admin {
 		add_action( 'wp_ajax_friends-refresh-feeds', array( $this, 'ajax_refresh_feeds' ) );
 		add_action( 'wp_ajax_friends-preview-subscription', array( $this, 'ajax_preview_subscription' ) );
 		add_action( 'wp_ajax_friends-subscribe-frontend', array( $this, 'ajax_subscribe_frontend' ) );
-		add_action( 'wp_ajax_friends-refresh-feeds', array( $this, 'ajax_refresh_feeds' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
@@ -1789,28 +1788,6 @@ class Admin {
 				'url' => $friend_user->get_local_friends_page_url(),
 			)
 		);
-	}
-
-	public function ajax_refresh_feeds() {
-		check_ajax_referer( 'friends-refresh' );
-
-		if ( ! Friends::has_required_privileges() ) {
-			wp_send_json_error( __( 'You do not have permission to do this.', 'friends' ) );
-		}
-
-		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
-
-		if ( ! empty( $_POST['user'] ) ) {
-			$friend_user = User::get_by_username( sanitize_user( wp_unslash( $_POST['user'] ) ) );
-			if ( ! $friend_user || is_wp_error( $friend_user ) || ! $friend_user->can_refresh_feeds() ) {
-				wp_send_json_error( __( 'Invalid user ID.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			}
-			$friend_user->retrieve_posts_from_active_feeds();
-		} else {
-			$this->friends->feed->retrieve_friend_posts();
-		}
-
-		wp_send_json_success();
 	}
 
 	public function ajax_set_avatar() {

@@ -928,4 +928,5 @@
 			},
 		} );
 	} );
+
 } )( jQuery, window.wp, window.friends );
