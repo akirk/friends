@@ -197,8 +197,6 @@ body.friends-page {
 
 /* === Center Column Header === */
 .mastodon-col-header {
-	position: sticky;
-	top: 32px;
 	z-index: 5;
 	background: light-dark(rgba(255,255,255,.9), rgba(40,44,55,.9));
 	backdrop-filter: blur(8px);
@@ -937,29 +935,35 @@ body.friends-page {
 	margin-right: 8px;
 }
 
-/* Mastodon theme: header image as banner on the column header */
-.mastodon-col-header.has-header-image {
+/* Mastodon theme: header image as banner on the title row */
+.mastodon-col-title-row.has-header-image {
 	position: relative;
 	background-size: cover;
 	background-position: center;
-}
-
-.mastodon-col-header.has-header-image .mastodon-col-title-row {
-	position: relative;
-	z-index: 1;
 	min-height: 150px;
 	align-items: flex-end;
 	padding-bottom: 10px;
+}
+
+.mastodon-col-title-row.has-header-image::before {
+	content: '';
+	position: absolute;
+	inset: 0;
 	background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.6) 100%);
 }
 
-.mastodon-col-header.has-header-image .mastodon-col-title-row h2 a,
-.mastodon-col-header.has-header-image .mastodon-col-title-row #page-title a {
+.mastodon-col-title-row.has-header-image > * {
+	position: relative;
+	z-index: 1;
+}
+
+.mastodon-col-title-row.has-header-image h2 a,
+.mastodon-col-title-row.has-header-image #page-title a {
 	color: #fff;
 	text-shadow: 0 1px 3px rgba(0,0,0,.5);
 }
 
-.mastodon-col-header.has-header-image .mastodon-col-title-row .mastodon-title-avatar {
+.mastodon-col-title-row.has-header-image .mastodon-title-avatar {
 	width: 48px;
 	height: 48px;
 	border-radius: 8px;
@@ -967,13 +971,9 @@ body.friends-page {
 	box-shadow: 0 1px 4px rgba(0,0,0,.3);
 }
 
-.mastodon-col-header.has-header-image .mastodon-col-title-row h2,
-.mastodon-col-header.has-header-image .mastodon-col-title-row #page-title {
+.mastodon-col-title-row.has-header-image h2,
+.mastodon-col-title-row.has-header-image #page-title {
 	font-size: 20px;
-}
-
-.mastodon-col-header.has-header-image .mastodon-chips-area {
-	background: light-dark(#fff, #282c37);
 }
 
 /* === Content Sections === */
