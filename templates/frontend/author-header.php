@@ -265,7 +265,7 @@ endforeach;
 ( function() {
 	var header = document.getElementById( 'author-header' );
 	if ( ! header ) return;
-	var navbar = header.closest( 'header' );
+	var navbar = header.closest( 'header' ) || header.closest( '.mastodon-col-header' );
 	if ( ! navbar ) return;
 	navbar.classList.add( 'has-header-image' );
 	navbar.style.backgroundImage = header.style.backgroundImage;
