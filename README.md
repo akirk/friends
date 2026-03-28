@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.0.2
+- Stable tag: 4.0.3
 
 Follow others via RSS and ActivityPub and read their posts on your own WordPress.
 
@@ -95,6 +95,11 @@ There is a cache of your friends post in form of a Custom Post Type friend_post 
 9. A Friend Request is accepted in the users screen. Delete the user to reject it or accept the request to make them a friend
 
 ## Changelog
+
+### 4.0.3
+- Fix header image centering in Mastodon theme ([#632])
+- Fix Mastodon theme design issues ([#630])
+- Add AJAX feed refresh on the frontend ([#631])
 
 ### 4.0.2
 - Clean up edit-friend UI: add username field, remove legacy roles ([#629])
@@ -536,3 +541,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#627]: https://github.com/akirk/friends/pull/627
 [#628]: https://github.com/akirk/friends/pull/628
 [#629]: https://github.com/akirk/friends/pull/629
+
+[#630]: https://github.com/akirk/friends/pull/630
+[#631]: https://github.com/akirk/friends/pull/631
+[#632]: https://github.com/akirk/friends/pull/632

@@ -1,3 +1,8 @@
+### 4.0.3
+- Fix header image centering in Mastodon theme ([#632])
+- Fix Mastodon theme design issues ([#630])
+- Add AJAX feed refresh on the frontend ([#631])
+
 ### 4.0.2
 - Clean up edit-friend UI: add username field, remove legacy roles ([#629])
 - Fix crash in admin_edit_user_link for virtual subscriptions ([#628])
@@ -795,3 +800,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#627]: https://github.com/akirk/friends/pull/627
 [#628]: https://github.com/akirk/friends/pull/628
 [#629]: https://github.com/akirk/friends/pull/629
+
+[#630]: https://github.com/akirk/friends/pull/630
+[#631]: https://github.com/akirk/friends/pull/631
+[#632]: https://github.com/akirk/friends/pull/632
