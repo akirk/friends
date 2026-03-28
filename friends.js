@@ -821,4 +821,26 @@
 		} );
 	} );
 
+	$document.on( 'click', '.refresh-feeds', function ( e ) {
+		e.preventDefault();
+		const $this = $( this );
+		const originalText = $this.text();
+		$this.text( friends.text_refreshing || 'Refreshing' );
+		wp.ajax.send( 'friends-refresh-feeds', {
+			data: {
+				_ajax_nonce: $this.data( 'nonce' ),
+				user: $this.data( 'user' ),
+			},
+			success() {
+				$this.text( friends.text_refreshed || 'Refreshed' );
+				setTimeout( function () {
+					window.location.reload();
+				}, 500 );
+			},
+			error( result ) {
+				$this.text( originalText );
+			},
+		} );
+	} );
+
 } )( jQuery, window.wp, window.friends );
