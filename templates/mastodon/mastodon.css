@@ -197,8 +197,6 @@ body.friends-page {
 
 /* === Center Column Header === */
 .mastodon-col-header {
-	position: sticky;
-	top: 32px;
 	z-index: 5;
 	background: light-dark(rgba(255,255,255,.9), rgba(40,44,55,.9));
 	backdrop-filter: blur(8px);
