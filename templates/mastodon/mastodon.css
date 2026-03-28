@@ -598,7 +598,6 @@ body.friends-page {
 /* === Comments === */
 .friends-page .comments-content {
 	padding: 12px 0 12px 16px;
-	border-left: 3px solid light-dark(#563acc, #6364ff);
 	margin: 12px 0;
 	font-size: 14px;
 }
