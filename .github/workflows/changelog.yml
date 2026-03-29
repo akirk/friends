@@ -1,0 +1,195 @@
+name: 'Changelog entry'
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check for Skip Changelog label, or if the PR is a draft'
+        id: check-skip-label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { payload : { pull_request : { number, labels, draft = false, base : { ref } } } } = context;
+
+            const skipLabel = 'Skip Changelog';
+            const prLabels = labels.map( label => label.name );
+            const hasSkipLabel = prLabels.includes( skipLabel );
+
+            if ( hasSkipLabel ) {
+              core.info( `Skipping changelog requirement for PR #${ number } because of the "${ skipLabel }" label.` );
+              core.setOutput( 'skip-changelog', 'true' );
+            } else if ( draft ) {
+              core.info( `Skipping changelog requirement for PR #${ number } because it is a draft.` );
+              core.setOutput( 'skip-changelog', 'true' );
+            } else if ( ref !== 'main' ) {
+              core.info( `Skipping changelog requirement for PR #${ number } because it is not against the "main" branch.` );
+              core.setOutput( 'skip-changelog', 'true' );
+            } else {
+              core.info( `No "${ skipLabel }" label found for PR #${ number }. Will check for changelog file.` );
+              core.setOutput( 'skip-changelog', 'false' );
+            }
+
+      - name: 'Check for changelog file'
+        if: steps.check-skip-label.outputs.skip-changelog != 'true'
+        id: check-changelog-file
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { repo: { owner, repo }, payload : { pull_request : { number } } } = context;
+
+            const fileList = [];
+            for await ( const response of github.paginate.iterator( github.rest.pulls.listFiles, {
+                owner,
+                repo,
+                pull_number: +number,
+                per_page: 100,
+            } ) ) {
+                for ( const file of response.data ) {
+                    fileList.push( file.filename );
+                }
+            }
+
+            const hasChangelogFile = fileList.some( file => file.startsWith( '.github/changelog/unreleased' ) );
+
+            if ( hasChangelogFile ) {
+                core.info( `PR #${ number } includes a changelog file.` );
+                core.setOutput( 'has-changelog-file', 'true' );
+            } else {
+                core.info( `PR #${ number } does not include a changelog file.` );
+                core.setOutput( 'has-changelog-file', 'false' );
+            }
+
+      - name: 'Check for changelog information in PR body'
+        id: check-pr-body
+        if: steps.check-skip-label.outputs.skip-changelog != 'true' && steps.check-changelog-file.outputs.has-changelog-file != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { payload : { pull_request : { number, body } } } = context;
+
+            if ( ! body ) {
+              core.setFailed( 'Your PR has no description. Please add a changelog entry by checking the "Automatically create a changelog entry" checkbox or add the "Skip Changelog" label.' );
+              return;
+            }
+
+            const autoCreateRegex = /-\s+\[x\]\s+Automatically\s+create\s+a\s+changelog\s+entry\s+from\s+the\s+details\s+below/i;
+            if ( ! autoCreateRegex.test( body ) ) {
+              core.setFailed( 'Your PR does not include a changelog file and the "Automatically create a changelog entry" checkbox is not checked. Please check it and fill in the details, or add the "Skip Changelog" label.' );
+              return;
+            }
+
+            const typeSection = body.match( /#### Type[\s\S]*?(?=####|$)/ );
+            const messageSection = body.match( /#### Message\s*\n+([\s\S]*?)(?=####|<\/details>|$)/ );
+
+            if ( ! typeSection || ! messageSection ) {
+              core.setFailed( 'Missing Type or Message section in the changelog details.' );
+              return;
+            }
+
+            const typeMatches = Array.from(
+              typeSection[0].matchAll( /-\s+\[x\]\s+(Added|Changed|Fixed|Removed)/gi )
+            );
+            if ( typeMatches.length !== 1 ) {
+              core.setFailed( 'Please check exactly one type (Added, Changed, Fixed, or Removed).' );
+              return;
+            }
+            const type = typeMatches[0][1].toLowerCase();
+
+            let changelogMessage = messageSection[1].trim();
+            if ( ! changelogMessage ) {
+              core.setFailed( 'Changelog message is empty. Please provide a message.' );
+              return;
+            }
+
+            // Strip HTML comments
+            changelogMessage = changelogMessage.replace( /<!--[\s\S]*?-->/g, '' ).trim();
+
+            if ( ! changelogMessage ) {
+              core.setFailed( 'Changelog message is empty after removing comments. Please provide a message.' );
+              return;
+            }
+
+            core.info( `Extracted changelog - Type: ${ type }, Message: ${ changelogMessage }` );
+            core.setOutput( 'type', type );
+            core.setOutput( 'message', changelogMessage );
+            core.setOutput( 'has-changelog-info', 'true' );
+
+      - name: 'Create changelog file from PR description'
+        if: steps.check-skip-label.outputs.skip-changelog != 'true' && steps.check-changelog-file.outputs.has-changelog-file != 'true' && steps.check-pr-body.outputs.has-changelog-info == 'true'
+        env:
+          PR_MESSAGE: '${{ steps.check-pr-body.outputs.message }}'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { repo: { owner, repo }, payload : { pull_request : { number, head : { ref, repo: head_repo } } } } = context;
+
+            const type = '${{ steps.check-pr-body.outputs.type }}';
+            const rawMessage = process.env.PR_MESSAGE;
+
+            if ( ! rawMessage ) {
+              core.setFailed( 'Changelog message is missing.' );
+              return;
+            }
+
+            const message = rawMessage.replace( /<!--[\s\S]*?-->/g, '' ).trim();
+
+            const content = `Type: ${ type }\n\n${ message }\n`;
+            const path = `.github/changelog/unreleased/${ number }-from-description`;
+
+            const isFromFork = head_repo.full_name !== `${ owner }/${ repo }`;
+
+            if ( isFromFork ) {
+              const commentBody = `Thanks for your contribution! 👋
+
+            I see you've provided changelog information in the PR description. Please create a file named \`.github/changelog/unreleased/${ number }-from-description\` with this content:
+
+            \`\`\`
+            ${ content }\`\`\`
+
+            You can also run \`composer changelog:add ${ number }\` to create it interactively.`;
+
+              // Check for existing comment to avoid duplicates
+              let hasExistingComment = false;
+              for await ( const response of github.paginate.iterator( github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: +number,
+                per_page: 100,
+              } ) ) {
+                for ( const comment of response.data ) {
+                  if ( comment.body.includes( 'changelog information in the PR description' ) ) {
+                    hasExistingComment = true;
+                    break;
+                  }
+                }
+                if ( hasExistingComment ) break;
+              }
+
+              if ( ! hasExistingComment ) {
+                await github.rest.issues.createComment( {
+                  owner,
+                  repo,
+                  issue_number: number,
+                  body: commentBody
+                } );
+              }
+              return;
+            }
+
+            try {
+              await github.rest.repos.createOrUpdateFileContents( {
+                owner,
+                repo,
+                path,
+                message: 'Add changelog',
+                content: Buffer.from( content ).toString( 'base64' ),
+                branch: ref
+              } );
+              core.info( `Created changelog file: ${ path }` );
+            } catch ( error ) {
+              core.setFailed( `Failed to create changelog file: ${ error.message }` );
+            }
