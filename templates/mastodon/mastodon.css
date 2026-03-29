@@ -92,9 +92,18 @@ body.friends-page {
 /* Mobile overlay */
 .mastodon-overlay { display: none; }
 
+/* Search inside right sidebar (shown when left col is hidden) */
+.mastodon-sidebar-search {
+	display: none;
+	padding: 16px 16px 8px;
+}
+
 @media (max-width: 1100px) {
 	.mastodon-left-col {
 		display: none;
+	}
+	.mastodon-sidebar-search {
+		display: block;
 	}
 }
 

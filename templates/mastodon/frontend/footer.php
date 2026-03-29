@@ -16,6 +16,14 @@
 				<h2><?php esc_html_e( 'Friends', 'friends' ); ?></h2>
 			</a>
 		</div>
+		<form class="mastodon-sidebar-search" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
+			<div class="mastodon-search-wrap">
+					<?php
+					$_sidebar_search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					?>
+				<input class="mastodon-search-input" type="text" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search or paste URL' ); ?>" value="<?php echo esc_attr( $_sidebar_search ); ?>" autocomplete="off" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-autocomplete' ) ); ?>" />
+			</div>
+		</form>
 		<nav class="mastodon-right-nav">
 			<?php dynamic_sidebar( 'friends-sidebar' ); ?>
 		</nav>
