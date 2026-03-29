@@ -623,6 +623,22 @@ body.friends-page {
 	padding-left: 30px;
 }
 
+/* Follow button on boosts: hidden by default, shown on hover (desktop only) */
+.friends-page .posts .boosted .follow-button,
+.friends-page .posts .boosted .follow-button span.name {
+	display: none;
+}
+
+.friends-page .posts .boosted:hover .follow-button {
+	display: inline;
+}
+
+@media (max-width: 780px) {
+	.friends-page .posts .boosted:hover .follow-button {
+		display: none;
+	}
+}
+
 /* === Comments === */
 .friends-page .comments-content {
 	padding: 12px 0 12px 16px;
