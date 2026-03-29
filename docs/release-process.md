@@ -29,10 +29,18 @@ These scripts can also be run locally if needed:
 - `bin/version-bump.sh <version>` — update version in `friends.php` and `README.md`
 - `bin/changelog-add.sh [PR-number]` — interactively create a changelog entry
 
-## Secrets
+## Setup
 
-The deploy workflow requires two repository secrets:
+### Environment
+
+The deploy workflow uses a `production` environment with required reviewers. Configure at: https://github.com/akirk/friends/settings/environments
+
+1. Create an environment called `production`
+2. Enable **Required reviewers** and add the users who can approve deploys
+3. Optionally restrict to the `main` branch under **Deployment branches**
+
+### Secrets
+
+Add these as environment secrets on `production` (or as repository secrets):
 - `SVN_USERNAME` — your WordPress.org username
 - `SVN_PASSWORD` — your WordPress.org password
-
-Configure at: https://github.com/akirk/friends/settings/secrets/actions
