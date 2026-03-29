@@ -334,7 +334,7 @@ body.friends-page {
 /* === Individual Status Card === */
 .friends-page .posts article.card {
 	position: relative;
-	padding: 16px 16px 14px 78px;
+	padding: 16px 16px 16px 78px;
 	border: none;
 	border-bottom: 1px solid light-dark(#c8d0db, #393f4f);
 	border-radius: 0;
@@ -954,6 +954,45 @@ body.friends-page {
 	border-radius: 8px;
 	vertical-align: middle;
 	margin-right: 8px;
+	margin-bottom: 10px;
+}
+
+/* Add spacing after the description text, before chips */
+.friends-page #author-header > p {
+	margin-bottom: 12px;
+}
+
+/* Folder dropdown: blend into chip style */
+.friends-page .friends-folder-selector select {
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	border: none;
+	color: inherit;
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .friends-folder-selector select:focus {
+	outline: none;
+}
+
+/* Message section styling */
+.friends-page .card.mt-2.p-2 {
+	padding: 16px 16px 16px 78px !important;
+	margin: 0 !important;
+	border: none;
+	border-bottom: 1px solid light-dark(#c8d0db, #393f4f);
+	border-radius: 0;
+	background: light-dark(#fff, #282c37);
+	box-shadow: none;
+}
+
+.friends-page #friends-send-new-message {
+	padding: 16px !important;
 }
 
 /* Mastodon theme: header image as banner on the title row */
