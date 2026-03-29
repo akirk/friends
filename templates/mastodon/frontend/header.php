@@ -74,6 +74,9 @@ $mastodon_current_user = wp_get_current_user();
 					echo '<h2 id="page-title"><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $_title ) . '</a></h2>';
 				}
 				?>
+				<a class="off-canvas-toggle" href="#friends-sidebar" aria-label="<?php esc_attr_e( 'Open sidebar', 'friends' ); ?>">
+					<i class="dashicons dashicons-menu"></i>
+				</a>
 			</div>
 			<?php if ( ! is_single() && empty( $args['no-bottom-margin'] ) ) : ?>
 			<div class="mastodon-chips-area">

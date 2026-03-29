@@ -10,6 +10,7 @@
 
 	<!-- Right column: navigation sidebar -->
 	<aside class="mastodon-right-col" id="friends-sidebar">
+		<a class="mastodon-sidebar-close" href="#close" aria-label="<?php esc_attr_e( 'Close sidebar', 'friends' ); ?>">&times;</a>
 		<div class="mastodon-brand">
 			<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 				<h2><?php esc_html_e( 'Friends', 'friends' ); ?></h2>
