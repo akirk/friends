@@ -623,6 +623,11 @@ body.friends-page {
 	padding-left: 30px;
 }
 
+/* Boost indicator: keep text light-weight to distinguish from post author */
+.friends-page .posts .boosted {
+	font-weight: 400;
+}
+
 /* Follow button on boosts: hidden by default, shown on hover (desktop only) */
 .friends-page .posts .boosted .follow-button,
 .friends-page .posts .boosted .follow-button span.name {
