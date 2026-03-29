@@ -10,7 +10,7 @@
 
 	$document.on(
 		'keydown',
-		'input#master-search, .form-autocomplete a',
+		'input#master-search, input.master-search, .form-autocomplete a',
 		function ( e ) {
 			const code = e.keyCode ? e.keyCode : e.which;
 			const results = $( this )
@@ -28,7 +28,7 @@
 				} else {
 					searchResultFocused -= 1;
 					if ( -1 === searchResultFocused ) {
-						$( 'input#master-search' ).focus();
+						$( this ).closest( '.form-autocomplete' ).find( 'input.master-search, input#master-search' ).focus();
 						return false;
 					}
 				}
@@ -48,7 +48,7 @@
 		}
 	);
 
-	$document.on( 'keyup', 'input#master-search', function () {
+	$document.on( 'keyup', 'input#master-search, input.master-search', function () {
 		const input = $( this );
 		const query = input.val().trim();
 
