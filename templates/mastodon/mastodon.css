@@ -71,6 +71,24 @@ body.friends-page {
 	padding-bottom: 16px;
 }
 
+/* Sidebar close button (mobile only) */
+.mastodon-sidebar-close {
+	display: none;
+	position: absolute;
+	top: 10px;
+	right: 12px;
+	font-size: 24px;
+	line-height: 1;
+	color: light-dark(#606984, #9baec8);
+	text-decoration: none;
+	z-index: 1;
+}
+
+.mastodon-sidebar-close:hover {
+	color: light-dark(#282c37, #fff);
+	text-decoration: none;
+}
+
 /* Mobile overlay */
 .mastodon-overlay { display: none; }
 
@@ -100,6 +118,9 @@ body.friends-page {
 		box-shadow: -4px 0 16px rgba(0,0,0,.2);
 	}
 	.mastodon-right-col:target {
+		display: block;
+	}
+	.mastodon-sidebar-close {
 		display: block;
 	}
 	.mastodon-overlay {
@@ -434,7 +455,7 @@ body.friends-page {
 }
 
 .friends-page .collapse-post { display: none; }
-.friends-page .teaser { display: none; }
+.friends-page .posts:not(.all-collapsed) .teaser { display: none; }
 
 /* === Post Title === */
 .friends-page .posts .card-title {
@@ -1290,4 +1311,102 @@ body.friends-page {
 	cursor: pointer;
 	font-size: .8rem;
 	padding: 1px 6px;
+}
+
+/* === Compact (all-collapsed) Mode === */
+
+/* Collapsed items: hide body, footer, card-title block */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) footer.entry-meta,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title {
+	display: none;
+}
+
+/* Compact card: reduce padding, single-line layout */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) {
+	padding: 10px 14px 10px 52px;
+	cursor: pointer;
+}
+
+/* Smaller avatar in compact mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header > div.avatar {
+	top: 10px;
+	left: 14px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header .avatar img {
+	width: 28px;
+	height: 28px;
+}
+
+/* Header inline */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header {
+	margin-bottom: 0;
+	align-items: center;
+}
+
+/* Author and permalink inline */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .post-meta {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: nowrap;
+	overflow: hidden;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author {
+	flex-shrink: 0;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author::after {
+	content: '\00b7';
+	margin-left: 6px;
+	color: light-dark(#999, #606984);
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .permalink {
+	flex-shrink: 0;
+	font-size: 12px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reading-time {
+	display: none;
+}
+
+/* Show teaser inline after header */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser {
+	display: block;
+	font-size: 13px;
+	color: light-dark(#606984, #9baec8);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-top: 2px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser p {
+	display: inline;
+	margin: 0;
+}
+
+/* Hide reblog/boost metadata in collapsed mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblog-info,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblogged-by {
+	display: none;
+}
+
+/* Hide overflow menu in collapsed mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .overflow {
+	display: none;
+}
+
+/* Expanded item within collapsed list: teaser hidden */
+.friends-page .posts.all-collapsed article.card.uncollapsed div.teaser {
+	display: none;
+}
+
+/* Highlight for currently-selected item */
+.friends-page .posts.all-collapsed article.card.mast-current:not(.uncollapsed) {
+	background: light-dark(#f0f3f8, #2c3040);
 }
