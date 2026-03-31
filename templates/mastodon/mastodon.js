@@ -120,11 +120,27 @@
 		return false;
 	} );
 
+	function toggleCard( card ) {
+		var items = getItems();
+		var index = items.index( card );
+		var $card = $( card );
+
+		currentIndex = index;
+		items.removeClass( 'mast-current' );
+		$card.addClass( 'mast-current' );
+
+		// Collapse all others.
+		items.not( card ).removeClass( 'uncollapsed' );
+
+		// Toggle this one.
+		$card.toggleClass( 'uncollapsed' );
+	}
+
 	// Block link clicks on collapsed items — expand instead.
-	$( document ).on( 'click', 'section.posts.all-collapsed article.card:not(.uncollapsed) .post-meta a', function( e ) {
+	$( document ).on( 'click', 'section.posts.all-collapsed article.card:not(.uncollapsed) .post-meta a, section.posts.all-collapsed article.card:not(.uncollapsed) .card-title a', function( e ) {
 		e.preventDefault();
 		e.stopPropagation();
-		$( this ).closest( 'article.card' ).trigger( 'click' );
+		toggleCard( $( this ).closest( 'article.card' )[0] );
 		return false;
 	} );
 
@@ -134,19 +150,7 @@
 			return;
 		}
 
-		var items = getItems();
-		var index = items.index( this );
-		var $card = $( this );
-
-		currentIndex = index;
-		items.removeClass( 'mast-current' );
-		$card.addClass( 'mast-current' );
-
-		// Collapse all others.
-		items.not( this ).removeClass( 'uncollapsed' );
-
-		// Toggle this one.
-		$card.toggleClass( 'uncollapsed' );
+		toggleCard( this );
 
 		e.stopPropagation();
 		return false;
