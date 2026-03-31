@@ -1384,12 +1384,25 @@ body.friends-page {
 
 /* === Compact (all-collapsed) Mode === */
 
-/* Collapsed items: hide body, footer, card-title block */
+/* Collapsed items: hide body and footer */
 .friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
 .friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,
-.friends-page .posts.all-collapsed article.card:not(.uncollapsed) footer.entry-meta,
-.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title {
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) footer.entry-meta {
 	display: none;
+}
+
+/* Show card-title as a truncated preview line in compact mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title {
+	margin: 2px 0 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title a {
+	font-size: 13px;
+	font-weight: 400;
+	color: light-dark(#606984, #9baec8);
 }
 
 /* Compact card: reduce padding, single-line layout */
