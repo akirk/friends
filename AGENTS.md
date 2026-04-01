@@ -1,4 +1,4 @@
-# Claude Instructions for Friends Plugin
+# AI Agent Instructions for Friends Plugin
 
 ## What is Friends?
 
@@ -47,6 +47,25 @@ The plugin integrates deeply with:
 - `composer test` - Run tests (ActivityPub tests require the ActivityPub plugin)
 - `composer check-cs` - Check coding standards
 - `composer fix-cs` - Auto-fix coding standards issues
+
+### Changelog Workflow
+Every PR must include a changelog entry. Create one by running `composer changelog:add` or by placing a file in `.github/changelog/unreleased/{PR-number}` with this format:
+
+```
+Type: fixed
+
+Description of the change
+```
+
+Valid types: `added`, `changed`, `fixed`, `removed`.
+
+- If working on a branch without a PR number yet, use the branch name as the filename.
+- The PR template has a checkbox to auto-create the entry from the PR description.
+- PRs that don't need a changelog entry should be labeled `Skip Changelog`.
+- At release time, `bin/changelog-write.sh <version>` compiles all entries into `CHANGELOG.md` and `README.md` in the project's existing format.
+
+### Release Process
+To release, create a GitHub release with a version tag (e.g. `4.0.4`). The `deploy.yml` workflow automatically compiles changelog entries, bumps the version, commits to `main`, and deploys to WordPress.org. No local SVN or scripts needed. See `docs/release-process.md` for details.
 
 ## Playground Link
 

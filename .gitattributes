@@ -17,3 +17,5 @@ package-lock.json	export-ignore
 package.*	export-ignore
 sftp-config.json	export-ignore
 vendor	export-ignore
+composer.json	export-ignore
+CLAUDE.md	export-ignore

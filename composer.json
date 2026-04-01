@@ -32,6 +32,12 @@
 		],
 		"update-wiki": [
 			"test -d ../friends.wiki && php ./vendor/akirk/extract-wp-hooks/extract-wp-hooks.php && cd ../friends.wiki/ && git add . && git commit -m 'Update hooks'; git push"
+		],
+		"changelog:add": [
+			"bash bin/changelog-add.sh"
+		],
+		"changelog:write": [
+			"bash bin/changelog-write.sh"
 		]
 	}
 }
