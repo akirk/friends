@@ -1,3 +1,6 @@
+### 4.0.4
+- Mastodon theme: compact mode, mobile sidebar, and profile page cosmetics ([#634])
+
 ### 4.0.3
 - Fix header image centering in Mastodon theme ([#632])
 - Fix Mastodon theme design issues ([#630])
@@ -804,3 +807,5 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#630]: https://github.com/akirk/friends/pull/630
 [#631]: https://github.com/akirk/friends/pull/631
 [#632]: https://github.com/akirk/friends/pull/632
+
+[#634]: https://github.com/akirk/friends/pull/634
