@@ -42,10 +42,12 @@ $mastodon_current_user = wp_get_current_user();
 				<span class="mastodon-handle">@<?php echo esc_html( $mastodon_current_user->user_login ); ?></span>
 			</div>
 		</a>
-		<form class="mastodon-search-form" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
-			<div class="mastodon-search-wrap">
-				<input class="mastodon-search-input" type="text" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search or paste URL' ); ?>" value="<?php echo esc_attr( $_search ); ?>" autocomplete="off" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-autocomplete' ) ); ?>" id="master-search" />
+		<form class="mastodon-search-form form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
+			<div class="form-autocomplete-input mastodon-search-wrap">
+				<input class="mastodon-search-input master-search" type="text" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search or paste URL' ); ?>" value="<?php echo esc_attr( $_search ); ?>" autocomplete="off" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-autocomplete' ) ); ?>" id="master-search" />
+				<i class="form-icon"></i>
 			</div>
+			<ul class="menu" style="display: none"></ul>
 		</form>
 	</aside>
 
@@ -74,6 +76,9 @@ $mastodon_current_user = wp_get_current_user();
 					echo '<h2 id="page-title"><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $_title ) . '</a></h2>';
 				}
 				?>
+				<a class="off-canvas-toggle" href="#friends-sidebar" aria-label="<?php esc_attr_e( 'Open sidebar', 'friends' ); ?>">
+					<i class="dashicons dashicons-menu"></i>
+				</a>
 			</div>
 			<?php if ( ! is_single() && empty( $args['no-bottom-margin'] ) ) : ?>
 			<div class="mastodon-chips-area">

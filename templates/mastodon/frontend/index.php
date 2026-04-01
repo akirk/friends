@@ -14,7 +14,7 @@ Friends\Friends::template_loader()->get_template_part(
 $show_welcome = isset( $args['show_welcome'] ) && $args['show_welcome'];
 
 ?>
-<section class="posts columns">
+<section class="posts columns<?php echo 'collapsed' === $args['frontend_default_view'] && ! is_single() ? ' all-collapsed' : ''; ?>">
 	<?php
 	if ( $show_welcome || ! have_posts() ) {
 		?>

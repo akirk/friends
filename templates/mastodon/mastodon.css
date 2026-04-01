@@ -71,12 +71,39 @@ body.friends-page {
 	padding-bottom: 16px;
 }
 
+/* Sidebar close button (mobile only) */
+.mastodon-sidebar-close {
+	display: none;
+	position: absolute;
+	top: 10px;
+	right: 12px;
+	font-size: 24px;
+	line-height: 1;
+	color: light-dark(#606984, #9baec8);
+	text-decoration: none;
+	z-index: 1;
+}
+
+.mastodon-sidebar-close:hover {
+	color: light-dark(#282c37, #fff);
+	text-decoration: none;
+}
+
 /* Mobile overlay */
 .mastodon-overlay { display: none; }
+
+/* Search inside right sidebar (shown when left col is hidden) */
+.mastodon-sidebar-search {
+	display: none;
+	padding: 16px 16px 8px;
+}
 
 @media (max-width: 1100px) {
 	.mastodon-left-col {
 		display: none;
+	}
+	.mastodon-sidebar-search {
+		display: block;
 	}
 }
 
@@ -100,6 +127,9 @@ body.friends-page {
 		box-shadow: -4px 0 16px rgba(0,0,0,.2);
 	}
 	.mastodon-right-col:target {
+		display: block;
+	}
+	.mastodon-sidebar-close {
 		display: block;
 	}
 	.mastodon-overlay {
@@ -313,7 +343,7 @@ body.friends-page {
 /* === Individual Status Card === */
 .friends-page .posts article.card {
 	position: relative;
-	padding: 16px 16px 14px 78px;
+	padding: 16px 16px 16px 78px;
 	border: none;
 	border-bottom: 1px solid light-dark(#c8d0db, #393f4f);
 	border-radius: 0;
@@ -434,7 +464,7 @@ body.friends-page {
 }
 
 .friends-page .collapse-post { display: none; }
-.friends-page .teaser { display: none; }
+.friends-page .posts:not(.all-collapsed) .teaser { display: none; }
 
 /* === Post Title === */
 .friends-page .posts .card-title {
@@ -591,6 +621,27 @@ body.friends-page {
 	align-items: center;
 	gap: 6px;
 	padding-left: 30px;
+}
+
+/* Boost indicator: keep text light-weight to distinguish from post author */
+.friends-page .posts .boosted {
+	font-weight: 400;
+}
+
+/* Follow button on boosts: hidden by default, shown on hover (desktop only) */
+.friends-page .posts .boosted .follow-button,
+.friends-page .posts .boosted .follow-button span.name {
+	display: none;
+}
+
+.friends-page .posts .boosted:hover .follow-button {
+	display: inline;
+}
+
+@media (max-width: 780px) {
+	.friends-page .posts .boosted:hover .follow-button {
+		display: none;
+	}
 }
 
 /* === Comments === */
@@ -933,6 +984,45 @@ body.friends-page {
 	border-radius: 8px;
 	vertical-align: middle;
 	margin-right: 8px;
+	margin-bottom: 10px;
+}
+
+/* Add spacing after the description text, before chips */
+.friends-page #author-header > p {
+	margin-bottom: 12px;
+}
+
+/* Folder dropdown: blend into chip style */
+.friends-page .friends-folder-selector select {
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	border: none;
+	color: inherit;
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .friends-folder-selector select:focus {
+	outline: none;
+}
+
+/* Message section styling */
+.friends-page .card.mt-2.p-2 {
+	padding: 16px 16px 16px 78px !important;
+	margin: 0 !important;
+	border: none;
+	border-bottom: 1px solid light-dark(#c8d0db, #393f4f);
+	border-radius: 0;
+	background: light-dark(#fff, #282c37);
+	box-shadow: none;
+}
+
+.friends-page #friends-send-new-message {
+	padding: 16px !important;
 }
 
 /* Mastodon theme: header image as banner on the title row */
@@ -1290,4 +1380,115 @@ body.friends-page {
 	cursor: pointer;
 	font-size: .8rem;
 	padding: 1px 6px;
+}
+
+/* === Compact (all-collapsed) Mode === */
+
+/* Collapsed items: hide body and footer */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) footer.entry-meta {
+	display: none;
+}
+
+/* Show card-title as a truncated preview line in compact mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title {
+	margin: 2px 0 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title a {
+	font-size: 13px;
+	font-weight: 400;
+	color: light-dark(#606984, #9baec8);
+}
+
+/* Compact card: reduce padding, single-line layout */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) {
+	padding: 10px 14px 10px 52px;
+	cursor: pointer;
+}
+
+/* Smaller avatar in compact mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header > div.avatar {
+	top: 10px;
+	left: 14px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header .avatar img {
+	width: 28px;
+	height: 28px;
+}
+
+/* Header inline */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header {
+	margin-bottom: 0;
+	align-items: center;
+}
+
+/* Author and permalink inline */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .post-meta {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: nowrap;
+	overflow: hidden;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author {
+	flex-shrink: 0;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author::after {
+	content: '\00b7';
+	margin-left: 6px;
+	color: light-dark(#999, #606984);
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .permalink {
+	flex-shrink: 0;
+	font-size: 12px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reading-time {
+	display: none;
+}
+
+/* Show teaser inline after header */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser {
+	display: block;
+	font-size: 13px;
+	color: light-dark(#606984, #9baec8);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-top: 2px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser p {
+	display: inline;
+	margin: 0;
+}
+
+/* Hide reblog/boost metadata in collapsed mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblog-info,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblogged-by {
+	display: none;
+}
+
+/* Hide overflow menu in collapsed mode */
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .overflow {
+	display: none;
+}
+
+/* Expanded item within collapsed list: teaser hidden */
+.friends-page .posts.all-collapsed article.card.uncollapsed div.teaser {
+	display: none;
+}
+
+/* Highlight for currently-selected item */
+.friends-page .posts.all-collapsed article.card.mast-current:not(.uncollapsed) {
+	background: light-dark(#f0f3f8, #2c3040);
 }

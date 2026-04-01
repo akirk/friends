@@ -64,7 +64,7 @@ $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_frien
 			$activitypub_meta = get_post_meta( get_the_id(), 'activitypub', true );
 			$is_reblog        = is_array( $activitypub_meta ) && ! empty( $activitypub_meta['reblog'] );
 			?>
-			<a href="<?php echo esc_url( get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
+			<a href="<?php echo esc_url( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ? $author_url : get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
 				<?php if ( $is_reblog && $avatar !== $args['avatar'] ) : ?>
 					<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
 					<img src="<?php echo esc_url( $args['avatar'] ); ?>" width="20" height="20" class="avatar avatar-overlay" />
