@@ -29,28 +29,34 @@ jobs:
           # Bump version numbers
           bash bin/version-bump.sh "$VERSION"
 
-      - name: Commit and update tag
-        env:
-          VERSION: ${{ github.event.release.tag_name }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git add -A
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Version bump + Changelog for $VERSION"
-            git push origin main
-
-            # Move the tag to the new commit
-            git tag -f "$VERSION"
-            git push origin "$VERSION" --force
-          fi
-
       - name: WordPress Plugin Deploy
         uses: 10up/action-wordpress-plugin-deploy@stable
         env:
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
           SLUG: friends
+
+      - name: Create version bump PR
+        env:
+          VERSION: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="release/$VERSION"
+          git checkout -b "$BRANCH"
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Version bump + Changelog for $VERSION"
+            git push origin "$BRANCH"
+            gh pr create \
+              --title "Version bump + Changelog for $VERSION" \
+              --body "Automated version bump and changelog update from release $VERSION." \
+              --base main \
+              --head "$BRANCH" \
+              --label "Skip Changelog"
+          fi
