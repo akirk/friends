@@ -2,18 +2,13 @@
 
 ## How to release
 
-1. Go to https://github.com/akirk/friends/releases
-2. Click **Draft a new release**
-3. Type the new version tag (e.g. `4.0.4`)
-4. Target the `main` branch
-5. Click **Generate release notes**, then **Publish release**
-
-That's it. The `deploy.yml` workflow will automatically:
-- Compile changelog entries from `.github/changelog/unreleased/` into `CHANGELOG.md` and `README.md`
-- Bump the version in `friends.php` and `README.md`
-- Commit and push to `main`
-- Move the tag to the new commit
-- Deploy to WordPress.org via SVN
+1. Go to [Actions → Prepare Release](https://github.com/akirk/friends/actions/workflows/release-prep.yml)
+2. Click **Run workflow**, enter the version number (e.g. `4.0.4`), and run it
+3. The workflow creates a PR with the version bump and compiled changelog
+4. Review and merge the PR
+5. [Create a GitHub release](https://github.com/akirk/friends/releases/new) with the version as the tag, targeting `main`
+6. Approve the deployment in the `production` environment
+7. The `deploy.yml` workflow deploys to WordPress.org
 
 ## Version numbering
 

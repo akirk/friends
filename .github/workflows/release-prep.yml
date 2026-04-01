@@ -1,0 +1,76 @@
+name: Prepare Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 4.0.4)'
+        required: true
+        type: string
+jobs:
+  prepare:
+    name: Prepare release PR
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid version number: $VERSION (expected X.Y.Z)"
+            exit 1
+          fi
+
+          if git tag | grep -Eq "^$VERSION$"; then
+            echo "::error::Tag $VERSION already exists"
+            exit 1
+          fi
+
+      - name: Compile changelog and bump version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          # Compile changelog entries
+          if [ -d ".github/changelog/unreleased" ] && [ -n "$(ls -A .github/changelog/unreleased 2>/dev/null)" ]; then
+            bash bin/changelog-write.sh "$VERSION"
+          else
+            echo "::error::No unreleased changelog entries found"
+            exit 1
+          fi
+
+          # Bump version numbers
+          bash bin/version-bump.sh "$VERSION"
+
+      - name: Create PR
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="release/$VERSION"
+          git checkout -b "$BRANCH"
+          git add -A
+          git commit -m "Version bump + Changelog for $VERSION"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --title "Release $VERSION" \
+            --body "$(cat <<EOF
+          Automated release preparation for $VERSION.
+
+          ## After merging
+
+          Create a GitHub release at https://github.com/${{ github.repository }}/releases/new with:
+          - Tag: \`$VERSION\`
+          - Target: \`main\`
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH" \
+            --label "Skip Changelog"

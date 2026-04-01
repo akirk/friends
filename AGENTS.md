@@ -65,7 +65,7 @@ Valid types: `added`, `changed`, `fixed`, `removed`.
 - At release time, `bin/changelog-write.sh <version>` compiles all entries into `CHANGELOG.md` and `README.md` in the project's existing format.
 
 ### Release Process
-To release, create a GitHub release with a version tag (e.g. `4.0.4`). The `deploy.yml` workflow automatically compiles changelog entries, bumps the version, commits to `main`, and deploys to WordPress.org. No local SVN or scripts needed. See `docs/release-process.md` for details.
+To release, trigger the "Prepare Release" workflow with a version number. It creates a PR with the version bump and compiled changelog. After merging, create a GitHub release with the version tag to deploy to WordPress.org. See `docs/release-process.md` for details.
 
 ## Playground Link
 
