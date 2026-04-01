@@ -68,7 +68,7 @@ jobs:
           git checkout -b "$BRANCH"
           git add -A
           git commit -m "Version bump + Changelog for $VERSION"
-          git push origin "$BRANCH"
+          git push --force origin "$BRANCH"
 
           gh pr create \
             --title "Release $VERSION" \
