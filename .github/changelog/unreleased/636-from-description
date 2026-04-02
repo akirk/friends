@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix search pagination losing search results on infinite scroll and add search controls (clear search, sort order).
