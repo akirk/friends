@@ -2174,12 +2174,14 @@ class Frontend {
 			}
 		}
 
-		if ( isset( $_GET['order'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$order = strtoupper( sanitize_text_field( wp_unslash( $_GET['order'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['order'] ) ) {
+			$order = strtoupper( sanitize_text_field( wp_unslash( $_GET['order'] ) ) );
 			if ( in_array( $order, array( 'ASC', 'DESC' ), true ) ) {
 				$query->set( 'order', $order );
 			}
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		return $query;
 	}
