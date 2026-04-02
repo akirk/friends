@@ -46,11 +46,13 @@ switch ( $args['friends']->frontend->post_format ) {
 		$_title = _x( 'Audio feed', 'Post format', 'friends' );
 		break;
 }
+$_search_term = '';
 if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$_search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	$_title = sprintf(
 		// translators: %s is a search term.
 		__( 'Search for "%s"', 'friends' ),
-		esc_html( sanitize_text_field( wp_unslash( $_GET['s'] ) ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		esc_html( $_search_term )
 	);
 }
 
@@ -87,40 +89,70 @@ if ( $args['friends']->frontend->reaction ) {
 	</p>
 <?php endif; ?>
 
-<?php foreach ( $data['post_count_by_post_format'] as $post_format => $count ) : ?>
-	<a class="chip post-count-<?php echo esc_attr( $post_format ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_post_counts' ) ); ?>" href="<?php echo esc_url( home_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
-<?php endforeach; ?>
-
-<?php if ( isset( $_GET['show-hidden'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
-	<a class="chip" href="<?php echo esc_attr( remove_query_arg( 'show-hidden' ) ); ?>">
-		<?php echo esc_html__( 'Hide hidden items', 'friends' ); ?>
-	</a>
-<?php elseif ( $hidden_post_count > 0 ) : ?>
-	<a class="chip" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
-		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) ); ?>
-	</a>
-<?php elseif ( $hidden_post_count ) : ?>
-	<a class="chip post-count-trash" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
-		<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), $hidden_post_count ) ); ?>
-	</a>
-<?php endif; ?>
-
-
-<?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
-	<a class="chip" href="<?php echo esc_url( home_url( '/friends/reaction' . $slug . '/' ) ); ?>">
+<?php if ( $_search_term ) : ?>
 	<?php
-	echo esc_html(
-		sprintf(
-			// translators: %s is an emoji.
-			__( 'Reacted with %s', 'friends' ),
-			$reaction->char
-		)
-	);
+	$_current_order = isset( $_GET['order'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_GET['order'] ) ) ) : 'DESC'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	?>
-</a>
-<?php endforeach; ?>
+	<a class="chip" href="<?php echo esc_url( remove_query_arg( 's' ) ); ?>">
+		<?php
+		echo esc_html(
+			sprintf(
+				/* translators: %s is the search term */
+				__( 'Clear search for "%s"', 'friends' ),
+				$_search_term
+			)
+		);
+		?>
+	</a>
+	<?php if ( 'DESC' === $_current_order ) : ?>
+		<a class="chip" href="<?php echo esc_url( add_query_arg( 'order', 'ASC' ) ); ?>">
+			<?php esc_html_e( 'Oldest first', 'friends' ); ?>
+		</a>
+	<?php else : ?>
+		<a class="chip active" href="<?php echo esc_url( add_query_arg( 'order', 'ASC' ) ); ?>">
+			<?php esc_html_e( 'Oldest first', 'friends' ); ?>
+		</a>
+		<a class="chip" href="<?php echo esc_url( remove_query_arg( 'order' ) ); ?>">
+			<?php esc_html_e( 'Newest first', 'friends' ); ?>
+		</a>
+	<?php endif; ?>
+	<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
+<?php else : ?>
+	<?php foreach ( $data['post_count_by_post_format'] as $post_format => $count ) : ?>
+		<a class="chip post-count-<?php echo esc_attr( $post_format ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends_post_counts' ) ); ?>" href="<?php echo esc_url( home_url( '/friends/type/' . $post_format . '/' ) ); ?>"><?php echo esc_html( $args['friends']->get_post_format_plural_string( $post_format, $count ) ); ?></a>
+	<?php endforeach; ?>
 
-<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
+	<?php if ( isset( $_GET['show-hidden'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?>
+		<a class="chip" href="<?php echo esc_attr( remove_query_arg( 'show-hidden' ) ); ?>">
+			<?php echo esc_html__( 'Hide hidden items', 'friends' ); ?>
+		</a>
+	<?php elseif ( $hidden_post_count > 0 ) : ?>
+		<a class="chip" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
+			<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) ); ?>
+		</a>
+	<?php elseif ( $hidden_post_count ) : ?>
+		<a class="chip post-count-trash" href="<?php echo esc_attr( add_query_arg( 'show-hidden', 1 ) ); ?>">
+			<?php echo esc_html( sprintf( /* translators: %s is the number of hidden posts */_n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), $hidden_post_count ) ); ?>
+		</a>
+	<?php endif; ?>
+
+
+	<?php foreach ( Friends\Reactions::get_available_emojis() as $slug => $reaction ) : ?>
+		<a class="chip" href="<?php echo esc_url( home_url( '/friends/reaction' . $slug . '/' ) ); ?>">
+		<?php
+		echo esc_html(
+			sprintf(
+				// translators: %s is an emoji.
+				__( 'Reacted with %s', 'friends' ),
+				$reaction->char
+			)
+		);
+		?>
+	</a>
+	<?php endforeach; ?>
+
+	<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
+<?php endif; ?>
 
 <?php do_action( 'friends_main_feed_header', $args ); ?>
 </div>
