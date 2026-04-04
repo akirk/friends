@@ -1822,6 +1822,7 @@ h2#page-title a.dashicons {
 			& .comment-reply-title { margin-top: 1em; }
 			& .comment-reply-title small { margin-left: 1em; }
 			& .comment-form-comment label { display: block; }
+				& .comment-form-comment textarea { max-width: 100%; box-sizing: border-box; }
 		}
 	}
 
