@@ -4366,59 +4366,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 	}
 
-	/**
-	 * Check if a post's permalink supports ActivityPub.
-	 *
-	 * Returns true if the post was parsed by the ActivityPub parser,
-	 * has ActivityPub metadata, or its permalink host is a known ActivityPub instance.
-	 *
-	 * @param int $post_id The post ID.
-	 * @return bool Whether the post supports ActivityPub.
-	 */
-	public static function post_supports_activitypub( $post_id ) {
-		if ( User_Feed::get_parser_for_post_id( $post_id ) === self::SLUG ) {
-			return true;
-		}
-
-		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( $meta ) {
-			return true;
-		}
-
-		$post = get_post( $post_id );
-		if ( $post && $post->guid ) {
-			$host = wp_parse_url( $post->guid, PHP_URL_HOST );
-			if ( $host && self::is_known_activitypub_host( $host ) ) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	public static function enable_comments_form( bool $comments_open, int $post_id ) {
-		if ( is_user_logged_in() && self::post_supports_activitypub( $post_id ) ) {
+		if ( is_user_logged_in() && User_Feed::get_parser_for_post_id( $post_id ) === self::SLUG ) {
 			return true;
 		}
 		return $comments_open;
 	}
 
 	public static function comment_form( $post_id ) {
-		if ( ! self::post_supports_activitypub( $post_id ) ) {
-			$post = get_post( $post_id );
-			if ( $post ) {
-				printf(
-					'<p class="friends-activitypub-comment-unavailable">%s</p>',
-					sprintf(
-						/* translators: %s is a link to the original post */
-						__( 'Commenting via ActivityPub is not available for this post. You can try to <a href="%s" target="_blank" rel="noopener noreferrer">comment at the source</a>.', 'friends' ),
-						esc_url( $post->guid )
-					)
-				);
-			}
-			return;
-		}
-
 		$post = get_post( $post_id );
 		$mentions = self::extract_html_mentions( $post->post_content );
 		$meta = get_post_meta( $post->ID, self::SLUG, true );
@@ -4473,6 +4428,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function append_comment_form( $content, $post_id, ?User $friend_user = null, ?User_Feed $user_feed = null ) {
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( ! $meta ) {
+			if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+				return $content;
+			}
+		}
+
 		ob_start();
 		self::comment_form( $post_id );
 		$comment_form = ob_get_contents();
