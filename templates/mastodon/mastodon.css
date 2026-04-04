@@ -651,6 +651,11 @@ body.friends-page {
 	font-size: 14px;
 }
 
+.friends-page .comments-content textarea {
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
 .friends-page .comments-content.closed { display: none; }
 .friends-page .comments-content.open { display: block; }
 
