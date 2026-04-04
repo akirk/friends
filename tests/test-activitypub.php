@@ -37,29 +37,38 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 	public function test_incoming_post_diagnostics() {
 		// Diagnostic test to debug CI failures.
+		$hook_fired = false;
+		$hook_data = array();
+		add_action( 'activitypub_inbox_create', function( $activity, $user_id ) use ( &$hook_fired, &$hook_data ) {
+			$hook_fired = true;
+			$hook_data['activity'] = $activity;
+			$hook_data['user_id'] = $user_id;
+		}, 1, 2 );
+
+		$handler_result = null;
+		$handler_called = false;
+		add_action( 'activitypub_inbox_create', function( $activity, $user_id ) use ( &$handler_called, &$handler_result ) {
+			$handler_called = true;
+			$actor_url = $activity['actor'];
+
+			// Check feed lookup.
+			$user_feed = User_Feed::get_by_url( $actor_url );
+			$handler_result['feed_lookup'] = is_wp_error( $user_feed ) ? 'WP_Error: ' . $user_feed->get_error_message() : 'OK: ' . get_class( $user_feed );
+
+			if ( ! is_wp_error( $user_feed ) ) {
+				$friend_user = $user_feed->get_friend_user();
+				$handler_result['friend_user'] = $friend_user ? 'OK: ' . $friend_user->ID : 'null';
+			}
+
+			// Check if Remote_Actors lookup works.
+			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				$ap_actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor_url );
+				$handler_result['remote_actors'] = is_wp_error( $ap_actor ) ? 'WP_Error: ' . $ap_actor->get_error_message() : 'OK: ID=' . $ap_actor->ID;
+			}
+		}, 5, 2 );
+
 		$user_id = get_current_user_id();
-		$user = get_userdata( $user_id );
-
-		// Check if user has activitypub capability.
-		$has_cap = user_can( $user_id, 'activitypub' );
-		$this->assertTrue( $has_cap, sprintf(
-			'User %d (role: %s) should have activitypub capability. Caps: %s',
-			$user_id,
-			implode( ', ', $user->roles ),
-			implode( ', ', array_keys( array_filter( $user->allcaps ) ) )
-		) );
-
-		// Check if user_can_activitypub passes.
-		if ( function_exists( 'Activitypub\user_can_activitypub' ) ) {
-			$this->assertTrue(
-				\Activitypub\user_can_activitypub( $user_id ),
-				'user_can_activitypub should return true for current user'
-			);
-		}
-
-		// Check if the inbox route exists and accepts our user_id.
-		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . $user_id . '/inbox' );
-		$request->set_body( wp_json_encode( array(
+		$response = $this->receive_activity( $user_id, array(
 			'type'   => 'Create',
 			'id'     => 'https://mastodon.local/test/diag1',
 			'actor'  => $this->actor,
@@ -70,23 +79,21 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'content'      => 'Diagnostic test',
 				'published'    => gmdate( \DATE_W3C ),
 			),
-		) ) );
-		$request->set_header( 'Content-type', 'application/json' );
+		), true );
 
-		$response = $this->server->dispatch( $request );
 		$this->assertEquals( 202, $response->get_status(), sprintf(
 			'Inbox request failed with status %d: %s',
 			$response->get_status(),
 			wp_json_encode( $response->get_data() )
 		) );
 
-		// Check if the hook fired and Friends created the post.
+		$this->assertTrue( $hook_fired, 'activitypub_inbox_create hook did not fire' );
+		$this->assertTrue( $handler_called, 'Our diagnostic handler was not called' );
+
 		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
 		$this->assertGreaterThanOrEqual( 1, count( $posts ), sprintf(
-			'Expected at least 1 post. User feed URL: %s, Actor: %s, Friend ID: %d',
-			$this->actor,
-			$this->actor,
-			$this->friend_id
+			'No post created. Handler results: %s',
+			wp_json_encode( $handler_result )
 		) );
 	}
 
