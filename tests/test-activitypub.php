@@ -35,33 +35,6 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		return rest_do_request( $request );
 	}
 
-	public function test_incoming_post_diagnostics() {
-		// Re-create the friend and feed right here so we can capture errors.
-		$friend = User::create( 'diag-test.blog', 'subscription', '', 'Diag Test' );
-		$this->assertNotWPError( $friend, 'User::create failed' );
-
-		$feed_result = $friend->save_feed(
-			$this->actor,
-			array(
-				'parser' => 'activitypub',
-				'active' => true,
-			)
-		);
-		$this->assertNotWPError( $feed_result, 'save_feed failed: ' . ( is_wp_error( $feed_result ) ? $feed_result->get_error_message() . ' ' . wp_json_encode( $feed_result->get_error_data() ) : '' ) );
-
-		// Now check if the term is actually there.
-		$object_terms = wp_get_object_terms( $friend->get_object_id(), User_Feed::TAXONOMY );
-		$this->assertNotEmpty( $object_terms, sprintf(
-			'Terms empty after save_feed. Object ID: %d, save_feed returned: %s',
-			$friend->get_object_id(),
-			is_object( $feed_result ) ? get_class( $feed_result ) . ' ' . $feed_result->get_url() : wp_json_encode( $feed_result )
-		) );
-
-		// Now verify get_by_url works.
-		$feed = User_Feed::get_by_url( $this->actor );
-		$this->assertNotWPError( $feed, 'get_by_url failed after explicit save_feed' );
-	}
-
 	public function test_incoming_post() {
 		$this->friend->update_user_option( 'activitypub_friends_show_replies', '1' );
 		$now = time() - 10;

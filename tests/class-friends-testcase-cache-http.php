@@ -58,6 +58,7 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 			array(
 				'me.local',
 				'friend.local',
+				'mastodon.local',
 				'example.org',
 				'notiz.blog',
 			)
