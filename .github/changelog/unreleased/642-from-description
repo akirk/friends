@@ -1,0 +1,3 @@
+Type: added
+
+Add `friends_browser_extension_actions` filter to allow plugins to register actions in the browser extension.
