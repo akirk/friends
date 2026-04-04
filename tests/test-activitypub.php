@@ -36,14 +36,21 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_incoming_post_diagnostics() {
-		// Verify the feed exists before sending any activity.
-		$feed_before = User_Feed::get_by_url( $this->actor );
-		$this->assertNotWPError( $feed_before, sprintf(
-			'Feed for %s should exist in set_up. All terms: %s',
-			$this->actor,
-			wp_json_encode( array_map( function( $t ) {
-				return array( 'name' => $t->name, 'slug' => $t->slug, 'term_id' => $t->term_id );
-			}, get_terms( array( 'taxonomy' => User_Feed::TAXONOMY, 'hide_empty' => false ) ) ) )
+		// Check if friend was created.
+		$this->assertNotNull( $this->friend, 'Friend user should exist' );
+		$this->assertNotWPError( $this->friend, 'Friend user should not be WP_Error: ' . ( is_wp_error( $this->friend ) ? $this->friend->get_error_message() : '' ) );
+
+		// Check if taxonomy exists.
+		$this->assertTrue( taxonomy_exists( User_Feed::TAXONOMY ), 'Taxonomy friend-user-feed should be registered' );
+
+		// Check object terms directly.
+		$object_terms = wp_get_object_terms( $this->friend->get_object_id(), User_Feed::TAXONOMY );
+		$this->assertNotWPError( $object_terms, 'wp_get_object_terms failed' );
+		$this->assertNotEmpty( $object_terms, sprintf(
+			'Friend user %d (login: %s) should have feed terms. Object ID: %d',
+			$this->friend->ID,
+			$this->friend->user_login,
+			$this->friend->get_object_id()
 		) );
 	}
 
