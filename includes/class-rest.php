@@ -280,7 +280,46 @@ class REST {
 
 		if ( 'POST' === $request->get_method() && $request->get_param( 'key' ) ) {
 			if ( Admin::check_browser_api_key( $request->get_param( 'key' ) ) ) {
-				$return = apply_filters( 'friends_browser_extension_rest_info', $return );
+				$current_user = wp_get_current_user();
+
+				/**
+				 * Allows plugins to register actions for the Friends browser extension.
+				 *
+				 * Each action is an associative array with:
+				 * - `name` (string, required) — label shown in the extension popup.
+				 * - `url` (string, required) — target URL; may contain `{current_url}` which the extension substitutes with the current page URL (URL-encoded).
+				 * - `method` (string, optional) — if `"POST"`, the extension submits a form instead of opening a link.
+				 * - `fields` (object, optional) — for POST actions, key/value pairs of form fields; values may contain `{current_url}` (raw) and `{page_html}` placeholders.
+				 *
+				 * Example:
+				 * ```php
+				 * add_filter( 'friends_browser_extension_actions', function ( $actions, $current_user ) {
+				 *     $actions[] = array(
+				 *         'name' => 'Save to Collection',
+				 *         'url'  => home_url( '/collect/?url={current_url}' ),
+				 *     );
+				 *     return $actions;
+				 * }, 10, 2 );
+				 * ```
+				 *
+				 * @param array    $actions      The array of actions.
+				 * @param \WP_User $current_user The current user.
+				 * @return array The modified array of actions.
+				 */
+				$actions = apply_filters( 'friends_browser_extension_actions', array(), $current_user );
+
+				$return['actions'] = array_values(
+					array_filter(
+						$actions,
+						function ( $action ) {
+							return is_array( $action )
+								&& ! empty( $action['name'] )
+								&& is_string( $action['name'] )
+								&& ! empty( $action['url'] )
+								&& is_string( $action['url'] );
+						}
+					)
+				);
 			} else {
 				$return['error'] = 'Invalid API key';
 			}
