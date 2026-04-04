@@ -322,7 +322,7 @@ jQuery( function ( $ ) {
 						if ( ! $this.find( 'li.friends-post' ).length ) {
 							$this.html( response.data );
 						} else {
-							$( response.data ).find( 'li.friends-post' ).reverse().each( function () {
+							$( $( response.data ).find( 'li.friends-post' ).get().reverse() ).each( function () {
 								if ( ! document.getElementById( $( this ).attr('id') ) ) {
 									$this.find( 'ul' ).prepend( this );
 								}
