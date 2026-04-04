@@ -1,0 +1,3 @@
+Type: added
+
+Show ActivityPub comment form for posts whose permalink host is a known ActivityPub instance, with a fallback message linking to the source for non-ActivityPub posts.
