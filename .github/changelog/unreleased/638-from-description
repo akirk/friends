@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix TypeError when updating the Friends dashboard widget.
