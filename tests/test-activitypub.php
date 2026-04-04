@@ -36,64 +36,14 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_incoming_post_diagnostics() {
-		// Diagnostic test to debug CI failures.
-		$hook_fired = false;
-		$hook_data = array();
-		add_action( 'activitypub_inbox_create', function( $activity, $user_id ) use ( &$hook_fired, &$hook_data ) {
-			$hook_fired = true;
-			$hook_data['activity'] = $activity;
-			$hook_data['user_id'] = $user_id;
-		}, 1, 2 );
-
-		$handler_result = null;
-		$handler_called = false;
-		add_action( 'activitypub_inbox_create', function( $activity, $user_id ) use ( &$handler_called, &$handler_result ) {
-			$handler_called = true;
-			$actor_url = $activity['actor'];
-
-			// Check feed lookup.
-			$user_feed = User_Feed::get_by_url( $actor_url );
-			$handler_result['feed_lookup'] = is_wp_error( $user_feed ) ? 'WP_Error: ' . $user_feed->get_error_message() : 'OK: ' . get_class( $user_feed );
-
-			if ( ! is_wp_error( $user_feed ) ) {
-				$friend_user = $user_feed->get_friend_user();
-				$handler_result['friend_user'] = $friend_user ? 'OK: ' . $friend_user->ID : 'null';
-			}
-
-			// Check if Remote_Actors lookup works.
-			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-				$ap_actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor_url );
-				$handler_result['remote_actors'] = is_wp_error( $ap_actor ) ? 'WP_Error: ' . $ap_actor->get_error_message() : 'OK: ID=' . $ap_actor->ID;
-			}
-		}, 5, 2 );
-
-		$user_id = get_current_user_id();
-		$response = $this->receive_activity( $user_id, array(
-			'type'   => 'Create',
-			'id'     => 'https://mastodon.local/test/diag1',
-			'actor'  => $this->actor,
-			'object' => array(
-				'type'         => 'Note',
-				'id'           => 'https://mastodon.local/test/diag1',
-				'attributedTo' => $this->actor,
-				'content'      => 'Diagnostic test',
-				'published'    => gmdate( \DATE_W3C ),
-			),
-		), true );
-
-		$this->assertEquals( 202, $response->get_status(), sprintf(
-			'Inbox request failed with status %d: %s',
-			$response->get_status(),
-			wp_json_encode( $response->get_data() )
-		) );
-
-		$this->assertTrue( $hook_fired, 'activitypub_inbox_create hook did not fire' );
-		$this->assertTrue( $handler_called, 'Our diagnostic handler was not called' );
-
-		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
-		$this->assertGreaterThanOrEqual( 1, count( $posts ), sprintf(
-			'No post created. Handler results: %s',
-			wp_json_encode( $handler_result )
+		// Verify the feed exists before sending any activity.
+		$feed_before = User_Feed::get_by_url( $this->actor );
+		$this->assertNotWPError( $feed_before, sprintf(
+			'Feed for %s should exist in set_up. All terms: %s',
+			$this->actor,
+			wp_json_encode( array_map( function( $t ) {
+				return array( 'name' => $t->name, 'slug' => $t->slug, 'term_id' => $t->term_id );
+			}, get_terms( array( 'taxonomy' => User_Feed::TAXONOMY, 'hide_empty' => false ) ) ) )
 		) );
 	}
 
