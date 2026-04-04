@@ -870,27 +870,45 @@ class Blocks {
 
 		$out = '<div ' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-feed-chips' ) ) . '>';
 
-		// Post count chips.
-		$nonce = wp_create_nonce( 'friends_post_counts' );
-		foreach ( $data['post_count_by_post_format'] as $post_format => $count ) {
-			$out .= '<a class="chip post-count-' . esc_attr( $post_format ) . '" data-nonce="' . esc_attr( $nonce ) . '" href="' . esc_url( home_url( '/friends/type/' . $post_format . '/' ) ) . '">' . esc_html( $friends->get_post_format_plural_string( $post_format, $count ) ) . '</a> ';
-		}
+		if ( isset( $_GET['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$search_term = sanitize_text_field( wp_unslash( $_GET['s'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$current_order = isset( $_GET['order'] ) ? strtoupper( sanitize_text_field( wp_unslash( $_GET['order'] ) ) ) : 'DESC'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-		// Hidden items chip.
-		if ( isset( $_GET['show-hidden'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$out .= '<a class="chip" href="' . esc_url( remove_query_arg( 'show-hidden' ) ) . '">' . esc_html__( 'Hide hidden items', 'friends' ) . '</a> ';
-		} elseif ( $hidden_post_count > 0 ) {
-			$out .= '<a class="chip" href="' . esc_url( add_query_arg( 'show-hidden', 1 ) ) . '">';
-			$out .= esc_html( sprintf( /* translators: %s is the number of hidden posts */ _n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) );
+			// Clear search chip.
+			$out .= '<a class="chip" href="' . esc_url( remove_query_arg( 's' ) ) . '">';
+			$out .= esc_html( sprintf( /* translators: %s is the search term */ __( 'Clear search for "%s"', 'friends' ), $search_term ) );
 			$out .= '</a> ';
-		}
 
-		// Reaction chips.
-		if ( class_exists( __NAMESPACE__ . '\Reactions' ) ) {
-			foreach ( Reactions::get_available_emojis() as $slug => $reaction ) {
-				$out .= '<a class="chip" href="' . esc_url( home_url( '/friends/reaction' . $slug . '/' ) ) . '">';
-				$out .= esc_html( sprintf( /* translators: %s is an emoji */ __( 'Reacted with %s', 'friends' ), $reaction->char ) );
+			// Order chips.
+			if ( 'DESC' === $current_order ) {
+				$out .= '<a class="chip" href="' . esc_url( add_query_arg( 'order', 'ASC' ) ) . '">' . esc_html__( 'Oldest first', 'friends' ) . '</a> ';
+			} else {
+				$out .= '<a class="chip active" href="' . esc_url( add_query_arg( 'order', 'ASC' ) ) . '">' . esc_html__( 'Oldest first', 'friends' ) . '</a> ';
+				$out .= '<a class="chip" href="' . esc_url( remove_query_arg( 'order' ) ) . '">' . esc_html__( 'Newest first', 'friends' ) . '</a> ';
+			}
+		} else {
+			// Post count chips.
+			$nonce = wp_create_nonce( 'friends_post_counts' );
+			foreach ( $data['post_count_by_post_format'] as $post_format => $count ) {
+				$out .= '<a class="chip post-count-' . esc_attr( $post_format ) . '" data-nonce="' . esc_attr( $nonce ) . '" href="' . esc_url( home_url( '/friends/type/' . $post_format . '/' ) ) . '">' . esc_html( $friends->get_post_format_plural_string( $post_format, $count ) ) . '</a> ';
+			}
+
+			// Hidden items chip.
+			if ( isset( $_GET['show-hidden'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$out .= '<a class="chip" href="' . esc_url( remove_query_arg( 'show-hidden' ) ) . '">' . esc_html__( 'Hide hidden items', 'friends' ) . '</a> ';
+			} elseif ( $hidden_post_count > 0 ) {
+				$out .= '<a class="chip" href="' . esc_url( add_query_arg( 'show-hidden', 1 ) ) . '">';
+				$out .= esc_html( sprintf( /* translators: %s is the number of hidden posts */ _n( '%s hidden items', '%s hidden items', $hidden_post_count, 'friends' ), number_format_i18n( $hidden_post_count ) ) );
 				$out .= '</a> ';
+			}
+
+			// Reaction chips.
+			if ( class_exists( __NAMESPACE__ . '\Reactions' ) ) {
+				foreach ( Reactions::get_available_emojis() as $slug => $reaction ) {
+					$out .= '<a class="chip" href="' . esc_url( home_url( '/friends/reaction' . $slug . '/' ) ) . '">';
+					$out .= esc_html( sprintf( /* translators: %s is an emoji */ __( 'Reacted with %s', 'friends' ), $reaction->char ) );
+					$out .= '</a> ';
+				}
 			}
 		}
 

@@ -48,8 +48,13 @@ The plugin integrates deeply with:
 - `composer check-cs` - Check coding standards
 - `composer fix-cs` - Auto-fix coding standards issues
 
+### Before Pushing
+Always run `composer check-cs` (or `composer fix-cs`) before pushing to catch coding standards issues that will fail CI.
+
 ### Changelog Workflow
-Every PR must include a changelog entry. Create one by running `composer changelog:add` or by placing a file in `.github/changelog/unreleased/{PR-number}` with this format:
+Every PR must include a changelog entry. You have two options:
+
+**Option 1: Changelog file** — Run `composer changelog:add` or place a file in `.github/changelog/unreleased/{PR-number}` with this format:
 
 ```
 Type: fixed
@@ -57,10 +62,26 @@ Type: fixed
 Description of the change
 ```
 
-Valid types: `added`, `changed`, `fixed`, `removed`.
+**Option 2: PR body checkbox** — Include this exact structure in the PR body (the CI regex is strict):
 
-- If working on a branch without a PR number yet, use the branch name as the filename.
-- The PR template has a checkbox to auto-create the entry from the PR description.
+```markdown
+<details><summary>Changelog</summary>
+
+- [x] Automatically create a changelog entry from the details below
+
+#### Type
+- [x] Fixed
+
+#### Message
+Description of the change.
+
+</details>
+```
+
+Check exactly **one** type. Valid types: `Added`, `Changed`, `Fixed`, `Removed`.
+
+**Other notes:**
+- If working on a branch without a PR number yet, use the branch name as the changelog filename.
 - PRs that don't need a changelog entry should be labeled `Skip Changelog`.
 - At release time, `bin/changelog-write.sh <version>` compiles all entries into `CHANGELOG.md` and `README.md` in the project's existing format.
 

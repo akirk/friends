@@ -814,7 +814,7 @@ class Frontend {
 	 * @return     array  The minimal query variables.
 	 */
 	private function get_minimal_query_vars( $query_vars ) {
-		return array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query' ) ) ) );
+		return array_filter( array_intersect_key( $query_vars, array_flip( array( 'p', 'page_id', 'pagename', 'author', 'author__not_in', 'post_type', 'post_status', 'posts_per_page', 'order', 'tax_query', 's' ) ) ) );
 	}
 
 	public function wp_ajax_reblog() {
@@ -2173,6 +2173,16 @@ class Frontend {
 				$query->set( 'author__not_in', $hide_from_friends_page );
 			}
 		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['order'] ) ) {
+			$order = strtoupper( sanitize_text_field( wp_unslash( $_GET['order'] ) ) );
+			if ( in_array( $order, array( 'ASC', 'DESC' ), true ) ) {
+				$query->set( 'order', $order );
+			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
 		return $query;
 	}
 }
