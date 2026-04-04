@@ -35,6 +35,61 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		return rest_do_request( $request );
 	}
 
+	public function test_incoming_post_diagnostics() {
+		// Diagnostic test to debug CI failures.
+		$user_id = get_current_user_id();
+		$user = get_userdata( $user_id );
+
+		// Check if user has activitypub capability.
+		$has_cap = user_can( $user_id, 'activitypub' );
+		$this->assertTrue( $has_cap, sprintf(
+			'User %d (role: %s) should have activitypub capability. Caps: %s',
+			$user_id,
+			implode( ', ', $user->roles ),
+			implode( ', ', array_keys( array_filter( $user->allcaps ) ) )
+		) );
+
+		// Check if user_can_activitypub passes.
+		if ( function_exists( 'Activitypub\user_can_activitypub' ) ) {
+			$this->assertTrue(
+				\Activitypub\user_can_activitypub( $user_id ),
+				'user_can_activitypub should return true for current user'
+			);
+		}
+
+		// Check if the inbox route exists and accepts our user_id.
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . $user_id . '/inbox' );
+		$request->set_body( wp_json_encode( array(
+			'type'   => 'Create',
+			'id'     => 'https://mastodon.local/test/diag1',
+			'actor'  => $this->actor,
+			'object' => array(
+				'type'         => 'Note',
+				'id'           => 'https://mastodon.local/test/diag1',
+				'attributedTo' => $this->actor,
+				'content'      => 'Diagnostic test',
+				'published'    => gmdate( \DATE_W3C ),
+			),
+		) ) );
+		$request->set_header( 'Content-type', 'application/json' );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 202, $response->get_status(), sprintf(
+			'Inbox request failed with status %d: %s',
+			$response->get_status(),
+			wp_json_encode( $response->get_data() )
+		) );
+
+		// Check if the hook fired and Friends created the post.
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
+		$this->assertGreaterThanOrEqual( 1, count( $posts ), sprintf(
+			'Expected at least 1 post. User feed URL: %s, Actor: %s, Friend ID: %d',
+			$this->actor,
+			$this->actor,
+			$this->friend_id
+		) );
+	}
+
 	public function test_incoming_post() {
 		$this->friend->update_user_option( 'activitypub_friends_show_replies', '1' );
 		$now = time() - 10;
