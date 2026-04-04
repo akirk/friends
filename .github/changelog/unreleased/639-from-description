@@ -1,0 +1,3 @@
+Type: added
+
+Add ActivityPub integration tests to CI and test for comment federation on cached posts.

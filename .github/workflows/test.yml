@@ -39,6 +39,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Checkout ActivityPub plugin
+        if: ${{ matrix.php >= 8.3 }}
+        uses: actions/checkout@v3
+        with:
+          repository: Automattic/wordpress-activitypub
+          path: activitypub
+
+      - name: Symlink ActivityPub plugin as sibling directory
+        if: ${{ matrix.php >= 8.3 }}
+        run: ln -s "$GITHUB_WORKSPACE/activitypub" ../activitypub
+
       - name: Setup PHP with tools
         uses: shivammathur/setup-php@v2
         with:
