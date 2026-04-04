@@ -827,6 +827,73 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		delete_option( 'friends_disable_auto_tagging' );
 	}
 
+	public function test_comment_on_cached_post_federation() {
+		$remote_post_url = 'https://mastodon.local/users/akirk/statuses/123456';
+
+		// Create a cached friend post with a known remote GUID.
+		$post_id = $this->friend->insert_post(
+			array(
+				'post_type'    => Friends::CPT,
+				'post_content' => 'Hello from the fediverse!',
+				'post_status'  => 'publish',
+				'guid'         => $remote_post_url,
+				'meta_input'   => array(
+					'activitypub' => array(
+						'attributedTo' => array(
+							'id'                => $this->actor,
+							'preferredUsername' => 'akirk',
+							'name'              => $this->friend_name,
+						),
+					),
+				),
+			)
+		);
+		$this->assertIsInt( $post_id );
+
+		// Verify get_permalink returns the remote URL (via Friends' post_type_link filter).
+		$permalink = get_permalink( $post_id );
+		$this->assertEquals( $remote_post_url, $permalink, 'get_permalink should return the remote GUID for friend_post_cache posts' );
+
+		// Submit a comment as the current local user.
+		$comment_id = wp_insert_comment(
+			array(
+				'comment_post_ID' => $post_id,
+				'comment_content' => '@akirk Nice post!',
+				'comment_type'    => 'comment',
+				'user_id'         => get_current_user_id(),
+				'comment_approved' => 1,
+			)
+		);
+		$this->assertIsInt( $comment_id );
+		$this->assertGreaterThan( 0, $comment_id );
+
+		$comment = get_comment( $comment_id );
+
+		// Verify the comment should be federated.
+		if ( function_exists( 'Activitypub\should_comment_be_federated' ) ) {
+			$this->assertTrue(
+				\Activitypub\should_comment_be_federated( $comment ),
+				'Comment on a cached post should be marked for federation'
+			);
+		}
+
+		// Verify the ActivityPub transformer produces the correct inReplyTo.
+		if ( class_exists( '\Activitypub\Transformer\Comment' ) ) {
+			$transformer = \Activitypub\Transformer\Factory::get_transformer( $comment );
+			if ( $transformer && ! is_wp_error( $transformer ) ) {
+				$object = $transformer->to_object();
+				$this->assertEquals(
+					$remote_post_url,
+					$object->get_in_reply_to(),
+					'inReplyTo should be the remote ActivityPub URL, not the local permalink'
+				);
+			}
+		}
+
+		wp_delete_comment( $comment_id, true );
+		wp_delete_post( $post_id, true );
+	}
+
 	public function test_incoming_move() {
 		$new_url = 'https://example.com/new_url';
 

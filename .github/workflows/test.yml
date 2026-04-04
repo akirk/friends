@@ -39,6 +39,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Checkout ActivityPub plugin
+        uses: actions/checkout@v3
+        with:
+          repository: Automattic/wordpress-activitypub
+          path: ../activitypub
+
       - name: Setup PHP with tools
         uses: shivammathur/setup-php@v2
         with:
