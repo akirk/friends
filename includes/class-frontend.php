@@ -363,6 +363,9 @@ class Frontend {
 		// translators: %s is a user handle.
 		$variables['text_confirm_delete_follower'] = __( 'Do you really want to delete the follower %s?', 'friends' );
 		$variables['text_new_folder']              = __( 'Folder name:', 'friends' );
+		$variables['text_loading']                 = __( 'Loading...', 'friends' );
+		$variables['text_follow']                  = __( 'Follow', 'friends' );
+		$variables['text_error']                   = __( 'An error occurred.', 'friends' );
 		wp_localize_script( 'friends', 'friends', $variables );
 	}
 
@@ -1503,6 +1506,10 @@ class Frontend {
 		$wp_query->is_singular = false;
 
 		switch ( $path ) {
+			case 'add-friend':
+				$path = 'frontend/add-friend';
+				break;
+
 			case 'subscriptions':
 				wp_safe_redirect( home_url( '/friends/following/' ) );
 				exit;

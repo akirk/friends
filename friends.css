@@ -1862,6 +1862,30 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	& section.subscriptions .feed-preview {
+		margin-top: 1em;
+
+		& .avatar { border-radius: 50%; vertical-align: middle; margin-right: .5em; }
+
+		& .feed-list {
+			list-style: none;
+			padding-left: 0;
+			margin: .5em 0;
+
+			& li { padding: 4px 0; }
+		}
+	}
+
+	& section.subscriptions .subscribe-success {
+		margin-top: 1em;
+		display: flex;
+		align-items: center;
+		gap: .5em;
+
+		& .avatar { border-radius: 50%; }
+		& a { font-weight: bold; font-size: 1.1em; }
+	}
+
 	& section.subscriptions {
 		& .subscription-item {
 			padding: 8px 0;

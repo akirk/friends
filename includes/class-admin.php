@@ -53,6 +53,8 @@ class Admin {
 		add_action( 'wp_ajax_friends_fetch_feeds', array( $this, 'ajax_fetch_feeds' ) );
 		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
 		add_action( 'wp_ajax_friends-refresh-feeds', array( $this, 'ajax_refresh_feeds' ) );
+		add_action( 'wp_ajax_friends-preview-subscription', array( $this, 'ajax_preview_subscription' ) );
+		add_action( 'wp_ajax_friends-subscribe-frontend', array( $this, 'ajax_subscribe_frontend' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
@@ -1665,6 +1667,129 @@ class Admin {
 		wp_send_json_success();
 	}
 
+	public function ajax_preview_subscription() {
+		if ( ! isset( $_POST['url'] ) ) {
+			wp_send_json_error( __( 'No URL provided.', 'friends' ) );
+		}
+
+		check_ajax_referer( 'friends_add_subscription' );
+
+		$url = wp_unslash( $_POST['url'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		$protocol = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! $protocol ) {
+			$url = apply_filters( 'friends_rewrite_incoming_url', 'https://' . $url, $url );
+		} else {
+			$url = apply_filters( 'friends_rewrite_incoming_url', $url, $url );
+		}
+
+		$feeds = $this->friends->feed->discover_available_feeds( $url );
+
+		if ( is_wp_error( $feeds ) ) {
+			wp_send_json_error( $feeds->get_error_message() );
+		}
+
+		if ( empty( $feeds ) ) {
+			wp_send_json_error( __( 'No suitable feed was found at the provided address.', 'friends' ) );
+		}
+
+		$display_name = User::get_display_name_from_feeds( $feeds );
+		$user_login = User::get_user_login_from_feeds( $feeds );
+		$avatar = null;
+		$description = null;
+		foreach ( $feeds as $feed_details ) {
+			if ( ! $avatar && ! empty( $feed_details['avatar'] ) ) {
+				$avatar = $feed_details['avatar'];
+			}
+			if ( ! $description && ! empty( $feed_details['description'] ) ) {
+				$description = $feed_details['description'];
+			}
+		}
+
+		wp_send_json_success(
+			array(
+				'feeds'        => $feeds,
+				'display_name' => $display_name ? $display_name : '',
+				'user_login'   => $user_login ? $user_login : '',
+				'avatar'       => $avatar,
+				'description'  => $description,
+				'url'          => $url,
+			)
+		);
+	}
+
+	public function ajax_subscribe_frontend() {
+		check_ajax_referer( 'friends_add_subscription' );
+
+		if ( ! Friends::has_required_privileges() ) {
+			wp_send_json_error( __( 'You do not have permission to do this.', 'friends' ) );
+		}
+
+		$url = isset( $_POST['url'] ) ? wp_unslash( $_POST['url'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$display_name = isset( $_POST['display_name'] ) ? sanitize_text_field( wp_unslash( $_POST['display_name'] ) ) : '';
+		$feeds = isset( $_POST['feeds'] ) ? wp_unslash( $_POST['feeds'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( empty( $url ) || empty( $feeds ) ) {
+			wp_send_json_error( __( 'Missing required data.', 'friends' ) );
+		}
+
+		$user_login = User::get_user_login_for_url( $url );
+
+		$avatar = null;
+		$description = null;
+		foreach ( $feeds as $feed ) {
+			if ( ! $avatar && ! empty( $feed['avatar'] ) ) {
+				$avatar = $feed['avatar'];
+			}
+			if ( ! $description && ! empty( $feed['description'] ) ) {
+				$description = $feed['description'];
+			}
+		}
+
+		$friend_user = User::create( $user_login, 'subscription', $url, $display_name, $avatar, $description );
+
+		if ( is_wp_error( $friend_user ) ) {
+			wp_send_json_error( $friend_user->get_error_message() );
+		}
+
+		$feed_options = array();
+		$subscribe = array();
+		foreach ( $feeds as $feed ) {
+			if ( ! empty( $feed['url'] ) ) {
+				$feed_options[ $feed['url'] ] = $feed;
+				if ( ! empty( $feed['selected'] ) ) {
+					$subscribe[] = $feed['url'];
+				}
+			}
+		}
+
+		$friend_user->save_feeds( $feed_options );
+
+		foreach ( $subscribe as $feed_url ) {
+			if ( ! isset( $feed_options[ $feed_url ] ) ) {
+				continue;
+			}
+			$new_feed = $friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
+			if ( ! is_wp_error( $new_feed ) ) {
+				do_action( 'friends_user_feed_activated', $new_feed );
+			}
+		}
+
+		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+		$friend_user->retrieve_posts_from_active_feeds();
+
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					// translators: %s is the name of a friend.
+					__( 'You are now following %s.', 'friends' ),
+					$display_name
+				),
+				'url' => $friend_user->get_local_friends_page_url(),
+			)
+		);
+	}
+
 	public function ajax_set_avatar() {
 		if ( ! isset( $_POST['user'] ) ) {
 			wp_send_json_error( __( 'No user specified.', 'friends' ) );
@@ -2637,6 +2762,14 @@ class Admin {
 			)
 		);
 
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'add-friend',
+				'parent' => 'friends-menu',
+				'title'  => esc_html__( 'Add a friend', 'friends' ),
+				'href'   => home_url( '/friends/add-friend' ),
+			)
+		);
 		$wp_menu->add_menu(
 			array(
 				'id'     => 'friends',

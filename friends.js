@@ -843,4 +843,90 @@
 		} );
 	} );
 
+	$document.on( 'submit', '#add-subscription-form', function ( e ) {
+		e.preventDefault();
+		const $this = $( this );
+		const url = $this.find( 'input[name="url"]' ).val();
+		if ( ! url ) {
+			return;
+		}
+		const $preview = $( '#preview-subscription' );
+		$preview.html( '<p class="loading">' + ( friends.text_loading || 'Loading...' ) + '</p>' );
+		wp.ajax.send( 'friends-preview-subscription', {
+			data: {
+				_ajax_nonce: $this.find( 'input[name=_wpnonce]' ).val(),
+				url: url,
+			},
+			success( r ) {
+				$preview.data( 'feeds', r.feeds );
+				let html = '<div class="feed-preview">';
+				if ( r.avatar ) {
+					html += '<img src="' + r.avatar + '" class="avatar" width="48" height="48" /> ';
+				}
+				html += '<strong>' + ( r.display_name || r.user_login || r.url ) + '</strong>';
+				if ( r.description ) {
+					html += '<p>' + r.description + '</p>';
+				}
+				html += '<ul class="feed-list">';
+				const feedUrls = Object.keys( r.feeds );
+				for ( let i = 0; i < feedUrls.length; i++ ) {
+					const feedUrl = feedUrls[ i ];
+					const feed = r.feeds[ feedUrl ];
+					if ( feed.parser === 'unsupported' ) {
+						continue;
+					}
+					const checked = feed.autoselect ? ' checked' : '';
+					html += '<li><label><input type="checkbox" name="feed" value="' + feedUrl + '"' + checked + ' /> ';
+					html += ( feed.title || feedUrl ) + ' <small>(' + ( feed.type || '' ) + ')</small>';
+					html += '</label></li>';
+				}
+				html += '</ul>';
+				html += '<button class="btn btn-primary subscribe-btn" data-url="' + r.url + '" data-display-name="' + ( r.display_name || '' ) + '" data-nonce="' + $this.find( 'input[name=_wpnonce]' ).val() + '">';
+				html += ( friends.text_follow || 'Follow' ) + '</button>';
+				html += '</div>';
+				$preview.html( html );
+				$preview.find( '.subscribe-btn' ).focus();
+			},
+			error( result ) {
+				$preview.html( '<p class="error">' + ( result && result.length ? result : ( friends.text_error || 'An error occurred.' ) ) + '</p>' );
+			},
+		} );
+	} );
+
+	$document.on( 'click', '.subscribe-btn', function () {
+		const $this = $( this );
+		const $preview = $( '#preview-subscription' );
+		const allFeeds = $preview.data( 'feeds' ) || {};
+		const feeds = {};
+		$preview.find( 'input[name="feed"]' ).each( function () {
+			const $input = $( this );
+			const feedUrl = $input.val();
+			feeds[ feedUrl ] = $.extend( {}, allFeeds[ feedUrl ] || {}, {
+				url: feedUrl,
+				selected: $input.is( ':checked' ),
+			} );
+		} );
+		wp.ajax.send( 'friends-subscribe-frontend', {
+			data: {
+				_ajax_nonce: $this.data( 'nonce' ),
+				url: $this.data( 'url' ),
+				display_name: $this.data( 'display-name' ),
+				feeds: feeds,
+			},
+			success( r ) {
+				let html = '<div class="subscribe-success">';
+				const avatar = $preview.find( '.avatar' ).attr( 'src' );
+				if ( avatar ) {
+					html += '<img src="' + avatar + '" class="avatar" width="48" height="48" /> ';
+				}
+				html += '<a href="' + r.url + '">' + r.message + '</a>';
+				html += '</div>';
+				$preview.html( html );
+			},
+			error( result ) {
+				$preview.html( '<p class="error">' + result + '</p>' );
+			},
+		} );
+	} );
+
 } )( jQuery, window.wp, window.friends );
