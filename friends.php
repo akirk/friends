@@ -7,7 +7,7 @@
  * Author URI: https://alex.kirk.at/
  * Requires PHP: 7.4
  *
- * Description: Follow others via RSS and ActivityPub and read their posts on your own WordPress.
+ * Description: A self-hosted social reader for WordPress: follow people via RSS and ActivityPub, with multiple themes and a plugin ecosystem.
  *
  * License: GPL2
  * Text Domain: friends
@@ -50,7 +50,6 @@ require_once __DIR__ . '/includes/class-logging.php';
 require_once __DIR__ . '/includes/class-messages.php';
 require_once __DIR__ . '/includes/class-migration.php';
 require_once __DIR__ . '/includes/class-notifications.php';
-require_once __DIR__ . '/includes/class-plugin-installer.php';
 require_once __DIR__ . '/includes/class-reactions.php';
 require_once __DIR__ . '/includes/class-rest.php';
 require_once __DIR__ . '/includes/class-site-health.php';
@@ -61,7 +60,6 @@ require_once __DIR__ . '/includes/class-friend-tag.php';
 require_once __DIR__ . '/includes/class-friends.php';
 
 add_action( 'plugins_loaded', array( __NAMESPACE__ . '\Friends', 'init' ) );
-add_action( 'admin_init', array( __NAMESPACE__ . '\Plugin_Installer', 'register_hooks' ) );
 
 if ( is_admin() && version_compare( get_option( 'friends_plugin_version' ), FRIENDS_VERSION, '<' ) ) {
 	add_action( 'admin_init', array( __NAMESPACE__ . '\Friends', 'upgrade_plugin' ) );

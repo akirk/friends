@@ -207,11 +207,7 @@ foreach ( $args['feeds'] as $feed_url => $details ) {
 						<div id="unsupported-feeds" class="hidden">
 							<p class="description details">
 								<?php
-								echo wp_kses(
-									// translators: %s is a URL to the plugin install page.
-									sprintf( _n( '<a href=%s>There might be a plugin available</a> to add support for it.', '<a href=%s>There might be a plugin available</a> to add support for them.', count( $unsupported_feeds ), 'friends' ), '"' . self_admin_url( 'admin.php?page=friends-plugins' ) . '"' ),
-									array( 'a' => array( 'href' => array() ) )
-								);
+								echo esc_html( _n( 'There might be a plugin available to add support for it.', 'There might be a plugin available to add support for them.', count( $unsupported_feeds ), 'friends' ) );
 								?>
 							</p>
 							<ul>
