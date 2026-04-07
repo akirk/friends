@@ -38,4 +38,5 @@
 
 Friends\Friends::template_loader()->get_template_part( 'frontend/parts/comments-content', null, $args );
 
+do_action( 'friends_post_after_footer' );
 ?>
