@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix reblog account handle for WordPress blog-wide ActivityPub actors using ?author=0 URLs.
