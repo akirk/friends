@@ -4565,7 +4565,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return (bool) apply_filters( 'friends_is_known_activitypub_host', false, $host );
 	}
 
-	public static function convert_actor_to_mastodon_handle( $actor ) {
+	private static function convert_actor_to_mastodon_handle( $actor ) {
 		static $cache = array();
 		if ( isset( $cache[ $actor ] ) ) {
 			return $cache[ $actor ];
