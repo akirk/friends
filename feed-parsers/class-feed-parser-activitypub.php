@@ -335,7 +335,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! empty( $actor_metadata['preferredUsername'] ) ) {
 				$status->reblog->account->id = $attributed_to_url;
 				$status->reblog->account->username = $actor_metadata['preferredUsername'];
-				$status->reblog->account->acct = self::convert_actor_to_mastodon_handle( $attributed_to_url );
+				$acct = self::convert_actor_to_mastodon_handle( $attributed_to_url );
+				if ( $acct === $attributed_to_url && ! empty( $meta['attributedTo']['ap_actor_id'] ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+					$acct = \Activitypub\Collection\Remote_Actors::get_acct( $meta['attributedTo']['ap_actor_id'] );
+				}
+				$status->reblog->account->acct = $acct;
 				if ( ! empty( $actor_metadata['name'] ) ) {
 					$status->reblog->account->display_name = $actor_metadata['name'];
 				}
