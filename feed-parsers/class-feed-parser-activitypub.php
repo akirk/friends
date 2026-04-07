@@ -335,7 +335,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( ! empty( $actor_metadata['preferredUsername'] ) ) {
 				$status->reblog->account->id = $attributed_to_url;
 				$status->reblog->account->username = $actor_metadata['preferredUsername'];
-				$status->reblog->account->acct = self::convert_actor_to_mastodon_handle( $attributed_to_url );
+				$acct = self::convert_actor_to_mastodon_handle( $attributed_to_url );
+				if ( $acct === $attributed_to_url && ! empty( $meta['attributedTo']['ap_actor_id'] ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+					$acct = \Activitypub\Collection\Remote_Actors::get_acct( $meta['attributedTo']['ap_actor_id'] );
+				}
+				$status->reblog->account->acct = $acct;
 				if ( ! empty( $actor_metadata['name'] ) ) {
 					$status->reblog->account->display_name = $actor_metadata['name'];
 				}
@@ -4561,7 +4565,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return (bool) apply_filters( 'friends_is_known_activitypub_host', false, $host );
 	}
 
-	private static function convert_actor_to_mastodon_handle( $actor ) {
+	public static function convert_actor_to_mastodon_handle( $actor ) {
 		static $cache = array();
 		if ( isset( $cache[ $actor ] ) ) {
 			return $cache[ $actor ];

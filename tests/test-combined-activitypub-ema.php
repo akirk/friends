@@ -201,6 +201,52 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		$this->assertNotEquals( $status->reblog->account->username, $status->account->username );
 	}
 
+	public function test_reblog_acct_uses_ap_actor_webfinger() {
+		$user_feed = User_Feed::get_by_url( $this->actor );
+		$friend = $user_feed->get_friend_user();
+
+		// Create an ap_actor post simulating a WordPress blog-wide actor (author=0 URL).
+		$ap_actor_id = $this->factory->post->create(
+			array(
+				'post_type'   => 'ap_actor',
+				'post_title'  => 'ActivityPub for WordPress',
+				'post_status' => 'publish',
+				'guid'        => 'https://activitypub.blog/?author=0',
+				'meta_input'  => array(
+					'_activitypub_acct' => 'activitypub.blog@activitypub.blog',
+				),
+			)
+		);
+
+		$post_id = $friend->insert_post(
+			array(
+				'post_type'    => Friends::CPT,
+				'post_content' => 'Reblogged post content',
+				'post_status'  => 'publish',
+				'meta_input'   => array(
+					'activitypub' => array(
+						'attributedTo' => array(
+							'ap_actor_id'       => $ap_actor_id,
+							'preferredUsername'  => 'activitypub.blog',
+							'name'              => 'ActivityPub for WordPress',
+						),
+						'reblog'       => true,
+					),
+				),
+			)
+		);
+		$this->posts[] = $post_id;
+
+		$request = $this->api_request( 'GET', '/api/v1/timelines/home' );
+		$response = $this->dispatch_authenticated( $request );
+		$statuses = $response->get_data();
+
+		$this->assertNotEmpty( $statuses );
+		$status = $statuses[0];
+		$this->assertNotNull( $status->reblog );
+		$this->assertEquals( 'activitypub.blog@activitypub.blog', $status->reblog->account->acct );
+	}
+
 	public function test_submit_external_user_and_status_reply() {
 		$external_user_url = 'https://mastodon.elsewhere/@user';
 		$external_url = $external_user_url . '/1';
