@@ -1,0 +1,3 @@
+Type: Added
+
+Add `friends_post_after_footer` action hook to the frontend post footer template.
