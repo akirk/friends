@@ -1,0 +1,3 @@
+Type: added
+
+Add compose box to the Mastodon theme with @mention autocomplete and a setting to exclude status posts from the main RSS feed.
