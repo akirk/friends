@@ -148,13 +148,6 @@ class Admin {
 			add_submenu_page( 'friends', __( 'Refresh', 'friends' ), __( 'Refresh', 'friends' ), $required_role, 'friends-refresh', array( $this, 'admin_refresh_friend_posts' ) );
 		}
 
-		if ( isset( $_GET['details'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'friends-plugin-overview' ) ) {
-			add_action( 'load-' . $page_type . '_page_friends-plugins', array( 'Friends\Plugin_Installer', 'plugin_details' ) );
-		}
-
-		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		add_submenu_page( 'friends', __( 'Plugins' ), __( 'Plugins' ), $required_role, 'friends-plugins', array( $this, 'admin_plugin_installer' ) );
-
 		$friend_submenu_items = array(
 			'edit-friend'               => __( 'Edit User', 'friends' ),
 			'edit-friend-feeds'         => __( 'Edit Feeds', 'friends' ),
@@ -395,15 +388,6 @@ class Admin {
 		} else {
 			$this->friends->feed->retrieve_friend_posts();
 		}
-	}
-
-	/**
-	 * Admin page for installing plugins.
-	 */
-	public function admin_plugin_installer() {
-		Friends::template_loader()->get_template_part( 'admin/plugin-installer-header' );
-		Plugin_Installer::init();
-		Friends::template_loader()->get_template_part( 'admin/plugin-installer-footer' );
 	}
 
 	/**

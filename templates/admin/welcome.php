@@ -50,10 +50,7 @@ $first_friend = array(
 	</li>
 	<li>
 		<span>
-		<?php
-		// translators: %s is the URL of the user's friends page.
-		echo wp_kses( sprintf( __( 'You can <a href=%s>install more plugins</a> that extend the Friends plugin with further functionality.', 'friends' ), '"' . admin_url( 'admin.php?page=friends-plugins' ) . '"' ), array( 'a' => array( 'href' => array() ) ) );
-		?>
+		<?php esc_html_e( 'You can install more plugins to extend the Friends plugin with further functionality.', 'friends' ); ?>
 		</span>
 		<?php if ( ! isset( $args['plugin-list'] ) || $args['plugin-list'] ) : ?>
 		<ul>
@@ -67,8 +64,8 @@ $first_friend = array(
 			<?php else : ?>
 			<li><a href="<?php echo \esc_url_raw( \admin_url( 'plugin-install.php?tab=plugin-information&plugin=enable-mastodon-apps&TB_iframe=true' ) ); ?>" class="thickbox open-plugin-details-modal install-now" target="_blank"><?php \esc_html_e( 'Enable Mastodon Apps Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Enjoy the comfort of Mastodon apps!', 'friends' ); ?></span> <span><?php esc_html_e( 'With this plugin you can use your favorite Mastodon app like Tusky, Ivory, or others to stay up to date and publish new status posts.', 'friends' ); ?></span> </li>
 			<?php endif; ?>
-			<li><a href="<?php echo \esc_url_raw( \admin_url( 'admin.php?page=friends-plugins' ) ); ?>"><?php \esc_html_e( 'Post Collection Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Collect posts from around the web and create feeds.', 'friends' ); ?></span> </li>
-			<li><a href="<?php echo \esc_url_raw( \admin_url( 'admin.php?page=friends-plugins' ) ); ?>"><?php \esc_html_e( 'Send to E-Reader Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Send new articles directly to your e-reader via e-mail or download the ePub.', 'friends' ); ?></span> </li>
+			<li><a href="<?php echo \esc_url_raw( \admin_url( 'plugin-install.php?tab=plugin-information&plugin=post-collection&TB_iframe=true' ) ); ?>" class="thickbox open-plugin-details-modal install-now" target="_blank"><?php \esc_html_e( 'Post Collection Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Collect posts from around the web and create feeds.', 'friends' ); ?></span> </li>
+			<li><a href="<?php echo \esc_url_raw( \admin_url( 'plugin-install.php?tab=plugin-information&plugin=send-to-e-reader&TB_iframe=true' ) ); ?>" class="thickbox open-plugin-details-modal install-now" target="_blank"><?php \esc_html_e( 'Send to E-Reader Plugin', 'friends' ); ?></a>: <span><?php esc_html_e( 'Send new articles directly to your e-reader via e-mail or download the ePub.', 'friends' ); ?></span> </li>
 		</ul>
 		<?php endif; ?>
 	</li>

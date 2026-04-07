@@ -205,10 +205,6 @@ p.lastlog {
 	margin-bottom: 2em;
 }
 
-.friends-plugin-installer .plugin-card {
-	& .desc, & .name { margin: auto; }
-}
-
 h4.unfriend .avatar {
 	vertical-align: middle;
 }
