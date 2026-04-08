@@ -56,49 +56,41 @@ $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_frien
 ?><header class="entry-header card-header columns">
 	<div class="avatar col-auto mr-2">
 		<?php if ( ! $avatar && in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
-			<a href="<?php echo esc_attr( $author_url ); ?>" class="author-avatar">
-				<?php echo get_avatar( $args['friend_user']->user_login, 36 ); ?>
-			</a>
+			<a href="<?php echo esc_attr( $author_url ); ?>" class="author-avatar"><?php echo get_avatar( $args['friend_user']->user_login, 36 ); ?></a>
 		<?php else : ?>
 			<?php
 			$activitypub_meta = get_post_meta( get_the_id(), 'activitypub', true );
 			$is_reblog        = is_array( $activitypub_meta ) && ! empty( $activitypub_meta['reblog'] );
 			?>
-			<a href="<?php echo esc_url( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ? $author_url : get_the_author_meta( 'url' ) ); ?>" class="author-avatar">
-				<?php if ( $is_reblog && $avatar !== $args['avatar'] ) : ?>
-					<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
-					<img src="<?php echo esc_url( $args['avatar'] ); ?>" width="20" height="20" class="avatar avatar-overlay" />
-				<?php else : ?>
-					<img src="<?php echo esc_url( $avatar ); ?>" width="36" height="36" class="avatar" />
-				<?php endif; ?>
-			</a>
+			<?php
+			echo '<a href="' . esc_url( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ? $author_url : get_the_author_meta( 'url' ) ) . '" class="author-avatar">';
+			if ( $is_reblog && $avatar !== $args['avatar'] ) {
+				echo '<img src="' . esc_url( $avatar ) . '" width="36" height="36" class="avatar" />';
+				echo '<img src="' . esc_url( $args['avatar'] ) . '" width="20" height="20" class="avatar avatar-overlay" />';
+			} else {
+				echo '<img src="' . esc_url( $avatar ) . '" width="36" height="36" class="avatar" />';
+			}
+			echo '</a>';
+			?>
 		<?php endif; ?>
 	</div>
 	<div class="post-meta">
 		<div class="author">
 			<?php if ( in_array( get_post_type(), apply_filters( 'friends_frontend_post_types', array() ), true ) ) : ?>
-				<a href="<?php echo esc_attr( $author_url ); ?>">
-					<?php
-					// If there's an override author that differs from the friend's display name,
-					// and it's not already part of the display name, show only the override name.
-					// Only apply this for the External user - for regular subscriptions, always use friend_user display name.
-					$is_external_user = 'external' === $friend_user->user_login;
-					$names_differ     = $is_external_user && $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name;
-					if ( $names_differ ) :
-						?>
-						<strong><?php echo esc_html( $override_author_name ); ?></strong>
-					<?php else : ?>
-						<strong><?php echo esc_html( $friend_user->display_name ); ?></strong>
-					<?php endif; ?>
-				</a>
+				<?php
+				// If there's an override author that differs from the friend's display name,
+				// and it's not already part of the display name, show only the override name.
+				// Only apply this for the External user - for regular subscriptions, always use friend_user display name.
+				$is_external_user = 'external' === $friend_user->user_login;
+				$names_differ     = $is_external_user && $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name;
+				?>
+				<a href="<?php echo esc_attr( $author_url ); ?>"><strong><?php echo esc_html( $names_differ ? $override_author_name : $friend_user->display_name ); ?></strong></a>
 				<?php do_action( 'friends_post_author_meta', $friend_user ); ?>
 				<?php if ( get_post_meta( get_the_ID(), '_has_mention_in_comments', true ) ) : ?>
 					<span class="mention-indicator" title="<?php esc_attr_e( 'You were mentioned in a comment', 'friends' ); ?>">@</span>
 				<?php endif; ?>
 			<?php else : ?>
-				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>">
-					<strong><?php the_author(); ?></strong>
-				</a>
+				<a href="<?php echo esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ); ?>"><strong><?php the_author(); ?></strong></a>
 			<?php endif; ?>
 		</div>
 		<div class="permalink">
@@ -135,13 +127,9 @@ $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_frien
 		</div>
 	</div>
 	<div class="overflow col-ml-auto">
-		<a class="btn btn-link collapse-post" tabindex="0" title="<?php esc_html_e( 'Double or meta/shift/cmd click to toggle all', 'friends' ); ?>">
-			<i class="dashicons dashicons-fullscreen-exit-alt"></i>
-		</a>
+		<a class="btn btn-link collapse-post" tabindex="0" title="<?php esc_html_e( 'Double or meta/shift/cmd click to toggle all', 'friends' ); ?>"><i class="dashicons dashicons-fullscreen-exit-alt"></i></a>
 		<div class="friends-dropdown friends-dropdown-right">
-			<a class="btn btn-link friends-dropdown-toggle" tabindex="0">
-				<i class="dashicons dashicons-menu-alt2"></i>
-			</a>
+			<a class="btn btn-link friends-dropdown-toggle" tabindex="0"><i class="dashicons dashicons-menu-alt2"></i></a>
 			<ul class="menu" style="min-width: <?php echo esc_attr( intval( _x( '250', 'dropdown-menu-width', 'friends' ) ) ); ?>px">
 				<?php
 				Friends\Friends::template_loader()->get_template_part(
