@@ -835,7 +835,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$actor = self::convert_actor_to_mastodon_handle( $attributed_to );
 		}
 		$account = new Entity_Account();
-		$account->id           = $attributed_to;
+		if ( ! empty( $meta['attributedTo']['ap_actor_id'] ) ) {
+			$account->id = \strval( $meta['attributedTo']['ap_actor_id'] );
+		} else {
+			$account->id = $attributed_to;
+		}
 		$account->username     = strtok( $actor, '@' );
 		$account->acct         = $actor;
 		$account->url          = $attributed_to;
