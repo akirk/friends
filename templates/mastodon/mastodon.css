@@ -193,6 +193,119 @@ body.friends-page {
 	text-overflow: ellipsis;
 }
 
+/* Compose box in left col */
+.mastodon-compose-form {
+	margin-bottom: 12px;
+	background: light-dark(#fff, #282c37);
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-radius: 8px;
+	padding: 10px 12px;
+}
+
+.mastodon-compose-form textarea {
+	width: 100%;
+	background: transparent;
+	border: none;
+	outline: none;
+	resize: none;
+	font-size: 14px;
+	font-family: inherit;
+	color: light-dark(#282c37, #dadada);
+	min-height: 80px;
+}
+
+.mastodon-compose-form textarea::placeholder {
+	color: light-dark(#606984, #9baec8);
+}
+
+.mastodon-compose-footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 6px;
+	padding-top: 6px;
+	border-top: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.mastodon-compose-settings {
+	color: light-dark(#606984, #9baec8);
+	display: flex;
+	align-items: center;
+	margin-right: auto;
+}
+
+.mastodon-compose-settings:hover { color: light-dark(#563acc, #c4bbff); text-decoration: none; }
+
+.mastodon-compose-submit {
+	background: light-dark(#563acc, #6364ff);
+	color: #fff;
+	border: none;
+	border-radius: 100px;
+	padding: 6px 18px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.mastodon-compose-submit:hover { background: light-dark(#4a30b0, #7475ff); }
+
+/* @ mention dropdown */
+.mastodon-mention-dropdown {
+	position: absolute;
+	z-index: 200;
+	list-style: none;
+	background: light-dark(#fff, #282c37);
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-radius: 8px;
+	box-shadow: 0 4px 16px rgba(0,0,0,.15);
+	padding: 4px 0;
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.mastodon-mention-dropdown li a {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 12px;
+	color: light-dark(#282c37, #dadada);
+	text-decoration: none;
+}
+
+.mastodon-mention-dropdown li a:hover,
+.mastodon-mention-dropdown li.active a {
+	background: light-dark(rgba(0,0,0,.04), rgba(255,255,255,.06));
+	text-decoration: none;
+}
+
+.mastodon-mention-dropdown li a img {
+	width: 24px;
+	height: 24px;
+	border-radius: 4px;
+	flex-shrink: 0;
+}
+
+.mastodon-mention-name {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.mastodon-mention-handle {
+	font-size: 12px;
+	color: light-dark(#606984, #9baec8);
+	margin-left: auto;
+}
+
+.mastodon-mention-no-results span {
+	display: block;
+	padding: 8px 12px;
+	font-size: 13px;
+	color: light-dark(#606984, #9baec8);
+	font-style: italic;
+}
+
 /* Search in left col */
 .mastodon-search-form {
 	width: 100%;

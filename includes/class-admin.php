@@ -498,12 +498,19 @@ class Admin {
 		}
 
 		if ( current_user_can( 'manage_options' ) ) {
-			foreach ( array( 'force_enable_post_formats', 'expose_post_format_feeds' ) as $checkbox ) {
+			foreach ( array( 'force_enable_post_formats', 'expose_post_format_feeds', 'exclude_compose_format_from_feed' ) as $checkbox ) {
 				if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
 					update_option( 'friends_' . $checkbox, true );
 				} else {
 					delete_option( 'friends_' . $checkbox );
 				}
+			}
+
+			$post_format_slugs = get_post_format_slugs();
+			if ( isset( $_POST['friends_compose_post_format'] ) && in_array( sanitize_key( $_POST['friends_compose_post_format'] ), array_merge( array( 'standard' ), $post_format_slugs ), true ) ) {
+				update_option( 'friends_compose_post_format', sanitize_key( $_POST['friends_compose_post_format'] ) );
+			} else {
+				delete_option( 'friends_compose_post_format' );
 			}
 		}
 
@@ -1269,18 +1276,20 @@ class Admin {
 				Friends::get_post_stats(),
 				$post_type_themes,
 				array(
-					'force_enable_post_formats'  => get_option( 'friends_force_enable_post_formats' ),
-					'post_format_strings'        => get_post_format_strings(),
-					'limit_homepage_post_format' => get_option( 'friends_limit_homepage_post_format', false ),
-					'expose_post_format_feeds'   => get_option( 'friends_expose_post_format_feeds' ),
-					'disable_auto_tagging'       => get_option( 'friends_disable_auto_tagging' ),
-					'retention_days'             => Friends::get_retention_days(),
-					'retention_number'           => Friends::get_retention_number(),
-					'retention_days_enabled'     => get_option( 'friends_enable_retention_days' ),
-					'retention_number_enabled'   => get_option( 'friends_enable_retention_number' ),
-					'retention_delete_reacted'   => get_option( 'friends_retention_delete_reacted' ),
-					'frontend_default_view'      => get_user_option( 'friends_frontend_default_view', get_current_user_id() ),
-					'frontend_theme'             => get_user_option( 'friends_frontend_theme' ),
+					'force_enable_post_formats'        => get_option( 'friends_force_enable_post_formats' ),
+					'post_format_strings'              => get_post_format_strings(),
+					'limit_homepage_post_format'       => get_option( 'friends_limit_homepage_post_format', false ),
+					'expose_post_format_feeds'         => get_option( 'friends_expose_post_format_feeds' ),
+					'compose_post_format'              => get_option( 'friends_compose_post_format', 'status' ),
+					'exclude_compose_format_from_feed' => get_option( 'friends_exclude_compose_format_from_feed' ),
+					'disable_auto_tagging'             => get_option( 'friends_disable_auto_tagging' ),
+					'retention_days'                   => Friends::get_retention_days(),
+					'retention_number'                 => Friends::get_retention_number(),
+					'retention_days_enabled'           => get_option( 'friends_enable_retention_days' ),
+					'retention_number_enabled'         => get_option( 'friends_enable_retention_number' ),
+					'retention_delete_reacted'         => get_option( 'friends_retention_delete_reacted' ),
+					'frontend_default_view'            => get_user_option( 'friends_frontend_default_view', get_current_user_id() ),
+					'frontend_theme'                   => get_user_option( 'friends_frontend_theme' ),
 				)
 			)
 		);

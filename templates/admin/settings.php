@@ -157,6 +157,31 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<?php endif; ?>
+			<?php if ( current_user_can( 'manage_options' ) ) : ?>
+			<tr id="compose">
+				<th scope="row"><?php esc_html_e( 'Compose', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="friends_compose_post_format">
+							<span><?php esc_html_e( 'Default post format for new posts:', 'friends' ); ?></span>
+							<select name="friends_compose_post_format" id="friends_compose_post_format">
+								<?php foreach ( get_post_format_strings() as $format => $label ) : ?>
+									<option value="<?php echo esc_attr( $format ); ?>"<?php selected( $args['compose_post_format'], $format ); ?>><?php echo esc_html( $label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+						</label>
+						<br/><br/>
+						<label for="friends_exclude_compose_format_from_feed">
+							<input name="friends_exclude_compose_format_from_feed" type="checkbox" id="friends_exclude_compose_format_from_feed" value="1" <?php checked( '1', $args['exclude_compose_format_from_feed'] ); ?>>
+							<span><?php esc_html_e( 'Exclude posts in this format from the main RSS feed.', 'friends' ); ?></span>
+						</label>
+						<p class="description">
+							<?php esc_html_e( 'This prevents short status posts from appearing in your regular blog RSS feed.', 'friends' ); ?>
+						</p>
+					</fieldset>
+				</td>
+			</tr>
+			<?php endif; ?>
 			<tr>
 				<th scope="row"><?php esc_html_e( 'Reactions', 'friends' ); ?></th>
 				<td>
@@ -276,6 +301,7 @@ do_action( 'friends_settings_before_form' );
 				foreach ( array(
 					__( 'Comments' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
 					__( 'Post Formats', 'friends' ),
+					__( 'Compose', 'friends' ),
 				) as $setting ) :
 					?>
 					<li><?php echo esc_html( $setting ); ?></li>

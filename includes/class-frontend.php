@@ -95,6 +95,7 @@ class Frontend {
 	 */
 	private function register_hooks() {
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
+		add_filter( 'pre_get_posts', array( $this, 'exclude_compose_format_from_feed' ), 10 );
 		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 2 );
 		add_filter( 'friends_header_widget_title', array( $this, 'header_widget_title' ) );
 		add_filter( 'get_edit_post_link', array( $this, 'friend_post_edit_link' ) );
@@ -103,6 +104,7 @@ class Frontend {
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
 		add_action( 'init', array( $this, 'add_theme_supports' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
+		add_action( 'wp_ajax_friends-mention-autocomplete', array( $this, 'ajax_mention_autocomplete' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
@@ -475,6 +477,13 @@ class Frontend {
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
 		wp_enqueue_script( 'friends-mastodon', plugins_url( 'templates/mastodon/mastodon.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $version, true );
+		wp_localize_script(
+			'friends-mastodon',
+			'friendsMastodon',
+			array(
+				'mentionNonce' => wp_create_nonce( 'friends-mention-autocomplete' ),
+			)
+		);
 
 		add_filter(
 			'friends_template_paths_theme_mastodon',
@@ -957,6 +966,60 @@ class Frontend {
 		wp_trash_post( $reblogged );
 
 		return $reblogged;
+	}
+
+	/**
+	 * The Ajax function to autocomplete @mentions in the compose box.
+	 */
+	public function ajax_mention_autocomplete() {
+		check_ajax_referer( 'friends-mention-autocomplete' );
+
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		if ( ! isset( $_POST['q'] ) ) {
+			wp_send_json_success( array() );
+			exit;
+		}
+
+		$q       = sanitize_text_field( wp_unslash( $_POST['q'] ) );
+		$users   = User_Query::search( '*' . $q . '*' );
+		$results = array();
+
+		foreach ( $users->get_results() as $friend ) {
+			$handle = null;
+
+			foreach ( $friend->get_feeds() as $feed ) {
+				$ap_actor_id = $feed->get_ap_actor_id();
+				if ( $ap_actor_id && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+					$acct = \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id );
+					if ( $acct ) {
+						$handle = $acct;
+						break;
+					}
+				}
+			}
+
+			if ( ! $handle ) {
+				$handle = $friend->user_login;
+				if ( $friend->user_url ) {
+					$host = wp_parse_url( $friend->user_url, PHP_URL_HOST );
+					if ( $host ) {
+						$handle = $friend->user_login . '@' . $host;
+					}
+				}
+			}
+
+			$results[] = array(
+				'handle'       => $handle,
+				'display_name' => $friend->display_name,
+				'avatar'       => $friend->get_avatar_url(),
+			);
+		}
+
+		wp_send_json_success( $results );
 	}
 
 	/**
@@ -1946,6 +2009,38 @@ class Frontend {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Exclude the compose post format from the main RSS feed.
+	 *
+	 * @param  \WP_Query $query The main query.
+	 * @return \WP_Query The modified main query.
+	 */
+	public function exclude_compose_format_from_feed( $query ) {
+		if ( ! $query->is_main_query() || ! $query->is_feed() ) {
+			return $query;
+		}
+
+		if ( ! get_option( 'friends_exclude_compose_format_from_feed' ) ) {
+			return $query;
+		}
+
+		$format = get_option( 'friends_compose_post_format', 'status' );
+		if ( ! $format || 'standard' === $format ) {
+			return $query;
+		}
+
+		$tax_query   = (array) $query->get( 'tax_query' );
+		$tax_query[] = array(
+			'taxonomy' => 'post_format',
+			'field'    => 'slug',
+			'terms'    => array( 'post-format-' . $format ),
+			'operator' => 'NOT IN',
+		);
+		$query->set( 'tax_query', $tax_query );
+
+		return $query;
 	}
 
 	/**
