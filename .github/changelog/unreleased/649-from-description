@@ -1,0 +1,3 @@
+Type: fixed
+
+Remove extra whitespace inside link tags that caused imprecise hover text in templates.
