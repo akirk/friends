@@ -1195,12 +1195,36 @@ class User extends \WP_User {
 			if ( ! $note ) {
 				$note = '';
 			}
-			$account->id             = apply_filters( 'friends_mastodon_api_username', $user->ID );
-			$account->username       = is_string( $account->id ) ? $account->id : $user->user_login;
+			$ap_actor_id = null;
+			if ( $post instanceof \WP_Post && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				$ap_meta = get_post_meta( $post->ID, 'activitypub', true );
+				if ( ! empty( $ap_meta['attributedTo']['ap_actor_id'] ) ) {
+					$ap_actor_id = (int) $ap_meta['attributedTo']['ap_actor_id'];
+				}
+			}
+
+			if ( ! $ap_actor_id ) {
+				foreach ( $user->get_active_feeds() as $user_feed ) {
+					if ( $user_feed->is_activitypub_feed() ) {
+						$ap_actor_id = $user_feed->get_ap_actor_id();
+						break;
+					}
+				}
+			}
+
+			if ( $ap_actor_id ) {
+				$account->id       = \strval( $ap_actor_id );
+				$acct              = \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id );
+				$account->username = $acct ? $acct : $user->user_login;
+				$account->acct     = $account->username;
+			} else {
+				$account->id       = apply_filters( 'friends_mastodon_api_username', $user->ID );
+				$account->username = is_string( $account->id ) && ! is_numeric( $account->id ) ? $account->id : $user->user_login;
+				$account->acct     = $account->username;
+			}
 			$account->display_name   = $user->display_name;
 			$account->avatar         = $user->get_avatar_url();
 			$account->avatar_static  = $user->get_avatar_url();
-			$account->acct           = $account->username;
 			$account->note           = wpautop( $note );
 			$account->created_at     = new \DateTime( $user->user_registered );
 			$account->statuses_count = $user->get_post_stats()['post_count'];

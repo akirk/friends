@@ -1,0 +1,3 @@
+Type: fixed
+
+Use ap_actor post ID as account ID in Mastodon API when ActivityPub plugin is active.
