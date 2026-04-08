@@ -65,6 +65,32 @@ $mastodon_current_user = wp_get_current_user();
 
 	<!-- Center column: timeline (left open, footer closes it) -->
 	<div class="mastodon-center-col">
+		<details class="mastodon-mobile-panel">
+			<summary class="mastodon-mobile-panel-toggle">
+				<?php echo get_avatar( $mastodon_current_user->ID, 32, '', '', array( 'class' => 'mastodon-avatar' ) ); ?>
+				<span><?php echo esc_html( $mastodon_current_user->display_name ); ?></span>
+				<i class="dashicons dashicons-arrow-down-alt2"></i>
+			</summary>
+			<div class="mastodon-mobile-panel-content">
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="mastodon-compose-form friends-post-inline">
+					<?php wp_nonce_field( 'friends_publish' ); ?>
+					<input type="hidden" name="action" value="friends_publish" />
+					<input type="hidden" name="format" value="<?php echo esc_attr( get_option( 'friends_compose_post_format', 'status' ) ); ?>" />
+					<textarea name="content" rows="3" placeholder="<?php echo esc_attr( sprintf( /* translators: %s is the user's display name */ __( "What's on your mind, %s?", 'friends' ), $mastodon_current_user->display_name ) ); ?>"></textarea>
+					<div class="mastodon-compose-footer">
+						<a href="<?php echo esc_url( admin_url( 'admin.php?page=friends-settings#compose' ) ); ?>" class="mastodon-compose-settings" title="<?php esc_attr_e( 'Compose settings', 'friends' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
+						<button type="submit" class="mastodon-compose-submit"><?php esc_html_e( 'Post', 'friends' ); ?></button>
+					</div>
+				</form>
+				<form class="mastodon-search-form form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
+					<div class="form-autocomplete-input mastodon-search-wrap">
+						<input class="mastodon-search-input master-search" type="text" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search or paste URL' ); ?>" value="<?php echo esc_attr( $_search ); ?>" autocomplete="off" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-autocomplete' ) ); ?>" />
+						<i class="form-icon"></i>
+					</div>
+					<ul class="menu" style="display: none"></ul>
+				</form>
+			</div>
+		</details>
 		<div class="mastodon-col-header<?php echo is_single() ? ' is-single' : ''; ?>">
 			<div class="mastodon-col-title-row">
 				<?php

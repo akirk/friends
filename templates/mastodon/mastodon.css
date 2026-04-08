@@ -92,17 +92,62 @@ body.friends-page {
 /* Mobile overlay */
 .mastodon-overlay { display: none; }
 
-/* Search inside right sidebar (shown when left col is hidden) */
-.mastodon-sidebar-search {
+/* Mobile panel: collapsible compose + search (replaces left col on small screens) */
+.mastodon-mobile-panel {
 	display: none;
-	padding: 16px 16px 8px;
+	border-bottom: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.mastodon-mobile-panel-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	cursor: pointer;
+	color: light-dark(#282c37, #dadada);
+	font-weight: 600;
+	font-size: 14px;
+	list-style: none;
+}
+
+.mastodon-mobile-panel-toggle::-webkit-details-marker { display: none; }
+.mastodon-mobile-panel-toggle::marker { display: none; content: ""; }
+
+.mastodon-mobile-panel-toggle img {
+	width: 32px;
+	height: 32px;
+	border-radius: 4px;
+}
+
+.mastodon-mobile-panel-toggle span {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.mastodon-mobile-panel-toggle .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+	transition: transform .2s;
+	color: light-dark(#606984, #9baec8);
+}
+
+.mastodon-mobile-panel[open] > .mastodon-mobile-panel-toggle .dashicons {
+	transform: rotate(180deg);
+}
+
+.mastodon-mobile-panel-content {
+	padding: 0 16px 12px;
 }
 
 @media (max-width: 1100px) {
 	.mastodon-left-col {
 		display: none;
 	}
-	.mastodon-sidebar-search {
+	.mastodon-mobile-panel {
 		display: block;
 	}
 }
