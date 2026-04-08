@@ -35,22 +35,17 @@ $mastodon_current_user = wp_get_current_user();
 
 	<!-- Left column: user info + search -->
 	<aside class="mastodon-left-col">
-		<a class="mastodon-user-card" href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
-			<?php echo get_avatar( $mastodon_current_user->ID, 46, '', '', array( 'class' => 'mastodon-avatar' ) ); ?>
-			<div class="mastodon-user-info">
+		<a class="mastodon-user-card" href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><?php echo get_avatar( $mastodon_current_user->ID, 46, '', '', array( 'class' => 'mastodon-avatar' ) ); ?><div class="mastodon-user-info">
 				<strong class="mastodon-display-name"><?php echo esc_html( $mastodon_current_user->display_name ); ?></strong>
 				<span class="mastodon-handle">@<?php echo esc_html( $mastodon_current_user->user_login ); ?></span>
-			</div>
-		</a>
+			</div></a>
 		<form method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="mastodon-compose-form friends-post-inline">
 			<?php wp_nonce_field( 'friends_publish' ); ?>
 			<input type="hidden" name="action" value="friends_publish" />
 			<input type="hidden" name="format" value="<?php echo esc_attr( get_option( 'friends_compose_post_format', 'status' ) ); ?>" />
 			<textarea name="content" rows="4" placeholder="<?php echo esc_attr( sprintf( /* translators: %s is the user's display name */ __( "What's on your mind, %s?", 'friends' ), $mastodon_current_user->display_name ) ); ?>"></textarea>
 			<div class="mastodon-compose-footer">
-				<a href="<?php echo esc_url( admin_url( 'admin.php?page=friends-settings#compose' ) ); ?>" class="mastodon-compose-settings" title="<?php esc_attr_e( 'Compose settings', 'friends' ); ?>">
-					<span class="dashicons dashicons-admin-generic"></span>
-				</a>
+				<a href="<?php echo esc_url( admin_url( 'admin.php?page=friends-settings#compose' ) ); ?>" class="mastodon-compose-settings" title="<?php esc_attr_e( 'Compose settings', 'friends' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
 				<button type="submit" class="mastodon-compose-submit"><?php esc_html_e( 'Post', 'friends' ); ?></button>
 			</div>
 		</form>
@@ -88,9 +83,7 @@ $mastodon_current_user = wp_get_current_user();
 					echo '<h2 id="page-title"><a href="' . esc_url( home_url( '/friends/' ) ) . '">' . esc_html( $_title ) . '</a></h2>';
 				}
 				?>
-				<a class="off-canvas-toggle" href="#friends-sidebar" aria-label="<?php esc_attr_e( 'Open sidebar', 'friends' ); ?>">
-					<i class="dashicons dashicons-menu"></i>
-				</a>
+				<a class="off-canvas-toggle" href="#friends-sidebar" aria-label="<?php esc_attr_e( 'Open sidebar', 'friends' ); ?>"><i class="dashicons dashicons-menu"></i></a>
 			</div>
 			<?php if ( ! is_single() && empty( $args['no-bottom-margin'] ) ) : ?>
 			<div class="mastodon-chips-area">

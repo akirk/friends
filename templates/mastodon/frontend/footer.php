@@ -12,9 +12,7 @@
 	<aside class="mastodon-right-col" id="friends-sidebar">
 		<a class="mastodon-sidebar-close" href="#close" aria-label="<?php esc_attr_e( 'Close sidebar', 'friends' ); ?>">&times;</a>
 		<div class="mastodon-brand">
-			<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
-				<h2><?php esc_html_e( 'Friends', 'friends' ); ?></h2>
-			</a>
+			<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><h2><?php esc_html_e( 'Friends', 'friends' ); ?></h2></a>
 		</div>
 		<form class="mastodon-sidebar-search form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 			<div class="form-autocomplete-input mastodon-search-wrap">
