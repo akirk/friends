@@ -1,0 +1,3 @@
+Type: fixed
+
+Remove ActivityPub reply-exclusion filter that causes a full table scan on the friends page query.

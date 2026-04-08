@@ -2194,6 +2194,14 @@ class Frontend {
 
 		$this->is_friends_page = true;
 		$query->is_friends_page = true;
+
+		// Remove the ActivityPub reply-exclusion filter which does a NOT LIKE on post_content,
+		// causing a full table scan. Friends posts don't use the activitypub/reply block.
+		if ( class_exists( '\Activitypub\Blocks' ) ) {
+			remove_filter( 'posts_where', array( \Activitypub\Blocks::class, 'exclude_replies_where' ) );
+			remove_action( 'pre_get_posts', array( \Activitypub\Blocks::class, 'filter_query_loop_vars' ) );
+		}
+
 		$query->is_singular = false;
 		$query->is_single = false;
 		$query->is_category = false;
