@@ -1,3 +1,18 @@
+### 4.0.5
+- Fix search pagination losing search results on infinite scroll and add search controls (clear search, sort order). ([#636])
+- Fix comment textarea causing horizontal scrollbar on mobile. ([#637])
+- Fix TypeError when updating the Friends dashboard widget. ([#638])
+- Add ActivityPub integration tests to CI and test for comment federation on cached posts. ([#639])
+- Show ActivityPub comment form for posts whose permalink host is a known ActivityPub instance, with a fallback message linking to the source for non-ActivityPub posts. ([#641])
+- Add `friends_browser_extension_actions` filter to allow plugins to register actions in the browser extension. ([#642])
+- Remove the plugin installer page and update the README for 4.0. ([#643])
+- Fix reblog account handle for WordPress blog-wide ActivityPub actors using ?author=0 URLs. ([#644])
+- Add compose box to the Mastodon theme with @mention autocomplete and a setting to exclude status posts from the main RSS feed. ([#646])
+- Use ap_actor post ID as account ID in Mastodon API when ActivityPub plugin is active. ([#647])
+- Remove extra whitespace inside link tags that caused imprecise hover text in templates. ([#649])
+- Add collapsible mobile panel for compose and search in Mastodon theme. ([#650])
+- Fix Mastodon theme search autocomplete styling and prevent User_Query from returning non-subscription WordPress users. ([#651])
+
 ### 4.0.4
 - Mastodon theme: compact mode, mobile sidebar, and profile page cosmetics ([#634])
 
@@ -809,3 +824,17 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#632]: https://github.com/akirk/friends/pull/632
 
 [#634]: https://github.com/akirk/friends/pull/634
+
+[#636]: https://github.com/akirk/friends/pull/636
+[#637]: https://github.com/akirk/friends/pull/637
+[#638]: https://github.com/akirk/friends/pull/638
+[#639]: https://github.com/akirk/friends/pull/639
+[#641]: https://github.com/akirk/friends/pull/641
+[#642]: https://github.com/akirk/friends/pull/642
+[#643]: https://github.com/akirk/friends/pull/643
+[#644]: https://github.com/akirk/friends/pull/644
+[#646]: https://github.com/akirk/friends/pull/646
+[#647]: https://github.com/akirk/friends/pull/647
+[#649]: https://github.com/akirk/friends/pull/649
+[#650]: https://github.com/akirk/friends/pull/650
+[#651]: https://github.com/akirk/friends/pull/651
