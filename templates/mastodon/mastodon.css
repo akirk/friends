@@ -362,6 +362,16 @@ body.friends-page {
 	align-items: center;
 }
 
+.mastodon-search-wrap .form-icon {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: .8rem;
+	height: .8rem;
+	pointer-events: none;
+}
+
 .mastodon-search-input {
 	width: 100%;
 	background: light-dark(#eaedf1, #313543);
@@ -1065,9 +1075,56 @@ body.friends-page {
 	border: 1px solid light-dark(#d4dde8, #393f4f);
 	border-radius: 8px;
 	z-index: 100;
-	max-height: 300px;
-	overflow-y: auto;
 	box-shadow: 0 8px 24px rgba(0,0,0,.2);
+	overflow: hidden;
+	padding: 0;
+}
+
+.friends-page .form-autocomplete .menu .menu-item {
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .form-autocomplete .menu .menu-item + .menu-item {
+	margin-top: 0;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a {
+	display: block !important;
+	white-space: normal;
+	margin: 0;
+	padding: 8px 12px;
+	border-radius: 0;
+	color: light-dark(#282c37, #dadada);
+	font-size: 14px;
+	font-weight: normal;
+	line-height: 1.4;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a:hover,
+.friends-page .form-autocomplete .menu .menu-item > a:focus,
+.friends-page .form-autocomplete .menu .menu-item > a:active {
+	background: light-dark(rgba(86,58,204,.06), rgba(99,100,255,.1));
+	color: light-dark(#282c37, #dadada);
+	outline: none;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a > .ab-icon {
+	margin-right: 6px;
+	vertical-align: middle;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a small {
+	margin-left: .3em;
+	color: light-dark(#606984, #9baec8);
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a mark {
+	background: light-dark(rgba(86,58,204,.15), rgba(99,100,255,.25));
+	color: inherit;
+	border: none;
+	border-radius: 2px;
+	padding: 0 1px;
 }
 
 /* === Dropdown Menus === */
@@ -1186,6 +1243,146 @@ body.friends-page {
 
 .friends-page #friends-send-new-message {
 	padding: 16px !important;
+}
+
+/* Mastodon theme: messages */
+.friends-page .card.mt-2.p-2:has(.friend-message) {
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	padding: 0 !important;
+	margin: 0;
+}
+
+.friends-page .card.mt-2.p-2:has(.friend-message) > strong {
+	display: block;
+	padding: 12px 16px;
+	font-size: 15px;
+	color: light-dark(#282c37, #dadada);
+	border-bottom: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.friends-page .friend-message {
+	border-bottom: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.friends-page a.display-message {
+	display: block;
+	padding: 12px 16px;
+	color: light-dark(#282c37, #dadada);
+	font-size: 14px;
+	transition: background .15s;
+}
+
+.friends-page a.display-message:hover {
+	background: light-dark(#f2f5f7, #313543);
+	text-decoration: none;
+}
+
+.friends-page a.display-message.unread {
+	font-weight: 700;
+	border-left: 3px solid light-dark(#563acc, #6364ff);
+	padding-left: 13px;
+}
+
+.friends-page .friend-message .conversation {
+	background: light-dark(#f2f5f7, #1e2028);
+	border-top: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.friends-page .friend-message .conversation .messages {
+	max-height: 50vh;
+	overflow-y: auto;
+	padding: 8px 0;
+}
+
+.friends-page .friend-message .conversation .message {
+	padding: 10px 16px;
+	font-size: 14px;
+	color: light-dark(#606984, #9baec8);
+}
+
+.friends-page .friend-message .conversation .message .author {
+	font-weight: 600;
+	color: light-dark(#282c37, #dadada);
+}
+
+.friends-page .friend-message .conversation .message .time {
+	font-size: 12px;
+}
+
+.friends-page .friend-message .conversation .message blockquote {
+	margin: 6px 0 0;
+	padding: 10px 14px;
+	background: light-dark(#fff, #282c37);
+	border-radius: 8px;
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-left: none;
+	color: light-dark(#282c37, #dadada);
+	font-size: 15px;
+}
+
+.friends-page .friend-message .conversation .message blockquote p:last-child {
+	margin-bottom: 0;
+}
+
+.friends-page .friend-message .conversation .form-horizontal {
+	padding: 12px 16px;
+	border-top: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-input {
+	background: light-dark(#fff, #282c37);
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-radius: 8px;
+	padding: 8px 12px;
+	font-size: 14px;
+	font-family: inherit;
+	color: light-dark(#282c37, #dadada);
+	width: 100%;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-input:focus {
+	border-color: light-dark(#563acc, #6364ff);
+	outline: none;
+}
+
+.friends-page .friend-message .conversation .form-horizontal textarea.form-input {
+	min-height: 60px;
+	resize: vertical;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .btn {
+	background: light-dark(#563acc, #6364ff);
+	color: #fff;
+	border: none;
+	border-radius: 100px;
+	padding: 6px 18px;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .btn:hover {
+	background: light-dark(#4a30b0, #7475ff);
+}
+
+.friends-page .friend-message .conversation .form-horizontal .btn.delete-conversation {
+	background: transparent;
+	color: light-dark(#df405a, #e87c8e);
+	font-size: 12px;
+	padding: 4px 8px;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-group {
+	margin-bottom: 8px;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-label {
+	font-size: 13px;
+	color: light-dark(#606984, #9baec8);
+	font-weight: 600;
 }
 
 /* Mastodon theme: header image as banner on the title row */

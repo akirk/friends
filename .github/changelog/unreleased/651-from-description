@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix Mastodon theme search autocomplete styling and prevent User_Query from returning non-subscription WordPress users.

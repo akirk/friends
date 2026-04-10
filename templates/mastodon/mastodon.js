@@ -9,6 +9,7 @@
  *   o/enter       - Toggle open/close current item
  *   s             - Toggle star reaction
  *   v             - Open original in new tab
+ *   cmd-k/ctrl-k  - Focus search
  *   ?             - Show keyboard shortcuts help
  */
 ( function( $ ) {
@@ -158,6 +159,19 @@
 
 	// Keyboard shortcuts.
 	$( document ).on( 'keydown', function( e ) {
+		// cmd-k / ctrl-k: focus search input (works in any context).
+		if ( ( e.metaKey || e.ctrlKey ) && 75 === e.keyCode ) {
+			e.preventDefault();
+			$( '.mastodon-search-input' ).first().focus();
+			return false;
+		}
+
+		// Escape: blur search input.
+		if ( 27 === e.keyCode && $( e.target ).is( '.mastodon-search-input' ) ) {
+			$( e.target ).blur();
+			return false;
+		}
+
 		if ( $( e.target ).is( 'input, textarea, select, [contenteditable]' ) ) {
 			return;
 		}
@@ -262,6 +276,7 @@
 						'<tr><td style="padding:2px 12px 2px 0"><b>o / enter</b></td><td>Open / close item</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>s</b></td><td>Toggle \u2b50 reaction</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>v</b></td><td>Open original in new tab</td></tr>' +
+						'<tr><td style="padding:2px 12px 2px 0"><b>\u2318K / Ctrl-K</b></td><td>Search</td></tr>' +
 						'<tr><td style="padding:2px 12px 2px 0"><b>?</b></td><td>Show this help</td></tr>' +
 						'</table>' +
 						'<p style="margin:12px 0 0;color:light-dark(#606984,#4a4e69);font-size:11px">Press any key to close</p>' +
