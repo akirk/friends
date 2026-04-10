@@ -167,7 +167,7 @@ class User_Query extends \WP_User_Query {
 				'order'   => 'ASC',
 				'orderby' => 'display_name',
 			);
-			$starred_friends_subscriptions[ $cache_key ] = new self( array( 'number' => 0 ) );
+			$starred_friends_subscriptions[ $cache_key ] = new self( array( 'include' => array( 0 ) ) );
 			$starred_friends_subscriptions[ $cache_key ]->add_virtual_subscriptions( $meta );
 			$starred_friends_subscriptions[ $cache_key ]->sort( $sort['orderby'], $sort['order'] );
 		}
@@ -266,7 +266,7 @@ class User_Query extends \WP_User_Query {
 			'order'   => 'ASC',
 			'orderby' => 'display_name',
 		);
-		$search = new self( array( 'number' => 0 ) );
+		$search = new self( array( 'include' => array( 0 ) ) );
 		$search->add_virtual_subscriptions( $query );
 		$search->sort( $sort['orderby'], $sort['order'] );
 		return $search;
@@ -282,7 +282,7 @@ class User_Query extends \WP_User_Query {
 				'order'   => 'ASC',
 				'orderby' => 'display_name',
 			);
-			$all_subscriptions[ get_current_blog_id() ] = new self( array( 'number' => 0 ) );
+			$all_subscriptions[ get_current_blog_id() ] = new self( array( 'include' => array( 0 ) ) );
 			$all_subscriptions[ get_current_blog_id() ]->add_virtual_subscriptions();
 			$all_subscriptions[ get_current_blog_id() ]->sort( $sort['orderby'], $sort['order'] );
 		}
