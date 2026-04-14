@@ -217,14 +217,15 @@ body.friends-page {
 }
 
 .twitter-logo a {
-	color: light-dark(#1d9bf0, #e7e9ea);
-	font-size: 28px;
+	color: #1d9bf0;
+	font-size: 22px;
+	font-weight: 800;
+	letter-spacing: -.5px;
+	text-decoration: none;
 }
 
-.twitter-logo .dashicons {
-	font-size: 28px;
-	width: 28px;
-	height: 28px;
+.twitter-logo a:hover {
+	text-decoration: none;
 }
 
 .twitter-left-nav {

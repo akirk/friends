@@ -36,7 +36,7 @@ $twitter_current_user = wp_get_current_user();
 	<!-- Left column: navigation -->
 	<aside class="twitter-left-col">
 		<div class="twitter-logo">
-			<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><span class="dashicons dashicons-twitter"></span></a>
+			<a href="<?php echo esc_url( home_url( '/friends/' ) ); ?>"><?php esc_html_e( 'Friends', 'friends' ); ?></a>
 		</div>
 		<nav class="twitter-left-nav">
 			<?php dynamic_sidebar( 'friends-sidebar' ); ?>
