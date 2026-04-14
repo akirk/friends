@@ -618,8 +618,14 @@ class Messages {
 		$conversation->unread = $unread;
 		$conversation->last_status = apply_filters( 'mastodon_api_status', null, $last_status->ID );
 		$conversation->accounts = array();
-		// TODO: include virtual users.
-		$conversation->accounts[] = apply_filters( 'mastodon_api_account', null, $message->post_author );
+		$account_id = $message->post_author;
+		if ( ! $account_id ) {
+			$account_id = get_post_meta( $message->ID, 'friends_feed_url', true );
+		}
+		$account = apply_filters( 'mastodon_api_account', null, $account_id );
+		if ( $account ) {
+			$conversation->accounts[] = $account;
+		}
 
 		return $conversation;
 	}
