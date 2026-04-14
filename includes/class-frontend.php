@@ -128,9 +128,11 @@ class Frontend {
 		add_action( 'friends_load_theme_block', array( $this, 'block_theme' ) );
 		add_action( 'friends_load_theme_google-reader', array( $this, 'google_reader_theme' ) );
 		add_action( 'friends_load_theme_mastodon', array( $this, 'mastodon_theme' ) );
+		add_action( 'friends_load_theme_twitter', array( $this, 'twitter_theme' ) );
 		add_action( 'friends_load_themes', array( $this, 'register_block_theme' ) );
 		add_action( 'friends_load_themes', array( $this, 'register_google_reader_theme' ) );
 		add_action( 'friends_load_themes', array( $this, 'register_mastodon_theme' ) );
+		add_action( 'friends_load_themes', array( $this, 'register_twitter_theme' ) );
 		add_action( 'init', array( $this, 'register_block_templates' ) );
 		add_action( 'friends_template_paths', array( $this, 'friends_template_paths' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'dequeue_scripts' ), 99999 );
@@ -489,6 +491,42 @@ class Frontend {
 			'friends_template_paths_theme_mastodon',
 			function ( $file_paths ) {
 				$file_paths[0] = FRIENDS_PLUGIN_DIR . 'templates/mastodon/';
+				return $file_paths;
+			}
+		);
+	}
+
+	public function register_twitter_theme( Frontend $friends_frontend ) {
+		$friends_frontend->register_theme( 'Twitter', 'twitter' );
+		add_filter(
+			'friends_theme_name',
+			function ( $name, $slug ) {
+				return 'twitter' === $slug ? __( 'Twitter', 'friends' ) : $name;
+			},
+			10,
+			2
+		);
+	}
+
+	public function twitter_theme() {
+		$handle  = 'friends-twitter';
+		$file    = 'templates/twitter/twitter.css';
+		$version = Friends::VERSION;
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
+
+		wp_enqueue_script( 'friends-twitter', plugins_url( 'templates/twitter/twitter.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $version, true );
+		wp_localize_script(
+			'friends-twitter',
+			'friendsTwitter',
+			array(
+				'mentionNonce' => wp_create_nonce( 'friends-mention-autocomplete' ),
+			)
+		);
+
+		add_filter(
+			'friends_template_paths_theme_twitter',
+			function ( $file_paths ) {
+				$file_paths[0] = FRIENDS_PLUGIN_DIR . 'templates/twitter/';
 				return $file_paths;
 			}
 		);
