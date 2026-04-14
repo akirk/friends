@@ -1,0 +1,1948 @@
+/* Friends Twitter/X Theme */
+
+/* === Base === */
+.friends-page {
+	margin: 0;
+	padding: 0;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	font-size: 15px;
+	line-height: 1.5;
+	color-scheme: light dark;
+	color: light-dark(#0f1419, #e7e9ea);
+	background: light-dark(#fff, #000);
+	overflow-wrap: break-word;
+}
+
+.friends-page *, .friends-page *::before, .friends-page *::after {
+	box-sizing: border-box;
+}
+
+.friends-page a { color: light-dark(#1d9bf0, #1d9bf0); text-decoration: none; }
+.friends-page a:visited { color: light-dark(#1d9bf0, #1d9bf0); }
+.friends-page a:hover { text-decoration: underline; }
+.friends-page img { max-width: 100%; height: auto; }
+.friends-page h1, .friends-page h2, .friends-page h3, .friends-page h4 { margin: 0; }
+.friends-page ul, .friends-page ol { margin: 0; padding: 0; }
+.friends-page p { margin: 0 0 .8em; }
+.friends-page p:last-child { margin-bottom: 0; }
+.friends-page code, .friends-page pre { overflow: auto; font-size: 13px; }
+
+/* === 3-Column Layout === */
+body.friends-page {
+	display: flex;
+	justify-content: center;
+	min-height: 100vh;
+	padding-top: 32px; /* wp admin bar */
+}
+
+/* --- Left column: navigation --- */
+.twitter-left-col {
+	width: 275px;
+	flex-shrink: 0;
+	padding: 12px;
+	position: sticky;
+	top: 32px;
+	height: calc(100vh - 32px);
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+}
+
+/* --- Center column: timeline --- */
+.twitter-center-col {
+	flex: 1;
+	min-width: 0;
+	max-width: 600px;
+	border-left: 1px solid light-dark(#eff3f4, #2f3336);
+	border-right: 1px solid light-dark(#eff3f4, #2f3336);
+	min-height: calc(100vh - 32px);
+}
+
+/* --- Right column: search + sidebar --- */
+.twitter-right-col {
+	width: 350px;
+	flex-shrink: 0;
+	position: sticky;
+	top: 32px;
+	height: calc(100vh - 32px);
+	overflow-y: auto;
+	padding: 12px 24px;
+}
+
+/* Sidebar close button (mobile only) */
+.twitter-sidebar-close {
+	display: none;
+	position: absolute;
+	top: 10px;
+	right: 12px;
+	font-size: 24px;
+	line-height: 1;
+	color: light-dark(#536471, #71767b);
+	text-decoration: none;
+	z-index: 1;
+}
+
+.twitter-sidebar-close:hover {
+	color: light-dark(#0f1419, #e7e9ea);
+	text-decoration: none;
+}
+
+/* Mobile overlay */
+.twitter-overlay { display: none; }
+
+/* Mobile panel */
+.twitter-mobile-panel {
+	display: none;
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.twitter-mobile-panel-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 16px;
+	cursor: pointer;
+	color: light-dark(#0f1419, #e7e9ea);
+	font-weight: 700;
+	font-size: 14px;
+	list-style: none;
+}
+
+.twitter-mobile-panel-toggle::-webkit-details-marker { display: none; }
+.twitter-mobile-panel-toggle::marker { display: none; content: ""; }
+
+.twitter-mobile-panel-toggle img {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+}
+
+.twitter-mobile-panel-toggle span {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.twitter-mobile-panel-toggle .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+	transition: transform .2s;
+	color: light-dark(#536471, #71767b);
+}
+
+.twitter-mobile-panel[open] > .twitter-mobile-panel-toggle .dashicons {
+	transform: rotate(180deg);
+}
+
+.twitter-mobile-panel-content {
+	padding: 0 16px 12px;
+}
+
+@media (max-width: 1100px) {
+	.twitter-left-col {
+		width: 88px;
+	}
+	.twitter-left-col .twitter-left-nav .menu-item a span,
+	.twitter-left-col .twitter-left-nav .description,
+	.twitter-left-col .twitter-left-nav p,
+	.twitter-left-col .twitter-left-customize,
+	.twitter-left-col .twitter-user-info {
+		display: none;
+	}
+	.twitter-left-col .twitter-left-nav .menu-item a {
+		justify-content: center;
+		padding: 12px;
+	}
+}
+
+@media (max-width: 1000px) {
+	.twitter-right-col {
+		display: none;
+	}
+	.twitter-mobile-panel {
+		display: block;
+	}
+}
+
+@media (max-width: 500px) {
+	body.friends-page {
+		display: block;
+	}
+	.twitter-left-col {
+		display: none;
+	}
+	.twitter-center-col {
+		max-width: 100%;
+		border: none;
+		min-height: 0;
+	}
+	.twitter-right-col {
+		display: none;
+		position: fixed;
+		top: 32px;
+		right: 0;
+		width: 300px;
+		height: calc(100vh - 32px);
+		z-index: 20;
+		background: light-dark(#fff, #000);
+		box-shadow: -4px 0 16px rgba(0,0,0,.2);
+	}
+	.twitter-right-col:target {
+		display: block;
+	}
+	.twitter-sidebar-close {
+		display: block;
+	}
+	.twitter-overlay {
+		display: block;
+		position: fixed;
+		inset: 0;
+		z-index: 15;
+		background: rgba(0,0,0,.4);
+		opacity: 0;
+		pointer-events: none;
+	}
+	.twitter-right-col:target ~ .twitter-overlay {
+		opacity: 1;
+		pointer-events: auto;
+	}
+}
+
+/* === Left Column === */
+.twitter-logo {
+	padding: 8px 12px 16px;
+}
+
+.twitter-logo a {
+	color: light-dark(#1d9bf0, #e7e9ea);
+	font-size: 28px;
+}
+
+.twitter-logo .dashicons {
+	font-size: 28px;
+	width: 28px;
+	height: 28px;
+}
+
+.twitter-left-nav {
+	flex: 1;
+	padding: 4px 0;
+}
+
+.twitter-left-customize {
+	padding: 8px 12px;
+	font-size: 12px;
+}
+
+.twitter-left-customize a {
+	color: light-dark(#536471, #71767b);
+	font-size: 12px;
+}
+
+.twitter-user-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px;
+	margin-top: 8px;
+	text-decoration: none;
+	border-radius: 9999px;
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.twitter-user-card:hover { background: light-dark(rgba(15,20,25,.1), rgba(231,233,234,.1)); text-decoration: none; }
+
+.twitter-user-card .twitter-avatar,
+.twitter-user-card img {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	display: block;
+	flex-shrink: 0;
+}
+
+.twitter-user-info {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.twitter-display-name {
+	font-size: 15px;
+	font-weight: 700;
+	color: light-dark(#0f1419, #e7e9ea);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.twitter-handle {
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Compose box inline (center column, Twitter-style) */
+.twitter-compose-inline {
+	display: flex;
+	gap: 12px;
+	padding: 12px 16px;
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.twitter-compose-inline .twitter-compose-avatar img {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+}
+
+.twitter-compose-inline .twitter-compose-form {
+	flex: 1;
+	background: transparent;
+	border: none;
+	padding: 0;
+}
+
+.twitter-compose-form {
+	margin-bottom: 12px;
+	background: light-dark(#fff, #000);
+	border: 1px solid light-dark(#eff3f4, #2f3336);
+	border-radius: 16px;
+	padding: 10px 12px;
+}
+
+.twitter-compose-form textarea {
+	width: 100%;
+	background: transparent;
+	border: none;
+	outline: none;
+	resize: none;
+	font-size: 20px;
+	font-family: inherit;
+	color: light-dark(#0f1419, #e7e9ea);
+	min-height: 52px;
+}
+
+.twitter-compose-form textarea::placeholder {
+	color: light-dark(#536471, #71767b);
+	font-size: 20px;
+}
+
+.twitter-compose-footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.twitter-compose-settings {
+	color: light-dark(#536471, #71767b);
+	display: flex;
+	align-items: center;
+	margin-right: auto;
+}
+
+.twitter-compose-settings:hover { color: light-dark(#1d9bf0, #1d9bf0); text-decoration: none; }
+
+.twitter-compose-submit {
+	background: #1d9bf0;
+	color: #fff;
+	border: none;
+	border-radius: 9999px;
+	padding: 8px 20px;
+	font-size: 15px;
+	font-weight: 700;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.twitter-compose-submit:hover { background: #1a8cd8; }
+
+/* @ mention dropdown */
+.twitter-mention-dropdown {
+	position: absolute;
+	z-index: 200;
+	list-style: none;
+	background: light-dark(#fff, #16181c);
+	border: none;
+	border-radius: 16px;
+	box-shadow: light-dark(rgba(101,119,134,.2), rgba(255,255,255,.2)) 0 0 15px, light-dark(rgba(101,119,134,.15), rgba(255,255,255,.1)) 0 0 3px 1px;
+	padding: 0;
+	max-height: 220px;
+	overflow-y: auto;
+}
+
+.twitter-mention-dropdown li a {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 16px;
+	color: light-dark(#0f1419, #e7e9ea);
+	text-decoration: none;
+	transition: background .1s;
+}
+
+.twitter-mention-dropdown li a:hover,
+.twitter-mention-dropdown li.active a {
+	background: light-dark(rgba(0,0,0,.03), rgba(231,233,234,.1));
+	text-decoration: none;
+}
+
+.twitter-mention-dropdown li a img {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.twitter-mention-name {
+	font-size: 15px;
+	font-weight: 700;
+}
+
+.twitter-mention-handle {
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	margin-left: auto;
+}
+
+.twitter-mention-no-results span {
+	display: block;
+	padding: 12px 16px;
+	font-size: 15px;
+	color: light-dark(#536471, #71767b);
+}
+
+/* Search in right col */
+.twitter-search-form {
+	width: 100%;
+	margin-bottom: 12px;
+}
+
+.twitter-search-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.twitter-search-wrap::before {
+	content: "\f179";
+	font-family: dashicons;
+	position: absolute;
+	left: 14px;
+	top: 50%;
+	transform: translateY(-50%);
+	color: light-dark(#536471, #71767b);
+	font-size: 16px;
+	line-height: 1;
+	pointer-events: none;
+	z-index: 1;
+}
+
+.twitter-search-wrap .form-icon {
+	position: absolute;
+	right: 10px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: .8rem;
+	height: .8rem;
+	pointer-events: none;
+}
+
+.friends-page .twitter-search-wrap .twitter-search-input {
+	width: 100%;
+	background: light-dark(#eff3f4, #202327);
+	border: 1px solid transparent;
+	border-radius: 9999px;
+	padding: 10px 16px 10px 40px;
+	font-size: 15px;
+	font-family: inherit;
+	color: light-dark(#0f1419, #e7e9ea);
+	outline: none;
+}
+
+.friends-page .twitter-search-wrap .twitter-search-input:focus {
+	border-color: #1d9bf0;
+	background: transparent;
+	box-shadow: 0 0 0 1px #1d9bf0;
+}
+
+.friends-page .twitter-search-wrap .twitter-search-input::placeholder {
+	color: light-dark(#536471, #71767b);
+}
+
+.twitter-right-customize {
+	padding: 8px 0;
+	font-size: 12px;
+}
+
+.twitter-right-customize a {
+	color: light-dark(#536471, #71767b);
+	font-size: 12px;
+}
+
+/* === Center Column Header === */
+.twitter-col-header {
+	z-index: 5;
+	background: light-dark(rgba(255,255,255,.85), rgba(0,0,0,.65));
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+	position: sticky;
+	top: 32px;
+}
+
+.twitter-col-title-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 16px;
+	gap: 8px;
+}
+
+.twitter-col-title-row h2,
+.twitter-col-title-row #page-title {
+	font-size: 20px;
+	font-weight: 800;
+	color: light-dark(#0f1419, #e7e9ea);
+	letter-spacing: -.2px;
+	margin: 0;
+	flex: 1;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.twitter-col-title-row #page-title a {
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.twitter-col-title-row #page-title a:hover { text-decoration: none; }
+
+.twitter-title-avatar {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	vertical-align: middle;
+	margin-right: 4px;
+}
+
+/* Mobile sidebar toggle */
+.off-canvas-toggle {
+	display: none;
+	color: light-dark(#536471, #71767b);
+	padding: 8px;
+	border-radius: 50%;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+
+.off-canvas-toggle:hover {
+	background: light-dark(rgba(15,20,25,.1), rgba(231,233,234,.1));
+}
+
+@media (max-width: 500px) {
+	.off-canvas-toggle {
+		display: inline-flex;
+		align-items: center;
+	}
+	.twitter-col-header {
+		position: static;
+	}
+}
+
+/* Chips area */
+.twitter-chips-area {
+	padding: 0 16px 12px;
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.twitter-chips-area h2,
+.twitter-chips-area #page-title,
+.twitter-chips-area #author-header > h2,
+.twitter-chips-area #main-header > h2 {
+	display: none;
+}
+
+/* === Chips === */
+.friends-page .chip {
+	display: inline-block;
+	background: transparent;
+	border: 1px solid light-dark(#cfd9de, #2f3336);
+	border-radius: 9999px;
+	padding: 4px 14px;
+	margin: 3px 2px;
+	font-size: 13px;
+	color: light-dark(#0f1419, #e7e9ea);
+	line-height: 1.6;
+	text-decoration: none;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.friends-page a.chip:visited { color: light-dark(#0f1419, #e7e9ea); }
+.friends-page .chip:hover { background: light-dark(rgba(15,20,25,.1), rgba(231,233,234,.1)); text-decoration: none; }
+.friends-page span.chip { cursor: default; }
+
+.twitter-chips-area p {
+	font-size: 14px;
+	color: light-dark(#536471, #71767b);
+	margin-bottom: 10px;
+}
+
+/* === Timeline === */
+.friends-page section.posts {
+	padding: 0;
+	margin: 0;
+}
+
+/* === Individual Tweet Card === */
+.friends-page .posts article.card {
+	position: relative;
+	padding: 12px 16px 12px 68px;
+	border: none;
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+	transition: background .15s;
+}
+
+.friends-page .posts article.card:hover {
+	background: light-dark(rgba(0,0,0,.03), rgba(231,233,234,.03));
+}
+
+.friends-page .posts article.card:last-child {
+	border-bottom: none;
+}
+
+/* === Card Header === */
+.friends-page .posts .card-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding: 0;
+	margin-bottom: 4px;
+	gap: 8px;
+}
+
+/* Avatar */
+.friends-page .posts .card-header > div.avatar {
+	position: absolute;
+	left: 16px;
+	top: 12px;
+	flex-shrink: 0;
+}
+
+.friends-page .posts .card-header .avatar a,
+.friends-page .posts .card-header .avatar .author-avatar {
+	display: block;
+}
+
+.friends-page .posts .card-header .avatar img {
+	width: 40px;
+	height: 40px;
+	max-width: none;
+	border-radius: 50%;
+	display: block;
+}
+
+.friends-page .posts .card-header .avatar img.avatar-overlay {
+	position: absolute;
+	bottom: -4px;
+	right: -4px;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: 2px solid light-dark(#fff, #000);
+}
+
+/* Post meta */
+.friends-page .posts .post-meta {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	gap: 0 4px;
+	line-height: 1.4;
+}
+
+.friends-page .posts .author {
+	font-weight: 700;
+	font-size: 15px;
+	color: light-dark(#0f1419, #e7e9ea);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
+}
+
+.friends-page .posts .author a {
+	color: light-dark(#0f1419, #e7e9ea);
+	font-weight: 700;
+}
+
+.friends-page .posts .author a:hover { text-decoration: underline; }
+.friends-page .posts .author strong { font-weight: 700; }
+
+/* Separator dot */
+.friends-page .posts .author::after {
+	content: ' ·';
+	color: light-dark(#536471, #71767b);
+	font-weight: 400;
+	margin-left: 2px;
+}
+
+.friends-page .posts .permalink {
+	font-size: 15px;
+	color: light-dark(#536471, #71767b);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.friends-page .posts .permalink a { color: light-dark(#536471, #71767b); }
+.friends-page .posts .permalink a:hover { text-decoration: underline; }
+.friends-page .posts .reading-time { color: light-dark(#536471, #71767b); font-size: 13px; }
+
+/* Overflow menu */
+.friends-page .posts .overflow {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	opacity: 0;
+	transition: opacity .1s;
+}
+
+.friends-page .posts article.card:hover .overflow {
+	opacity: 1;
+}
+
+.friends-page .collapse-post { display: none; }
+.friends-page .posts:not(.all-collapsed) .teaser { display: none; }
+
+/* === Post Title === */
+.friends-page .posts .card-title {
+	margin-bottom: 4px;
+}
+
+.friends-page .posts article.card > header.card-header {
+	margin-bottom: 4px;
+}
+
+.friends-page .posts .card-title a {
+	font-size: 15px;
+	font-weight: 700;
+	color: light-dark(#0f1419, #e7e9ea);
+	line-height: 1.4;
+}
+
+.friends-page .posts .card-title a:visited { color: light-dark(#0f1419, #e7e9ea); }
+.friends-page .posts .card-title a:hover { text-decoration: underline; }
+.friends-page .posts h4 a { font-size: 15px; font-weight: 700; }
+
+/* === Post Body === */
+.friends-page .posts .card-body,
+.friends-page .posts .entry-content {
+	font-size: 15px;
+	line-height: 1.5;
+	color: light-dark(#0f1419, #e7e9ea);
+	padding: 0;
+}
+
+.friends-page .posts .card-body p,
+.friends-page .posts .entry-content p {
+	margin: 0 0 .6em;
+}
+
+.friends-page .posts .card-body p:last-child,
+.friends-page .posts .entry-content p:last-child {
+	margin-bottom: 0;
+}
+
+.friends-page .posts .card-body img,
+.friends-page .posts .entry-content img {
+	max-width: 100%;
+	border-radius: 16px;
+	height: auto;
+	margin: 10px 0;
+	display: block;
+	border: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+/* Image gallery */
+.friends-page .posts .card-body .friends-gallery {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 2px;
+	border-radius: 16px;
+	overflow: hidden;
+	margin: 10px 0;
+	border: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.friends-page .posts .card-body .friends-gallery img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	margin: 0;
+	border-radius: 0;
+	border: none;
+}
+
+.friends-page .posts .card-body .friends-gallery.gallery-1 {
+	grid-template-columns: 1fr;
+}
+
+.friends-page .posts .card-body .friends-gallery.gallery-3 img:first-child {
+	grid-column: 1 / -1;
+}
+
+/* === Post Footer / Action Bar === */
+.friends-page .posts .card-footer,
+.friends-page .posts footer.entry-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0;
+	padding: 0;
+	border-top: none;
+	background: transparent;
+	margin-top: 12px;
+	max-width: 425px;
+	justify-content: space-between;
+}
+
+.friends-page .posts .card-footer a,
+.friends-page .posts .card-footer .btn-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: light-dark(#536471, #71767b);
+	font-size: 13px;
+	padding: 8px;
+	border-radius: 9999px;
+	background: none;
+	border: none;
+	cursor: pointer;
+	transition: color .15s, background .15s;
+	text-decoration: none;
+}
+
+.friends-page .posts .card-footer a:hover,
+.friends-page .posts .card-footer .btn-link:hover {
+	color: #1d9bf0;
+	background: rgba(29,155,240,.1);
+	text-decoration: none;
+}
+
+.friends-page .posts .card-footer .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+	vertical-align: text-bottom;
+}
+
+/* Reaction buttons */
+.friends-page button.friends-reaction,
+.friends-page button.friends-reaction-picker {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	background: none;
+	border: none;
+	border-radius: 9999px;
+	padding: 8px;
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	cursor: pointer;
+	transition: color .15s, background .15s;
+	font-family: inherit;
+}
+
+.friends-page button.friends-reaction:hover,
+.friends-page button.friends-reaction-picker:hover {
+	color: #f91880;
+	background: rgba(249,24,128,.1);
+}
+
+.friends-page button.friends-reaction.pressed { color: #f91880; }
+
+/* === Boost / Retweet Indicator === */
+.friends-page .posts .reblogged-by,
+.friends-page .posts .reblog-info {
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	margin-bottom: 4px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding-left: 26px;
+	font-weight: 700;
+}
+
+.friends-page .posts .boosted {
+	font-weight: 400;
+}
+
+.friends-page .posts .boosted .follow-button,
+.friends-page .posts .boosted .follow-button span.name {
+	display: none;
+}
+
+.friends-page .posts .boosted:hover .follow-button {
+	display: inline;
+}
+
+@media (max-width: 500px) {
+	.friends-page .posts .boosted:hover .follow-button {
+		display: none;
+	}
+}
+
+/* === Comments === */
+.friends-page .comments-content {
+	padding: 12px 0 12px 16px;
+	margin: 12px 0;
+	font-size: 14px;
+}
+
+.friends-page .comments-content textarea {
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.friends-page .comments-content.closed { display: none; }
+.friends-page .comments-content.open { display: block; }
+
+.friends-page .comments-content h5 {
+	font-size: 13px;
+	font-weight: 700;
+	color: light-dark(#536471, #71767b);
+	margin: 0 0 8px;
+}
+
+.friends-page .comments-content .comment-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .comments-content .comment {
+	padding: 6px 0;
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+/* === Right Column === */
+
+/* Keep sidebar dashicons from blowing up */
+.twitter-right-col .dashicons {
+	font-size: 16px !important;
+	width: 16px !important;
+	height: 16px !important;
+	vertical-align: text-bottom;
+	flex-shrink: 0;
+}
+
+.twitter-right-col .friends-widget h5 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 12px 16px 0;
+	margin: 0;
+	font-size: 15px;
+	font-weight: 800;
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.twitter-right-col .friends-widget .accordion-header h5,
+.twitter-right-col .friends-widget summary h5 {
+	padding: 16px 0 6px;
+	margin: 8px 0 0;
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.twitter-right-col .friends-widget .form-group {
+	padding: 0 16px;
+	margin-bottom: 8px;
+}
+
+/* Left column sidebar nav */
+.twitter-left-nav .dashicons {
+	font-size: 20px !important;
+	width: 20px !important;
+	height: 20px !important;
+	vertical-align: text-bottom;
+	flex-shrink: 0;
+}
+
+.twitter-left-nav .friends-widget h5 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 12px 0;
+	margin: 0;
+	font-size: 13px;
+	font-weight: 700;
+	color: light-dark(#536471, #71767b);
+	text-transform: uppercase;
+	letter-spacing: .5px;
+}
+
+.twitter-left-nav .friends-widget .accordion-header h5,
+.twitter-left-nav .friends-widget summary h5 {
+	padding: 12px 0 4px;
+	margin: 4px 0 0;
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.twitter-left-nav .friends-widget .form-group {
+	padding: 0 12px;
+	margin-bottom: 8px;
+}
+
+/* Sidebar accordion */
+.friends-page .accordion,
+.twitter-right-col details,
+.twitter-left-col details {
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.friends-page .accordion summary,
+.friends-page .accordion .accordion-header {
+	display: block;
+	padding: 0 16px;
+	font-size: 13px;
+	font-weight: 700;
+	color: light-dark(#536471, #71767b);
+	text-transform: uppercase;
+	letter-spacing: .5px;
+	cursor: pointer;
+	list-style: none;
+}
+
+.friends-page .accordion summary::-webkit-details-marker { display: none; }
+.friends-page .accordion summary::marker { display: none; content: ''; }
+
+.friends-page .friends-widget .dashicons {
+	font-size: 14px;
+	width: 14px;
+	height: 14px;
+	vertical-align: text-bottom;
+}
+
+/* Sidebar nav menu */
+.friends-page .menu, .friends-page .menu-nav {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .menu-item,
+.friends-page .friend-list .menu-item {
+	margin: 0;
+}
+
+.friends-page .menu-item a,
+.friends-page .friend-list .menu-item a {
+	display: flex !important;
+	align-items: center;
+	gap: 16px;
+	padding: 12px;
+	color: light-dark(#0f1419, #e7e9ea);
+	font-size: 20px;
+	font-weight: 400;
+	line-height: 1.3;
+	text-decoration: none;
+	transition: background .15s;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	border-radius: 9999px;
+}
+
+.friends-page .menu-item a:hover {
+	background: light-dark(rgba(15,20,25,.1), rgba(231,233,234,.1));
+	text-decoration: none;
+}
+
+.friends-page .friend-stats .menu-item a {
+	font-size: 15px;
+	padding: 8px 12px;
+}
+
+.friends-page .off-canvas-sidebar .description,
+.friends-page .off-canvas-sidebar p,
+.twitter-right-col .description,
+.twitter-right-col p,
+.twitter-left-col .description,
+.twitter-left-col p {
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	padding: 2px 16px;
+	margin: 0 0 4px;
+	line-height: 1.4;
+}
+
+/* === Inputs & Forms === */
+.friends-page .form-input,
+.friends-page input[type="text"] {
+	background: light-dark(#eff3f4, #202327);
+	border: 1px solid transparent;
+	border-radius: 9999px;
+	padding: 10px 16px;
+	font-size: 15px;
+	font-family: inherit;
+	color: light-dark(#0f1419, #e7e9ea);
+	outline: none;
+}
+
+.friends-page .form-input:focus,
+.friends-page input[type="text"]:focus {
+	border-color: #1d9bf0;
+	background: transparent;
+}
+
+.friends-page .btn,
+.friends-page button {
+	font-family: inherit;
+	font-size: 15px;
+	cursor: pointer;
+}
+
+.friends-page .btn {
+	border-radius: 9999px;
+	padding: 8px 20px;
+	font-weight: 700;
+	border: none;
+	transition: background .15s;
+	background: light-dark(#eff3f4, #202327);
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.friends-page .btn:hover { background: light-dark(#d7dbdc, #2c3033); box-shadow: none; }
+
+.friends-page .btn-primary {
+	background: #1d9bf0;
+	color: #fff;
+}
+
+.friends-page .btn-primary:hover { background: #1a8cd8; }
+
+.friends-page .btn-link {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 8px;
+	color: light-dark(#536471, #71767b);
+	border-radius: 9999px;
+}
+
+.friends-page .btn-link:hover {
+	background: rgba(29,155,240,.1);
+	color: #1d9bf0;
+	box-shadow: none;
+}
+
+.friends-page .input-group { display: flex; }
+
+.friends-page .input-group .form-input,
+.friends-page .input-group input[type="text"] {
+	flex: 1;
+	border-radius: 9999px 0 0 9999px;
+}
+
+.friends-page .input-group .input-group-btn,
+.friends-page .input-group .btn {
+	border-radius: 0 9999px 9999px 0;
+}
+
+.friends-page .form-autocomplete { position: relative; }
+
+.friends-page .form-autocomplete .menu {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	background: light-dark(#fff, #16181c);
+	border: none;
+	border-radius: 16px;
+	z-index: 100;
+	box-shadow: light-dark(rgba(101,119,134,.2), rgba(255,255,255,.2)) 0 0 15px, light-dark(rgba(101,119,134,.15), rgba(255,255,255,.1)) 0 0 3px 1px;
+	overflow: hidden;
+	padding: 0;
+}
+
+.friends-page .form-autocomplete .menu .menu-item {
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .form-autocomplete .menu .menu-item + .menu-item {
+	margin-top: 0;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a {
+	display: block !important;
+	white-space: normal;
+	margin: 0;
+	padding: 12px 16px;
+	border-radius: 0;
+	color: light-dark(#0f1419, #e7e9ea);
+	font-size: 15px;
+	font-weight: normal;
+	line-height: 1.4;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a:hover,
+.friends-page .form-autocomplete .menu .menu-item > a:focus,
+.friends-page .form-autocomplete .menu .menu-item > a:active {
+	background: light-dark(rgba(0,0,0,.03), rgba(231,233,234,.1));
+	color: light-dark(#0f1419, #e7e9ea);
+	outline: none;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a > .ab-icon {
+	margin-right: 6px;
+	vertical-align: middle;
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a small {
+	margin-left: .3em;
+	color: light-dark(#536471, #71767b);
+}
+
+.friends-page .form-autocomplete .menu .menu-item > a mark {
+	background: rgba(29,155,240,.2);
+	color: inherit;
+	border: none;
+	border-radius: 2px;
+	padding: 0 1px;
+}
+
+/* === Dropdown Menus === */
+.friends-page .friends-dropdown {
+	position: relative;
+	display: inline-block;
+}
+
+.friends-page .friends-dropdown .menu {
+	display: none;
+	position: absolute;
+	top: 100%;
+	right: 0;
+	left: auto;
+	background: light-dark(#fff, #16181c);
+	border: none;
+	border-radius: 16px;
+	box-shadow: light-dark(rgba(101,119,134,.2), rgba(255,255,255,.2)) 0 0 15px, light-dark(rgba(101,119,134,.15), rgba(255,255,255,.1)) 0 0 3px 1px;
+	z-index: 100;
+	min-width: 200px;
+	overflow: hidden;
+}
+
+.friends-page .friends-dropdown.active .menu,
+.friends-page .friends-dropdown .menu:hover {
+	display: block;
+}
+
+.friends-page .friends-dropdown .menu .menu-item a {
+	padding: 12px 16px;
+	font-size: 15px;
+}
+
+.friends-page .friends-dropdown-right .menu {
+	left: auto;
+	right: 0;
+}
+
+/* === Author Header === */
+.friends-page #author-header,
+.friends-page .author-header {
+	padding: 16px;
+}
+
+.friends-page #author-header.has-header-image {
+	background-size: cover;
+	background-position: center;
+	position: relative;
+	padding: 60px 16px 16px;
+}
+
+.friends-page #author-header.has-header-image::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to bottom, rgba(0,0,0,.2) 0%, rgba(0,0,0,.6) 100%);
+	border-radius: inherit;
+}
+
+.friends-page #author-header.has-header-image > * {
+	position: relative;
+}
+
+.friends-page #author-header.has-header-image h2,
+.friends-page #author-header.has-header-image p,
+.friends-page #author-header.has-header-image .chip,
+.friends-page #author-header.has-header-image a {
+	color: #fff;
+	text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+
+.friends-page #author-header.has-header-image .chip {
+	background: rgba(255,255,255,.2);
+	border-color: rgba(255,255,255,.3);
+}
+
+.friends-page .author-header .avatar img {
+	border-radius: 50%;
+	vertical-align: middle;
+	margin-right: 8px;
+	margin-bottom: 10px;
+	border: 3px solid light-dark(#fff, #000);
+}
+
+.friends-page #author-header > p {
+	margin-bottom: 12px;
+}
+
+/* Folder dropdown */
+.friends-page .friends-folder-selector select {
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	border: none;
+	color: inherit;
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+	padding: 0;
+	margin: 0;
+}
+
+.friends-page .friends-folder-selector select:focus {
+	outline: none;
+}
+
+/* Message section */
+.friends-page .card.mt-2.p-2 {
+	padding: 12px 16px 12px 68px !important;
+	margin: 0 !important;
+	border: none;
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+	border-radius: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+.friends-page #friends-send-new-message {
+	padding: 16px !important;
+}
+
+.friends-page .card.mt-2.p-2:has(.friend-message) {
+	background: transparent;
+	border: none;
+	box-shadow: none;
+	padding: 0 !important;
+	margin: 0;
+}
+
+.friends-page .card.mt-2.p-2:has(.friend-message) > strong {
+	display: block;
+	padding: 12px 16px;
+	font-size: 15px;
+	color: light-dark(#0f1419, #e7e9ea);
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.friends-page .friend-message {
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.friends-page a.display-message {
+	display: block;
+	padding: 12px 16px;
+	color: light-dark(#0f1419, #e7e9ea);
+	font-size: 15px;
+	transition: background .15s;
+}
+
+.friends-page a.display-message:hover {
+	background: light-dark(rgba(0,0,0,.03), rgba(231,233,234,.03));
+	text-decoration: none;
+}
+
+.friends-page a.display-message.unread {
+	font-weight: 700;
+	border-left: 3px solid #1d9bf0;
+	padding-left: 13px;
+}
+
+.friends-page .friend-message .conversation {
+	background: light-dark(#f7f9fa, #16181c);
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.friends-page .friend-message .conversation .messages {
+	max-height: 50vh;
+	overflow-y: auto;
+	padding: 8px 0;
+}
+
+.friends-page .friend-message .conversation .message {
+	padding: 10px 16px;
+	font-size: 15px;
+	color: light-dark(#536471, #71767b);
+}
+
+.friends-page .friend-message .conversation .message .author {
+	font-weight: 700;
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.friends-page .friend-message .conversation .message .time {
+	font-size: 13px;
+}
+
+.friends-page .friend-message .conversation .message blockquote {
+	margin: 6px 0 0;
+	padding: 12px 16px;
+	background: light-dark(#fff, #000);
+	border-radius: 16px;
+	border: 1px solid light-dark(#eff3f4, #2f3336);
+	border-left: none;
+	color: light-dark(#0f1419, #e7e9ea);
+	font-size: 15px;
+}
+
+.friends-page .friend-message .conversation .message blockquote p:last-child {
+	margin-bottom: 0;
+}
+
+.friends-page .friend-message .conversation .form-horizontal {
+	padding: 12px 16px;
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-input {
+	background: transparent;
+	border: 1px solid light-dark(#eff3f4, #2f3336);
+	border-radius: 16px;
+	padding: 10px 16px;
+	font-size: 15px;
+	font-family: inherit;
+	color: light-dark(#0f1419, #e7e9ea);
+	width: 100%;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-input:focus {
+	border-color: #1d9bf0;
+	outline: none;
+}
+
+.friends-page .friend-message .conversation .form-horizontal textarea.form-input {
+	min-height: 60px;
+	resize: vertical;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .btn {
+	background: #1d9bf0;
+	color: #fff;
+	border: none;
+	border-radius: 9999px;
+	padding: 8px 20px;
+	font-size: 15px;
+	font-weight: 700;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .btn:hover {
+	background: #1a8cd8;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .btn.delete-conversation {
+	background: transparent;
+	color: light-dark(#f4212e, #f4212e);
+	font-size: 13px;
+	padding: 4px 8px;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-group {
+	margin-bottom: 8px;
+}
+
+.friends-page .friend-message .conversation .form-horizontal .form-label {
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	font-weight: 700;
+}
+
+/* Header image as banner */
+.twitter-col-title-row.has-header-image {
+	position: relative;
+	background-size: cover;
+	background-position: center;
+	min-height: 200px;
+	align-items: flex-end;
+	padding-bottom: 12px;
+}
+
+.twitter-col-title-row.has-header-image::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,.7) 100%);
+}
+
+.twitter-col-title-row.has-header-image > * {
+	position: relative;
+	z-index: 1;
+}
+
+.twitter-col-title-row.has-header-image h2 a,
+.twitter-col-title-row.has-header-image #page-title a {
+	color: #fff;
+	text-shadow: 0 1px 3px rgba(0,0,0,.5);
+}
+
+.twitter-col-title-row.has-header-image .twitter-title-avatar {
+	width: 64px;
+	height: 64px;
+	border-radius: 50%;
+	border: 3px solid #fff;
+	box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+
+.twitter-col-title-row.has-header-image h2,
+.twitter-col-title-row.has-header-image #page-title {
+	font-size: 20px;
+}
+
+/* === Content Sections === */
+.friends-page section.subscriptions,
+.friends-page section.followers {
+	padding: 16px;
+}
+
+.friends-page section.followers ul,
+.friends-page section.subscriptions ul {
+	list-style: none;
+	padding-left: 0;
+}
+
+/* Subscription items */
+.friends-page section.subscriptions .subscription-item {
+	padding: 12px 0;
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+	display: grid;
+	grid-template-columns: 40px 1fr;
+	grid-template-rows: auto auto auto;
+	column-gap: 12px;
+	row-gap: 2px;
+	align-items: center;
+}
+
+.friends-page section.subscriptions .subscription-item:last-child {
+	border-bottom: none;
+}
+
+.friends-page section.subscriptions .subscription-link {
+	display: contents;
+	text-decoration: none;
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.friends-page section.subscriptions .subscription-link .avatar {
+	border-radius: 50%;
+	grid-row: 1 / 3;
+	width: 40px;
+	height: 40px;
+}
+
+.friends-page section.subscriptions .subscription-info {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.friends-page section.subscriptions .subscription-name {
+	font-size: 15px;
+	font-weight: 700;
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.friends-page section.subscriptions .starred {
+	color: #f91880;
+}
+
+.friends-page section.subscriptions .subscription-folder {
+	font-size: 12px;
+	background: rgba(29,155,240,.1);
+	padding: 2px 8px;
+	border-radius: 9999px;
+	color: #1d9bf0;
+}
+
+.friends-page section.subscriptions .subscription-meta {
+	grid-column: 2;
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+}
+
+.friends-page section.subscriptions .subscription-description {
+	grid-column: 2;
+	font-size: 15px;
+	color: light-dark(#536471, #71767b);
+	margin: 4px 0 0;
+}
+
+.friends-page section.subscriptions .subscription-actions {
+	grid-column: 2;
+	margin-top: 4px;
+}
+
+.friends-page section.subscriptions .subscription-action {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 10px;
+	border-radius: 9999px;
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	transition: color .15s, background .15s;
+	text-decoration: none;
+}
+
+.friends-page section.subscriptions .subscription-unfollow:hover {
+	color: #f4212e;
+	background: rgba(244,33,46,.1);
+	text-decoration: none;
+}
+
+.friends-page section.subscriptions .subscription-action .dashicons {
+	font-size: 16px;
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+}
+
+/* Follower items */
+.friends-page section.followers .follower-item {
+	padding: 12px 0;
+	border-bottom: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.friends-page section.followers .follower-item:last-child {
+	border-bottom: none;
+}
+
+.friends-page section.followers .follower-details > summary {
+	list-style: none;
+	display: grid;
+	grid-template-columns: 40px 1fr auto;
+	column-gap: 12px;
+	row-gap: 0;
+	align-items: start;
+	cursor: pointer;
+}
+
+.friends-page section.followers .follower-details > summary::-webkit-details-marker { display: none; }
+.friends-page section.followers .follower-details > summary::marker { display: none; content: ''; }
+
+.friends-page section.followers .follower-link {
+	display: contents;
+	text-decoration: none;
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.friends-page section.followers .follower-link .avatar {
+	border-radius: 50%;
+	grid-row: 1 / -1;
+	width: 40px;
+	height: 40px;
+	max-width: none;
+}
+
+.friends-page section.followers .follower-info {
+	display: flex;
+	align-items: baseline;
+	gap: 6px;
+	flex-wrap: wrap;
+	min-width: 0;
+}
+
+.friends-page section.followers .follower-name {
+	font-size: 15px;
+	font-weight: 700;
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.friends-page section.followers .follower-handle {
+	font-size: 15px;
+	color: light-dark(#536471, #71767b);
+}
+
+.friends-page section.followers .follower-meta {
+	grid-column: 2;
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	line-height: 1.3;
+}
+
+.friends-page section.followers .follower-actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	grid-row: 1 / -1;
+}
+
+.friends-page section.followers .follower-action,
+.friends-page section.followers .follower-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 6px 16px;
+	border-radius: 9999px;
+	font-size: 14px;
+	font-weight: 700;
+	color: light-dark(#0f1419, #e7e9ea);
+	border: 1px solid light-dark(#cfd9de, #536471);
+	transition: background .15s;
+}
+
+.friends-page section.followers .follower-action:hover {
+	background: light-dark(rgba(15,20,25,.1), rgba(231,233,234,.1));
+	text-decoration: none;
+}
+
+.friends-page section.followers .follower-delete:hover {
+	color: #f4212e;
+	border-color: rgba(244,33,46,.5);
+	background: rgba(244,33,46,.1);
+}
+
+.friends-page section.followers .follower-status {
+	color: #00ba7c;
+	border-color: #00ba7c;
+}
+
+.friends-page section.followers .follower-actions .dashicons {
+	font-size: 18px;
+	width: 18px;
+	height: 18px;
+	vertical-align: middle;
+}
+
+.friends-page section.followers .follower-description {
+	grid-column: 2 / -1;
+	font-size: 15px;
+	color: light-dark(#536471, #71767b);
+	margin: 4px 0 0;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.friends-page section.followers .loading-posts {
+	grid-column: 2;
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	padding: 8px 0;
+}
+
+/* Filter & sort controls */
+.friends-page section.followers > p,
+.friends-page section.subscriptions > p {
+	font-size: 15px;
+	color: light-dark(#536471, #71767b);
+	margin-bottom: 8px;
+}
+
+.friends-page section.followers > p a,
+.friends-page section.subscriptions > p a {
+	color: #1d9bf0;
+}
+
+.friends-page section.followers > p strong,
+.friends-page section.subscriptions > p strong {
+	color: light-dark(#0f1419, #e7e9ea);
+}
+
+/* === Pagination === */
+.friends-page .navigation {
+	padding: 16px;
+	font-size: 15px;
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+}
+
+.friends-page .navigation a { color: #1d9bf0; }
+
+/* === Loading === */
+.friends-page .loading {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	border: 2px solid light-dark(#eff3f4, #2f3336);
+	border-top-color: #1d9bf0;
+	border-radius: 50%;
+	animation: twitter-spin .7s linear infinite;
+}
+
+@keyframes twitter-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* === Utility === */
+.friends-page .d-hide { display: none !important; }
+.friends-page .mb-2 { margin-bottom: 8px; }
+.friends-page .ml-1 { margin-left: 4px; }
+.friends-page .mr-2 { margin-right: 8px; }
+.friends-page .text { font-size: 13px; }
+.friends-page .mention-indicator { color: #1d9bf0; font-weight: 700; }
+.friends-page .toggle-compact { cursor: pointer; }
+.friends-page .overflow { display: none; }
+
+/* Migration notification */
+.friends-page .friends-migration-notification {
+	display: flex;
+	align-items: center;
+	gap: .4rem;
+	padding: .5rem 1rem;
+	background: light-dark(#fef9e7, #2a2410);
+	border-bottom: 1px solid light-dark(#e8c840, #5a4a00);
+	font-size: .85rem;
+	white-space: nowrap;
+	overflow: hidden;
+}
+.friends-page .friends-migration-notification .friends-migration-notification-meta {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+	white-space: nowrap;
+	opacity: .75;
+}
+.friends-page .friends-migration-notification button {
+	background: none;
+	border: 1px solid currentColor;
+	border-radius: 9999px;
+	cursor: pointer;
+	font-size: .8rem;
+	padding: 2px 8px;
+}
+
+/* === Compact (all-collapsed) Mode === */
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) footer.entry-meta {
+	display: none;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title {
+	margin: 2px 0 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-title a {
+	font-size: 13px;
+	font-weight: 400;
+	color: light-dark(#536471, #71767b);
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) {
+	padding: 8px 12px 8px 52px;
+	cursor: pointer;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header > div.avatar {
+	top: 8px;
+	left: 12px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header .avatar img {
+	width: 28px;
+	height: 28px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-header {
+	margin-bottom: 0;
+	align-items: center;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .post-meta {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: nowrap;
+	overflow: hidden;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author {
+	flex-shrink: 0;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .author::after {
+	content: '\00b7';
+	margin-left: 6px;
+	color: light-dark(#536471, #71767b);
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .permalink {
+	flex-shrink: 0;
+	font-size: 13px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reading-time {
+	display: none;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser {
+	display: block;
+	font-size: 13px;
+	color: light-dark(#536471, #71767b);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	margin-top: 2px;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser p {
+	display: inline;
+	margin: 0;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblog-info,
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .reblogged-by {
+	display: none;
+}
+
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) .overflow {
+	display: none;
+}
+
+.friends-page .posts.all-collapsed article.card.uncollapsed div.teaser {
+	display: none;
+}
+
+.friends-page .posts.all-collapsed article.card.mast-current:not(.uncollapsed) {
+	background: light-dark(rgba(0,0,0,.03), rgba(231,233,234,.03));
+}
