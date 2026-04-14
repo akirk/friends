@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix conversation accounts for migrated users by falling back to friends_feed_url meta when post_author is 0.
