@@ -59,16 +59,6 @@ $twitter_current_user = wp_get_current_user();
 				<i class="dashicons dashicons-arrow-down-alt2"></i>
 			</summary>
 			<div class="twitter-mobile-panel-content">
-				<form method="post" action="<?php echo esc_url( admin_url( 'admin-ajax.php' ) ); ?>" class="twitter-compose-form friends-post-inline">
-					<?php wp_nonce_field( 'friends_publish' ); ?>
-					<input type="hidden" name="action" value="friends_publish" />
-					<input type="hidden" name="format" value="<?php echo esc_attr( get_option( 'friends_compose_post_format', 'status' ) ); ?>" />
-					<textarea name="content" rows="3" placeholder="<?php echo esc_attr( sprintf( /* translators: %s is the user's display name */ __( "What's on your mind, %s?", 'friends' ), $twitter_current_user->display_name ) ); ?>"></textarea>
-					<div class="twitter-compose-footer">
-						<a href="<?php echo esc_url( admin_url( 'admin.php?page=friends-settings#compose' ) ); ?>" class="twitter-compose-settings" title="<?php esc_attr_e( 'Compose settings', 'friends' ); ?>"><span class="dashicons dashicons-admin-generic"></span></a>
-						<button type="submit" class="twitter-compose-submit"><?php esc_html_e( 'Post', 'friends' ); ?></button>
-					</div>
-				</form>
 				<form class="twitter-search-form form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 					<div class="form-autocomplete-input twitter-search-wrap">
 						<input class="twitter-search-input master-search" type="text" name="s" placeholder="<?php /* phpcs:ignore WordPress.WP.I18n.MissingArgDomain */ esc_attr_e( 'Search or paste URL' ); ?>" value="<?php echo esc_attr( $_search ); ?>" autocomplete="off" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-autocomplete' ) ); ?>" />

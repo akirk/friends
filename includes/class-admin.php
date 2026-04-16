@@ -46,6 +46,7 @@ class Admin {
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_new_content' ), 71 );
 		add_action( 'wp_head', array( $this, 'admin_bar_mobile' ) );
+		add_action( 'admin_head', array( $this, 'admin_bar_mobile' ) );
 		add_action( 'current_screen', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
@@ -2613,7 +2614,7 @@ class Admin {
 			array(
 				'id'     => 'friends-menu',
 				'parent' => '',
-				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $unread . '</span>',
+				'title'  => '<span class="ab-icon"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $unread . '</span>',
 				'href'   => $my_url . '/friends/',
 			)
 		);
@@ -2673,14 +2674,34 @@ class Admin {
 		if ( ! is_user_logged_in() ) {
 			return;
 		}
+		$logo_mask = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-10 53 154 187'%3E%3Cpath d='M 132.29 90.93 C 119.28 54.95 70.12 63.99 38.89 88.85 -7.9 126.11 11.81 177.74 25.75 200.93 40.32 225.15 60.67 237.5 74.87 225.14 83.57 217.57 86.99 209.19 77.64 194.01 74.25 188.51 76.44 170.04 85.94 165.64 94.55 161.65 94.95 149.38 83.17 149.73 75.25 149.97 53.78 148.25 61.03 144.89 67.56 141.86 143.08 120.75 132.29 90.93 Z'/%3E%3C/svg%3E\") center/contain no-repeat";
 		?>
 		<style type="text/css" media="screen">
+			#wpadminbar #wp-admin-bar-friends-menu .ab-icon:before {
+				content: "";
+				float: left;
+				width: 20px;
+				height: 20px;
+				margin-top: 2px;
+				background-color: currentColor;
+				-webkit-mask: <?php echo $logo_mask; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
+				mask: <?php echo $logo_mask; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>;
+			}
 			@media screen and (max-width: 782px) {
-				#wpadminbar #wp-admin-bar-friends, #wpadminbar #wp-admin-bar-friends .ab-icon {
+				#wpadminbar #wp-admin-bar-friends-menu, #wpadminbar #wp-admin-bar-friends-menu .ab-icon {
 					display: block !important;
 				}
-				#wpadminbar #wp-admin-bar-friends .ab-label {
+				#wpadminbar #wp-admin-bar-friends-menu .ab-label {
 					display: none !important;
+				}
+				#wpadminbar #wp-admin-bar-friends-menu .ab-icon:before {
+					width: 32px;
+					height: 32px;
+					margin-top: 6px;
+					margin-left: 6px;
+				}
+				body.friends-page #wpadminbar li#wp-admin-bar-comments {
+					display: none;
 				}
 			}
 		</style>

@@ -91,6 +91,24 @@
 	}
 }
 
+@media (max-width: 782px) {
+	.friends-page .off-canvas-sidebar,
+	.friends-page .off-canvas-content {
+		margin-top: 46px;
+	}
+}
+
+@media (max-width: 640px) {
+	.friends-page header.navbar {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 6px;
+	}
+	.friends-page .navbar-section.search {
+		margin-left: 0;
+	}
+}
+
 /* === Sidebar === */
 .friends-page .friends-brand {
 	padding: 14px 16px 10px;
