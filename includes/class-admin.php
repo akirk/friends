@@ -2610,11 +2610,13 @@ class Admin {
 
 		$unread = $this->get_unread_badge();
 
+		$logo = '<svg class="friends-logo-mark" viewBox="-10 50 160 195" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path fill="currentColor" d="M 132.29 90.93 C 119.28 54.95 70.12 63.99 38.89 88.85 C -7.90 126.11 11.81 177.74 25.75 200.93 C 40.32 225.15 60.67 237.50 74.87 225.14 C 83.57 217.57 86.99 209.19 77.64 194.01 C 74.25 188.51 76.44 170.04 85.94 165.64 C 94.55 161.65 94.95 149.38 83.17 149.73 C 75.25 149.97 53.78 148.25 61.03 144.89 C 67.56 141.86 143.08 120.75 132.29 90.93 Z"/></svg>';
+
 		$wp_menu->add_node(
 			array(
 				'id'     => 'friends-menu',
 				'parent' => '',
-				'title'  => '<span class="ab-icon dashicons dashicons-groups"></span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $unread . '</span>',
+				'title'  => '<span class="ab-icon">' . $logo . '</span> <span class="ab-label">' . esc_html( __( 'Friends', 'friends' ) ) . $unread . '</span>',
 				'href'   => $my_url . '/friends/',
 			)
 		);
@@ -2676,12 +2678,23 @@ class Admin {
 		}
 		?>
 		<style type="text/css" media="screen">
+			#wpadminbar #wp-admin-bar-friends-menu .ab-icon .friends-logo-mark {
+				width: 20px;
+				height: 20px;
+				vertical-align: middle;
+				margin-top: -2px;
+			}
 			@media screen and (max-width: 782px) {
 				#wpadminbar #wp-admin-bar-friends-menu, #wpadminbar #wp-admin-bar-friends-menu .ab-icon {
 					display: block !important;
 				}
 				#wpadminbar #wp-admin-bar-friends-menu .ab-label {
 					display: none !important;
+				}
+				#wpadminbar #wp-admin-bar-friends-menu .ab-icon .friends-logo-mark {
+					width: 24px;
+					height: 24px;
+					margin-top: 7px;
 				}
 			}
 		</style>
