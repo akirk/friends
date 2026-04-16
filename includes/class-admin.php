@@ -46,6 +46,7 @@ class Admin {
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_friends_menu' ), 39 );
 		add_action( 'admin_bar_menu', array( $this, 'admin_bar_new_content' ), 71 );
 		add_action( 'wp_head', array( $this, 'admin_bar_mobile' ) );
+		add_action( 'admin_head', array( $this, 'admin_bar_mobile' ) );
 		add_action( 'current_screen', array( $this, 'register_help' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ), 39 );
 		add_action( 'gettext_with_context', array( $this->friends, 'translate_user_role' ), 10, 4 );
@@ -2676,10 +2677,10 @@ class Admin {
 		?>
 		<style type="text/css" media="screen">
 			@media screen and (max-width: 782px) {
-				#wpadminbar #wp-admin-bar-friends, #wpadminbar #wp-admin-bar-friends .ab-icon {
+				#wpadminbar #wp-admin-bar-friends-menu, #wpadminbar #wp-admin-bar-friends-menu .ab-icon {
 					display: block !important;
 				}
-				#wpadminbar #wp-admin-bar-friends .ab-label {
+				#wpadminbar #wp-admin-bar-friends-menu .ab-label {
 					display: none !important;
 				}
 			}
