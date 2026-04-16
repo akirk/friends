@@ -2700,6 +2700,9 @@ class Admin {
 					margin-top: 6px;
 					margin-left: 6px;
 				}
+				body.friends-page #wpadminbar li#wp-admin-bar-comments {
+					display: none;
+				}
 			}
 		</style>
 		<?php
