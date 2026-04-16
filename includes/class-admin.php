@@ -2697,7 +2697,8 @@ class Admin {
 				#wpadminbar #wp-admin-bar-friends-menu .ab-icon:before {
 					width: 32px;
 					height: 32px;
-					margin-top: 7px;
+					margin-top: 6px;
+					margin-left: 6px;
 				}
 			}
 		</style>
