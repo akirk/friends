@@ -91,6 +91,13 @@
 	}
 }
 
+@media (max-width: 782px) {
+	.friends-page .off-canvas-sidebar,
+	.friends-page .off-canvas-content {
+		margin-top: 46px;
+	}
+}
+
 @media (max-width: 640px) {
 	.friends-page header.navbar {
 		flex-direction: column;

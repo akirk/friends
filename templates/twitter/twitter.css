@@ -167,6 +167,26 @@ body.friends-page {
 	}
 }
 
+@media (max-width: 782px) {
+	body.friends-page {
+		padding-top: 46px;
+	}
+	.twitter-left-col {
+		top: 46px;
+		height: calc(100vh - 46px);
+	}
+	.twitter-center-col {
+		min-height: calc(100vh - 46px);
+	}
+	.twitter-right-col {
+		top: 46px;
+		height: calc(100vh - 46px);
+	}
+	.twitter-col-title-row {
+		top: 46px;
+	}
+}
+
 @media (max-width: 500px) {
 	body.friends-page {
 		display: block;
@@ -182,10 +202,10 @@ body.friends-page {
 	.twitter-right-col {
 		display: none;
 		position: fixed;
-		top: 32px;
+		top: 46px;
 		right: 0;
 		width: 300px;
-		height: calc(100vh - 32px);
+		height: calc(100vh - 46px);
 		z-index: 20;
 		background: light-dark(#fff, #000);
 		box-shadow: -4px 0 16px rgba(0,0,0,.2);
