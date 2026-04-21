@@ -182,28 +182,26 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 	);
 	?>
 	</p>
-	<form method="get" action="<?php echo esc_url( $base_url ); ?>" class="subscriptions-search">
-		<p>
-			<label>
-				<?php esc_html_e( 'Search:', 'friends' ); ?>
-				<input type="search" name="q" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Name, handle, or description', 'friends' ); ?>" />
-			</label>
-			<button type="submit" class="button"><?php esc_html_e( 'Search', 'friends' ); ?></button>
-			<?php if ( 'all' !== $filter ) : ?>
-				<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>" />
-			<?php endif; ?>
-			<?php if ( 'name' !== $sort ) : ?>
-				<input type="hidden" name="sort" value="<?php echo esc_attr( $sort ); ?>" />
-			<?php endif; ?>
-			<?php
-			if ( '' !== $search_term ) :
-				$clear_args = $link_args;
-				unset( $clear_args['q'] );
-				$clear_url = $clear_args ? add_query_arg( $clear_args, $base_url ) : $base_url;
-				?>
-				<a href="<?php echo esc_url( $clear_url ); ?>"><?php esc_html_e( 'Clear', 'friends' ); ?></a>
-			<?php endif; ?>
-		</p>
+	<form method="get" action="<?php echo esc_url( $base_url ); ?>" class="friends-search" role="search">
+		<label class="friends-search-label">
+			<?php esc_html_e( 'Search:', 'friends' ); ?>
+			<input type="search" name="q" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Name, handle, or description', 'friends' ); ?>" class="friends-search-input" />
+		</label>
+		<button type="submit" class="button friends-search-submit"><?php esc_html_e( 'Search', 'friends' ); ?></button>
+		<?php if ( 'all' !== $filter ) : ?>
+			<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>" />
+		<?php endif; ?>
+		<?php if ( 'name' !== $sort ) : ?>
+			<input type="hidden" name="sort" value="<?php echo esc_attr( $sort ); ?>" />
+		<?php endif; ?>
+		<?php
+		if ( '' !== $search_term ) :
+			$clear_args = $link_args;
+			unset( $clear_args['q'] );
+			$clear_url = $clear_args ? add_query_arg( $clear_args, $base_url ) : $base_url;
+			?>
+			<a href="<?php echo esc_url( $clear_url ); ?>" class="friends-search-clear"><?php esc_html_e( 'Clear', 'friends' ); ?></a>
+		<?php endif; ?>
 	</form>
 	<?php if ( '' !== $search_term ) : ?>
 	<p>
