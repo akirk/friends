@@ -501,10 +501,7 @@ body.friends-page {
 }
 
 .twitter-right-widgets {
-	background: light-dark(#f7f9fa, #16181c);
-	border-radius: 16px;
 	margin-bottom: 12px;
-	overflow: hidden;
 }
 
 .twitter-right-widgets:empty {
