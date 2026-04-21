@@ -500,6 +500,20 @@ body.friends-page {
 	color: light-dark(#536471, #71767b);
 }
 
+.twitter-right-widgets {
+	margin-bottom: 12px;
+}
+
+.twitter-right-widgets:empty {
+	display: none;
+}
+
+.twitter-right-widgets .friends-widget + .friends-widget {
+	border-top: 1px solid light-dark(#eff3f4, #2f3336);
+	margin-top: 4px;
+	padding-top: 4px;
+}
+
 .twitter-right-customize {
 	padding: 8px 0;
 	font-size: 12px;

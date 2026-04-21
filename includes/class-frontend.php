@@ -258,6 +258,17 @@ class Frontend {
 				'after_title'   => '</h5>',
 			)
 		);
+		register_sidebar(
+			array(
+				'name'          => __( 'Friends Sidebar 2 (Twitter theme)', 'friends' ),
+				'id'            => 'friends-sidebar-2',
+				'description'   => __( 'Shown in the right column of the Twitter theme.', 'friends' ),
+				'before_widget' => '<div class="friends-widget">',
+				'after_widget'  => '</div>',
+				'before_title'  => '<h5>',
+				'after_title'   => '</h5>',
+			)
+		);
 
 		if ( Friends::on_frontend() ) {
 			add_action( 'customize_register', '__return_true' );

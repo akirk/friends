@@ -24,8 +24,11 @@
 			</div>
 			<ul class="menu" style="display: none"></ul>
 		</form>
+		<div class="twitter-right-widgets">
+			<?php dynamic_sidebar( 'friends-sidebar-2' ); ?>
+		</div>
 		<div class="twitter-right-customize">
-			<a href="<?php echo esc_url( add_query_arg( 'url', home_url( '/friends/' ), admin_url( 'customize.php?autofocus[section]=sidebar-widgets-friends-sidebar' ) ) ); ?>"><?php esc_html_e( 'customize sidebar', 'friends' ); ?></a>
+			<a href="<?php echo esc_url( add_query_arg( 'url', home_url( '/friends/' ), admin_url( 'customize.php?autofocus[section]=sidebar-widgets-friends-sidebar-2' ) ) ); ?>"><?php esc_html_e( 'customize sidebar', 'friends' ); ?></a>
 		</div>
 	</aside>
 
