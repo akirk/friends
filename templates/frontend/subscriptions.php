@@ -32,6 +32,8 @@ if ( ! in_array( $sort, array( 'name', 'newest', 'oldest', 'posts' ), true ) ) {
 	$sort = 'name';
 }
 
+$search_term = isset( $_GET['q'] ) ? trim( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
 Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, $args );
 
 ?>
@@ -62,6 +64,31 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 		);
 	} else {
 		$filtered = $all_subscriptions;
+	}
+
+	// Search (applied after category filter so the top-of-page totals stay accurate).
+	if ( '' !== $search_term ) {
+		$search_term_lc = function_exists( 'mb_strtolower' ) ? mb_strtolower( $search_term ) : strtolower( $search_term );
+		$filtered  = array_filter(
+			$filtered,
+			function ( $s ) use ( $search_term_lc ) {
+				$haystack = '';
+				if ( isset( $s->display_name ) ) {
+					$haystack .= $s->display_name . ' ';
+				}
+				if ( isset( $s->user_login ) ) {
+					$haystack .= $s->user_login . ' ';
+				}
+				if ( isset( $s->user_url ) ) {
+					$haystack .= $s->user_url . ' ';
+				}
+				if ( isset( $s->description ) ) {
+					$haystack .= wp_strip_all_tags( $s->description );
+				}
+				$haystack = function_exists( 'mb_strtolower' ) ? mb_strtolower( $haystack ) : strtolower( $haystack );
+				return false !== strpos( $haystack, $search_term_lc );
+			}
+		);
 	}
 
 	// Sort.
@@ -132,6 +159,9 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 	if ( 'name' !== $sort ) {
 		$link_args['sort'] = $sort;
 	}
+	if ( '' !== $search_term ) {
+		$link_args['q'] = $search_term;
+	}
 	?>
 	<p>
 	<?php
@@ -152,6 +182,41 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 	);
 	?>
 	</p>
+	<form method="get" action="<?php echo esc_url( $base_url ); ?>" class="friends-search" role="search">
+		<label class="friends-search-label">
+			<?php esc_html_e( 'Search:', 'friends' ); ?>
+			<input type="search" name="q" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Name, handle, or description', 'friends' ); ?>" class="friends-search-input" />
+		</label>
+		<button type="submit" class="button friends-search-submit"><?php esc_html_e( 'Search', 'friends' ); ?></button>
+		<?php if ( 'all' !== $filter ) : ?>
+			<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>" />
+		<?php endif; ?>
+		<?php if ( 'name' !== $sort ) : ?>
+			<input type="hidden" name="sort" value="<?php echo esc_attr( $sort ); ?>" />
+		<?php endif; ?>
+		<?php
+		if ( '' !== $search_term ) :
+			$clear_args = $link_args;
+			unset( $clear_args['q'] );
+			$clear_url = $clear_args ? add_query_arg( $clear_args, $base_url ) : $base_url;
+			?>
+			<a href="<?php echo esc_url( $clear_url ); ?>" class="friends-search-clear"><?php esc_html_e( 'Clear', 'friends' ); ?></a>
+		<?php endif; ?>
+	</form>
+	<?php if ( '' !== $search_term ) : ?>
+	<p>
+		<?php
+		echo esc_html(
+			sprintf(
+				// translators: %1$s is the number of matches, %2$s is the search term.
+				_n( '%1$s match for "%2$s"', '%1$s matches for "%2$s"', count( $filtered ), 'friends' ),
+				number_format_i18n( count( $filtered ) ),
+				$search_term
+			)
+		);
+		?>
+	</p>
+	<?php endif; ?>
 	<p>
 		<?php esc_html_e( 'Filter:', 'friends' ); ?>
 		<?php

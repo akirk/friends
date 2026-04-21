@@ -30,6 +30,8 @@ if ( ! in_array( $sort, array( 'newest', 'oldest', 'name' ), true ) ) {
 	$sort = 'newest';
 }
 
+$search_term = isset( $_GET['q'] ) ? trim( wp_unslash( $_GET['q'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
 $args['no-bottom-margin'] = true;
 
 Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, $args );
@@ -44,6 +46,30 @@ if ( $blog_followers ) {
 	if ( class_exists( '\ActivityPub\Collection\Followers' ) ) {
 		$follower_data = \ActivityPub\Collection\Followers::query( $args['user_id'] );
 		$total         = $follower_data['total'];
+
+		// Apply search filter first so downstream work operates on the smaller set.
+		if ( '' !== $search_term ) {
+			$search_term_lc                    = function_exists( 'mb_strtolower' ) ? mb_strtolower( $search_term ) : strtolower( $search_term );
+			$follower_data['followers'] = array_values(
+				array_filter(
+					$follower_data['followers'],
+					function ( $f ) use ( $search_term_lc ) {
+						$haystack = '';
+						if ( isset( $f->post_title ) ) {
+							$haystack .= $f->post_title . ' ';
+						}
+						if ( isset( $f->guid ) ) {
+							$haystack .= $f->guid . ' ';
+						}
+						if ( isset( $f->post_content ) ) {
+							$haystack .= wp_strip_all_tags( $f->post_content );
+						}
+						$haystack = function_exists( 'mb_strtolower' ) ? mb_strtolower( $haystack ) : strtolower( $haystack );
+						return false !== strpos( $haystack, $search_term_lc );
+					}
+				)
+			);
+		}
 
 		// Classify followers only when a filter is active.
 		if ( 'all' !== $filter ) {
@@ -150,6 +176,9 @@ if ( $blog_followers ) {
 		if ( 'newest' !== $sort ) {
 			$link_args['sort'] = $sort;
 		}
+		if ( '' !== $search_term ) {
+			$link_args['q'] = $search_term;
+		}
 		?>
 		<p>
 		<?php
@@ -180,6 +209,41 @@ if ( $blog_followers ) {
 		echo '</a>';
 		?>
 		</p>
+		<form method="get" action="<?php echo esc_url( $base_url ); ?>" class="friends-search" role="search">
+			<label class="friends-search-label">
+				<?php esc_html_e( 'Search:', 'friends' ); ?>
+				<input type="search" name="q" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Name, handle, or description', 'friends' ); ?>" class="friends-search-input" />
+			</label>
+			<button type="submit" class="button friends-search-submit"><?php esc_html_e( 'Search', 'friends' ); ?></button>
+			<?php if ( 'all' !== $filter ) : ?>
+				<input type="hidden" name="filter" value="<?php echo esc_attr( $filter ); ?>" />
+			<?php endif; ?>
+			<?php if ( 'newest' !== $sort ) : ?>
+				<input type="hidden" name="sort" value="<?php echo esc_attr( $sort ); ?>" />
+			<?php endif; ?>
+			<?php
+			if ( '' !== $search_term ) :
+				$clear_args = $link_args;
+				unset( $clear_args['q'] );
+				$clear_url = $clear_args ? add_query_arg( $clear_args, $base_url ) : $base_url;
+				?>
+				<a href="<?php echo esc_url( $clear_url ); ?>" class="friends-search-clear"><?php esc_html_e( 'Clear', 'friends' ); ?></a>
+			<?php endif; ?>
+		</form>
+		<?php if ( '' !== $search_term ) : ?>
+		<p>
+			<?php
+			echo esc_html(
+				sprintf(
+					// translators: %1$s is the number of matches, %2$s is the search term.
+					_n( '%1$s match for "%2$s"', '%1$s matches for "%2$s"', count( $filtered_followers ), 'friends' ),
+					number_format_i18n( count( $filtered_followers ) ),
+					$search_term
+				)
+			);
+			?>
+		</p>
+		<?php endif; ?>
 		<p>
 			<?php esc_html_e( 'Filter:', 'friends' ); ?>
 			<?php
