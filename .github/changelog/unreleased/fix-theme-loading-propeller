@@ -1,0 +1,3 @@
+Type: Fixed
+
+Fix loading indicator in Google Reader, Mastodon, and Twitter themes spinning the host element's text like a propeller; use a rotating pseudo-element instead.

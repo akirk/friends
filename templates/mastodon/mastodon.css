@@ -1749,9 +1749,25 @@ body.friends-page {
 
 /* === Loading === */
 .friends-page .loading {
-	display: inline-block;
+	color: transparent !important;
+	pointer-events: none;
+	position: relative;
+	min-height: 20px;
+	min-width: 20px;
+	animation: none;
+	border: 0;
+}
+
+.friends-page .loading::after {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 50%;
+	left: 50%;
 	width: 20px;
 	height: 20px;
+	margin-top: -10px;
+	margin-left: -10px;
 	border: 2px solid light-dark(#d4dde8, #393f4f);
 	border-top-color: light-dark(#563acc, #6364ff);
 	border-radius: 50%;
