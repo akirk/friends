@@ -349,10 +349,10 @@ class Notifications {
 	/**
 	 * Notify of a follower
 	 *
-	 * @param string                     $actor    The Actor URL.
-	 * @param array                      $activitypub_object   The Activity object.
-	 * @param int                        $user_id  The ID of the WordPress User.
-	 * @param Activitypub\Model\Follower $follower The Follower object.
+	 * @param string                               $actor              The Actor URL.
+	 * @param array                                $activitypub_object The Activity object.
+	 * @param int                                  $user_id            The ID of the WordPress User.
+	 * @param \WP_Post|\Activitypub\Activity\Actor $follower           The Actor post (since ActivityPub 7.5.0) or Actor object.
 	 *
 	 * @return void
 	 */
@@ -366,6 +366,15 @@ class Notifications {
 		}
 		if ( ! $user->user_email ) {
 			return;
+		}
+
+		$follower_post = null;
+		if ( $follower instanceof \WP_Post ) {
+			$follower_post = $follower;
+			$follower = \Activitypub\Collection\Remote_Actors::get_actor( $follower_post );
+			if ( is_wp_error( $follower ) ) {
+				return;
+			}
 		}
 
 		if ( ! apply_filters( 'notify_user_about_new_follower', true, $user, $actor, $activitypub_object, $follower ) ) {
@@ -384,6 +393,10 @@ class Notifications {
 			$following = false;
 		}
 
+		$icon_url = $follower_post
+			? \Activitypub\Collection\Remote_Actors::get_avatar_url( $follower_post->ID )
+			: \ActivityPub\object_to_uri( $follower->get_icon() );
+
 		// translators: %s is a user display name.
 		$email_title = sprintf( __( 'New Follower: %s', 'friends' ), $follower->get_name() . '@' . $server );
 
@@ -391,6 +404,7 @@ class Notifications {
 			'user'      => $user,
 			'url'       => $url,
 			'follower'  => $follower,
+			'icon_url'  => $icon_url,
 			'server'    => $server,
 			'following' => $following,
 		);
@@ -415,9 +429,9 @@ class Notifications {
 	/**
 	 * Notify of a lost follower
 	 *
-	 * @param Activitypub\Model\Follower $follower The Follower object.
-	 * @param int                        $user_id  The ID of the WordPress User.
-	 * @param string                     $actor    The Actor URL.
+	 * @param \WP_Post|\Activitypub\Activity\Actor $follower The Actor post (since ActivityPub 7.0.0) or Actor object.
+	 * @param int                                  $user_id  The ID of the WordPress User.
+	 * @param string|\Activitypub\Activity\Actor   $actor    The Actor URL or Actor object.
 	 *
 	 * @return void
 	 */
@@ -433,12 +447,33 @@ class Notifications {
 			return;
 		}
 
+		$follower_post = null;
+		$published = null;
+		if ( $follower instanceof \WP_Post ) {
+			$follower_post = $follower;
+			$published = $follower_post->post_date_gmt;
+			if ( $actor instanceof \Activitypub\Activity\Actor ) {
+				$follower = $actor;
+			} else {
+				$follower = \Activitypub\Collection\Remote_Actors::get_actor( $follower_post );
+				if ( is_wp_error( $follower ) ) {
+					return;
+				}
+			}
+		} else {
+			$published = $follower->get_published();
+		}
+
 		if ( ! apply_filters( 'notify_user_about_lost_follower', true, $user, $actor, $follower ) ) {
 			return;
 		}
 
 		$url = \ActivityPub\object_to_uri( $follower->get( 'id' ) );
 		$server = wp_parse_url( $url, PHP_URL_HOST );
+
+		$icon_url = $follower_post
+			? \Activitypub\Collection\Remote_Actors::get_avatar_url( $follower_post->ID )
+			: \ActivityPub\object_to_uri( $follower->get_icon() );
 
 		// translators: %s is a user display name.
 		$email_title = sprintf( __( 'Lost Follower: %s', 'friends' ), $follower->get_name() . '@' . $server );
@@ -447,11 +482,12 @@ class Notifications {
 			'user'     => $user,
 			'url'      => $url,
 			'follower' => $follower,
+			'icon_url' => $icon_url,
 			'server'   => $server,
-			'duration' => human_time_diff( strtotime( $follower->get_published() ) ) . ' (' . sprintf(
+			'duration' => human_time_diff( strtotime( $published ) ) . ' (' . sprintf(
 				// translators: %s is a time duration.
 				__( 'since %s', 'friends' ),
-				$follower->get_published()
+				$published
 			) . ')',
 
 		);

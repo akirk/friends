@@ -1,0 +1,3 @@
+Type: Fixed
+
+Avoid a fatal error in follower notifications when the ActivityPub plugin (7.5.0+) passes a WP_Post instead of a Follower model — the email handlers now resolve the Actor via Remote_Actors so new- and lost-follower emails work again, ending the inbox retry loop that this caused.
