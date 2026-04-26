@@ -24,7 +24,7 @@
 	<tr>
 		<td style="vertical-align: top">
 			<a href="<?php echo esc_url( $args['follower']->get_url() ); ?>" style="float: left; margin-right: 1em;">
-				<img src="<?php echo esc_url( $args['follower']->get_icon_url() ); /* phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage */ ?>" alt="<?php echo esc_attr( $args['follower']->get_name() ); ?>" width="64" height="64">
+				<img src="<?php echo esc_url( $args['icon_url'] ); /* phpcs:ignore PluginCheck.CodeAnalysis.ImageFunctions.NonEnqueuedImage */ ?>" alt="<?php echo esc_attr( $args['follower']->get_name() ); ?>" width="64" height="64">
 			</a>
 		</td>
 		<td>
