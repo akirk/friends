@@ -368,6 +368,10 @@ class Notifications {
 			return;
 		}
 
+		if ( is_wp_error( $follower ) ) {
+			return;
+		}
+
 		$follower_post = null;
 		if ( $follower instanceof \WP_Post ) {
 			$follower_post = $follower;
@@ -429,7 +433,7 @@ class Notifications {
 	/**
 	 * Notify of a lost follower
 	 *
-	 * @param \WP_Post|\Activitypub\Activity\Actor $follower The Actor post (since ActivityPub 7.0.0) or Actor object.
+	 * @param \WP_Post|\Activitypub\Activity\Actor $follower The Actor post (since ActivityPub 7.5.0) or Actor object.
 	 * @param int                                  $user_id  The ID of the WordPress User.
 	 * @param string|\Activitypub\Activity\Actor   $actor    The Actor URL or Actor object.
 	 *
