@@ -14,6 +14,8 @@ fi
 UNRELEASED_DIR=".github/changelog/unreleased"
 ENTRIES=()
 PR_NUMBERS=()
+SKIPPED=0
+REPO="${GITHUB_REPOSITORY:-akirk/friends}"
 
 if [ ! -d "$UNRELEASED_DIR" ] || [ -z "$(ls -A "$UNRELEASED_DIR" 2>/dev/null)" ]; then
 	echo "No changelog entries found in $UNRELEASED_DIR/"
@@ -27,9 +29,26 @@ for entry_file in "$UNRELEASED_DIR"/*; do
 	# Extract PR number from filename (e.g., "123" or "123-from-description")
 	pr_number=$(echo "$filename" | grep -Eo '^[0-9]+')
 
+	# Branch-named files (e.g., "fix-theme-loading-propeller") have no PR number in
+	# the filename. Look it up from git history.
 	if [ -z "$pr_number" ]; then
-		echo -ne "\033[33m!\033[0m "
-		echo "Skipping $filename (no PR number in filename)"
+		add_commit=$(git log --diff-filter=A --format='%H' -1 -- "$entry_file")
+
+		if [ -n "$add_commit" ]; then
+			# Squash-merged PRs: subject ends with "(#NNN)".
+			pr_number=$(git log -1 --format='%s' "$add_commit" | grep -Eo '\(#[0-9]+\)$' | grep -Eo '[0-9]+')
+
+			# Rebase-merged PRs leave no PR ref in the commit message; ask GitHub.
+			if [ -z "$pr_number" ] && command -v gh >/dev/null 2>&1; then
+				pr_number=$(gh api "repos/$REPO/commits/$add_commit/pulls" --jq '.[0].number' 2>/dev/null)
+			fi
+		fi
+	fi
+
+	if [ -z "$pr_number" ]; then
+		echo -ne "\033[31m✘\033[0m "
+		echo "Could not determine PR number for $filename"
+		SKIPPED=1
 		continue
 	fi
 
@@ -37,14 +56,20 @@ for entry_file in "$UNRELEASED_DIR"/*; do
 	message=$(awk 'BEGIN{found=0} /^$/{found=1; next} found{print}' "$entry_file" | head -1)
 
 	if [ -z "$message" ]; then
-		echo -ne "\033[33m!\033[0m "
-		echo "Skipping $filename (no message found)"
+		echo -ne "\033[31m✘\033[0m "
+		echo "No message found in $filename"
+		SKIPPED=1
 		continue
 	fi
 
 	ENTRIES+=("- $message ([#$pr_number])")
 	PR_NUMBERS+=("$pr_number")
 done
+
+if [ "$SKIPPED" = 1 ]; then
+	echo "Refusing to write changelog with skipped entries. Fix the entries above and retry."
+	exit 1
+fi
 
 if [ ${#ENTRIES[@]} -eq 0 ]; then
 	echo "No changelog entries found in $UNRELEASED_DIR/"
