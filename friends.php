@@ -2,7 +2,7 @@
 /**
  * Plugin name: Friends
  * Plugin URI: https://github.com/akirk/friends
- * Version: 4.0.5
+ * Version: 4.0.6
  * Author: Alex Kirk
  * Author URI: https://alex.kirk.at/
  * Requires PHP: 7.4
@@ -26,7 +26,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'FRIENDS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 define( 'FRIENDS_PLUGIN_FILE', plugin_dir_path( __FILE__ ) . '/' . basename( __FILE__ ) );
-define( 'FRIENDS_VERSION', '4.0.5' );
+define( 'FRIENDS_VERSION', '4.0.6' );
 
 require_once __DIR__ . '/libs/Mf2/Parser.php';
 
