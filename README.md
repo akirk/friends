@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.0.5
+- Stable tag: 4.0.6
 
 A self-hosted social reader for WordPress: follow people via RSS and ActivityPub, with multiple themes and a plugin ecosystem.
 
@@ -73,6 +73,15 @@ Cached posts are stored as the custom post type `friend_post_cache`. When you un
 8. Followed people are stored as taxonomy terms
 
 ## Changelog
+
+### 4.0.6
+- Fix conversation accounts for migrated users by falling back to friends_feed_url meta when post_author is 0. ([#655])
+- Add a search field to the Followers, Following, and Mutual pages. ([#658])
+- Add a Twitter/X-inspired frontend theme. ([#653])
+- Avoid a fatal error in follower notifications when the ActivityPub plugin (7.5.0+) passes a WP_Post instead of a Follower model — the email handlers now resolve the Actor via Remote_Actors so new- and lost-follower emails work again, ending the inbox retry loop that this caused. ([#661])
+- Mobile fixes: show the Friends icon in the admin bar on mobile and swap the generic group glyph for the Friends logo mark; stack chips and search on separate rows in the Google Reader theme on narrow screens; remove duplicate compose box from the Twitter theme mobile panel. ([#656])
+- Fix loading indicator in Google Reader, Mastodon, and Twitter themes spinning the host element's text like a propeller; use a rotating pseudo-element instead. ([#659])
+- Twitter theme: add a second widget area ("Friends Sidebar 2") shown in the right column. ([#657])
 
 ### 4.0.5
 - Fix search pagination losing search results on infinite scroll and add search controls (clear search, sort order). ([#636])
@@ -557,3 +566,11 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#649]: https://github.com/akirk/friends/pull/649
 [#650]: https://github.com/akirk/friends/pull/650
 [#651]: https://github.com/akirk/friends/pull/651
+
+[#653]: https://github.com/akirk/friends/pull/653
+[#655]: https://github.com/akirk/friends/pull/655
+[#656]: https://github.com/akirk/friends/pull/656
+[#657]: https://github.com/akirk/friends/pull/657
+[#658]: https://github.com/akirk/friends/pull/658
+[#659]: https://github.com/akirk/friends/pull/659
+[#661]: https://github.com/akirk/friends/pull/661
