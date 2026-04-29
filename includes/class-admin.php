@@ -187,10 +187,8 @@ class Admin {
 			add_submenu_page( 'friends', $title, $title, $required_role, 'friends-logs', array( $this, 'render_friends_logs' ) );
 		}
 
-		if ( isset( $_GET['page'] ) && 'friends-browser-extension' === $_GET['page'] ) {
-			$title = __( 'Browser Extension', 'friends' );
-			add_submenu_page( 'friends', $title, $title, $required_role, 'friends-browser-extension', array( $this, 'render_browser_extension' ) );
-		}
+		$title = __( 'Browser Extension', 'friends' );
+		add_submenu_page( 'friends', $title, $title, $required_role, 'friends-browser-extension', array( $this, 'render_browser_extension' ) );
 
 		if ( isset( $_GET['page'] ) && 'unfriend' === $_GET['page'] ) {
 			$user = new User( intval( $_GET['user'] ) );
@@ -606,6 +604,11 @@ class Admin {
 		return apply_filters(
 			'friends_news_entries',
 			array(
+				array(
+					'version'  => '4.1',
+					'title'    => __( '4.1: Twitter Theme & Browser Extension', 'friends' ),
+					'template' => 'admin/news-4-1',
+				),
 				array(
 					'version'           => '4.0',
 					'title'             => __( '4.0: A Major Update', 'friends' ),
@@ -2778,8 +2781,10 @@ class Admin {
 			</p>
 			<h3><?php esc_html_e( 'Browser Extension', 'friends' ); ?></h3>
 
-			<p><?php esc_html_e( 'There is also the option to use a browser extension.', 'friends' ); ?></p>
+			<p><?php esc_html_e( 'For a smoother experience, install the Friends browser extension. It adds a toolbar button to subscribe to the current site with one click, plus quick actions provided by other Friends-aware plugins.', 'friends' ); ?></p>
 			<p>
+				<a href="https://chromewebstore.google.com/detail/friends/ledbghpaplkpclndlommpbokndieflhl"><?php esc_html_e( 'Chrome Extension', 'friends' ); ?></a>
+				&nbsp;·&nbsp;
 				<a href="https://addons.mozilla.org/en-US/firefox/addon/wpfriends/"><?php esc_html_e( 'Firefox Extension', 'friends' ); ?></a>
 			</p>
 		</div>

@@ -1,0 +1,3 @@
+Type: changed
+
+Surface the Friends browser extension in more places so users can discover it: the Browser Extension submenu is now always visible under Friends, the settings page describes what the extension does and links to the Chrome and Firefox stores, and the Tools → Bookmarklets card and README mention it as well.
