@@ -28,6 +28,7 @@ You can...
 - Get full-post email notifications from your favorite blogs.
 - Save posts to a collection for later reference (via the Post Collection plugin).
 - Send posts to your eReader (via the Send to E-Reader plugin).
+- Subscribe to any site with one click using the [Friends browser extension](https://chromewebstore.google.com/detail/friends/ledbghpaplkpclndlommpbokndieflhl) (also available [for Firefox](https://addons.mozilla.org/en-US/firefox/addon/wpfriends/)).
 
 [![Friends Plugin Demo on Youtube](img/friends-plugin-youtube-thumbnail.png)](https://www.youtube.com/watch?v=4bz6GluXnsk)
 
@@ -60,6 +61,9 @@ That's exactly the point — with WordPress you own your data and decide where t
 
 ### What happens if I modify or delete a post?
 Cached posts are stored as the custom post type `friend_post_cache`. When you unfollow someone, their cached posts are removed with them.
+
+### Is there a browser extension?
+Yes — install it for [Chrome](https://chromewebstore.google.com/detail/friends/ledbghpaplkpclndlommpbokndieflhl) or [Firefox](https://addons.mozilla.org/en-US/firefox/addon/wpfriends/). It adds a toolbar button that lets you subscribe to the site you are currently visiting with one click. Pair it with the API key on the Friends → Browser Extension page to also expose quick actions from other Friends-aware plugins (saving to a collection, sending to your eReader, etc.).
 
 ## Screenshots
 
