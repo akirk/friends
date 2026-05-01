@@ -843,11 +843,26 @@
 		} );
 	} );
 
+	function looksLikeOpml( text ) {
+		if ( ! text ) {
+			return false;
+		}
+		const trimmed = text.trim();
+		if ( trimmed.charAt( 0 ) !== '<' ) {
+			return false;
+		}
+		return /<\s*(opml|outline)\b/i.test( trimmed );
+	}
+
 	$document.on( 'submit', '#add-subscription-form', function ( e ) {
 		e.preventDefault();
 		const $this = $( this );
 		const url = $this.find( 'input[name="url"]' ).val();
 		if ( ! url ) {
+			return;
+		}
+		if ( looksLikeOpml( url ) ) {
+			renderOpmlPreview( url );
 			return;
 		}
 		const $preview = $( '#preview-subscription' );
@@ -927,6 +942,155 @@
 				$preview.html( '<p class="error">' + result + '</p>' );
 			},
 		} );
+	} );
+
+	function renderOpmlPreview( opmlText ) {
+		const $preview = $( '#preview-subscription' );
+		const parser = new DOMParser();
+		const doc = parser.parseFromString( opmlText, 'application/xml' );
+		if ( doc.getElementsByTagName( 'parsererror' ).length ) {
+			$preview.html( '<p class="error">' + ( friends.text_opml_invalid || 'Could not parse the OPML file.' ) + '</p>' );
+			return;
+		}
+		const outlines = doc.querySelectorAll( 'outline[xmlUrl]' );
+		if ( ! outlines.length ) {
+			$preview.html( '<p class="error">' + ( friends.text_opml_no_feeds || 'No feeds were found in the OPML file.' ) + '</p>' );
+			return;
+		}
+
+		const $list = $( '<ul class="feed-list opml-feed-list"></ul>' );
+		outlines.forEach( function ( outline, idx ) {
+			const xmlUrl = outline.getAttribute( 'xmlUrl' ) || '';
+			const htmlUrl = outline.getAttribute( 'htmlUrl' ) || '';
+			const text = outline.getAttribute( 'text' ) || outline.getAttribute( 'title' ) || '';
+			const $cb = $( '<input type="checkbox" class="opml-feed-cb" checked />' )
+				.data( { xmlUrl: xmlUrl, htmlUrl: htmlUrl, text: text } )
+				.attr( 'data-idx', idx );
+			const $label = $( '<label></label>' ).append( $cb );
+			$label.append( document.createTextNode( ' ' + ( text || xmlUrl ) ) );
+			if ( htmlUrl ) {
+				$label.append( ' ' );
+				$label.append( $( '<small></small>' ).append( $( '<a target="_blank" rel="noopener noreferrer"></a>' ).attr( 'href', htmlUrl ).text( htmlUrl ) ) );
+			}
+			const $status = $( '<span class="opml-feed-status"></span>' );
+			$list.append( $( '<li></li>' ).attr( 'data-idx', idx ).append( $label ).append( ' ' ).append( $status ) );
+		} );
+
+		const $controls = $( '<div class="opml-controls"></div>' );
+		$controls.append( $( '<button type="button" class="btn btn-link opml-toggle-all"></button>' ).text( friends.text_opml_deselect_all || 'Deselect all' ) );
+		$controls.append( ' ' );
+		$controls.append( $( '<button type="button" class="btn btn-primary opml-import-selected"></button>' ).text( friends.text_opml_import_selected || 'Import selected' ) );
+
+		$preview.empty().append( $controls ).append( $list );
+	}
+
+	$document.on( 'change', '#opml-file', function () {
+		const file = this.files && this.files[ 0 ];
+		if ( ! file ) {
+			return;
+		}
+		const reader = new FileReader();
+		reader.onload = function ( e ) {
+			renderOpmlPreview( e.target.result );
+		};
+		reader.readAsText( file );
+	} );
+
+	$document.on( 'click', '.opml-toggle-all', function () {
+		const $this = $( this );
+		const $cbs = $( '.opml-feed-cb' );
+		const allChecked = $cbs.length === $cbs.filter( ':checked' ).length;
+		$cbs.prop( 'checked', ! allChecked );
+		$this.text( allChecked ? ( friends.text_opml_select_all || 'Select all' ) : ( friends.text_opml_deselect_all || 'Deselect all' ) );
+	} );
+
+	function importOpmlFeed( $li, nonce, done ) {
+		const $cb = $li.find( '.opml-feed-cb' );
+		const data = $cb.data();
+		const $status = $li.find( '.opml-feed-status' );
+		const url = data.htmlUrl || data.xmlUrl;
+		$status.text( '⏳' );
+		wp.ajax.send( 'friends-preview-subscription', {
+			data: {
+				_ajax_nonce: nonce,
+				url: url,
+			},
+			success( r ) {
+				const feedsForSubscribe = {};
+				const feedUrls = Object.keys( r.feeds );
+				let anySelected = false;
+				for ( let i = 0; i < feedUrls.length; i++ ) {
+					const fUrl = feedUrls[ i ];
+					const f = r.feeds[ fUrl ];
+					if ( f.parser === 'unsupported' ) {
+						continue;
+					}
+					const selected = !! f.autoselect;
+					if ( selected ) {
+						anySelected = true;
+					}
+					feedsForSubscribe[ fUrl ] = $.extend( {}, f, { url: fUrl, selected: selected } );
+				}
+				if ( ! anySelected ) {
+					// Fall back to selecting the first supported feed if no autoselect.
+					const keys = Object.keys( feedsForSubscribe );
+					if ( keys.length ) {
+						feedsForSubscribe[ keys[ 0 ] ].selected = true;
+					} else {
+						$status.text( '✗ ' + ( friends.text_opml_no_feeds_for_url || 'No feeds discovered.' ) );
+						done();
+						return;
+					}
+				}
+				wp.ajax.send( 'friends-subscribe-frontend', {
+					data: {
+						_ajax_nonce: nonce,
+						url: r.url,
+						display_name: r.display_name || data.text || '',
+						feeds: feedsForSubscribe,
+					},
+					success( r2 ) {
+						$status.empty().append( '✓ ' ).append( $( '<a></a>' ).attr( 'href', r2.url ).text( r2.message ) );
+						done();
+					},
+					error( result ) {
+						$status.text( '✗ ' + ( result && result.length ? result : ( friends.text_error || 'An error occurred.' ) ) );
+						done();
+					},
+				} );
+			},
+			error( result ) {
+				$status.text( '✗ ' + ( result && result.length ? result : ( friends.text_error || 'An error occurred.' ) ) );
+				done();
+			},
+		} );
+	}
+
+	$document.on( 'click', '.opml-import-selected', function () {
+		const $btn = $( this ).prop( 'disabled', true );
+		const nonce = $( '#add-subscription-form input[name=_wpnonce]' ).val();
+		const queue = [];
+		$( '.opml-feed-list li' ).each( function () {
+			const $li = $( this );
+			if ( $li.find( '.opml-feed-cb' ).is( ':checked' ) ) {
+				queue.push( $li );
+			}
+		} );
+		if ( ! queue.length ) {
+			alert( friends.text_opml_no_selected || 'Please select at least one feed.' );
+			$btn.prop( 'disabled', false );
+			return;
+		}
+		let i = 0;
+		function next() {
+			if ( i >= queue.length ) {
+				$btn.prop( 'disabled', false );
+				return;
+			}
+			const $li = queue[ i++ ];
+			importOpmlFeed( $li, nonce, next );
+		}
+		next();
 	} );
 
 } )( jQuery, window.wp, window.friends );
