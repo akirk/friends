@@ -18,9 +18,13 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 			<form id="add-subscription-form" action="" method="post">
 				<?php wp_nonce_field( 'friends_add_subscription' ); ?>
 				<div class="input-group">
-					<input type="text" name="url" id="subscription-url" class="form-input" placeholder="<?php esc_attr_e( 'Enter a URL or @user@instance', 'friends' ); ?>" required>
+					<input type="text" name="url" id="subscription-url" class="form-input" placeholder="<?php esc_attr_e( 'Enter a URL, @user@instance, or paste OPML content', 'friends' ); ?>" required>
 					<button type="submit" class="btn btn-primary input-group-btn"><?php esc_html_e( 'Follow', 'friends' ); ?></button>
 				</div>
+				<p class="opml-file-hint">
+					<label for="opml-file"><?php esc_html_e( 'Or upload an OPML file:', 'friends' ); ?></label>
+					<input type="file" id="opml-file" accept=".opml,.xml,application/xml,text/xml">
+				</p>
 			</form>
 			<div id="preview-subscription"></div>
 		</div>

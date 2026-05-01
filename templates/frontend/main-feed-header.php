@@ -116,6 +116,7 @@ if ( $args['friends']->frontend->reaction ) {
 			<?php esc_html_e( 'Newest first', 'friends' ); ?>
 		</a>
 	<?php endif; ?>
+	<a class="chip" href="<?php echo esc_url( home_url( '/friends/add-friend/' ) ); ?>"><?php echo esc_html__( 'Add Friend', 'friends' ); ?></a>
 	<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
 <?php else : ?>
 	<?php foreach ( $data['post_count_by_post_format'] as $post_format => $count ) : ?>
@@ -151,6 +152,7 @@ if ( $args['friends']->frontend->reaction ) {
 	</a>
 	<?php endforeach; ?>
 
+	<a class="chip" href="<?php echo esc_url( home_url( '/friends/add-friend/' ) ); ?>"><?php echo esc_html__( 'Add Friend', 'friends' ); ?></a>
 	<a class="chip toggle-compact" href=""><?php echo esc_html( 'collapsed' === $args['frontend_default_view'] ? __( 'Expanded mode', 'friends' ) : __( 'Compact mode', 'friends' ) ); ?></a>
 <?php endif; ?>
 
