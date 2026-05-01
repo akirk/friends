@@ -1671,6 +1671,10 @@ class Admin {
 
 		check_ajax_referer( 'friends_add_subscription' );
 
+		if ( ! Friends::has_required_privileges() ) {
+			wp_send_json_error( __( 'You do not have permission to do this.', 'friends' ) );
+		}
+
 		$url = wp_unslash( $_POST['url'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
 		$protocol = wp_parse_url( $url, PHP_URL_SCHEME );
@@ -1782,7 +1786,7 @@ class Admin {
 					__( 'You are now following %s.', 'friends' ),
 					$display_name
 				),
-				'url' => $friend_user->get_local_friends_page_url(),
+				'url'     => $friend_user->get_local_friends_page_url(),
 			)
 		);
 	}

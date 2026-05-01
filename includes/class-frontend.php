@@ -381,6 +381,13 @@ class Frontend {
 		$variables['text_loading']                 = __( 'Loading...', 'friends' );
 		$variables['text_follow']                  = __( 'Follow', 'friends' );
 		$variables['text_error']                   = __( 'An error occurred.', 'friends' );
+		$variables['text_opml_no_feeds']           = __( 'No feeds were found in the OPML file.', 'friends' );
+		$variables['text_opml_invalid']            = __( 'Could not parse the OPML file.', 'friends' );
+		$variables['text_opml_select_all']         = __( 'Select all', 'friends' );
+		$variables['text_opml_deselect_all']       = __( 'Deselect all', 'friends' );
+		$variables['text_opml_import_selected']    = __( 'Import selected', 'friends' );
+		$variables['text_opml_no_selected']        = __( 'Please select at least one feed.', 'friends' );
+		$variables['text_opml_no_feeds_for_url']   = __( 'No feeds discovered.', 'friends' );
 		wp_localize_script( 'friends', 'friends', $variables );
 	}
 
