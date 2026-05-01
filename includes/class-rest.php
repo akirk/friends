@@ -290,6 +290,7 @@ class REST {
 				 * - `url` (string, required) — target URL; may contain `{current_url}` which the extension substitutes with the current page URL (URL-encoded).
 				 * - `method` (string, optional) — if `"POST"`, the extension submits a form instead of opening a link.
 				 * - `fields` (object, optional) — for POST actions, key/value pairs of form fields; values may contain `{current_url}` (raw) and `{page_html}` placeholders.
+				 * - `category` (string, optional) — groups actions under a named header; actions without a category appear under the default "Actions" header.
 				 *
 				 * Example:
 				 * ```php
