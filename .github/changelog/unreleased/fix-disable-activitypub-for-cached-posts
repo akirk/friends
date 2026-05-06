@@ -1,0 +1,3 @@
+Type: fixed
+
+Prevent the ActivityPub plugin from federating cached friend posts so remote content stored locally is never announced as the site's own activity.
