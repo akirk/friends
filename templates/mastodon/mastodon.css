@@ -1763,6 +1763,223 @@ body.friends-page {
 	color: light-dark(#282c37, #fff);
 }
 
+/* --- Add friend review flow --- */
+.friends-page section.add-friend-subscriptions {
+	display: grid;
+	gap: 12px;
+	padding: 16px;
+}
+
+.friends-page section.add-friend-subscriptions .card {
+	background: light-dark(#fff, #282c37);
+	border-radius: 12px;
+	margin: 0;
+}
+
+.friends-page section.add-friend-subscriptions .card-body {
+	padding: 16px;
+}
+
+.friends-page section.add-friend-subscriptions .hidden {
+	display: none;
+}
+
+.friends-page section.add-friend-subscriptions .add-subscription-input {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+}
+
+.friends-page section.add-friend-subscriptions textarea.form-input {
+	flex: 1 1 auto;
+	min-height: 96px;
+	resize: vertical;
+	width: 100%;
+}
+
+.friends-page section.add-friend-subscriptions .form-select {
+	background: light-dark(#eaedf1, #313543);
+	border: 1px solid transparent;
+	border-radius: 100px;
+	color: light-dark(#282c37, #dadada);
+	font: inherit;
+	padding: 8px 16px;
+	width: 100%;
+}
+
+.friends-page section.add-friend-subscriptions .opml-file-hint,
+.friends-page section.add-friend-subscriptions .subscription-preview-description,
+.friends-page section.add-friend-subscriptions .subscription-feed-details,
+.friends-page section.add-friend-subscriptions .subscription-preview-status,
+.friends-page section.add-friend-subscriptions .bulk-feed-status {
+	color: light-dark(#606984, #9baec8);
+	font-size: 13px;
+}
+
+.friends-page section.add-friend-subscriptions #preview-subscription:not(:empty) {
+	margin-top: 14px;
+}
+
+.friends-page section.add-friend-subscriptions .bulk-controls,
+.friends-page section.add-friend-subscriptions .subscription-feed-actions,
+.friends-page section.add-friend-subscriptions .subscription-preview-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-preview-results,
+.friends-page section.add-friend-subscriptions .bulk-feed-list,
+.friends-page section.add-friend-subscriptions .subscription-feed-list {
+	display: grid;
+	gap: 10px;
+	list-style: none;
+	margin: 12px 0 0;
+	padding: 0;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-feed-list.hidden {
+	display: none;
+}
+
+.friends-page section.add-friend-subscriptions .bulk-feed-row,
+.friends-page section.add-friend-subscriptions .subscription-feed-option {
+	background: light-dark(#f7f9fb, #313543);
+	border-radius: 10px;
+	padding: 12px;
+}
+
+.friends-page section.add-friend-subscriptions .bulk-feed-row > label,
+.friends-page section.add-friend-subscriptions .subscription-feed-option > label {
+	display: block;
+	font-weight: 700;
+	overflow-wrap: anywhere;
+}
+
+.friends-page section.add-friend-subscriptions .bulk-feed-row > label small,
+.friends-page section.add-friend-subscriptions .subscription-feed-option > label small {
+	color: light-dark(#606984, #9baec8);
+	font-weight: 400;
+}
+
+.friends-page section.add-friend-subscriptions .bulk-feed-row.is-reviewing > .label-for-bulkfeed,
+.friends-page section.add-friend-subscriptions .bulk-feed-row.is-reviewing > .bulk-feed-status {
+	display: none;
+}
+
+.friends-page section.add-friend-subscriptions .bulk-feed-review {
+	margin-top: 10px;
+}
+
+.friends-page section.add-friend-subscriptions .feed-preview {
+	background: light-dark(#f7f9fb, #313543);
+	border-radius: 12px;
+	box-shadow: inset 4px 0 0 light-dark(rgba(86,58,204,.18), rgba(99,100,255,.25));
+	margin-top: 12px;
+	padding: 14px;
+}
+
+.friends-page section.add-friend-subscriptions .bulk-feed-review .feed-preview {
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	margin-top: 0;
+	padding: 0;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-preview-header,
+.friends-page section.add-friend-subscriptions .subscribe-success {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-preview-header .avatar,
+.friends-page section.add-friend-subscriptions .subscribe-success .avatar {
+	border-radius: 8px;
+	flex: 0 0 auto;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-preview-title,
+.friends-page section.add-friend-subscriptions .subscription-feed-preview-title {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-preview-title small,
+.friends-page section.add-friend-subscriptions .subscription-feed-preview-title small {
+	color: light-dark(#606984, #9baec8);
+	overflow-wrap: anywhere;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-settings,
+.friends-page section.add-friend-subscriptions .subscription-feed-controls {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 10px;
+	margin-top: 12px;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-settings label,
+.friends-page section.add-friend-subscriptions .subscription-feed-controls label {
+	display: grid;
+	gap: 4px;
+	font-size: 13px;
+	font-weight: 700;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-feed-url-label {
+	grid-column: 1 / -1;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-feed-preview {
+	background: light-dark(#fff, #282c37);
+	border-radius: 8px;
+	margin-top: 10px;
+	padding: 10px;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-feed-preview ul {
+	display: grid;
+	gap: 10px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.friends-page section.add-friend-subscriptions .subscription-feed-preview p {
+	color: light-dark(#606984, #9baec8);
+	font-size: 13px;
+	margin: 3px 0 0;
+}
+
+.friends-page section.add-friend-subscriptions .error,
+.friends-page section.add-friend-subscriptions .subscription-preview-status.error,
+.friends-page section.add-friend-subscriptions .bulk-feed-status.error {
+	color: light-dark(#c0392b, #e74c3c);
+}
+
+@media (max-width: 640px) {
+	.friends-page section.add-friend-subscriptions .add-subscription-input {
+		flex-direction: column;
+	}
+
+	.friends-page section.add-friend-subscriptions .add-subscription-input .btn,
+	.friends-page section.add-friend-subscriptions .bulk-controls .btn,
+	.friends-page section.add-friend-subscriptions .subscription-feed-actions .btn,
+	.friends-page section.add-friend-subscriptions .subscription-preview-actions .btn {
+		width: 100%;
+	}
+
+	.friends-page section.add-friend-subscriptions .subscription-settings,
+	.friends-page section.add-friend-subscriptions .subscription-feed-controls {
+		grid-template-columns: 1fr;
+	}
+}
+
 /* === Pagination === */
 .friends-page .navigation {
 	padding: 16px;
