@@ -2,3 +2,237 @@ ul.friend-posts img.avatar {
 	vertical-align: middle;
 	margin-right: .3em;
 }
+
+.friends-page .wp-block-friends-add-friend-form {
+	max-width: min(100%, 860px);
+}
+
+.friends-page .wp-block-friends-add-friend-form .hidden {
+	display: none;
+}
+
+.friends-page .wp-block-friends-add-friend-form .add-friend-subscriptions {
+	display: grid;
+	gap: var(--wp--preset--spacing--40, 1.25rem);
+}
+
+.friends-page .wp-block-friends-add-friend-form .card {
+	background: color-mix(in srgb, currentColor 3%, transparent);
+	border-radius: 6px;
+	margin: 0;
+}
+
+.friends-page .wp-block-friends-add-friend-form .card-body {
+	padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.friends-page .wp-block-friends-add-friend-form .add-subscription-input {
+	display: flex;
+	align-items: flex-start;
+	gap: .75rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .form-input,
+.friends-page .wp-block-friends-add-friend-form .form-select {
+	background: var(--wp--preset--color--base, Canvas);
+	border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+	border-radius: 4px;
+	box-sizing: border-box;
+	color: inherit;
+	font: inherit;
+	padding: .55rem .7rem;
+	width: 100%;
+}
+
+.friends-page .wp-block-friends-add-friend-form textarea.form-input {
+	min-height: 6rem;
+	resize: vertical;
+}
+
+.friends-page .wp-block-friends-add-friend-form .btn {
+	background: color-mix(in srgb, currentColor 8%, transparent);
+	border: 0;
+	border-radius: 4px;
+	color: inherit;
+	cursor: pointer;
+	font: inherit;
+	line-height: 1.3;
+	padding: .55rem .85rem;
+	text-decoration: none;
+	white-space: nowrap;
+}
+
+.friends-page .wp-block-friends-add-friend-form .btn-primary {
+	background: var(--wp--preset--color--contrast, currentColor);
+	color: var(--wp--preset--color--base, Canvas);
+}
+
+.friends-page .wp-block-friends-add-friend-form .btn-link {
+	background: transparent;
+	color: inherit;
+	opacity: .78;
+}
+
+.friends-page .wp-block-friends-add-friend-form .opml-file-hint,
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-description,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-details,
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-status,
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-status {
+	color: color-mix(in srgb, currentColor 68%, transparent);
+	font-size: .9rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form #preview-subscription:not(:empty) {
+	margin-top: 1rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-results,
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-list,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-list {
+	display: grid;
+	gap: .75rem;
+	list-style: none;
+	margin: 1rem 0 0;
+	padding: 0;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-list.hidden {
+	display: none;
+}
+
+.friends-page .wp-block-friends-add-friend-form .bulk-controls,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-actions,
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: .5rem;
+	margin-top: 1rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-row,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-option {
+	background: color-mix(in srgb, currentColor 5%, transparent);
+	border-radius: 6px;
+	padding: .75rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-row > label,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-option > label {
+	display: block;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-row.is-reviewing > .label-for-bulkfeed,
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-row.is-reviewing > .bulk-feed-status {
+	display: none;
+}
+
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-review {
+	margin-top: .75rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .feed-preview {
+	background: color-mix(in srgb, currentColor 4%, transparent);
+	border-radius: 6px;
+	box-shadow: inset 3px 0 0 color-mix(in srgb, currentColor 22%, transparent);
+	margin-top: 1rem;
+	padding: 1rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-review .feed-preview {
+	background: transparent;
+	border-radius: 0;
+	box-shadow: none;
+	margin-top: 0;
+	padding: 0;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-header,
+.friends-page .wp-block-friends-add-friend-form .subscribe-success {
+	display: flex;
+	align-items: center;
+	gap: .75rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-header .avatar,
+.friends-page .wp-block-friends-add-friend-form .subscribe-success .avatar {
+	border-radius: 50%;
+	flex: 0 0 auto;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-title,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-preview-title {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-title small,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-preview-title small {
+	color: color-mix(in srgb, currentColor 65%, transparent);
+	overflow-wrap: anywhere;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-settings,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-controls {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: .75rem;
+	margin-top: .85rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-settings label,
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-controls label {
+	display: grid;
+	gap: .25rem;
+	font-weight: 600;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-url-label {
+	grid-column: 1 / -1;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-preview {
+	background: color-mix(in srgb, currentColor 4%, transparent);
+	border-radius: 4px;
+	margin-top: .75rem;
+	padding: .75rem;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-preview ul {
+	display: grid;
+	gap: .7rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.friends-page .wp-block-friends-add-friend-form .subscription-feed-preview p {
+	margin: .25rem 0 0;
+}
+
+.friends-page .wp-block-friends-add-friend-form .error,
+.friends-page .wp-block-friends-add-friend-form .subscription-preview-status.error,
+.friends-page .wp-block-friends-add-friend-form .bulk-feed-status.error {
+	color: #b91c1c;
+}
+
+@media (max-width: 640px) {
+	.friends-page .wp-block-friends-add-friend-form .add-subscription-input {
+		flex-direction: column;
+	}
+
+	.friends-page .wp-block-friends-add-friend-form .add-subscription-input .btn,
+	.friends-page .wp-block-friends-add-friend-form .bulk-controls .btn,
+	.friends-page .wp-block-friends-add-friend-form .subscription-feed-actions .btn,
+	.friends-page .wp-block-friends-add-friend-form .subscription-preview-actions .btn {
+		width: 100%;
+	}
+
+	.friends-page .wp-block-friends-add-friend-form .subscription-settings,
+	.friends-page .wp-block-friends-add-friend-form .subscription-feed-controls {
+		grid-template-columns: 1fr;
+	}
+}

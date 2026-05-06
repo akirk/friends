@@ -96,6 +96,13 @@ class Blocks {
 			)
 		);
 
+		register_block_type(
+			'friends/add-friend-form',
+			array(
+				'render_callback' => array( $this, 'render_add_friend_form_block' ),
+			)
+		);
+
 		$list_supports = array(
 			'color'      => array(
 				'background' => true,
@@ -322,6 +329,19 @@ class Blocks {
 		}
 
 		return '<ul class="wp-block-friends-subscriptions-query">' . $items . '</ul>';
+	}
+
+	/**
+	 * Render the friends/add-friend-form block.
+	 *
+	 * @return string The rendered block HTML.
+	 */
+	public function render_add_friend_form_block() {
+		ob_start();
+		Friends::template_loader()->get_template_part( 'frontend/add-friend-form' );
+		$form = ob_get_clean();
+
+		return '<div' . $this->get_wrapper_attributes( array( 'class' => 'wp-block-friends-add-friend-form' ) ) . '>' . $form . '</div>';
 	}
 
 	/**
@@ -873,6 +893,17 @@ class Blocks {
 
 		// Determine feed title.
 		$title = __( 'Main Feed', 'friends' );
+		if ( $frontend->template ) {
+			$template_titles = array(
+				'frontend/add-friend'    => __( 'Add Friend', 'friends' ),
+				'frontend/followers'     => __( 'Followers', 'friends' ),
+				'frontend/subscriptions' => __( 'Following', 'friends' ),
+			);
+			if ( isset( $template_titles[ $frontend->template ] ) ) {
+				$title = $template_titles[ $frontend->template ];
+			}
+		}
+
 		$format_titles = array(
 			'standard' => _x( 'Post feed', 'Post format', 'friends' ),
 			'aside'    => _x( 'Aside feed', 'Post format', 'friends' ),
