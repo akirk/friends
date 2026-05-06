@@ -55,6 +55,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
 		\add_action( 'activitypub_interactions_follow_url', array( $this, 'activitypub_interactions_follow_url' ), 10, 2 );
 		\add_filter( 'activitypub_comment_post_id', array( $this, 'activitypub_comment_post_id' ), 10, 3 );
+		\add_filter( 'activitypub_is_post_disabled', array( $this, 'disable_activitypub_for_cached_posts' ), 10, 2 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
@@ -3362,6 +3363,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$post_id = \Friends\Feed::url_to_postid( $url );
 		}
 		return $post_id;
+	}
+
+	/**
+	 * Prevent the ActivityPub plugin from federating cached friend posts.
+	 *
+	 * Cached posts are remote content stored locally; they must never be
+	 * announced as the site's own activity. The ActivityPub plugin's
+	 * lifecycle override would otherwise keep firing Updates whenever a
+	 * cached post is re-fetched, if its `activitypub_status` post meta was
+	 * ever set.
+	 *
+	 * @param bool     $disabled Whether ActivityPub processing is disabled.
+	 * @param \WP_Post $post     The post being evaluated.
+	 *
+	 * @return bool
+	 */
+	public function disable_activitypub_for_cached_posts( $disabled, $post ) {
+		if ( $post instanceof \WP_Post && Friends::CPT === $post->post_type ) {
+			return true;
+		}
+		return $disabled;
 	}
 
 	public function the_content( $the_content ) {
