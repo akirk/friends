@@ -18,7 +18,7 @@ $show_welcome = isset( $args['show_welcome'] ) && $args['show_welcome'];
 	<?php
 	if ( $show_welcome || ! have_posts() ) {
 		?>
-		<div class="card columns col-12">
+		<div class="card columns col-12 friends-empty-state">
 			<div class="card-body">
 			<?php
 			if ( ! $show_welcome && $args['friends']->frontend->post_format ) {

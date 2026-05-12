@@ -1684,6 +1684,10 @@ h2#page-title a.dashicons {
 	}
 
 	& section.posts {
+		& .friends-empty-state > .card-body {
+			padding: 1.25rem;
+		}
+
 		& .card {
 			& header.entry-header {
 				display: flex;
