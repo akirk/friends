@@ -1602,7 +1602,11 @@ class Frontend {
 		if ( ! isset( $map[ $template_path ] ) ) {
 			return false;
 		}
-		$file = FRIENDS_PLUGIN_DIR . 'themes/friends/templates/' . $map[ $template_path ] . '.html';
+		$template = $map[ $template_path ];
+		if ( 'frontend/index' === $template_path && isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$template = 'welcome';
+		}
+		$file = FRIENDS_PLUGIN_DIR . 'themes/friends/templates/' . $template . '.html';
 		if ( ! file_exists( $file ) ) {
 			return false;
 		}

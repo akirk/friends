@@ -60,6 +60,7 @@ class BlockThemeTest extends \WP_UnitTestCase {
 			'friends/search',
 			'friends/feed-title',
 			'friends/feed-chips',
+			'friends/welcome',
 			'friends/post-content',
 			'friends/post-permalink',
 			'friends/author-star',
@@ -90,6 +91,7 @@ class BlockThemeTest extends \WP_UnitTestCase {
 			'themes/friends/templates/friends-followers.html',
 			'themes/friends/templates/friends-subscriptions.html',
 			'themes/friends/templates/single-friend_post_cache.html',
+			'themes/friends/templates/welcome.html',
 		);
 
 		foreach ( $templates as $template ) {
@@ -174,6 +176,17 @@ class BlockThemeTest extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'wp-block-friends-feed-chips', $output );
 		$this->assertStringContainsString( 'chip', $output );
+	}
+
+	/**
+	 * Test the welcome block renders the empty state wrapper.
+	 */
+	public function test_render_welcome_block() {
+		$blocks = new Blocks();
+		$output = $blocks->render_welcome_block( array( 'forceWelcome' => true ) );
+
+		$this->assertStringContainsString( 'wp-block-friends-welcome', $output );
+		$this->assertStringContainsString( 'Welcome to the Friends Plugin!', $output );
 	}
 
 	/**
@@ -323,6 +336,8 @@ class BlockThemeTest extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'wp:post-title', $index );
 		$this->assertStringContainsString( 'wp:friends/post-content', $index );
 		$this->assertStringContainsString( 'wp:friends/post-permalink', $index );
+		$this->assertStringContainsString( 'wp:query-no-results', $index );
+		$this->assertStringContainsString( 'wp:friends/welcome', $index );
 		$this->assertStringContainsString( 'wp:query-pagination', $index );
 
 		// Footer should not be referenced.
