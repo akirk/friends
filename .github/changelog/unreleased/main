@@ -1,0 +1,3 @@
+Type: changed
+
+Add generic inline browser extension action dispatching so companion plugins can provide authenticated in-popup actions through Friends filters.

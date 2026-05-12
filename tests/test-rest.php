@@ -135,4 +135,135 @@ class RestTest extends Friends_TestCase_Cache_HTTP {
 		}
 	}
 
+	/**
+	 * Check that browser extension action filters receive the authenticated user and context.
+	 */
+	public function test_extension_actions_receive_user_and_context() {
+		$user_id = self::factory()->user->create(
+			array(
+				'role'         => 'administrator',
+				'display_name' => 'Extension User',
+			)
+		);
+		$key     = Admin::get_browser_api_key( $user_id );
+
+		wp_set_current_user( 0 );
+
+		$received = array();
+		$callback = function ( $actions, $current_user, $context ) use ( &$received ) {
+			$received = array(
+				'user_id'             => $current_user->ID,
+				'current_user_id'     => get_current_user_id(),
+				'key'                 => $context['key'],
+				'extension_version'   => $context['extension_version'],
+			);
+
+			$actions[] = array(
+				'name' => 'Inline Action',
+				'url'  => rest_url( REST::PREFIX . '/extension/action' ),
+				'run'  => 'inline',
+			);
+
+			return $actions;
+		};
+
+		add_filter( 'friends_browser_extension_actions', $callback, 10, 3 );
+
+		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/extension' );
+		$request->set_param( 'key', $key );
+		$request->set_param( 'version', '1.6.0' );
+
+		$response = $this->server->dispatch( $request );
+		remove_filter( 'friends_browser_extension_actions', $callback, 10 );
+
+		$data = $response->get_data();
+
+		$this->assertSame( $user_id, $received['user_id'] );
+		$this->assertSame( $user_id, $received['current_user_id'] );
+		$this->assertSame( $key, $received['key'] );
+		$this->assertSame( '1.6.0', $received['extension_version'] );
+		$this->assertCount( 1, $data['actions'] );
+		$this->assertSame( 'inline', $data['actions'][0]['run'] );
+		$this->assertSame( 0, get_current_user_id() );
+	}
+
+	/**
+	 * Check that inline browser extension actions are dispatched through a filter.
+	 */
+	public function test_extension_action_dispatches_to_filter() {
+		$user_id = self::factory()->user->create(
+			array(
+				'role' => 'administrator',
+			)
+		);
+		$key     = Admin::get_browser_api_key( $user_id );
+
+		wp_set_current_user( 0 );
+
+		$received = array();
+		$callback = function ( $response, $action, $request, $current_user, $context ) use ( &$received ) {
+			$received = array(
+				'action'          => $action,
+				'current_user_id' => get_current_user_id(),
+				'filter_user_id'  => $current_user->ID,
+				'context_version' => $context['version'],
+			);
+
+			return array(
+				'success' => true,
+				'message' => 'Saved.',
+				'url'     => $request->get_param( 'url' ),
+			);
+		};
+
+		add_filter( 'friends_browser_extension_action', $callback, 10, 5 );
+
+		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/extension/action' );
+		$request->set_param( 'action', 'save' );
+		$request->set_param( 'key', $key );
+		$request->set_param( 'version', '1.6.0' );
+		$request->set_param( 'url', 'https://example.org/post' );
+
+		$response = $this->server->dispatch( $request );
+		remove_filter( 'friends_browser_extension_action', $callback, 10 );
+
+		$data = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $data['success'] );
+		$this->assertSame( 'Saved.', $data['message'] );
+		$this->assertSame( 'https://example.org/post', $data['url'] );
+		$this->assertSame( 'save', $received['action'] );
+		$this->assertSame( $user_id, $received['current_user_id'] );
+		$this->assertSame( $user_id, $received['filter_user_id'] );
+		$this->assertSame( '1.6.0', $received['context_version'] );
+		$this->assertSame( 0, get_current_user_id() );
+	}
+
+	/**
+	 * Check that inline browser extension actions reject invalid API keys.
+	 */
+	public function test_extension_action_rejects_invalid_key() {
+		$called   = false;
+		$callback = function () use ( &$called ) {
+			$called = true;
+			return true;
+		};
+
+		add_filter( 'friends_browser_extension_action_save', $callback );
+
+		$request = new \WP_REST_Request( 'POST', '/' . REST::PREFIX . '/extension/action' );
+		$request->set_param( 'action', 'save' );
+		$request->set_param( 'key', 'invalid' );
+
+		$response = $this->server->dispatch( $request );
+		remove_filter( 'friends_browser_extension_action_save', $callback );
+
+		$data = $response->get_data();
+
+		$this->assertSame( 401, $response->get_status() );
+		$this->assertSame( 'friends_invalid_browser_extension_key', $data['code'] );
+		$this->assertFalse( $called );
+	}
+
 }

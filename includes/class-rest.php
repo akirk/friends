@@ -119,6 +119,26 @@ class REST {
 				),
 			)
 		);
+
+		register_rest_route(
+			self::PREFIX,
+			'extension/action',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_extension_action' ),
+				'permission_callback' => array( $this, 'browser_extension_action_permission_callback' ),
+				'args'                => array(
+					'action' => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+					'key'    => array(
+						'type'     => 'string',
+						'required' => true,
+					),
+				),
+			)
+		);
 	}
 
 	/**
@@ -279,8 +299,9 @@ class REST {
 		);
 
 		if ( 'POST' === $request->get_method() && $request->get_param( 'key' ) ) {
-			if ( Admin::check_browser_api_key( $request->get_param( 'key' ) ) ) {
-				$current_user = wp_get_current_user();
+			$current_user = self::get_browser_extension_user( $request->get_param( 'key' ) );
+			if ( ! is_wp_error( $current_user ) ) {
+				$context = $this->get_browser_extension_request_context( $request, $current_user );
 
 				/**
 				 * Allows plugins to register actions for the Friends browser extension.
@@ -290,24 +311,33 @@ class REST {
 				 * - `url` (string, required) — target URL; may contain `{current_url}` which the extension substitutes with the current page URL (URL-encoded).
 				 * - `method` (string, optional) — if `"POST"`, the extension submits a form instead of opening a link.
 				 * - `fields` (object, optional) — for POST actions, key/value pairs of form fields; values may contain `{current_url}` (raw) and `{page_html}` placeholders.
+				 * - `run` (string, optional) — if `"inline"`, the extension handles the response in place instead of opening a new tab.
+				 * - `inputs` (array, optional) — user-editable fields for inline actions.
 				 * - `category` (string, optional) — groups actions under a named header; actions without a category appear under the default "Actions" header.
 				 *
 				 * Example:
 				 * ```php
-				 * add_filter( 'friends_browser_extension_actions', function ( $actions, $current_user ) {
+				 * add_filter( 'friends_browser_extension_actions', function ( $actions, $current_user, $context ) {
 				 *     $actions[] = array(
 				 *         'name' => 'Save to Collection',
 				 *         'url'  => home_url( '/collect/?url={current_url}' ),
 				 *     );
 				 *     return $actions;
-				 * }, 10, 2 );
+				 * }, 10, 3 );
 				 * ```
 				 *
 				 * @param array    $actions      The array of actions.
 				 * @param \WP_User $current_user The current user.
+				 * @param array    $context      Browser extension request context: key, version, user, and request.
 				 * @return array The modified array of actions.
 				 */
-				$actions = apply_filters( 'friends_browser_extension_actions', array(), $current_user );
+				$previous_user_id = get_current_user_id();
+				wp_set_current_user( $current_user->ID );
+				try {
+					$actions = apply_filters( 'friends_browser_extension_actions', array(), $current_user, $context );
+				} finally {
+					wp_set_current_user( $previous_user_id );
+				}
 
 				$return['actions'] = array_values(
 					array_filter(
@@ -329,6 +359,191 @@ class REST {
 		return $return;
 	}
 
+	/**
+	 * Validate a browser extension inline action request.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return true|\WP_Error True if the request is allowed, otherwise an error.
+	 */
+	public function browser_extension_action_permission_callback( $request ) {
+		$current_user = self::get_browser_extension_user( $request->get_param( 'key' ) );
+		if ( is_wp_error( $current_user ) ) {
+			return new \WP_Error(
+				$current_user->get_error_code(),
+				$current_user->get_error_message(),
+				array( 'status' => 401 )
+			);
+		}
+
+		$attributes                                      = $request->get_attributes();
+		$attributes['friends_browser_extension_user']    = $current_user;
+		$attributes['friends_browser_extension_context'] = $this->get_browser_extension_request_context( $request, $current_user );
+		$request->set_attributes( $attributes );
+
+		return true;
+	}
+
+	/**
+	 * Handle a browser extension inline action.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return \WP_REST_Response The REST response.
+	 */
+	public function rest_extension_action( $request ) {
+		$url_params = $request->get_url_params();
+		$action     = isset( $url_params['action'] ) ? $url_params['action'] : $request->get_param( 'action' );
+		$action     = sanitize_key( (string) wp_unslash( $action ) );
+		if ( ! $action ) {
+			return self::browser_extension_action_error(
+				new \WP_Error( 'friends_missing_browser_extension_action', __( 'No browser extension action was provided.', 'friends' ) ),
+				400
+			);
+		}
+
+		$attributes   = $request->get_attributes();
+		$current_user = isset( $attributes['friends_browser_extension_user'] ) ? $attributes['friends_browser_extension_user'] : self::get_browser_extension_user( $request->get_param( 'key' ) );
+		if ( is_wp_error( $current_user ) ) {
+			return self::browser_extension_action_error( $current_user, 401 );
+		}
+
+		$context           = isset( $attributes['friends_browser_extension_context'] ) ? $attributes['friends_browser_extension_context'] : $this->get_browser_extension_request_context( $request, $current_user );
+		$context['action'] = $action;
+
+		$previous_user_id = get_current_user_id();
+		wp_set_current_user( $current_user->ID );
+
+		try {
+			/**
+			 * Handles a browser extension inline action.
+			 *
+			 * Return a \WP_REST_Response, \WP_Error, array, or scalar value. Returning null means the action
+			 * was not handled.
+			 *
+			 * @param mixed            $response     The action response.
+			 * @param string           $action       The browser extension action name.
+			 * @param \WP_REST_Request $request      The REST request.
+			 * @param \WP_User         $current_user The user authenticated by the browser extension key.
+			 * @param array            $context      Browser extension request context.
+			 */
+			$response = apply_filters( 'friends_browser_extension_action', null, $action, $request, $current_user, $context );
+
+			/**
+			 * Handles a specific browser extension inline action.
+			 *
+			 * The dynamic portion of the hook name, `$action`, is the sanitized action name from the
+			 * request's `action` parameter.
+			 *
+			 * @param mixed            $response     The action response.
+			 * @param \WP_REST_Request $request      The REST request.
+			 * @param \WP_User         $current_user The user authenticated by the browser extension key.
+			 * @param array            $context      Browser extension request context.
+			 */
+			$response = apply_filters( "friends_browser_extension_action_{$action}", $response, $request, $current_user, $context );
+		} finally {
+			wp_set_current_user( $previous_user_id );
+		}
+
+		if ( null === $response ) {
+			return self::browser_extension_action_error(
+				new \WP_Error( 'friends_unknown_browser_extension_action', __( 'Unknown browser extension action.', 'friends' ) ),
+				404
+			);
+		}
+
+		return self::prepare_browser_extension_action_response( $response );
+	}
+
+	/**
+	 * Get the user authenticated by a browser extension key.
+	 *
+	 * @param string $key The browser extension API key.
+	 * @return \WP_User|\WP_Error The authenticated user or an error.
+	 */
+	private static function get_browser_extension_user( $key ) {
+		$key = sanitize_text_field( (string) wp_unslash( $key ) );
+		if ( ! $key ) {
+			return new \WP_Error( 'friends_invalid_browser_extension_key', __( 'Invalid API key', 'friends' ) );
+		}
+
+		$user = Admin::get_browser_api_key_user( $key );
+		if ( ! $user ) {
+			return new \WP_Error( 'friends_invalid_browser_extension_key', __( 'Invalid API key', 'friends' ) );
+		}
+
+		return $user;
+	}
+
+	/**
+	 * Build browser extension request context for plugin filters.
+	 *
+	 * @param \WP_REST_Request $request      The REST request.
+	 * @param \WP_User         $current_user The user authenticated by the browser extension key.
+	 * @return array Browser extension request context.
+	 */
+	private function get_browser_extension_request_context( $request, $current_user ) {
+		$key     = sanitize_text_field( (string) wp_unslash( $request->get_param( 'key' ) ) );
+		$version = sanitize_text_field( (string) wp_unslash( $request->get_param( 'version' ) ) );
+
+		if ( ! $version ) {
+			$version = sanitize_text_field( (string) wp_unslash( $request->get_param( 'extension_version' ) ) );
+		}
+
+		return array(
+			'key'                   => $key,
+			'browser_extension_key' => $key,
+			'version'               => $version,
+			'extension_version'     => $version,
+			'user'                  => $current_user,
+			'request'               => $request,
+		);
+	}
+
+	/**
+	 * Prepare a browser extension action response.
+	 *
+	 * @param mixed $response The handler response.
+	 * @return \WP_REST_Response The REST response.
+	 */
+	private static function prepare_browser_extension_action_response( $response ) {
+		if ( is_wp_error( $response ) ) {
+			return self::browser_extension_action_error( $response, 400 );
+		}
+
+		if ( $response instanceof \WP_REST_Response ) {
+			return $response;
+		}
+
+		if ( true === $response ) {
+			$response = array(
+				'success' => true,
+			);
+		}
+
+		return rest_ensure_response( $response );
+	}
+
+	/**
+	 * Format a browser extension action error response.
+	 *
+	 * @param \WP_Error $error  The error.
+	 * @param int       $status The default HTTP status.
+	 * @return \WP_REST_Response The REST response.
+	 */
+	private static function browser_extension_action_error( \WP_Error $error, $status ) {
+		$error_data = $error->get_error_data();
+		if ( is_array( $error_data ) && ! empty( $error_data['status'] ) ) {
+			$status = absint( $error_data['status'] );
+		}
+
+		return new \WP_REST_Response(
+			array(
+				'success' => false,
+				'code'    => $error->get_error_code(),
+				'message' => $error->get_error_message(),
+			),
+			$status
+		);
+	}
 
 	/**
 	 * Discover the REST URL for a friend site

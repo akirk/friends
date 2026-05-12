@@ -2430,7 +2430,12 @@ class Admin {
 	}
 
 
-	public static function check_browser_api_key( $key ) {
+	public static function get_browser_api_key_user( $key ) {
+		$key = (string) $key;
+		if ( ! $key ) {
+			return false;
+		}
+
 		$parts = explode( '-', $key, 3 );
 		if ( 3 !== count( $parts ) ) {
 			return false;
@@ -2441,12 +2446,21 @@ class Admin {
 			return false;
 		}
 
-		$desired_key = self::get_browser_api_key( $user_id );
-		if ( ! $desired_key ) {
+		$desired_key = get_user_option( 'friends_browser_api_key', $user_id );
+		if ( ! $desired_key || ! hash_equals( (string) $desired_key, (string) $key ) ) {
 			return false;
 		}
 
-		return $key === $desired_key;
+		$user = get_user_by( 'ID', $user_id );
+		if ( ! $user ) {
+			return false;
+		}
+
+		return $user;
+	}
+
+	public static function check_browser_api_key( $key ) {
+		return false !== self::get_browser_api_key_user( $key );
 	}
 
 	public static function revoke_browser_api_key( $user_id = false ) {
