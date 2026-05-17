@@ -31,6 +31,13 @@ class Friends {
 	}
 
 	/**
+	 * A reference to the Abilities object.
+	 *
+	 * @var Abilities
+	 */
+	public $abilities;
+
+	/**
 	 * A reference to the Admin object.
 	 *
 	 * @var Admin
@@ -117,6 +124,7 @@ class Friends {
 		$this->frontend       = new Frontend( $this );
 		$this->reactions      = new Reactions( $this );
 		$this->rest           = new REST( $this );
+		$this->abilities      = new Abilities( $this );
 
 		new Third_Parties( $this );
 		new Blocks( $this );

@@ -42,6 +42,7 @@ require_once __DIR__ . '/feed-parsers/class-feed-parser-v2.php';
 require_once __DIR__ . '/feed-parsers/class-feed-item.php';
 
 require_once __DIR__ . '/includes/class-admin.php';
+require_once __DIR__ . '/includes/class-abilities.php';
 require_once __DIR__ . '/includes/class-blocks.php';
 require_once __DIR__ . '/includes/class-feed.php';
 require_once __DIR__ . '/includes/class-frontend.php';
