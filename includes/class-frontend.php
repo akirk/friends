@@ -378,6 +378,40 @@ class Frontend {
 		// translators: %s is a user handle.
 		$variables['text_confirm_delete_follower'] = __( 'Do you really want to delete the follower %s?', 'friends' );
 		$variables['text_new_folder']              = __( 'Folder name:', 'friends' );
+		$variables['text_loading']                 = __( 'Loading...', 'friends' );
+		$variables['text_discovering']             = __( 'Discovering feeds...', 'friends' );
+		$variables['text_ready_to_follow']         = __( 'Ready', 'friends' );
+		$variables['text_follow']                  = __( 'Follow', 'friends' );
+		$variables['text_follow_selected']         = __( 'Follow selected', 'friends' );
+		$variables['text_review_selected']         = __( 'Review selected', 'friends' );
+		$variables['text_skip']                    = __( 'Skip', 'friends' );
+		$variables['text_error']                   = __( 'An error occurred.', 'friends' );
+		$variables['text_display_name']            = __( 'Display Name', 'friends' );
+		$variables['text_username']                = __( 'Username', 'friends' );
+		$variables['text_post_format']             = __( 'Post Format', 'friends' );
+		$variables['text_feed_parser']             = __( 'Parser', 'friends' );
+		$variables['text_feed_metadata']           = __( 'Display feed metadata', 'friends' );
+		$variables['text_hide_feed_metadata']      = __( 'Hide feed metadata', 'friends' );
+		$variables['text_preview_feed']            = __( 'Preview feed', 'friends' );
+		$variables['text_hide_preview']            = __( 'Hide preview', 'friends' );
+		$variables['text_no_preview_items']        = __( 'No preview items were found.', 'friends' );
+		$variables['text_add_feed_url']            = __( 'Add feed URL', 'friends' );
+		$variables['text_feed_url']                = __( 'Feed URL', 'friends' );
+		$variables['text_custom_feed']             = __( 'Custom feed', 'friends' );
+		$variables['text_feed_url_required']       = __( 'Please enter a feed URL.', 'friends' );
+		$variables['text_show_more_feeds']         = __( 'Show more feeds', 'friends' );
+		$variables['text_show_unsupported_feeds']  = __( 'Show unsupported feeds', 'friends' );
+		$variables['text_no_supported_feeds']      = __( 'No supported feeds discovered.', 'friends' );
+		$variables['text_no_feed_selected']        = __( 'Please select at least one feed.', 'friends' );
+		$variables['text_opml_no_feeds']           = __( 'No feeds were found in the OPML file.', 'friends' );
+		$variables['text_opml_invalid']            = __( 'Could not parse the OPML file.', 'friends' );
+		$variables['text_opml_select_all']         = __( 'Select all', 'friends' );
+		$variables['text_opml_deselect_all']       = __( 'Deselect all', 'friends' );
+		$variables['text_opml_import_selected']    = __( 'Review selected', 'friends' );
+		$variables['text_opml_no_selected']        = __( 'Please select at least one feed.', 'friends' );
+		$variables['text_opml_no_feeds_for_url']   = __( 'No feeds discovered.', 'friends' );
+		$variables['post_formats']                 = array_merge( array( 'autodetect' => __( 'Autodetect Post Format', 'friends' ) ), get_post_format_strings() );
+		$variables['registered_parsers']           = array_map( 'wp_strip_all_tags', $this->friends->feed->get_registered_parsers() );
 		wp_localize_script( 'friends', 'friends', $variables );
 	}
 
@@ -619,8 +653,12 @@ class Frontend {
 	}
 
 	public function block_theme() {
-		// No theme swap needed — templates are registered as plugin templates
+		// No theme swap needed; templates are registered as plugin templates
 		// and injected via template_override.
+		$handle  = 'friends-blocks';
+		$file    = 'friends-blocks.css';
+		$version = Friends::VERSION;
+		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 	}
 
 	/**
@@ -644,6 +682,10 @@ class Frontend {
 			'friends//friends-followers'     => array(
 				'title'   => __( 'Friends Followers', 'friends' ),
 				'content' => 'friends-followers',
+			),
+			'friends//friends-add-friend'    => array(
+				'title'   => __( 'Friends Add Friend', 'friends' ),
+				'content' => 'friends-add-friend',
 			),
 			'friends//friends-subscriptions' => array(
 				'title'   => __( 'Friends Following', 'friends' ),
@@ -1597,6 +1639,7 @@ class Frontend {
 			'frontend/author-index'  => 'friends-author-index',
 			'frontend/single'        => 'single-friend_post_cache',
 			'frontend/followers'     => 'friends-followers',
+			'frontend/add-friend'    => 'friends-add-friend',
 			'frontend/subscriptions' => 'friends-subscriptions',
 		);
 		if ( ! isset( $map[ $template_path ] ) ) {
@@ -1619,6 +1662,10 @@ class Frontend {
 		$wp_query->is_singular = false;
 
 		switch ( $path ) {
+			case 'add-friend':
+				$path = 'frontend/add-friend';
+				break;
+
 			case 'subscriptions':
 				wp_safe_redirect( home_url( '/friends/following/' ) );
 				exit;

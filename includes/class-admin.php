@@ -54,6 +54,9 @@ class Admin {
 		add_action( 'wp_ajax_friends_fetch_feeds', array( $this, 'ajax_fetch_feeds' ) );
 		add_action( 'wp_ajax_friends_set_avatar', array( $this, 'ajax_set_avatar' ) );
 		add_action( 'wp_ajax_friends-refresh-feeds', array( $this, 'ajax_refresh_feeds' ) );
+		add_action( 'wp_ajax_friends-preview-subscription', array( $this, 'ajax_preview_subscription' ) );
+		add_action( 'wp_ajax_friends-preview-subscription-feed', array( $this, 'ajax_preview_subscription_feed' ) );
+		add_action( 'wp_ajax_friends-subscribe-frontend', array( $this, 'ajax_subscribe_frontend' ) );
 		add_action( 'delete_user_form', array( $this, 'delete_user_form' ), 10, 2 );
 		add_action( 'delete_user', array( $this, 'delete_user' ) );
 		add_action( 'remove_user_from_blog', array( $this, 'delete_user' ) );
@@ -1662,6 +1665,300 @@ class Admin {
 		wp_send_json_success();
 	}
 
+	private function normalize_frontend_subscription_url( $url ) {
+		if ( ! is_string( $url ) ) {
+			return '';
+		}
+
+		$url = trim( $url );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		$protocol = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! $protocol ) {
+			return apply_filters( 'friends_rewrite_incoming_url', 'https://' . $url, $url );
+		}
+
+		return apply_filters( 'friends_rewrite_incoming_url', $url, $url );
+	}
+
+	public function ajax_preview_subscription() {
+		if ( ! isset( $_POST['url'] ) || is_array( $_POST['url'] ) ) {
+			wp_send_json_error( __( 'No URL provided.', 'friends' ) );
+		}
+
+		check_ajax_referer( 'friends_add_subscription' );
+
+		if ( ! Friends::has_required_privileges() ) {
+			wp_send_json_error( __( 'You do not have permission to do this.', 'friends' ) );
+		}
+
+		$url = $this->normalize_frontend_subscription_url( wp_unslash( $_POST['url'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( '' === $url ) {
+			wp_send_json_error( __( 'No URL provided.', 'friends' ) );
+		}
+
+		if ( str_starts_with( $url, home_url() ) ) {
+			wp_send_json_error( __( 'It seems like you sent a friend request to yourself.', 'friends' ) );
+		}
+
+		if ( ! Friends::check_url( $url ) ) {
+			wp_send_json_error( __( 'You entered an invalid URL.', 'friends' ) );
+		}
+
+		$user_login   = apply_filters( 'friends_suggest_user_login', User::get_user_login_for_url( $url ), $url );
+		$display_name = apply_filters( 'friends_suggest_display_name', User::get_display_name_for_url( $url ), $url );
+
+		$feeds = $this->friends->feed->discover_available_feeds( $url );
+
+		if ( is_wp_error( $feeds ) ) {
+			wp_send_json_error( $feeds->get_error_message() );
+		}
+
+		if ( empty( $feeds ) ) {
+			wp_send_json_error( __( 'No suitable feed was found at the provided address.', 'friends' ) );
+		}
+
+		$better_user_login = User::get_user_login_from_feeds( $feeds );
+		if ( $better_user_login ) {
+			$user_login = trim( $better_user_login, '-' );
+		}
+
+		$better_display_name = User::get_display_name_from_feeds( $feeds );
+		if ( $better_display_name ) {
+			$display_name = $better_display_name;
+			if ( ! $better_user_login ) {
+				$user_login = trim( User::sanitize_username( $better_display_name ), '-' );
+			}
+		}
+
+		$friend_user = User::get_user( $user_login );
+		if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+			$friend_user = Subscription::get_by_username( $user_login );
+		}
+
+		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
+			// translators: %s is the name of a friend / site.
+			wp_send_json_error( sprintf( __( 'You are already subscribed to this site: %s', 'friends' ), $friend_user->display_name ) );
+		}
+
+		$avatar = null;
+		$description = null;
+		foreach ( $feeds as $feed_details ) {
+			if ( ! $avatar && ! empty( $feed_details['avatar'] ) ) {
+				$avatar = $feed_details['avatar'];
+			}
+			if ( ! $description && ! empty( $feed_details['description'] ) ) {
+				$description = $feed_details['description'];
+			}
+		}
+
+		wp_send_json_success(
+			array(
+				'feeds'        => $feeds,
+				'display_name' => $display_name ? $display_name : '',
+				'user_login'   => $user_login ? $user_login : '',
+				'avatar'       => $avatar,
+				'description'  => $description,
+				'url'          => $url,
+			)
+		);
+	}
+
+	public function ajax_preview_subscription_feed() {
+		check_ajax_referer( 'friends_add_subscription' );
+
+		if ( ! Friends::has_required_privileges() ) {
+			wp_send_json_error( __( 'You do not have permission to do this.', 'friends' ) );
+		}
+
+		$url = isset( $_POST['url'] ) && ! is_array( $_POST['url'] ) ? $this->normalize_frontend_subscription_url( wp_unslash( $_POST['url'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( '' === $url || ! Friends::check_url( $url ) ) {
+			wp_send_json_error( __( 'You entered an invalid URL.', 'friends' ) );
+		}
+
+		$parser = isset( $_POST['parser'] ) && ! is_array( $_POST['parser'] ) ? sanitize_key( wp_unslash( $_POST['parser'] ) ) : '';
+		if ( ! $parser ) {
+			wp_send_json_error( __( 'An invalid parser was supplied.', 'friends' ) );
+		}
+
+		$items = $this->friends->feed->preview( $parser, $url );
+		if ( is_wp_error( $items ) ) {
+			wp_send_json_error( $items->get_error_message() );
+		}
+
+		$preview_items = array();
+		foreach ( array_slice( $items, 0, 5 ) as $item ) {
+			$title = $item->title;
+			if ( 'status' === $item->post_format || ! $title ) {
+				$title = wp_strip_all_tags( $item->content );
+			}
+
+			$preview_items[] = array(
+				'title'       => wp_trim_words( wp_strip_all_tags( $title ), 16 ),
+				'excerpt'     => wp_trim_words( wp_strip_all_tags( $item->content ), 40 ),
+				'permalink'   => $item->permalink,
+				'date'        => $item->date,
+				'author'      => $item->author,
+				'post_format' => $item->post_format,
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'items' => $preview_items,
+			)
+		);
+	}
+
+	public function ajax_subscribe_frontend() {
+		check_ajax_referer( 'friends_add_subscription' );
+
+		if ( ! Friends::has_required_privileges() ) {
+			wp_send_json_error( __( 'You do not have permission to do this.', 'friends' ) );
+		}
+
+		$url          = isset( $_POST['url'] ) && ! is_array( $_POST['url'] ) ? $this->normalize_frontend_subscription_url( wp_unslash( $_POST['url'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$display_name = isset( $_POST['display_name'] ) && ! is_array( $_POST['display_name'] ) ? sanitize_text_field( wp_unslash( $_POST['display_name'] ) ) : '';
+		$user_login   = isset( $_POST['user_login'] ) && ! is_array( $_POST['user_login'] ) ? User::sanitize_username( wp_unslash( $_POST['user_login'] ) ) : User::get_user_login_for_url( $url ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$feeds        = isset( $_POST['feeds'] ) && is_array( $_POST['feeds'] ) ? wp_unslash( $_POST['feeds'] ) : array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+		if ( empty( $url ) || empty( $feeds ) ) {
+			wp_send_json_error( __( 'Missing required data.', 'friends' ) );
+		}
+
+		if ( ! Friends::check_url( $url ) ) {
+			wp_send_json_error( __( 'You entered an invalid URL.', 'friends' ) );
+		}
+
+		$user_login = trim( $user_login, '-' );
+		if ( ! $user_login ) {
+			wp_send_json_error( __( 'Please enter a valid username.', 'friends' ) );
+		}
+
+		if ( ! $display_name ) {
+			$display_name = User::get_display_name_for_url( $url );
+		}
+
+		if ( ! is_multisite() && username_exists( $user_login ) ) {
+			wp_send_json_error( __( 'This username is already registered. Please choose another one.' ) ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+		}
+
+		$avatar = null;
+		$description = null;
+		$feed_options = array();
+		$subscribe = array();
+		$post_formats = array_merge( array( 'autodetect' => true ), array_fill_keys( array_keys( get_post_format_strings() ), true ) );
+
+		foreach ( $feeds as $feed ) {
+			if ( ! is_array( $feed ) ) {
+				continue;
+			}
+
+			$feed_url = '';
+			if ( ! empty( $feed['url'] ) && is_scalar( $feed['url'] ) ) {
+				$feed_url = esc_url_raw( trim( $feed['url'] ) );
+			}
+
+			if ( ! $feed_url || ! Friends::check_url( $feed_url ) ) {
+				continue;
+			}
+
+			$parser = isset( $feed['parser'] ) && is_scalar( $feed['parser'] ) ? sanitize_key( $feed['parser'] ) : 'simplepie';
+			if ( ! $parser || 'unsupported' === $parser ) {
+				continue;
+			}
+
+			$post_format = isset( $feed['post-format'] ) && is_scalar( $feed['post-format'] ) ? sanitize_key( $feed['post-format'] ) : 'standard';
+			if ( ! isset( $post_formats[ $post_format ] ) ) {
+				$post_format = 'standard';
+			}
+
+			$mime_type = isset( $feed['mime-type'] ) && is_scalar( $feed['mime-type'] ) ? sanitize_text_field( $feed['mime-type'] ) : '';
+			if ( ! $mime_type && ! empty( $feed['type'] ) && is_scalar( $feed['type'] ) ) {
+				$mime_type = sanitize_text_field( $feed['type'] );
+			}
+
+			$feed_options[ $feed_url ] = array(
+				'url'         => $feed_url,
+				'parser'      => $parser,
+				'post-format' => $post_format,
+				'title'       => isset( $feed['title'] ) && is_scalar( $feed['title'] ) ? sanitize_text_field( $feed['title'] ) : $feed_url,
+			);
+
+			if ( $mime_type ) {
+				$feed_options[ $feed_url ]['mime-type'] = $mime_type;
+			}
+
+			$is_selected = isset( $feed['selected'] ) && in_array( $feed['selected'], array( true, 'true', '1', 1, 'on' ), true );
+			if ( $is_selected ) {
+				$subscribe[] = $feed_url;
+			}
+
+			if ( ! $avatar && ! empty( $feed['avatar'] ) && is_scalar( $feed['avatar'] ) ) {
+				$avatar = esc_url_raw( $feed['avatar'] );
+			}
+			if ( ! $description && ! empty( $feed['description'] ) && is_scalar( $feed['description'] ) ) {
+				$description = wp_encode_emoji( sanitize_textarea_field( $feed['description'] ) );
+			}
+		}
+
+		if ( empty( $feed_options ) ) {
+			wp_send_json_error( __( 'No suitable feed was found at the provided address.', 'friends' ) );
+		}
+
+		if ( empty( $subscribe ) ) {
+			wp_send_json_error( __( 'Please select at least one feed.', 'friends' ) );
+		}
+
+		$friend_user = User::get_user( $user_login );
+		if ( ! $friend_user || is_wp_error( $friend_user ) ) {
+			$friend_user = Subscription::get_by_username( $user_login );
+		}
+
+		if ( $friend_user && ! is_wp_error( $friend_user ) ) {
+			// translators: %s is the name of a friend / site.
+			wp_send_json_error( sprintf( __( 'You are already subscribed to this site: %s', 'friends' ), $friend_user->display_name ) );
+		}
+
+		$friend_user = User::create( $user_login, 'subscription', $url, $display_name, $avatar, $description );
+
+		if ( is_wp_error( $friend_user ) ) {
+			wp_send_json_error( $friend_user->get_error_message() );
+		}
+
+		$saved_feeds = $friend_user->save_feeds( $feed_options );
+		if ( is_wp_error( $saved_feeds ) ) {
+			wp_send_json_error( $saved_feeds->get_error_message() );
+		}
+
+		foreach ( $subscribe as $feed_url ) {
+			if ( ! isset( $feed_options[ $feed_url ] ) ) {
+				continue;
+			}
+			$new_feed = $friend_user->subscribe( $feed_url, $feed_options[ $feed_url ] );
+			if ( ! is_wp_error( $new_feed ) ) {
+				do_action( 'friends_user_feed_activated', $new_feed );
+			}
+		}
+
+		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
+		wp_schedule_single_event( time(), 'friends_retrieve_user_feeds', array( $friend_user->ID ) );
+
+		wp_send_json_success(
+			array(
+				'message' => sprintf(
+					// translators: %s is the name of a friend.
+					__( 'You are now following %s.', 'friends' ),
+					$display_name
+				),
+				'url'     => $friend_user->get_local_friends_page_url(),
+			)
+		);
+	}
+
 	public function ajax_set_avatar() {
 		if ( ! isset( $_POST['user'] ) ) {
 			wp_send_json_error( __( 'No user specified.', 'friends' ) );
@@ -2648,6 +2945,14 @@ class Admin {
 			)
 		);
 
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'add-friend',
+				'parent' => 'friends-menu',
+				'title'  => esc_html__( 'Add a friend', 'friends' ),
+				'href'   => home_url( '/friends/add-friend' ),
+			)
+		);
 		$wp_menu->add_menu(
 			array(
 				'id'     => 'friends',

@@ -843,4 +843,804 @@
 		} );
 	} );
 
+	let subscriptionPreviewId = 0;
+	let subscriptionPasteReviewTimer = null;
+
+	function friendsText( key, fallback ) {
+		return friends && friends[ key ] ? friends[ key ] : fallback;
+	}
+
+	function ajaxErrorText( result ) {
+		if ( $.isArray( result ) ) {
+			return result.join( ', ' );
+		}
+		if ( result && result.message ) {
+			return result.message;
+		}
+		if ( result ) {
+			return String( result );
+		}
+		return friendsText( 'text_error', 'An error occurred.' );
+	}
+
+	function getSubscriptionNonce() {
+		return $( '#add-subscription-form input[name=_wpnonce]' ).val();
+	}
+
+	function looksLikeOpml( text ) {
+		if ( ! text ) {
+			return false;
+		}
+		const trimmed = text.trim();
+		if ( trimmed.charAt( 0 ) !== '<' ) {
+			return false;
+		}
+		return /<\s*(opml|outline)\b/i.test( trimmed );
+	}
+
+	function parsePastedPeopleList( text ) {
+		const seen = {};
+		const items = [];
+		const lines = text.split( /\r?\n/ );
+		for ( let i = 0; i < lines.length; i++ ) {
+			const line = lines[ i ]
+				.replace( /^\s*[-*]\s+/, '' )
+				.replace( /^\s*\d+[.)]\s+/, '' )
+				.trim();
+			if ( ! line || seen[ line ] ) {
+				continue;
+			}
+			seen[ line ] = true;
+			items.push( {
+				url: line,
+				text: line,
+			} );
+		}
+		return items.length > 1 ? items : [];
+	}
+
+	function parseOpmlItems( opmlText ) {
+		const parser = new DOMParser();
+		const doc = parser.parseFromString( opmlText, 'application/xml' );
+		if ( doc.getElementsByTagName( 'parsererror' ).length ) {
+			return {
+				error: friendsText( 'text_opml_invalid', 'Could not parse the OPML file.' ),
+			};
+		}
+
+		const outlines = doc.querySelectorAll( 'outline[xmlUrl]' );
+		if ( ! outlines.length ) {
+			return {
+				error: friendsText( 'text_opml_no_feeds', 'No feeds were found in the OPML file.' ),
+			};
+		}
+
+		const items = [];
+		$( outlines ).each( function () {
+			const xmlUrl = this.getAttribute( 'xmlUrl' ) || '';
+			const htmlUrl = this.getAttribute( 'htmlUrl' ) || '';
+			items.push( {
+				url: htmlUrl || xmlUrl,
+				feedUrl: xmlUrl,
+				htmlUrl: htmlUrl,
+				text: this.getAttribute( 'text' ) || this.getAttribute( 'title' ) || xmlUrl,
+			} );
+		} );
+
+		return { items: items };
+	}
+
+	function setSubscriptionPreviewError( message ) {
+		$( '#preview-subscription' ).empty().append( $( '<p class="error"></p>' ).text( message ) );
+	}
+
+	function createSelect( options, selected, className ) {
+		const $select = $( '<select></select>' ).addClass( 'form-select ' + className );
+		let selectedFound = false;
+		$.each( options, function ( value, label ) {
+			const $option = $( '<option></option>' ).attr( 'value', value ).text( label );
+			if ( selected === value ) {
+				$option.prop( 'selected', true );
+				selectedFound = true;
+			}
+			$select.append( $option );
+		} );
+		if ( selected && ! selectedFound ) {
+			$select.append( $( '<option></option>' ).attr( 'value', selected ).prop( 'selected', true ).text( selected ) );
+		}
+		return $select;
+	}
+
+	function generateUserLogin( value ) {
+		return String( value || '' )
+			.toLowerCase()
+			.replace( /[^a-z0-9.]+/g, '-' )
+			.replace( /^-+|-+$/g, '' );
+	}
+
+	function htmlToPlainText( value ) {
+		const doc = new DOMParser().parseFromString( String( value || '' ), 'text/html' );
+		if ( ! doc.body ) {
+			return String( value || '' );
+		}
+		$( doc.body ).find( 'script, style, noscript' ).remove();
+		return doc.body.textContent.replace( /\s+/g, ' ' ).trim();
+	}
+
+	function appendMetadataText( $details, label, value ) {
+		if ( ! value ) {
+			return;
+		}
+		if ( $details.contents().length ) {
+			$details.append( document.createTextNode( ' | ' ) );
+		}
+		$details.append( document.createTextNode( label + ': ' + value ) );
+	}
+
+	function getDefaultParser() {
+		const parsers = friends.registered_parsers || { simplepie: 'SimplePie' };
+		const parserKeys = Object.keys( parsers );
+		return parserKeys.length ? parserKeys[ 0 ] : 'simplepie';
+	}
+
+	function getFeedOptionUrl( $item ) {
+		const $input = $item.find( '.subscription-feed-url' );
+		if ( $input.length ) {
+			return $.trim( $input.val() );
+		}
+		return $.trim( $item.data( 'feedUrl' ) || '' );
+	}
+
+	function resetSubscriptionFeedPreview( $item ) {
+		const $preview = $item.find( '.subscription-feed-preview' );
+		$preview.removeData( 'loaded' ).empty().addClass( 'hidden' );
+		$item.find( '.subscription-feed-preview-toggle' ).text( friendsText( 'text_preview_feed', 'Preview feed' ) );
+	}
+
+	function renderSubscriptionFeedOption( panelId, feedIndex, feedUrl, feed, options ) {
+		const settings = $.extend( { hidden: false, unsupported: false, custom: false }, options || {} );
+		const feedDetails = $.extend( { url: feedUrl }, feed || {} );
+		const feedId = panelId + '-feed-' + feedIndex;
+		const parser = settings.unsupported || settings.custom ? getDefaultParser() : ( feedDetails.parser || getDefaultParser() );
+		const title = feedDetails.title || feedUrl || friendsText( 'text_custom_feed', 'Custom feed' );
+		const $item = $( '<li class="subscription-feed-option"></li>' )
+			.toggleClass( 'hidden rel-alternate', settings.hidden )
+			.toggleClass( 'unsupported-feed-option', settings.unsupported )
+			.toggleClass( 'custom-feed-option', settings.custom )
+			.data( {
+				feedUrl: feedUrl,
+				feed: feedDetails,
+			} );
+		const $checkbox = $( '<input type="checkbox" class="subscription-feed-selected" />' )
+			.attr( 'id', feedId )
+			.prop( 'checked', settings.custom ? true : ( ! settings.unsupported && !! feedDetails.autoselect ) );
+		const $label = $( '<label></label>' ).attr( 'for', feedId ).append( $checkbox ).append( ' ' );
+		if ( feedUrl ) {
+			$label.append(
+				$( '<a class="subscription-feed-title-link" target="_blank" rel="noopener noreferrer"></a>' )
+					.attr( 'href', feedUrl )
+					.text( title )
+			);
+		} else {
+			$label.append( $( '<span class="subscription-feed-title"></span>' ).text( title ) );
+		}
+		if ( feedDetails.type ) {
+			$label.append( ' ' ).append( $( '<small></small>' ).text( '(' + feedDetails.type + ')' ) );
+		}
+		$item.append( $label );
+
+		const $controls = $( '<div class="subscription-feed-controls"></div>' );
+		if ( settings.unsupported || settings.custom ) {
+			$controls.append(
+				$( '<label class="subscription-feed-url-label"></label>' )
+					.text( friendsText( 'text_feed_url', 'Feed URL' ) )
+					.append(
+						$( '<input type="url" class="form-input subscription-feed-url" />' )
+							.val( feedUrl )
+							.attr( 'placeholder', 'https://example.com/feed.xml' )
+					)
+			);
+		}
+		$controls.append(
+			$( '<label></label>' )
+				.text( friendsText( 'text_post_format', 'Post Format' ) )
+				.append( createSelect( friends.post_formats || { standard: 'Standard' }, feedDetails[ 'post-format' ] || 'standard', 'subscription-feed-post-format' ) )
+		);
+		$controls.append(
+			$( '<label></label>' )
+				.text( friendsText( 'text_feed_parser', 'Parser' ) )
+				.append( createSelect( friends.registered_parsers || { simplepie: 'SimplePie' }, parser, 'subscription-feed-parser' ) )
+		);
+		$controls.append(
+			$( '<button type="button" class="btn btn-link subscription-feed-preview-toggle"></button>' )
+				.text( friendsText( 'text_preview_feed', 'Preview feed' ) )
+		);
+		$item.append( $controls );
+
+		const $details = $( '<p class="description details subscription-feed-details hidden"></p>' );
+		appendMetadataText( $details, 'Type', feedDetails.type );
+		appendMetadataText( $details, 'rel', feedDetails.rel );
+		appendMetadataText( $details, 'URL', feedUrl );
+		appendMetadataText( $details, 'Parser', feedDetails.parser );
+		if ( feedDetails[ 'additional-info' ] ) {
+			$details.append( $( '<br />' ) ).append( document.createTextNode( feedDetails[ 'additional-info' ] ) );
+		}
+		$item.append( $details );
+		$item.append( $( '<div class="subscription-feed-preview hidden" aria-live="polite"></div>' ) );
+		return $item;
+	}
+
+	function renderSubscriptionCard( response, nonce, fallbackDisplayName ) {
+		const feeds = response.feeds || {};
+		const displayName = response.display_name || fallbackDisplayName || response.user_login || response.url;
+		const userLogin = response.user_login || generateUserLogin( displayName || response.url );
+		const panelId = 'subscription-preview-' + ( ++subscriptionPreviewId );
+		const $panel = $( '<div class="feed-preview subscription-preview"></div>' )
+			.attr( 'id', panelId )
+			.data( {
+				url: response.url,
+				nonce: nonce,
+			} );
+
+		const $header = $( '<div class="subscription-preview-header"></div>' );
+		if ( response.avatar ) {
+			$header.append( $( '<img class="avatar" width="48" height="48" alt="" />' ).attr( 'src', response.avatar ) );
+		}
+		const $title = $( '<div class="subscription-preview-title"></div>' );
+		$title.append( $( '<strong></strong>' ).text( displayName ) );
+		$title.append( $( '<small></small>' ).text( response.url ) );
+		$header.append( $title );
+		$panel.append( $header );
+
+		if ( response.description ) {
+			$panel.append( $( '<p class="subscription-preview-description"></p>' ).text( htmlToPlainText( response.description ) ) );
+		}
+
+		const $settings = $( '<div class="subscription-settings"></div>' );
+		const $displayNameInput = $( '<input type="text" class="form-input subscription-display-name" required />' ).val( displayName );
+		const $userLoginInput = $( '<input type="text" class="form-input subscription-user-login" required />' )
+			.val( userLogin )
+			.data( 'original', userLogin );
+		$settings.append(
+			$( '<label></label>' )
+				.text( friendsText( 'text_display_name', 'Display Name' ) )
+				.append( $displayNameInput )
+		);
+		$settings.append(
+			$( '<label></label>' )
+				.text( friendsText( 'text_username', 'Username' ) )
+				.append( $userLoginInput )
+		);
+		$panel.append( $settings );
+
+		const $feedList = $( '<ul class="feed-list subscription-feed-list"></ul>' );
+		const unsupportedFeeds = [];
+		let supportedCount = 0;
+		let hiddenFeedCount = 0;
+
+		$.each( feeds, function ( feedUrl, feed ) {
+			if ( ! feed || 'unsupported' === feed.parser ) {
+				unsupportedFeeds.push( {
+					url: feedUrl,
+					feed: feed || {},
+				} );
+				return;
+			}
+
+			supportedCount++;
+			const hidden = supportedCount > 1 && ! feed.autoselect;
+			if ( hidden ) {
+				hiddenFeedCount++;
+			}
+
+			$feedList.append( renderSubscriptionFeedOption( panelId, supportedCount, feedUrl, feed, { hidden: hidden } ) );
+		} );
+
+		if ( supportedCount ) {
+			$panel.append( $feedList );
+		} else {
+			$panel.append( $( '<p class="error"></p>' ).text( friendsText( 'text_no_supported_feeds', 'No supported feeds discovered.' ) ) );
+		}
+
+		const $feedActions = $( '<div class="subscription-feed-actions"></div>' );
+		if ( hiddenFeedCount ) {
+			$feedActions.append(
+				$( '<button type="button" class="btn btn-link show-alternate-feeds"></button>' )
+					.text( friendsText( 'text_show_more_feeds', 'Show more feeds' ) )
+			);
+		}
+		if ( supportedCount || unsupportedFeeds.length ) {
+			$feedActions.append(
+				$( '<button type="button" class="btn btn-link show-feed-details"></button>' )
+					.text( friendsText( 'text_feed_metadata', 'Display feed metadata' ) )
+			);
+		}
+		if ( unsupportedFeeds.length ) {
+			$feedActions.append(
+				$( '<button type="button" class="btn btn-link show-unsupported-feeds"></button>' )
+					.text( friendsText( 'text_show_unsupported_feeds', 'Show unsupported feeds' ) )
+			);
+			const $unsupported = $( '<ul class="feed-list subscription-feed-list unsupported-feed-list hidden"></ul>' );
+			$.each( unsupportedFeeds, function ( index, item ) {
+				$unsupported.append( renderSubscriptionFeedOption( panelId, supportedCount + index + 1, item.url, item.feed, { unsupported: true } ) );
+			} );
+			$panel.append( $unsupported );
+		}
+		$feedActions.append(
+			$( '<button type="button" class="btn btn-link add-custom-feed"></button>' )
+				.text( friendsText( 'text_add_feed_url', 'Add feed URL' ) )
+		);
+		if ( $feedActions.children().length ) {
+			$panel.append( $feedActions );
+		}
+
+		const $previewActions = $( '<div class="subscription-preview-actions"></div>' )
+			.append( $( '<button type="button" class="btn btn-link bulk-skip-entry"></button>' ).text( friendsText( 'text_skip', 'Skip' ) ) )
+			.append( $( '<button type="button" class="btn btn-primary subscribe-btn"></button>' ).text( friendsText( 'text_follow', 'Follow' ) ) )
+			.append( $( '<span class="subscription-preview-status" aria-live="polite"></span>' ) );
+		$panel.append( $previewActions );
+
+		return $panel;
+	}
+
+	function collectSubscriptionFeeds( $panel ) {
+		const feeds = [];
+		$panel.find( '.subscription-feed-option' ).each( function () {
+			const $item = $( this );
+			const feed = $.extend( {}, $item.data( 'feed' ) || {} );
+			feed.url = getFeedOptionUrl( $item );
+			if ( ! feed.url ) {
+				return;
+			}
+			feed.selected = $item.find( '.subscription-feed-selected' ).is( ':checked' );
+			feed[ 'post-format' ] = $item.find( '.subscription-feed-post-format' ).val();
+			feed.parser = $item.find( '.subscription-feed-parser' ).val();
+			feeds.push( feed );
+		} );
+		return feeds;
+	}
+
+	function renderFeedPreviewItems( $preview, items ) {
+		$preview.empty();
+		if ( ! items || ! items.length ) {
+			$preview.append( $( '<p class="description"></p>' ).text( friendsText( 'text_no_preview_items', 'No preview items were found.' ) ) );
+			return;
+		}
+
+		const $list = $( '<ul></ul>' );
+		$.each( items, function ( index, item ) {
+			const $item = $( '<li></li>' );
+			const $summary = $( '<div class="subscription-feed-preview-title"></div>' );
+			if ( item.permalink ) {
+				$summary.append(
+					$( '<a target="_blank" rel="noopener noreferrer"></a>' )
+						.attr( 'href', item.permalink )
+						.text( item.title || item.permalink )
+				);
+			} else {
+				$summary.text( item.title || '' );
+			}
+			const meta = [];
+			if ( item.date ) {
+				meta.push( item.date );
+			}
+			if ( item.author ) {
+				meta.push( item.author );
+			}
+			if ( item.post_format ) {
+				meta.push( item.post_format );
+			}
+			if ( meta.length ) {
+				$summary.append( $( '<small></small>' ).text( meta.join( ' | ' ) ) );
+			}
+			$item.append( $summary );
+			if ( item.excerpt ) {
+				$item.append( $( '<p></p>' ).text( item.excerpt ) );
+			}
+			$list.append( $item );
+		} );
+		$preview.append( $list );
+	}
+
+	function previewSubscriptionFeed( $item, $button ) {
+		const $preview = $item.find( '.subscription-feed-preview' );
+		const feedUrl = getFeedOptionUrl( $item );
+		if ( ! feedUrl ) {
+			$preview.removeClass( 'hidden' ).empty().append( $( '<p class="error"></p>' ).text( friendsText( 'text_feed_url_required', 'Please enter a feed URL.' ) ) );
+			return;
+		}
+		if ( $preview.data( 'loaded' ) ) {
+			const isHidden = $preview.hasClass( 'hidden' );
+			$preview.toggleClass( 'hidden', ! isHidden );
+			$button.text( isHidden ? friendsText( 'text_hide_preview', 'Hide preview' ) : friendsText( 'text_preview_feed', 'Preview feed' ) );
+			return;
+		}
+
+		$button.prop( 'disabled', true );
+		$preview.removeClass( 'hidden' ).text( friendsText( 'text_loading', 'Loading...' ) );
+		wp.ajax.send( 'friends-preview-subscription-feed', {
+			data: {
+				_ajax_nonce: $item.closest( '.subscription-preview' ).data( 'nonce' ),
+				url: feedUrl,
+				parser: $item.find( '.subscription-feed-parser' ).val(),
+			},
+			success( response ) {
+				renderFeedPreviewItems( $preview, response.items );
+				$preview.data( 'loaded', true );
+				$button.prop( 'disabled', false ).text( friendsText( 'text_hide_preview', 'Hide preview' ) );
+			},
+			error( result ) {
+				$preview.empty().append( $( '<p class="error"></p>' ).text( ajaxErrorText( result ) ) );
+				$button.prop( 'disabled', false );
+			},
+		} );
+	}
+
+	function subscribeSubscriptionPanel( $panel, $button, done ) {
+		const feeds = collectSubscriptionFeeds( $panel );
+		let selectedFeedCount = 0;
+		for ( let i = 0; i < feeds.length; i++ ) {
+			if ( feeds[ i ].selected ) {
+				selectedFeedCount++;
+			}
+		}
+
+		const $status = $panel.find( '.subscription-preview-status' );
+		if ( ! selectedFeedCount ) {
+			$status.addClass( 'error' ).text( friendsText( 'text_no_feed_selected', 'Please select at least one feed.' ) );
+			if ( done ) {
+				done( false );
+			}
+			return;
+		}
+
+		$button.prop( 'disabled', true );
+		$status.removeClass( 'error' ).text( friendsText( 'text_loading', 'Loading...' ) );
+		wp.ajax.send( 'friends-subscribe-frontend', {
+			data: {
+				_ajax_nonce: $panel.data( 'nonce' ),
+				url: $panel.data( 'url' ),
+				display_name: $panel.find( '.subscription-display-name' ).val(),
+				user_login: $panel.find( '.subscription-user-login' ).val(),
+				feeds: feeds,
+			},
+			success( response ) {
+				const avatar = $panel.find( '.avatar' ).attr( 'src' );
+				const $success = $( '<div class="subscribe-success"></div>' );
+				if ( avatar ) {
+					$success.append( $( '<img class="avatar" width="48" height="48" alt="" />' ).attr( 'src', avatar ) );
+				}
+				$success.append( $( '<a></a>' ).attr( 'href', response.url ).text( response.message ) );
+				$panel.addClass( 'is-subscribed' ).empty().append( $success );
+				if ( done ) {
+					done( true );
+				}
+			},
+			error( result ) {
+				$status.addClass( 'error' ).text( ajaxErrorText( result ) );
+				$button.prop( 'disabled', false );
+				if ( done ) {
+					done( false );
+				}
+			},
+		} );
+	}
+
+	function discoverSubscription( url, nonce, fallbackDisplayName, $target, done ) {
+		wp.ajax.send( 'friends-preview-subscription', {
+			data: {
+				_ajax_nonce: nonce,
+				url: url,
+			},
+			success( response ) {
+				$target.append( renderSubscriptionCard( response, nonce, fallbackDisplayName ) );
+				if ( done ) {
+					done( true );
+				}
+			},
+			error( result ) {
+				if ( done ) {
+					done( false, ajaxErrorText( result ) );
+				} else {
+					setSubscriptionPreviewError( ajaxErrorText( result ) );
+				}
+			},
+		} );
+	}
+
+	function renderSingleSubscriptionPreview( url ) {
+		const $preview = $( '#preview-subscription' ).empty();
+		const $results = $( '<div class="subscription-preview-results"></div>' );
+		$preview.append( $( '<p class="loading"></p>' ).text( friendsText( 'text_loading', 'Loading...' ) ) );
+		$preview.append( $results );
+		discoverSubscription( url, getSubscriptionNonce(), '', $results, function ( success, message ) {
+			$preview.find( '.loading' ).remove();
+			if ( ! success ) {
+				setSubscriptionPreviewError( message || friendsText( 'text_error', 'An error occurred.' ) );
+			}
+		} );
+	}
+
+	function renderBulkPicker( items ) {
+		const $preview = $( '#preview-subscription' ).empty();
+		const $controls = $( '<div class="bulk-controls"></div>' );
+		$controls.append( $( '<button type="button" class="btn btn-link bulk-toggle-all"></button>' ).text( friendsText( 'text_opml_deselect_all', 'Deselect all' ) ) );
+		$controls.append( ' ' );
+		$controls.append( $( '<button type="button" class="btn btn-primary bulk-preview-selected"></button>' ).text( friendsText( 'text_review_selected', 'Review selected' ) ) );
+		$controls.append( ' ' );
+		$controls.append( $( '<button type="button" class="btn btn-primary bulk-follow-selected hidden"></button>' ).text( friendsText( 'text_follow_selected', 'Follow selected' ) ) );
+
+		const $list = $( '<ul class="feed-list bulk-feed-list"></ul>' );
+		$.each( items, function ( index, item ) {
+			const itemId = 'bulk-feed-' + index;
+			const $checkbox = $( '<input type="checkbox" class="bulk-feed-cb" checked />' )
+				.attr( 'id', itemId )
+				.data( item );
+			const $label = $( '<label class="label-for-bulkfeed"></label>' )
+				.attr( 'for', itemId )
+				.append( $checkbox )
+				.append( ' ' )
+				.append( document.createTextNode( item.text || item.url ) );
+			if ( item.htmlUrl ) {
+				$label.append( ' ' ).append(
+					$( '<small></small>' ).append(
+						$( '<a target="_blank" rel="noopener noreferrer"></a>' )
+							.attr( 'href', item.htmlUrl )
+							.text( item.htmlUrl )
+					)
+				);
+			}
+			$list.append(
+				$( '<li class="bulk-feed-row"></li>' )
+					.append( $label )
+					.append( ' ' )
+					.append( $( '<span class="bulk-feed-status"></span>' ) )
+					.append( $( '<div class="bulk-feed-review"></div>' ) )
+			);
+		} );
+
+		$preview.append( $controls ).append( $list );
+	}
+
+	function updateBulkFeedRowState( $row ) {
+		const isChecked = $row.find( '.bulk-feed-cb' ).is( ':checked' );
+		const hasPreview = !! $row.find( '.bulk-feed-review .subscription-preview' ).length;
+		const previewIsVisible = ! $row.find( '.bulk-feed-review' ).hasClass( 'hidden' );
+		const isReviewing = isChecked && hasPreview && previewIsVisible;
+		$row.toggleClass( 'is-reviewing', isReviewing );
+		$row.find( '.label-for-bulkfeed, .bulk-feed-status' ).toggleClass( 'hidden', isReviewing );
+	}
+
+	function reviewBulkSubscription( $item, nonce, done ) {
+		const data = $item.find( '.bulk-feed-cb' ).data();
+		const $status = $item.find( '.bulk-feed-status' );
+		const $review = $item.find( '.bulk-feed-review' ).empty();
+		$status.removeClass( 'error' ).text( friendsText( 'text_discovering', 'Discovering feeds...' ) );
+		updateBulkFeedRowState( $item );
+		discoverSubscription( data.url, nonce, data.text, $review, function ( success, message ) {
+			if ( success ) {
+				$status.text( friendsText( 'text_ready_to_follow', 'Ready' ) );
+			} else {
+				$status.addClass( 'error' ).text( message || friendsText( 'text_error', 'An error occurred.' ) );
+			}
+			updateBulkFeedRowState( $item );
+			done();
+		} );
+	}
+
+	$document.on( 'submit', '#add-subscription-form', function ( e ) {
+		e.preventDefault();
+		const value = $( this ).find( '[name="url"]' ).val();
+		if ( ! value ) {
+			return;
+		}
+
+		if ( looksLikeOpml( value ) ) {
+			const parsedOpml = parseOpmlItems( value );
+			if ( parsedOpml.error ) {
+				setSubscriptionPreviewError( parsedOpml.error );
+				return;
+			}
+			renderBulkPicker( parsedOpml.items );
+			return;
+		}
+
+		const pastedItems = parsePastedPeopleList( value );
+		if ( pastedItems.length ) {
+			renderBulkPicker( pastedItems );
+			return;
+		}
+
+		renderSingleSubscriptionPreview( value.trim() );
+	} );
+
+	$document.on( 'paste', '#subscription-url', function () {
+		const input = this;
+		clearTimeout( subscriptionPasteReviewTimer );
+		subscriptionPasteReviewTimer = setTimeout( function () {
+			if ( $( input ).val().trim() ) {
+				$( input ).closest( 'form' ).trigger( 'submit' );
+			}
+		}, 25 );
+	} );
+
+	$document.on( 'change', '#opml-file', function () {
+		const file = this.files && this.files[ 0 ];
+		if ( ! file ) {
+			return;
+		}
+		const reader = new FileReader();
+		reader.onload = function ( e ) {
+			const parsedOpml = parseOpmlItems( e.target.result );
+			if ( parsedOpml.error ) {
+				setSubscriptionPreviewError( parsedOpml.error );
+				return;
+			}
+			renderBulkPicker( parsedOpml.items );
+		};
+		reader.readAsText( file );
+	} );
+
+	$document.on( 'keyup', '.subscription-display-name', function () {
+		const $login = $( this ).closest( '.subscription-preview' ).find( '.subscription-user-login' );
+		if ( this.value && $login.data( 'original' ) === $login.val() ) {
+			const generatedLogin = generateUserLogin( this.value );
+			$login.val( generatedLogin );
+			$login.data( 'original', generatedLogin );
+		}
+	} );
+
+	$document.on( 'click', '.show-alternate-feeds', function () {
+		$( this ).closest( '.subscription-preview' ).find( '.rel-alternate' ).toggleClass( 'hidden' );
+		return false;
+	} );
+
+	$document.on( 'click', '.show-feed-details', function () {
+		const $this = $( this );
+		const $details = $this.closest( '.subscription-preview' ).find( '.subscription-feed-details' );
+		const isHidden = $details.first().hasClass( 'hidden' );
+		$details.toggleClass( 'hidden', ! isHidden );
+		$this.text( isHidden ? friendsText( 'text_hide_feed_metadata', 'Hide feed metadata' ) : friendsText( 'text_feed_metadata', 'Display feed metadata' ) );
+		return false;
+	} );
+
+	$document.on( 'click', '.show-unsupported-feeds', function () {
+		$( this ).closest( '.subscription-preview' ).find( '.unsupported-feed-list' ).toggleClass( 'hidden' );
+		return false;
+	} );
+
+	$document.on( 'change', '.subscription-feed-parser', function () {
+		resetSubscriptionFeedPreview( $( this ).closest( '.subscription-feed-option' ) );
+	} );
+
+	$document.on( 'input change', '.subscription-feed-url', function () {
+		const $item = $( this ).closest( '.subscription-feed-option' );
+		const feedUrl = getFeedOptionUrl( $item );
+		const feed = $.extend( {}, $item.data( 'feed' ) || {} );
+		feed.url = feedUrl;
+		$item.data( 'feedUrl', feedUrl ).data( 'feed', feed );
+		$item.find( '.subscription-feed-title-link' ).attr( 'href', feedUrl || '#' );
+		$item.find( '.subscription-feed-selected' ).prop( 'checked', !! feedUrl );
+		resetSubscriptionFeedPreview( $item );
+	} );
+
+	$document.on( 'click', '.add-custom-feed', function () {
+		const $panel = $( this ).closest( '.subscription-preview' );
+		let $list = $panel.find( '.custom-feed-list' );
+		if ( ! $list.length ) {
+			$list = $( '<ul class="feed-list subscription-feed-list custom-feed-list"></ul>' );
+			$list.insertBefore( $panel.find( '.subscription-feed-actions' ) );
+		}
+		const feedIndex = $panel.find( '.subscription-feed-option' ).length + 1;
+		const panelId = $panel.attr( 'id' ) || 'subscription-preview';
+		const $item = renderSubscriptionFeedOption(
+			panelId,
+			feedIndex,
+			'',
+			{
+				title: friendsText( 'text_custom_feed', 'Custom feed' ),
+				parser: getDefaultParser(),
+				rel: 'manual',
+				type: 'custom',
+			},
+			{ custom: true }
+		);
+		$list.append( $item );
+		$item.find( '.subscription-feed-url' ).trigger( 'focus' );
+		return false;
+	} );
+
+	$document.on( 'click', '.subscription-feed-preview-toggle', function () {
+		previewSubscriptionFeed( $( this ).closest( '.subscription-feed-option' ), $( this ) );
+		return false;
+	} );
+
+	$document.on( 'click', '.subscribe-btn', function () {
+		subscribeSubscriptionPanel( $( this ).closest( '.subscription-preview' ), $( this ) );
+		return false;
+	} );
+
+	$document.on( 'click', '.bulk-toggle-all', function () {
+		const $this = $( this );
+		const $checkboxes = $( '.bulk-feed-cb' );
+		const allChecked = $checkboxes.length === $checkboxes.filter( ':checked' ).length;
+		$checkboxes.prop( 'checked', ! allChecked ).trigger( 'change' );
+		$this.text( allChecked ? friendsText( 'text_opml_select_all', 'Select all' ) : friendsText( 'text_opml_deselect_all', 'Deselect all' ) );
+		return false;
+	} );
+
+	$document.on( 'change', '.bulk-feed-cb', function () {
+		const $row = $( this ).closest( '.bulk-feed-row' );
+		$row.find( '.bulk-feed-review' ).toggleClass( 'hidden', ! this.checked );
+		if ( ! this.checked ) {
+			$row.find( '.bulk-feed-status' ).text( '' ).removeClass( 'error' );
+		}
+		updateBulkFeedRowState( $row );
+	} );
+
+	$document.on( 'click', '.bulk-skip-entry', function () {
+		const $panel = $( this ).closest( '.subscription-preview' );
+		const $row = $panel.closest( '.bulk-feed-row' );
+		if ( $row.length ) {
+			$row.find( '.bulk-feed-cb' ).prop( 'checked', false ).trigger( 'change' );
+		} else {
+			$panel.addClass( 'hidden' );
+		}
+		return false;
+	} );
+
+	$document.on( 'click', '.bulk-preview-selected', function () {
+		const $button = $( this ).prop( 'disabled', true );
+		const nonce = getSubscriptionNonce();
+		const queue = [];
+		$( '.bulk-feed-list > .bulk-feed-row' ).each( function () {
+			const $item = $( this );
+			if ( $item.find( '.bulk-feed-cb' ).is( ':checked' ) ) {
+				queue.push( $item );
+			}
+		} );
+		if ( ! queue.length ) {
+			alert( friendsText( 'text_opml_no_selected', 'Please select at least one feed.' ) );
+			$button.prop( 'disabled', false );
+			return false;
+		}
+
+		let index = 0;
+		function next() {
+			if ( index >= queue.length ) {
+				if ( $( '.bulk-feed-review .subscription-preview .subscribe-btn' ).length ) {
+					$( '.bulk-follow-selected' ).removeClass( 'hidden' );
+				}
+				$button.prop( 'disabled', false );
+				return;
+			}
+			reviewBulkSubscription( queue[ index++ ], nonce, next );
+		}
+		next();
+		return false;
+	} );
+
+	$document.on( 'click', '.bulk-follow-selected', function () {
+		const $button = $( this ).prop( 'disabled', true );
+		const queue = [];
+		$( '.bulk-feed-list > .bulk-feed-row' ).each( function () {
+			if ( $( this ).find( '.bulk-feed-cb' ).is( ':checked' ) ) {
+				$( this ).find( '.bulk-feed-review .subscription-preview' ).has( '.subscribe-btn' ).not( '.is-subscribed' ).each( function () {
+					queue.push( this );
+				} );
+			}
+		} );
+		let index = 0;
+		function next() {
+			if ( index >= queue.length ) {
+				$button.prop( 'disabled', false );
+				return;
+			}
+			const $panel = $( queue[ index++ ] );
+			subscribeSubscriptionPanel( $panel, $panel.find( '.subscribe-btn' ), next );
+		}
+		next();
+		return false;
+	} );
+
 } )( jQuery, window.wp, window.friends );
