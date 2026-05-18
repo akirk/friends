@@ -799,7 +799,7 @@ class Abilities {
 
 		return array(
 			'id'           => (int) $post->ID,
-			'title'        => (string) get_the_title( $post ),
+			'title'        => (string) $post->post_title,
 			'excerpt'      => $this->clean_text( $post->post_excerpt ? $post->post_excerpt : $post->post_content, 500 ),
 			'content_text' => $this->clean_text( $post->post_content, 1200 ),
 			'date'         => mysql2date( DATE_ATOM, $post->post_date_gmt, false ),
