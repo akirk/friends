@@ -172,7 +172,7 @@ jQuery(document).ready(function($) {
 	background: #0073aa;
 	transition: width 0.3s ease;
 }
-@media screen and (max-width: 1200px) {
+@media screen and (max-width: 1460px) {
 	.friends-news-toc {
 		position: static;
 		width: auto;
