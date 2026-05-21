@@ -1,3 +1,12 @@
+### 4.1.0
+- Surface the Friends browser extension in more places so users can discover it: the Browser Extension submenu is now always visible under Friends, the settings page describes what the extension does and links to the Chrome and Firefox stores, and the Tools → Bookmarklets card and README mention it as well. ([#663])
+- Document that a category can be specified. ([#664])
+- Prevent the ActivityPub plugin from federating cached friend posts so remote content stored locally is never announced as the site's own activity. ([#665])
+- Add generic inline browser extension action dispatching so companion plugins can provide authenticated in-popup actions through Friends filters. ([#666])
+- Show and pad the welcome content in the shipped frontend themes. ([#667])
+- Add WordPress Abilities for AI Assistant to manage Friends subscriptions, feeds, single-feed refreshes, bulk refreshes, and cached timeline items. ([#668])
+- Require changelog entries to come from PR body details and add release-prep dry-run validation. ([#669])
+
 ### 4.0.6
 - Fix conversation accounts for migrated users by falling back to friends_feed_url meta when post_author is 0. ([#655])
 - Add a search field to the Followers, Following, and Mutual pages. ([#658])
@@ -855,3 +864,11 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#658]: https://github.com/akirk/friends/pull/658
 [#659]: https://github.com/akirk/friends/pull/659
 [#661]: https://github.com/akirk/friends/pull/661
+
+[#663]: https://github.com/akirk/friends/pull/663
+[#664]: https://github.com/akirk/friends/pull/664
+[#665]: https://github.com/akirk/friends/pull/665
+[#666]: https://github.com/akirk/friends/pull/666
+[#667]: https://github.com/akirk/friends/pull/667
+[#668]: https://github.com/akirk/friends/pull/668
+[#669]: https://github.com/akirk/friends/pull/669
