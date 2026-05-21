@@ -1,4 +1,5 @@
 ### 4.1.0
+- Add a frontend Add Friend page with feed review and OPML import support. ([#516])
 - Surface the Friends browser extension in more places so users can discover it: the Browser Extension submenu is now always visible under Friends, the settings page describes what the extension does and links to the Chrome and Firefox stores, and the Tools → Bookmarklets card and README mention it as well. ([#663])
 - Document that a category can be specified. ([#664])
 - Prevent the ActivityPub plugin from federating cached friend posts so remote content stored locally is never announced as the site's own activity. ([#665])
@@ -789,6 +790,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#546]: https://github.com/akirk/friends/pull/546
 [#362]: https://github.com/akirk/friends/pull/362
 [#515]: https://github.com/akirk/friends/pull/515
+[#516]: https://github.com/akirk/friends/pull/516
 [#547]: https://github.com/akirk/friends/pull/547
 [#551]: https://github.com/akirk/friends/pull/551
 [#553]: https://github.com/akirk/friends/pull/553
