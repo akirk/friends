@@ -1,0 +1,3 @@
+Type: changed
+
+Require changelog entries to come from PR body details and add release-prep dry-run validation.
