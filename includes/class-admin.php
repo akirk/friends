@@ -609,7 +609,7 @@ class Admin {
 			array(
 				array(
 					'version'  => '4.1',
-					'title'    => __( '4.1: Twitter Theme & Browser Extension', 'friends' ),
+					'title'    => __( '4.1: Twitter Theme, Browser Extension & AI Assistant', 'friends' ),
 					'template' => 'admin/news-4-1',
 				),
 				array(
