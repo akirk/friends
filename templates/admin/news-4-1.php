@@ -37,15 +37,5 @@
 			<h4><?php esc_html_e( 'AI Assistant Abilities', 'friends' ); ?></h4>
 			<p><?php esc_html_e( 'Friends now registers WordPress Abilities so AI Assistant can help manage subscriptions, feeds, feed refreshes, and cached timeline items.', 'friends' ); ?></p>
 		</div>
-
-		<div class="friends-news-change">
-			<h4><?php esc_html_e( 'ActivityPub Safety', 'friends' ); ?></h4>
-			<p><?php esc_html_e( 'Cached friend posts are no longer federated by the ActivityPub plugin, so remote content stored in your reader is not announced as your site\'s own activity.', 'friends' ); ?></p>
-		</div>
-
-		<div class="friends-news-change">
-			<h4><?php esc_html_e( 'Theme Polish', 'friends' ); ?></h4>
-			<p><?php esc_html_e( 'The shipped frontend themes now show and pad welcome content correctly, making first-run screens feel less abrupt.', 'friends' ); ?></p>
-		</div>
 	</div>
 </div>
