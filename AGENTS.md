@@ -52,17 +52,9 @@ The plugin integrates deeply with:
 Always run `composer check-cs` (or `composer fix-cs`) before pushing to catch coding standards issues that will fail CI.
 
 ### Changelog Workflow
-Every PR must include a changelog entry. You have two options:
+Every PR must include changelog details in the PR body unless it is labeled `Skip Changelog`. Do not add arbitrary files in `.github/changelog/unreleased/`; CI only accepts the workflow-generated `.github/changelog/unreleased/{PR-number}-from-description` file.
 
-**Option 1: Changelog file** — Run `composer changelog:add` or place a file in `.github/changelog/unreleased/{PR-number}` with this format:
-
-```
-Type: fixed
-
-Description of the change
-```
-
-**Option 2: PR body checkbox** — Include this exact structure in the PR body (the CI regex is strict):
+Include this exact structure in the PR body (the CI regex is strict):
 
 ```markdown
 <details><summary>Changelog</summary>
@@ -81,9 +73,10 @@ Description of the change.
 Check exactly **one** type. Valid types: `Added`, `Changed`, `Fixed`, `Removed`.
 
 **Other notes:**
-- If working on a branch without a PR number yet, use the branch name as the changelog filename.
+- For same-repository PRs, the changelog workflow creates the `{PR-number}-from-description` file automatically.
+- For forked PRs where the workflow cannot push to the contributor branch, run `composer changelog:add {PR-number}` only after the PR number exists; it creates the required `{PR-number}-from-description` file.
 - PRs that don't need a changelog entry should be labeled `Skip Changelog`.
-- At release time, `bin/changelog-write.sh <version>` compiles all entries into `CHANGELOG.md` and `README.md` in the project's existing format.
+- At release time, `bin/changelog-write.sh [--dry-run] <version>` compiles all entries into `CHANGELOG.md` and `README.md` in the project's existing format.
 
 ### Release Process
 To release, trigger the "Prepare Release" workflow with a version number. It creates a PR with the version bump and compiled changelog. After merging, create a GitHub release with the version tag to deploy to WordPress.org. See `docs/release-process.md` for details.

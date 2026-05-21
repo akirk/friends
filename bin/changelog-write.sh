@@ -1,20 +1,26 @@
 #!/bin/bash
 # Compile changelog entries from .github/changelog/ into CHANGELOG.md and README.md.
-# Usage: bin/changelog-write.sh <version>
+# Usage: bin/changelog-write.sh [--dry-run] <version>
 
 cd "$(dirname "$0")/.."
+
+DRY_RUN=0
+if [ "$1" = "--dry-run" ]; then
+	DRY_RUN=1
+	shift
+fi
 
 VERSION="$1"
 
 if [ -z "$VERSION" ]; then
-	echo "Usage: bin/changelog-write.sh <version>"
+	echo "Usage: bin/changelog-write.sh [--dry-run] <version>"
 	exit 1
 fi
 
 UNRELEASED_DIR=".github/changelog/unreleased"
 ENTRIES=()
 PR_NUMBERS=()
-SKIPPED=0
+HAS_ERRORS=0
 REPO="${GITHUB_REPOSITORY:-akirk/friends}"
 
 if [ ! -d "$UNRELEASED_DIR" ] || [ -z "$(ls -A "$UNRELEASED_DIR" 2>/dev/null)" ]; then
@@ -35,20 +41,26 @@ for entry_file in "$UNRELEASED_DIR"/*; do
 		add_commit=$(git log --diff-filter=A --format='%H' -1 -- "$entry_file")
 
 		if [ -n "$add_commit" ]; then
-			# Squash-merged PRs: subject ends with "(#NNN)".
-			pr_number=$(git log -1 --format='%s' "$add_commit" | grep -Eo '\(#[0-9]+\)$' | grep -Eo '[0-9]+')
+			# Squash-merged PRs usually include "(#NNN)" in the subject.
+			pr_number=$(git log -1 --format='%s' "$add_commit" | grep -Eo '\(#[0-9]+\)' | tail -1 | grep -Eo '[0-9]+')
 
 			# Rebase-merged PRs leave no PR ref in the commit message; ask GitHub.
 			if [ -z "$pr_number" ] && command -v gh >/dev/null 2>&1; then
-				pr_number=$(gh api "repos/$REPO/commits/$add_commit/pulls" --jq '.[0].number' 2>/dev/null)
+				pr_number=$(gh api -H "Accept: application/vnd.github+json" "repos/$REPO/commits/$add_commit/pulls" --jq '.[0].number // empty' 2>/dev/null)
 			fi
 		fi
 	fi
 
+	pr_number=$(printf '%s\n' "$pr_number" | grep -Eo '^[0-9]+$' | head -1)
+
 	if [ -z "$pr_number" ]; then
 		echo -ne "\033[31m✘\033[0m "
 		echo "Could not determine PR number for $filename"
-		SKIPPED=1
+		if [ -n "${add_commit:-}" ]; then
+			echo "  Added in commit $add_commit, but no associated PR could be resolved."
+		fi
+		echo "  Use a PR-numbered filename or run with an authenticated GitHub CLI so branch-named entries can be resolved."
+		HAS_ERRORS=1
 		continue
 	fi
 
@@ -58,7 +70,7 @@ for entry_file in "$UNRELEASED_DIR"/*; do
 	if [ -z "$message" ]; then
 		echo -ne "\033[31m✘\033[0m "
 		echo "No message found in $filename"
-		SKIPPED=1
+		HAS_ERRORS=1
 		continue
 	fi
 
@@ -66,8 +78,8 @@ for entry_file in "$UNRELEASED_DIR"/*; do
 	PR_NUMBERS+=("$pr_number")
 done
 
-if [ "$SKIPPED" = 1 ]; then
-	echo "Refusing to write changelog with skipped entries. Fix the entries above and retry."
+if [ "$HAS_ERRORS" = 1 ]; then
+	echo "Refusing to write changelog with unresolved or invalid entries. Fix the entries above and retry."
 	exit 1
 fi
 
@@ -81,6 +93,11 @@ for entry in "${ENTRIES[@]}"; do
 	echo "  $entry"
 done
 echo
+
+if [ "$DRY_RUN" = 1 ]; then
+	echo "Dry run: would update CHANGELOG.md and README.md, then archive entries to .github/changelog/$VERSION/"
+	exit 0
+fi
 
 # Write the new section to a temp file
 SECTION_FILE=$(mktemp)
