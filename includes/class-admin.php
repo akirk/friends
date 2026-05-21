@@ -121,9 +121,8 @@ class Admin {
 		$menu_title = __( 'Friends', 'friends' ) . $unread_badge;
 		$page_type = sanitize_title( $menu_title );
 		$current_page = isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : '';
-		add_menu_page( 'friends', $menu_title, $required_role, 'friends', null, 'dashicons-groups', 3 );
-		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-		add_submenu_page( 'friends', __( 'Home' ), __( 'Home' ), $required_role, 'friends', array( $this, 'render_admin_home' ) );
+		add_menu_page( __( 'Friends', 'friends' ), $menu_title, $required_role, 'friends', null, 'dashicons-groups', 3 );
+		add_submenu_page( 'friends', __( 'Friends', 'friends' ), __( 'Home', 'friends' ), $required_role, 'friends', array( $this, 'render_admin_home' ) );
 		add_action( 'load-' . $page_type . '_page_friends-page', array( $this, 'redirect_to_friends_page' ) );
 		add_submenu_page( 'friends', __( 'Add Friend', 'friends' ), __( 'Add Friend', 'friends' ), $required_role, 'add-friend', array( $this, 'render_admin_add_friend' ) );
 		// phpcs:ignore WordPress.WP.I18n.MissingArgDomain
@@ -609,7 +608,7 @@ class Admin {
 			array(
 				array(
 					'version'  => '4.1',
-					'title'    => __( '4.1: Twitter Theme, Browser Extension & AI Assistant', 'friends' ),
+					'title'    => __( '4.1: Add Friend Frontend, Twitter Theme & Browser Extension', 'friends' ),
 					'template' => 'admin/news-4-1',
 				),
 				array(
