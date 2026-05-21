@@ -1,24 +1,25 @@
 #!/bin/bash
 # Interactive helper to create a changelog entry for a PR.
-# Usage: bin/changelog-add.sh [PR-number]
+# Usage: bin/changelog-add.sh <PR-number>
 
 cd "$(dirname "$0")/.."
 
 CHANGELOG_DIR=".github/changelog/unreleased"
 mkdir -p "$CHANGELOG_DIR"
 
-# Determine the filename (PR number or branch name)
 if [ -n "$1" ]; then
-	ENTRY_NAME="$1"
+	PR_NUMBER="$1"
 else
-	echo -n "PR number (or leave empty to use branch name): "
+	echo -n "PR number: "
 	read PR_NUMBER
-	if [ -n "$PR_NUMBER" ]; then
-		ENTRY_NAME="$PR_NUMBER"
-	else
-		ENTRY_NAME=$(git rev-parse --abbrev-ref HEAD | sed 's/[\/]/-/g')
-	fi
 fi
+
+if ! echo "$PR_NUMBER" | grep -Eq '^[0-9]+$'; then
+	echo "A numeric PR number is required."
+	exit 1
+fi
+
+ENTRY_NAME="$PR_NUMBER-from-description"
 
 if [ -f "$CHANGELOG_DIR/$ENTRY_NAME" ]; then
 	echo "Entry $CHANGELOG_DIR/$ENTRY_NAME already exists:"

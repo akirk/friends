@@ -3,7 +3,7 @@
 ## How to release
 
 1. Go to [Actions → Prepare Release](https://github.com/akirk/friends/actions/workflows/release-prep.yml)
-2. Click **Run workflow**, enter the version number (e.g. `4.0.4`), and run it
+2. Click **Run workflow**, enter the version number (e.g. `4.0.4`), and optionally enable **Validate without creating a release PR** to verify the changelog and PR associations without opening a release PR
 3. The workflow creates a PR with the version bump and compiled changelog
 4. Review and merge the PR
 5. [Create a GitHub release](https://github.com/akirk/friends/releases/new) with the version as the tag, targeting `main`
@@ -20,9 +20,9 @@
 
 These scripts can also be run locally if needed:
 
-- `bin/changelog-write.sh <version>` — compile `.github/changelog/unreleased/` entries into CHANGELOG.md and README.md
-- `bin/version-bump.sh <version>` — update version in `friends.php` and `README.md`
-- `bin/changelog-add.sh [PR-number]` — interactively create a changelog entry
+- `bin/changelog-write.sh [--dry-run] <version>` — compile `.github/changelog/unreleased/` entries into CHANGELOG.md and README.md; legacy branch-named entries require an authenticated GitHub CLI so their merged PR can be resolved
+- `bin/version-bump.sh [--dry-run] <version>` — update version in `friends.php` and `README.md`
+- `bin/changelog-add.sh <PR-number>` — interactively create a workflow-compatible changelog entry for a specific PR
 
 ## Setup
 

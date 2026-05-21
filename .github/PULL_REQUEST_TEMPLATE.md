@@ -8,7 +8,7 @@ Fixes #
 
 ### Changelog entry
 
-<!-- You can optionally choose to enter a changelog entry by checking the box below and supplying data. -->
+<!-- Check the box below and supply changelog details unless this PR has the "Skip Changelog" label. -->
 <!-- A GitHub workflow will create and push the entry into the branch. -->
 
 <!-- If no changelog entry is required for this PR, please add the "Skip Changelog" label. -->

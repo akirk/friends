@@ -6,6 +6,16 @@ on:
         description: 'Version number (e.g. 4.0.4)'
         required: true
         type: string
+      dry_run:
+        description: 'Validate without creating a release PR'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   prepare:
     name: Prepare release PR
@@ -33,19 +43,34 @@ jobs:
       - name: Compile changelog and bump version
         env:
           VERSION: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Compile changelog entries
           if [ -d ".github/changelog/unreleased" ] && [ -n "$(ls -A .github/changelog/unreleased 2>/dev/null)" ]; then
-            bash bin/changelog-write.sh "$VERSION"
+            if [ "$DRY_RUN" = "true" ]; then
+              bash bin/changelog-write.sh --dry-run "$VERSION"
+            else
+              bash bin/changelog-write.sh "$VERSION"
+            fi
           else
             echo "::error::No unreleased changelog entries found"
             exit 1
           fi
 
           # Bump version numbers
-          bash bin/version-bump.sh "$VERSION"
+          if [ "$DRY_RUN" = "true" ]; then
+            bash bin/version-bump.sh --dry-run "$VERSION"
+          else
+            bash bin/version-bump.sh "$VERSION"
+          fi
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: echo "Dry run completed; no release branch or PR was created."
 
       - name: Create PR
+        if: ${{ ! inputs.dry_run }}
         env:
           VERSION: ${{ inputs.version }}
           GH_TOKEN: ${{ github.token }}

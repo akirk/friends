@@ -1,13 +1,19 @@
 #!/bin/bash
 # Update the version number in all locations.
-# Usage: bin/version-bump.sh <new-version>
+# Usage: bin/version-bump.sh [--dry-run] <new-version>
 
 cd "$(dirname "$0")/.."
+
+DRY_RUN=0
+if [ "$1" = "--dry-run" ]; then
+	DRY_RUN=1
+	shift
+fi
 
 NEW_VERSION="$1"
 
 if [ -z "$NEW_VERSION" ]; then
-	echo "Usage: bin/version-bump.sh <new-version>"
+	echo "Usage: bin/version-bump.sh [--dry-run] <new-version>"
 	exit 1
 fi
 
@@ -33,6 +39,11 @@ fi
 
 echo "Bumping version: $OLD_VERSION → $NEW_VERSION"
 echo
+
+if [ "$DRY_RUN" = 1 ]; then
+	echo "Dry run: would update friends.php and README.md"
+	exit 0
+fi
 
 # Update friends.php (plugin header + constant)
 sed -i "s/Version: $OLD_VERSION/Version: $NEW_VERSION/" friends.php
