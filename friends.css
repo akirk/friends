@@ -2218,6 +2218,211 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	& .friends-dm-view {
+		background: #fff;
+		border-top: 1px solid #e5e7eb;
+		display: grid;
+		grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+		height: calc(100vh - 3.2rem);
+		min-height: 32rem;
+	}
+
+	& .friends-dm-empty {
+		align-self: start;
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		border-radius: .2rem;
+		grid-column: 1 / -1;
+		margin: 1rem;
+		padding: 1rem;
+
+		& h3 { margin-top: 0; }
+		& p { margin-bottom: 0; }
+	}
+
+	& .friends-dm-sidebar {
+		background: #f8fafc;
+		border-right: 1px solid #e5e7eb;
+		overflow: auto;
+	}
+
+	& .friends-dm-conversation,
+	& .friends-dm-conversation:visited {
+		border-bottom: 1px solid #e5e7eb;
+		color: #2f3542;
+		display: grid;
+		gap: .25rem .5rem;
+		grid-template-columns: 2rem minmax(0, 1fr) auto;
+		padding: .65rem .7rem;
+		text-decoration: none;
+	}
+
+	& .friends-dm-conversation:hover,
+	& .friends-dm-conversation:focus,
+	& .friends-dm-conversation.is-selected {
+		background: #edf2ff;
+		color: #1f2937;
+		text-decoration: none;
+	}
+
+	& .friends-dm-conversation.is-unread .friends-dm-conversation-name,
+	& .friends-dm-conversation.is-unread .friends-dm-conversation-preview { font-weight: 700; }
+
+	& .friends-dm-conversation .avatar,
+	& .friends-dm-thread-header .avatar,
+	& .friends-dm-message-avatar .avatar {
+		border-radius: 50%;
+		display: block;
+		object-fit: cover;
+	}
+
+	& .friends-dm-conversation-main {
+		display: grid;
+		min-width: 0;
+	}
+
+	& .friends-dm-conversation-name,
+	& .friends-dm-conversation-preview {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	& .friends-dm-conversation-preview {
+		color: #667085;
+		font-size: .72rem;
+	}
+
+	& .friends-dm-conversation-meta {
+		align-items: end;
+		color: #667085;
+		display: flex;
+		flex-direction: column;
+		font-size: .65rem;
+		gap: .25rem;
+	}
+
+	& .friends-dm-unread-count {
+		background: #d63638;
+		border-radius: 999px;
+		color: #fff;
+		font-size: .6rem;
+		font-weight: 700;
+		line-height: 1;
+		min-width: 1rem;
+		padding: .2rem .3rem;
+		text-align: center;
+	}
+
+	& .friends-dm-thread {
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr) auto;
+		min-width: 0;
+	}
+
+	& .friends-dm-thread-header {
+		align-items: center;
+		border-bottom: 1px solid #e5e7eb;
+		display: flex;
+		gap: .6rem;
+		min-height: 3.2rem;
+		padding: .55rem .8rem;
+
+		& h3 {
+			font-size: .95rem;
+			line-height: 1.2;
+			margin: 0;
+		}
+
+		& a {
+			font-size: .68rem;
+		}
+	}
+
+	& .friends-dm-messages {
+		background: #fff;
+		overflow: auto;
+		padding: .7rem .9rem;
+	}
+
+	& .friends-dm-message {
+		display: grid;
+		gap: .5rem;
+		grid-template-columns: 1.6rem minmax(0, 1fr);
+		margin: 0 0 .9rem;
+	}
+
+	& .friends-dm-message.is-own-message .friends-dm-message-content {
+		background: #eef6ff;
+	}
+
+	& .friends-dm-message-meta {
+		align-items: baseline;
+		display: flex;
+		gap: .35rem;
+		line-height: 1.2;
+
+		& time {
+			color: #667085;
+			font-size: .65rem;
+		}
+	}
+
+	& .friends-dm-message-content {
+		background: #f8fafc;
+		border: 1px solid #e5e7eb;
+		border-radius: .3rem;
+		margin-top: .18rem;
+		max-width: 48rem;
+		padding: .45rem .55rem;
+
+		& > :first-child { margin-top: 0; }
+		& > :last-child { margin-bottom: 0; }
+	}
+
+	& .friends-dm-reply {
+		background: #f8fafc;
+		border-top: 1px solid #e5e7eb;
+		padding: .65rem .8rem;
+
+		& form.form-horizontal .form-group {
+			display: flex;
+			gap: .5rem;
+			margin-bottom: .45rem;
+		}
+
+		& form.form-horizontal .form-group > div:first-child {
+			flex: 0 0 4rem;
+		}
+
+		& form.form-horizontal .form-group > div:nth-child(2) {
+			flex: 1 1 auto;
+			max-width: none;
+		}
+
+		& textarea.friends-message-message {
+			min-height: 4.2rem;
+			resize: vertical;
+		}
+	}
+
+	@media (max-width: 840px) {
+		& .friends-dm-view {
+			grid-template-columns: 1fr;
+			height: auto;
+		}
+
+		& .friends-dm-sidebar {
+			border-bottom: 1px solid #e5e7eb;
+			border-right: 0;
+			max-height: 16rem;
+		}
+
+		& .friends-dm-thread {
+			min-height: 34rem;
+		}
+	}
+
 	& .chip { background-color: #fff; }
 
 	/* to support mastodon style tags */

@@ -1410,6 +1410,224 @@ body.friends-page {
 	font-weight: 600;
 }
 
+/* Mastodon theme: direct messages */
+.friends-page .friends-dm-view {
+	background: light-dark(#fff, #282c37);
+	border-top: 1px solid light-dark(#d4dde8, #393f4f);
+	display: grid;
+	grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+	height: calc(100vh - 56px);
+	min-height: 32rem;
+}
+
+.friends-page .friends-dm-sidebar {
+	background: light-dark(#f2f5f7, #1e2028);
+	border-right: 1px solid light-dark(#d4dde8, #393f4f);
+	overflow: auto;
+}
+
+.friends-page .friends-dm-conversation,
+.friends-page .friends-dm-conversation:visited {
+	border-bottom: 1px solid light-dark(#d4dde8, #393f4f);
+	color: light-dark(#282c37, #dadada);
+	display: grid;
+	gap: 4px 10px;
+	grid-template-columns: 40px minmax(0, 1fr) auto;
+	padding: 12px 16px;
+	text-decoration: none;
+}
+
+.friends-page .friends-dm-conversation:hover,
+.friends-page .friends-dm-conversation:focus,
+.friends-page .friends-dm-conversation.is-selected {
+	background: light-dark(#e6ebf0, #313543);
+	text-decoration: none;
+}
+
+.friends-page .friends-dm-conversation.is-unread .friends-dm-conversation-name,
+.friends-page .friends-dm-conversation.is-unread .friends-dm-conversation-preview {
+	font-weight: 700;
+}
+
+.friends-page .friends-dm-conversation .avatar,
+.friends-page .friends-dm-thread-header .avatar,
+.friends-page .friends-dm-message-avatar .avatar {
+	border-radius: 8px;
+	display: block;
+	object-fit: cover;
+}
+
+.friends-page .friends-dm-conversation-main {
+	display: grid;
+	min-width: 0;
+}
+
+.friends-page .friends-dm-conversation-name,
+.friends-page .friends-dm-conversation-preview {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.friends-page .friends-dm-conversation-preview,
+.friends-page .friends-dm-conversation-meta,
+.friends-page .friends-dm-message-meta time {
+	color: light-dark(#606984, #9baec8);
+}
+
+.friends-page .friends-dm-conversation-meta {
+	align-items: end;
+	display: flex;
+	flex-direction: column;
+	font-size: 12px;
+	gap: 5px;
+}
+
+.friends-page .friends-dm-unread-count {
+	background: light-dark(#563acc, #6364ff);
+	border-radius: 999px;
+	color: #fff;
+	font-size: 11px;
+	font-weight: 700;
+	line-height: 1;
+	min-width: 20px;
+	padding: 4px 6px;
+	text-align: center;
+}
+
+.friends-page .friends-dm-thread {
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+	min-width: 0;
+}
+
+.friends-page .friends-dm-thread-header {
+	align-items: center;
+	border-bottom: 1px solid light-dark(#d4dde8, #393f4f);
+	display: flex;
+	gap: 12px;
+	min-height: 64px;
+	padding: 10px 16px;
+}
+
+.friends-page .friends-dm-thread-header h3 {
+	color: light-dark(#282c37, #dadada);
+	font-size: 17px;
+	line-height: 1.2;
+	margin: 0;
+}
+
+.friends-page .friends-dm-thread-header a {
+	font-size: 13px;
+}
+
+.friends-page .friends-dm-messages {
+	background: light-dark(#fff, #282c37);
+	overflow: auto;
+	padding: 16px;
+}
+
+.friends-page .friends-dm-message {
+	display: grid;
+	gap: 10px;
+	grid-template-columns: 32px minmax(0, 1fr);
+	margin: 0 0 16px;
+}
+
+.friends-page .friends-dm-message-meta {
+	align-items: baseline;
+	display: flex;
+	gap: 8px;
+	line-height: 1.2;
+}
+
+.friends-page .friends-dm-message-meta strong {
+	color: light-dark(#282c37, #dadada);
+}
+
+.friends-page .friends-dm-message-content {
+	background: light-dark(#f2f5f7, #1e2028);
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-radius: 8px;
+	color: light-dark(#282c37, #dadada);
+	margin-top: 4px;
+	max-width: 720px;
+	padding: 10px 14px;
+}
+
+.friends-page .friends-dm-message.is-own-message .friends-dm-message-content {
+	background: light-dark(#f4f1ff, #313052);
+}
+
+.friends-page .friends-dm-message-content > :first-child { margin-top: 0; }
+.friends-page .friends-dm-message-content > :last-child { margin-bottom: 0; }
+
+.friends-page .friends-dm-reply {
+	background: light-dark(#f2f5f7, #1e2028);
+	border-top: 1px solid light-dark(#d4dde8, #393f4f);
+	padding: 12px 16px;
+}
+
+.friends-page .friends-dm-reply .form-horizontal .form-group {
+	display: flex;
+	gap: 10px;
+	margin-bottom: 8px;
+}
+
+.friends-page .friends-dm-reply .form-horizontal .form-group > div:first-child {
+	flex: 0 0 72px;
+}
+
+.friends-page .friends-dm-reply .form-horizontal .form-group > div:nth-child(2) {
+	flex: 1 1 auto;
+	max-width: none;
+}
+
+.friends-page .friends-dm-reply .form-horizontal .form-input {
+	background: light-dark(#fff, #282c37);
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-radius: 8px;
+	color: light-dark(#282c37, #dadada);
+	padding: 8px 12px;
+	width: 100%;
+}
+
+.friends-page .friends-dm-reply textarea.friends-message-message {
+	min-height: 76px;
+	resize: vertical;
+}
+
+.friends-page .friends-dm-reply .btn {
+	background: light-dark(#563acc, #6364ff);
+	border: none;
+	border-radius: 999px;
+	color: #fff;
+	font-weight: 600;
+	padding: 7px 18px;
+}
+
+.friends-page .friends-dm-empty {
+	background: light-dark(#fff, #282c37);
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-radius: 8px;
+	grid-column: 1 / -1;
+	margin: 16px;
+	padding: 16px;
+}
+
+@media (max-width: 840px) {
+	.friends-page .friends-dm-view {
+		grid-template-columns: 1fr;
+		height: auto;
+	}
+
+	.friends-page .friends-dm-sidebar {
+		border-bottom: 1px solid light-dark(#d4dde8, #393f4f);
+		border-right: 0;
+		max-height: 16rem;
+	}
+}
+
 /* Mastodon theme: header image as banner on the title row */
 .mastodon-col-title-row.has-header-image {
 	position: relative;
