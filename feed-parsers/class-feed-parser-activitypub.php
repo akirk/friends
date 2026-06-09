@@ -56,6 +56,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_interactions_follow_url', array( $this, 'activitypub_interactions_follow_url' ), 10, 2 );
 		\add_filter( 'activitypub_comment_post_id', array( $this, 'activitypub_comment_post_id' ), 10, 3 );
 		\add_filter( 'activitypub_is_post_disabled', array( $this, 'disable_activitypub_for_cached_posts' ), 10, 2 );
+		\add_filter( 'activitypub_is_post_publicly_queryable', array( $this, 'activitypub_cached_post_publicly_queryable' ), 10, 2 );
 
 		\add_action( 'friends_user_feed_activated', array( $this, 'queue_follow_user' ), 10 );
 		\add_action( 'friends_user_feed_deactivated', array( $this, 'queue_unfollow_user' ), 10 );
@@ -2568,6 +2569,11 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'data' => $data,
 			)
 		);
+
+		if ( defined( 'ACTIVITYPUB_OBJECT_STATE_FEDERATED' ) ) {
+			$data['meta']['activitypub_status'] = ACTIVITYPUB_OBJECT_STATE_FEDERATED;
+		}
+
 		return new Feed_Item( $data );
 	}
 
@@ -3384,6 +3390,32 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return true;
 		}
 		return $disabled;
+	}
+
+	/**
+	 * Allow local comments on cached ActivityPub posts to federate.
+	 *
+	 * Cached ActivityPub posts are remote public objects stored locally. They
+	 * should remain disabled for the ActivityPub post pipeline, but replies to
+	 * them need to pass ActivityPub's public-queryability gate so comments can
+	 * be sent as replies to the remote object.
+	 *
+	 * @param bool     $queryable Whether the post is publicly queryable.
+	 * @param \WP_Post $post      The post being evaluated.
+	 *
+	 * @return bool
+	 */
+	public function activitypub_cached_post_publicly_queryable( $queryable, $post ) {
+		if (
+			$post instanceof \WP_Post &&
+			Friends::CPT === $post->post_type &&
+			'publish' === $post->post_status &&
+			self::SLUG === User_Feed::get_parser_for_post_id( $post->ID )
+		) {
+			return true;
+		}
+
+		return $queryable;
 	}
 
 	public function the_content( $the_content ) {

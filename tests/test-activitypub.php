@@ -361,6 +361,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			array(
 				'post_author'  => 1,
 				'post_content' => '@' . sanitize_title( $this->friend_nicename ) . '  hello',
+				'post_status'  => 'publish',
 			)
 		);
 
@@ -396,6 +397,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			array(
 				'post_author'  => 1,
 				'post_content' => '@' . sanitize_title( $this->friend_nicename ) . '@mastodon.social  hello',
+				'post_status'  => 'publish',
 			)
 		);
 
@@ -838,6 +840,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'post_status'  => 'publish',
 				'guid'         => $remote_post_url,
 				'meta_input'   => array(
+					'activitypub_status' => defined( 'ACTIVITYPUB_OBJECT_STATE_FEDERATED' ) ? ACTIVITYPUB_OBJECT_STATE_FEDERATED : 'federated',
 					'activitypub' => array(
 						'attributedTo' => array(
 							'id'                => $this->actor,
