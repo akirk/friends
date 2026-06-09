@@ -3407,15 +3407,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function activitypub_cached_post_publicly_queryable( $queryable, $post ) {
 		if (
-			$post instanceof \WP_Post &&
-			Friends::CPT === $post->post_type &&
-			'publish' === $post->post_status &&
-			self::SLUG === User_Feed::get_parser_for_post_id( $post->ID )
+			! $post instanceof \WP_Post ||
+			Friends::CPT !== $post->post_type ||
+			'publish' !== $post->post_status
 		) {
+			return $queryable;
+		}
+
+		if ( self::SLUG === User_Feed::get_parser_for_post_id( $post->ID ) ) {
 			return true;
 		}
 
-		return $queryable;
+		$activitypub = get_post_meta( $post->ID, self::SLUG, true );
+		return is_array( $activitypub ) && ! empty( $activitypub['attributedTo'] ) ? true : $queryable;
 	}
 
 	public function the_content( $the_content ) {
