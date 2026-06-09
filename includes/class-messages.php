@@ -270,6 +270,20 @@ class Messages {
 			)
 		);
 
+		$title = esc_html__( 'Direct Messages', 'friends' );
+		if ( $unread_messages->post_count > 0 ) {
+			$title .= ' <span class="wp-core-ui wp-ui-notification friends-open-requests">' . esc_html( number_format_i18n( $unread_messages->post_count ) ) . '</span>';
+		}
+
+		$wp_menu->add_menu(
+			array(
+				'id'     => 'friends-direct-messages',
+				'parent' => 'friends-menu',
+				'title'  => $title,
+				'href'   => home_url( '/friends/messages/' ),
+			)
+		);
+
 		while ( $unread_messages->have_posts() ) {
 			$unread_messages->the_post();
 			$friend_user = User::get_post_author( $post );
@@ -543,7 +557,13 @@ class Messages {
 			wp_die( esc_html( $error->get_error_message() ) );
 		}
 
-		wp_safe_redirect( $friend_user->get_local_friends_page_url() );
+		if ( isset( $_REQUEST['friends_message_redirect_to'] ) ) {
+			$redirect_to = wp_validate_redirect( sanitize_url( wp_unslash( $_REQUEST['friends_message_redirect_to'] ) ), $friend_user->get_local_friends_page_url() );
+		} else {
+			$redirect_to = $friend_user->get_local_friends_page_url();
+		}
+
+		wp_safe_redirect( $redirect_to );
 		exit;
 	}
 
@@ -574,7 +594,13 @@ class Messages {
 			wp_die( esc_html( $error->get_error_message() ) );
 		}
 
-		wp_safe_redirect( $friend_user->get_local_friends_page_url() );
+		if ( isset( $_REQUEST['friends_message_redirect_to'] ) ) {
+			$redirect_to = wp_validate_redirect( sanitize_url( wp_unslash( $_REQUEST['friends_message_redirect_to'] ) ), $friend_user->get_local_friends_page_url() );
+		} else {
+			$redirect_to = $friend_user->get_local_friends_page_url();
+		}
+
+		wp_safe_redirect( $redirect_to );
 		exit;
 	}
 

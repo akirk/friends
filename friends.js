@@ -602,6 +602,35 @@
 		return false;
 	} );
 
+	$( function () {
+		const $thread = $( '.friends-dm-thread' );
+		if ( ! $thread.length ) {
+			return;
+		}
+
+		const messages = $thread.find( '.friends-dm-messages' ).get( 0 );
+		if ( messages ) {
+			messages.scrollTop = messages.scrollHeight;
+		}
+
+		if ( '1' !== String( $thread.data( 'unread' ) ) ) {
+			return;
+		}
+
+		wp.ajax.send( 'friends-mark-read', {
+			data: {
+				_ajax_nonce: $thread.data( 'nonce' ),
+				post_id: $thread.data( 'id' ),
+			},
+			success() {
+				$( '.friends-dm-conversation.is-selected' )
+					.removeClass( 'is-unread' )
+					.find( '.friends-dm-unread-count' )
+					.remove();
+			},
+		} );
+	} );
+
 	$document.on( 'mouseenter', 'h2#page-title a.dashicons, a.wp-block-friends-author-star.dashicons', function () {
 		if ( $( this ).hasClass( 'not-starred' ) ) {
 			if ( $( this ).hasClass( 'dashicons-star-empty' ) ) {

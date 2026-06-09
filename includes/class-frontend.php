@@ -419,9 +419,13 @@ class Frontend {
 		if ( is_user_logged_in() && Friends::on_frontend() && 'block' !== $this->theme ) {
 			// Dequeue theme styles so that they don't interact with the Friends frontend.
 			$wp_styles = wp_styles();
+			$theme_root_path = wp_parse_url( get_theme_root_uri(), PHP_URL_PATH );
 			foreach ( $wp_styles->queue as $style ) {
 				$src = $wp_styles->registered[ $style ]->src;
-				if ( 'global-styles' === $style || false !== strpos( $src, '/themes/' ) ) {
+				$src_path = wp_parse_url( $src, PHP_URL_PATH );
+				$is_theme_style = $theme_root_path && $src_path
+					&& 0 === strpos( $src_path, trailingslashit( $theme_root_path ) );
+				if ( 'global-styles' === $style || $is_theme_style ) {
 					wp_dequeue_style( $style );
 				}
 			}
@@ -1673,6 +1677,14 @@ class Frontend {
 			case 'following':
 				$friends_args = array();
 				$path         = 'frontend/subscriptions';
+				break;
+
+			case 'messages':
+				$friends_args = array(
+					'title'            => __( 'Direct Messages', 'friends' ),
+					'no-bottom-margin' => true,
+				);
+				$path         = 'frontend/messages';
 				break;
 
 			case 'followers':
