@@ -509,6 +509,24 @@
 	overflow: auto;
 }
 
+.friends-page .friends-profile-messages {
+	overflow: hidden;
+	padding: 0 !important;
+}
+
+.friends-page .friends-profile-messages-header {
+	align-items: center;
+	border-bottom: 1px solid #e8e8e8;
+	display: flex;
+	justify-content: space-between;
+	padding: 7px 8px;
+}
+
+.friends-page .friends-profile-messages .friends-dm-conversation,
+.friends-page .friends-profile-messages .friends-dm-conversation:visited {
+	grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .friends-page .friends-dm-conversation,
 .friends-page .friends-dm-conversation:visited {
 	border-bottom: 1px solid #e8e8e8;
