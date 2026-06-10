@@ -629,6 +629,18 @@ body.friends-page {
 .friends-page a.chip:visited { color: light-dark(#0f1419, #e7e9ea); }
 .friends-page .chip:hover { background: light-dark(rgba(15,20,25,.1), rgba(231,233,234,.1)); text-decoration: none; }
 .friends-page span.chip { cursor: default; }
+.friends-page .chip.activitypub-follower-check.is-following {
+	background: light-dark(#e4f6e8, rgba(46,160,67,.22));
+	color: light-dark(#116329, #8ddb8c);
+}
+.friends-page .chip.activitypub-follower-check.is-not-following {
+	background: light-dark(#fff4d6, rgba(210,153,34,.22));
+	color: light-dark(#7a4d00, #eac55f);
+}
+.friends-page .chip.activitypub-follower-check.is-error {
+	background: light-dark(#fde7e9, rgba(218,54,51,.22));
+	color: light-dark(#8a2424, #ff9b9b);
+}
 
 .twitter-chips-area p {
 	font-size: 14px;
