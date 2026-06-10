@@ -671,6 +671,46 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		return $this->assertTrue( false ); // should not be called.
 	}
 
+	public function test_direct_message_is_added_to_activitypub_outbox() {
+		$post_id = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
+
+		$this->assertIsInt( $post_id );
+		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
+		$this->assertNotEmpty( $outbox_id );
+
+		$outbox_item = get_post( $outbox_id );
+		$this->assertInstanceOf( \WP_Post::class, $outbox_item );
+		$this->assertSame( 'ap_outbox', $outbox_item->post_type );
+		$this->assertSame( 'pending', $outbox_item->post_status );
+		$this->assertSame( 'Create', get_post_meta( $outbox_id, '_activitypub_activity_type', true ) );
+		$this->assertSame( ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE, get_post_meta( $outbox_id, 'activitypub_content_visibility', true ) );
+
+		$activity = json_decode( $outbox_item->post_content, true );
+		$this->assertSame( 'Create', $activity['type'] );
+		$this->assertContains( $this->actor, $activity['to'] );
+		$this->assertContains( $this->actor, $activity['object']['to'] );
+		$this->assertStringContainsString( '@akirk', $activity['object']['content'] );
+	}
+
+	public function test_direct_message_reply_outbox_activity_has_in_reply_to() {
+		$reply_to_post_id = $this->friend->insert_post(
+			array(
+				'post_type'    => Messages::CPT,
+				'post_content' => 'Hello from the fediverse.',
+				'post_status'  => 'friends_read',
+				'guid'         => $this->actor . '/statuses/123',
+			)
+		);
+
+		$post_id = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Reply by DM.', '', $reply_to_post_id );
+
+		$this->assertIsInt( $post_id );
+		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
+		$activity  = json_decode( get_post( $outbox_id )->post_content, true );
+
+		$this->assertSame( $this->actor . '/statuses/123', $activity['object']['inReplyTo'] );
+	}
+
 	public function example_actors() {
 		$actors = array();
 		foreach ( array( 'user', 'test' ) as $username ) {
