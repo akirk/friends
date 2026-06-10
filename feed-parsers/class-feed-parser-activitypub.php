@@ -895,17 +895,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		update_post_meta( $post_id, 'activitypub_content_visibility', ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE );
-		$inbox = \Activitypub\Http::get_remote_object( $send_to );
-
-		if ( ! $inbox || \is_wp_error( $inbox ) ) {
-			return new \WP_Error( 'friends_activitypub_inbox_error', __( 'Cannot get Activitypub inbox.', 'friends' ), compact( 'post_id', 'to', 'send_to' ) );
-		}
-		$inboxes = array();
-		if ( ! empty( $inbox['endpoints']['sharedInbox'] ) ) {
-			$inboxes[] = $inbox['endpoints']['sharedInbox'];
-		} elseif ( ! empty( $inbox['inbox'] ) ) {
-			$inboxes[] = $inbox['inbox'];
-		}
 
 		require_once __DIR__ . '/activitypub/class-activitypub-transformer-message.php';
 
@@ -934,13 +923,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$activity->set_id( home_url( '?p=' . $post_id ) . '#direct-message' );
 		$activity->set_actor( $actor->get_id() );
 		$activity->set_object( $object );
-		$activity->set_to( $send_to );
+		$activity->set_to( array( $send_to ) );
 
-		$json = $activity->to_json();
-
-		foreach ( $inboxes as $inbox ) {
-			$result = \Activitypub\safe_remote_post( $inbox, $json, $actor->get__id() );
+		$outbox_activity_id = \Activitypub\add_to_outbox( $activity, null, $actor->get__id(), ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE );
+		if ( ! $outbox_activity_id ) {
+			return new \WP_Error(
+				'friends_activitypub_outbox_error',
+				__( 'Could not add ActivityPub direct message to the outbox.', 'friends' ),
+				compact( 'post_id', 'to', 'send_to' )
+			);
 		}
+
+		update_post_meta( $post_id, 'activitypub_direct_message_outbox_id', $outbox_activity_id );
 
 		return $post_id;
 	}

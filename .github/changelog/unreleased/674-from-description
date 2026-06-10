@@ -1,0 +1,3 @@
+Type: fixed
+
+Send ActivityPub direct messages through the outbox so delivery can use the normal persistence and retry flow.
