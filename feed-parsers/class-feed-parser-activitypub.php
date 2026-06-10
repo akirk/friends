@@ -123,6 +123,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'wp_ajax_friends-preview-activitypub', array( $this, 'ajax_preview' ) );
 		add_action( 'wp_ajax_friends-delete-follower', array( $this, 'ajax_delete_follower' ) );
 		add_action( 'wp_ajax_friends_check_activitypub_subscription', array( $this, 'ajax_check_subscription' ) );
+		add_action( 'wp_ajax_friends_check_activitypub_follower', array( $this, 'ajax_check_follower' ) );
 		add_action( 'wp_ajax_friends_relink_activitypub_actor', array( $this, 'ajax_relink_actor' ) );
 		add_action( 'wp_ajax_friends_refollow_activitypub', array( $this, 'ajax_refollow' ) );
 		add_action( 'friends_edit_feed_content_top', array( $this, 'render_subscription_check_button' ), 10, 3 );
@@ -881,7 +882,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $post_id;
 		}
 		$send_to = null;
-		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
+		foreach ( $friend_user->get_feeds() as $user_feed ) {
 			if ( 'activitypub' === $user_feed->get_parser() && $user_feed->get_url() === $to ) {
 				$send_to = $to;
 				break;
@@ -952,6 +953,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$user_feed = $this->friends_feed->get_user_feed_by_url( $actor_url );
 		}
 
+		if ( ( ! $user_feed || is_wp_error( $user_feed ) ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) && Friends::check_url( $actor_url ) ) {
+			$ap_actor_post = \Activitypub\Collection\Remote_Actors::get_by_uri( $actor_url );
+			if ( ! is_wp_error( $ap_actor_post ) ) {
+				$user_feed = User_Feed::get_by_ap_actor_id( $ap_actor_post->ID );
+			}
+		}
+
 		$object = $activity['object'];
 		$remote_url = $object['id'];
 		$reply_to = null;
@@ -964,6 +972,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
 			$actor = apply_filters( 'friends_get_activitypub_metadata', array(), $actor_url );
 			if ( ! $actor || is_wp_error( $actor ) ) {
+				return;
+			}
+
+			$friend_user = $this->create_message_sender_from_actor( $actor_url, $actor );
+			if ( ! is_wp_error( $friend_user ) && $friend_user instanceof User ) {
+				$feed_url = ! empty( $actor['id'] ) && Friends::check_url( $actor['id'] ) ? $actor['id'] : $actor_url;
+				do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $feed_url, $remote_url, $reply_to );
 				return;
 			}
 
@@ -990,7 +1005,76 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$friend_user = $user_feed->get_friend_user();
 
-		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $actor_url, $remote_url, $reply_to );
+		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $user_feed->get_url(), $remote_url, $reply_to );
+	}
+
+	/**
+	 * Create an inactive subscription identity for an ActivityPub DM sender.
+	 *
+	 * Receiving a direct message must make the sender visible and replyable, but
+	 * must not silently follow them or import their public outbox.
+	 *
+	 * @param string $actor_url The actor URL from the incoming activity.
+	 * @param array  $actor     The resolved actor metadata.
+	 * @return User|\WP_Error The sender subscription or an error.
+	 */
+	private function create_message_sender_from_actor( $actor_url, $actor ) {
+		$canonical_actor_url = ! empty( $actor['id'] ) && Friends::check_url( $actor['id'] ) ? $actor['id'] : $actor_url;
+		if ( ! Friends::check_url( $canonical_actor_url ) ) {
+			return new \WP_Error( 'invalid_actor_url', __( 'Invalid ActivityPub actor URL.', 'friends' ) );
+		}
+
+		$display_name = null;
+		if ( ! empty( $actor['name'] ) ) {
+			$display_name = $actor['name'];
+		} elseif ( ! empty( $actor['preferredUsername'] ) ) {
+			$display_name = $actor['preferredUsername'];
+		}
+
+		$avatar_url = null;
+		if ( ! empty( $actor['icon']['url'] ) ) {
+			$avatar_url = $actor['icon']['url'];
+		} elseif ( ! empty( $actor['icon'] ) && is_string( $actor['icon'] ) ) {
+			$avatar_url = $actor['icon'];
+		}
+
+		$host = wp_parse_url( $canonical_actor_url, PHP_URL_HOST );
+		$user_login = sanitize_title( ( $actor['preferredUsername'] ?? 'activitypub' ) . '.' . $host );
+
+		$friend_user = Subscription::create(
+			$user_login,
+			'subscription',
+			$canonical_actor_url,
+			$display_name,
+			$avatar_url,
+			$actor['summary'] ?? null
+		);
+
+		if ( is_wp_error( $friend_user ) ) {
+			return $friend_user;
+		}
+
+		$user_feed = $friend_user->save_feed(
+			$canonical_actor_url,
+			array(
+				'parser' => self::SLUG,
+				'active' => false,
+				'title'  => $display_name ? $display_name : $canonical_actor_url,
+			)
+		);
+
+		if ( is_wp_error( $user_feed ) ) {
+			return $user_feed;
+		}
+
+		if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $canonical_actor_url );
+			if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
+				$user_feed->set_ap_actor_id( $actor_post->ID );
+			}
+		}
+
+		return $friend_user;
 	}
 
 	public function register_post_meta() {
@@ -1463,6 +1547,54 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$result = $this->check_subscription_status( $feed );
 		wp_send_json_success( $result );
+	}
+
+	/**
+	 * AJAX handler for checking whether an ActivityPub actor follows the current user.
+	 */
+	public function ajax_check_follower() {
+		if ( ! isset( $_POST['actor_url'] ) ) {
+			wp_send_json_error( 'missing-parameters' );
+		}
+
+		check_ajax_referer( 'friends-check-follower' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( 'not-authorized' );
+		}
+
+		if ( ! class_exists( '\Activitypub\Collection\Followers' ) ) {
+			wp_send_json_error( 'activitypub-plugin-not-active' );
+		}
+
+		$actor_url = sanitize_url( wp_unslash( $_POST['actor_url'] ) );
+		if ( ! Friends::check_url( $actor_url ) ) {
+			wp_send_json_error( 'invalid-actor-url' );
+		}
+
+		$user_id = self::get_activitypub_actor_id( get_current_user_id() );
+		if ( ! $user_id ) {
+			wp_send_json_error( 'missing-local-activitypub-actor' );
+		}
+
+		$follower = \Activitypub\Collection\Followers::get_by_uri( $user_id, $actor_url );
+		if ( ! is_wp_error( $follower ) ) {
+			wp_send_json_success(
+				array(
+					'follows' => true,
+					'label'   => __( 'Follows you', 'friends' ),
+					'title'   => __( 'This actor follows your ActivityPub account. Replies and direct messages should be deliverable.', 'friends' ),
+				)
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'follows' => false,
+				'label'   => __( 'Not following you', 'friends' ),
+				'title'   => __( 'This actor is not in your local ActivityPub followers list. They may not receive follower-only or direct replies from your site.', 'friends' ),
+			)
+		);
 	}
 
 	/**

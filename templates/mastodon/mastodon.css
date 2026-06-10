@@ -493,6 +493,18 @@ body.friends-page {
 .friends-page a.chip:visited { color: light-dark(#563acc, #c4bbff); }
 .friends-page .chip:hover { background: light-dark(rgba(86,58,204,.15), rgba(99,100,255,.25)); text-decoration: none; }
 .friends-page span.chip { cursor: default; }
+.friends-page .chip.activitypub-follower-check.is-following {
+	background: light-dark(#e4f6e8, rgba(46,160,67,.22));
+	color: light-dark(#116329, #8ddb8c);
+}
+.friends-page .chip.activitypub-follower-check.is-not-following {
+	background: light-dark(#fff4d6, rgba(210,153,34,.22));
+	color: light-dark(#7a4d00, #eac55f);
+}
+.friends-page .chip.activitypub-follower-check.is-error {
+	background: light-dark(#fde7e9, rgba(218,54,51,.22));
+	color: light-dark(#8a2424, #ff9b9b);
+}
 
 /* Description text in author header chips area */
 .mastodon-chips-area p {

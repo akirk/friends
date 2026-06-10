@@ -23,9 +23,9 @@ $get_message_friend_user = function ( $message ) {
 	$terms = wp_get_object_terms( $message->ID, Friends\Messages::TAXONOMY );
 	if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
 		$term = reset( $terms );
-		$user = get_user_by( 'id', absint( $term->slug ) );
+		$user = Friends\User::get_user_by_id( absint( $term->slug ) );
 		if ( $user ) {
-			return new Friends\User( $user );
+			return $user;
 		}
 	}
 

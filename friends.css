@@ -1082,6 +1082,21 @@ summary.accordion-header::-webkit-details-marker {
 	& .btn-clear { border-radius: 50%; transform: scale(.75); }
 }
 
+.chip.activitypub-follower-check.is-following {
+	background: #e4f6e8;
+	color: #116329;
+}
+
+.chip.activitypub-follower-check.is-not-following {
+	background: #fff4d6;
+	color: #7a4d00;
+}
+
+.chip.activitypub-follower-check.is-error {
+	background: #fde7e9;
+	color: #8a2424;
+}
+
 /* ========================================================================
    Menus
    ======================================================================== */

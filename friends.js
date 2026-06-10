@@ -202,6 +202,34 @@
 	}
 
 	$( function () {
+		$( '.activitypub-follower-check' ).each( function () {
+			const $pill = $( this );
+			wp.ajax.send( 'friends_check_activitypub_follower', {
+				data: {
+					_ajax_nonce: $pill.data( 'nonce' ),
+					actor_url: $pill.data( 'actor-url' ),
+				},
+				success( result ) {
+					$pill
+						.removeClass( 'is-loading is-error' )
+						.toggleClass( 'is-following', !! result.follows )
+						.toggleClass( 'is-not-following', ! result.follows )
+						.text( result.label )
+						.attr( 'title', result.title );
+				},
+				error( result ) {
+					const message = Array.isArray( result )
+						? result.map( function( error ) { return error.message || error.code; } ).join( ', ' )
+						: friends.text_error;
+					$pill
+						.removeClass( 'is-loading is-following is-not-following' )
+						.addClass( 'is-error' )
+						.text( friends.text_error )
+						.attr( 'title', message );
+				},
+			} );
+		} );
+
 		const standard_count = $( '.chip.post-count-standard' );
 		if ( standard_count.text().substr( 0, 3 ) === '...' || standard_count.text().substr( 0, 1 ) === '…' ) {
 			wp.ajax.send( 'friends-get-post-counts', {
