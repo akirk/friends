@@ -2261,6 +2261,24 @@ h2#page-title a.dashicons {
 		overflow: auto;
 	}
 
+	& .friends-profile-messages {
+		overflow: hidden;
+		padding: 0;
+	}
+
+	& .friends-profile-messages-header {
+		align-items: center;
+		border-bottom: 1px solid #e5e7eb;
+		display: flex;
+		justify-content: space-between;
+		padding: .65rem .7rem;
+	}
+
+	& .friends-profile-messages .friends-dm-conversation,
+	& .friends-profile-messages .friends-dm-conversation:visited {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
 	& .friends-dm-conversation,
 	& .friends-dm-conversation:visited {
 		border-bottom: 1px solid #e5e7eb;
