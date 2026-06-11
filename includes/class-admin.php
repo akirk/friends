@@ -607,6 +607,11 @@ class Admin {
 			'friends_news_entries',
 			array(
 				array(
+					'version'  => '4.2',
+					'title'    => __( '4.2: Direct Messages', 'friends' ),
+					'template' => 'admin/news-4-2',
+				),
+				array(
 					'version'  => '4.1',
 					'title'    => __( '4.1: Add Friend Frontend, Twitter Theme & Browser Extension', 'friends' ),
 					'template' => 'admin/news-4-1',
