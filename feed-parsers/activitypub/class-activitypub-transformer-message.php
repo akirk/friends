@@ -92,6 +92,10 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 		return \apply_filters( 'activitypub_the_content', $content );
 	}
 
+	public function get_rendered_content() {
+		return $this->get_content();
+	}
+
 	public function get_likes() {
 		// You can't fetch likes for a message.
 		return null;
