@@ -1,3 +1,14 @@
+### 4.2.0
+- Add a direct messages view with a conversation list and chat layout. ([#671])
+- Show direct messages from ActivityPub users you do not follow and surface follower status on their profile. ([#672])
+- Link profile message previews to the direct messages view. ([#673])
+- Send ActivityPub direct messages through the outbox so delivery can use the normal persistence and retry flow. ([#674])
+- Improve direct message links, drafts, grouping, and live refresh behavior. ([#675])
+- Support ActivityPub custom emoji in boosted actor names. ([#676])
+- Run CI checks on PR heads after the changelog workflow adds its generated commit. ([#677])
+- Fix action icon alignment on follower and following pages. ([#678])
+- Run normal PR checks after workflow-generated changelog commits. ([#679])
+
 ### 4.1.0
 - Add a frontend Add Friend page with feed review and OPML import support. ([#516])
 - Surface the Friends browser extension in more places so users can discover it: the Browser Extension submenu is now always visible under Friends, the settings page describes what the extension does and links to the Chrome and Firefox stores, and the Tools → Bookmarklets card and README mention it as well. ([#663])
@@ -874,3 +885,13 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#667]: https://github.com/akirk/friends/pull/667
 [#668]: https://github.com/akirk/friends/pull/668
 [#669]: https://github.com/akirk/friends/pull/669
+
+[#671]: https://github.com/akirk/friends/pull/671
+[#672]: https://github.com/akirk/friends/pull/672
+[#673]: https://github.com/akirk/friends/pull/673
+[#674]: https://github.com/akirk/friends/pull/674
+[#675]: https://github.com/akirk/friends/pull/675
+[#676]: https://github.com/akirk/friends/pull/676
+[#677]: https://github.com/akirk/friends/pull/677
+[#678]: https://github.com/akirk/friends/pull/678
+[#679]: https://github.com/akirk/friends/pull/679
