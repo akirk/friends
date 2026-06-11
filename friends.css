@@ -1923,6 +1923,38 @@ h2#page-title a.dashicons {
 
 				& span { margin-left: 0; border-bottom: 0; }
 			}
+
+			& .follower-actions {
+				display: inline-flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: .4em;
+			}
+
+			& .follower-status,
+			& .follower-action {
+				display: inline-flex;
+				align-items: center;
+				border-bottom: 0;
+				gap: .2em;
+				line-height: 1.4;
+				margin-left: 0;
+				vertical-align: baseline;
+			}
+
+			& .follower-status .dashicons,
+			& .follower-action .dashicons {
+				display: inline-flex;
+				align-items: center;
+				border-bottom: 0;
+				justify-content: center;
+				font-size: .9em;
+				height: .9em;
+				line-height: 1;
+				margin: 0;
+				vertical-align: text-bottom;
+				width: .9em;
+			}
 		}
 	}
 
@@ -2214,6 +2246,20 @@ h2#page-title a.dashicons {
 		& .subscription-folder { font-size: 0.8em; background: #e8e8e8; padding: 1px 6px; border-radius: 3px; color: #666; }
 		& .subscription-meta { grid-column: 2; font-size: 0.85em; color: #888; }
 		& .subscription-description { grid-column: 2; font-size: 0.85em; color: #666; margin: 0; }
+		& .subscription-actions {
+			grid-column: 2;
+			display: flex;
+			align-items: center;
+			margin-top: .15rem;
+		}
+
+		& .subscription-action {
+			display: inline-flex;
+			align-items: center;
+			gap: .2rem;
+			width: max-content;
+			max-width: 100%;
+		}
 	}
 
 	& ul.friend-posts img.avatar { vertical-align: middle; margin-right: .3em; }
