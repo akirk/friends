@@ -2030,7 +2030,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * ActivityPub plugin's Remote_Actors API for the new format, or from legacy inline data.
 	 *
 	 * @param array $attributed_to The attributedTo metadata array.
-	 * @return array Actor metadata with keys: url, name, icon, summary, preferredUsername, header.
+	 * @return array Actor metadata with keys: url, name, icon, summary, preferredUsername, header, emojis.
 	 */
 	public static function get_actor_metadata_from_attributed_to( $attributed_to ) {
 		static $cache = array();
@@ -2042,6 +2042,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'header'            => '',
 			'summary'           => '',
 			'preferredUsername' => '',
+			'emojis'            => array(),
 		);
 
 		if ( ! is_array( $attributed_to ) ) {
@@ -2064,6 +2065,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$ap_actor_id = $attributed_to['ap_actor_id'];
 
 			if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+				self::refresh_actor_if_stale( $ap_actor_id );
+
 				$actor = \Activitypub\Collection\Remote_Actors::get_actor( $ap_actor_id );
 
 				if ( $actor && ! is_wp_error( $actor ) ) {
@@ -2071,6 +2074,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$metadata['name'] = $actor->get_name() ?? '';
 					$metadata['summary'] = $actor->get_summary() ?? '';
 					$metadata['preferredUsername'] = $actor->get_preferred_username() ?? '';
+					$metadata['emojis'] = self::get_custom_emojis_from_actor_post( $ap_actor_id );
 					$icon = $actor->get_icon();
 					if ( $icon ) {
 						$metadata['icon'] = \Activitypub\object_to_uri( $icon );
@@ -2114,11 +2118,143 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( isset( $attributed_to['preferredUsername'] ) ) {
 			$metadata['preferredUsername'] = $attributed_to['preferredUsername'];
 		}
+		if ( isset( $attributed_to['tag'] ) ) {
+			$metadata['emojis'] = self::get_custom_emojis_from_actor_tags( $attributed_to['tag'] );
+		}
 
 		if ( $cache_key ) {
 			$cache[ $cache_key ] = $metadata;
 		}
 		return $metadata;
+	}
+
+	/**
+	 * Refresh stale cached remote actor metadata.
+	 *
+	 * Boosted actors may not send Update activities to this site, so their
+	 * cached metadata can go stale even while the boosting feed remains fresh.
+	 *
+	 * @param int $ap_actor_id The ap_actor post ID.
+	 * @return int|\WP_Error|null Updated post ID, error, or null when no refresh was needed.
+	 */
+	public static function refresh_actor_if_stale( $ap_actor_id ) {
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) || ! class_exists( '\Activitypub\Http' ) ) {
+			return null;
+		}
+
+		$actor_post = get_post( $ap_actor_id );
+		if ( ! $actor_post || 'ap_actor' !== $actor_post->post_type ) {
+			return null;
+		}
+
+		$modified = strtotime( $actor_post->post_modified_gmt . ' GMT' );
+		if ( $modified && time() - $modified < WEEK_IN_SECONDS ) {
+			return null;
+		}
+
+		$last_attempt = (int) get_post_meta( $actor_post->ID, '_friends_actor_refresh_attempted', true );
+		if ( $last_attempt && time() - $last_attempt < DAY_IN_SECONDS ) {
+			return null;
+		}
+
+		$actor_url = self::get_actor_url_from_remote_actor_id( $actor_post->ID );
+		if ( ! $actor_url ) {
+			return null;
+		}
+
+		update_post_meta( $actor_post->ID, '_friends_actor_refresh_attempted', time() );
+
+		$actor = \Activitypub\Http::get_remote_object( $actor_url, false );
+		if ( is_wp_error( $actor ) ) {
+			return $actor;
+		}
+
+		$updated = \Activitypub\Collection\Remote_Actors::update( $actor_post, $actor );
+		if ( is_wp_error( $updated ) ) {
+			return $updated;
+		}
+
+		delete_post_meta( $actor_post->ID, '_friends_actor_refresh_attempted' );
+
+		return $updated;
+	}
+
+	/**
+	 * Get custom emoji metadata from a cached ActivityPub actor post.
+	 *
+	 * @param int $ap_actor_id The ap_actor post ID.
+	 * @return array Map of shortcode to image URL.
+	 */
+	public static function get_custom_emojis_from_actor_post( $ap_actor_id ) {
+		$actor_post = get_post( $ap_actor_id );
+		if ( ! $actor_post || 'ap_actor' !== $actor_post->post_type || empty( $actor_post->post_content ) ) {
+			return array();
+		}
+
+		$actor = json_decode( $actor_post->post_content, true );
+		if ( ! is_array( $actor ) || empty( $actor['tag'] ) ) {
+			return array();
+		}
+
+		return self::get_custom_emojis_from_actor_tags( $actor['tag'] );
+	}
+
+	/**
+	 * Get custom emoji metadata from ActivityPub actor tags.
+	 *
+	 * @param array $tags ActivityPub tag data.
+	 * @return array Map of shortcode to image URL.
+	 */
+	public static function get_custom_emojis_from_actor_tags( $tags ) {
+		$emojis = array();
+
+		if ( ! is_array( $tags ) ) {
+			return $emojis;
+		}
+
+		if ( isset( $tags['type'] ) ) {
+			$tags = array( $tags );
+		}
+
+		foreach ( $tags as $tag ) {
+			if ( ! is_array( $tag ) || ( $tag['type'] ?? null ) !== 'Emoji' || empty( $tag['name'] ) || empty( $tag['icon']['url'] ) ) {
+				continue;
+			}
+
+			$emojis[ $tag['name'] ] = $tag['icon']['url'];
+		}
+
+		return $emojis;
+	}
+
+	/**
+	 * Replaces ActivityPub custom emoji shortcodes with inline images.
+	 *
+	 * @param string $text The text that may contain custom emoji shortcodes.
+	 * @param array  $emojis Map of shortcode to image URL.
+	 * @return string HTML with custom emoji images.
+	 */
+	public static function replace_custom_emojis( $text, $emojis ) {
+		if ( empty( $text ) || empty( $emojis ) || ! is_array( $emojis ) ) {
+			return esc_html( $text );
+		}
+
+		$parts = preg_split( '/(:[a-zA-Z0-9_+-]+:)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE );
+		if ( false === $parts ) {
+			return esc_html( $text );
+		}
+
+		$html = '';
+		foreach ( $parts as $part ) {
+			if ( isset( $emojis[ $part ] ) ) {
+				$html .= '<img class="activitypub-custom-emoji" src="' . esc_url( $emojis[ $part ] ) . '" alt="' . esc_attr( $part ) . '" title="' . esc_attr( trim( $part, ':' ) ) . '" loading="lazy" />';
+				continue;
+			}
+
+			$html .= esc_html( $part );
+		}
+
+		return $html;
 	}
 
 	/**
@@ -4542,6 +4678,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				'name'    => $actor_metadata['name'],
 				'handle'  => self::convert_actor_to_mastodon_handle( $actor_metadata['url'] ),
 				'summary' => wp_strip_all_tags( $actor_metadata['summary'] ),
+				'emojis'  => $actor_metadata['emojis'],
 			)
 		);
 	}

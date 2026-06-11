@@ -1565,6 +1565,16 @@ h2#page-title a.dashicons {
 		}
 
 		& .overflow { height: .5em; }
+		& .post-meta .boosted .activitypub-custom-emoji {
+			display: inline-block;
+			width: auto;
+			max-width: 1.5em;
+			height: 1em;
+			max-height: 1em;
+			margin: 0 0.05em;
+			object-fit: contain;
+			vertical-align: -0.15em;
+		}
 		& .boosted .follow-button, & .boosted .follow-button span.name { display: none; }
 		& .boosted:hover .follow-button { display: inline; }
 
