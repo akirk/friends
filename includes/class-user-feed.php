@@ -233,6 +233,15 @@ class User_Feed {
 			register_taxonomy_for_object_type( self::TAXONOMY, \Activitypub\Collection\Remote_Actors::POST_TYPE );
 		}
 
+		$object_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
+		if ( ! is_wp_error( $object_ids ) ) {
+			foreach ( $object_ids as $object_id ) {
+				if ( absint( $ap_actor_id ) !== absint( $object_id ) && 'ap_actor' === get_post_type( $object_id ) ) {
+					wp_remove_object_terms( $object_id, $this->term->term_id, self::TAXONOMY );
+				}
+			}
+		}
+
 		return wp_set_object_terms( absint( $ap_actor_id ), $this->term->term_id, self::TAXONOMY );
 	}
 

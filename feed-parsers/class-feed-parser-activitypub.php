@@ -260,8 +260,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 
 	public function mastodon_api_mapback_user_id( $user_id ) {
-		if ( ! is_string( $user_id ) && $user_id < 1e10 ) {
-			return $user_id;
+		if ( is_numeric( $user_id ) && $user_id < 1e10 ) {
+			return absint( $user_id );
 		}
 
 		$user = self::determine_mastodon_api_user( $user_id );
@@ -2061,7 +2061,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( isset( $attributed_to['ap_actor_id'] ) && $attributed_to['ap_actor_id'] ) {
 			$cache_key = 'ap_' . $attributed_to['ap_actor_id'];
 		} elseif ( isset( $attributed_to['id'] ) ) {
-			$cache_key = 'id_' . $attributed_to['id'];
+			$cache_key = 'id_' . md5( wp_json_encode( $attributed_to ) );
 		}
 		if ( $cache_key && isset( $cache[ $cache_key ] ) ) {
 			return $cache[ $cache_key ];
@@ -2300,7 +2300,30 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return string HTML with custom emoji images.
 	 */
 	public static function replace_custom_emojis_for_user( $text, ?User $friend_user = null ) {
-		return self::replace_custom_emojis( $text, self::get_custom_emojis_for_user( $friend_user ) );
+		$emojis = self::get_custom_emojis_for_user( $friend_user );
+		$html   = self::replace_custom_emojis( $text, $emojis );
+
+		if ( empty( $emojis ) || ! $friend_user || esc_html( $text ) !== $html ) {
+			return $html;
+		}
+
+		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
+			if ( self::SLUG !== $user_feed->get_parser() ) {
+				continue;
+			}
+
+			$ap_actor_id = $user_feed->get_ap_actor_id();
+			if ( ! $ap_actor_id ) {
+				continue;
+			}
+
+			$actor_title = get_post_field( 'post_title', $ap_actor_id );
+			if ( $actor_title && $actor_title !== $text ) {
+				return self::replace_custom_emojis( $actor_title, $emojis );
+			}
+		}
+
+		return $html;
 	}
 
 	/**
