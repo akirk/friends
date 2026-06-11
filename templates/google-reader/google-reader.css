@@ -1036,6 +1036,17 @@
 }
 
 /* Follow button: hidden by default on boosted posts, shown on hover */
+.friends-page .posts .post-meta .boosted .activitypub-custom-emoji {
+	display: inline-block;
+	width: auto;
+	max-width: 1.5em;
+	height: 1em;
+	max-height: 1em;
+	margin: 0 0.05em;
+	object-fit: contain;
+	vertical-align: -0.15em;
+}
+
 .friends-page .posts .boosted .follow-button,
 .friends-page .posts .boosted .follow-button span.name {
 	display: none;

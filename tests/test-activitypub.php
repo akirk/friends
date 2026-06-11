@@ -27,12 +27,65 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . $user_id . '/inbox' );
 		$request->set_body( wp_json_encode( $activity_data ) );
 		$request->set_header( 'Content-type', 'application/json' );
-		
+
 		if ( $use_server_dispatch ) {
 			return $this->server->dispatch( $request );
 		}
-		
+
 		return rest_do_request( $request );
+	}
+
+	public function test_custom_emojis_from_actor_tags() {
+		$tags = array(
+			array(
+				'type' => 'Hashtag',
+				'name' => '#activitypub',
+			),
+			array(
+				'type' => 'Emoji',
+				'name' => ':party:',
+				'icon' => array(
+					'url' => 'https://example.com/party.png',
+				),
+			),
+		);
+
+		$this->assertEquals(
+			array(
+				':party:' => 'https://example.com/party.png',
+			),
+			Feed_Parser_ActivityPub::get_custom_emojis_from_actor_tags( $tags )
+		);
+	}
+
+	public function test_custom_emojis_from_single_actor_tag() {
+		$tag = array(
+			'type' => 'Emoji',
+			'name' => ':bot:',
+			'icon' => array(
+				'url' => 'https://example.com/bot.png',
+			),
+		);
+
+		$this->assertEquals(
+			array(
+				':bot:' => 'https://example.com/bot.png',
+			),
+			Feed_Parser_ActivityPub::get_custom_emojis_from_actor_tags( $tag )
+		);
+	}
+
+	public function test_replace_custom_emojis() {
+		$html = Feed_Parser_ActivityPub::replace_custom_emojis(
+			'Elena Rocks :party: :unknown:',
+			array(
+				':party:' => 'https://example.com/party.png',
+			)
+		);
+
+		$this->assertStringContainsString( 'Elena Rocks ', $html );
+		$this->assertStringContainsString( '<img class="activitypub-custom-emoji" src="https://example.com/party.png" alt=":party:" title="party" loading="lazy" />', $html );
+		$this->assertStringContainsString( ':unknown:', $html );
 	}
 
 	public function test_incoming_post() {
