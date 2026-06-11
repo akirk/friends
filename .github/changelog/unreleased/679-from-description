@@ -1,0 +1,3 @@
+Type: fixed
+
+Run normal PR checks after workflow-generated changelog commits.
