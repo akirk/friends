@@ -4,6 +4,7 @@ on:
     types: [opened, edited, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 permissions:
+  actions: write
   contents: write
   issues: write
   pull-requests: read
@@ -197,7 +198,7 @@ jobs:
             }
 
             try {
-              await github.rest.repos.createOrUpdateFileContents( {
+              const response = await github.rest.repos.createOrUpdateFileContents( {
                 owner,
                 repo,
                 path,
@@ -205,7 +206,21 @@ jobs:
                 content: Buffer.from( content ).toString( 'base64' ),
                 branch: ref
               } );
-              core.info( `Created changelog file: ${ path }` );
+
+              const commitSha = response.data.commit.sha;
+              core.info( `Created changelog file: ${ path } in ${ commitSha }` );
+
+              // Commits made with GITHUB_TOKEN do not trigger push/pull_request workflows.
+              // Dispatch the required CI workflows explicitly so checks run on the new PR head.
+              for ( const workflow_id of [ 'test.yml', 'cs.yml', 'lint.yml' ] ) {
+                await github.rest.actions.createWorkflowDispatch( {
+                  owner,
+                  repo,
+                  workflow_id,
+                  ref
+                } );
+                core.info( `Dispatched ${ workflow_id } for ${ ref }` );
+              }
             } catch ( error ) {
-              core.setFailed( `Failed to create changelog file: ${ error.message }` );
+              core.setFailed( `Failed to create changelog file or dispatch CI: ${ error.message }` );
             }

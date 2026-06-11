@@ -1,0 +1,3 @@
+Type: fixed
+
+Run CI checks on PR heads after the changelog workflow adds its generated commit.

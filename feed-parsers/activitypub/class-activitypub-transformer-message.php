@@ -40,10 +40,35 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 				if ( $acct && ! is_wp_error( $acct ) ) {
 					$acct = str_replace( 'acct:', '@', $acct );
 				}
+				if ( is_wp_error( $acct ) ) {
+					$acct = $this->get_acct_from_url( $to );
+				}
+				if ( ! $acct ) {
+					continue;
+				}
 				$this->mentions[ $acct ] = $to;
 			}
 		}
 		return $this->mentions;
+	}
+
+	private function get_acct_from_url( $url ) {
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		$path = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
+
+		if ( ! $host || ! $path ) {
+			return null;
+		}
+
+		$path_parts = explode( '/', $path );
+		$username   = end( $path_parts );
+		$username   = ltrim( $username, '@' );
+
+		if ( ! $username ) {
+			return null;
+		}
+
+		return sprintf( '@%s@%s', $username, $host );
 	}
 
 	protected function get_content() {
@@ -90,6 +115,10 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 		 * @return string The filtered content of the comment.
 		 */
 		return \apply_filters( 'activitypub_the_content', $content );
+	}
+
+	public function get_rendered_content() {
+		return $this->get_content();
 	}
 
 	public function get_likes() {
