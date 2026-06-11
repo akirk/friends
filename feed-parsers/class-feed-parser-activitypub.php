@@ -88,6 +88,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'mastodon_api_unreact', array( $this, 'mastodon_api_unreact' ), 10, 2 );
 		\add_action( 'friends_get_reaction_display_name', array( $this, 'get_reaction_display_name' ), 10, 2 );
 
+		\add_filter( 'url_to_postid', array( $this, 'fix_comment_url_to_postid' ) );
+		\add_filter( 'activitypub_is_post_disabled', array( $this, 'allow_comments_on_friends_posts' ), 10, 2 );
+		\add_filter( 'comment_reply_link', array( $this, 'fix_comment_reply_link' ), 10, 4 );
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
 		\add_action( 'comment_post', array( $this, 'comment_post' ), 10, 3 );
 		\add_action( 'trashed_comment', array( $this, 'trashed_comment' ), 10, 2 );
@@ -2266,6 +2269,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				// This is a reply to an existing Friends post - skip processing and let ActivityPub handle it as a comment.
 				return false;
 			}
+			// Check if this is a reply to a local comment (e.g. ?c=123 URLs).
+			if ( function_exists( '\Activitypub\url_to_commentid' ) ) {
+				$comment_id = \Activitypub\url_to_commentid( $in_reply_to );
+				if ( $comment_id ) {
+					return false;
+				}
+			}
 		}
 
 		if ( 'undo' === $type ) {
@@ -4394,6 +4404,67 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Prevent comment URLs (?c=NNN) from resolving to the front page via url_to_postid().
+	 *
+	 * WordPress core's url_to_postid() strips query strings and matches the bare domain
+	 * to the static front page. This causes ActivityPub replies to comments to be attached
+	 * to the wrong post.
+	 *
+	 * @param string $url The URL to derive the post ID from.
+	 * @return string The URL, or empty string for comment URLs.
+	 */
+	public function fix_comment_url_to_postid( $url ) {
+		if ( preg_match( '#[?&]c=\d+#', $url ) ) {
+			return '';
+		}
+		return $url;
+	}
+
+	/**
+	 * Allow ActivityPub comments on friend_post_cache posts.
+	 *
+	 * The ActivityPub plugin's persist() rejects comments on post types that don't
+	 * support ActivityPub. Since friend_post_cache posts aggregate content from
+	 * ActivityPub sources, comments should be allowed.
+	 *
+	 * @param bool     $disabled Whether the post is disabled for ActivityPub.
+	 * @param \WP_Post $post     The post object.
+	 * @return bool Whether the post is disabled.
+	 */
+	public function allow_comments_on_friends_posts( $disabled, $post ) {
+		if ( Friends::CPT === $post->post_type ) {
+			return false;
+		}
+		return $disabled;
+	}
+
+	/**
+	 * Fix comment reply links on friend_post_cache posts to use the local Friends URL.
+	 *
+	 * WordPress core's get_comment_reply_link() uses get_permalink() which returns
+	 * the external URL for friend_post_cache posts.
+	 *
+	 * @param string      $link    The HTML markup for the comment reply link.
+	 * @param array       $args    The arguments.
+	 * @param \WP_Comment $comment The comment object.
+	 * @param \WP_Post    $post    The post object.
+	 * @return string The fixed HTML markup.
+	 */
+	public function fix_comment_reply_link( $link, $args, $comment, $post ) {
+		if ( Friends::CPT !== $post->post_type ) {
+			return $link;
+		}
+
+		$friend_user = User::get_post_author( $post );
+		if ( ! $friend_user ) {
+			return $link;
+		}
+
+		$local_url = $friend_user->get_local_friends_page_url( $post->ID );
+		return str_replace( get_permalink( $post->ID ), $local_url, $link );
+	}
+
+	/**
 	 * Approve incoming fediverse comments.
 	 *
 	 * @param      bool  $approved     Whether the comment is approved.
@@ -4473,12 +4544,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     array  The comments.
 	 */
 	public function get_remote_comments( $comments, $post_id, ?User $friend_user = null, ?User_Feed $user_feed = null ) {
-		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+		$post = get_post( $post_id );
+		if ( ! $post || Friends::CPT !== $post->post_type ) {
 			return $comments;
 		}
 
-		$post = get_post( $post_id );
-		if ( Friends::CPT !== $post->post_type ) {
+		if ( ! self::post_supports_activitypub( $post_id ) ) {
 			return $comments;
 		}
 
@@ -4488,7 +4559,30 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'descendants' => array(),
 		);
 		$context = apply_filters( 'mastodon_api_status_context', $context, $post_id, $post->guid );
+
+		// Collect existing comment identifiers to avoid duplicates.
+		$existing_ids = array();
+		foreach ( $comments as $comment ) {
+			$existing_ids[ $comment->comment_ID ] = true;
+			$source_id = get_comment_meta( $comment->comment_ID, 'source_id', true );
+			if ( $source_id ) {
+				$existing_ids[ $source_id ] = true;
+			}
+			$source_url = get_comment_meta( $comment->comment_ID, 'source_url', true );
+			if ( $source_url ) {
+				$existing_ids[ $source_url ] = true;
+			}
+		}
+
 		foreach ( $context['descendants'] as $status ) {
+			// Skip if already present as a local comment.
+			if ( isset( $existing_ids[ $status->id ] ) || ( ! empty( $status->uri ) && isset( $existing_ids[ $status->uri ] ) ) ) {
+				continue;
+			}
+			// Check if the URI contains a local comment anchor (e.g. #comment-88153).
+			if ( ! empty( $status->uri ) && preg_match( '/#comment-(\d+)$/', $status->uri, $matches ) && isset( $existing_ids[ $matches[1] ] ) ) {
+				continue;
+			}
 
 			$comments[] = new \WP_Comment(
 				(object) array(
@@ -4503,7 +4597,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					'comment_approved'     => 1,
 					'comment_type'         => 'activitypub',
 					'comment_parent'       => $status->in_reply_to_id,
-
 				)
 			);
 		}
@@ -4665,6 +4758,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function append_comment_form( $content, $post_id, ?User $friend_user = null, ?User_Feed $user_feed = null ) {
+		$post = get_post( $post_id );
+
+		// Show a link to view the conversation at the source when the post is on a known AP host.
+		if ( $post && Friends::CPT === $post->post_type && self::post_supports_activitypub( $post_id ) ) {
+			$content .= sprintf(
+				'<p class="friends-fediverse-conversation"><a href="%s" target="_blank" rel="noopener noreferrer">%s</a></p>',
+				esc_url( $post->guid ),
+				esc_html__( 'View the full conversation at the source', 'friends' )
+			);
+		}
+
 		ob_start();
 		self::comment_form( $post_id );
 		$comment_form = ob_get_contents();
