@@ -910,13 +910,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		$transformer->set_content_visibility( ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE );
 		$transformer->to = array( $send_to );
+		$reply_to_url    = null;
 		if ( $reply_to_post_id ) {
 			$reply_to = get_post( $reply_to_post_id );
 			if ( ! is_wp_error( $reply_to ) ) {
-				$transformer->in_reply_to = $reply_to->guid;
+				$reply_to_url               = $reply_to->guid;
+				$transformer->in_reply_to = $reply_to_url;
 			}
 		}
 		$object = $transformer->to_object();
+		$object->set_to( array( $send_to ) );
+		if ( $reply_to_url ) {
+			$object->set_in_reply_to( $reply_to_url );
+		}
 
 		$activity = new \Activitypub\Activity\Activity();
 		$activity->set_type( 'Create' );
