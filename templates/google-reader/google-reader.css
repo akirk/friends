@@ -1082,8 +1082,7 @@
 	background: light-dark(#edf2fc, #2a2d35);
 }
 
-/* Follow button: hidden by default on boosted posts, shown on hover */
-.friends-page .posts .post-meta .boosted .activitypub-custom-emoji {
+.friends-page .activitypub-custom-emoji {
 	display: inline-block;
 	width: auto;
 	max-width: 1.5em;

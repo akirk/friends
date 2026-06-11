@@ -10,6 +10,7 @@ $_feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 $hidden_post_count = $args['friend_user']->get_post_in_trash_count();
+$display_name_html = Friends\Feed_Parser_ActivityPub::replace_custom_emojis_for_user( $args['friend_user']->display_name, $args['friend_user'] );
 
 // Get ActivityPub feeds and their data (header image, profile URLs, summary).
 $activitypub_feeds = array();
@@ -112,7 +113,7 @@ if ( $args['friends']->frontend->reaction ) {
 		<img src="<?php echo esc_attr( $args['friend_user']->get_avatar_url() ); ?>" alt="<?php echo esc_attr( $args['friend_user']->display_name ); ?>" class="avatar" width="36" height="36" style="vertical-align: middle;" />
 		<?php
 	}
-	echo esc_html( $args['friend_user']->display_name );
+	echo wp_kses( $display_name_html, Friends\Feed_Parser_ActivityPub::get_custom_emoji_allowed_html() );
 }
 ?>
 </a>

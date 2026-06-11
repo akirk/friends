@@ -1554,6 +1554,16 @@ h2#page-title a.dashicons {
 	& dialog { border: 0; box-shadow: 0 0 10px rgba(0, 0, 0, 0.6); }
 	& header.navbar section.navbar-section.author { flex: 3; min-width: 20em; }
 	& summary.quick-status-panel-opener { margin-bottom: 2em; cursor: pointer; }
+	& .activitypub-custom-emoji {
+		display: inline-block;
+		width: auto;
+		max-width: 1.5em;
+		height: 1em;
+		max-height: 1em;
+		margin: 0 0.05em;
+		object-fit: contain;
+		vertical-align: -0.15em;
+	}
 
 	& article {
 		margin-bottom: 2em;
@@ -1565,16 +1575,6 @@ h2#page-title a.dashicons {
 		}
 
 		& .overflow { height: .5em; }
-		& .post-meta .boosted .activitypub-custom-emoji {
-			display: inline-block;
-			width: auto;
-			max-width: 1.5em;
-			height: 1em;
-			max-height: 1em;
-			margin: 0 0.05em;
-			object-fit: contain;
-			vertical-align: -0.15em;
-		}
 		& .boosted .follow-button, & .boosted .follow-button span.name { display: none; }
 		& .boosted:hover .follow-button { display: inline; }
 

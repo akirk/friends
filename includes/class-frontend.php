@@ -872,18 +872,19 @@ class Frontend {
 				} else {
 					return '';
 				}
-				if ( empty( $author ) ) {
+				if ( empty( $author ) || is_wp_error( $author ) ) {
 					return '';
 				}
 
-				$author_name = $author->display_name;
+				$author_name      = $author->display_name;
+				$author_name_html = Feed_Parser_ActivityPub::replace_custom_emojis_for_user( $author_name, $author );
 				$override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, $block->context['postId'] );
 				if ( isset( $attributes['isLink'] ) && $attributes['isLink'] ) {
-					$author_name = sprintf( '<a href="%1$s" target="%2$s" class="wp-block-post-author-name__link">%3$s</a>', $author->get_local_friends_page_url(), esc_attr( $attributes['linkTarget'] ), $author_name );
+					$author_name_html = sprintf( '<a href="%1$s" target="%2$s" class="wp-block-post-author-name__link">%3$s</a>', esc_url( $author->get_local_friends_page_url() ), esc_attr( $attributes['linkTarget'] ), $author_name_html );
 				}
 
 				if ( $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name ) {
-					$author_name .= ' – ' . esc_html( $override_author_name );
+					$author_name_html .= ' – ' . esc_html( $override_author_name );
 				}
 
 				$classes = array();
@@ -895,7 +896,23 @@ class Frontend {
 				}
 				$wrapper_attributes = get_block_wrapper_attributes( array( 'class' => implode( ' ', $classes ) ) );
 
-				return sprintf( '<div %1$s>%2$s</div>', $wrapper_attributes, $author_name );
+				return sprintf(
+					'<div %1$s>%2$s</div>',
+					$wrapper_attributes,
+					wp_kses(
+						$author_name_html,
+						array_merge(
+							Feed_Parser_ActivityPub::get_custom_emoji_allowed_html(),
+							array(
+								'a' => array(
+									'class'  => true,
+									'href'   => true,
+									'target' => true,
+								),
+							)
+						)
+					)
+				);
 			};
 		}
 		return $settings;

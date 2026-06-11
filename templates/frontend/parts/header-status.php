@@ -83,8 +83,9 @@ $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_frien
 				// Only apply this for the External user - for regular subscriptions, always use friend_user display name.
 				$is_external_user = 'external' === $friend_user->user_login;
 				$names_differ     = $is_external_user && $override_author_name && trim( str_replace( $override_author_name, '', $author_name ) ) === $author_name;
+				$display_name     = $names_differ ? $override_author_name : $friend_user->display_name;
 				?>
-				<a href="<?php echo esc_attr( $author_url ); ?>"><strong><?php echo esc_html( $names_differ ? $override_author_name : $friend_user->display_name ); ?></strong></a>
+				<a href="<?php echo esc_attr( $author_url ); ?>"><strong><?php echo wp_kses( Friends\Feed_Parser_ActivityPub::replace_custom_emojis_for_user( $display_name, $friend_user ), Friends\Feed_Parser_ActivityPub::get_custom_emoji_allowed_html() ); ?></strong></a>
 				<?php do_action( 'friends_post_author_meta', $friend_user ); ?>
 				<?php if ( get_post_meta( get_the_ID(), '_has_mention_in_comments', true ) ) : ?>
 					<span class="mention-indicator" title="<?php esc_attr_e( 'You were mentioned in a comment', 'friends' ); ?>">@</span>
