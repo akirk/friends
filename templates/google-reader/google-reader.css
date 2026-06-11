@@ -493,6 +493,53 @@
 	margin: 0;
 }
 
+.friends-page section.subscriptions .subscription-actions {
+	grid-column: 2;
+	display: flex;
+	align-items: center;
+	margin-top: 2px;
+}
+
+.friends-page section.subscriptions .subscription-action {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	width: max-content;
+	max-width: 100%;
+}
+
+.friends-page section.followers .follower-actions {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px;
+}
+
+.friends-page section.followers .follower-status,
+.friends-page section.followers .follower-action {
+	display: inline-flex;
+	align-items: center;
+	border-bottom: 0;
+	gap: 3px;
+	line-height: 1.4;
+	margin-left: 0;
+	vertical-align: baseline;
+}
+
+.friends-page section.followers .follower-status .dashicons,
+.friends-page section.followers .follower-action .dashicons {
+	display: inline-flex;
+	align-items: center;
+	border-bottom: 0;
+	justify-content: center;
+	font-size: 14px;
+	height: 14px;
+	line-height: 1;
+	margin: 0;
+	vertical-align: text-bottom;
+	width: 14px;
+}
+
 /* Direct messages */
 .friends-page .friends-dm-view {
 	background: #fff;
