@@ -24,8 +24,7 @@ echo PHP_EOL . PHP_EOL;
 
 echo $quoted_text;
 
-// translators: %s is a URL.
-printf( wp_strip_all_tags( __( 'Go to your <a href=%s>friends page</a> to respond.', 'friends' ) ) );
+esc_html_e( 'Open the conversation to respond.', 'friends' );
 echo PHP_EOL . PHP_EOL;
 
-echo $args['friend_user']->get_local_friends_page_url();
+echo $args['message_url'];

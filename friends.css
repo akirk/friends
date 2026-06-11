@@ -2385,6 +2385,19 @@ h2#page-title a.dashicons {
 		margin: 0 0 .9rem;
 	}
 
+	& .friends-dm-message.is-consecutive-message {
+		margin-top: -.55rem;
+
+		& .friends-dm-message-avatar,
+		& .friends-dm-message-meta {
+			visibility: hidden;
+		}
+
+		& .friends-dm-message-content {
+			margin-top: 0;
+		}
+	}
+
 	& .friends-dm-message.is-own-message .friends-dm-message-content {
 		background: #eef6ff;
 	}

@@ -91,6 +91,38 @@ class NotificationTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test message notifications link to the direct message view.
+	 */
+	public function test_notify_friend_message_received_links_to_conversation() {
+		$that = $this;
+		update_option( 'home', 'http://me.local' );
+
+		add_filter(
+			'friends_send_mail',
+			function ( $do_send, $to, $subject, $message ) use ( $that ) {
+				$that->assertEquals( $to, \WP_TESTS_EMAIL );
+				$that->assertStringContainsString( 'sent you a message', $subject );
+				$that->assertStringContainsString( 'http://me.local/friends/messages/?conversation=', $message['html'] );
+				$that->assertStringContainsString( 'http://me.local/friends/messages/?conversation=', $message['text'] );
+				$that->assertTrue( $do_send );
+				return false;
+			},
+			10,
+			4
+		);
+
+		do_action(
+			'notify_friend_message_received',
+			new User( $this->friend_id ),
+			'<p>Hello there.</p>',
+			'',
+			'https://friend.local/users/friend',
+			'https://friend.local/messages/1',
+			null
+		);
+	}
+
+	/**
 	 * Test notifications of a new post.
 	 */
 	public function test_no_notify_new_post_single_setting() {

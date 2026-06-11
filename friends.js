@@ -601,6 +601,76 @@
 		return window.confirm( friends.text_del_convers );
 	} );
 
+	function getMessageDraftKey( form, field ) {
+		const key = $( form ).data( 'friends-message-draft-key' );
+		if ( ! key ) {
+			return '';
+		}
+
+		return key + ':' + field;
+	}
+
+	function getMessageDraftStorage() {
+		try {
+			return window.localStorage;
+		} catch ( e ) {
+			return false;
+		}
+	}
+
+	function restoreMessageDrafts() {
+		const storage = getMessageDraftStorage();
+		if ( ! storage ) {
+			return;
+		}
+
+		$( 'form[data-friends-message-draft-key]' ).each( function () {
+			const form = this;
+			const messageKey = getMessageDraftKey( form, 'message' );
+			const subjectKey = getMessageDraftKey( form, 'subject' );
+			const message = storage.getItem( messageKey );
+			const subject = storage.getItem( subjectKey );
+
+			if ( message ) {
+				$( form ).find( 'textarea[name="friends_message_message"]' ).val( message );
+			}
+
+			if ( subject ) {
+				$( form ).find( 'input[name="friends_message_subject"]:not([type="hidden"])' ).val( subject );
+			}
+		} );
+	}
+
+	$document.on( 'input', 'textarea[name="friends_message_message"], input[name="friends_message_subject"]', function () {
+		const storage = getMessageDraftStorage();
+		if ( ! storage ) {
+			return;
+		}
+
+		const form = this.form;
+		const field = 'friends_message_subject' === this.name ? 'subject' : 'message';
+		const key = getMessageDraftKey( form, field );
+		if ( ! key ) {
+			return;
+		}
+
+		if ( this.value ) {
+			storage.setItem( key, this.value );
+		} else {
+			storage.removeItem( key );
+		}
+	} );
+
+	$document.on( 'submit', 'form[data-friends-message-draft-key]', function () {
+		const storage = getMessageDraftStorage();
+		if ( ! storage ) {
+			return;
+		}
+
+		storage.removeItem( getMessageDraftKey( this, 'message' ) );
+		storage.removeItem( getMessageDraftKey( this, 'subject' ) );
+	} );
+
 	$document.on( 'click', 'a.display-message', function () {
 		const $this = $( this ).closest( 'div' );
 		const conversation = $this.find( 'div.conversation' );
@@ -630,15 +700,58 @@
 		return false;
 	} );
 
-	$( function () {
+	function getRelativeTime( timestamp ) {
+		const seconds = Math.max( 1, Math.floor( Date.now() / 1000 ) - timestamp );
+		const minute = 60;
+		const hour = 60 * minute;
+		const day = 24 * hour;
+		const week = 7 * day;
+		const month = 30 * day;
+		const year = 365 * day;
+
+		if ( seconds < minute ) {
+			return seconds + ' seconds';
+		}
+		if ( seconds < hour ) {
+			const minutes = Math.floor( seconds / minute );
+			return minutes + ' minute' + ( 1 === minutes ? '' : 's' );
+		}
+		if ( seconds < day ) {
+			const hours = Math.floor( seconds / hour );
+			return hours + ' hour' + ( 1 === hours ? '' : 's' );
+		}
+		if ( seconds < week ) {
+			const days = Math.floor( seconds / day );
+			return days + ' day' + ( 1 === days ? '' : 's' );
+		}
+		if ( seconds < month ) {
+			const weeks = Math.floor( seconds / week );
+			return weeks + ' week' + ( 1 === weeks ? '' : 's' );
+		}
+		if ( seconds < year ) {
+			const months = Math.floor( seconds / month );
+			return months + ' month' + ( 1 === months ? '' : 's' );
+		}
+
+		const years = Math.floor( seconds / year );
+		return years + ' year' + ( 1 === years ? '' : 's' );
+	}
+
+	function updateRelativeTimes( scope ) {
+		$( scope || document ).find( 'time[data-friends-relative-time]' ).each( function () {
+			const timestamp = parseInt( $( this ).data( 'friends-relative-time' ), 10 );
+			if ( ! timestamp ) {
+				return;
+			}
+
+			$( this ).text( getRelativeTime( timestamp ) + ( $( this ).data( 'friends-relative-time-suffix' ) || '' ) );
+		} );
+	}
+
+	function markCurrentDmThreadRead() {
 		const $thread = $( '.friends-dm-thread' );
 		if ( ! $thread.length ) {
 			return;
-		}
-
-		const messages = $thread.find( '.friends-dm-messages' ).get( 0 );
-		if ( messages ) {
-			messages.scrollTop = messages.scrollHeight;
 		}
 
 		if ( '1' !== String( $thread.data( 'unread' ) ) ) {
@@ -655,8 +768,78 @@
 					.removeClass( 'is-unread' )
 					.find( '.friends-dm-unread-count' )
 					.remove();
+				$thread.data( 'unread', '0' ).attr( 'data-unread', '0' );
 			},
 		} );
+	}
+
+	let isRefreshingDmView = false;
+
+	function refreshDmView() {
+		const $thread = $( '.friends-dm-thread' );
+		const $messages = $( '.friends-dm-messages' );
+		if ( isRefreshingDmView || ! $thread.length || ! $messages.length ) {
+			return;
+		}
+
+		isRefreshingDmView = true;
+
+		$.get( window.location.href ).done( function ( response ) {
+			const $response = $( $.parseHTML( response, document ) );
+			const $newSidebar = $response.find( '.friends-dm-sidebar' );
+			const $newThread = $response.find( '.friends-dm-thread' );
+			const $newMessages = $newThread.find( '.friends-dm-messages' );
+			if ( ! $newThread.length || ! $newMessages.length ) {
+				return;
+			}
+
+			const messages = $messages.get( 0 );
+			const shouldStickToBottom = messages && messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 80;
+			const currentMessageIds = $messages.find( '.friends-dm-message' ).map( function () {
+				return $( this ).data( 'message-id' );
+			} ).get().join( ',' );
+			const newMessageIds = $newMessages.find( '.friends-dm-message' ).map( function () {
+				return $( this ).data( 'message-id' );
+			} ).get().join( ',' );
+
+			if ( $newSidebar.length && $newSidebar.html() !== $( '.friends-dm-sidebar' ).html() ) {
+				$( '.friends-dm-sidebar' ).html( $newSidebar.html() );
+			}
+
+			if ( newMessageIds !== currentMessageIds ) {
+				$messages.html( $newMessages.html() );
+				if ( shouldStickToBottom ) {
+					messages.scrollTop = messages.scrollHeight;
+				}
+			}
+
+			$thread
+				.data( 'unread', $newThread.data( 'unread' ) )
+				.attr( 'data-unread', $newThread.attr( 'data-unread' ) );
+			updateRelativeTimes( '.friends-dm-view' );
+			markCurrentDmThreadRead();
+		} ).always( function () {
+			isRefreshingDmView = false;
+		} );
+	}
+
+	$( function () {
+		restoreMessageDrafts();
+		updateRelativeTimes( document );
+
+		const $thread = $( '.friends-dm-thread' );
+		if ( ! $thread.length ) {
+			return;
+		}
+
+		const messages = $thread.find( '.friends-dm-messages' ).get( 0 );
+		if ( messages ) {
+			messages.scrollTop = messages.scrollHeight;
+		}
+
+		markCurrentDmThreadRead();
+		window.setInterval( updateRelativeTimes, 60000 );
+		window.setInterval( refreshDmView, 30000 );
 	} );
 
 	$document.on( 'mouseenter', 'h2#page-title a.dashicons, a.wp-block-friends-author-star.dashicons', function () {

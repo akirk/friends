@@ -142,7 +142,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 						<span class="friends-dm-conversation-preview"><?php echo esc_html( $conversation_row['preview'] ); ?></span>
 					</span>
 					<span class="friends-dm-conversation-meta">
-						<time title="<?php echo esc_attr( date_i18n( $time_format, $conversation_row['latest_time'] ) ); ?>">
+						<time data-friends-relative-time="<?php echo esc_attr( $conversation_row['latest_time'] ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $conversation_row['latest_time'] ) ); ?>">
 							<?php echo esc_html( human_time_diff( $conversation_row['latest_time'] ) ); ?>
 						</time>
 						<?php if ( $conversation_row['unread_count'] ) : ?>
@@ -173,14 +173,17 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 			</header>
 
 			<div class="friends-dm-messages">
+				<?php $previous_message_author_key = null; ?>
 				<?php foreach ( $selected_conversation['messages'] as $message ) : ?>
 					<?php
 					$message_author = Friends\User::get_post_author( $message );
 					$is_own_message = $message_author && ! is_wp_error( $message_author ) && get_current_user_id() === intval( $message_author->ID );
 					$author_name    = $message_author && ! is_wp_error( $message_author ) ? $message_author->display_name : __( 'Unknown sender', 'friends' );
 					$post_time      = get_post_modified_time( 'U', true, $message );
+					$author_key     = $message_author && ! is_wp_error( $message_author ) ? 'user-' . $message_author->ID : 'unknown';
+					$is_consecutive = $author_key === $previous_message_author_key;
 					?>
-					<div class="friends-dm-message<?php echo $is_own_message ? ' is-own-message' : ''; ?>">
+					<div class="friends-dm-message<?php echo $is_own_message ? ' is-own-message' : ''; ?><?php echo $is_consecutive ? ' is-consecutive-message' : ''; ?>" data-message-id="<?php echo esc_attr( $message->ID ); ?>">
 						<div class="friends-dm-message-avatar">
 							<?php if ( ! $is_own_message && $message_author && ! is_wp_error( $message_author ) && $message_author->get_avatar_url() ) : ?>
 								<img class="avatar" src="<?php echo esc_url( $message_author->get_avatar_url() ); ?>" alt="" width="32" height="32">
@@ -191,7 +194,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 						<div class="friends-dm-message-body">
 							<div class="friends-dm-message-meta">
 								<strong><?php echo esc_html( $is_own_message ? __( 'You', 'friends' ) : $author_name ); ?></strong>
-								<time title="<?php echo esc_attr( date_i18n( $time_format, $post_time ) ); ?>">
+								<time data-friends-relative-time="<?php echo esc_attr( $post_time ); ?>" data-friends-relative-time-suffix="<?php echo esc_attr_x( ' ago', 'relative message timestamp suffix', 'friends' ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $post_time ) ); ?>">
 									<?php
 									echo esc_html(
 										sprintf(
@@ -203,7 +206,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 									?>
 								</time>
 							</div>
-							<div class="friends-dm-message-content">
+							<div class="friends-dm-message-content" title="<?php echo esc_attr( date_i18n( $time_format, $post_time ) ); ?>">
 								<?php
 								$content = make_clickable( get_the_content( null, false, $message ) );
 								echo wp_kses_post( apply_filters( 'the_content', $content ) );
@@ -211,6 +214,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 							</div>
 						</div>
 					</div>
+					<?php $previous_message_author_key = $author_key; ?>
 				<?php endforeach; ?>
 			</div>
 

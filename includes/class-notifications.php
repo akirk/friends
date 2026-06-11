@@ -43,7 +43,7 @@ class Notifications {
 		add_filter( 'friends_rewrite_mail_html', array( $this, 'highlight_keywords' ), 10, 2 );
 		add_action( 'notify_new_friend_post', array( $this, 'notify_new_friend_post' ), 10, 3 );
 		add_filter( 'friends_notify_keyword_match_post', array( $this, 'notify_keyword_match_post' ), 10, 3 );
-		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 3 );
+		add_action( 'notify_friend_message_received', array( $this, 'notify_friend_message_received' ), 10, 5 );
 		add_action( 'notify_unknown_friend_message_received', array( $this, 'notify_unknown_friend_message_received' ), 10, 4 );
 		add_action( 'activitypub_new_follower_email', array( $this, 'activitypub_new_follower_email' ), 10, 3 );
 		add_action( 'activitypub_followers_post_follow', array( $this, 'activitypub_followers_post_follow' ), 10, 4 );
@@ -216,10 +216,12 @@ class Notifications {
 	 * Notify the users of this site about a received message
 	 *
 	 * @param  User   $friend_user The user who sent the message.
-	 * @param       string $message     The message.
-	 * @param       string $subject     The subject.
+	 * @param  string $message     The message.
+	 * @param  string $subject     The subject.
+	 * @param  string $_feed_url   The feed URL.
+	 * @param  string $remote_url  The remote message URL.
 	 */
-	public function notify_friend_message_received( User $friend_user, $message, $subject ) {
+	public function notify_friend_message_received( User $friend_user, $message, $subject, $_feed_url = null, $remote_url = null ) {
 		$user = new User( Friends::get_main_friend_user_id() );
 		if ( defined( 'WP_TESTS_EMAIL' ) ) {
 			$user->user_email = WP_TESTS_EMAIL;
@@ -240,6 +242,7 @@ class Notifications {
 			'friend_user' => $friend_user,
 			'subject'     => $subject,
 			'message'     => $message,
+			'message_url' => $this->get_friend_message_url( $friend_user, $remote_url ),
 		);
 
 		$email_message = array();
@@ -257,6 +260,45 @@ class Notifications {
 		ob_end_clean();
 
 		$this->send_mail( $user->user_email, $email_title, $email_message );
+	}
+
+	/**
+	 * Get the URL for replying to a received direct message.
+	 *
+	 * @param User        $friend_user The message sender.
+	 * @param string|null $remote_url  The remote ActivityPub message URL.
+	 * @return string The reply URL.
+	 */
+	private function get_friend_message_url( User $friend_user, $remote_url = null ) {
+		if ( $remote_url ) {
+			add_filter( 'friends_frontend_post_types', array( $this, 'friends_frontend_post_types_only_messages' ), 999 );
+			$message_id = Feed::url_to_postid( $remote_url );
+			remove_filter( 'friends_frontend_post_types', array( $this, 'friends_frontend_post_types_only_messages' ), 999 );
+
+			if ( $message_id ) {
+				$message = get_post( $message_id );
+				if ( $message ) {
+					while ( $message && $message->post_parent ) {
+						$message = get_post( $message->post_parent );
+					}
+
+					if ( $message ) {
+						return add_query_arg( 'conversation', $message->ID, home_url( '/friends/messages/' ) );
+					}
+				}
+			}
+		}
+
+		return $friend_user->get_local_friends_page_url();
+	}
+
+	/**
+	 * Limit frontend post type lookups to messages.
+	 *
+	 * @return array The message post type.
+	 */
+	public function friends_frontend_post_types_only_messages() {
+		return array( Messages::CPT );
 	}
 
 	/**

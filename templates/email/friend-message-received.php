@@ -31,6 +31,6 @@
 <p>
 	<?php
 	// translators: %s is a URL.
-	echo wp_kses( sprintf( __( 'Go to your <a href=%s>friends page</a> to respond.', 'friends' ), esc_url( $args['friend_user']->get_local_friends_page_url() ) ), array( 'a' => array( 'href' => true ) ) );
+	echo wp_kses( sprintf( __( 'Open the <a href="%s">conversation</a> to respond.', 'friends' ), esc_url( $args['message_url'] ) ), array( 'a' => array( 'href' => true ) ) );
 	?>
 </p>
