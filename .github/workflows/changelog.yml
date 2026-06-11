@@ -4,7 +4,6 @@ on:
     types: [opened, edited, synchronize, reopened, ready_for_review, labeled, unlabeled]
 
 permissions:
-  actions: write
   contents: write
   issues: write
   pull-requests: read
@@ -139,7 +138,7 @@ jobs:
           PR_MESSAGE: '${{ steps.check-pr-body.outputs.message }}'
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.API_TOKEN_GITHUB }}
           script: |
             const { repo: { owner, repo }, payload : { pull_request : { number, head : { ref, repo: head_repo } } } } = context;
 
@@ -207,20 +206,7 @@ jobs:
                 branch: ref
               } );
 
-              const commitSha = response.data.commit.sha;
-              core.info( `Created changelog file: ${ path } in ${ commitSha }` );
-
-              // Commits made with GITHUB_TOKEN do not trigger push/pull_request workflows.
-              // Dispatch the required CI workflows explicitly so checks run on the new PR head.
-              for ( const workflow_id of [ 'test.yml', 'cs.yml', 'lint.yml' ] ) {
-                await github.rest.actions.createWorkflowDispatch( {
-                  owner,
-                  repo,
-                  workflow_id,
-                  ref
-                } );
-                core.info( `Dispatched ${ workflow_id } for ${ ref }` );
-              }
+              core.info( `Created changelog file: ${ path } in ${ response.data.commit.sha }` );
             } catch ( error ) {
-              core.setFailed( `Failed to create changelog file or dispatch CI: ${ error.message }` );
+              core.setFailed( `Failed to create changelog file: ${ error.message }` );
             }
