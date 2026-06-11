@@ -2265,6 +2265,62 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Get custom emoji metadata for a Friends user with an ActivityPub feed.
+	 *
+	 * @param User|null $friend_user The Friends user.
+	 * @return array Map of shortcode to image URL.
+	 */
+	public static function get_custom_emojis_for_user( ?User $friend_user = null ) {
+		if ( ! $friend_user ) {
+			return array();
+		}
+
+		foreach ( $friend_user->get_active_feeds() as $user_feed ) {
+			if ( self::SLUG !== $user_feed->get_parser() ) {
+				continue;
+			}
+
+			$ap_actor_id = $user_feed->get_ap_actor_id();
+			if ( ! $ap_actor_id ) {
+				continue;
+			}
+
+			self::refresh_actor_if_stale( $ap_actor_id );
+			return self::get_custom_emojis_from_actor_post( $ap_actor_id );
+		}
+
+		return array();
+	}
+
+	/**
+	 * Replaces custom emoji shortcodes in a Friends user's display name.
+	 *
+	 * @param string    $text        The display name.
+	 * @param User|null $friend_user The Friends user.
+	 * @return string HTML with custom emoji images.
+	 */
+	public static function replace_custom_emojis_for_user( $text, ?User $friend_user = null ) {
+		return self::replace_custom_emojis( $text, self::get_custom_emojis_for_user( $friend_user ) );
+	}
+
+	/**
+	 * Get the HTML allowed for rendered ActivityPub custom emoji.
+	 *
+	 * @return array Allowed HTML.
+	 */
+	public static function get_custom_emoji_allowed_html() {
+		return array(
+			'img' => array(
+				'alt'     => true,
+				'class'   => true,
+				'loading' => true,
+				'src'     => true,
+				'title'   => true,
+			),
+		);
+	}
+
+	/**
 	 * Gets the external mentions user.
 	 *
 	 * @return     User  The external mentions user.

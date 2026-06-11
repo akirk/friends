@@ -969,7 +969,7 @@ body.friends-page {
 	font-weight: 400;
 }
 
-.friends-page .posts .post-meta .boosted .activitypub-custom-emoji {
+.friends-page .activitypub-custom-emoji {
 	display: inline-block;
 	width: auto;
 	max-width: 1.5em;

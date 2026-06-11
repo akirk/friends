@@ -88,6 +88,48 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertStringContainsString( ':unknown:', $html );
 	}
 
+	public function test_replace_custom_emojis_for_activitypub_user() {
+		$user_feed = User_Feed::get_by_url( $this->actor );
+		$this->assertInstanceOf( User_Feed::class, $user_feed );
+
+		$ap_actor_id = $this->factory->post->create(
+			array(
+				'post_type'    => 'ap_actor',
+				'post_status'  => 'publish',
+				'post_title'   => 'Alex :party:',
+				'post_content' => wp_json_encode(
+					array(
+						'id'  => $this->actor,
+						'tag' => array(
+							array(
+								'type' => 'Emoji',
+								'name' => ':party:',
+								'icon' => array(
+									'url' => 'https://example.com/party.png',
+								),
+							),
+						),
+					)
+				),
+				'guid'         => $this->actor,
+			)
+		);
+
+		$user_feed->set_ap_actor_id( $ap_actor_id );
+		wp_update_user(
+			array(
+				'ID'           => $this->friend_id,
+				'display_name' => 'Alex :party:',
+			)
+		);
+
+		$friend = User::get_user_by_id( $this->friend_id );
+		$html   = Feed_Parser_ActivityPub::replace_custom_emojis_for_user( $friend->display_name, $friend );
+
+		$this->assertStringContainsString( 'Alex ', $html );
+		$this->assertStringContainsString( '<img class="activitypub-custom-emoji" src="https://example.com/party.png" alt=":party:" title="party" loading="lazy" />', $html );
+	}
+
 	public function test_incoming_post() {
 		$this->friend->update_user_option( 'activitypub_friends_show_replies', '1' );
 		$now = time() - 10;

@@ -1322,7 +1322,7 @@ class Blocks {
 				'class' => 'wp-block-friends-author-name',
 				'id'    => 'page-title',
 			)
-		) . '>' . esc_html( $author->display_name ) . '</h2>';
+		) . '>' . wp_kses( Feed_Parser_ActivityPub::replace_custom_emojis_for_user( $author->display_name, $author ), Feed_Parser_ActivityPub::get_custom_emoji_allowed_html() ) . '</h2>';
 	}
 
 	/**
