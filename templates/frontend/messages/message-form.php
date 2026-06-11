@@ -10,8 +10,18 @@ if ( ! isset( $args['subject'] ) && ! isset( $args['reply_to'] ) ) {
 	<div class="card mt-2 p-2" id="friends-send-new-message" style="display: none">
 	<?php
 }
+
+$draft_key = implode(
+	':',
+	array(
+		'friends-message-draft',
+		get_current_user_id(),
+		$args['friend_user']->user_login,
+		isset( $args['reply_to'] ) ? 'reply-' . absint( $args['reply_to'] ) : 'new',
+	)
+);
 ?>
-<form method="post" class="form-horizontal">
+<form method="post" class="form-horizontal" data-friends-message-draft-key="<?php echo esc_attr( $draft_key ); ?>">
 	<input type="hidden" name="friends_message_recipient" value="<?php echo esc_attr( $args['friend_user']->user_login ); ?>">
 	<?php if ( isset( $args['reply_to'] ) ) : ?>
 		<input type="hidden" name="friends_message_reply_to" value="<?php echo esc_attr( $args['reply_to'] ); ?>">

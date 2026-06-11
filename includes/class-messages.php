@@ -286,14 +286,19 @@ class Messages {
 
 		while ( $unread_messages->have_posts() ) {
 			$unread_messages->the_post();
-			$friend_user = User::get_post_author( $post );
+			$friend_user   = User::get_post_author( $post );
+			$conversation  = $post;
+			while ( $conversation->post_parent ) {
+				$conversation = get_post( $conversation->post_parent );
+			}
+			$conversation_url = add_query_arg( 'conversation', $conversation->ID, home_url( '/friends/messages/' ) );
 			$wp_menu->add_menu(
 				array(
 					'id'     => 'friend-message-' . $friend_user->ID,
 					'parent' => 'friends-menu',
 					// translators: %s is the number of open friend requests.
 					'title'  => '<span style="border-left: 2px solid #d63638; padding-left: .5em">' . esc_html( sprintf( __( 'New message from %s', 'friends' ), $friend_user->display_name ) ) . '</span>',
-					'href'   => $friend_user->get_local_friends_page_url(),
+					'href'   => $conversation_url,
 				)
 			);
 		}
