@@ -180,6 +180,39 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test parsing a direct feed URL that is served as text/plain.
+	 */
+	public function test_parse_direct_feed_url_with_text_plain_content_type() {
+		$url = 'https://example.org/feed.xml';
+
+		$mock_text_plain_feed = function ( $preempt, $request, $request_url ) use ( $url ) {
+			if ( $request_url !== $url ) {
+				return $preempt;
+			}
+
+			return array(
+				'headers'  => array(
+					'content-type' => 'text/plain; charset=utf-8',
+				),
+				// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				'body'     => file_get_contents( __DIR__ . '/data/friend-feed-1-public-post.rss' ),
+				'response' => array(
+					'code' => 200,
+				),
+			);
+		};
+		add_filter( 'pre_http_request', $mock_text_plain_feed, 10, 3 );
+
+		$parser = new Feed_Parser_SimplePie( Friends::get_instance()->feed );
+		$items  = $parser->fetch_feed( $url );
+
+		remove_filter( 'pre_http_request', $mock_text_plain_feed, 10 );
+
+		$this->assertNotWPError( $items );
+		$this->assertCount( 1, $items );
+	}
+
+	/**
 	 * Test parsing a feed with identical posts.
 	 */
 	public function test_parse_feed_with_identical_posts() {
