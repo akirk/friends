@@ -149,6 +149,21 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Check whether a URL looks like a direct feed file.
+	 *
+	 * @param string $url The URL to check.
+	 * @return bool Whether the URL has a feed file extension.
+	 */
+	private function is_direct_feed_url( $url ) {
+		$path = wp_parse_url( $url, PHP_URL_PATH );
+		if ( ! $path ) {
+			return false;
+		}
+
+		return (bool) preg_match( '/\.(?:atom|rdf|rss|xml)$/i', $path );
+	}
+
+	/**
 	 * Instanciate SimplePie the same way WordPress does it.
 	 *
 	 * @return     SimplePie  A simplepie instance.
@@ -274,6 +289,9 @@ class Feed_Parser_SimplePie extends Feed_Parser_V2 {
 		 */
 		$feed->set_feed_url( $url );
 		$feed->set_cache_duration( apply_filters( 'wp_feed_cache_transient_lifetime', HOUR_IN_SECONDS - 600, $url ) );
+		if ( $this->is_direct_feed_url( $url ) ) {
+			$feed->force_feed( true );
+		}
 
 		do_action_ref_array( 'wp_feed_options', array( &$feed, $url ) );
 
