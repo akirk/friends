@@ -110,7 +110,15 @@ class Enable_Mastodon_Apps {
 			return $status;
 		}
 
-		$reactions = Reactions::get_post_reactions( $post_id );
+		$reaction_post_id = $post_id;
+		$reactions        = Reactions::get_post_reactions( $reaction_post_id );
+		if ( empty( $reactions ) ) {
+			$remapped_post_id = get_post_meta( $post_id, 'mastodon_reblog_id', true );
+			if ( $remapped_post_id ) {
+				$reaction_post_id = $remapped_post_id;
+				$reactions        = Reactions::get_post_reactions( $reaction_post_id );
+			}
+		}
 		if ( ! is_array( $reactions ) ) {
 			return $status;
 		}
