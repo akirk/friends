@@ -215,6 +215,106 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertTrue( $has_mention_query, 'tax_query should filter by mention tag for current user' );
 	}
 
+	private function create_mastodon_status( $post_id ) {
+		$status                   = new \Enable_Mastodon_Apps\Entity\Status();
+		$status->id               = strval( $post_id );
+		$status->favourited       = false;
+		$status->bookmarked       = false;
+		$status->favourites_count = 0;
+		return $status;
+	}
+
+	private function add_reaction( $post_id, $reaction ) {
+		wp_set_current_user( $this->administrator_id );
+		Reactions::register_user_taxonomy( $this->administrator_id );
+		$term_id = apply_filters( 'friends_react', null, $post_id, $reaction, $this->administrator_id );
+		$this->assertNotEmpty( $term_id );
+	}
+
+	public function test_ema_status_hydrates_reactions() {
+		wp_set_current_user( $this->administrator_id );
+		$friend = Subscription::create( 'reaction.local', 'subscription', 'https://reaction.local' );
+		$post_id = $friend->insert_post(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_title'  => 'Reaction Post',
+				'post_status' => 'publish',
+			)
+		);
+		$this->posts[] = $post_id;
+
+		$this->add_reaction( $post_id, '2764' );
+		$this->add_reaction( $post_id, '2b50' );
+
+		$status = Enable_Mastodon_Apps::mastodon_api_status( $this->create_mastodon_status( $post_id ), $post_id );
+
+		$this->assertTrue( $status->favourited );
+		$this->assertTrue( $status->bookmarked );
+		$this->assertEquals( 1, $status->favourites_count );
+	}
+
+	public function test_ema_status_hydrates_paired_reblog_reactions() {
+		wp_set_current_user( $this->administrator_id );
+		$original_id = wp_insert_post(
+			array(
+				'post_type'   => 'post',
+				'post_title'  => 'Original Post',
+				'post_status' => 'publish',
+			)
+		);
+		$this->posts[] = $original_id;
+
+		$friend = Subscription::create( 'boost.local', 'subscription', 'https://boost.local' );
+		$boost_id = $friend->insert_post(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_title'  => 'Boost Post',
+				'post_status' => 'publish',
+			)
+		);
+		$this->posts[] = $boost_id;
+
+		update_post_meta( $original_id, 'mastodon_reblog_id', $boost_id );
+		update_post_meta( $boost_id, 'mastodon_reblog_id', $original_id );
+		$this->add_reaction( $boost_id, '2764' );
+
+		$status         = $this->create_mastodon_status( $original_id );
+		$status->reblog = $this->create_mastodon_status( $boost_id );
+
+		$status = Enable_Mastodon_Apps::mastodon_api_status( $status, $original_id );
+
+		$this->assertTrue( $status->favourited );
+		$this->assertEquals( 1, $status->favourites_count );
+		$this->assertTrue( $status->reblog->favourited );
+		$this->assertEquals( 1, $status->reblog->favourites_count );
+	}
+
+	public function test_ema_status_uses_reaction_mapping_filters() {
+		wp_set_current_user( $this->administrator_id );
+		$friend = Subscription::create( 'mapped-reaction.local', 'subscription', 'https://mapped-reaction.local' );
+		$post_id = $friend->insert_post(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_title'  => 'Mapped Reaction Post',
+				'post_status' => 'publish',
+			)
+		);
+		$this->posts[] = $post_id;
+		$this->add_reaction( $post_id, '1f44d' );
+
+		$favourite_mapping = function () {
+			return '1f44d';
+		};
+		add_filter( 'mastodon_api_favourite_reaction', $favourite_mapping );
+
+		$status = Enable_Mastodon_Apps::mastodon_api_status( $this->create_mastodon_status( $post_id ), $post_id );
+
+		remove_filter( 'mastodon_api_favourite_reaction', $favourite_mapping );
+
+		$this->assertTrue( $status->favourited );
+		$this->assertEquals( 1, $status->favourites_count );
+	}
+
 	public function test_ema_notifications_mentions_queryable() {
 		// This test verifies that Friends posts with mention tags are properly queryable
 		// through the mastodon_api_get_notifications_query_args filter, which allows
