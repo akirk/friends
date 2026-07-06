@@ -106,32 +106,43 @@ class Enable_Mastodon_Apps {
 	}
 
 	public static function mastodon_api_status( $status, $post_id ) {
-		if ( ! $status || Friends::CPT !== get_post_type( $post_id ) ) {
+		if ( ! $status ) {
 			return $status;
 		}
 
 		$reaction_post_id = $post_id;
-		$reactions        = Reactions::get_post_reactions( $reaction_post_id );
-		if ( empty( $reactions ) ) {
-			$remapped_post_id = get_post_meta( $post_id, 'mastodon_reblog_id', true );
-			if ( $remapped_post_id ) {
-				$reaction_post_id = $remapped_post_id;
-				$reactions        = Reactions::get_post_reactions( $reaction_post_id );
+		$paired_post_id   = get_post_meta( $post_id, 'mastodon_reblog_id', true );
+		if ( Friends::CPT !== get_post_type( $reaction_post_id ) ) {
+			if ( ! $paired_post_id || Friends::CPT !== get_post_type( $paired_post_id ) ) {
+				return $status;
 			}
+			$reaction_post_id = $paired_post_id;
 		}
+
+		$reactions = Reactions::get_post_reactions( $reaction_post_id );
 		if ( ! is_array( $reactions ) ) {
 			return $status;
 		}
 
 		$favourite_reaction = self::get_mastodon_api_reaction( 'favourite' );
 		$bookmark_reaction  = self::get_mastodon_api_reaction( 'bookmark' );
-
-		if ( isset( $reactions[ $favourite_reaction ] ) ) {
-			$status->favourited       = (bool) $reactions[ $favourite_reaction ]->user_reacted;
-			$status->favourites_count = intval( $reactions[ $favourite_reaction ]->count );
+		$remapped_reactions = array();
+		if ( $paired_post_id && intval( $paired_post_id ) !== intval( $reaction_post_id ) ) {
+			$remapped_reactions = Reactions::get_post_reactions( $paired_post_id );
+			if ( ! is_array( $remapped_reactions ) ) {
+				$remapped_reactions = array();
+			}
 		}
-		if ( isset( $reactions[ $bookmark_reaction ] ) ) {
-			$status->bookmarked = (bool) $reactions[ $bookmark_reaction ]->user_reacted;
+
+		$favourite = $reactions[ $favourite_reaction ] ?? $remapped_reactions[ $favourite_reaction ] ?? null;
+		$bookmark  = $reactions[ $bookmark_reaction ] ?? $remapped_reactions[ $bookmark_reaction ] ?? null;
+
+		if ( $favourite ) {
+			$status->favourited       = (bool) $favourite->user_reacted;
+			$status->favourites_count = intval( $favourite->count );
+		}
+		if ( $bookmark ) {
+			$status->bookmarked = (bool) $bookmark->user_reacted;
 		}
 
 		if ( isset( $status->reblog ) ) {
