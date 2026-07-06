@@ -22,6 +22,7 @@ class Enable_Mastodon_Apps {
 		add_filter( 'mastodon_api_view_post_types', array( get_called_class(), 'mastodon_api_view_post_types' ) );
 		add_filter( 'mastodon_api_favourites_args', array( get_called_class(), 'mastodon_api_favourites_args' ), 10, 2 );
 		add_filter( 'mastodon_api_bookmarks_args', array( get_called_class(), 'mastodon_api_bookmarks_args' ), 10, 2 );
+		add_filter( 'mastodon_api_status', array( get_called_class(), 'mastodon_api_status' ), 60, 2 );
 		add_filter( 'mastodon_api_get_notifications_query_args', array( get_called_class(), 'mastodon_api_get_notifications_query_args' ), 10, 2 );
 	}
 
@@ -55,14 +56,14 @@ class Enable_Mastodon_Apps {
 
 	public static function mastodon_api_favourites_args( $args, $user_id ) {
 		return self::mastodon_api_reaction_args(
-			apply_filters( 'friends_favourites_emoji', '2764' ), // ❤️
+			self::get_mastodon_api_reaction( 'favourite' ),
 			$args,
 			$user_id
 		);
 	}
 	public static function mastodon_api_bookmarks_args( $args, $user_id ) {
 		return self::mastodon_api_reaction_args(
-			apply_filters( 'friends_bookmarks_emoji', '2b50' ), // ⭐
+			self::get_mastodon_api_reaction( 'bookmark' ),
 			$args,
 			$user_id
 		);
@@ -94,6 +95,38 @@ class Enable_Mastodon_Apps {
 		$args['tax_query'] = $tax_query; // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
 
 		return $args;
+	}
+
+	protected static function get_mastodon_api_reaction( $type ) {
+		if ( 'bookmark' === $type ) {
+			return apply_filters( 'mastodon_api_bookmark_reaction', apply_filters( 'friends_bookmarks_emoji', '2b50' ), null );
+		}
+
+		return apply_filters( 'mastodon_api_favourite_reaction', apply_filters( 'friends_favourites_emoji', '2764' ), null );
+	}
+
+	public static function mastodon_api_status( $status, $post_id ) {
+		if ( ! $status || Friends::CPT !== get_post_type( $post_id ) ) {
+			return $status;
+		}
+
+		$reactions = Reactions::get_post_reactions( $post_id );
+		if ( ! is_array( $reactions ) ) {
+			return $status;
+		}
+
+		$favourite_reaction = self::get_mastodon_api_reaction( 'favourite' );
+		$bookmark_reaction  = self::get_mastodon_api_reaction( 'bookmark' );
+
+		if ( isset( $reactions[ $favourite_reaction ] ) ) {
+			$status->favourited       = (bool) $reactions[ $favourite_reaction ]->user_reacted;
+			$status->favourites_count = intval( $reactions[ $favourite_reaction ]->count );
+		}
+		if ( isset( $reactions[ $bookmark_reaction ] ) ) {
+			$status->bookmarked = (bool) $reactions[ $bookmark_reaction ]->user_reacted;
+		}
+
+		return $status;
 	}
 
 	public static function mastodon_api_get_notifications_query_args( $args, $type ) {
