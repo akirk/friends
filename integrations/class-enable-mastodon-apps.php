@@ -126,6 +126,12 @@ class Enable_Mastodon_Apps {
 			$status->bookmarked = (bool) $reactions[ $bookmark_reaction ]->user_reacted;
 		}
 
+		if ( isset( $status->reblog ) ) {
+			$status->reblog->favourited       = $status->favourited;
+			$status->reblog->bookmarked       = $status->bookmarked;
+			$status->reblog->favourites_count = $status->favourites_count;
+		}
+
 		return $status;
 	}
 
