@@ -1022,6 +1022,219 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
 	}
 
+	public function test_local_comment_urls_do_not_resolve_to_posts() {
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+
+		$this->assertSame( '', $parser->fix_comment_url_to_postid( home_url( '/?c=123' ) ) );
+		$this->assertSame( '', $parser->fix_comment_url_to_postid( home_url( '/friends/?foo=bar&c=123' ) ) );
+		$this->assertSame( home_url( '/friends/?post=123' ), $parser->fix_comment_url_to_postid( home_url( '/friends/?post=123' ) ) );
+	}
+
+	public function test_incoming_reply_to_local_comment_is_deferred_to_activitypub_comments() {
+		$post_id = $this->friend->insert_post(
+			array(
+				'post_type'    => Friends::CPT,
+				'post_content' => 'Cached ActivityPub post.',
+				'post_status'  => 'publish',
+				'guid'         => 'https://mastodon.local/users/akirk/statuses/123456',
+				'meta_input'   => array(
+					Feed_Parser_ActivityPub::SLUG => array(
+						'attributedTo' => array(
+							'id' => $this->actor,
+						),
+					),
+				),
+			)
+		);
+		$comment_id = wp_insert_comment(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_content'  => 'Local comment.',
+				'comment_type'     => 'comment',
+				'user_id'          => get_current_user_id(),
+				'comment_approved' => 1,
+			)
+		);
+
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+		$result = $parser->handle_received_activity(
+			array(
+				'type'   => 'Create',
+				'id'     => $this->actor . '/statuses/reply/activity',
+				'actor'  => $this->actor,
+				'object' => array(
+					'type'         => 'Note',
+					'id'           => $this->actor . '/statuses/reply',
+					'attributedTo' => $this->actor,
+					'inReplyTo'    => home_url( '/?c=' . $comment_id ),
+					'content'      => 'Reply to the local comment.',
+					'url'          => $this->actor . '/statuses/reply',
+					'published'    => gmdate( \DATE_W3C, time() - 10 ),
+				),
+			),
+			get_current_user_id(),
+			'create'
+		);
+
+		$this->assertFalse( $result );
+	}
+
+	public function test_activitypub_can_persist_reply_to_local_comment_on_cached_post() {
+		if ( ! class_exists( '\Activitypub\Handler\Create' ) ) {
+			$this->markTestSkipped( 'The ActivityPub Create handler is not available.' );
+		}
+
+		$post_id = $this->friend->insert_post(
+			array(
+				'post_type'    => Friends::CPT,
+				'post_content' => 'Cached ActivityPub post.',
+				'post_status'  => 'publish',
+				'guid'         => 'https://mastodon.local/users/akirk/statuses/123456',
+				'meta_input'   => array(
+					Feed_Parser_ActivityPub::SLUG => array(
+						'attributedTo' => array(
+							'id' => $this->actor,
+						),
+					),
+				),
+			)
+		);
+		$comment_id = wp_insert_comment(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_content'  => 'Local comment.',
+				'comment_type'     => 'comment',
+				'user_id'          => get_current_user_id(),
+				'comment_approved' => 1,
+			)
+		);
+		$reply_id = $this->actor . '/statuses/reply';
+		$this->assertSame( (int) $comment_id, (int) \Activitypub\url_to_commentid( home_url( '/?c=' . $comment_id ) ) );
+
+		$activity = array(
+			'type'   => 'Create',
+			'id'     => $reply_id . '/activity',
+			'actor'  => $this->actor,
+			'object' => array(
+				'type'         => 'Note',
+				'id'           => $reply_id,
+				'attributedTo' => $this->actor,
+				'inReplyTo'    => home_url( '/?c=' . $comment_id ),
+				'content'      => 'Reply to the local comment.',
+				'url'          => $reply_id,
+				'published'    => gmdate( \DATE_W3C, time() - 10 ),
+			),
+		);
+		$handler = function ( $activity, $user_ids, $activity_object ) {
+			\Activitypub\Handler\Create::create_interaction( $activity, $user_ids, $activity_object );
+		};
+		add_action( 'activitypub_handled_inbox_create', $handler, 10, 3 );
+		do_action( 'activitypub_handled_inbox_create', $activity, array( get_current_user_id() ), null );
+		remove_action( 'activitypub_handled_inbox_create', $handler, 10 );
+
+		$replies = get_comments(
+			array(
+				'post_id' => $post_id,
+				'parent'  => $comment_id,
+			)
+		);
+
+		$this->assertCount( 1, $replies );
+		$reply = reset( $replies );
+		$this->assertSame( (int) $post_id, (int) $reply->comment_post_ID );
+		$this->assertSame( (int) $comment_id, (int) $reply->comment_parent );
+	}
+
+	public function test_comment_reply_link_uses_local_friends_url() {
+		$remote_post_url = 'https://mastodon.local/users/akirk/statuses/123456';
+		$post_id = $this->friend->insert_post(
+			array(
+				'post_type'    => Friends::CPT,
+				'post_content' => 'Cached ActivityPub post.',
+				'post_status'  => 'publish',
+				'guid'         => $remote_post_url,
+			)
+		);
+		$comment_id = wp_insert_comment(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_content'  => 'Local comment.',
+				'comment_type'     => 'comment',
+				'user_id'          => get_current_user_id(),
+				'comment_approved' => 1,
+			)
+		);
+
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+		$link = $parser->fix_comment_reply_link(
+			'<a href="' . esc_url( $remote_post_url ) . '?replytocom=' . $comment_id . '#respond">Reply</a>',
+			array(),
+			get_comment( $comment_id ),
+			get_post( $post_id )
+		);
+
+		$this->assertStringContainsString( $this->friend->get_local_friends_page_url( $post_id ), $link );
+		$this->assertStringNotContainsString( $remote_post_url, $link );
+	}
+
+	public function test_get_remote_comments_skips_existing_local_comments() {
+		$post_id = $this->friend->insert_post(
+			array(
+				'post_type'    => Friends::CPT,
+				'post_content' => 'Cached ActivityPub post.',
+				'post_status'  => 'publish',
+				'guid'         => 'https://mastodon.local/users/akirk/statuses/123456',
+				'meta_input'   => array(
+					Feed_Parser_ActivityPub::SLUG => array(
+						'attributedTo' => array(
+							'id' => $this->actor,
+						),
+					),
+				),
+			)
+		);
+		$comment_id = wp_insert_comment(
+			array(
+				'comment_post_ID'  => $post_id,
+				'comment_content'  => 'Already stored locally.',
+				'comment_type'     => 'comment',
+				'user_id'          => get_current_user_id(),
+				'comment_approved' => 1,
+			)
+		);
+		add_comment_meta( $comment_id, 'source_id', 'remote-comment-1' );
+		$existing_comment = get_comment( $comment_id );
+
+		$filter = function ( $context ) {
+			$status = (object) array(
+				'id'             => 'remote-comment-1',
+				'uri'            => 'https://mastodon.local/users/akirk/statuses/remote-comment-1',
+				'account'        => (object) array(
+					'display_name' => 'Alex Kirk',
+					'url'          => $this->actor,
+					'acct'         => 'akirk@mastodon.local',
+				),
+				'content'        => 'Already stored locally.',
+				'created_at'     => new \DateTimeImmutable( '2026-01-01 00:00:00' ),
+				'in_reply_to_id' => null,
+			);
+
+			$context['descendants'] = array( $status );
+			return $context;
+		};
+		add_filter(
+			'mastodon_api_status_context',
+			$filter
+		);
+
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+		$comments = $parser->get_remote_comments( array( $existing_comment ), $post_id );
+		remove_filter( 'mastodon_api_status_context', $filter );
+
+		$this->assertCount( 1, $comments );
+		$this->assertSame( (int) $comment_id, (int) $comments[0]->comment_ID );
+	}
+
 	public function test_comment_on_cached_post_federation() {
 		$remote_post_url = 'https://mastodon.local/users/akirk/statuses/123456';
 
