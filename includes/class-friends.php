@@ -507,6 +507,8 @@ class Friends {
 			}
 		}
 
+		Migration::backfill_activitypub_attributed_to_acct();
+
 		update_option( 'friends_plugin_version', Friends::VERSION );
 	}
 

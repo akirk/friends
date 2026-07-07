@@ -161,6 +161,27 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 	}
 
 	/**
+	 * Test that cached acct metadata avoids known-host URL heuristics.
+	 */
+	public function test_cached_acct_metadata_is_used_for_unknown_host() {
+		$actor_url = 'https://totally-unknown.example/users/bob';
+		$post_id = $this->create_friend_post(
+			$actor_url,
+			array(
+				'id'                => $actor_url,
+				'acct'              => 'bob@totally-unknown.example',
+				'preferredUsername' => 'bob',
+				'name'              => 'Bob',
+			)
+		);
+
+		$account = apply_filters( 'mastodon_api_account', null, $this->friend_id, null, get_post( $post_id ) );
+		$this->assertInstanceOf( '\Enable_Mastodon_Apps\Entity\Account', $account );
+		$this->assertEquals( 'bob@totally-unknown.example', $account->acct );
+		$this->assertEquals( 'bob', $account->username );
+	}
+
+	/**
 	 * Test that .social TLD is treated as a known fediverse host.
 	 */
 	public function test_social_tld_is_known() {
