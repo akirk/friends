@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix local replies on cached ActivityPub posts not entering the outbox.
