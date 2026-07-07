@@ -89,6 +89,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_get_reaction_display_name', array( $this, 'get_reaction_display_name' ), 10, 2 );
 
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
+		\add_action( 'wp_insert_comment', array( $this, 'prepare_cached_post_for_comment_federation' ), 5, 2 );
 		\add_action( 'comment_post', array( $this, 'comment_post' ), 10, 3 );
 		\add_action( 'trashed_comment', array( $this, 'trashed_comment' ), 10, 2 );
 		\add_filter( 'friends_get_comments', array( $this, 'get_remote_comments' ), 10, 4 );
@@ -3768,6 +3769,41 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$activitypub = get_post_meta( $post->ID, self::SLUG, true );
 		return is_array( $activitypub ) && ! empty( $activitypub['attributedTo'] ) ? true : $queryable;
+	}
+
+	/**
+	 * Mark cached ActivityPub posts as federated before comment scheduling.
+	 *
+	 * ActivityPub only federates a new local comment when its parent post is
+	 * considered federated. Cached Friends posts are remote objects, so they do
+	 * not go through the normal local post outbox lifecycle, but local replies
+	 * still need this state so ActivityPub can queue the comment as a reply to
+	 * the remote object.
+	 *
+	 * @param int         $comment_id The comment ID.
+	 * @param \WP_Comment $comment    The comment object.
+	 */
+	public function prepare_cached_post_for_comment_federation( $comment_id, $comment ) {
+		if ( ! defined( 'ACTIVITYPUB_OBJECT_STATE_FEDERATED' ) ) {
+			return;
+		}
+
+		$comment = get_comment( $comment );
+		if ( ! $comment || ! $comment->user_id || 1 !== (int) $comment->comment_approved ) {
+			return;
+		}
+
+		$post = get_post( $comment->comment_post_ID );
+		if (
+			! $post instanceof \WP_Post ||
+			Friends::CPT !== $post->post_type ||
+			'publish' !== $post->post_status ||
+			! self::post_supports_activitypub( $post->ID )
+		) {
+			return;
+		}
+
+		update_post_meta( $post->ID, 'activitypub_status', ACTIVITYPUB_OBJECT_STATE_FEDERATED );
 	}
 
 	public function the_content( $the_content ) {

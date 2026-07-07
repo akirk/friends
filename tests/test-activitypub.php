@@ -1033,7 +1033,6 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'post_status'  => 'publish',
 				'guid'         => $remote_post_url,
 				'meta_input'   => array(
-					'activitypub_status' => defined( 'ACTIVITYPUB_OBJECT_STATE_FEDERATED' ) ? ACTIVITYPUB_OBJECT_STATE_FEDERATED : 'federated',
 					'activitypub' => array(
 						'attributedTo' => array(
 							'id'                => $this->actor,
@@ -1045,6 +1044,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			)
 		);
 		$this->assertIsInt( $post_id );
+		$this->assertEmpty( get_post_meta( $post_id, 'activitypub_status', true ) );
 
 		// Verify get_permalink returns the remote URL (via Friends' post_type_link filter).
 		$permalink = get_permalink( $post_id );
@@ -1064,6 +1064,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertGreaterThan( 0, $comment_id );
 
 		$comment = get_comment( $comment_id );
+		$this->assertSame( ACTIVITYPUB_OBJECT_STATE_FEDERATED, get_post_meta( $post_id, 'activitypub_status', true ) );
 
 		// Verify the comment should be federated.
 		if ( function_exists( 'Activitypub\should_comment_be_federated' ) ) {
