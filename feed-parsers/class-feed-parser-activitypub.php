@@ -2052,14 +2052,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return ltrim( $attributed_to['acct'], '@' );
 		}
 
-		if ( ! empty( $attributed_to['ap_actor_id'] ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			$acct = \Activitypub\Collection\Remote_Actors::get_acct( $attributed_to['ap_actor_id'] );
-			if ( $acct ) {
-				return ltrim( $acct, '@' );
-			}
+		if ( ! empty( $attributed_to['ap_actor_id'] ) ) {
+			return self::get_actor_acct_from_remote_actor_id( $attributed_to['ap_actor_id'] );
 		}
 
 		return '';
+	}
+
+	/**
+	 * Get the actor acct from an ActivityPub remote actor post ID.
+	 *
+	 * @param int $ap_actor_id The ActivityPub remote actor post ID.
+	 * @return string The actor acct, or an empty string if unavailable.
+	 */
+	private static function get_actor_acct_from_remote_actor_id( $ap_actor_id ) {
+		$ap_actor_id = (int) $ap_actor_id;
+		if ( ! $ap_actor_id || ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			return '';
+		}
+
+		return ltrim( \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id ), '@' );
 	}
 
 	/**
@@ -2070,11 +2082,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	private static function get_actor_acct_from_user_feed( User_Feed $user_feed ) {
 		$ap_actor_id = $user_feed->get_ap_actor_id();
-		if ( ! $ap_actor_id || ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			return '';
-		}
-
-		return ltrim( \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id ), '@' );
+		return self::get_actor_acct_from_remote_actor_id( $ap_actor_id );
 	}
 
 	/**
