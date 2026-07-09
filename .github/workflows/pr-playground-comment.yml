@@ -1,4 +1,4 @@
-name: PR Playground Comment
+name: PR Playground Link
 on:
   pull_request:
     types: [opened, reopened, synchronize]
@@ -7,52 +7,41 @@ permissions:
   pull-requests: write
 
 jobs:
-  comment:
+  add-link:
     runs-on: ubuntu-latest
     steps:
-      - name: Post Playground Link Comment
+      - name: Add Playground Link to PR Description
         uses: actions/github-script@v7
         with:
           script: |
-            const prNumber = context.payload.pull_request.number;
-            const prBody = context.payload.pull_request.body || '';
-
-            if (prBody.includes('playground.wordpress.net') || prBody.includes('playground-step-library')) {
-              console.log('PR description already contains a playground link, skipping.');
-              return;
-            }
-
+            const markerStart = '<!-- friends-playground-link:start -->';
+            const markerEnd = '<!-- friends-playground-link:end -->';
             const branchName = context.payload.pull_request.head.ref;
             const playgroundUrl = `https://akirk.github.io/playground-step-library/?redir=1&step[0]=setLandingPage&landingPage[0]=/friends/&step[1]=installPlugin&url[1]=github.com/akirk/friends/tree/${branchName}&step[2]=importFriendFeeds&opml[2]=https://alex.kirk.at%20Alex%20Kirk%0Ahttps://adamadam.blog%20Adam%20Zieliński`;
 
-            const commentBody = '## Test this PR in WordPress Playground\n\nYou can test this pull request directly in WordPress Playground:\n\n[Launch WordPress Playground](' + playgroundUrl + ')\n\nThis will install and activate the plugin with the changes from this PR.';
+            const playgroundSection = [
+              markerStart,
+              '## Test this PR in WordPress Playground',
+              '',
+              'You can test this pull request directly in WordPress Playground:',
+              '',
+              `[Launch WordPress Playground](${playgroundUrl})`,
+              '',
+              'This will install and activate the plugin with the changes from this PR.',
+              markerEnd,
+            ].join('\n');
 
-            // Check if we already posted a comment
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const currentBody = context.payload.pull_request.body || '';
+            const existingSection = new RegExp(`${markerStart}[\\s\\S]*?${markerEnd}`);
+            const body = existingSection.test(currentBody)
+              ? currentBody.replace(existingSection, playgroundSection)
+              : [currentBody.trimEnd(), playgroundSection].filter(Boolean).join('\n\n');
+
+            await github.rest.pulls.update({
+              owner,
+              repo,
+              pull_number,
+              body,
             });
-
-            const botComment = comments.find(comment =>
-              comment.user.login === 'github-actions[bot]' &&
-              comment.body.includes('Test this PR in WordPress Playground')
-            );
-
-            if (botComment) {
-              // Update existing comment
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: commentBody
-              });
-            } else {
-              // Create new comment
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: prNumber,
-                body: commentBody
-              });
-            }
