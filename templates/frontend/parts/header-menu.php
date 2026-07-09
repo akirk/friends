@@ -36,4 +36,4 @@ $friend_user = $args['friend_user'];
 	</li>
 <?php endif; ?>
 <?php
-do_action( 'friends_entry_dropdown_menu' );
+do_action( 'friends_entry_dropdown_menu', get_post(), $args['item_friend_user'] ?? $args['friend_user'] );

@@ -1285,12 +1285,13 @@ class Frontend {
 			$args = array(
 				'friends' => $friends,
 			);
+			$args['item_friend_user'] = User::get_post_author( $post );
 
 			if ( $known_author ) {
 				$args['friend_user'] = $known_author;
 				$args['avatar'] = $known_avatar;
 			} else {
-				$args['friend_user'] = User::get_post_author( $post );
+				$args['friend_user'] = $args['item_friend_user'];
 				$args['avatar'] = $args['friend_user']->get_avatar_url();
 			}
 

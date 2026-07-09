@@ -516,6 +516,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						<em style="color: green;"><?php \esc_html_e( 'accepted', 'friends' ); ?></em>
 					<?php elseif ( 'pending' === $follow_status ) : ?>
 						<em style="color: orange;"><?php \esc_html_e( 'pending', 'friends' ); ?></em>
+						<button type="button" class="button button-small refollow-btn"
+							data-nonce="<?php echo \esc_attr( \wp_create_nonce( 'friends-refollow-activitypub' ) ); ?>">
+							<?php \esc_html_e( 'Re-follow', 'friends' ); ?>
+						</button>
 					<?php elseif ( false === $follow_status ) : ?>
 						<em style="color: orange;"><?php \esc_html_e( 'not managed by ActivityPub plugin', 'friends' ); ?></em>
 						<button type="button" class="button button-small refollow-btn"
@@ -1399,14 +1403,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					$result['can_relink']     = true;
 					$result['found_actor_id'] = $actor_post->ID;
 				} else {
-					$result['status']        = 'warning';
-					$result['messages'][]    = __( 'No linked ActivityPub actor found for this feed. You can send a new follow request.', 'friends' );
-					$result['can_refollow']  = true;
+					$result['status']     = 'warning';
+					$result['messages'][] = __( 'No linked ActivityPub actor found for this feed.', 'friends' );
 				}
 			} else {
-				$result['status']       = 'warning';
-				$result['messages'][]   = __( 'No linked ActivityPub actor found for this feed. The ActivityPub plugin may not be managing this subscription.', 'friends' );
-				$result['can_refollow'] = true;
+				$result['status']     = 'warning';
+				$result['messages'][] = __( 'No linked ActivityPub actor found for this feed. The ActivityPub plugin may not be managing this subscription.', 'friends' );
 			}
 		}
 
@@ -1418,13 +1420,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				$result['follow_status'] = $follow_status;
 
 				if ( false === $follow_status ) {
-					$result['status']     = 'warning';
-					$result['messages'][] = __( 'The ActivityPub plugin is not managing this subscription. You may need to re-follow this actor.', 'friends' );
+					$result['status']        = 'warning';
+					$result['messages'][]    = __( 'The ActivityPub plugin is not managing this subscription. You may need to re-follow this actor.', 'friends' );
+					$result['can_refollow'] = true;
 				}
 
 				if ( 'pending' === $follow_status ) {
-					$result['status']     = 'warning';
-					$result['messages'][] = __( 'Your follow request is still pending. The remote server has not yet accepted it.', 'friends' );
+					$result['status']        = 'warning';
+					$result['messages'][]    = __( 'Your follow request is still pending. The remote server has not yet accepted it.', 'friends' );
+					$result['can_refollow'] = true;
 				}
 
 				if ( 'accepted' === $follow_status ) {
@@ -1671,13 +1675,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		$queued = $this->queue_follow_user( $feed );
+		if ( is_wp_error( $queued ) ) {
+			wp_send_json_error( $queued->get_error_message() );
+		}
+
 		if ( ! $queued ) {
 			wp_send_json_error( __( 'Could not queue the follow request. Make sure the ActivityPub plugin is active.', 'friends' ) );
+		}
+
+		$rescheduled = false;
+		if ( is_numeric( $queued ) && class_exists( '\Activitypub\Collection\Outbox' ) ) {
+			$rescheduled = \Activitypub\Collection\Outbox::reschedule( (int) $queued );
 		}
 
 		$message = $actor_post
 			? __( 'Follow request queued and actor data fetched. The feed will start updating once the remote server accepts it.', 'friends' )
 			: __( 'Follow request queued. The feed will start updating once the remote server accepts it.', 'friends' );
+
+		if ( $rescheduled ) {
+			$message = __( 'Follow request resent. The feed will start updating once the remote server accepts it.', 'friends' );
+		}
 
 		wp_send_json_success( array( 'message' => $message ) );
 	}
@@ -1716,7 +1733,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( $ap_actor_id ) {
 			if ( class_exists( '\Activitypub\Collection\Following' ) ) {
 				$follow_status = \Activitypub\Collection\Following::check_status( self::get_activitypub_actor_id( null ), $ap_actor_id );
-				if ( false === $follow_status ) {
+				if ( false === $follow_status || 'pending' === $follow_status ) {
 					$can_refollow = true;
 				}
 			} else {
@@ -1727,8 +1744,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			if ( $actor_post && ! is_wp_error( $actor_post ) && 'ap_actor' === get_post_type( $actor_post ) ) {
 				$can_relink = true;
 			} else {
-				$actor_post   = null;
-				$can_refollow = true;
+				$actor_post = null;
 			}
 		} else {
 			$footer_note = __( 'The ActivityPub plugin is not active. ActivityPub subscriptions require it to receive new posts.', 'friends' );
@@ -1748,6 +1764,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 							<em style="color: orange;"><?php esc_html_e( 'not managed by ActivityPub plugin', 'friends' ); ?></em>
 						<?php else : ?>
 							<em><?php esc_html_e( 'unknown', 'friends' ); ?></em>
+						<?php endif; ?>
+						<?php if ( $can_refollow ) : ?>
+							<button type="button" class="button button-small refollow-btn"
+								data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-refollow-activitypub' ) ); ?>">
+								<?php esc_html_e( 'Re-follow', 'friends' ); ?>
+							</button>
 						<?php endif; ?>
 					</span>
 				<?php else : ?>
@@ -1785,12 +1807,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 						<span class="ap-data-label"><?php esc_html_e( 'Actor Post', 'friends' ); ?></span>
 						<span class="ap-data-value">
 							<em style="color: orange;"><?php esc_html_e( 'not found', 'friends' ); ?></em>
-							<?php if ( $can_refollow ) : ?>
-								<button type="button" class="button button-small refollow-btn"
-									data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-refollow-activitypub' ) ); ?>">
-									<?php esc_html_e( 'Re-follow', 'friends' ); ?>
-								</button>
-							<?php endif; ?>
 						</span>
 					<?php endif; ?>
 				<?php endif; ?>
