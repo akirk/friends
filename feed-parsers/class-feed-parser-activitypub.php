@@ -1490,16 +1490,14 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				// Get the latest local post for this user.
 				$friend_user = $user_feed->get_friend_user();
 				if ( $friend_user ) {
-					$latest_local_post = new \WP_Query(
-						array(
-							'post_type'      => Friends::CPT,
-							'post_status'    => array( 'publish', 'private' ),
-							'posts_per_page' => 1,
-							'orderby'        => 'date',
-							'order'          => 'DESC',
-							'author'         => $friend_user->ID,
-						)
-					);
+					$latest_local_post = new \WP_Query();
+					$latest_local_post->set( 'post_type', Friends::CPT );
+					$latest_local_post->set( 'post_status', array( 'publish', 'private' ) );
+					$latest_local_post->set( 'posts_per_page', 1 );
+					$latest_local_post->set( 'orderby', 'date' );
+					$latest_local_post->set( 'order', 'DESC' );
+					$latest_local_post = $friend_user->modify_query_by_author( $latest_local_post );
+					$latest_local_post->get_posts();
 
 					if ( $latest_local_post->have_posts() ) {
 						$result['latest_local'] = $latest_local_post->posts[0]->post_date_gmt;
