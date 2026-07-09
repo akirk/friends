@@ -166,6 +166,18 @@ class Migration {
 
 		self::register(
 			array(
+				'id'            => 'activitypub_attributed_to_acct',
+				'version'       => '4.2.0',
+				'title'         => 'Backfill ActivityPub Actor Handles',
+				'description'   => 'Adds cached ActivityPub actor handles to the latest 100 cached posts that already reference ap_actor posts.',
+				'method'        => 'backfill_activitypub_attributed_to_acct',
+				'status_option' => 'friends_ap_attributed_to_acct_backfilled',
+				'depends_on'    => 'activitypub_attributed_to',
+			)
+		);
+
+		self::register(
+			array(
 				'id'            => 'import_activitypub_followings',
 				'version'       => '4.0.0',
 				'title'         => 'Import ActivityPub Followings',
@@ -1689,6 +1701,71 @@ class Migration {
 	private static function finalize_ap_attributed_to_migration() {
 		delete_option( 'friends_ap_attributed_to_migration_in_progress' );
 		update_option( 'friends_ap_attributed_to_migration_completed', true, false );
+	}
+
+	/**
+	 * Backfill cached ActivityPub actor handles for the latest 100 cached posts.
+	 */
+	public static function backfill_activitypub_attributed_to_acct() {
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) || ! class_exists( __NAMESPACE__ . '\Feed_Parser_ActivityPub' ) ) {
+			update_option( 'friends_ap_attributed_to_acct_backfilled', true, false );
+			return;
+		}
+
+		if ( get_option( 'friends_ap_attributed_to_acct_backfilled' ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$limit = 100;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+		$posts_to_migrate = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT pm.post_id, pm.meta_value
+				FROM {$wpdb->postmeta} pm
+				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				WHERE p.post_type = %s
+				AND p.post_status IN ( 'publish', 'private' )
+				AND pm.meta_key = %s
+				AND pm.meta_value LIKE %s
+				AND pm.meta_value LIKE %s
+				AND pm.meta_value NOT LIKE %s
+				ORDER BY p.post_date_gmt DESC, p.ID DESC
+				LIMIT %d",
+				Friends::CPT,
+				Feed_Parser_ActivityPub::SLUG,
+				'%"attributedTo"%',
+				'%"ap_actor_id"%',
+				'%"acct"%',
+				$limit
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		$updated = 0;
+
+		foreach ( $posts_to_migrate as $row ) {
+			$meta = maybe_unserialize( $row->meta_value );
+			if ( ! is_array( $meta ) || empty( $meta['attributedTo']['ap_actor_id'] ) || ! empty( $meta['attributedTo']['acct'] ) ) {
+				continue;
+			}
+
+			$acct = \Activitypub\Collection\Remote_Actors::get_acct( $meta['attributedTo']['ap_actor_id'] );
+			if ( ! $acct ) {
+				continue;
+			}
+
+			$meta['attributedTo']['acct'] = ltrim( $acct, '@' );
+			update_post_meta( $row->post_id, Feed_Parser_ActivityPub::SLUG, $meta );
+			++$updated;
+		}
+
+		update_option( 'friends_ap_attributed_to_acct_backfilled', true, false );
+		update_option( 'friends_ap_attributed_to_acct_backfilled_count', $updated, false );
 	}
 
 	/**

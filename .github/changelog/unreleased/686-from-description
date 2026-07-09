@@ -1,0 +1,3 @@
+Type: fixed
+
+Avoid slow ActivityPub host lookups by caching actor handles for cached posts.

@@ -1292,6 +1292,89 @@ class MigrationTest extends \WP_UnitTestCase {
 		$this->assertTrue( Friends::has_pending_migrations() );
 	}
 
+	public function test_backfill_activitypub_attributed_to_acct_limits_to_latest_100_posts() {
+		if ( ! class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$this->markTestSkipped( 'ActivityPub plugin is not available.' );
+		}
+
+		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
+		delete_option( 'friends_ap_attributed_to_acct_backfilled' );
+		delete_option( 'friends_ap_attributed_to_acct_backfilled_count' );
+
+		$post_ids = array();
+		for ( $i = 0; $i < 101; ++$i ) {
+			$ap_actor_id = $this->factory->post->create(
+				array(
+					'post_type'   => 'ap_actor',
+					'post_title'  => 'AP Actor ' . $i,
+					'post_status' => 'publish',
+					'guid'        => 'https://example.com/users/actor' . $i,
+					'meta_input'  => array(
+						'_activitypub_acct' => 'actor' . $i . '@example.com',
+					),
+				)
+			);
+
+			$post_ids[ $i ] = $this->factory->post->create(
+				array(
+					'post_type'     => Friends::CPT,
+					'post_title'    => 'Cached ActivityPub Post ' . $i,
+					'post_status'   => 'publish',
+					'post_date'     => gmdate( 'Y-m-d H:i:s', strtotime( '2024-01-01 00:00:00' ) + $i ),
+					'post_date_gmt' => gmdate( 'Y-m-d H:i:s', strtotime( '2024-01-01 00:00:00' ) + $i ),
+					'meta_input'    => array(
+						Feed_Parser_ActivityPub::SLUG => array(
+							'attributedTo' => array(
+								'ap_actor_id' => $ap_actor_id,
+							),
+						),
+					),
+				)
+			);
+		}
+
+		$cached_actor_id = $this->factory->post->create(
+			array(
+				'post_type'   => 'ap_actor',
+				'post_title'  => 'Already Cached Actor',
+				'post_status' => 'publish',
+				'guid'        => 'https://example.com/users/cached',
+				'meta_input'  => array(
+					'_activitypub_acct' => 'cached@example.com',
+				),
+			)
+		);
+		$already_cached_post_id = $this->factory->post->create(
+			array(
+				'post_type'     => Friends::CPT,
+				'post_title'    => 'Already Cached ActivityPub Post',
+				'post_status'   => 'publish',
+				'post_date'     => '2024-01-02 00:00:00',
+				'post_date_gmt' => '2024-01-02 00:00:00',
+				'meta_input'    => array(
+					Feed_Parser_ActivityPub::SLUG => array(
+						'attributedTo' => array(
+							'ap_actor_id' => $cached_actor_id,
+							'acct'        => 'keep@example.com',
+						),
+					),
+				),
+			)
+		);
+
+		Migration::backfill_activitypub_attributed_to_acct();
+
+		$oldest_meta = get_post_meta( $post_ids[0], Feed_Parser_ActivityPub::SLUG, true );
+		$newest_meta = get_post_meta( $post_ids[100], Feed_Parser_ActivityPub::SLUG, true );
+		$cached_meta = get_post_meta( $already_cached_post_id, Feed_Parser_ActivityPub::SLUG, true );
+
+		$this->assertArrayNotHasKey( 'acct', $oldest_meta['attributedTo'] );
+		$this->assertSame( 'actor100@example.com', $newest_meta['attributedTo']['acct'] );
+		$this->assertSame( 'keep@example.com', $cached_meta['attributedTo']['acct'] );
+		$this->assertSame( 100, (int) get_option( 'friends_ap_attributed_to_acct_backfilled_count' ) );
+		$this->assertTrue( (bool) get_option( 'friends_ap_attributed_to_acct_backfilled' ) );
+	}
+
 	public function test_upgrade_plugin_sets_pending_when_migrating_from_before_4_0() {
 		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
 		$this->setup_pre_migration_environment();

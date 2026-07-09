@@ -14,9 +14,10 @@ $display_name_html = Friends\Feed_Parser_ActivityPub::replace_custom_emojis_for_
 
 // Get ActivityPub feeds and their data (header image, profile URLs, summary).
 $activitypub_feeds = array();
+$seen_activitypub_feeds = array();
 $header_image_url = null;
 $activitypub_summary = null;
-foreach ( $args['friend_user']->get_feeds() as $feed ) {
+foreach ( $args['friend_user']->get_active_feeds() as $feed ) {
 	// Check if this is an ActivityPub feed (parser is 'activitypub').
 	if ( 'activitypub' !== $feed->get_parser() ) {
 		continue;
@@ -24,6 +25,11 @@ foreach ( $args['friend_user']->get_feeds() as $feed ) {
 
 	$ap_actor_id = $feed->get_ap_actor_id();
 	$ap_actor_url = $feed->get_ap_actor_url();
+	$ap_actor_acct = Friends\Feed_Parser_ActivityPub::get_actor_acct_from_attributed_to(
+		array(
+			'ap_actor_id' => $ap_actor_id,
+		)
+	);
 
 	// If no actor URL from linked actor, use the feed URL as the actor URL.
 	if ( ! $ap_actor_url ) {
@@ -34,9 +40,15 @@ foreach ( $args['friend_user']->get_feeds() as $feed ) {
 		continue;
 	}
 
+	$dedupe_key = $ap_actor_acct ? 'acct:' . strtolower( $ap_actor_acct ) : 'url:' . strtolower( untrailingslashit( $ap_actor_url ) );
+	if ( isset( $seen_activitypub_feeds[ $dedupe_key ] ) ) {
+		continue;
+	}
+	$seen_activitypub_feeds[ $dedupe_key ] = true;
+
 	$feed_data = array(
-		'url'    => $ap_actor_url,
-		'header' => null,
+		'url'  => $ap_actor_url,
+		'acct' => $ap_actor_acct,
 	);
 
 	// Try to get actor metadata including header image and summary.
@@ -173,7 +185,9 @@ foreach ( $activitypub_feeds as $ap_feed ) :
 		}
 		// Extract @username for Mastodon-style URLs like /@username.
 		$ap_display = $ap_hostname;
-		if ( isset( $ap_url_parts['path'] ) && preg_match( '#^/@([^/]+)#', $ap_url_parts['path'], $matches ) ) {
+		if ( ! empty( $ap_feed['acct'] ) ) {
+			$ap_display = '@' . $ap_feed['acct'];
+		} elseif ( isset( $ap_url_parts['path'] ) && preg_match( '#^/@([^/]+)#', $ap_url_parts['path'], $matches ) ) {
 			$ap_display = '@' . $matches[1] . '@' . $ap_hostname;
 		} elseif ( isset( $ap_url_parts['path'] ) && preg_match( '#^/users/([^/]+)#i', $ap_url_parts['path'], $matches ) ) {
 			$ap_display = '@' . $matches[1] . '@' . $ap_hostname;
