@@ -134,7 +134,7 @@ $has_last_log = false;
 												<td>
 													<?php if ( $feed->is_activitypub_feed() ) : ?>
 														<?php if ( $feed->get_active() ) : ?>
-															<span class="dashicons dashicons-info-outline" title="<?php esc_attr_e( 'Make inactive and save changes before removing this feed.', 'friends' ); ?>" aria-label="<?php esc_attr_e( 'Make inactive and save changes before removing this feed.', 'friends' ); ?>"></span>
+															<span class="dashicons dashicons-info-outline" title="<?php esc_attr_e( 'Make inactive and save changes so that you can remove this feed.', 'friends' ); ?>" aria-label="<?php esc_attr_e( 'Make inactive and save changes so that you can remove this feed.', 'friends' ); ?>"></span>
 															<?php esc_html_e( 'Unfollow to remove', 'friends' ); ?>
 														<?php else : ?>
 															<a href="#" class="delete-feed activitypub-unfollow"><?php esc_html_e( 'Remove', 'friends' ); ?></a>
