@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix ActivityPub re-follow actions for pending subscriptions.
