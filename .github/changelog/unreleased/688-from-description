@@ -1,0 +1,3 @@
+Type: changed
+
+Update the Playground workflow to add the test link to the pull request description instead of posting a comment.
