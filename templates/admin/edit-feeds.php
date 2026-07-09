@@ -68,7 +68,12 @@ $has_last_log = false;
 										<tbody>
 											<tr>
 												<th><?php esc_html_e( 'Active', 'friends' ); ?></th>
-												<td><input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> /></td>
+												<td>
+													<input type="checkbox" name="feeds[<?php echo esc_attr( $term_id ); ?>][active]" value="1" aria-label="<?php esc_attr_e( 'Feed is active', 'friends' ); ?>"<?php checked( $feed->get_active() ); ?> />
+													<?php if ( $feed->is_activitypub_feed() ) : ?>
+														<p class="description"><?php esc_html_e( 'Make inactive and save changes to unfollow.', 'friends' ); ?></p>
+													<?php endif; ?>
+												</td>
 											</tr>
 											<?php if ( ! $feed->is_activitypub_feed() ) : ?>
 											<tr>
@@ -84,6 +89,7 @@ $has_last_log = false;
 													<?php if ( $feed->is_activitypub_feed() ) : ?>
 														<strong><?php esc_html_e( 'ActivityPub', 'friends' ); ?></strong>
 														<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" value="activitypub" />
+														<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][ap-actor-id]" value="<?php echo esc_attr( $feed->get_ap_actor_id() ); ?>" />
 													<?php else : ?>
 													<select name="feeds[<?php echo esc_attr( $term_id ); ?>][parser]" aria-label="<?php esc_attr_e( 'Parser', 'friends' ); ?>">
 														<?php foreach ( $args['registered_parsers'] as $slug => $parser_name ) : ?>
@@ -123,17 +129,21 @@ $has_last_log = false;
 											<th><?php esc_html_e( 'Remarks', 'friends' ); ?></th>
 											<td><input type="text" name="feeds[<?php echo esc_attr( $term_id ); ?>][title]" value="<?php echo esc_attr( $feed->get_title() ); ?>" size="20" aria-label="<?php esc_attr_e( 'Feed Name', 'friends' ); ?>" /></td>
 										</tr>
-										<tr>
-											<th><?php esc_html_e( 'Actions', 'friends' ); ?></th>
-											<td>
-												<?php if ( $feed->is_activitypub_feed() ) : ?>
-													<a href="#" class="delete-feed activitypub-unfollow"><?php esc_html_e( 'Unfollow &amp; Remove', 'friends' ); ?></a>
-													<input type="hidden" name="feeds[<?php echo esc_attr( $term_id ); ?>][ap-actor-id]" value="<?php echo esc_attr( $feed->get_ap_actor_id() ); ?>" />
-												<?php else : ?>
-													<a href="#" class="delete-feed"><?php esc_html_e( 'Delete', 'friends' ); ?></a>
-												<?php endif; ?>
-											</td>
-										</tr>
+											<tr>
+												<th><?php esc_html_e( 'Actions', 'friends' ); ?></th>
+												<td>
+													<?php if ( $feed->is_activitypub_feed() ) : ?>
+														<?php if ( $feed->get_active() ) : ?>
+															<span class="dashicons dashicons-info-outline" title="<?php esc_attr_e( 'Make inactive and save changes so that you can remove this feed.', 'friends' ); ?>" aria-label="<?php esc_attr_e( 'Make inactive and save changes so that you can remove this feed.', 'friends' ); ?>"></span>
+															<?php esc_html_e( 'Unfollow to remove', 'friends' ); ?>
+														<?php else : ?>
+															<a href="#" class="delete-feed activitypub-unfollow"><?php esc_html_e( 'Remove', 'friends' ); ?></a>
+														<?php endif; ?>
+													<?php else : ?>
+														<a href="#" class="delete-feed"><?php esc_html_e( 'Delete', 'friends' ); ?></a>
+													<?php endif; ?>
+												</td>
+											</tr>
 										<?php do_action( 'friends_feed_list_item', $feed, $term_id ); ?>
 									</tbody>
 								</table>
