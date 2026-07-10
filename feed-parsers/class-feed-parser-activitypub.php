@@ -4494,14 +4494,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( get_post_meta( $post->ID, 'boosted', true ) ) {
-			\delete_post_meta( $post->ID, 'boosted' );
-			\delete_post_meta( $post->ID, 'boosted_at' );
 			$this->mastodon_api_unreblog( $post->ID );
 			wp_send_json_success( 'unboosted', array( 'id' => $post->ID ) );
 			return;
 		}
-		\update_post_meta( $post->ID, 'boosted', get_current_user_id() );
-		\update_post_meta( $post->ID, 'boosted_at', current_time( 'mysql', true ) );
 		$this->mastodon_api_reblog( $post->ID );
 
 		wp_send_json_success( 'boosted', array( 'id' => $post->ID ) );
