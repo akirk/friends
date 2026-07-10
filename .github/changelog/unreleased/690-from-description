@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix default frontend theme colors so the page follows system dark mode.
