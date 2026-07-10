@@ -1,0 +1,3 @@
+Type: fixed
+
+Persist Mastodon API boosts locally so announced boosts also appear in Mastodon account statuses.
