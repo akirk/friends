@@ -1,3 +1,15 @@
+### 4.2.1
+- Render ActivityPub custom emoji in actor display names. ([#681])
+- Parse direct XML feeds even when they are served with a text/plain content type. ([#683])
+- Hydrate Enable Mastodon Apps favourite and bookmark state from Friends reactions. ([#684])
+- Fix local replies on cached ActivityPub posts not entering the outbox. ([#685])
+- Avoid slow ActivityPub host lookups by caching actor handles for cached posts. ([#686])
+- Fix ActivityPub re-follow actions for pending subscriptions. ([#687])
+- Update the Playground workflow to add the test link to the pull request description instead of posting a comment. ([#688])
+- Clarify ActivityPub feed unfollow and removal actions. ([#689])
+- Fix default frontend theme colors so the page follows system dark mode. ([#690])
+- Persist Mastodon API boosts locally so announced boosts also appear in Mastodon account statuses. ([#691])
+
 ### 4.2.0
 - Add a direct messages view with a conversation list and chat layout. ([#671])
 - Show direct messages from ActivityPub users you do not follow and surface follower status on their profile. ([#672])
@@ -895,3 +907,14 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#677]: https://github.com/akirk/friends/pull/677
 [#678]: https://github.com/akirk/friends/pull/678
 [#679]: https://github.com/akirk/friends/pull/679
+
+[#681]: https://github.com/akirk/friends/pull/681
+[#683]: https://github.com/akirk/friends/pull/683
+[#684]: https://github.com/akirk/friends/pull/684
+[#685]: https://github.com/akirk/friends/pull/685
+[#686]: https://github.com/akirk/friends/pull/686
+[#687]: https://github.com/akirk/friends/pull/687
+[#688]: https://github.com/akirk/friends/pull/688
+[#689]: https://github.com/akirk/friends/pull/689
+[#690]: https://github.com/akirk/friends/pull/690
+[#691]: https://github.com/akirk/friends/pull/691
