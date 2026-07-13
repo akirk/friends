@@ -315,6 +315,106 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertEquals( 1, $status->favourites_count );
 	}
 
+	public function test_mastodon_api_reblog_persists_local_boost_state() {
+		wp_set_current_user( $this->administrator_id );
+
+		$friend = Subscription::create( 'api-boost.local', 'subscription', 'https://api-boost.local' );
+		$post_id = $friend->insert_post(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_title'  => 'API Boost Post',
+				'post_status' => 'publish',
+			)
+		);
+		$this->posts[] = $post_id;
+
+		$parser = new class() extends Feed_Parser_ActivityPub {
+			public $announced_post_id;
+			public $unannounced_post_id;
+
+			public function __construct() {}
+
+			public function queue_announce( \WP_Post $post ) {
+				$this->announced_post_id = $post->ID;
+				return true;
+			}
+
+			public function queue_unannounce( \WP_Post $post ) {
+				$this->unannounced_post_id = $post->ID;
+				return true;
+			}
+		};
+
+		$parser->mastodon_api_reblog( $post_id );
+
+		$this->assertEquals( $this->administrator_id, get_post_meta( $post_id, 'boosted', true ) );
+		$this->assertNotEmpty( get_post_meta( $post_id, 'boosted_at', true ) );
+		$this->assertEquals( $post_id, $parser->announced_post_id );
+
+		$parser->mastodon_api_unreblog( $post_id );
+
+		$this->assertEmpty( get_post_meta( $post_id, 'boosted', true ) );
+		$this->assertEmpty( get_post_meta( $post_id, 'boosted_at', true ) );
+		$this->assertEquals( $post_id, $parser->unannounced_post_id );
+	}
+
+	public function test_ema_account_statuses_include_local_boosts() {
+		wp_set_current_user( $this->administrator_id );
+
+		$friend = Subscription::create( 'account-boost.local', 'subscription', 'https://account-boost.local' );
+		$post_id = $friend->insert_post(
+			array(
+				'post_type'     => Friends::CPT,
+				'post_title'    => 'Account Boost Post',
+				'post_status'   => 'publish',
+				'post_date_gmt' => '2024-05-01 10:00:00',
+			)
+		);
+		$this->posts[] = $post_id;
+
+		update_post_meta( $post_id, 'boosted', $this->administrator_id );
+		update_post_meta( $post_id, 'boosted_at', '2024-05-02 12:00:00' );
+
+		$status_filter = function ( $status, $filtered_post_id ) use ( $post_id ) {
+			if ( intval( $filtered_post_id ) !== intval( $post_id ) ) {
+				return $status;
+			}
+
+			$status = $this->create_mastodon_status( $post_id );
+			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
+			$status->account = (object) array(
+				'id' => 'remote-account',
+			);
+			return $status;
+		};
+		add_filter( 'mastodon_api_status', $status_filter, 20, 2 );
+
+		$account_filter = function ( $account, $user_id ) {
+			if ( intval( $user_id ) !== intval( $this->administrator_id ) ) {
+				return $account;
+			}
+
+			return (object) array(
+				'id' => strval( $this->administrator_id ),
+			);
+		};
+		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
+
+		$request = $this->api_request( 'GET', '/api/v1/accounts/' . $this->administrator_id . '/statuses' );
+		$request->set_param( 'limit', 20 );
+		$statuses = Enable_Mastodon_Apps::mastodon_api_account_statuses( new \WP_REST_Response( array() ), $request, $this->administrator_id );
+
+		remove_filter( 'mastodon_api_status', $status_filter, 20 );
+		remove_filter( 'mastodon_api_account', $account_filter, 20 );
+
+		$data = $statuses->get_data();
+
+		$this->assertCount( 1, $data );
+		$this->assertEquals( strval( $this->administrator_id ), $data[0]->account->id );
+		$this->assertEquals( strval( $post_id ), $data[0]->reblog->id );
+		$this->assertEquals( '2024-05-02T12:00:00+00:00', $data[0]->created_at->format( \DateTime::ATOM ) );
+	}
+
 	public function test_ema_notifications_mentions_queryable() {
 		// This test verifies that Friends posts with mention tags are properly queryable
 		// through the mastodon_api_get_notifications_query_args filter, which allows
