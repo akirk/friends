@@ -54,6 +54,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'activitypub_inbox_update', array( $this, 'handle_received_update' ), 15, 2 );
 		\add_action( 'activitypub_handled_create', array( $this, 'activitypub_handled_create' ), 10, 4 );
 		\add_action( 'activitypub_interactions_follow_url', array( $this, 'activitypub_interactions_follow_url' ), 10, 2 );
+		\add_action( 'activitypub_handled_inbox_create', array( $this, 'prepare_activitypub_comment_reply' ), 5, 3 );
 		\add_filter( 'activitypub_comment_post_id', array( $this, 'activitypub_comment_post_id' ), 10, 3 );
 		\add_filter( 'activitypub_is_post_disabled', array( $this, 'disable_activitypub_for_cached_posts' ), 10, 2 );
 		\add_filter( 'activitypub_is_post_publicly_queryable', array( $this, 'activitypub_cached_post_publicly_queryable' ), 10, 2 );
@@ -88,6 +89,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'mastodon_api_unreact', array( $this, 'mastodon_api_unreact' ), 10, 2 );
 		\add_action( 'friends_get_reaction_display_name', array( $this, 'get_reaction_display_name' ), 10, 2 );
 
+		\add_filter( 'url_to_postid', array( $this, 'fix_comment_url_to_postid' ) );
+		\add_filter( 'comment_reply_link', array( $this, 'fix_comment_reply_link' ), 10, 4 );
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
 		\add_action( 'wp_insert_comment', array( $this, 'prepare_cached_post_for_comment_federation' ), 5, 2 );
 		\add_action( 'comment_post', array( $this, 'comment_post' ), 10, 3 );
@@ -2560,6 +2563,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				// This is a reply to an existing Friends post - skip processing and let ActivityPub handle it as a comment.
 				return false;
 			}
+			if ( function_exists( '\Activitypub\url_to_commentid' ) && \Activitypub\url_to_commentid( $in_reply_to ) ) {
+				// This is a reply to an existing local comment - skip processing and let ActivityPub handle it as a threaded comment.
+				return false;
+			}
 		}
 
 		if ( 'undo' === $type ) {
@@ -3812,6 +3819,32 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Prepare ActivityPub's Create handler to persist a reply to a local comment.
+	 *
+	 * ActivityPub checks is_post_disabled() before inserting interaction comments.
+	 * Cached Friends posts normally stay disabled there to avoid post federation,
+	 * so mark the parent post when the incoming object targets a local comment.
+	 *
+	 * @param array $activity The activity object.
+	 */
+	public function prepare_activitypub_comment_reply( $activity ) {
+		if ( empty( $activity['object']['inReplyTo'] ) || ! function_exists( '\Activitypub\url_to_commentid' ) ) {
+			return;
+		}
+
+		$in_reply_to = $activity['object']['inReplyTo'];
+		if ( is_array( $in_reply_to ) ) {
+			$in_reply_to = reset( $in_reply_to );
+		}
+
+		$comment_id = \Activitypub\url_to_commentid( $in_reply_to );
+		$comment = $comment_id ? get_comment( $comment_id ) : null;
+		if ( $comment ) {
+			wp_cache_set( 'activitypub_comment_reply_post_' . $comment->comment_post_ID, true, 'friends' );
+		}
+	}
+
+	/**
 	 * Prevent the ActivityPub plugin from federating cached friend posts.
 	 *
 	 * Cached posts are remote content stored locally; they must never be
@@ -3827,9 +3860,67 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function disable_activitypub_for_cached_posts( $disabled, $post ) {
 		if ( $post instanceof \WP_Post && Friends::CPT === $post->post_type ) {
+			$cache_key = 'activitypub_comment_reply_post_' . $post->ID;
+			if (
+				doing_action( 'activitypub_handled_inbox_create' ) &&
+				wp_cache_get( $cache_key, 'friends' ) &&
+				self::post_supports_activitypub( $post->ID )
+			) {
+				return false;
+			}
 			return true;
 		}
 		return $disabled;
+	}
+
+	/**
+	 * Prevent comment URLs (?c=NNN) from resolving to the front page via url_to_postid().
+	 *
+	 * WordPress core strips query strings in url_to_postid(). For local comment URLs,
+	 * that can resolve to the site's front page before ActivityPub falls back to
+	 * url_to_commentid(), which breaks threaded replies.
+	 *
+	 * @param string $url The URL to derive the post ID from.
+	 * @return string The URL, or empty string for comment URLs.
+	 */
+	public function fix_comment_url_to_postid( $url ) {
+		if ( preg_match( '#[?&]c=\d+#', $url ) ) {
+			if ( function_exists( '\Activitypub\url_to_commentid' ) ) {
+				$comment_id = \Activitypub\url_to_commentid( $url );
+				$comment = $comment_id ? get_comment( $comment_id ) : null;
+				if ( $comment ) {
+					wp_cache_set( 'activitypub_comment_reply_post_' . $comment->comment_post_ID, true, 'friends' );
+				}
+			}
+			return '';
+		}
+
+		return $url;
+	}
+
+	/**
+	 * Fix comment reply links on friend_post_cache posts to use the local Friends URL.
+	 *
+	 * WordPress core's get_comment_reply_link() uses get_permalink(), which returns
+	 * the external source URL for cached Friends posts.
+	 *
+	 * @param string      $link    The HTML markup for the comment reply link.
+	 * @param array       $args    The arguments.
+	 * @param \WP_Comment $comment The comment object.
+	 * @param \WP_Post    $post    The post object.
+	 * @return string The fixed HTML markup.
+	 */
+	public function fix_comment_reply_link( $link, $args, $comment, $post ) {
+		if ( ! $post instanceof \WP_Post || Friends::CPT !== $post->post_type ) {
+			return $link;
+		}
+
+		$friend_user = User::get_post_author( $post );
+		if ( ! $friend_user ) {
+			return $link;
+		}
+
+		return str_replace( get_permalink( $post->ID ), $friend_user->get_local_friends_page_url( $post->ID ), $link );
 	}
 
 	/**
@@ -4841,12 +4932,12 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return     array  The comments.
 	 */
 	public function get_remote_comments( $comments, $post_id, ?User $friend_user = null, ?User_Feed $user_feed = null ) {
-		if ( User_Feed::get_parser_for_post_id( $post_id ) !== self::SLUG ) {
+		$post = get_post( $post_id );
+		if ( ! $post || Friends::CPT !== $post->post_type ) {
 			return $comments;
 		}
 
-		$post = get_post( $post_id );
-		if ( Friends::CPT !== $post->post_type ) {
+		if ( ! self::post_supports_activitypub( $post_id ) ) {
 			return $comments;
 		}
 
@@ -4856,7 +4947,30 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'descendants' => array(),
 		);
 		$context = apply_filters( 'mastodon_api_status_context', $context, $post_id, $post->guid );
+
+		$existing_ids = array();
+		foreach ( $comments as $comment ) {
+			$existing_ids[ $comment->comment_ID ] = true;
+
+			$source_id = get_comment_meta( $comment->comment_ID, 'source_id', true );
+			if ( $source_id ) {
+				$existing_ids[ $source_id ] = true;
+			}
+
+			$source_url = get_comment_meta( $comment->comment_ID, 'source_url', true );
+			if ( $source_url ) {
+				$existing_ids[ $source_url ] = true;
+			}
+		}
+
 		foreach ( $context['descendants'] as $status ) {
+			if ( isset( $existing_ids[ $status->id ] ) || ( ! empty( $status->uri ) && isset( $existing_ids[ $status->uri ] ) ) ) {
+				continue;
+			}
+
+			if ( ! empty( $status->uri ) && preg_match( '/#comment-(\d+)$/', $status->uri, $matches ) && isset( $existing_ids[ $matches[1] ] ) ) {
+				continue;
+			}
 
 			$comments[] = new \WP_Comment(
 				(object) array(
