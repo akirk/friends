@@ -326,13 +326,29 @@ class Frontend {
 		return $file_paths;
 	}
 
+	/**
+	 * Get an asset version that changes when the local file changes.
+	 *
+	 * @param string $file Relative asset path.
+	 * @return string Asset version.
+	 */
+	private function get_asset_version( $file ) {
+		$path = dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file;
+		if ( file_exists( $path ) ) {
+			return Friends::VERSION . '-' . filemtime( $path );
+		}
+
+		return Friends::VERSION;
+	}
+
 	public function default_theme() {
 		$handle = 'friends';
 		$file = 'friends.css';
-		$version = Friends::VERSION;
+		$version = $this->get_asset_version( $file );
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
-		wp_enqueue_script( 'friends-default-theme', plugins_url( 'friends-default-theme.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $version, true );
+		$file = 'friends-default-theme.js';
+		wp_enqueue_script( 'friends-default-theme', plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $this->get_asset_version( $file ), true );
 	}
 
 	/**
@@ -346,7 +362,7 @@ class Frontend {
 
 		$handle = 'friends';
 		$file = 'friends.js';
-		$version = Friends::VERSION;
+		$version = $this->get_asset_version( $file );
 		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ), true );
 
 		$query_vars = wp_json_encode( $this->get_minimal_query_vars( $wp_query->query_vars ) );
@@ -524,10 +540,11 @@ class Frontend {
 	public function mastodon_theme() {
 		$handle  = 'friends-mastodon';
 		$file    = 'templates/mastodon/mastodon.css';
-		$version = Friends::VERSION;
+		$version = $this->get_asset_version( $file );
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
-		wp_enqueue_script( 'friends-mastodon', plugins_url( 'templates/mastodon/mastodon.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $version, true );
+		$file = 'templates/mastodon/mastodon.js';
+		wp_enqueue_script( 'friends-mastodon', plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $this->get_asset_version( $file ), true );
 		wp_localize_script(
 			'friends-mastodon',
 			'friendsMastodon',
@@ -560,10 +577,11 @@ class Frontend {
 	public function twitter_theme() {
 		$handle  = 'friends-twitter';
 		$file    = 'templates/twitter/twitter.css';
-		$version = Friends::VERSION;
+		$version = $this->get_asset_version( $file );
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
-		wp_enqueue_script( 'friends-twitter', plugins_url( 'templates/twitter/twitter.js', FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $version, true );
+		$file = 'templates/twitter/twitter.js';
+		wp_enqueue_script( 'friends-twitter', plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery', 'friends' ), $this->get_asset_version( $file ), true );
 		wp_localize_script(
 			'friends-twitter',
 			'friendsTwitter',
@@ -584,10 +602,11 @@ class Frontend {
 	public function google_reader_theme() {
 		$handle  = 'friends-google-reader';
 		$file    = 'templates/google-reader/google-reader.css';
-		$version = Friends::VERSION;
+		$version = $this->get_asset_version( $file );
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 
-		wp_enqueue_script( 'friends-google-reader', plugins_url( 'templates/google-reader/google-reader.js', FRIENDS_PLUGIN_FILE ), array( 'jquery' ), $version, true );
+		$file = 'templates/google-reader/google-reader.js';
+		wp_enqueue_script( 'friends-google-reader', plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'jquery' ), $this->get_asset_version( $file ), true );
 
 		add_filter(
 			'friends_template_paths_theme_google-reader',
@@ -661,7 +680,7 @@ class Frontend {
 		// and injected via template_override.
 		$handle  = 'friends-blocks';
 		$file    = 'friends-blocks.css';
-		$version = Friends::VERSION;
+		$version = $this->get_asset_version( $file );
 		wp_enqueue_style( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array(), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ) );
 	}
 
