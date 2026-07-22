@@ -134,6 +134,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_external_user' ), 15, 4 );
 		add_action( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
 		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 6 );
+		add_action( 'activitypub_pre_send_to_inboxes', array( $this, 'record_direct_message_delivery_targets' ), 10, 3 );
+		add_action( 'activitypub_sent_to_inbox', array( $this, 'record_direct_message_delivery_result' ), 10, 5 );
 
 		// Auto-create Friend subscription when following via ActivityPub plugin.
 		add_action( 'post_activitypub_add_to_outbox', array( $this, 'handle_outbox_follow' ), 10, 4 );
@@ -953,8 +955,168 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		update_post_meta( $post_id, 'activitypub_direct_message_outbox_id', $outbox_activity_id );
+		update_post_meta( $outbox_activity_id, 'activitypub_direct_message_post_id', $post_id );
+		$this->update_direct_message_delivery_status(
+			$post_id,
+			array(
+				'status'  => 'queued',
+				'message' => __( 'Queued for delivery', 'friends' ),
+			)
+		);
 
 		return $post_id;
+	}
+
+	/**
+	 * Record the inboxes an ActivityPub direct message is being sent to.
+	 *
+	 * @param string $json           The ActivityPub Activity JSON.
+	 * @param array  $inboxes        The inboxes to send to.
+	 * @param int    $outbox_item_id The ActivityPub outbox item ID.
+	 */
+	public function record_direct_message_delivery_targets( $json, $inboxes, $outbox_item_id ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+		$post_id = $this->get_direct_message_post_id_from_outbox( $outbox_item_id );
+		if ( ! $post_id ) {
+			return;
+		}
+
+		if ( empty( $inboxes ) ) {
+			$this->update_direct_message_delivery_status(
+				$post_id,
+				array(
+					'status'  => 'failed',
+					'message' => __( 'No delivery inbox found', 'friends' ),
+				)
+			);
+			return;
+		}
+
+		$this->update_direct_message_delivery_status(
+			$post_id,
+			array(
+				'status'  => 'sending',
+				'message' => __( 'Sending', 'friends' ),
+				'inboxes' => array_values( array_unique( array_map( 'esc_url_raw', $inboxes ) ) ),
+			)
+		);
+	}
+
+	/**
+	 * Record the delivery result for an ActivityPub direct message.
+	 *
+	 * @param array|\WP_Error $result         The inbox delivery result.
+	 * @param string          $inbox          The inbox URL.
+	 * @param string          $json           The ActivityPub Activity JSON.
+	 * @param int             $actor_id       The actor ID.
+	 * @param int             $outbox_item_id The ActivityPub outbox item ID.
+	 */
+	public function record_direct_message_delivery_result( $result, $inbox, $json, $actor_id, $outbox_item_id ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+		$post_id = $this->get_direct_message_post_id_from_outbox( $outbox_item_id );
+		if ( ! $post_id ) {
+			return;
+		}
+
+		$status  = 'failed';
+		$message = __( 'Delivery failed', 'friends' );
+		$code    = null;
+		$error   = null;
+
+		if ( is_wp_error( $result ) ) {
+			$error = $result->get_error_message();
+		} else {
+			$code = wp_remote_retrieve_response_code( $result );
+			if ( $code >= 200 && $code < 300 ) {
+				$status  = 'delivered';
+				$message = __( 'Delivered', 'friends' );
+			} elseif ( $code ) {
+				// translators: %d is an HTTP status code.
+				$error = sprintf( __( 'Remote inbox returned HTTP %d', 'friends' ), $code );
+			}
+		}
+
+		$this->update_direct_message_delivery_status(
+			$post_id,
+			array(
+				'status'  => $status,
+				'message' => $message,
+				'inbox'   => esc_url_raw( $inbox ),
+				'code'    => $code,
+				'error'   => $error,
+			)
+		);
+	}
+
+	/**
+	 * Get a direct message post ID from an ActivityPub outbox item.
+	 *
+	 * @param int $outbox_item_id The ActivityPub outbox item ID.
+	 * @return int The direct message post ID, or 0.
+	 */
+	private function get_direct_message_post_id_from_outbox( $outbox_item_id ) {
+		$post_id = (int) get_post_meta( $outbox_item_id, 'activitypub_direct_message_post_id', true );
+		return $post_id;
+	}
+
+	/**
+	 * Update delivery metadata for a direct message.
+	 *
+	 * @param int   $post_id The direct message post ID.
+	 * @param array $status  The delivery status data.
+	 */
+	private function update_direct_message_delivery_status( $post_id, $status ) {
+		$previous = get_post_meta( $post_id, 'activitypub_direct_message_delivery', true );
+		if ( ! is_array( $previous ) ) {
+			$previous = array();
+		}
+
+		$status['updated_at'] = time();
+
+		update_post_meta(
+			$post_id,
+			'activitypub_direct_message_delivery',
+			array_filter(
+				array_merge( $previous, $status ),
+				static function ( $value ) {
+					return null !== $value && '' !== $value;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Get display data for an ActivityPub direct message delivery indicator.
+	 *
+	 * @param int|\WP_Post $post The direct message post or ID.
+	 * @return array|null Delivery display data, or null for non-ActivityPub messages.
+	 */
+	public static function get_direct_message_delivery_status( $post ) {
+		$post = get_post( $post );
+		if ( ! $post || \Friends\Messages::CPT !== $post->post_type ) {
+			return null;
+		}
+
+		if ( ! get_post_meta( $post->ID, 'activitypub_direct_message_outbox_id', true ) ) {
+			return null;
+		}
+
+		$delivery = get_post_meta( $post->ID, 'activitypub_direct_message_delivery', true );
+		if ( ! is_array( $delivery ) ) {
+			$delivery = array();
+		}
+
+		$status = isset( $delivery['status'] ) ? $delivery['status'] : 'queued';
+		$labels = array(
+			'queued'    => __( 'Queued', 'friends' ),
+			'sending'   => __( 'Sending', 'friends' ),
+			'delivered' => __( 'Delivered', 'friends' ),
+			'failed'    => __( 'Delivery failed', 'friends' ),
+		);
+
+		return array(
+			'status' => $status,
+			'label'  => isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Delivery pending', 'friends' ),
+			'title'  => ! empty( $delivery['error'] ) ? $delivery['error'] : ( isset( $delivery['message'] ) ? $delivery['message'] : '' ),
+		);
 	}
 
 	public function handle_received_direct_message( $activity, $user_id ) {

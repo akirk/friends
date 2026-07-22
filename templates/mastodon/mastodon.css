@@ -1586,12 +1586,27 @@ body.friends-page {
 .friends-page .friends-dm-message-meta {
 	align-items: baseline;
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	line-height: 1.2;
 }
 
 .friends-page .friends-dm-message-meta strong {
 	color: light-dark(#282c37, #dadada);
+}
+
+.friends-page .friends-dm-delivery-status {
+	color: light-dark(#606984, #9baec8);
+	font-size: 13px;
+}
+
+.friends-page .friends-dm-delivery-status::before {
+	content: "·";
+	margin-right: 8px;
+}
+
+.friends-page .friends-dm-delivery-status.is-failed {
+	color: light-dark(#d92d20, #ff8f8f);
 }
 
 .friends-page .friends-dm-message-content {

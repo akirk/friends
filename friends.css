@@ -243,6 +243,7 @@ html {
 	--friends-color-link: #2e5bec;
 	--friends-color-link-hover: #1341d4;
 	--friends-color-link-visited: #5d80f0;
+	--friends-color-error: #c0392b;
 	--friends-color-focus: rgba(46, 91, 236, 0.2);
 	--friends-color-menu-hover: #dde5fc;
 	--friends-color-note-background: #f7f7f7;
@@ -264,6 +265,7 @@ html {
 		--friends-color-link: #8fb1ff;
 		--friends-color-link-hover: #b8ccff;
 		--friends-color-link-visited: #c4b5fd;
+		--friends-color-error: #ff8f8f;
 		--friends-color-focus: rgba(143, 177, 255, 0.28);
 		--friends-color-menu-hover: #22304a;
 		--friends-color-note-background: #202633;
@@ -2508,12 +2510,27 @@ h2#page-title a.dashicons {
 	& .friends-dm-message-meta {
 		align-items: baseline;
 		display: flex;
+		flex-wrap: wrap;
 		gap: .35rem;
 		line-height: 1.2;
 
 		& time {
 			color: var(--friends-color-text-muted);
 			font-size: .65rem;
+		}
+	}
+
+	& .friends-dm-delivery-status {
+		color: var(--friends-color-text-muted);
+		font-size: .65rem;
+
+		&::before {
+			content: "·";
+			margin-right: .35rem;
+		}
+
+		&.is-failed {
+			color: var(--friends-color-error);
 		}
 	}
 

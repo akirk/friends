@@ -695,12 +695,27 @@
 .friends-page .friends-dm-message-meta {
 	align-items: baseline;
 	display: flex;
+	flex-wrap: wrap;
 	gap: 6px;
 	line-height: 1.2;
 }
 
 .friends-page .friends-dm-message-meta strong {
 	color: #222;
+}
+
+.friends-page .friends-dm-delivery-status {
+	color: #666;
+	font-size: 11px;
+}
+
+.friends-page .friends-dm-delivery-status::before {
+	content: "·";
+	margin-right: 6px;
+}
+
+.friends-page .friends-dm-delivery-status.is-failed {
+	color: #dd4b39;
 }
 
 .friends-page .friends-dm-message-content {
