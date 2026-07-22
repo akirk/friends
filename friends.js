@@ -774,6 +774,88 @@
 	}
 
 	let isRefreshingDmView = false;
+	const dmMobileQuery = window.matchMedia ? window.matchMedia( '(max-width: 840px)' ) : null;
+
+	function isMobileDmView() {
+		return dmMobileQuery && dmMobileQuery.matches;
+	}
+
+	function hasFocusedDmHash() {
+		const $thread = $( '.friends-dm-thread' );
+		return !! $thread.length && window.location.hash === '#' + $thread.attr( 'id' );
+	}
+
+	function isDmConversationVisible() {
+		return ! isMobileDmView() || hasFocusedDmHash();
+	}
+
+	function scrollCurrentDmThreadToBottom() {
+		const messages = $( '.friends-dm-thread' ).find( '.friends-dm-messages' ).get( 0 );
+		if ( messages ) {
+			messages.scrollTop = messages.scrollHeight;
+		}
+	}
+
+	function updateDmHashState() {
+		const $view = $( '.friends-dm-view' );
+		if ( ! $view.length ) {
+			return;
+		}
+
+		$view.toggleClass( 'is-focused-conversation', hasFocusedDmHash() );
+		if ( isDmConversationVisible() ) {
+			scrollCurrentDmThreadToBottom();
+			markCurrentDmThreadRead();
+		}
+	}
+
+	function updateDmViewportHeight() {
+		if ( ! $( '.friends-dm-view' ).length ) {
+			return;
+		}
+
+		const viewport = window.visualViewport || window;
+		const height = viewport.height || window.innerHeight;
+		if ( height ) {
+			document.documentElement.style.setProperty( '--friends-dm-viewport-height', height + 'px' );
+		}
+	}
+
+	function watchDmViewportHeight() {
+		if ( ! $( '.friends-dm-view' ).length ) {
+			return;
+		}
+
+		let frame = null;
+		const scheduleUpdate = function () {
+			if ( frame ) {
+				window.cancelAnimationFrame( frame );
+			}
+			frame = window.requestAnimationFrame( updateDmViewportHeight );
+		};
+
+		updateDmViewportHeight();
+		$( window ).on( 'resize orientationchange', scheduleUpdate );
+		if ( window.visualViewport ) {
+			window.visualViewport.addEventListener( 'resize', scheduleUpdate );
+			window.visualViewport.addEventListener( 'scroll', scheduleUpdate );
+		}
+		if ( dmMobileQuery && dmMobileQuery.addEventListener ) {
+			dmMobileQuery.addEventListener( 'change', updateDmHashState );
+		} else if ( dmMobileQuery && dmMobileQuery.addListener ) {
+			dmMobileQuery.addListener( updateDmHashState );
+		}
+	}
+
+	$document.on( 'focus blur', '.friends-dm-reply input, .friends-dm-reply select, .friends-dm-reply textarea', function () {
+		const reply = $( this ).closest( '.friends-dm-reply' ).get( 0 );
+		window.setTimeout( function () {
+			updateDmViewportHeight();
+			if ( reply ) {
+				reply.scrollIntoView( { block: 'end' } );
+			}
+		}, 300 );
+	} );
 
 	function refreshDmView() {
 		const $thread = $( '.friends-dm-thread' );
@@ -817,7 +899,7 @@
 				.data( 'unread', $newThread.data( 'unread' ) )
 				.attr( 'data-unread', $newThread.attr( 'data-unread' ) );
 			updateRelativeTimes( '.friends-dm-view' );
-			markCurrentDmThreadRead();
+			updateDmHashState();
 		} ).always( function () {
 			isRefreshingDmView = false;
 		} );
@@ -826,18 +908,15 @@
 	$( function () {
 		restoreMessageDrafts();
 		updateRelativeTimes( document );
+		watchDmViewportHeight();
+		updateDmHashState();
+		$( window ).on( 'hashchange', updateDmHashState );
 
 		const $thread = $( '.friends-dm-thread' );
 		if ( ! $thread.length ) {
 			return;
 		}
 
-		const messages = $thread.find( '.friends-dm-messages' ).get( 0 );
-		if ( messages ) {
-			messages.scrollTop = messages.scrollHeight;
-		}
-
-		markCurrentDmThreadRead();
 		window.setInterval( updateRelativeTimes, 60000 );
 		window.setInterval( refreshDmView, 30000 );
 	} );

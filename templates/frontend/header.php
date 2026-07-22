@@ -86,7 +86,7 @@ add_filter(
 			</dialog>
 
 
-			<section class="navbar-section search<?php echo esc_attr( is_singular() ? ' d-hide' : '' ); ?>">
+			<section class="navbar-section search<?php echo esc_attr( is_singular() ? ' d-hide' : '' ); ?><?php echo esc_attr( ! empty( $args['hide-mobile-search'] ) ? ' hide-mobile-search' : '' ); ?>">
 				<form class="input-group input-inline form-autocomplete" action="<?php echo esc_url( home_url( '/friends/' ) ); ?>">
 					<div class="form-autocomplete-input form-input">
 						<div class="has-icon-right">

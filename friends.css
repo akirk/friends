@@ -2337,7 +2337,7 @@ h2#page-title a.dashicons {
 		border-top: 1px solid var(--friends-color-border);
 		display: grid;
 		grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
-		height: calc(100vh - 3.2rem);
+		height: calc(var(--friends-dm-viewport-height, 100vh) - 3.2rem);
 		min-height: 32rem;
 	}
 
@@ -2471,6 +2471,10 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	& .friends-dm-back {
+		display: none;
+	}
+
 	& .friends-dm-messages {
 		background: var(--friends-color-surface);
 		overflow: auto;
@@ -2552,19 +2556,69 @@ h2#page-title a.dashicons {
 	}
 
 	@media (max-width: 840px) {
+		& .navbar-section.search.hide-mobile-search {
+			display: none;
+		}
+
 		& .friends-dm-view {
 			grid-template-columns: 1fr;
-			height: auto;
+			grid-template-rows: minmax(0, 1fr);
+			height: min(calc(var(--friends-dm-viewport-height, 100vh) - 3.2rem), 48rem);
+			min-height: 0;
+			overflow: hidden;
+			position: relative;
 		}
 
 		& .friends-dm-sidebar {
-			border-bottom: 1px solid var(--friends-color-border);
 			border-right: 0;
-			max-height: 16rem;
+			grid-column: 1;
+			grid-row: 1;
+			height: 100%;
+			max-height: none;
+			min-height: 0;
+			transform: translateX(0);
+			transition: transform .2s ease;
+			width: 100%;
+			z-index: 1;
 		}
 
 		& .friends-dm-thread {
-			min-height: 34rem;
+			grid-column: 1;
+			grid-row: 1;
+			height: 100%;
+			min-height: 0;
+			overflow: hidden;
+			transform: translateX(100%);
+			transition: transform .2s ease;
+			width: 100%;
+			z-index: 2;
+		}
+
+		& .friends-dm-view.is-focused-conversation .friends-dm-sidebar {
+			transform: translateX(-100%);
+		}
+
+		& .friends-dm-view.is-focused-conversation .friends-dm-thread {
+			transform: translateX(0);
+		}
+
+		& .friends-dm-back {
+			align-items: center;
+			border: 0;
+			color: var(--friends-color-text);
+			display: flex;
+			font-size: 1.25rem;
+			line-height: 1;
+			text-decoration: none;
+		}
+
+		& .friends-dm-messages {
+			min-height: 0;
+			overscroll-behavior: contain;
+		}
+
+		& .friends-dm-reply {
+			padding-bottom: calc(.65rem + env(safe-area-inset-bottom, 0px));
 		}
 	}
 

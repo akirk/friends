@@ -546,7 +546,7 @@
 	border: 1px solid #d4d4d4;
 	display: grid;
 	grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-	height: calc(100vh - 50px);
+	height: calc(var(--friends-dm-viewport-height, 100vh) - 50px);
 	min-height: 30rem;
 }
 
@@ -675,6 +675,10 @@
 	font-size: 12px;
 }
 
+.friends-page .friends-dm-back {
+	display: none;
+}
+
 .friends-page .friends-dm-messages {
 	background: #fff;
 	overflow: auto;
@@ -769,15 +773,68 @@
 }
 
 @media (max-width: 840px) {
+	.friends-page .navbar-section.search.hide-mobile-search {
+		display: none;
+	}
+
 	.friends-page .friends-dm-view {
 		grid-template-columns: 1fr;
-		height: auto;
+		grid-template-rows: minmax(0, 1fr);
+		height: min(calc(var(--friends-dm-viewport-height, 100vh) - 50px), 48rem);
+		min-height: 0;
+		overflow: hidden;
+		position: relative;
 	}
 
 	.friends-page .friends-dm-sidebar {
-		border-bottom: 1px solid #d4d4d4;
 		border-right: 0;
-		max-height: 14rem;
+		grid-column: 1;
+		grid-row: 1;
+		height: 100%;
+		max-height: none;
+		min-height: 0;
+		transform: translateX(0);
+		transition: transform .2s ease;
+		width: 100%;
+		z-index: 1;
+	}
+
+	.friends-page .friends-dm-thread {
+		grid-column: 1;
+		grid-row: 1;
+		height: 100%;
+		min-height: 0;
+		overflow: hidden;
+		transform: translateX(100%);
+		transition: transform .2s ease;
+		width: 100%;
+		z-index: 2;
+	}
+
+	.friends-page .friends-dm-view.is-focused-conversation .friends-dm-sidebar {
+		transform: translateX(-100%);
+	}
+
+	.friends-page .friends-dm-view.is-focused-conversation .friends-dm-thread {
+		transform: translateX(0);
+	}
+
+	.friends-page .friends-dm-back {
+		align-items: center;
+		color: #222;
+		display: flex;
+		font-size: 20px;
+		line-height: 1;
+		text-decoration: none;
+	}
+
+	.friends-page .friends-dm-messages {
+		min-height: 0;
+		overscroll-behavior: contain;
+	}
+
+	.friends-page .friends-dm-reply {
+		padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
 	}
 }
 
