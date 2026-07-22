@@ -1728,12 +1728,27 @@ body.friends-page {
 .friends-page .friends-dm-message-meta {
 	align-items: baseline;
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	line-height: 1.2;
 }
 
 .friends-page .friends-dm-message-meta strong {
 	color: light-dark(#0f1419, #e7e9ea);
+}
+
+.friends-page .friends-dm-delivery-status {
+	color: light-dark(#536471, #71767b);
+	font-size: 13px;
+}
+
+.friends-page .friends-dm-delivery-status::before {
+	content: "·";
+	margin-right: 8px;
+}
+
+.friends-page .friends-dm-delivery-status.is-failed {
+	color: light-dark(#f4212e, #ff8f8f);
 }
 
 .friends-page .friends-dm-message-content {

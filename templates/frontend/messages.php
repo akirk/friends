@@ -186,6 +186,10 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 					$post_time      = get_post_modified_time( 'U', true, $message );
 					$author_key     = $message_author && ! is_wp_error( $message_author ) ? 'user-' . $message_author->ID : 'unknown';
 					$is_consecutive = $author_key === $previous_message_author_key;
+					$delivery       = null;
+					if ( $is_own_message && class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
+						$delivery = Friends\Feed_Parser_ActivityPub::get_direct_message_delivery_status( $message );
+					}
 					?>
 					<div class="friends-dm-message<?php echo $is_own_message ? ' is-own-message' : ''; ?><?php echo $is_consecutive ? ' is-consecutive-message' : ''; ?>" data-message-id="<?php echo esc_attr( $message->ID ); ?>">
 						<div class="friends-dm-message-avatar">
@@ -209,6 +213,9 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 									);
 									?>
 								</time>
+								<?php if ( $delivery ) : ?>
+									<span class="friends-dm-delivery-status is-<?php echo esc_attr( $delivery['status'] ); ?>" title="<?php echo esc_attr( $delivery['title'] ); ?>"><?php echo esc_html( $delivery['label'] ); ?></span>
+								<?php endif; ?>
 							</div>
 							<div class="friends-dm-message-content" title="<?php echo esc_attr( date_i18n( $time_format, $post_time ) ); ?>">
 								<?php
