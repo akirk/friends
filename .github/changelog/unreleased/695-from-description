@@ -1,0 +1,3 @@
+Type: fixed
+
+Update CI actions to avoid Node module deprecation warnings.
