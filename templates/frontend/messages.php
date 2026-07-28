@@ -214,7 +214,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 									?>
 								</time>
 								<?php if ( $delivery ) : ?>
-									<span class="friends-dm-delivery-status is-<?php echo esc_attr( $delivery['status'] ); ?>" title="<?php echo esc_attr( $delivery['title'] ); ?>"><?php echo esc_html( $delivery['label'] ); ?></span>
+									<span class="friends-dm-delivery-status is-<?php echo esc_attr( $delivery['status'] ); ?>" data-delivery-message-id="<?php echo esc_attr( $message->ID ); ?>" title="<?php echo esc_attr( $delivery['title'] ); ?>"><?php echo esc_html( $delivery['label'] ); ?></span>
 								<?php endif; ?>
 							</div>
 							<div class="friends-dm-message-content" title="<?php echo esc_attr( date_i18n( $time_format, $post_time ) ); ?>">

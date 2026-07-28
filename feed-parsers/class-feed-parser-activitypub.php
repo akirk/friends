@@ -1111,11 +1111,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'delivered' => __( 'Delivered', 'friends' ),
 			'failed'    => __( 'Delivery failed', 'friends' ),
 		);
+		$titles = array(
+			'queued'    => __( 'This message is waiting for ActivityPub delivery.', 'friends' ),
+			'sending'   => __( 'This message is being delivered to the remote inbox.', 'friends' ),
+			'delivered' => __( 'The remote inbox accepted this message.', 'friends' ),
+			'failed'    => __( 'The remote inbox did not accept this message.', 'friends' ),
+		);
 
 		return array(
 			'status' => $status,
 			'label'  => isset( $labels[ $status ] ) ? $labels[ $status ] : __( 'Delivery pending', 'friends' ),
-			'title'  => ! empty( $delivery['error'] ) ? $delivery['error'] : ( isset( $delivery['message'] ) ? $delivery['message'] : '' ),
+			'title'  => ! empty( $delivery['error'] ) ? $delivery['error'] : ( isset( $titles[ $status ] ) ? $titles[ $status ] : __( 'Delivery status is pending.', 'friends' ) ),
 		);
 	}
 

@@ -368,27 +368,28 @@ class Frontend {
 		$query_vars = wp_json_encode( $this->get_minimal_query_vars( $wp_query->query_vars ) );
 
 		$variables = array(
-			'emojis_json'           => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
-			'ajax_url'              => admin_url( 'admin-ajax.php' ),
-			'rest_base'             => rest_url( 'friends/v1/' ),
-			'rest_nonce'            => wp_create_nonce( 'wp_rest' ),
-			'text_link_expired'     => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
-			'text_undo'             => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			'text_trash_post'       => __( 'Trash this post', 'friends' ),
-			'text_del_convers'      => __( 'Do you really want to delete this conversation?', 'friends' ),
-			'text_no_more_posts'    => __( 'No more posts available.', 'friends' ),
-			'text_checking_url'     => __( 'Checking URL.', 'friends' ),
-			'text_refreshed'        => __( 'Refreshed', 'friends' ),
-			'text_refreshing'       => __( 'Refreshing', 'friends' ),
-			'text_compact_mode'     => __( 'Compact mode', 'friends' ),
-			'text_expanded_mode'    => __( 'Expanded mode', 'friends' ),
-			'text_loading_comments' => __( 'Loading comments...', 'friends' ),
-			'text_still_loading'    => __( 'Still loading...', 'friends' ),
-			'refresh_now'           => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			'query_vars'            => $query_vars,
-			'qv_sign'               => sha1( wp_salt( 'nonce' ) . $query_vars ),
-			'current_page'          => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
-			'max_page'              => $wp_query->max_num_pages,
+			'emojis_json'            => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
+			'ajax_url'               => admin_url( 'admin-ajax.php' ),
+			'rest_base'              => rest_url( 'friends/v1/' ),
+			'rest_nonce'             => wp_create_nonce( 'wp_rest' ),
+			'text_link_expired'      => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
+			'text_undo'              => __( 'Undo' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
+			'text_trash_post'        => __( 'Trash this post', 'friends' ),
+			'text_del_convers'       => __( 'Do you really want to delete this conversation?', 'friends' ),
+			'text_no_more_posts'     => __( 'No more posts available.', 'friends' ),
+			'text_checking_url'      => __( 'Checking URL.', 'friends' ),
+			'text_refreshed'         => __( 'Refreshed', 'friends' ),
+			'text_refreshing'        => __( 'Refreshing', 'friends' ),
+			'text_compact_mode'      => __( 'Compact mode', 'friends' ),
+			'text_expanded_mode'     => __( 'Expanded mode', 'friends' ),
+			'text_loading_comments'  => __( 'Loading comments...', 'friends' ),
+			'text_still_loading'     => __( 'Still loading...', 'friends' ),
+			'message_delivery_nonce' => wp_create_nonce( 'friends-message-delivery-statuses' ),
+			'refresh_now'            => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'query_vars'             => $query_vars,
+			'qv_sign'                => sha1( wp_salt( 'nonce' ) . $query_vars ),
+			'current_page'           => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
+			'max_page'               => $wp_query->max_num_pages,
 		);
 
 		// translators: %s is a user handle.

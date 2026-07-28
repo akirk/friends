@@ -773,7 +773,6 @@
 		} );
 	}
 
-	let isRefreshingDmView = false;
 	const dmMobileQuery = window.matchMedia ? window.matchMedia( '(max-width: 840px)' ) : null;
 
 	function isMobileDmView() {
@@ -857,51 +856,121 @@
 		}, 300 );
 	} );
 
-	function refreshDmView() {
-		const $thread = $( '.friends-dm-thread' );
-		const $messages = $( '.friends-dm-messages' );
-		if ( isRefreshingDmView || ! $thread.length || ! $messages.length ) {
+	let dmDeliveryTooltipTimeout = null;
+
+	function hideDmDeliveryTooltip() {
+		window.clearTimeout( dmDeliveryTooltipTimeout );
+		dmDeliveryTooltipTimeout = null;
+		$( '.friends-dm-delivery-tooltip' ).remove();
+		$( '.friends-dm-delivery-status.is-showing-title' ).removeClass( 'is-showing-title' );
+	}
+
+	function showDmDeliveryTooltip( element ) {
+		const $status = $( element );
+		const title = $status.attr( 'title' );
+		if ( ! title ) {
 			return;
 		}
 
-		isRefreshingDmView = true;
+		hideDmDeliveryTooltip();
+		$status.addClass( 'is-showing-title' );
 
-		$.get( window.location.href ).done( function ( response ) {
-			const $response = $( $.parseHTML( response, document ) );
-			const $newSidebar = $response.find( '.friends-dm-sidebar' );
-			const $newThread = $response.find( '.friends-dm-thread' );
-			const $newMessages = $newThread.find( '.friends-dm-messages' );
-			if ( ! $newThread.length || ! $newMessages.length ) {
-				return;
-			}
+		const rect = element.getBoundingClientRect();
+		const $tooltip = $( '<div class="friends-dm-delivery-tooltip" role="tooltip"></div>' ).text( title );
+		$( document.body ).append( $tooltip );
 
-			const messages = $messages.get( 0 );
-			const shouldStickToBottom = messages && messages.scrollTop + messages.clientHeight >= messages.scrollHeight - 80;
-			const currentMessageIds = $messages.find( '.friends-dm-message' ).map( function () {
-				return $( this ).data( 'message-id' );
-			} ).get().join( ',' );
-			const newMessageIds = $newMessages.find( '.friends-dm-message' ).map( function () {
-				return $( this ).data( 'message-id' );
-			} ).get().join( ',' );
+		const margin = 8;
+		const width = $tooltip.outerWidth();
+		const height = $tooltip.outerHeight();
+		const left = Math.min( Math.max( margin, rect.right - width ), window.innerWidth - width - margin );
+		let top = rect.top - height - margin;
+		if ( top < margin ) {
+			top = rect.bottom + margin;
+		}
 
-			if ( $newSidebar.length && $newSidebar.html() !== $( '.friends-dm-sidebar' ).html() ) {
-				$( '.friends-dm-sidebar' ).html( $newSidebar.html() );
-			}
+		$tooltip.css( {
+			left: left + 'px',
+			top: top + 'px',
+		} );
 
-			if ( newMessageIds !== currentMessageIds ) {
-				$messages.html( $newMessages.html() );
-				if ( shouldStickToBottom ) {
-					messages.scrollTop = messages.scrollHeight;
-				}
-			}
+		dmDeliveryTooltipTimeout = window.setTimeout( hideDmDeliveryTooltip, 5000 );
+	}
 
-			$thread
-				.data( 'unread', $newThread.data( 'unread' ) )
-				.attr( 'data-unread', $newThread.attr( 'data-unread' ) );
-			updateRelativeTimes( '.friends-dm-view' );
-			updateDmHashState();
+	$document.on( 'click', '.friends-dm-delivery-status[title]', function ( event ) {
+		const $status = $( this );
+		if ( ! $status.attr( 'title' ) ) {
+			return;
+		}
+
+		event.preventDefault();
+		event.stopPropagation();
+		if ( $status.hasClass( 'is-showing-title' ) ) {
+			hideDmDeliveryTooltip();
+		} else {
+			showDmDeliveryTooltip( this );
+		}
+	} );
+
+	$document.on( 'click', hideDmDeliveryTooltip );
+	$( window ).on( 'resize scroll', hideDmDeliveryTooltip );
+
+	function updateDmDeliveryStatusElement( $status, delivery ) {
+		if ( ! delivery || ! delivery.status ) {
+			return;
+		}
+
+		const classes = ( $status.attr( 'class' ) || '' )
+			.split( /\s+/ )
+			.filter( function ( className ) {
+				return className && ! className.match( /^is-/ );
+			} );
+		classes.push( 'is-' + delivery.status );
+
+		$status
+			.attr( 'class', classes.join( ' ' ) )
+			.attr( 'title', delivery.title || '' )
+			.text( delivery.label || '' );
+	}
+
+	let isRefreshingDmDeliveryStatuses = false;
+
+	function refreshDmDeliveryStatuses() {
+		const $statuses = $( '.friends-dm-delivery-status[data-delivery-message-id]' );
+		if ( isRefreshingDmDeliveryStatuses || ! $statuses.length || ! friends.message_delivery_nonce ) {
+			return;
+		}
+
+		const postIds = $statuses.map( function () {
+			return $( this ).data( 'delivery-message-id' );
+		} ).get().filter( function ( postId, index, postIds ) {
+			return postId && postIds.indexOf( postId ) === index;
+		} );
+
+		if ( ! postIds.length ) {
+			return;
+		}
+
+		isRefreshingDmDeliveryStatuses = true;
+
+		wp.ajax.send( 'friends-get-message-delivery-statuses', {
+			data: {
+				_ajax_nonce: friends.message_delivery_nonce,
+				post_ids: postIds,
+			},
+			success( response ) {
+				const statuses = response.statuses || {};
+				Object.keys( statuses ).forEach( function ( postId ) {
+					updateDmDeliveryStatusElement(
+						$( '.friends-dm-delivery-status[data-delivery-message-id="' + postId + '"]' ),
+						statuses[ postId ]
+					);
+				} );
+			},
+			error() {
+				isRefreshingDmDeliveryStatuses = false;
+			},
 		} ).always( function () {
-			isRefreshingDmView = false;
+			isRefreshingDmDeliveryStatuses = false;
 		} );
 	}
 
@@ -918,7 +987,8 @@
 		}
 
 		window.setInterval( updateRelativeTimes, 60000 );
-		window.setInterval( refreshDmView, 30000 );
+		window.setInterval( refreshDmDeliveryStatuses, 5000 );
+		refreshDmDeliveryStatuses();
 	} );
 
 	$document.on( 'mouseenter', 'h2#page-title a.dashicons, a.wp-block-friends-author-star.dashicons', function () {
