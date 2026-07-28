@@ -39,11 +39,11 @@ jobs:
     name: "Tests: PHP ${{ matrix.php }} - PHPUnit: ${{matrix.phpunit}} - WordPress: ${{matrix.wordpress}}"
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Checkout ActivityPub plugin
         if: ${{ matrix.php >= 8.3 }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
         with:
           repository: Automattic/wordpress-activitypub
           path: activitypub
@@ -81,12 +81,12 @@ jobs:
       # @link https://github.com/marketplace/actions/install-composer-dependencies
       - name: Install Composer dependencies for PHP < 8.2
         if: ${{ matrix.php < 8.2 }}
-        uses: "ramsey/composer-install@v2"
+        uses: "ramsey/composer-install@v4"
 
       # For PHP 8.2 and above, we need to install with ignore platform reqs as not all dependencies allow it yet.
       - name: Install Composer dependencies for PHP >= 8.2
         if: ${{ matrix.php >= 8.2 }}
-        uses: "ramsey/composer-install@v2"
+        uses: "ramsey/composer-install@v4"
         with:
           composer-options: --ignore-platform-reqs
 
