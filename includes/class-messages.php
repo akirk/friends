@@ -48,6 +48,7 @@ class Messages {
 		add_filter( 'friends_unread_count', array( $this, 'friends_unread_messages_count' ) );
 		add_action( 'friends_own_site_menu_top', array( $this, 'friends_add_menu_unread_messages' ) );
 		add_action( 'wp_ajax_friends-mark-read', array( $this, 'mark_message_read' ) );
+		add_action( 'wp_ajax_friends-get-message-delivery-statuses', array( $this, 'get_message_delivery_statuses' ) );
 		add_action( 'friends_author_header', array( $this, 'friends_author_header' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_display_messages' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_message_form' ), 11, 2 );
@@ -365,6 +366,57 @@ class Messages {
 				'result' => $result,
 			)
 		);
+	}
+
+	/**
+	 * Ajax function to fetch delivery status for outgoing direct messages.
+	 */
+	public function get_message_delivery_statuses() {
+		check_ajax_referer( 'friends-message-delivery-statuses' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'You are not authorized to view message delivery statuses.', 'friends' ),
+				),
+				403
+			);
+		}
+
+		$post_ids = array();
+		if ( isset( $_POST['post_ids'] ) && is_array( $_POST['post_ids'] ) ) {
+			$post_ids = array_map( 'absint', wp_unslash( $_POST['post_ids'] ) );
+		}
+
+		$post_ids = array_filter( array_unique( $post_ids ) );
+		if ( empty( $post_ids ) ) {
+			wp_send_json_success( array( 'statuses' => array() ) );
+		}
+
+		$statuses = array();
+		foreach ( $post_ids as $post_id ) {
+			$post = get_post( $post_id );
+			if ( ! $post || self::CPT !== $post->post_type || get_current_user_id() !== intval( $post->post_author ) ) {
+				continue;
+			}
+
+			$delivery = null;
+			if ( class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
+				$delivery = Feed_Parser_ActivityPub::get_direct_message_delivery_status( $post );
+			}
+
+			if ( ! $delivery ) {
+				continue;
+			}
+
+			$statuses[ $post_id ] = array(
+				'status' => sanitize_html_class( $delivery['status'] ),
+				'label'  => $delivery['label'],
+				'title'  => $delivery['title'],
+			);
+		}
+
+		wp_send_json_success( array( 'statuses' => $statuses ) );
 	}
 
 	/**

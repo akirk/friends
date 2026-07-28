@@ -78,13 +78,13 @@ $draft_key = implode(
 	<div class="form-group">
 		<div class="col-2 col-sm-12">
 		</div>
-		<div class="col-6 col-sm-12">
+		<div class="<?php echo esc_attr( ! empty( $args['reply_to'] ) ? 'col-4' : 'col-6' ); ?> col-sm-12">
 			<button class="btn"><?php esc_html_e( 'Send', 'friends' ); ?></button>
 		</div>
 		<?php
 		if ( ! empty( $args['reply_to'] ) ) {
 			?>
-			<div class="col-2 col-sm-12" style="text-align: right">
+			<div class="col-4 col-sm-12" style="text-align: right">
 				<button class="btn btn-link btn-sm delete-conversation text-error" name="friends_message_delete_conversation"><?php esc_html_e( 'Delete conversation', 'friends' ); ?></button>
 			</div>
 			<?php

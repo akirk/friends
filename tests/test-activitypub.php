@@ -779,12 +779,58 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( 'pending', $outbox_item->post_status );
 		$this->assertSame( 'Create', get_post_meta( $outbox_id, '_activitypub_activity_type', true ) );
 		$this->assertSame( ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE, get_post_meta( $outbox_id, 'activitypub_content_visibility', true ) );
+		$this->assertSame( $post_id, (int) get_post_meta( $outbox_id, 'activitypub_direct_message_post_id', true ) );
+
+		$delivery = Feed_Parser_ActivityPub::get_direct_message_delivery_status( $post_id );
+		$this->assertSame( 'queued', $delivery['status'] );
+		$this->assertSame( 'Queued', $delivery['label'] );
 
 		$activity = json_decode( $outbox_item->post_content, true );
 		$this->assertSame( 'Create', $activity['type'] );
 		$this->assertContains( $this->actor, $activity['to'] );
 		$this->assertContains( $this->actor, $activity['object']['to'] );
 		$this->assertStringContainsString( '@akirk', $activity['object']['content'] );
+	}
+
+	public function test_direct_message_delivery_status_tracks_inbox_result() {
+		$post_id   = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
+		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
+		$inbox     = 'https://mastodon.local/inbox';
+
+		do_action( 'activitypub_pre_send_to_inboxes', '{}', array( $inbox ), $outbox_id );
+
+		$delivery = Feed_Parser_ActivityPub::get_direct_message_delivery_status( $post_id );
+		$this->assertSame( 'sending', $delivery['status'] );
+		$this->assertSame( 'Sending', $delivery['label'] );
+
+		do_action(
+			'activitypub_sent_to_inbox',
+			array(
+				'response' => array(
+					'code' => 202,
+				),
+			),
+			$inbox,
+			'{}',
+			get_current_user_id(),
+			$outbox_id
+		);
+
+		$delivery = Feed_Parser_ActivityPub::get_direct_message_delivery_status( $post_id );
+		$this->assertSame( 'delivered', $delivery['status'] );
+		$this->assertSame( 'Delivered', $delivery['label'] );
+	}
+
+	public function test_direct_message_delivery_status_tracks_inbox_failure() {
+		$post_id   = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
+		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
+
+		do_action( 'activitypub_pre_send_to_inboxes', '{}', array(), $outbox_id );
+
+		$delivery = Feed_Parser_ActivityPub::get_direct_message_delivery_status( $post_id );
+		$this->assertSame( 'failed', $delivery['status'] );
+		$this->assertSame( 'Delivery failed', $delivery['label'] );
+		$this->assertSame( 'No delivery inbox found', $delivery['title'] );
 	}
 
 	public function test_direct_message_reply_outbox_activity_has_in_reply_to() {
