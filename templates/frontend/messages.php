@@ -87,15 +87,21 @@ foreach ( $top_level_messages as $top_level_message ) {
 		$message_preview = wp_strip_all_tags( get_the_excerpt( $latest_message ) );
 	}
 
+	$latest_delivery = null;
+	if ( intval( $latest_message->post_author ) === get_current_user_id() && class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
+		$latest_delivery = Friends\Feed_Parser_ActivityPub::get_direct_message_delivery_status( $latest_message );
+	}
+
 	$conversation_rows[] = array(
-		'id'           => $top_level_message->ID,
-		'friend_user'  => $friend_user,
-		'messages'     => $thread_messages,
-		'latest'       => $latest_message,
-		'latest_time'  => $latest_message_time,
-		'preview'      => $message_preview,
-		'unread_count' => $unread_count,
-		'root_message' => $top_level_message,
+		'id'              => $top_level_message->ID,
+		'friend_user'     => $friend_user,
+		'messages'        => $thread_messages,
+		'latest'          => $latest_message,
+		'latest_delivery' => $latest_delivery,
+		'latest_time'     => $latest_message_time,
+		'preview'         => $message_preview,
+		'unread_count'    => $unread_count,
+		'root_message'    => $top_level_message,
 	);
 }
 
@@ -146,6 +152,9 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 						<time data-friends-relative-time="<?php echo esc_attr( $conversation_row['latest_time'] ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $conversation_row['latest_time'] ) ); ?>">
 							<?php echo esc_html( human_time_diff( $conversation_row['latest_time'] ) ); ?>
 						</time>
+						<?php if ( $conversation_row['latest_delivery'] ) : ?>
+							<span class="friends-dm-delivery-status friends-dm-delivery-icon is-<?php echo esc_attr( $conversation_row['latest_delivery']['status'] ); ?>" data-delivery-message-id="<?php echo esc_attr( $conversation_row['latest']->ID ); ?>" title="<?php echo esc_attr( $conversation_row['latest_delivery']['title'] ); ?>" aria-label="<?php echo esc_attr( $conversation_row['latest_delivery']['label'] ); ?>"></span>
+						<?php endif; ?>
 						<?php if ( $conversation_row['unread_count'] ) : ?>
 							<span class="friends-dm-unread-count"><?php echo esc_html( number_format_i18n( $conversation_row['unread_count'] ) ); ?></span>
 						<?php endif; ?>

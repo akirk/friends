@@ -1606,6 +1606,60 @@ body.friends-page {
 	margin-right: 8px;
 }
 
+.friends-page .friends-dm-delivery-icon {
+	align-items: center;
+	display: inline-flex;
+	flex: 0 0 auto;
+	height: 16px;
+	justify-content: center;
+	line-height: 1;
+	position: relative;
+	width: 16px;
+}
+
+.friends-page .friends-dm-delivery-icon::before {
+	border: 1.5px solid currentColor;
+	border-radius: 50%;
+	box-sizing: border-box;
+	content: "";
+	height: 14px;
+	margin: 0;
+	width: 14px;
+}
+
+.friends-page .friends-dm-delivery-icon::after {
+	border: solid currentColor;
+	border-width: 0 1.5px 1.5px 0;
+	content: "";
+	height: 7px;
+	left: 6px;
+	position: absolute;
+	top: 3px;
+	transform: rotate(45deg);
+	width: 4px;
+}
+
+.friends-page .friends-dm-delivery-icon.is-queued::before {
+	border-style: dotted;
+}
+
+.friends-page .friends-dm-delivery-icon.is-sending::before {
+	border-style: dashed;
+}
+
+.friends-page .friends-dm-delivery-icon.is-failed::after {
+	border: 0;
+	content: "!";
+	font-size: 11px;
+	font-weight: 700;
+	height: auto;
+	left: auto;
+	position: absolute;
+	top: 2px;
+	transform: none;
+	width: auto;
+}
+
 .friends-page .friends-dm-delivery-tooltip {
 	background: light-dark(#fff, #1f232b);
 	border: 1px solid light-dark(#d9e1e8, #393f4f);
