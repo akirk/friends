@@ -821,6 +821,20 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( 'Delivered', $delivery['label'] );
 	}
 
+	public function test_direct_message_delivery_status_falls_back_to_message_outbox_meta() {
+		$post_id   = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
+		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
+		$inbox     = 'https://mastodon.local/inbox';
+
+		delete_post_meta( $outbox_id, 'activitypub_direct_message_post_id' );
+
+		do_action( 'activitypub_pre_send_to_inboxes', '{}', array( $inbox ), $outbox_id );
+
+		$delivery = Feed_Parser_ActivityPub::get_direct_message_delivery_status( $post_id );
+		$this->assertSame( 'sending', $delivery['status'] );
+		$this->assertSame( $post_id, (int) get_post_meta( $outbox_id, 'activitypub_direct_message_post_id', true ) );
+	}
+
 	public function test_direct_message_delivery_status_tracks_inbox_failure() {
 		$post_id   = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
 		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );

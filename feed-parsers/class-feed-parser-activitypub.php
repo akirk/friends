@@ -1054,6 +1054,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	private function get_direct_message_post_id_from_outbox( $outbox_item_id ) {
 		$post_id = (int) get_post_meta( $outbox_item_id, 'activitypub_direct_message_post_id', true );
+		if ( $post_id ) {
+			return $post_id;
+		}
+
+		$posts = get_posts(
+			array(
+				'post_type'      => \Friends\Messages::CPT,
+				'post_status'    => array( 'friends_read', 'friends_unread' ),
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_key'       => 'activitypub_direct_message_outbox_id',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'meta_value'     => $outbox_item_id,
+			)
+		);
+		if ( $posts ) {
+			$post_id = (int) reset( $posts );
+			update_post_meta( $outbox_item_id, 'activitypub_direct_message_post_id', $post_id );
+		}
+
 		return $post_id;
 	}
 
@@ -1095,7 +1116,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return null;
 		}
 
-		if ( ! get_post_meta( $post->ID, 'activitypub_direct_message_outbox_id', true ) ) {
+		$outbox_id = get_post_meta( $post->ID, 'activitypub_direct_message_outbox_id', true );
+		if ( ! $outbox_id ) {
 			return null;
 		}
 
