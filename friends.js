@@ -929,7 +929,8 @@
 		$status
 			.attr( 'class', classes.join( ' ' ) )
 			.attr( 'title', delivery.title || '' )
-			.text( delivery.label || '' );
+			.attr( 'aria-label', delivery.label || '' )
+			.text( $status.hasClass( 'friends-dm-delivery-icon' ) ? '' : delivery.label || '' );
 	}
 
 	let isRefreshingDmDeliveryStatuses = false;

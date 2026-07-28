@@ -1,0 +1,3 @@
+Type: fixed
+
+Show direct message delivery status in the conversation overview and recover delivery tracking for older ActivityPub outbox items.

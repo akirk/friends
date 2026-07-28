@@ -2535,6 +2535,60 @@ h2#page-title a.dashicons {
 		}
 	}
 
+	& .friends-dm-delivery-icon {
+		align-items: center;
+		display: inline-flex;
+		flex: 0 0 auto;
+		height: 1rem;
+		justify-content: center;
+		line-height: 1;
+		position: relative;
+		width: 1rem;
+
+		&::before {
+			border: 1.5px solid currentColor;
+			border-radius: 50%;
+			box-sizing: border-box;
+			content: "";
+			height: .9rem;
+			margin: 0;
+			width: .9rem;
+		}
+
+		&::after {
+			border: solid currentColor;
+			border-width: 0 1.5px 1.5px 0;
+			content: "";
+			height: .42rem;
+			left: .37rem;
+			position: absolute;
+			top: .22rem;
+			transform: rotate(45deg);
+			width: .22rem;
+		}
+
+		&.is-queued::before {
+			border-style: dotted;
+		}
+
+		&.is-sending::before {
+			border-style: dashed;
+		}
+
+		&.is-failed::after {
+			border: 0;
+			content: "!";
+			font-size: .65rem;
+			font-weight: 700;
+			height: auto;
+			left: auto;
+			position: absolute;
+			top: .13rem;
+			transform: none;
+			width: auto;
+		}
+	}
+
 	& .friends-dm-delivery-tooltip {
 		background: var(--friends-color-surface);
 		border: 1px solid var(--friends-color-border);
