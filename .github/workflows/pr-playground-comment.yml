@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Add Playground Link to PR Description
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const markerStart = '<!-- friends-playground-link:start -->';
