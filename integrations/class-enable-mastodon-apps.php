@@ -23,6 +23,7 @@ class Enable_Mastodon_Apps {
 		add_filter( 'mastodon_api_favourites_args', array( get_called_class(), 'mastodon_api_favourites_args' ), 10, 2 );
 		add_filter( 'mastodon_api_bookmarks_args', array( get_called_class(), 'mastodon_api_bookmarks_args' ), 10, 2 );
 		add_filter( 'mastodon_api_status', array( get_called_class(), 'mastodon_api_status' ), 60, 2 );
+		add_filter( 'mastodon_api_submit_post_data', array( get_called_class(), 'mastodon_api_submit_post_data' ), 20, 9 );
 		add_filter( 'mastodon_api_get_notifications_query_args', array( get_called_class(), 'mastodon_api_get_notifications_query_args' ), 10, 2 );
 		add_filter( 'mastodon_api_account_statuses_excluded_post_types', array( get_called_class(), 'mastodon_api_account_statuses_excluded_post_types' ) );
 		add_filter( 'mastodon_api_account_statuses', array( get_called_class(), 'mastodon_api_account_statuses' ), 10, 3 );
@@ -117,6 +118,10 @@ class Enable_Mastodon_Apps {
 			return $status;
 		}
 
+		if ( self::get_activitypub_quiet_public_visibility() === get_post_meta( $post_id, 'activitypub_content_visibility', true ) ) {
+			$status->visibility = 'unlisted';
+		}
+
 		$reaction_post_id = $post_id;
 		$paired_post_id   = get_post_meta( $post_id, 'mastodon_reblog_id', true );
 		if ( Friends::CPT !== get_post_type( $reaction_post_id ) ) {
@@ -159,6 +164,30 @@ class Enable_Mastodon_Apps {
 		}
 
 		return $status;
+	}
+
+	public static function mastodon_api_submit_post_data( $post_data, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility, $scheduled_at, $post_id, $app ) {
+		unset( $status_text, $in_reply_to_id, $media_ids, $post_format, $post_id, $app );
+
+		if ( 'unlisted' !== $visibility ) {
+			return $post_data;
+		}
+
+		if ( empty( $scheduled_at ) ) {
+			$post_data['post_status'] = 'publish';
+		}
+
+		if ( ! isset( $post_data['meta_input'] ) || ! is_array( $post_data['meta_input'] ) ) {
+			$post_data['meta_input'] = array();
+		}
+
+		$post_data['meta_input']['activitypub_content_visibility'] = self::get_activitypub_quiet_public_visibility();
+
+		return $post_data;
+	}
+
+	private static function get_activitypub_quiet_public_visibility() {
+		return defined( 'ACTIVITYPUB_CONTENT_VISIBILITY_QUIET_PUBLIC' ) ? ACTIVITYPUB_CONTENT_VISIBILITY_QUIET_PUBLIC : 'quiet_public';
 	}
 
 	public static function mastodon_api_account_statuses( $statuses, $request, $user_id ) {

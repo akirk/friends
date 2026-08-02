@@ -215,6 +215,25 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertTrue( $has_mention_query, 'tax_query should filter by mention tag for current user' );
 	}
 
+	public function test_ema_unlisted_status_is_quiet_public() {
+		$request = $this->api_request( 'POST', '/api/v1/statuses' );
+		$request->set_param( 'status', 'Quiet public test.' );
+		$request->set_param( 'visibility', 'unlisted' );
+
+		$response = $this->dispatch_authenticated( $request );
+		$this->assertEquals( 200, $response->get_status() );
+
+		$status = $response->get_data();
+		$post = get_post( $status->id );
+		$this->posts[] = $post->ID;
+
+		$quiet_public = defined( 'ACTIVITYPUB_CONTENT_VISIBILITY_QUIET_PUBLIC' ) ? ACTIVITYPUB_CONTENT_VISIBILITY_QUIET_PUBLIC : 'quiet_public';
+
+		$this->assertSame( 'publish', $post->post_status );
+		$this->assertSame( $quiet_public, get_post_meta( $post->ID, 'activitypub_content_visibility', true ) );
+		$this->assertSame( 'unlisted', $status->visibility );
+	}
+
 	private function create_mastodon_status( $post_id ) {
 		$status                   = new \Enable_Mastodon_Apps\Entity\Status();
 		$status->id               = strval( $post_id );
