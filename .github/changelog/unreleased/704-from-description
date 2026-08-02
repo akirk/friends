@@ -1,0 +1,3 @@
+Type: fixed
+
+Quiet public posts created through Mastodon apps are stored as published posts with quiet-public ActivityPub visibility.
