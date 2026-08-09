@@ -307,13 +307,19 @@ class REST {
 				 * Allows plugins to register actions for the Friends browser extension.
 				 *
 				 * Each action is an associative array with:
+				 * - `id` (string, optional) — stable action identifier for clients that persist action state.
 				 * - `name` (string, required) — label shown in the extension popup.
 				 * - `url` (string, required) — target URL; may contain `{current_url}` which the extension substitutes with the current page URL (URL-encoded).
 				 * - `method` (string, optional) — if `"POST"`, the extension submits a form instead of opening a link.
 				 * - `fields` (object, optional) — for POST actions, key/value pairs of form fields; values may contain `{current_url}` (raw) and `{page_html}` placeholders.
 				 * - `run` (string, optional) — if `"inline"`, the extension handles the response in place instead of opening a new tab.
 				 * - `inputs` (array, optional) — user-editable fields for inline actions.
+				 * - `submit_label` (string, optional) — label for the inline action submit button.
 				 * - `category` (string, optional) — groups actions under a named header; actions without a category appear under the default "Actions" header.
+				 *
+				 * Inline action responses may include `message`, `edit_url`, and `link_label`. They may also
+				 * include `fields`, `values`, and `submit_label` to let the browser extension update the same
+				 * inline form for follow-up edits after the first action has created server-side state.
 				 *
 				 * Example:
 				 * ```php
