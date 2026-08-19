@@ -151,7 +151,9 @@ class Friend_Tag {
 	 * @return array|false|\WP_Error Array of term IDs on success, false or WP_Error on failure.
 	 */
 	public static function add_tags( $post_id, $tags, $append = true ) {
-		return wp_set_post_terms( $post_id, $tags, self::TAXONOMY, $append );
+		// wp_set_object_terms() inserts one term_relationships row per entry without
+		// deduplicating, so a duplicate slug here triggers a duplicate key DB error.
+		return wp_set_post_terms( $post_id, array_unique( $tags ), self::TAXONOMY, $append );
 	}
 
 	/**
