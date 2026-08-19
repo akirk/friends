@@ -1,0 +1,3 @@
+Type: fixed
+
+Avoid a duplicate-key database error when the same ActivityPub activity is redelivered.
