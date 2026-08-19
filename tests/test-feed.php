@@ -887,6 +887,54 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertContains( 'unittest', $tag_names );
 	}
 
+	public function test_feed_processing_with_duplicate_hashtags_does_not_error() {
+		// Ensure the friend_tag taxonomy is registered and CPT is using new taxonomy.
+		Friends::get_instance()->register_friend_tag_taxonomy();
+		unregister_post_type( Friends::CPT );
+		Friends::get_instance()->register_custom_post_type();
+
+		delete_option( 'friends_disable_auto_tagging' );
+
+		$user = User::get_user_by_id( $this->alex );
+
+		$feeds = $user->get_active_feeds();
+		if ( empty( $feeds ) ) {
+			$user_feed = $user->save_feed(
+				'https://example.com/feed.xml',
+				array( 'parser' => 'simplepie' )
+			);
+			$this->assertNotWPError( $user_feed );
+		} else {
+			$user_feed = $feeds[0];
+		}
+
+		// A remote post can list the same hashtag more than once; wp_set_object_terms()
+		// would otherwise try to insert the same term_relationships row twice and
+		// trigger a duplicate-key database error.
+		$feed_item = new Feed_Item(
+			array(
+				'permalink' => 'https://example.com/duplicate-hashtag-test-' . wp_rand(),
+				'title'     => 'Test Post with duplicate hashtag',
+				'content'   => 'This is a test with a duplicated hashtag',
+				'date'      => time() - 50,
+			)
+		);
+		$feed_item->friend_tags = array( 'duplicatetag', 'duplicatetag' );
+
+		$feed_items = array( $feed_item );
+		$new_posts = Friends::get_instance()->feed->process_incoming_feed_items( $feed_items, $user_feed );
+
+		$this->assertNotEmpty( $new_posts );
+		$this->assertCount( 1, $new_posts );
+		$post_id = array_keys( $new_posts )[0];
+
+		$tags = wp_get_post_terms( $post_id, Friends::TAG_TAXONOMY );
+		$tag_names = wp_list_pluck( $tags, 'name' );
+
+		$this->assertContains( 'duplicatetag', $tag_names );
+		$this->assertCount( 1, $tag_names );
+	}
+
 	public function test_feed_processing_respects_disable_auto_tagging() {
 		// Ensure the friend_tag taxonomy is registered and CPT is using new taxonomy
 		Friends::get_instance()->register_friend_tag_taxonomy();

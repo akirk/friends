@@ -2741,8 +2741,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @param string $type  The type of the activity.
 	 */
 	public function handle_received_activity( $activity, $user_id, $type ) {
-		if ( isset( $activity['object']['id'] ) && isset( $this->activitypub_already_handled[ $activity['object']['id'] ] ) ) {
-			return;
+		if ( isset( $activity['object']['id'] ) ) {
+			if ( isset( $this->activitypub_already_handled[ $activity['object']['id'] ] ) ) {
+				return;
+			}
+
+			// Some remote servers deliver (or retry) the same activity more than once,
+			// which can otherwise be processed concurrently by two requests and race
+			// on inserting the same term_relationships row. Skip the redeliveries.
+			$duplicate_lock = 'friends_ap_seen_' . md5( $type . '|' . $activity['object']['id'] );
+			if ( false !== get_transient( $duplicate_lock ) ) {
+				return false;
+			}
+			set_transient( $duplicate_lock, true, MINUTE_IN_SECONDS );
 		}
 
 		// Check if this is a reply to an existing Friends post - if so, let the ActivityPub plugin handle it as a comment.
