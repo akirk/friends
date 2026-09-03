@@ -47,6 +47,9 @@ class Enable_Mastodon_Apps {
 
 	public static function mastodon_api_account_unfollow( $user_id ) {
 		$user = User::get_user_by_id( $user_id );
+		if ( ! $user ) {
+			return;
+		}
 		foreach ( $user->get_active_feeds() as $feed ) {
 			$feed->deactivate();
 		}
