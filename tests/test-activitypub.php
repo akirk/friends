@@ -141,7 +141,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		// Let's post a new Note through the REST API.
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 		$content = 'Test ' . $date . ' ' . wp_rand();
 		$attachment_url = 'https://mastodon.local/files/original/1234.png';
 		$attachment_width = 400;
@@ -184,7 +184,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		// Do another test post, this time with a URL that has an @-id.
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 		$content = 'Test ' . $date . ' ' . wp_rand();
 
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
@@ -267,7 +267,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		// Let's post a new Note through the REST API.
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 		$content = 'Test ' . $date . ' ' . wp_rand();
 		$attachment_url = 'https://mastodon.local/files/original/1234.png';
 		$attachment_width = 400;
@@ -317,7 +317,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		// Update the post
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 		$updated_content = 'Test ' . $date . ' ' . wp_rand();
 
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
@@ -366,7 +366,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		// Let's post a new Note through the REST API.
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 		$content = '<a rel="mention" class="u-url mention" href="https://example.org/users/abc">@<span>abc</span></a> Test ' . $date . ' ' . wp_rand();
 
 		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
@@ -416,7 +416,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$post_count = count( $posts );
 
 		$date = gmdate( \DATE_W3C, $now++ );
-		$id = 'test' . $status_id;
+		$id = $this->actor . '/status/' . $status_id;
 
 		$object = 'https://notiz.blog/2022/11/14/the-at-protocol/';
 
