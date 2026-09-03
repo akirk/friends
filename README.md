@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.2.1
+- Stable tag: 4.2.2
 
 A self-hosted social reader for WordPress: follow people via RSS and ActivityPub, with multiple themes and a plugin ecosystem.
 
@@ -77,6 +77,17 @@ Yes — install it for [Chrome](https://chromewebstore.google.com/detail/friends
 8. Followed people are stored as taxonomy terms
 
 ## Changelog
+
+### 4.2.2
+- Fix the mobile direct messages layout and keyboard behavior. ([#693])
+- Add delivery status indicators for ActivityPub direct messages. ([#694])
+- Update CI actions to avoid Node module deprecation warnings. ([#695])
+- Update CI actions to avoid Node module deprecation warnings. ([#696])
+- Show direct message delivery status in the conversation overview and recover delivery tracking for older ActivityPub outbox items. ([#703])
+- Quiet public posts created through Mastodon apps are stored as published posts with quiet-public ActivityPub visibility. ([#704])
+- Document browser extension inline action responses that can update form state after saving. ([#705])
+- Avoid a duplicate-key database error when the same ActivityPub activity is redelivered. ([#707])
+- Fix a fatal error when unfollowing an account that isn't a Friends subscription through a Mastodon app. ([#709])
 
 ### 4.2.1
 - Render ActivityPub custom emoji in actor display names. ([#681])
@@ -641,3 +652,13 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#689]: https://github.com/akirk/friends/pull/689
 [#690]: https://github.com/akirk/friends/pull/690
 [#691]: https://github.com/akirk/friends/pull/691
+
+[#693]: https://github.com/akirk/friends/pull/693
+[#694]: https://github.com/akirk/friends/pull/694
+[#695]: https://github.com/akirk/friends/pull/695
+[#696]: https://github.com/akirk/friends/pull/696
+[#703]: https://github.com/akirk/friends/pull/703
+[#704]: https://github.com/akirk/friends/pull/704
+[#705]: https://github.com/akirk/friends/pull/705
+[#707]: https://github.com/akirk/friends/pull/707
+[#709]: https://github.com/akirk/friends/pull/709
