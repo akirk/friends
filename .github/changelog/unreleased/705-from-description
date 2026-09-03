@@ -1,0 +1,3 @@
+Type: changed
+
+Document browser extension inline action responses that can update form state after saving.
