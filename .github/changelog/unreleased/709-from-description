@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix a fatal error when unfollowing an account that isn't a Friends subscription through a Mastodon app.
