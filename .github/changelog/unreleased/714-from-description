@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix a fatal error that stopped the friends page from rendering when the ActivityPub plugin is not active.
