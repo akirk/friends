@@ -500,6 +500,44 @@ class FeedTest extends \WP_UnitTestCase {
 		}
 	}
 
+	public function test_feed_of_wp_user_backed_friend_resolves_to_that_user() {
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		// Friends created before the switch to subscription terms store their
+		// feeds as object terms on the WP user, without a parent term.
+		$user_id = $this->factory->user->create(
+			array(
+				'user_login' => 'wp-user-friend',
+				'user_url'   => 'http://wp-user-friend.local/',
+				'role'       => 'subscription',
+			)
+		);
+		$user = new User( $user_id );
+		$feed_url = 'http://wp-user-friend.local/feed';
+		$user_feed = $user->save_feed( $feed_url, array( 'parser' => 'simplepie', 'active' => true ) );
+		$this->assertNotWPError( $user_feed );
+		$this->assertEquals( 0, get_term( $user_feed->get_id(), User_Feed::TAXONOMY )->parent );
+
+		// Looked up without the user at hand, the feed must still find it.
+		$user_feed = User_Feed::get_by_url( $feed_url );
+		$this->assertNotWPError( $user_feed );
+
+		$friend_user = $user_feed->get_friend_user();
+		$this->assertInstanceOf( User::class, $friend_user );
+		$this->assertEquals( $user_id, $friend_user->ID );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
+	public function test_orphaned_feed_term_resolves_to_no_user() {
+		$term = wp_insert_term( 'http://orphaned-feed.local/feed', User_Feed::TAXONOMY );
+		$this->assertNotWPError( $term );
+
+		$user_feed = User_Feed::get_by_url( 'http://orphaned-feed.local/feed' );
+		$this->assertNotWPError( $user_feed );
+		$this->assertFalse( $user_feed->get_friend_user() );
+	}
+
 	public function test_cron_refresh_processes_feeds() {
 		$user = User::get_user_by_id( $this->friend_id );
 		$friends = Friends::get_instance();

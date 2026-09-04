@@ -130,7 +130,30 @@ class User_Feed {
 			}
 		}
 
-		return array();
+		// Feeds of a user-backed friend aren't child terms of a subscription
+		// term but are attached to the user as object terms, see
+		// User::save_feeds().
+		$object_ids = get_objects_in_term( $this->term->term_id, self::TAXONOMY );
+		if ( is_wp_error( $object_ids ) ) {
+			return array();
+		}
+
+		$users = array();
+		foreach ( $object_ids as $object_id ) {
+			$user = User::get_user_by_id( $object_id );
+			if ( ! $user ) {
+				continue;
+			}
+
+			// The same object id can belong to an ap_actor post, so only accept
+			// the user if this feed really is one of theirs.
+			$feeds = $user->get_feeds();
+			if ( isset( $feeds[ $this->term->term_id ] ) ) {
+				$users[] = $user;
+			}
+		}
+
+		return $users;
 	}
 
 	/**

@@ -1091,6 +1091,69 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
 	}
 
+	public function test_direct_message_from_feed_without_friend_user_is_saved() {
+		$orphan_actor = 'https://mastodon.local/users/orphan-dm-sender';
+		self::$users[ $orphan_actor ] = array(
+			'id'                => $orphan_actor,
+			'url'               => $orphan_actor,
+			'name'              => 'Orphan DM Sender',
+			'preferredUsername' => 'orphan-dm-sender',
+			'icon'              => array(
+				'type' => 'Image',
+				'url'  => $orphan_actor . '.png',
+			),
+		);
+
+		// A feed term that no longer resolves to a user, for example because its
+		// subscription term was deleted.
+		$this->assertNotWPError( wp_insert_term( $orphan_actor, User_Feed::TAXONOMY ) );
+		$user_feed = User_Feed::get_by_url( $orphan_actor );
+		$this->assertNotWPError( $user_feed );
+		$this->assertFalse( $user_feed->get_friend_user(), 'The feed must not resolve to a user for this test to be meaningful.' );
+
+		$local_user = get_current_user_id();
+		$local_activitypub_id = $this->mock_local_user_activitypub_metadata( $local_user );
+		$date = gmdate( \DATE_W3C, time() - 10 );
+		$id = $orphan_actor . '/statuses/direct-message';
+		$content = 'Hello from a sender whose feed lost its user.';
+
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+		$parser->handle_received_direct_message(
+			array(
+				'type'   => 'Create',
+				'id'     => $id . '/activity',
+				'actor'  => $orphan_actor,
+				'to'     => array( $local_activitypub_id ),
+				'object' => array(
+					'id'           => $id,
+					'type'         => 'Note',
+					'published'    => $date,
+					'attributedTo' => $orphan_actor,
+					'to'           => array( $local_activitypub_id ),
+					'content'      => $content,
+				),
+			),
+			$local_user
+		);
+
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_unread',
+				'numberposts' => -1,
+			)
+		);
+
+		$this->assertCount( 1, $messages );
+		$this->assertSame( $content, $messages[0]->post_content );
+		$this->assertSame( $id, $messages[0]->guid );
+
+		// The message is attributed to a sender identity created from the actor
+		// rather than to the feed that resolves to no user.
+		$this->assertInstanceOf( User::class, User::get_post_author( $messages[0] ) );
+		$this->assertSame( $orphan_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
+	}
+
 	public function test_comment_on_cached_post_federation() {
 		$remote_post_url = 'https://mastodon.local/users/akirk/statuses/123456';
 
