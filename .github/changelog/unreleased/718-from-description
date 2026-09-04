@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix direct messages being federated as a Tombstone so they never arrived at the recipient.
