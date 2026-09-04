@@ -20,6 +20,21 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 	public $cc = array();
 	private $mentions;
 
+	/**
+	 * Whether the item should federate as a Tombstone.
+	 *
+	 * The parent class treats every post that is not publicly queryable as
+	 * redacted, and a direct message never is: it lives in a non-public post
+	 * type, in a custom post status, and carries a private content visibility.
+	 * Without this, `to_object()` returns a Tombstone and the remote silently
+	 * drops the message even though it accepted the delivery.
+	 *
+	 * @return bool Always false.
+	 */
+	protected function is_redacted() {
+		return false;
+	}
+
 	protected function get_in_reply_to() {
 		return $this->in_reply_to;
 	}
