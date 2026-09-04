@@ -1066,6 +1066,7 @@ class Blocks {
 		$content = get_the_content();
 		$content = wp_kses_post( $content );
 		$content = wpautop( $content );
+		$content .= Link_Preview::render();
 
 		return '<div class="wp-block-friends-post-content">' . $content . '</div>';
 	}

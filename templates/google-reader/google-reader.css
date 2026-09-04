@@ -1704,3 +1704,62 @@
 	font-size: .8rem;
 	padding: 1px 6px;
 }
+
+/* === Link Previews === */
+.friends-page a.friends-link-preview {
+	display: flex;
+	gap: 10px;
+	margin-top: 8px;
+	padding: 8px;
+	border: 1px solid light-dark(#dadce0, #3c4043);
+	border-radius: 4px;
+	background: light-dark(#f8f9fa, #292a2d);
+	color: inherit;
+	text-decoration: none;
+}
+
+.friends-page a.friends-link-preview:hover {
+	background: light-dark(#f1f3f4, #35363a);
+	text-decoration: none;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-image {
+	flex: 0 0 auto;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-image img {
+	display: block;
+	width: 100px;
+	height: 75px;
+	object-fit: cover;
+	border-radius: 2px;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-host {
+	color: light-dark(#5f6368, #9aa0a6);
+	font-size: 11px;
+	text-transform: uppercase;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-title {
+	font-size: 13px;
+	font-weight: bold;
+	line-height: 1.3;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-description {
+	color: light-dark(#5f6368, #9aa0a6);
+	font-size: 12px;
+	line-height: 1.4;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}

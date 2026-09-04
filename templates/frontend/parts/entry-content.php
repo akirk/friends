@@ -15,5 +15,7 @@ $content = get_the_content();
 	} else {
 		the_content();
 	}
+
+	Friends\Friends::template_loader()->get_template_part( 'frontend/parts/link-preview', get_post_format(), $args );
 	?>
 </div>

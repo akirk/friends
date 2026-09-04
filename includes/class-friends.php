@@ -73,6 +73,13 @@ class Friends {
 	public $frontend;
 
 	/**
+	 * A reference to the Link_Preview object.
+	 *
+	 * @var Link_Preview
+	 */
+	public $link_preview;
+
+	/**
 	 * A reference to the REST object.
 	 *
 	 * @var REST
@@ -125,6 +132,8 @@ class Friends {
 		$this->reactions      = new Reactions( $this );
 		$this->rest           = new REST( $this );
 		$this->abilities      = new Abilities( $this );
+
+		$this->link_preview = new Link_Preview( $this );
 
 		new Third_Parties( $this );
 		new Blocks( $this );
