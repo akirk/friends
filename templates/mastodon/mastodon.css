@@ -2530,3 +2530,59 @@ body.friends-page {
 .friends-page .posts.all-collapsed article.card.mast-current:not(.uncollapsed) {
 	background: light-dark(#f0f3f8, #2c3040);
 }
+
+/* === Link Previews === */
+.friends-page a.friends-link-preview {
+	display: flex;
+	flex-direction: column;
+	margin-top: 12px;
+	overflow: hidden;
+	border: 1px solid light-dark(#d4dde8, #393f4f);
+	border-radius: 8px;
+	background: light-dark(#f2f5f7, #1e2028);
+	color: inherit;
+	text-decoration: none;
+}
+
+.friends-page a.friends-link-preview:hover {
+	border-color: light-dark(#b6c3d4, #4a5266);
+	text-decoration: none;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-image img {
+	display: block;
+	width: 100%;
+	height: auto;
+	object-fit: cover;
+	aspect-ratio: 1.91 / 1;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-text {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding: 12px;
+	min-width: 0;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-host {
+	color: light-dark(#606984, #9baec8);
+	font-size: 13px;
+	text-transform: uppercase;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-title {
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 1.3;
+}
+
+.friends-page a.friends-link-preview .friends-link-preview-description {
+	color: light-dark(#606984, #9baec8);
+	font-size: 14px;
+	line-height: 1.4;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}

@@ -490,7 +490,7 @@ class Admin {
 		}
 
 		$this->check_admin_settings();
-		foreach ( array( 'disable_auto_tagging' ) as $checkbox ) {
+		foreach ( array( 'disable_auto_tagging', 'disable_link_previews' ) as $checkbox ) {
 			if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
 				update_option( 'friends_' . $checkbox, true );
 			} else {
@@ -1294,6 +1294,7 @@ class Admin {
 					'compose_post_format'              => get_option( 'friends_compose_post_format', 'status' ),
 					'exclude_compose_format_from_feed' => get_option( 'friends_exclude_compose_format_from_feed' ),
 					'disable_auto_tagging'             => get_option( 'friends_disable_auto_tagging' ),
+					'disable_link_previews'            => get_option( 'friends_disable_link_previews' ),
 					'retention_days'                   => Friends::get_retention_days(),
 					'retention_number'                 => Friends::get_retention_number(),
 					'retention_days_enabled'           => get_option( 'friends_enable_retention_days' ),

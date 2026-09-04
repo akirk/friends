@@ -231,6 +231,24 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<tr>
+				<th scope="row"><?php esc_html_e( 'Link Previews', 'friends' ); ?></th>
+				<td>
+					<fieldset>
+						<label for="disable_link_previews">
+							<input name="disable_link_previews" type="checkbox" id="disable_link_previews" value="1" <?php checked( '1', $args['disable_link_previews'] ); ?> />
+							<span><?php esc_html_e( 'Disable link previews for incoming posts.', 'friends' ); ?></span>
+						</label>
+						<p class="description">
+						<?php
+						esc_html_e( 'When a status contains a link but no image or video of its own, a preview card with the linked page\'s title, description and image can be shown below the post.', 'friends' );
+						echo '<br>';
+						esc_html_e( 'To do so, your site downloads the linked page in the background, so disable this if you\'d rather not have your site contact the linked websites.', 'friends' );
+						?>
+						</p>
+					</fieldset>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row" rowspan="3"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
 				<td>
 					<fieldset>
