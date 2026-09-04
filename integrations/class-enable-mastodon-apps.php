@@ -25,6 +25,7 @@ class Enable_Mastodon_Apps {
 		add_filter( 'mastodon_api_status', array( get_called_class(), 'mastodon_api_status' ), 60, 2 );
 		add_filter( 'mastodon_api_submit_post_data', array( get_called_class(), 'mastodon_api_submit_post_data' ), 20, 9 );
 		add_filter( 'mastodon_api_get_notifications_query_args', array( get_called_class(), 'mastodon_api_get_notifications_query_args' ), 10, 2 );
+		add_filter( 'mastodon_api_get_notifications_queries', array( get_called_class(), 'mastodon_api_get_notifications_queries' ), 10, 2 );
 		add_filter( 'mastodon_api_account_statuses_excluded_post_types', array( get_called_class(), 'mastodon_api_account_statuses_excluded_post_types' ) );
 		add_filter( 'mastodon_api_account_statuses', array( get_called_class(), 'mastodon_api_account_statuses' ), 10, 3 );
 	}
@@ -282,6 +283,30 @@ class Enable_Mastodon_Apps {
 		}
 
 		return new \DateTime( $post->post_modified_gmt, new \DateTimeZone( 'UTC' ) );
+	}
+
+	/**
+	 * Add the received messages as their own notification source.
+	 *
+	 * Enable Mastodon Apps queries every entry of this filter separately, so the mention
+	 * tag query that mastodon_api_get_notifications_query_args() needs for the cached
+	 * posts doesn't apply to the messages, which don't carry that tag.
+	 *
+	 * @param array  $queries The notification queries.
+	 * @param string $type    The type of notifications.
+	 * @return array The notification queries.
+	 */
+	public static function mastodon_api_get_notifications_queries( $queries, $type ) {
+		if ( 'mention' !== $type ) {
+			return $queries;
+		}
+
+		$queries[] = array(
+			'post_type'   => Messages::CPT,
+			'post_status' => array( 'friends_read', 'friends_unread' ),
+		);
+
+		return $queries;
 	}
 
 	public static function mastodon_api_get_notifications_query_args( $args, $type ) {

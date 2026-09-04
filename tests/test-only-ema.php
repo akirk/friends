@@ -215,6 +215,30 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertTrue( $has_mention_query, 'tax_query should filter by mention tag for current user' );
 	}
 
+	public function test_ema_notifications_queries_filter() {
+		// The messages are registered as their own notification source.
+		$this->assertTrue( has_filter( 'mastodon_api_get_notifications_queries' ), 'mastodon_api_get_notifications_queries filter should be registered' );
+
+		wp_set_current_user( $this->administrator_id );
+
+		$queries = apply_filters( 'mastodon_api_get_notifications_queries', array(), 'mention' );
+
+		$message_query = null;
+		foreach ( $queries as $query ) {
+			if ( isset( $query['post_type'] ) && Messages::CPT === $query['post_type'] ) {
+				$message_query = $query;
+				break;
+			}
+		}
+
+		$this->assertNotNull( $message_query, 'The messages should be queried for notifications' );
+		$this->assertContains( 'friends_unread', $message_query['post_status'], 'Unread messages should be included' );
+		$this->assertContains( 'friends_read', $message_query['post_status'], 'Read messages should be included' );
+
+		// The mention tag query for the cached posts must stay out of it.
+		$this->assertArrayNotHasKey( 'tax_query', $message_query, 'The messages do not carry a mention tag' );
+	}
+
 	public function test_ema_unlisted_status_is_quiet_public() {
 		$request = $this->api_request( 'POST', '/api/v1/statuses' );
 		$request->set_param( 'status', 'Quiet public test.' );
