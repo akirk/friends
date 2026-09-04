@@ -1179,7 +1179,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$message = $object['content'];
 		$subject = null;
 
-		if ( ! $user_feed || is_wp_error( $user_feed ) ) {
+		$friend_user = false;
+		if ( $user_feed && ! is_wp_error( $user_feed ) ) {
+			// A feed term can exist without resolving to a user, for example when
+			// its subscription term was deleted. Treat that like an unknown sender
+			// instead of passing a false to the notification hooks.
+			$friend_user = $user_feed->get_friend_user();
+		}
+
+		if ( ! $friend_user instanceof User ) {
 			$actor = apply_filters( 'friends_get_activitypub_metadata', array(), $actor_url );
 			if ( ! $actor || is_wp_error( $actor ) ) {
 				return;
@@ -1212,8 +1220,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			do_action( 'notify_unknown_friend_message_received', $sender_name, $message, $subject, $actor_url, $remote_url, $reply_to );
 			return;
 		}
-
-		$friend_user = $user_feed->get_friend_user();
 
 		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $user_feed->get_url(), $remote_url, $reply_to );
 	}
