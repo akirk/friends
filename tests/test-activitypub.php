@@ -790,6 +790,15 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertContains( $this->actor, $activity['to'] );
 		$this->assertContains( $this->actor, $activity['object']['to'] );
 		$this->assertStringContainsString( '@akirk', $activity['object']['content'] );
+
+		// A message that federates as a Tombstone is accepted by the remote but silently dropped.
+		$this->assertSame( 'Note', $activity['object']['type'] );
+		$this->assertArrayNotHasKey( 'formerType', $activity['object'] );
+
+		// Mastodon needs a Mention tag to attach the message to the recipient.
+		$this->assertNotEmpty( $activity['object']['tag'] );
+		$this->assertSame( 'Mention', $activity['object']['tag'][0]['type'] );
+		$this->assertSame( $this->actor, $activity['object']['tag'][0]['href'] );
 	}
 
 	public function test_direct_message_delivery_status_tracks_inbox_result() {
