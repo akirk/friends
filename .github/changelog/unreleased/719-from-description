@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix a fatal error when receiving a direct message from a sender whose feed doesn't resolve to a friend user.
