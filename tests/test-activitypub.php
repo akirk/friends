@@ -1139,10 +1139,10 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( $content, $messages[0]->post_content );
 		$this->assertSame( $id, $messages[0]->guid );
 
-		// The sender was turned into a usable identity along the way.
-		$friend_user = User_Feed::get_by_url( $orphan_actor )->get_friend_user();
-		$this->assertInstanceOf( User::class, $friend_user );
-		$this->assertSame( (int) $friend_user->ID, (int) User::get_post_author( $messages[0] )->ID );
+		// The message is attributed to a sender identity created from the actor
+		// rather than to the feed that resolves to no user.
+		$this->assertInstanceOf( User::class, User::get_post_author( $messages[0] ) );
+		$this->assertSame( $orphan_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
 	}
 
 	public function test_comment_on_cached_post_federation() {
