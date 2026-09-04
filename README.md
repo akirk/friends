@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.3.0
+- Stable tag: 4.3.1
 
 A self-hosted social reader for WordPress: follow people via RSS and ActivityPub, with multiple themes and a plugin ecosystem.
 
@@ -77,6 +77,10 @@ Yes — install it for [Chrome](https://chromewebstore.google.com/detail/friends
 8. Followed people are stored as taxonomy terms
 
 ## Changelog
+
+### 4.3.1
+- Fix direct messages being federated as a Tombstone so they never arrived at the recipient. ([#718])
+- Fix a fatal error when receiving a direct message from a sender whose feed doesn't resolve to a friend user. ([#719])
 
 ### 4.3.0
 - Notify Mastodon apps about received direct messages. ([#711])
@@ -671,3 +675,6 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#711]: https://github.com/akirk/friends/pull/711
 [#712]: https://github.com/akirk/friends/pull/712
 [#714]: https://github.com/akirk/friends/pull/714
+
+[#718]: https://github.com/akirk/friends/pull/718
+[#719]: https://github.com/akirk/friends/pull/719
