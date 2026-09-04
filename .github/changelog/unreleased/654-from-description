@@ -1,0 +1,3 @@
+Type: fixed
+
+Fix ActivityPub replies to local comments not arriving as threaded comments
