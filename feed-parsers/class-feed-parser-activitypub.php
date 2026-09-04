@@ -117,6 +117,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_in_reply_to_id', array( $this, 'mastodon_api_in_reply_to_id' ), 25 );
 		add_filter( 'friends_cache_url_post_id', array( $this, 'check_url_to_postid' ), 10, 2 );
 
+		add_filter( 'friends_author_display_name_html', array( self::class, 'author_display_name_html' ), 10, 3 );
+
 		add_action( 'friends_post_author_meta', array( self::class, 'friends_post_author_meta' ) );
 		add_action( 'friends_get_template_part_frontend/parts/header-menu', array( self::class, 'header_menu' ) );
 		add_action( 'friends_comments_form', array( self::class, 'comment_form' ) );
@@ -5092,6 +5094,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			);
 		}
 		return $comments;
+	}
+
+	/**
+	 * Render a display name with the actor's custom emoji.
+	 *
+	 * Hooked to `friends_author_display_name_html`, which is only filtered while
+	 * this parser is registered, i.e. while the ActivityPub plugin is active.
+	 * Without it the escaped display name passed in is used as-is.
+	 *
+	 * @param string    $html         The display name as safe HTML.
+	 * @param string    $display_name The raw display name.
+	 * @param User|null $friend_user  The user the name belongs to.
+	 * @return string Safe HTML.
+	 */
+	public static function author_display_name_html( $html, $display_name, $friend_user = null ) {
+		if ( ! $friend_user instanceof User ) {
+			return $html;
+		}
+
+		return wp_kses( self::replace_custom_emojis_for_user( $display_name, $friend_user ), self::get_custom_emoji_allowed_html() );
 	}
 
 	public static function friends_post_author_meta( $friend_user ) {

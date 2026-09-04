@@ -1251,7 +1251,11 @@ class User extends \WP_User {
 		if ( $user_id ) {
 			return $user_id;
 		}
-		$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
+		$user = false;
+		// The ActivityPub parser is only loaded when the ActivityPub plugin is active.
+		if ( class_exists( Feed_Parser_ActivityPub::class ) ) {
+			$user = Feed_Parser_ActivityPub::determine_mastodon_api_user( $user_id );
+		}
 		if ( ! $user ) {
 			$user = self::get_post_author( get_post( $post_id ) );
 		}
@@ -1294,7 +1298,8 @@ class User extends \WP_User {
 				$relationship = new \Enable_Mastodon_Apps\Entity\Relationship();
 			}
 			foreach ( $user->get_active_feeds() as $feed ) {
-				if ( Feed_Parser_ActivityPub::SLUG === $feed->get_parser() ) {
+				// Not Feed_Parser_ActivityPub::SLUG: this is reached above without the ActivityPub plugin, so that class may not exist.
+				if ( 'activitypub' === $feed->get_parser() ) {
 					$relationship->following = true;
 					break;
 				}
