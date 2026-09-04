@@ -897,7 +897,7 @@ class Frontend {
 				}
 
 				$author_name      = $author->display_name;
-				$author_name_html = Feed_Parser_ActivityPub::replace_custom_emojis_for_user( $author_name, $author );
+				$author_name_html = apply_filters( 'friends_author_display_name_html', esc_html( $author_name ), $author_name, $author );
 				$override_author_name = apply_filters( 'friends_override_author_name', '', $author_name, $block->context['postId'] );
 				if ( isset( $attributes['isLink'] ) && $attributes['isLink'] ) {
 					$author_name_html = sprintf( '<a href="%1$s" target="%2$s" class="wp-block-post-author-name__link">%3$s</a>', esc_url( $author->get_local_friends_page_url() ), esc_attr( $attributes['linkTarget'] ), $author_name_html );
@@ -922,7 +922,7 @@ class Frontend {
 					wp_kses(
 						$author_name_html,
 						array_merge(
-							Feed_Parser_ActivityPub::get_custom_emoji_allowed_html(),
+							wp_kses_allowed_html( 'post' ),
 							array(
 								'a' => array(
 									'class'  => true,

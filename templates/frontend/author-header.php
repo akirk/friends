@@ -10,7 +10,7 @@ $_feeds = count( $args['friend_user']->get_feeds() );
 $rules = count( $args['friend_user']->get_feed_rules() );
 $active_feeds = count( $args['friend_user']->get_active_feeds() );
 $hidden_post_count = $args['friend_user']->get_post_in_trash_count();
-$display_name_html = Friends\Feed_Parser_ActivityPub::replace_custom_emojis_for_user( $args['friend_user']->display_name, $args['friend_user'] );
+$display_name_html = apply_filters( 'friends_author_display_name_html', esc_html( $args['friend_user']->display_name ), $args['friend_user']->display_name, $args['friend_user'] );
 
 // Get ActivityPub feeds and their data (header image, profile URLs, summary).
 $activitypub_feeds = array();
@@ -25,11 +25,15 @@ foreach ( $args['friend_user']->get_active_feeds() as $feed ) {
 
 	$ap_actor_id = $feed->get_ap_actor_id();
 	$ap_actor_url = $feed->get_ap_actor_url();
-	$ap_actor_acct = Friends\Feed_Parser_ActivityPub::get_actor_acct_from_attributed_to(
-		array(
-			'ap_actor_id' => $ap_actor_id,
-		)
-	);
+	// The parser is only loaded while the ActivityPub plugin is active; a feed can still be marked as one without it.
+	$ap_actor_acct = '';
+	if ( class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
+		$ap_actor_acct = Friends\Feed_Parser_ActivityPub::get_actor_acct_from_attributed_to(
+			array(
+				'ap_actor_id' => $ap_actor_id,
+			)
+		);
+	}
 
 	// If no actor URL from linked actor, use the feed URL as the actor URL.
 	if ( ! $ap_actor_url ) {
@@ -125,7 +129,7 @@ if ( $args['friends']->frontend->reaction ) {
 		<img src="<?php echo esc_attr( $args['friend_user']->get_avatar_url() ); ?>" alt="<?php echo esc_attr( $args['friend_user']->display_name ); ?>" class="avatar" width="36" height="36" style="vertical-align: middle;" />
 		<?php
 	}
-	echo wp_kses( $display_name_html, Friends\Feed_Parser_ActivityPub::get_custom_emoji_allowed_html() );
+	echo wp_kses_post( $display_name_html );
 }
 ?>
 </a>
