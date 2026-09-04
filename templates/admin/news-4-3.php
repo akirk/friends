@@ -49,7 +49,31 @@
 
 		<div class="friends-news-change">
 			<h4><?php esc_html_e( 'Direct Messages in Mastodon Apps', 'friends' ); ?></h4>
-			<p><?php esc_html_e( 'Incoming direct messages now raise a notification in Mastodon apps connected through Enable Mastodon Apps, so a new message reaches you there instead of waiting to be discovered.', 'friends' ); ?></p>
+			<?php
+			if ( class_exists( 'Enable_Mastodon_Apps\Mastodon_API' ) ) {
+				$mastodon_apps_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=enable-mastodon-apps' ) ) . '">' . esc_html__( 'Enable Mastodon Apps', 'friends' ) . '</a>';
+			} else {
+				$mastodon_apps_link = '<a href="' . esc_url( admin_url( 'plugin-install.php?tab=plugin-information&plugin=enable-mastodon-apps&TB_iframe=true' ) ) . '" class="thickbox open-plugin-details-modal install-now" target="_blank">' . esc_html__( 'Enable Mastodon Apps', 'friends' ) . '</a>';
+			}
+			?>
+			<p>
+				<?php
+				echo wp_kses(
+					sprintf(
+						// translators: %s is a link to the Enable Mastodon Apps plugin.
+						__( 'Incoming direct messages now raise a notification in Mastodon apps connected through %s, so a new message reaches you there instead of waiting to be discovered.', 'friends' ),
+						$mastodon_apps_link
+					),
+					array(
+						'a' => array(
+							'href'   => true,
+							'class'  => true,
+							'target' => true,
+						),
+					)
+				);
+				?>
+			</p>
 		</div>
 	</div>
 </div>
