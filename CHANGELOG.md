@@ -1,3 +1,8 @@
+### 4.3.0
+- Notify Mastodon apps about received direct messages. ([#711])
+- Show a link preview card for posts that link to an article, with a setting to turn it off. ([#712])
+- Fix a fatal error that stopped the friends page from rendering when the ActivityPub plugin is not active. ([#714])
+
 ### 4.2.2
 - Fix the mobile direct messages layout and keyboard behavior. ([#693])
 - Add delivery status indicators for ActivityPub direct messages. ([#694])
@@ -939,3 +944,7 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#705]: https://github.com/akirk/friends/pull/705
 [#707]: https://github.com/akirk/friends/pull/707
 [#709]: https://github.com/akirk/friends/pull/709
+
+[#711]: https://github.com/akirk/friends/pull/711
+[#712]: https://github.com/akirk/friends/pull/712
+[#714]: https://github.com/akirk/friends/pull/714
