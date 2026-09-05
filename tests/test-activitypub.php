@@ -486,6 +486,76 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		\wp_trash_post( $post_id );
 	}
 
+	public function test_dont_resolve_a_remotely_linked_mention_locally() {
+		add_filter( 'activitypub_cache_possible_friend_mentions', '__return_false' );
+		$post_id = \wp_insert_post(
+			array(
+				'post_author'  => 1,
+				'post_content' => 'Hi <a rel="mention" class="u-url mention" href="https://mastodon.social/@' . $this->friend_nicename . '">@' . $this->friend_nicename . '</a>  hello',
+				'post_status'  => 'publish',
+			)
+		);
+
+		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
+		$object = $activitypub_post->to_object();
+
+		$tags = $object->get_tag();
+		if ( ! $tags ) {
+			$tags = array();
+		}
+
+		// The link points at another server, so the local friend of that name must not be addressed.
+		$this->assertNotContains(
+			array(
+				'type' => 'Mention',
+				'href' => $this->actor,
+				'name' => '@' . $this->friend_nicename,
+			),
+			$tags
+		);
+		$this->assertNotContains( $this->actor, $object->get_cc() );
+
+		remove_all_filters( 'activitypub_from_post_object' );
+		remove_all_filters( 'activitypub_cache_possible_friend_mentions' );
+
+		\wp_trash_post( $post_id );
+	}
+
+	public function test_resolve_a_locally_linked_mention_locally() {
+		add_filter( 'activitypub_cache_possible_friend_mentions', '__return_false' );
+		$post_id = \wp_insert_post(
+			array(
+				'post_author'  => 1,
+				'post_content' => 'Hi <a rel="mention" class="u-url mention" href="' . home_url( '/author/' . $this->friend_nicename ) . '">@' . $this->friend_nicename . '</a>  hello',
+				'post_status'  => 'publish',
+			)
+		);
+
+		$activitypub_post = new \Activitypub\Transformer\Post( get_post( $post_id ) );
+		$object = $activitypub_post->to_object();
+
+		$tags = $object->get_tag();
+		if ( ! $tags ) {
+			$tags = array();
+		}
+
+		// A link that stays on this site is still a mention of the local friend.
+		$this->assertContains(
+			array(
+				'type' => 'Mention',
+				'href' => $this->actor,
+				'name' => '@' . $this->friend_nicename,
+			),
+			$tags
+		);
+		$this->assertContains( $this->actor, $object->get_cc() );
+
+		remove_all_filters( 'activitypub_from_post_object' );
+		remove_all_filters( 'activitypub_cache_possible_friend_mentions' );
+
+		\wp_trash_post( $post_id );
+	}
+
 	public function test_dont_override_activitypub_mentions() {
 		add_filter( 'activitypub_cache_possible_friend_mentions', '__return_false' );
 		$post_id = \wp_insert_post(
