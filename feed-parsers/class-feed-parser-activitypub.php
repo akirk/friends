@@ -3765,12 +3765,27 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return mixed The discovered mentions.
 	 */
 	public function activitypub_extract_mentions( $mentions, $post_content ) {
+		// Names that are already linked to somebody else's server. Collected before the tags
+		// are stripped, because the link is the only thing that tells them apart from a
+		// mention of a local user who happens to have the same name.
+		$linked_remotely = $this->get_remotely_linked_mention_names( $post_content );
+
 		// Find all @mentions in the content.
 		if ( ! preg_match_all( '/@([a-zA-Z0-9_.-]+(?:@[a-zA-Z0-9.-]+)?)\b/i', wp_strip_all_tags( $post_content ), $matches ) ) {
 			return $mentions;
 		}
 
 		foreach ( array_unique( $matches[1] ) as $handle ) {
+			/*
+			 * A bare @name that is the text of a link to another server is a remote mention
+			 * that lost its domain on the way in, not a mention of the local friend of that
+			 * name. Resolving it here would address the wrong actor entirely. A handle that
+			 * still carries its @host is resolved as before, remotely.
+			 */
+			if ( false === strpos( $handle, '@' ) && in_array( strtolower( $handle ), $linked_remotely, true ) ) {
+				continue;
+			}
+
 			$url = $this->resolve_mention_to_url( $handle );
 			if ( $url ) {
 				$mentions[ '@' . $handle ] = $url;
@@ -3778,6 +3793,37 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $mentions;
+	}
+
+	/**
+	 * Get the names of bare @mentions that link to another server.
+	 *
+	 * Only a link whose text is the bare name is of interest: a link whose text still spells
+	 * out @user@host needs no help, it resolves remotely on its own.
+	 *
+	 * @param string $post_content The post content.
+	 * @return array Lowercased names, without the leading @.
+	 */
+	private function get_remotely_linked_mention_names( $post_content ) {
+		if ( false === stripos( $post_content, '<a' ) ) {
+			return array();
+		}
+
+		if ( ! preg_match_all( '#<a\s[^>]*href=([\'"])(?P<href>[^\'"]+)\1[^>]*>\s*@(?P<name>[a-zA-Z0-9_.-]+)\s*</a>#i', $post_content, $matches, PREG_SET_ORDER ) ) {
+			return array();
+		}
+
+		$names     = array();
+		$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
+
+		foreach ( $matches as $match ) {
+			$link_host = wp_parse_url( $match['href'], PHP_URL_HOST );
+			if ( $link_host && strtolower( $link_host ) !== strtolower( $site_host ) ) {
+				$names[] = strtolower( $match['name'] );
+			}
+		}
+
+		return $names;
 	}
 
 	/**
