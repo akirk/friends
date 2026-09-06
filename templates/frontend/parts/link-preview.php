@@ -6,7 +6,33 @@
  * @package Friends
  */
 
-$link_preview = Friends\Link_Preview::get_for_post();
+/**
+ * Temporary diagnostics for link previews. The actual remote request runs in
+ * a scheduled WordPress event, so expose the frontend state in the browser
+ * console while testing in WordPress Playground.
+ *
+ * @var WP_Post|null $current_post
+ */
+$current_post    = get_post();
+$checked         = $current_post ? intval( get_post_meta( $current_post->ID, Friends\Link_Preview::META_CHECKED, true ) ) : 0;
+$is_supported    = $current_post ? Friends\Link_Preview::is_supported_post( $current_post ) : false;
+$candidate_url   = $current_post ? Friends\Link_Preview::extract_url( $current_post ) : false;
+$link_preview    = Friends\Link_Preview::get_for_post( $current_post );
+$diagnostic_data = array(
+	'postId'        => $current_post ? $current_post->ID : 0,
+	'enabled'       => Friends\Link_Preview::is_enabled(),
+	'supportedPost' => $is_supported,
+	'candidateUrl'  => $candidate_url ? $candidate_url : null,
+	'checkedAt'     => $checked ? gmdate( 'c', $checked ) : null,
+	'cronScheduled' => $current_post ? (bool) wp_next_scheduled( Friends\Link_Preview::CRON_HOOK, array( $current_post->ID ) ) : false,
+	'hasPreview'    => (bool) $link_preview,
+);
+?>
+<script>
+	console.log( '[Friends link preview]', <?php echo wp_json_encode( $diagnostic_data ); ?> );
+</script>
+<script type="application/json" class="friends-link-preview-state"><?php echo wp_json_encode( $diagnostic_data ); ?></script>
+<?php
 if ( ! $link_preview ) {
 	return;
 }

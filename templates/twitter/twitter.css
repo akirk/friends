@@ -2468,12 +2468,21 @@ body.friends-page {
 	text-decoration: none;
 }
 
+.friends-page a.friends-link-preview .friends-link-preview-image {
+	display: block;
+	background: light-dark(#eff3f4, #16181c);
+}
+
+/* Reset the generic card-body image styling so the preview image fills the card. */
 .friends-page a.friends-link-preview .friends-link-preview-image img {
 	display: block;
 	width: 100%;
 	height: auto;
 	object-fit: cover;
 	aspect-ratio: 1.91 / 1;
+	margin: 0;
+	border: 0;
+	border-radius: 0;
 }
 
 .friends-page a.friends-link-preview .friends-link-preview-text {

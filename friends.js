@@ -6,6 +6,87 @@
 	const bottomOffsetLoadNext = 2000;
 	let searchResultFocused = false;
 
+	function renderLinkPreview( state, preview ) {
+		const link = document.createElement( 'a' );
+		link.className = 'friends-link-preview' + ( preview.image ? '' : ' no-image' );
+		link.href = preview.url;
+		link.target = '_blank';
+		link.rel = 'noopener noreferrer nofollow';
+
+		if ( preview.image ) {
+			const imageContainer = document.createElement( 'span' );
+			imageContainer.className = 'friends-link-preview-image';
+			const image = document.createElement( 'img' );
+			image.src = preview.image;
+			image.alt = '';
+			image.loading = 'lazy';
+			image.decoding = 'async';
+			imageContainer.appendChild( image );
+			link.appendChild( imageContainer );
+		}
+
+		const text = document.createElement( 'span' );
+		text.className = 'friends-link-preview-text';
+		const host = preview.site_name || preview.host;
+		if ( host ) {
+			const hostElement = document.createElement( 'span' );
+			hostElement.className = 'friends-link-preview-host';
+			hostElement.textContent = host;
+			text.appendChild( hostElement );
+		}
+		if ( preview.title ) {
+			const title = document.createElement( 'strong' );
+			title.className = 'friends-link-preview-title';
+			title.textContent = preview.title;
+			text.appendChild( title );
+		}
+		if ( preview.description ) {
+			const description = document.createElement( 'span' );
+			description.className = 'friends-link-preview-description';
+			description.textContent = preview.description;
+			text.appendChild( description );
+		}
+		link.appendChild( text );
+		state.replaceWith( link );
+	}
+
+	function fetchMissingLinkPreviews() {
+		if ( ! friends || ! friends.rest_base || ! friends.rest_nonce ) {
+			return;
+		}
+
+		document.querySelectorAll( '.friends-link-preview-state' ).forEach( ( state ) => {
+			const data = JSON.parse( state.textContent );
+			if ( data.hasPreview || data.checkedAt || ! data.candidateUrl ) {
+				return;
+			}
+
+			console.log( '[Friends link preview] requesting on demand', data.postId, data.candidateUrl );
+			fetch( friends.rest_base + 'link-preview', {
+				method: 'POST',
+				credentials: 'same-origin',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-WP-Nonce': friends.rest_nonce,
+				},
+				body: JSON.stringify( { id: data.postId } ),
+			} )
+				.then( ( response ) => response.json().then( ( result ) => ( { response, result } ) ) )
+				.then( ( { response, result } ) => {
+					if ( ! response.ok ) {
+						throw new Error( result.message || 'Link preview request failed.' );
+					}
+					console.log( '[Friends link preview] on-demand response', data.postId, result );
+					if ( result.preview ) {
+						renderLinkPreview( state, result.preview );
+					}
+				} )
+				.catch( ( error ) => console.error( '[Friends link preview] on-demand request failed', data.postId, error ) );
+		} );
+	}
+
+	$( fetchMissingLinkPreviews );
+
 	wp = wp || { ajax: { send() {}, post() {} } };
 
 	$document.on(
