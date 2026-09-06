@@ -6,6 +6,11 @@
  * @package Friends
  */
 
+$prefill_url = '';
+if ( isset( $_GET['url'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	$prefill_url = sanitize_text_field( wp_unslash( $_GET['url'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+}
+
 ?>
 <section class="subscriptions add-friend-subscriptions">
 	<div class="card add-friend-card">
@@ -13,7 +18,7 @@
 			<form id="add-subscription-form" action="" method="post">
 				<?php wp_nonce_field( 'friends_add_subscription' ); ?>
 				<div class="add-subscription-input">
-					<textarea name="url" id="subscription-url" class="form-input" rows="4" placeholder="<?php esc_attr_e( 'Enter URLs, @user@instance handles, or paste OPML content', 'friends' ); ?>" required></textarea>
+					<textarea name="url" id="subscription-url" class="form-input" rows="4" placeholder="<?php esc_attr_e( 'Enter URLs, @user@instance handles, or paste OPML content', 'friends' ); ?>" required><?php echo esc_textarea( $prefill_url ); ?></textarea>
 					<button type="submit" class="btn btn-primary"><?php esc_html_e( 'Review', 'friends' ); ?></button>
 				</div>
 				<p class="opml-file-hint">
