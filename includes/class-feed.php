@@ -1161,12 +1161,14 @@ class Feed {
 	 * @return int Post ID, or 0 on failure.
 	 */
 	public static function url_to_postid( $url, $author_id = false ) {
-		$cache_key = 'friends_url_to_postid_' . md5( $url ) . ( $author_id ? '_' . $author_id : '' );
+		$post_types = apply_filters( 'friends_frontend_post_types', array() );
+
+		// The post types are part of the cache key since they can be filtered per lookup.
+		$cache_key = 'friends_url_to_postid_' . md5( $url . '|' . implode( ',', $post_types ) ) . ( $author_id ? '_' . $author_id : '' );
 		$post_id = wp_cache_get( $cache_key, 'friends' );
 		if ( false !== $post_id ) {
 			return $post_id;
 		}
-		$post_types = apply_filters( 'friends_frontend_post_types', array() );
 		$args = $post_types;
 
 		global $wpdb;

@@ -161,6 +161,27 @@ class Messages {
 		return $post_types;
 	}
 
+	/**
+	 * Look up a direct message by its URL.
+	 *
+	 * Messages live in their own post type which is not part of the frontend post
+	 * types, so Feed::url_to_postid() doesn't consider them by default.
+	 *
+	 * @param      string $url    The URL of the message.
+	 *
+	 * @return     int|null  The post ID or null if it wasn't found.
+	 */
+	public static function url_to_postid( $url ) {
+		$only_messages = function () {
+			return array( self::CPT );
+		};
+
+		add_filter( 'friends_frontend_post_types', $only_messages, 999 );
+		$post_id = Feed::url_to_postid( $url );
+		remove_filter( 'friends_frontend_post_types', $only_messages, 999 );
+
+		return $post_id;
+	}
 
 	public function save_incoming_message( User $friend_user, $message, $subject = '', $feed_url = null, $remote_url = null, $reply_to = null ) {
 		$post_data = array(

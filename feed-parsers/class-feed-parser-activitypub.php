@@ -3431,8 +3431,35 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 
+	/**
+	 * Resolve the object of a Like (or its Undo) to a local post.
+	 *
+	 * Besides the cached posts this also considers direct messages so that a
+	 * reaction to a message we sent doesn't get dropped.
+	 *
+	 * @param      string|array $liked_object  The object of the Like activity.
+	 *
+	 * @return     int|null  The post ID or null if it couldn't be resolved.
+	 */
+	private function liked_object_to_postid( $liked_object ) {
+		if ( is_array( $liked_object ) ) {
+			$liked_object = isset( $liked_object['id'] ) ? $liked_object['id'] : reset( $liked_object );
+		}
+
+		if ( ! is_string( $liked_object ) || ! $liked_object ) {
+			return null;
+		}
+
+		$post_id = Feed::url_to_postid( $liked_object );
+		if ( $post_id ) {
+			return $post_id;
+		}
+
+		return Messages::url_to_postid( $liked_object );
+	}
+
 	public function handle_incoming_like( $activity, $user_id ) {
-		$post_id = Feed::url_to_postid( $activity['object'] );
+		$post_id = $this->liked_object_to_postid( $activity['object'] );
 		if ( ! $post_id ) {
 			return false;
 		}
@@ -3465,7 +3492,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	public function handle_incoming_unlike( $activity, $user_id ) {
-		$post_id = Feed::url_to_postid( $activity['object'] );
+		$post_id = $this->liked_object_to_postid( $activity['object'] );
 		if ( ! $post_id ) {
 			return false;
 		}
