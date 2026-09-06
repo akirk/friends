@@ -266,7 +266,7 @@ class Admin {
 							sprintf(
 								// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
 								__( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ),
-								'"' . esc_attr( self_admin_url( self::get_users_url() ) ) . '"',
+								'"' . esc_attr( self::get_users_url() ) . '"',
 								__( 'Friends &amp; Requests', 'friends' )
 							) .
 							'</p>',
@@ -2879,7 +2879,7 @@ class Admin {
 	}
 
 	public static function get_users_url() {
-		return 'users.php?role=subscription';
+		return home_url( '/friends/following/' );
 	}
 
 	/**
