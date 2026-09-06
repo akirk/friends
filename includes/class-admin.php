@@ -264,10 +264,10 @@ class Admin {
 							'</p>' .
 							'<p>' .
 							sprintf(
-								// translators: %1$s is a URL, %2$s is the name of a wp-admin screen.
-								__( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> screen.', 'friends' ),
+								// translators: %1$s is a URL, %2$s is the name of a page.
+								__( 'There are more settings available for each friend or subscription individually. To get there, click on the user on the <a href=%1$s>%2$s</a> page.', 'friends' ),
 								'"' . esc_attr( self::get_users_url() ) . '"',
-								__( 'Friends &amp; Requests', 'friends' )
+								__( 'Following', 'friends' )
 							) .
 							'</p>',
 					)
