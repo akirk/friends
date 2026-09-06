@@ -31,6 +31,7 @@ $diagnostic_data = array(
 <script>
 	console.log( '[Friends link preview]', <?php echo wp_json_encode( $diagnostic_data ); ?> );
 </script>
+<script type="application/json" class="friends-link-preview-state"><?php echo wp_json_encode( $diagnostic_data ); ?></script>
 <?php
 if ( ! $link_preview ) {
 	return;

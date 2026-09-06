@@ -106,6 +106,24 @@ class REST {
 
 		register_rest_route(
 			self::PREFIX,
+			'link-preview',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'rest_link_preview' ),
+				'permission_callback' => function () {
+					return current_user_can( Friends::REQUIRED_ROLE );
+				},
+				'args'                => array(
+					'id' => array(
+						'type'     => 'integer',
+						'required' => true,
+					),
+				),
+			)
+		);
+
+		register_rest_route(
+			self::PREFIX,
 			'extension',
 			array(
 				'methods'             => array( 'GET', 'POST' ),
@@ -288,6 +306,27 @@ class REST {
 			'new_posts'  => count( $new_posts ),
 			'url'        => $feed->get_url(),
 			'was_polled' => $was_polled,
+		);
+	}
+
+	/**
+	 * Fetch a link preview on demand.
+	 *
+	 * @param \WP_REST_Request $request The REST request.
+	 * @return array|\WP_Error
+	 */
+	public function rest_link_preview( $request ) {
+		$post_id = intval( $request->get_param( 'id' ) );
+		$post    = get_post( $post_id );
+
+		if ( ! $post || ! in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
+			return new \WP_Error( 'friends_link_preview_invalid_post', __( 'The requested post is not available.', 'friends' ), array( 'status' => 404 ) );
+		}
+
+		$preview = Link_Preview::update_link_preview( $post_id );
+
+		return array(
+			'preview' => $preview ? $preview : false,
 		);
 	}
 
