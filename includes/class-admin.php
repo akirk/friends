@@ -2354,7 +2354,7 @@ class Admin {
 		if ( isset( $_GET['_wp_http_referer'] ) ) {
 			wp_safe_redirect( wp_get_referer() );
 		} else {
-			wp_safe_redirect( add_query_arg( $arg, $arg_value, self_admin_url( 'admin.php?page=friends-list' ) ) );
+			wp_safe_redirect( add_query_arg( $arg, $arg_value, home_url( '/friends/following/' ) ) );
 		}
 		exit;
 	}
