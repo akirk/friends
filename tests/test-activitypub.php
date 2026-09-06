@@ -401,6 +401,54 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
 	}
 
+	public function test_incoming_like_on_direct_message() {
+		$message_id = wp_insert_post(
+			array(
+				'post_type'    => Messages::CPT,
+				'post_title'   => 'Re: Hello',
+				'post_content' => 'Hi there!',
+				'post_status'  => 'friends_read',
+			)
+		);
+		$this->assertGreaterThan( 0, $message_id );
+
+		$message_url = get_post_field( 'guid', $message_id );
+		$this->assertNotEmpty( $message_url );
+
+		$response = $this->receive_activity(
+			get_current_user_id(),
+			array(
+				'type'   => 'Like',
+				'id'     => $this->actor . '/likes/1',
+				'actor'  => $this->actor,
+				'object' => $message_url,
+			)
+		);
+		$this->assertEquals( 202, $response->get_status() );
+
+		$reactions = Reactions::get_post_reactions( $message_id );
+		$this->assertArrayHasKey( '2b50', $reactions );
+		$this->assertEquals( 1, $reactions['2b50']->count );
+
+		$response = $this->receive_activity(
+			get_current_user_id(),
+			array(
+				'type'   => 'Undo',
+				'id'     => $this->actor . '/likes/1#undo',
+				'actor'  => $this->actor,
+				'object' => array(
+					'type'   => 'Like',
+					'id'     => $this->actor . '/likes/1',
+					'actor'  => $this->actor,
+					'object' => $message_url,
+				),
+			)
+		);
+		$this->assertEquals( 202, $response->get_status() );
+
+		$this->assertEmpty( Reactions::get_post_reactions( $message_id ) );
+	}
+
 	public function test_incoming_announce() {
 		$now = time() - 10;
 		$status_id = 123;

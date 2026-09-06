@@ -2618,6 +2618,24 @@ h2#page-title a.dashicons {
 		& > :last-child { margin-bottom: 0; }
 	}
 
+	& .friends-dm-message-reactions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .25rem;
+		margin-top: .2rem;
+	}
+
+	& .friends-dm-message-reaction {
+		background: var(--friends-color-surface);
+		border: 1px solid var(--friends-color-border);
+		border-radius: 1rem;
+		color: var(--friends-color-text-muted);
+		cursor: help;
+		font-size: .7rem;
+		line-height: 1.4;
+		padding: 0 .4rem;
+	}
+
 	& .friends-dm-reply {
 		background: var(--friends-color-surface-muted);
 		border-top: 1px solid var(--friends-color-border);

@@ -163,7 +163,7 @@ class Reactions {
 			$reactions[ $term->slug ][ $user_id ] = $user_display_name;
 		}
 
-		$remote_reactions = maybe_unserialize( get_post_meta( $post, 'remote_reactions', true ) );
+		$remote_reactions = maybe_unserialize( get_post_meta( $post->ID, 'remote_reactions', true ) );
 		foreach ( $reactions as $emoji => $reacting_usernames ) {
 			$user_reacted = isset( $user_reactions[ $emoji ] );
 

@@ -232,6 +232,14 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 								echo wp_kses_post( apply_filters( 'the_content', $content ) );
 								?>
 							</div>
+							<?php $reactions = Friends\Reactions::get_post_reactions( $message ); ?>
+							<?php if ( ! empty( $reactions ) ) : ?>
+								<div class="friends-dm-message-reactions">
+									<?php foreach ( $reactions as $reaction ) : ?>
+										<span class="friends-dm-message-reaction" title="<?php echo esc_attr( $reaction->usernames ); ?>"><?php echo esc_html( $reaction->emoji ); ?> <?php echo esc_html( number_format_i18n( $reaction->count ) ); ?></span>
+									<?php endforeach; ?>
+								</div>
+							<?php endif; ?>
 						</div>
 					</div>
 					<?php $previous_message_author_key = $author_key; ?>
