@@ -774,6 +774,36 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		return $is_known;
 	}
 
+	public function test_webfinger_resource_from_mastodon_style_handle() {
+		$this->assertSame(
+			'acct:pfefferle@mastodon.social',
+			Feed_Parser_ActivityPub::get_webfinger_resource_from_username( '@pfefferle@mastodon.social' )
+		);
+		$this->assertSame(
+			'acct:pfefferle@mastodon.social',
+			Feed_Parser_ActivityPub::get_webfinger_resource_from_username( 'pfefferle@mastodon.social' )
+		);
+		$this->assertFalse( Feed_Parser_ActivityPub::get_webfinger_resource_from_username( 'https://mastodon.social/@pfefferle' ) );
+	}
+
+	public function test_webfinger_resolve_accepts_mastodon_style_handle() {
+		self::$users['https://mastodon.social/@pfefferle'] = array(
+			'id'                => 'https://mastodon.social/users/pfefferle',
+			'url'               => 'https://mastodon.social/users/pfefferle',
+			'name'              => 'Matthias Pfefferle',
+			'preferredUsername' => 'pfefferle',
+		);
+
+		$this->assertSame(
+			'https://mastodon.social/users/pfefferle',
+			Feed_Parser_ActivityPub::friends_webfinger_resolve( 'https://@pfefferle@mastodon.social', '@pfefferle@mastodon.social' )
+		);
+		$this->assertSame(
+			'https://mastodon.social/users/pfefferle',
+			Feed_Parser_ActivityPub::friends_webfinger_resolve( 'https://pfefferle@mastodon.social', 'pfefferle@mastodon.social' )
+		);
+	}
+
 	public function set_up() {
 		if ( ! class_exists( '\Activitypub\Activitypub' ) ) {
 			return $this->markTestSkipped( 'The Activitypub plugin is not loaded.' );
@@ -852,7 +882,8 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		return $ret;
 	}
 
-	public static function pre_friends_webfinger_resolve( $ret, $url ) {
+	public static function pre_friends_webfinger_resolve( $ret, $url, $incoming_url = null ) {
+		$url = $incoming_url ? $incoming_url : $url;
 		if ( preg_match( '/^@?' . Feed_Parser_ActivityPub::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $url, $m ) ) {
 			$url = 'https://' . $m[2] . '/@' . $m[1];
 		}
