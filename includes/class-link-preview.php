@@ -172,7 +172,7 @@ class Link_Preview {
 		 * @param array    $post_formats  The post formats.
 		 * @param \WP_Post $post          The post.
 		 */
-		$post_formats = apply_filters( 'friends_link_preview_post_formats', array( 'status', 'link', 'aside' ), $post );
+		$post_formats = apply_filters( 'friends_link_preview_post_formats', array( 'standard', 'status', 'link', 'aside' ), $post );
 
 		return in_array( $post_format, $post_formats, true );
 	}
