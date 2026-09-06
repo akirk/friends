@@ -1020,6 +1020,20 @@ class Feed {
 			}
 		}
 
+		// Prefer the ActivityPub actor feed over RSS when both are available.
+		$activitypub_feed = null;
+		foreach ( $available_feeds as $link_url => $feed ) {
+			if ( 'activitypub' === $feed['parser'] ) {
+				$activitypub_feed = $link_url;
+				break;
+			}
+		}
+		if ( $activitypub_feed ) {
+			foreach ( $available_feeds as $link_url => $feed ) {
+				$available_feeds[ $link_url ]['autoselect'] = $link_url === $activitypub_feed;
+			}
+		}
+
 		$feed_sort_order = array( 'self', 'alternate', 'me' );
 		if ( $has_friends_plugin ) {
 			// If we have the Friends plugin, we prefer an (augmented) RSS feed over, for example, microformats.

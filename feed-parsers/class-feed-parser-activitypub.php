@@ -1424,14 +1424,29 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return $cache[ $incoming_url ];
 		}
 
-		if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $incoming_url ) ) {
-			$resolved_url = \Activitypub\Webfinger::resolve( $incoming_url );
+		$webfinger_resource = self::get_webfinger_resource_from_username( $incoming_url );
+		if ( $webfinger_resource ) {
+			$resolved_url = \Activitypub\Webfinger::resolve( $webfinger_resource );
 			if ( ! is_wp_error( $resolved_url ) ) {
 				$cache[ $incoming_url ] = $resolved_url;
 				return $resolved_url;
 			}
 		}
 		return $url;
+	}
+
+	/**
+	 * Convert a Mastodon-style handle to an acct: WebFinger resource.
+	 *
+	 * @param string $username Potential ActivityPub username.
+	 * @return string|false WebFinger resource, or false if the input is not a handle.
+	 */
+	public static function get_webfinger_resource_from_username( $username ) {
+		if ( preg_match( '/^@?' . self::ACTIVITYPUB_USERNAME_REGEXP . '$/i', $username, $m ) ) {
+			return 'acct:' . $m[1] . '@' . $m[2];
+		}
+
+		return false;
 	}
 
 	/**
