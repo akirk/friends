@@ -1,0 +1,3 @@
+Type: fixed
+
+Fixed the link preview image being inset with a visible margin in the Mastodon and Twitter themes.
