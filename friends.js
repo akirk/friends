@@ -1844,6 +1844,14 @@
 		renderSingleSubscriptionPreview( value.trim() );
 	} );
 
+	// When the form was reached with a URL prefilled (e.g. from the Follow widget), review it right away.
+	$( function () {
+		const $prefilled = $( '#subscription-url' );
+		if ( $prefilled.length && $prefilled.val().trim() ) {
+			$prefilled.closest( 'form' ).trigger( 'submit' );
+		}
+	} );
+
 	$document.on( 'paste', '#subscription-url', function () {
 		const input = this;
 		clearTimeout( subscriptionPasteReviewTimer );

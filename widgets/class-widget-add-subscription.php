@@ -46,10 +46,9 @@ class Widget_Add_Subscription extends \WP_Widget {
 		}
 
 		?>
-		<form action="<?php echo esc_url( home_url( 'friends/add-suscription' ) ); ?>" method="post" class="form-horizontal">
-		<?php wp_nonce_field( 'add-suscription' ); ?>
+		<form action="<?php echo esc_url( home_url( '/friends/add-friend/' ) ); ?>" method="get" class="form-horizontal">
 		<div class="form-group">
-			<input type="text" name="friend_url" aria-label="<?php esc_attr_e( "Enter the Friend's URL", 'friends' ); ?>"  placeholder="<?php esc_attr_e( "Friend's URL", 'friends' ); ?>" class="form-input input-sm" />
+			<input type="text" name="url" required aria-label="<?php esc_attr_e( 'Enter a URL or an @user@instance handle to follow', 'friends' ); ?>" placeholder="<?php esc_attr_e( 'URL or @user@instance', 'friends' ); ?>" class="form-input input-sm" />
 		</div>
 		<div class="form-group">
 			<button class="btn btn-primary btn-sm"><?php esc_html_e( 'Follow', 'friends' ); ?></button>
