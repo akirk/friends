@@ -815,7 +815,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		add_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		add_filter( 'activitypub_pre_http_get_remote_object', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		add_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
-		add_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 2 );
+		add_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 3 );
 
 		$user_id = $this->factory->user->create(
 			array(
@@ -870,7 +870,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		remove_filter( 'pre_get_remote_metadata_by_actor', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		remove_filter( 'activitypub_pre_http_get_remote_object', array( get_called_class(), 'friends_get_activitypub_metadata' ), 10, 2 );
 		remove_filter( 'friends_get_activitypub_metadata', array( get_called_class(), 'friends_get_activitypub_metadata' ), 5, 2 );
-		remove_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 2 );
+		remove_filter( 'pre_friends_webfinger_resolve', array( get_called_class(), 'pre_friends_webfinger_resolve' ), 5, 3 );
 		remove_filter( 'pre_http_request', array( $this, 'invalid_http_response' ), 8 );
 		parent::tear_down();
 	}
