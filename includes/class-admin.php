@@ -1704,7 +1704,12 @@ class Admin {
 			wp_send_json_error( __( 'You do not have permission to do this.', 'friends' ) );
 		}
 
-		$url = $this->normalize_frontend_subscription_url( wp_unslash( $_POST['url'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$incoming_url = trim( wp_unslash( $_POST['url'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		if ( ! class_exists( '\Activitypub\Activitypub' ) && preg_match( '/^@?[A-Za-z0-9_.-]+@(?:[A-Za-z0-9_-]+\.)+[A-Za-z]+$/i', $incoming_url ) ) {
+			wp_send_json_error( __( 'The ActivityPub plugin is required to follow Mastodon handles. Please install and activate it first.', 'friends' ) );
+		}
+
+		$url = $this->normalize_frontend_subscription_url( $incoming_url );
 
 		if ( '' === $url ) {
 			wp_send_json_error( __( 'No URL provided.', 'friends' ) );
