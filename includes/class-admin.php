@@ -2879,7 +2879,7 @@ class Admin {
 	}
 
 	public static function get_users_url() {
-		return 'admin.php?page=friends-list';
+		return 'users.php?role=subscription';
 	}
 
 	/**
