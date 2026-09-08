@@ -1011,6 +1011,7 @@
 			.attr( 'class', classes.join( ' ' ) )
 			.attr( 'title', delivery.title || '' )
 			.attr( 'aria-label', delivery.label || '' )
+			.removeAttr( 'hidden' )
 			.text( $status.hasClass( 'friends-dm-delivery-icon' ) ? '' : delivery.label || '' );
 	}
 

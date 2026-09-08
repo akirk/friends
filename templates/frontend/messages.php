@@ -57,14 +57,14 @@ foreach ( $top_level_messages as $top_level_message ) {
 	array_unshift( $thread_messages, $top_level_message );
 
 	$latest_message      = $top_level_message;
-	$latest_message_time = get_post_modified_time( 'U', true, $top_level_message );
+	$latest_message_time = get_post_time( 'U', true, $top_level_message );
 	$unread_count        = 0;
 	foreach ( $thread_messages as $thread_message ) {
 		if ( 'friends_unread' === get_post_status( $thread_message ) ) {
 			++$unread_count;
 		}
 
-		$message_time = get_post_modified_time( 'U', true, $thread_message );
+		$message_time = get_post_time( 'U', true, $thread_message );
 		if ( $message_time > $latest_message_time ) {
 			$latest_message      = $thread_message;
 			$latest_message_time = $message_time;
@@ -152,8 +152,8 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 						<time data-friends-relative-time="<?php echo esc_attr( $conversation_row['latest_time'] ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $conversation_row['latest_time'] ) ); ?>">
 							<?php echo esc_html( human_time_diff( $conversation_row['latest_time'] ) ); ?>
 						</time>
-						<?php if ( $conversation_row['latest_delivery'] ) : ?>
-							<span class="friends-dm-delivery-status friends-dm-delivery-icon is-<?php echo esc_attr( $conversation_row['latest_delivery']['status'] ); ?>" data-delivery-message-id="<?php echo esc_attr( $conversation_row['latest']->ID ); ?>" title="<?php echo esc_attr( $conversation_row['latest_delivery']['title'] ); ?>" aria-label="<?php echo esc_attr( $conversation_row['latest_delivery']['label'] ); ?>"></span>
+						<?php if ( intval( $conversation_row['latest']->post_author ) === get_current_user_id() ) : ?>
+							<span class="friends-dm-delivery-status friends-dm-delivery-icon<?php echo $conversation_row['latest_delivery'] ? ' is-' . esc_attr( $conversation_row['latest_delivery']['status'] ) : ''; ?>" data-delivery-message-id="<?php echo esc_attr( $conversation_row['latest']->ID ); ?>"<?php echo $conversation_row['latest_delivery'] ? ' title="' . esc_attr( $conversation_row['latest_delivery']['title'] ) . '" aria-label="' . esc_attr( $conversation_row['latest_delivery']['label'] ) . '"' : ' hidden'; ?>></span>
 						<?php endif; ?>
 						<?php if ( $conversation_row['unread_count'] ) : ?>
 							<span class="friends-dm-unread-count"><?php echo esc_html( number_format_i18n( $conversation_row['unread_count'] ) ); ?></span>
@@ -186,21 +186,26 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 			</header>
 
 			<div class="friends-dm-messages">
-				<?php $previous_message_author_key = null; ?>
+				<?php
+				$previous_message_author_key       = null;
+				$previous_message_time             = null;
+				$consecutive_message_time_threshold = 5 * MINUTE_IN_SECONDS;
+				?>
 				<?php foreach ( $selected_conversation['messages'] as $message ) : ?>
 					<?php
 					$message_author = Friends\User::get_post_author( $message );
 					$is_own_message = $message_author && ! is_wp_error( $message_author ) && get_current_user_id() === intval( $message_author->ID );
 					$author_name    = $message_author && ! is_wp_error( $message_author ) ? $message_author->display_name : __( 'Unknown sender', 'friends' );
-					$post_time      = get_post_modified_time( 'U', true, $message );
+					$post_time      = get_post_time( 'U', true, $message );
 					$author_key     = $message_author && ! is_wp_error( $message_author ) ? 'user-' . $message_author->ID : 'unknown';
 					$is_consecutive = $author_key === $previous_message_author_key;
+					$is_spaced      = $is_consecutive && $previous_message_time && $post_time - $previous_message_time >= $consecutive_message_time_threshold;
 					$delivery       = null;
 					if ( $is_own_message && class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
 						$delivery = Friends\Feed_Parser_ActivityPub::get_direct_message_delivery_status( $message );
 					}
 					?>
-					<div class="friends-dm-message<?php echo $is_own_message ? ' is-own-message' : ''; ?><?php echo $is_consecutive ? ' is-consecutive-message' : ''; ?>" data-message-id="<?php echo esc_attr( $message->ID ); ?>">
+					<div class="friends-dm-message<?php echo $is_own_message ? ' is-own-message' : ''; ?><?php echo $is_consecutive ? ' is-consecutive-message' : ''; ?><?php echo $is_spaced ? ' is-spaced-message' : ''; ?>" data-message-id="<?php echo esc_attr( $message->ID ); ?>">
 						<div class="friends-dm-message-avatar">
 							<?php if ( ! $is_own_message && $message_author && ! is_wp_error( $message_author ) && $message_author->get_avatar_url() ) : ?>
 								<img class="avatar" src="<?php echo esc_url( $message_author->get_avatar_url() ); ?>" alt="" width="32" height="32">
@@ -222,8 +227,8 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 									);
 									?>
 								</time>
-								<?php if ( $delivery ) : ?>
-									<span class="friends-dm-delivery-status is-<?php echo esc_attr( $delivery['status'] ); ?>" data-delivery-message-id="<?php echo esc_attr( $message->ID ); ?>" title="<?php echo esc_attr( $delivery['title'] ); ?>"><?php echo esc_html( $delivery['label'] ); ?></span>
+								<?php if ( $is_own_message ) : ?>
+									<span class="friends-dm-delivery-status<?php echo $delivery ? ' is-' . esc_attr( $delivery['status'] ) : ''; ?>" data-delivery-message-id="<?php echo esc_attr( $message->ID ); ?>"<?php echo $delivery ? ' title="' . esc_attr( $delivery['title'] ) . '"' : ' hidden'; ?>><?php echo $delivery ? esc_html( $delivery['label'] ) : ''; ?></span>
 								<?php endif; ?>
 							</div>
 							<div class="friends-dm-message-content" title="<?php echo esc_attr( date_i18n( $time_format, $post_time ) ); ?>">
@@ -242,7 +247,10 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 							<?php endif; ?>
 						</div>
 					</div>
-					<?php $previous_message_author_key = $author_key; ?>
+					<?php
+					$previous_message_author_key = $author_key;
+					$previous_message_time       = $post_time;
+					?>
 				<?php endforeach; ?>
 			</div>
 
