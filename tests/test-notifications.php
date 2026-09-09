@@ -91,6 +91,43 @@ class NotificationTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test future posts don't trigger notifications.
+	 */
+	public function test_no_notify_future_post() {
+		add_filter(
+			'notify_user_about_friend_post',
+			function ( $do_send ) {
+				$this->fail( 'Future posts should return before notification filters run.' );
+				return $do_send;
+			}
+		);
+		add_filter(
+			'friends_send_mail',
+			function ( $do_send ) {
+				$this->fail( 'Future posts should not send email.' );
+				return $do_send;
+			}
+		);
+
+		$user = new User( $this->friend_id );
+		add_filter( 'friends_pre_check_url', '__return_true' );
+		$user_feed = User_Feed::save( $user, 'http://friend.local/feed/', array( 'parser' => Feed_Parser_SimplePie::SLUG ) );
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+
+		$post = $this->factory->post->create_and_get(
+			array(
+				'post_type'     => Friends::CPT,
+				'post_title'    => 'Future Friend Post',
+				'post_date_gmt' => gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ),
+				'post_status'   => 'future',
+				'post_author'   => $this->friend_id,
+			)
+		);
+
+		Friends::get_instance()->notifications->notify_new_friend_post( $post, $user_feed, false );
+	}
+
+	/**
 	 * Test message notifications link to the direct message view.
 	 */
 	public function test_notify_friend_message_received_links_to_conversation() {

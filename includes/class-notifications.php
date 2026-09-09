@@ -93,6 +93,8 @@ class Notifications {
 		if (
 			// Post might be trashed through rules.
 			'trash' === $post->post_status
+			// Don't notify about posts that WordPress scheduled for future publishing.
+			|| 'future' === $post->post_status
 			// Don't notify about posts older than a week.
 			|| strtotime( $post->post_date_gmt ) + WEEK_IN_SECONDS < time()
 		) {

@@ -930,7 +930,7 @@ class User extends \WP_User {
 		$existing_posts = new \WP_Query();
 		foreach ( array(
 			'post_type'   => Friends::CPT,
-			'post_status' => array( 'publish', 'private', 'trash' ),
+			'post_status' => array( 'publish', 'private', 'trash', 'future' ),
 			'nopaging'    => true,
 			'fields'      => 'ids',
 		) as $key => $value ) {

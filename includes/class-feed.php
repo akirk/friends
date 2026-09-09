@@ -1207,7 +1207,9 @@ class Feed {
 			)
 		);
 
-		wp_cache_set( $cache_key, $post_id, 'friends' );
+		if ( $post_id ) {
+			wp_cache_set( $cache_key, $post_id, 'friends' );
+		}
 		return $post_id;
 	}
 
