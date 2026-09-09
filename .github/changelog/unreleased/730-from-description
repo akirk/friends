@@ -1,0 +1,3 @@
+Type: fixed
+
+Prevent duplicate imports and notifications for future-dated feed items.
