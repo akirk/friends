@@ -180,6 +180,64 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test parsing a feed does not recreate future-dated posts.
+	 */
+	public function test_parse_feed_deduplicates_future_posts() {
+		$user = User::get_user_by_id( $this->friend_id );
+		$friends = Friends::get_instance();
+		$parser = new Feed_Parser_Local_File( $friends->feed );
+		$friends->feed->register_parser( 'local', $parser );
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		$user_feed = $user->save_feed(
+			'http://friend.local/feed/',
+			array( 'parser' => 'local' )
+		);
+		$this->assertNotWPError( $user_feed );
+
+		$item = new Feed_Item(
+			array(
+				'permalink'     => 'http://friend.local/future-post',
+				'title'         => 'Future Friend Post',
+				'content'       => 'This post is scheduled.',
+				'date'          => time() + DAY_IN_SECONDS,
+				'comment_count' => 0,
+			)
+		);
+
+		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
+		$this->assertCount( 1, $new_items );
+
+		$posts = get_posts(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'meta_key'    => 'feed_url',
+				'meta_value'  => $user_feed->get_url(),
+			)
+		);
+		$this->assertCount( 1, $posts );
+		$this->assertEquals( 'future', $posts[0]->post_status );
+
+		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
+		$this->assertCount( 0, $new_items );
+
+		$posts = get_posts(
+			array(
+				'post_type'   => Friends::CPT,
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'meta_key'    => 'feed_url',
+				'meta_value'  => $user_feed->get_url(),
+			)
+		);
+		$this->assertCount( 1, $posts );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
+	/**
 	 * Test parsing a direct feed URL that is served as text/plain.
 	 */
 	public function test_parse_direct_feed_url_with_text_plain_content_type() {
