@@ -492,22 +492,33 @@ class Feed {
 		return preg_replace_callback(
 			'#https?://[^\s<>"\']+#i',
 			function ( $matches ) {
-				return self::remove_url_query_from_keyword_search_text( $matches[0] );
+				return self::remove_tracking_url_query_args_from_keyword_search_text( $matches[0] );
 			},
 			$text
 		);
 	}
 
 	/**
-	 * Removes URL query strings and fragments from keyword notification matching.
+	 * Removes tracking query args from URLs before keyword notification matching.
 	 *
 	 * @param string $url The URL to normalize.
-	 * @return string The URL without query string or fragment.
+	 * @return string The URL without known tracking query args.
 	 */
-	private static function remove_url_query_from_keyword_search_text( $url ) {
+	private static function remove_tracking_url_query_args_from_keyword_search_text( $url ) {
 		$parsed_url = wp_parse_url( $url );
 		if ( ! is_array( $parsed_url ) || empty( $parsed_url['host'] ) ) {
 			return $url;
+		}
+
+		$query_args = array();
+		if ( isset( $parsed_url['query'] ) ) {
+			wp_parse_str( html_entity_decode( $parsed_url['query'], ENT_QUOTES ), $query_args );
+		}
+
+		foreach ( array_keys( $query_args ) as $query_arg ) {
+			if ( self::is_tracking_query_arg( $query_arg ) ) {
+				unset( $query_args[ $query_arg ] );
+			}
 		}
 
 		$normalized_url = $parsed_url['scheme'] . '://';
@@ -525,8 +536,53 @@ class Feed {
 		if ( isset( $parsed_url['path'] ) ) {
 			$normalized_url .= $parsed_url['path'];
 		}
+		if ( $query_args ) {
+			$normalized_url .= '?' . http_build_query( $query_args, '', '&' );
+		}
+		if ( isset( $parsed_url['fragment'] ) ) {
+			$normalized_url .= '#' . $parsed_url['fragment'];
+		}
 
 		return $normalized_url;
+	}
+
+	/**
+	 * Checks whether a query arg is used for tracking.
+	 *
+	 * @param string $query_arg The query arg.
+	 * @return bool Whether the query arg is used for tracking.
+	 */
+	private static function is_tracking_query_arg( $query_arg ) {
+		if ( preg_match( '/^(?:utm|mtm|hsa)_/i', $query_arg ) ) {
+			return true;
+		}
+
+		return in_array(
+			strtolower( $query_arg ),
+			array(
+				'_hsenc',
+				'_hsmi',
+				'dclid',
+				'fbclid',
+				'gclid',
+				'gbraid',
+				'igshid',
+				'li_fat_id',
+				'mc_cid',
+				'mc_eid',
+				'mkt_tok',
+				'msclkid',
+				'oly_anon_id',
+				'oly_enc_id',
+				'pk_campaign',
+				'pk_kwd',
+				'twclid',
+				'vero_id',
+				'wbraid',
+				'yclid',
+			),
+			true
+		);
 	}
 
 	/**

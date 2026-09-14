@@ -385,11 +385,20 @@ class NotificationTest extends \WP_UnitTestCase {
 	public function test_keyword_search_text_ignores_url_tracking_parameters() {
 		$fulltext = Feed::prepare_keyword_search_text(
 			'<p>Why Did These Powerful People Kowtow to Donald Trump?</p>' .
-			'<p>https://www.nytimes.com/2026/09/14/books/review/profiles-in-cowardice-jacob-weisberg.html?utm_source=flipboard&utm_medium=activitypub</p>'
+			'<p>https://www.nytimes.com/2026/09/14/books/review/profiles-in-cowardice-jacob-weisberg.html?utm_source=flipboard&utm_medium=activitypub&topic=fediverse</p>'
 		);
 
 		$this->assertStringNotContainsString( 'activitypub', $fulltext );
-		$this->assertStringContainsString( 'nytimes.com/2026/09/14/books/review/profiles-in-cowardice-jacob-weisberg.html', $fulltext );
+		$this->assertStringContainsString( 'nytimes.com/2026/09/14/books/review/profiles-in-cowardice-jacob-weisberg.html?topic=fediverse', $fulltext );
+	}
+
+	/**
+	 * Test keyword matching preserves regular URL query parameters.
+	 */
+	public function test_keyword_search_text_preserves_regular_url_query_parameters() {
+		$fulltext = Feed::prepare_keyword_search_text( 'https://example.com/search?q=activitypub' );
+
+		$this->assertStringContainsString( 'q=activitypub', $fulltext );
 	}
 
 	/**
