@@ -1,0 +1,3 @@
+Type: fixed
+
+Avoid keyword notifications for matches that only appear in known URL tracking parameters.

@@ -716,7 +716,8 @@ class Subscription extends User {
 			return $user;
 		}
 
-		$subscription = self::create( $user->user_login, $user->roles[0], $user->user_url, $user->display_name, $user->get_avatar_url(), $user->description, $user->user_registered );
+		$role         = isset( $user->roles[0] ) ? $user->roles[0] : 'subscription';
+		$subscription = self::create( $user->user_login, $role, $user->user_url, $user->display_name, $user->get_avatar_url(), $user->description, $user->user_registered );
 
 		if ( is_wp_error( $subscription ) ) {
 			return $subscription;

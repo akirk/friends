@@ -255,7 +255,7 @@ class Feed {
 				foreach ( apply_filters( 'friends_keyword_search_fields', array( 'post_title', 'post_content' ) ) as $field ) {
 					$fulltext .= PHP_EOL . $post->$field;
 				}
-				$fulltext = wp_strip_all_tags( $fulltext );
+				$fulltext = self::prepare_keyword_search_text( $fulltext );
 				foreach ( $keywords as $keyword ) {
 					if ( preg_match( '/' . str_replace( '/', '\\/', $keyword ) . '/ius', $fulltext ) ) {
 						$keyword_match = $keyword;
@@ -478,6 +478,111 @@ class Feed {
 		}
 
 		return $catch_all;
+	}
+
+	/**
+	 * Prepares post fields for keyword notification matching.
+	 *
+	 * @param string $text The text to search.
+	 * @return string The prepared text.
+	 */
+	public static function prepare_keyword_search_text( $text ) {
+		$text = wp_strip_all_tags( $text );
+
+		return preg_replace_callback(
+			'#https?://[^\s<>"\']+#i',
+			function ( $matches ) {
+				return self::remove_tracking_url_query_args_from_keyword_search_text( $matches[0] );
+			},
+			$text
+		);
+	}
+
+	/**
+	 * Removes tracking query args from URLs before keyword notification matching.
+	 *
+	 * @param string $url The URL to normalize.
+	 * @return string The URL without known tracking query args.
+	 */
+	private static function remove_tracking_url_query_args_from_keyword_search_text( $url ) {
+		$parsed_url = wp_parse_url( $url );
+		if ( ! is_array( $parsed_url ) || empty( $parsed_url['host'] ) ) {
+			return $url;
+		}
+
+		$query_args = array();
+		if ( isset( $parsed_url['query'] ) ) {
+			wp_parse_str( html_entity_decode( $parsed_url['query'], ENT_QUOTES ), $query_args );
+		}
+
+		foreach ( array_keys( $query_args ) as $query_arg ) {
+			if ( self::is_tracking_query_arg( $query_arg ) ) {
+				unset( $query_args[ $query_arg ] );
+			}
+		}
+
+		$normalized_url = $parsed_url['scheme'] . '://';
+		if ( isset( $parsed_url['user'] ) ) {
+			$normalized_url .= $parsed_url['user'];
+			if ( isset( $parsed_url['pass'] ) ) {
+				$normalized_url .= ':' . $parsed_url['pass'];
+			}
+			$normalized_url .= '@';
+		}
+		$normalized_url .= $parsed_url['host'];
+		if ( isset( $parsed_url['port'] ) ) {
+			$normalized_url .= ':' . $parsed_url['port'];
+		}
+		if ( isset( $parsed_url['path'] ) ) {
+			$normalized_url .= $parsed_url['path'];
+		}
+		if ( $query_args ) {
+			$normalized_url .= '?' . http_build_query( $query_args, '', '&' );
+		}
+		if ( isset( $parsed_url['fragment'] ) ) {
+			$normalized_url .= '#' . $parsed_url['fragment'];
+		}
+
+		return $normalized_url;
+	}
+
+	/**
+	 * Checks whether a query arg is used for tracking.
+	 *
+	 * @param string $query_arg The query arg.
+	 * @return bool Whether the query arg is used for tracking.
+	 */
+	private static function is_tracking_query_arg( $query_arg ) {
+		if ( preg_match( '/^(?:utm|mtm|hsa)_/i', $query_arg ) ) {
+			return true;
+		}
+
+		return in_array(
+			strtolower( $query_arg ),
+			array(
+				'_hsenc',
+				'_hsmi',
+				'dclid',
+				'fbclid',
+				'gclid',
+				'gbraid',
+				'igshid',
+				'li_fat_id',
+				'mc_cid',
+				'mc_eid',
+				'mkt_tok',
+				'msclkid',
+				'oly_anon_id',
+				'oly_enc_id',
+				'pk_campaign',
+				'pk_kwd',
+				'twclid',
+				'vero_id',
+				'wbraid',
+				'yclid',
+			),
+			true
+		);
 	}
 
 	/**
