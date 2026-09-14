@@ -1,0 +1,3 @@
+Type: fixed
+
+Avoid keyword notifications for matches that only appear in URL query strings or fragments.
