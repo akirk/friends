@@ -239,6 +239,14 @@ $has_last_log = false;
 							<?php esc_html_e( 'Show posts on your friends page', 'friends' ); ?>
 						</label>
 					</fieldset>
+					<?php if ( $args['show_blockroll_setting'] ) : ?>
+					<fieldset>
+						<label for="hide_from_blockroll">
+							<input name="hide_from_blockroll" type="checkbox" id="hide_from_blockroll" value="1" <?php checked( $args['hide_from_blockroll'] ); ?>>
+							<?php esc_html_e( 'Exclude from Blogroll blocks', 'friends' ); ?>
+						</label>
+					</fieldset>
+					<?php endif; ?>
 					<fieldset>
 					<a href="<?php echo esc_url( $args['friend']->get_local_friends_page_url() ); ?>">
 						<?php

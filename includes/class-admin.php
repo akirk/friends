@@ -2118,6 +2118,10 @@ class Admin {
 					update_user_option( get_current_user_id(), 'friends_hide_from_friends_page', $hide_from_friends_page );
 			}
 
+			if ( Blockroll::is_available() ) {
+				Blockroll::set_hidden( $friend, isset( $_POST['hide_from_blockroll'] ) && boolval( $_POST['hide_from_blockroll'] ) );
+			}
+
 			if ( $friend->set_retention_number_enabled( boolval( filter_input( INPUT_POST, 'friends_enable_retention_number', FILTER_SANITIZE_NUMBER_INT ) ) ) && isset( $_POST['friends_retention_number'] ) ) {
 				$friend->set_retention_number( filter_input( INPUT_POST, 'friends_retention_number', FILTER_SANITIZE_NUMBER_INT ) );
 			}
@@ -2315,6 +2319,8 @@ class Admin {
 				'global_retention_days_enabled'   => get_option( 'friends_enable_retention_days' ),
 				'global_retention_number_enabled' => get_option( 'friends_enable_retention_number' ),
 				'show_on_dashboard'               => $already_on_dashboard,
+				'show_blockroll_setting'          => Blockroll::is_available(),
+				'hide_from_blockroll'             => Blockroll::is_hidden( $friend ),
 			)
 		);
 		if ( ! $args['hide_from_friends_page'] ) {

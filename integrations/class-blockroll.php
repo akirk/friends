@@ -11,6 +11,8 @@ namespace Friends;
  * Provides Friends subscriptions as a Blockroll source.
  */
 class Blockroll {
+	const HIDE_META = 'hide_from_blockroll';
+
 	/**
 	 * Register hooks.
 	 */
@@ -44,7 +46,7 @@ class Blockroll {
 
 		$links = array();
 		foreach ( User_Query::all_subscriptions()->get_results() as $subscription ) {
-			if ( ! $subscription->user_url ) {
+			if ( ! $subscription->user_url || self::is_hidden( $subscription ) ) {
 				continue;
 			}
 
@@ -78,5 +80,47 @@ class Blockroll {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Whether Blockroll is available.
+	 *
+	 * @return bool True if Blockroll is active.
+	 */
+	public static function is_available() {
+		return defined( 'BLOCKROLL_PLUGIN_FILE' );
+	}
+
+	/**
+	 * Whether a subscription is hidden from Blockroll for the current user.
+	 *
+	 * @param User $subscription Friend user or virtual subscription.
+	 * @return bool True if hidden from Blockroll.
+	 */
+	public static function is_hidden( User $subscription ) {
+		if ( ! $subscription instanceof Subscription ) {
+			return false;
+		}
+
+		return (bool) get_term_meta( $subscription->get_term_id(), self::HIDE_META, true );
+	}
+
+	/**
+	 * Set whether a subscription is hidden from Blockroll.
+	 *
+	 * @param User $subscription Friend user or virtual subscription.
+	 * @param bool $hide         Whether to hide the subscription.
+	 */
+	public static function set_hidden( User $subscription, $hide ) {
+		if ( ! $subscription instanceof Subscription ) {
+			return;
+		}
+
+		if ( $hide ) {
+			update_term_meta( $subscription->get_term_id(), self::HIDE_META, true );
+			return;
+		}
+
+		delete_term_meta( $subscription->get_term_id(), self::HIDE_META );
 	}
 }
