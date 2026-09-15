@@ -2498,6 +2498,26 @@ h2#page-title a.dashicons {
 			visibility: hidden;
 		}
 
+		&.is-own-message .friends-dm-message-meta {
+			visibility: visible;
+
+			& strong,
+			& time {
+				display: none;
+			}
+		}
+
+		&.is-spaced-message .friends-dm-message-meta {
+			visibility: visible;
+		}
+
+		&.is-own-message.is-spaced-message .friends-dm-message-meta {
+			& strong,
+			& time {
+				display: inline;
+			}
+		}
+
 		& .friends-dm-message-content {
 			margin-top: 0;
 		}
