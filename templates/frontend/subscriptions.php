@@ -377,6 +377,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 					</a>
 				</span>
 				<?php endif; ?>
+				<?php do_action( 'friends_subscription_actions', $subscription ); ?>
 			</li>
 			<?php
 		}

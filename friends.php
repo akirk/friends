@@ -190,5 +190,8 @@ function check_url( $url ) {
 
 // Integrations.
 
+require_once __DIR__ . '/integrations/class-blockroll.php';
+Blockroll::init();
+
 require_once __DIR__ . '/integrations/class-enable-mastodon-apps.php';
 Enable_Mastodon_Apps::init();
