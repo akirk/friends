@@ -20,6 +20,10 @@ class Blockroll {
 		add_filter( 'blockroll_sources', array( __CLASS__, 'sources' ) );
 		add_filter( 'blockroll_source_links', array( __CLASS__, 'source_links' ), 10, 2 );
 		add_action( 'friends_subscription_actions', array( __CLASS__, 'subscription_action' ) );
+		add_action( 'friends_edit_friend_table_end', array( __CLASS__, 'settings_table_row' ) );
+		add_action( 'friends_edit_feeds_table_end', array( __CLASS__, 'settings_table_row' ) );
+		add_action( 'friends_edit_friend_after_form_submit', array( __CLASS__, 'save_settings' ) );
+		add_action( 'friends_edit_feeds_after_form_submit', array( __CLASS__, 'save_settings' ) );
 		add_action( 'wp_ajax_friends-blockroll-visibility', array( __CLASS__, 'ajax_visibility' ) );
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_script' ), 20 );
 	}
@@ -93,6 +97,43 @@ class Blockroll {
 			</label>
 		</span>
 		<?php
+	}
+
+	/**
+	 * Render the Blockroll visibility setting on friend settings forms.
+	 *
+	 * @param User $subscription Friend user or virtual subscription.
+	 */
+	public static function settings_table_row( User $subscription ) {
+		if ( ! self::is_available() || ! $subscription instanceof Subscription ) {
+			return;
+		}
+
+		$hidden = self::is_hidden( $subscription );
+		?>
+		<tr>
+			<th scope="row"><?php esc_html_e( 'Blogroll', 'friends' ); ?></th>
+			<td>
+				<label for="hide_from_blockroll">
+					<input name="hide_from_blockroll" type="checkbox" id="hide_from_blockroll" value="1" <?php checked( $hidden ); ?>>
+					<?php echo esc_html( self::visibility_label( $hidden ) ); ?>
+				</label>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Save the Blockroll visibility setting from friend settings forms.
+	 *
+	 * @param User $subscription Friend user or virtual subscription.
+	 */
+	public static function save_settings( User $subscription ) {
+		if ( ! self::is_available() || ! $subscription instanceof Subscription ) {
+			return;
+		}
+
+		self::set_hidden( $subscription, isset( $_POST['hide_from_blockroll'] ) && boolval( $_POST['hide_from_blockroll'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
