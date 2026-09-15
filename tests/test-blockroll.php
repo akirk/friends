@@ -50,4 +50,22 @@ class BlockrollTest extends \WP_UnitTestCase {
 		$this->assertContains( 'https://visible.example/', $urls );
 		$this->assertNotContains( 'https://hidden.example/', $urls );
 	}
+
+	/**
+	 * Test that the source help explains how to hide subscriptions.
+	 */
+	public function test_source_help_describes_hiding_subscriptions() {
+		$help = Blockroll::source_help( '', 'friends-subscriptions' );
+
+		$this->assertStringContainsString( 'Hide from Blogroll', $help );
+	}
+
+	/**
+	 * Test that the source help links to the following page.
+	 */
+	public function test_source_help_url_links_to_following_page() {
+		$url = Blockroll::source_help_url( '', 'friends-subscriptions' );
+
+		$this->assertSame( home_url( '/friends/following/' ), $url );
+	}
 }

@@ -18,6 +18,8 @@ class Blockroll {
 	 */
 	public static function init() {
 		add_filter( 'blockroll_sources', array( __CLASS__, 'sources' ) );
+		add_filter( 'blockroll_source_help', array( __CLASS__, 'source_help' ), 10, 2 );
+		add_filter( 'blockroll_source_help_url', array( __CLASS__, 'source_help_url' ), 10, 2 );
 		add_filter( 'blockroll_source_links', array( __CLASS__, 'source_links' ), 10, 2 );
 		add_action( 'friends_subscription_actions', array( __CLASS__, 'subscription_action' ) );
 		add_action( 'friends_edit_friend_table_end', array( __CLASS__, 'settings_table_row' ) );
@@ -37,6 +39,36 @@ class Blockroll {
 	public static function sources( $sources ) {
 		$sources['friends-subscriptions'] = __( 'Friends subscriptions', 'friends' );
 		return $sources;
+	}
+
+	/**
+	 * Provide help text for the Friends subscriptions source.
+	 *
+	 * @param string $help   Current help text.
+	 * @param string $source Selected source.
+	 * @return string Help text.
+	 */
+	public static function source_help( $help, $source ) {
+		if ( 'friends-subscriptions' !== $source ) {
+			return $help;
+		}
+
+		return __( 'To hide someone from this Blogroll, choose "Hide from Blogroll" for that subscription.', 'friends' );
+	}
+
+	/**
+	 * Provide a help URL for the Friends subscriptions source.
+	 *
+	 * @param string $url    Current help URL.
+	 * @param string $source Selected source.
+	 * @return string Help URL.
+	 */
+	public static function source_help_url( $url, $source ) {
+		if ( 'friends-subscriptions' !== $source ) {
+			return $url;
+		}
+
+		return home_url( '/friends/following/' );
 	}
 
 	/**
