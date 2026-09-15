@@ -499,6 +499,13 @@ class Admin {
 		}
 
 		if ( current_user_can( 'manage_options' ) ) {
+			if ( isset( $_POST['main_user_id'] ) ) {
+				$main_user_id = absint( $_POST['main_user_id'] );
+				if ( $main_user_id && user_can( $main_user_id, Friends::REQUIRED_ROLE ) ) {
+					update_option( 'friends_main_user_id', $main_user_id );
+				}
+			}
+
 			foreach ( array( 'force_enable_post_formats', 'expose_post_format_feeds', 'exclude_compose_format_from_feed' ) as $checkbox ) {
 				if ( isset( $_POST[ $checkbox ] ) && boolval( $_POST[ $checkbox ] ) ) {
 					update_option( 'friends_' . $checkbox, true );
@@ -1298,6 +1305,8 @@ class Admin {
 					'expose_post_format_feeds'         => get_option( 'friends_expose_post_format_feeds' ),
 					'compose_post_format'              => get_option( 'friends_compose_post_format', 'status' ),
 					'exclude_compose_format_from_feed' => get_option( 'friends_exclude_compose_format_from_feed' ),
+					'main_user_id'                     => Friends::get_main_friend_user_id(),
+					'potential_main_users'             => User_Query::all_admin_users(),
 					'disable_auto_tagging'             => get_option( 'friends_disable_auto_tagging' ),
 					'disable_link_previews'            => get_option( 'friends_disable_link_previews' ),
 					'retention_days'                   => Friends::get_retention_days(),

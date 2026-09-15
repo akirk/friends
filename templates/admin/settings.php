@@ -12,6 +12,47 @@ do_action( 'friends_settings_before_form' );
 	<?php wp_nonce_field( 'friends-settings' ); ?>
 	<table class="form-table">
 		<tbody>
+			<?php if ( $args['potential_main_users']->get_total() > 1 ) : ?>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Main Friend User', 'friends' ); ?></th>
+					<td>
+						<?php if ( current_user_can( 'manage_options' ) ) : ?>
+							<select name="main_user_id" id="main_user_id">
+								<?php foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) : ?>
+									<option value="<?php echo esc_attr( $potential_main_user->ID ); ?>" <?php selected( $args['main_user_id'], $potential_main_user->ID ); ?>>
+										<?php echo esc_html( $potential_main_user->display_name ); ?>
+									</option>
+								<?php endforeach; ?>
+							</select>
+							<p class="description"><?php esc_html_e( 'Since there are multiple users on this site, we need to know which one should be considered the main one.', 'friends' ); ?> <?php esc_html_e( 'They can edit friends-related settings.', 'friends' ); ?> <?php esc_html_e( 'Whenever a friends-related action needs to be associated with a user, this one will be chosen.', 'friends' ); ?></p>
+						<?php else : ?>
+							<?php
+							$count = 0;
+							foreach ( $args['potential_main_users']->get_results() as $potential_main_user ) {
+								++$count;
+								if ( $potential_main_user->ID === $args['main_user_id'] ) {
+									?>
+									<span id="main_user_id"><?php echo esc_html( $potential_main_user->display_name ); ?></span>
+									<?php
+								}
+							}
+							?>
+							<span class="description">
+								<?php
+								echo esc_html(
+									sprintf(
+										/* translators: %s is a number of users. */
+										_n( '%s potential user', '%s potential users', $count, 'friends' ),
+										number_format_i18n( $count )
+									)
+								);
+								?>
+							</span>
+							<p class="description"><?php esc_html_e( 'An administrator can change this.', 'friends' ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+			<?php endif; ?>
 			<tr>
 				<th><?php esc_html_e( 'Retention', 'friends' ); ?></th>
 				<td>
