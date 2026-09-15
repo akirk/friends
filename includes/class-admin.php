@@ -2982,7 +2982,7 @@ class Admin {
 				'id'     => 'friends',
 				'parent' => 'friends-menu',
 				'title'  => esc_html__( 'Settings' ), // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-				'href'   => $my_admin_url . '/wp-admin/admin.php?page=friends-settings',
+				'href'   => home_url( '/friends/settings/' ),
 			)
 		);
 	}

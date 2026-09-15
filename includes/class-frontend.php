@@ -2221,6 +2221,11 @@ class Frontend {
 			return $query;
 		}
 
+		if ( isset( $pagename_parts[0] ) && 'settings' === $pagename_parts[0] ) {
+			wp_safe_redirect( self_admin_url( 'admin.php?page=friends-settings' ) );
+			exit;
+		}
+
 		// Not available for the general public or friends.
 		$viewable = $this->has_required_priviledges() && Friends::on_frontend();
 		if ( $query->is_feed() ) {
