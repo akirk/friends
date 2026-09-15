@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.3.1
+- Stable tag: 4.3.2
 
 A self-hosted social reader for WordPress: follow people via RSS and ActivityPub, with multiple themes and a plugin ecosystem.
 
@@ -77,6 +77,22 @@ Yes — install it for [Chrome](https://chromewebstore.google.com/detail/friends
 8. Followed people are stored as taxonomy terms
 
 ## Changelog
+
+### 4.3.2
+- A mention that links to somebody on another server is no longer mistaken for a mention of a friend who happens to have the same name. ([#721])
+- Fixed the link preview image being inset with a visible margin in the Mastodon and Twitter themes. ([#722])
+- Show likes received on direct messages. ([#723])
+- The sidebar Follow field now opens the Add Friend review instead of silently reloading the Friends page. ([#724])
+- Accept Mastodon-style handles when adding friends. ([#725])
+- Standard-format Friend posts now support link previews. ([#726])
+- Redirect to the current subscriptions page after unfriending and remove stale links to the deleted friends-list admin screen. ([#727])
+- Use the frontend Following page for subscriptions links instead of the legacy WordPress users screen. ([#728])
+- Fix direct message delivery status visibility for latest and consecutive outgoing messages. ([#729])
+- Prevent duplicate imports and notifications for future-dated feed items. ([#730])
+- Avoid keyword notifications for matches that only appear in known URL tracking parameters. ([#731])
+- Restore the setting for choosing the main Friends user. ([#732])
+- Add Blockroll integration for exposing Friends subscriptions as a Blogroll block source. ([#733])
+- Redirect the friendly Friends settings URL to the settings admin page. ([#734])
 
 ### 4.3.1
 - Fix direct messages being federated as a Tombstone so they never arrived at the recipient. ([#718])
@@ -678,3 +694,18 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 
 [#718]: https://github.com/akirk/friends/pull/718
 [#719]: https://github.com/akirk/friends/pull/719
+
+[#721]: https://github.com/akirk/friends/pull/721
+[#722]: https://github.com/akirk/friends/pull/722
+[#723]: https://github.com/akirk/friends/pull/723
+[#724]: https://github.com/akirk/friends/pull/724
+[#725]: https://github.com/akirk/friends/pull/725
+[#726]: https://github.com/akirk/friends/pull/726
+[#727]: https://github.com/akirk/friends/pull/727
+[#728]: https://github.com/akirk/friends/pull/728
+[#729]: https://github.com/akirk/friends/pull/729
+[#730]: https://github.com/akirk/friends/pull/730
+[#731]: https://github.com/akirk/friends/pull/731
+[#732]: https://github.com/akirk/friends/pull/732
+[#733]: https://github.com/akirk/friends/pull/733
+[#734]: https://github.com/akirk/friends/pull/734
