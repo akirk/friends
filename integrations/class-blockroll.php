@@ -19,6 +19,9 @@ class Blockroll {
 	public static function init() {
 		add_filter( 'blockroll_sources', array( __CLASS__, 'sources' ) );
 		add_filter( 'blockroll_source_links', array( __CLASS__, 'source_links' ), 10, 2 );
+		add_action( 'friends_subscription_actions', array( __CLASS__, 'subscription_action' ) );
+		add_action( 'wp_ajax_friends-blockroll-visibility', array( __CLASS__, 'ajax_visibility' ) );
+		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_script' ), 20 );
 	}
 
 	/**
@@ -65,6 +68,103 @@ class Blockroll {
 	}
 
 	/**
+	 * Render the Blockroll visibility toggle for a subscription.
+	 *
+	 * @param User $subscription Friend user or virtual subscription.
+	 */
+	public static function subscription_action( User $subscription ) {
+		if ( ! self::is_available() || ! $subscription instanceof Subscription ) {
+			return;
+		}
+
+		$hidden = self::is_hidden( $subscription );
+		?>
+		<span class="subscription-actions">
+			<label class="subscription-action subscription-blockroll-visibility">
+				<input
+					type="checkbox"
+					class="friends-blockroll-visibility"
+					value="1"
+					data-id="<?php echo esc_attr( $subscription->user_login ); ?>"
+					data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-blockroll-visibility-' . $subscription->user_login ) ); ?>"
+					<?php checked( $hidden ); ?>
+				/>
+				<span><?php echo esc_html( self::visibility_label( $hidden ) ); ?></span>
+			</label>
+		</span>
+		<?php
+	}
+
+	/**
+	 * Enqueue the front-end behavior for the Blockroll visibility toggle.
+	 */
+	public static function enqueue_script() {
+		if ( ! self::is_available() || ! Friends::on_frontend() ) {
+			return;
+		}
+
+		wp_add_inline_script(
+			'friends',
+			<<<'JS'
+( function ( $, wp ) {
+	$( document ).on( 'change', '.friends-blockroll-visibility', function () {
+		const input = $( this );
+		const label = input.closest( 'label' ).find( 'span' );
+		const previous = ! input.prop( 'checked' );
+
+		input.prop( 'disabled', true );
+		wp.ajax.send( 'friends-blockroll-visibility', {
+			data: {
+				friend_id: input.data( 'id' ),
+				hidden: input.prop( 'checked' ) ? 1 : 0,
+				_ajax_nonce: input.data( 'nonce' ),
+			},
+			success( response ) {
+				input.prop( 'checked', !! response.hidden );
+				label.text( response.label );
+			},
+			error() {
+				input.prop( 'checked', previous );
+			},
+		} ).always( function () {
+			input.prop( 'disabled', false );
+		} );
+	} );
+} )( jQuery, wp );
+JS
+		);
+	}
+
+	/**
+	 * Ajax handler to hide or show a subscription in Blockroll.
+	 */
+	public static function ajax_visibility() {
+		if ( ! current_user_can( Friends::REQUIRED_ROLE ) || ! self::is_available() || ! isset( $_POST['friend_id'] ) || ! isset( $_POST['hidden'] ) ) {
+			wp_send_json_error();
+			exit;
+		}
+
+		$friend_id = sanitize_text_field( wp_unslash( $_POST['friend_id'] ) );
+		check_ajax_referer( "friends-blockroll-visibility-$friend_id" );
+
+		$friend_user = User::get_by_username( $friend_id );
+		if ( ! $friend_user || is_wp_error( $friend_user ) || ! ( $friend_user instanceof Subscription ) ) {
+			wp_send_json_error( 'invalid-user' );
+			exit;
+		}
+
+		self::set_hidden( $friend_user, boolval( $_POST['hidden'] ) );
+		$hidden = self::is_hidden( $friend_user );
+
+		wp_send_json_success(
+			array(
+				'hidden' => $hidden,
+				'label'  => self::visibility_label( $hidden ),
+			)
+		);
+	}
+
+	/**
 	 * Get a representative feed URL for a subscription.
 	 *
 	 * @param User $subscription Friend user or virtual subscription.
@@ -89,6 +189,16 @@ class Blockroll {
 	 */
 	public static function is_available() {
 		return defined( 'BLOCKROLL_PLUGIN_FILE' );
+	}
+
+	/**
+	 * Get the label for the Blockroll visibility toggle.
+	 *
+	 * @param bool $hidden Whether the subscription is hidden from Blockroll.
+	 * @return string Toggle label.
+	 */
+	private static function visibility_label( $hidden ) {
+		return $hidden ? __( 'Hidden from Blogroll', 'friends' ) : __( 'Hide from Blogroll', 'friends' );
 	}
 
 	/**
