@@ -745,6 +745,16 @@ class Feed {
 				$post_data = array_merge( $post_data, $item->_feed_rule_transform );
 			}
 
+			$import_lock = false;
+			if ( is_null( $post_id ) ) {
+				$import_lock = $this->acquire_item_import_lock( $friend_user, $item );
+				if ( ! $import_lock ) {
+					continue;
+				}
+
+				$post_id = self::url_to_postid( $item->permalink );
+			}
+
 			$old_post = null;
 			if ( ! is_null( $post_id ) ) {
 				$old_post = get_post( $post_id );
@@ -794,6 +804,7 @@ class Feed {
 
 				$post_id = $friend_user->insert_post( $post_data, true );
 				if ( is_wp_error( $post_id ) ) {
+					$this->release_item_import_lock( $import_lock );
 					continue;
 				}
 
@@ -801,6 +812,7 @@ class Feed {
 
 				$remote_post_ids[ $item->permalink ] = $post_id;
 			}
+			$this->release_item_import_lock( $import_lock );
 
 			if ( is_null( $old_post ) || intval( $old_post->comment_count ) !== intval( $item->comment_count ) ) {
 				// The comment_count needs to be updated manually since it doesn't represent real comments in the database.
@@ -867,6 +879,43 @@ class Feed {
 		}
 
 		return $new_posts;
+	}
+
+	/**
+	 * Acquire a short-lived lock for creating a remote item.
+	 *
+	 * @param User      $friend_user The friend.
+	 * @param Feed_Item $item        The feed item.
+	 * @return string|false The lock option name, or false when another request owns it.
+	 */
+	private function acquire_item_import_lock( User $friend_user, Feed_Item $item ) {
+		$lock_key = 'friends_import_' . md5( $friend_user->get_object_id() . '|' . $item->permalink );
+		if ( add_option( $lock_key, time(), '', false ) ) {
+			return $lock_key;
+		}
+
+		$locked_at = intval( get_option( $lock_key ) );
+		if ( $locked_at && time() - $locked_at < 5 * MINUTE_IN_SECONDS ) {
+			return false;
+		}
+
+		delete_option( $lock_key );
+		if ( add_option( $lock_key, time(), '', false ) ) {
+			return $lock_key;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Release a remote item creation lock.
+	 *
+	 * @param string|false $lock_key The lock option name.
+	 */
+	private function release_item_import_lock( $lock_key ) {
+		if ( $lock_key ) {
+			delete_option( $lock_key );
+		}
 	}
 
 	/**

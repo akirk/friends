@@ -238,6 +238,46 @@ class FeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Test parsing a feed skips items currently being imported by another request.
+	 */
+	public function test_parse_feed_skips_items_with_active_import_lock() {
+		$user = User::get_user_by_id( $this->friend_id );
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		$user_feed = $user->save_feed(
+			'http://friend.local/feed/',
+			array( 'parser' => 'local' )
+		);
+		$this->assertNotWPError( $user_feed );
+
+		$item = new Feed_Item(
+			array(
+				'permalink'     => 'http://friend.local/locked-post',
+				'title'         => 'Locked Friend Post',
+				'content'       => 'This post is already being imported.',
+				'date'          => time(),
+				'comment_count' => 0,
+			)
+		);
+
+		$lock_key = 'friends_import_' . md5( $user->get_object_id() . '|' . $item->permalink );
+		add_option( $lock_key, time(), '', false );
+
+		$friends = Friends::get_instance();
+		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
+		$this->assertCount( 0, $new_items );
+		$this->assertSame( 0, Feed::url_to_postid( $item->permalink ) );
+
+		delete_option( $lock_key );
+
+		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
+		$this->assertCount( 1, $new_items );
+		$this->assertNotSame( 0, Feed::url_to_postid( $item->permalink ) );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
+	/**
 	 * Test parsing a direct feed URL that is served as text/plain.
 	 */
 	public function test_parse_direct_feed_url_with_text_plain_content_type() {
