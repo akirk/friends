@@ -1485,7 +1485,7 @@ class Admin {
 
 		add_filter( 'notify_about_new_friend_post', '__return_false', 999 );
 
-		$friend_user->retrieve_posts_from_active_feeds();
+		$friend_user->retrieve_posts_from_pollable_feeds();
 
 		wp_send_json_success();
 	}

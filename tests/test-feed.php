@@ -237,60 +237,46 @@ class FeedTest extends \WP_UnitTestCase {
 		remove_filter( 'friends_pre_check_url', '__return_true' );
 	}
 
-	/**
-	 * Test parsing a feed skips items currently being imported by another request.
-	 */
-	public function test_parse_feed_skips_items_with_active_import_lock() {
+	public function test_pollable_feed_retrieval_skips_feeds_currently_being_polled() {
 		$user = User::get_user_by_id( $this->friend_id );
+		$friends = Friends::get_instance();
+		$friends->feed->register_parser( 'local', new Feed_Parser_Local_File( $friends->feed ) );
 		add_filter( 'friends_pre_check_url', '__return_true' );
 
+		$file = __DIR__ . '/data/friend-feed-1-private-post.rss';
 		$user_feed = $user->save_feed(
-			'http://friend.local/feed/',
-			array( 'parser' => 'local' )
+			$file,
+			array(
+				'parser' => 'local',
+				'active' => true,
+			)
 		);
 		$this->assertNotWPError( $user_feed );
 
-		$item = new Feed_Item(
-			array(
-				'permalink'     => 'http://friend.local/locked-post',
-				'title'         => 'Locked Friend Post',
-				'content'       => 'This post is already being imported.',
-				'date'          => time(),
-				'comment_count' => 0,
-			)
-		);
-
-		$lock_key = 'friends_import_' . md5( $user->get_object_id() . '|' . $item->permalink );
-		add_option( $lock_key, time(), '', false );
-
-		$friends = Friends::get_instance();
-		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
+		$user_feed->set_polling_now();
+		$new_items = $user->retrieve_posts_from_pollable_feeds();
 		$this->assertCount( 0, $new_items );
-		$this->assertSame( 0, $this->get_friend_post_count_by_guid( $item->permalink ) );
-
-		delete_option( $lock_key );
-
-		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
-		$this->assertCount( 1, $new_items );
-		$this->assertSame( 1, $this->get_friend_post_count_by_guid( $item->permalink ) );
+		$this->assertSame( 0, $this->get_friend_post_count_by_feed_url( $file ) );
 
 		remove_filter( 'friends_pre_check_url', '__return_true' );
 	}
 
 	/**
-	 * Get the number of cached friend posts with the given guid.
+	 * Get the number of cached friend posts for the given feed URL.
 	 *
-	 * @param string $guid The post guid.
+	 * @param string $feed_url The feed URL.
 	 * @return int
 	 */
-	private function get_friend_post_count_by_guid( $guid ) {
-		global $wpdb;
-
-		return (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->prepare(
-				"SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = %s AND guid = %s",
-				Friends::CPT,
-				$guid
+	private function get_friend_post_count_by_feed_url( $feed_url ) {
+		return count(
+			get_posts(
+				array(
+					'post_type'   => Friends::CPT,
+					'post_status' => 'any',
+					'numberposts' => -1,
+					'meta_key'    => 'feed_url',
+					'meta_value'  => $feed_url,
+				)
 			)
 		);
 	}
