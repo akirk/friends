@@ -266,15 +266,33 @@ class FeedTest extends \WP_UnitTestCase {
 		$friends = Friends::get_instance();
 		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
 		$this->assertCount( 0, $new_items );
-		$this->assertSame( 0, Feed::url_to_postid( $item->permalink ) );
+		$this->assertSame( 0, $this->get_friend_post_count_by_guid( $item->permalink ) );
 
 		delete_option( $lock_key );
 
 		$new_items = $friends->feed->process_incoming_feed_items( array( $item ), $user_feed );
 		$this->assertCount( 1, $new_items );
-		$this->assertNotSame( 0, Feed::url_to_postid( $item->permalink ) );
+		$this->assertSame( 1, $this->get_friend_post_count_by_guid( $item->permalink ) );
 
 		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
+	/**
+	 * Get the number of cached friend posts with the given guid.
+	 *
+	 * @param string $guid The post guid.
+	 * @return int
+	 */
+	private function get_friend_post_count_by_guid( $guid ) {
+		global $wpdb;
+
+		return (int) $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+			$wpdb->prepare(
+				"SELECT COUNT(*) FROM $wpdb->posts WHERE post_type = %s AND guid = %s",
+				Friends::CPT,
+				$guid
+			)
+		);
 	}
 
 	/**
