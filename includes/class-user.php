@@ -429,54 +429,41 @@ class User extends \WP_User {
 	}
 
 	/**
-	 * Retrieve the posts for this user
+	 * Retrieve the posts for this user.
 	 *
+	 * @param bool $force Whether to retrieve even if feeds are not due or already polling.
 	 * @return array The new posts.
 	 */
-	public function retrieve_posts_from_active_feeds() {
-		return $this->retrieve_posts_from_feeds( $this->get_active_feeds() );
-	}
-
-	/**
-	 * Retrieve posts for active feeds that are due and not already polling.
-	 *
-	 * @return array The new posts.
-	 */
-	public function retrieve_posts_from_pollable_feeds() {
-		$friends = Friends::get_instance();
-		$new_posts = array();
-
-		foreach ( $this->get_active_feeds() as $feed ) {
-			if ( ! $feed->can_be_polled_now() ) {
-				continue;
-			}
-
-			$feed->set_polling_now();
-			$posts = $friends->feed->retrieve_feed( $feed );
-			$feed->was_polled();
-
-			if ( ! is_wp_error( $posts ) ) {
-				foreach ( $posts as $post_id => $item ) {
-					$new_posts[ $post_id ] = $item;
-				}
-			}
-		}
-
-		return $new_posts;
+	public function retrieve_posts_from_active_feeds( $force = true ) {
+		return $this->retrieve_posts_from_feeds( $this->get_active_feeds(), $force );
 	}
 
 	/**
 	 * Retrieve the posts for these user feeds
 	 *
 	 * @param      array $feeds  The feeds to retrieve from.
+	 * @param bool  $force Whether to retrieve even if feeds are not due or already polling.
 	 *
 	 * @return array The new posts.
 	 */
-	public function retrieve_posts_from_feeds( array $feeds ) {
+	public function retrieve_posts_from_feeds( array $feeds, $force = true ) {
 		$friends = Friends::get_instance();
 		$new_posts = array();
 		foreach ( $feeds as $feed ) {
+			if ( ! $force && ! $feed->can_be_polled_now() ) {
+				continue;
+			}
+
+			if ( ! $force ) {
+				$feed->set_polling_now();
+			}
+
 			$posts = $friends->feed->retrieve_feed( $feed );
+
+			if ( ! $force ) {
+				$feed->was_polled();
+			}
+
 			if ( ! is_wp_error( $posts ) ) {
 				foreach ( $posts as $post_id => $item ) {
 					$new_posts[ $post_id ] = $item;

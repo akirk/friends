@@ -254,7 +254,7 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertNotWPError( $user_feed );
 
 		$user_feed->set_polling_now();
-		$new_items = $user->retrieve_posts_from_pollable_feeds();
+		$new_items = $user->retrieve_posts_from_active_feeds( false );
 		$this->assertCount( 0, $new_items );
 		$this->assertSame( 0, $this->get_friend_post_count_by_feed_url( $file ) );
 

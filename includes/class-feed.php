@@ -131,7 +131,7 @@ class Feed {
 			return;
 		}
 
-		$friend_user->retrieve_posts_from_pollable_feeds();
+		$friend_user->retrieve_posts_from_active_feeds( false );
 	}
 
 	/**
