@@ -1,0 +1,3 @@
+Type: fixed
+
+Prevent duplicate posts when the same feed item is imported concurrently.

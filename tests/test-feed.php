@@ -237,6 +237,50 @@ class FeedTest extends \WP_UnitTestCase {
 		remove_filter( 'friends_pre_check_url', '__return_true' );
 	}
 
+	public function test_pollable_feed_retrieval_skips_feeds_currently_being_polled() {
+		$user = User::get_user_by_id( $this->friend_id );
+		$friends = Friends::get_instance();
+		$friends->feed->register_parser( 'local', new Feed_Parser_Local_File( $friends->feed ) );
+		add_filter( 'friends_pre_check_url', '__return_true' );
+
+		$file = __DIR__ . '/data/friend-feed-1-private-post.rss';
+		$user_feed = $user->save_feed(
+			$file,
+			array(
+				'parser' => 'local',
+				'active' => true,
+			)
+		);
+		$this->assertNotWPError( $user_feed );
+
+		$user_feed->set_polling_now();
+		$new_items = $user->retrieve_posts_from_active_feeds( false );
+		$this->assertCount( 0, $new_items );
+		$this->assertSame( 0, $this->get_friend_post_count_by_feed_url( $file ) );
+
+		remove_filter( 'friends_pre_check_url', '__return_true' );
+	}
+
+	/**
+	 * Get the number of cached friend posts for the given feed URL.
+	 *
+	 * @param string $feed_url The feed URL.
+	 * @return int
+	 */
+	private function get_friend_post_count_by_feed_url( $feed_url ) {
+		return count(
+			get_posts(
+				array(
+					'post_type'   => Friends::CPT,
+					'post_status' => 'any',
+					'numberposts' => -1,
+					'meta_key'    => 'feed_url',
+					'meta_value'  => $feed_url,
+				)
+			)
+		);
+	}
+
 	/**
 	 * Test parsing a direct feed URL that is served as text/plain.
 	 */

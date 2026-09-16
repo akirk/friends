@@ -131,14 +131,7 @@ class Feed {
 			return;
 		}
 
-		foreach ( $friend_user->get_active_feeds() as $feed ) {
-			$friend_user = $feed->get_friend_user();
-			if ( $friend_user && $feed->can_be_polled_now() ) {
-				$feed->set_polling_now();
-				$this->retrieve_feed( $feed );
-				$feed->was_polled();
-			}
-		}
+		$friend_user->retrieve_posts_from_active_feeds( false );
 	}
 
 	/**
