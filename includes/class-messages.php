@@ -53,15 +53,15 @@ class Messages {
 		add_action( 'friends_after_header', array( $this, 'friends_display_messages' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_message_form' ), 11, 2 );
 		add_filter( 'template_redirect', array( $this, 'handle_message_send' ), 10, 2 );
-		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 6 );
-		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 6 );
+		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 7 );
+		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 7 );
 		add_filter( 'mastodon_api_conversation', array( $this, 'mastodon_api_conversation' ), 10, 2 );
 		add_filter( 'mastodon_api_conversations', array( $this, 'mastodon_api_conversations' ), 10, 3 );
 		add_filter( 'mastodon_api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 );
 		add_filter( 'mastodon_api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 );
 		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 ); // legacy filter.
 		add_filter( 'api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 ); // legacy filter.
-		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 6 );
+		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 9 );
 		add_filter( 'mastodon_api_conversation_mark_read', array( $this, 'mastodon_api_conversation_mark_read' ), 10 );
 		add_filter( 'mastodon_api_conversation_delete', array( $this, 'delete_conversation' ), 10 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status' ), 20, 2 );
@@ -183,7 +183,7 @@ class Messages {
 		return $post_id;
 	}
 
-	public function save_incoming_message( User $friend_user, $message, $subject = '', $feed_url = null, $remote_url = null, $reply_to = null ) {
+	public function save_incoming_message( User $friend_user, $message, $subject = '', $feed_url = null, $remote_url = null, $reply_to = null, $poll = null ) {
 		$post_data = array(
 			'post_type'    => self::CPT,
 			'post_title'   => $subject,
@@ -211,6 +211,9 @@ class Messages {
 		if ( $feed_url ) {
 			update_post_meta( $post_id, 'friends_feed_url', $feed_url );
 		}
+		if ( is_array( $poll ) ) {
+			update_post_meta( $post_id, 'friends_activitypub_poll', $poll );
+		}
 
 		return $post_id;
 	}
@@ -224,10 +227,11 @@ class Messages {
 	 * @param      string $message      The message.
 	 * @param      string $subject      The subject.
 	 * @param      int    $reply_to_post_id  The reply to post ID.
+	 * @param      array  $poll              Normalized ActivityPub poll data.
 	 *
 	 * @return     int     The post ID.
 	 */
-	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null ) {
+	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null, $poll = null ) {
 		$content = \wpautop( $message );
 		$content = \preg_replace( '/[\n\r\t]/', '', $content );
 		$content = \trim( $content );
@@ -244,6 +248,9 @@ class Messages {
 		wp_set_post_terms( $post_id, strval( $friend_user->ID ), self::TAXONOMY );
 		if ( $to ) {
 			update_post_meta( $post_id, 'friends_feed_url', $to );
+		}
+		if ( is_array( $poll ) ) {
+			update_post_meta( $post_id, 'friends_activitypub_poll', $poll );
 		}
 
 		return $post_id;
@@ -534,10 +541,11 @@ class Messages {
 	 * @param      string $message      The message.
 	 * @param      string $subject      The subject.
 	 * @param      int    $reply_to_post_id  The reply to post ID.
+	 * @param      array  $poll              Normalized ActivityPub poll data.
 	 *
 	 * @return     \WP_Error|int  An error or the message post id.
 	 */
-	public function send_message( User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null ) {
+	public function send_message( User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null, $poll = null ) {
 		$tos = apply_filters( 'friends_message_form_accounts', array(), $friend_user );
 		if ( ! isset( $tos[ $to ] ) ) {
 			return new \WP_Error( 'not-a-friend', __( 'You cannot send messages to this user.', 'friends' ) );
@@ -546,7 +554,7 @@ class Messages {
 			return new \WP_Error( 'empty-message', __( 'You cannot send empty messages.', 'friends' ) );
 		}
 
-		$post_id = apply_filters( 'friends_send_direct_message', null, $friend_user, $to, $message, $subject, $reply_to_post_id );
+		$post_id = apply_filters( 'friends_send_direct_message', null, $friend_user, $to, $message, $subject, $reply_to_post_id, $poll );
 
 		return $post_id;
 	}
@@ -766,7 +774,7 @@ class Messages {
 		return $post_statuses;
 	}
 
-	public function mastodon_api_submit_status( $status, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility ) {
+	public function mastodon_api_submit_status( $status, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility, $scheduled_at = null, $request = null ) {
 		if ( $status instanceof \WP_Error || $status instanceof \Enable_Mastodon_Apps\Entity\Status || 'direct' !== $visibility ) {
 			return $status;
 		}
@@ -859,7 +867,15 @@ class Messages {
 			}
 		}
 
-		$post_id = $this->send_message( $friend_user, $user_feed->get_url(), $status_text, null, $in_reply_to_id );
+		$poll = $request ? $request->get_param( 'poll' ) : null;
+		if ( $poll ) {
+			$poll = Feed_Parser_ActivityPub::normalize_mastodon_poll( $poll, $status_text );
+			if ( is_wp_error( $poll ) ) {
+				return $poll;
+			}
+		}
+
+		$post_id = $this->send_message( $friend_user, $user_feed->get_url(), $status_text, null, $in_reply_to_id, $poll );
 
 		if ( ! empty( $media_ids ) ) {
 			foreach ( $media_ids as $media_id ) {
