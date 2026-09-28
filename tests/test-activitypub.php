@@ -968,12 +968,21 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			'direct'
 		);
 
-		$this->assertInstanceOf( \Enable_Mastodon_Apps\Entity\Status::class, $status );
+		$this->assertNotWPError( $status );
 
 		$user_feed = User_Feed::get_by_url( $unknown_actor );
 		$this->assertInstanceOf( User_Feed::class, $user_feed );
 		$this->assertFalse( $user_feed->is_active(), 'Sending a DM must not follow the recipient.' );
-		$this->assertSame( $unknown_actor, get_post_meta( $status->id, 'friends_feed_url', true ) );
+
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_read',
+				'numberposts' => -1,
+			)
+		);
+		$this->assertCount( 1, $messages );
+		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
 	}
 
 	public function test_direct_message_delivery_status_tracks_inbox_result() {
