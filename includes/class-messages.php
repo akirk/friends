@@ -53,7 +53,7 @@ class Messages {
 		add_action( 'friends_after_header', array( $this, 'friends_display_messages' ), 10, 2 );
 		add_action( 'friends_after_header', array( $this, 'friends_message_form' ), 11, 2 );
 		add_filter( 'template_redirect', array( $this, 'handle_message_send' ), 10, 2 );
-		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 7 );
+		add_filter( 'friends_send_direct_message', array( $this, 'save_outgoing_message' ), 10, 6 );
 		add_filter( 'notify_friend_message_received', array( $this, 'save_incoming_message' ), 5, 7 );
 		add_filter( 'mastodon_api_conversation', array( $this, 'mastodon_api_conversation' ), 10, 2 );
 		add_filter( 'mastodon_api_conversations', array( $this, 'mastodon_api_conversations' ), 10, 3 );
@@ -214,7 +214,6 @@ class Messages {
 		if ( is_array( $poll ) ) {
 			update_post_meta( $post_id, 'friends_activitypub_poll', $poll );
 		}
-
 		return $post_id;
 	}
 
@@ -227,11 +226,10 @@ class Messages {
 	 * @param      string $message      The message.
 	 * @param      string $subject      The subject.
 	 * @param      int    $reply_to_post_id  The reply to post ID.
-	 * @param      array  $poll              Normalized ActivityPub poll data.
 	 *
 	 * @return     int     The post ID.
 	 */
-	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null, $poll = null ) {
+	public function save_outgoing_message( $post_id, User $friend_user, $to, $message, $subject = '', $reply_to_post_id = null ) {
 		$content = \wpautop( $message );
 		$content = \preg_replace( '/[\n\r\t]/', '', $content );
 		$content = \trim( $content );
@@ -249,10 +247,6 @@ class Messages {
 		if ( $to ) {
 			update_post_meta( $post_id, 'friends_feed_url', $to );
 		}
-		if ( is_array( $poll ) ) {
-			update_post_meta( $post_id, 'friends_activitypub_poll', $poll );
-		}
-
 		return $post_id;
 	}
 
@@ -869,6 +863,13 @@ class Messages {
 
 		$poll = $request ? $request->get_param( 'poll' ) : null;
 		if ( $poll ) {
+			if ( ! Integration_Polls_For_ActivityPub::is_available() ) {
+				return new \WP_Error(
+					'friends_poll_provider_required',
+					__( 'Install and activate Polls for ActivityPub to create polls in private messages.', 'friends' ),
+					array( 'status' => 422 )
+				);
+			}
 			$poll = Feed_Parser_ActivityPub::normalize_mastodon_poll( $poll, $status_text );
 			if ( is_wp_error( $poll ) ) {
 				return $poll;

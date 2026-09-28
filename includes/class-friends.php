@@ -138,6 +138,7 @@ class Friends {
 		new Third_Parties( $this );
 		new Blocks( $this );
 		new Logging( $this );
+		new Integration_Polls_For_ActivityPub();
 		new Shortcodes( $this );
 		new Site_Health();
 		new Migration();

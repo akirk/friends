@@ -1150,29 +1150,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( $reply_to_url ) {
 			$object->set_in_reply_to( $reply_to_url );
 		}
-		if ( is_array( $poll ) ) {
-			$object->set_type( 'Question' );
-			$object->set_end_time( $poll['expires_at'] );
-			$options = array_map(
-				static function ( $option ) {
-					return array(
-						'type'    => 'Note',
-						'name'    => $option['title'],
-						'replies' => array(
-							'type'       => 'Collection',
-							'totalItems' => 0,
-						),
-					);
-				},
-				$poll['options']
-			);
-			if ( $poll['multiple'] ) {
-				$object->set_any_of( $options );
-			} else {
-				$object->set_one_of( $options );
+		$poll_id = Integration_Polls_For_ActivityPub::get_poll_post_id( $post_id );
+		if ( $poll_id ) {
+			$poll_transformer = new \Polls_For_ActivityPub\ActivityPub\Transformer\Poll( get_post( $poll_id ) );
+			$object = $poll_transformer->to_object();
+			if ( is_wp_error( $object ) ) {
+				return $object;
 			}
-			$poll['id'] = $object->get_id();
-			update_post_meta( $post_id, 'friends_activitypub_poll', $poll );
+			$object->set_to( array( $send_to ) );
+			$object->set_cc( array() );
+			if ( $reply_to_url ) {
+				$object->set_in_reply_to( $reply_to_url );
+			}
 		}
 
 		$activity = new \Activitypub\Activity\Activity();

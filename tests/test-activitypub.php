@@ -971,6 +971,10 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_direct_message_poll_is_federated_as_question() {
+		if ( ! Integration_Polls_For_ActivityPub::is_available() ) {
+			$this->markTestSkipped( 'Polls for ActivityPub is not available.' );
+		}
+
 		$poll = Feed_Parser_ActivityPub::normalize_mastodon_poll(
 			array(
 				'options'    => array( 'Yes', 'No' ),
@@ -983,13 +987,14 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertIsInt( $post_id );
 		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
 		$activity = json_decode( get_post( $outbox_id )->post_content, true );
-		$stored_poll = get_post_meta( $post_id, 'friends_activitypub_poll', true );
+		$poll_id = Integration_Polls_For_ActivityPub::get_poll_post_id( $post_id );
 
 		$this->assertSame( 'Question', $activity['object']['type'] );
 		$this->assertCount( 2, $activity['object']['oneOf'] );
 		$this->assertSame( 'Yes', $activity['object']['oneOf'][0]['name'] );
 		$this->assertContains( $this->actor, $activity['object']['to'] );
-		$this->assertSame( $activity['object']['id'], $stored_poll['id'] );
+		$this->assertSame( 'private', get_post_status( $poll_id ) );
+		$this->assertSame( get_permalink( $poll_id ), $activity['object']['id'] );
 	}
 
 	public function test_direct_message_delivery_status_tracks_inbox_result() {
