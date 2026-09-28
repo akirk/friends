@@ -958,6 +958,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			'name'              => 'Unknown DM Recipient',
 			'preferredUsername' => 'unknown-dm-recipient',
 		);
+		self::$users['https://mastodon.local/@unknown-dm-recipient'] = self::$users[ $unknown_actor ];
 		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
 		add_filter( 'activitypub_extract_mentions', array( $parser, 'activitypub_extract_mentions' ), 10, 2 );
 		add_filter( 'friends_resolve_message_recipient', array( $parser, 'resolve_message_recipient' ), 10, 2 );
