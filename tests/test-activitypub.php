@@ -950,6 +950,32 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( $this->actor, $activity['object']['tag'][0]['href'] );
 	}
 
+	public function test_direct_message_to_unknown_actor_creates_inactive_recipient() {
+		$unknown_actor = 'https://mastodon.local/users/unknown-dm-recipient';
+		self::$users[ $unknown_actor ] = array(
+			'id'                => $unknown_actor,
+			'url'               => $unknown_actor,
+			'name'              => 'Unknown DM Recipient',
+			'preferredUsername' => 'unknown-dm-recipient',
+		);
+
+		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
+			null,
+			'@unknown-dm-recipient@mastodon.local Hello by DM.',
+			null,
+			array(),
+			'standard',
+			'direct'
+		);
+
+		$this->assertInstanceOf( \Enable_Mastodon_Apps\Entity\Status::class, $status );
+
+		$user_feed = User_Feed::get_by_url( $unknown_actor );
+		$this->assertInstanceOf( User_Feed::class, $user_feed );
+		$this->assertFalse( $user_feed->is_active(), 'Sending a DM must not follow the recipient.' );
+		$this->assertSame( $unknown_actor, get_post_meta( $status->id, 'friends_feed_url', true ) );
+	}
+
 	public function test_direct_message_delivery_status_tracks_inbox_result() {
 		$post_id   = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
 		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );

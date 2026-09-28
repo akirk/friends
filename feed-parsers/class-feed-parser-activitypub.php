@@ -136,6 +136,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_external_user' ), 15, 4 );
 		add_action( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
 		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 6 );
+		add_filter( 'friends_resolve_message_recipient', array( $this, 'resolve_message_recipient' ), 10, 2 );
 		add_action( 'activitypub_pre_send_to_inboxes', array( $this, 'record_direct_message_delivery_targets' ), 10, 3 );
 		add_action( 'activitypub_sent_to_inbox', array( $this, 'record_direct_message_delivery_result' ), 10, 5 );
 
@@ -1291,6 +1292,38 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $friend_user;
+	}
+
+	/**
+	 * Resolve an unknown ActivityPub account for direct messaging without following it.
+	 *
+	 * @param User_Feed|false $user_feed An already resolved recipient feed, or false.
+	 * @param string          $mention   An actor URL or Mastodon-style handle.
+	 * @return User_Feed|false The recipient feed, or false when it cannot be resolved.
+	 */
+	public function resolve_message_recipient( $user_feed, $mention ) {
+		if ( $user_feed instanceof User_Feed ) {
+			return $user_feed;
+		}
+
+		$actor_url = self::friends_webfinger_resolve( $mention, $mention );
+		if ( ! Friends::check_url( $actor_url ) ) {
+			return false;
+		}
+
+		$actor = $this->get_metadata( $actor_url );
+		if ( is_wp_error( $actor ) || ! is_array( $actor ) ) {
+			return false;
+		}
+
+		$friend_user = $this->create_message_sender_from_actor( $actor_url, $actor );
+		if ( is_wp_error( $friend_user ) ) {
+			return false;
+		}
+
+		$user_feed = User_Feed::get_by_url( $actor_url );
+
+		return $user_feed instanceof User_Feed ? $user_feed : false;
 	}
 
 	public function register_post_meta() {

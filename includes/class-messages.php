@@ -799,6 +799,24 @@ class Messages {
 					break;
 				}
 			}
+
+			/**
+			 * Resolve a direct-message recipient that Friends does not know yet.
+			 *
+			 * Integrations may create a non-following identity for a remotely
+			 * discoverable recipient and return its feed here. This keeps recipient
+			 * discovery with the protocol integration that owns the remote identity.
+			 *
+			 * @param User_Feed|false $user_feed The resolved recipient feed, or false.
+			 * @param string          $mention   The extracted recipient identifier.
+			 */
+			$user_feed = apply_filters( 'friends_resolve_message_recipient', false, $mention );
+			if ( $user_feed instanceof User_Feed ) {
+				$friend_user = $user_feed->get_friend_user();
+				if ( $friend_user ) {
+					break;
+				}
+			}
 		}
 
 		if ( ! $friend_user ) {
