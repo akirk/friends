@@ -35,6 +35,26 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		return rest_do_request( $request );
 	}
 
+	public function test_normalize_activitypub_question() {
+		$poll = Feed_Parser_ActivityPub::normalize_poll(
+			array(
+				'type'         => 'Question',
+				'id'           => 'https://example.org/questions/1',
+				'endTime'      => '2030-01-01T00:00:00Z',
+				'votersCount'  => 3,
+				'oneOf'        => array(
+					array( 'name' => 'Yes', 'replies' => array( 'totalItems' => 2 ) ),
+					array( 'name' => 'No', 'replies' => array( 'totalItems' => 1 ) ),
+				),
+			)
+		);
+
+		$this->assertSame( 'https://example.org/questions/1', $poll['id'] );
+		$this->assertFalse( $poll['multiple'] );
+		$this->assertSame( 3, $poll['voters_count'] );
+		$this->assertSame( 2, $poll['options'][0]['votes_count'] );
+	}
+
 	public function test_custom_emojis_from_actor_tags() {
 		$tags = array(
 			array(
@@ -948,6 +968,33 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertNotEmpty( $activity['object']['tag'] );
 		$this->assertSame( 'Mention', $activity['object']['tag'][0]['type'] );
 		$this->assertSame( $this->actor, $activity['object']['tag'][0]['href'] );
+	}
+
+	public function test_direct_message_poll_is_federated_as_question() {
+		if ( ! Integration_Polls_For_ActivityPub::is_available() ) {
+			$this->markTestSkipped( 'Polls for ActivityPub is not available.' );
+		}
+
+		$poll = Feed_Parser_ActivityPub::normalize_mastodon_poll(
+			array(
+				'options'    => array( 'Yes', 'No' ),
+				'expires_in' => 3600,
+			),
+			'Choose one'
+		);
+		$post_id = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Choose one', '', null, $poll );
+
+		$this->assertIsInt( $post_id );
+		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
+		$activity = json_decode( get_post( $outbox_id )->post_content, true );
+		$poll_id = Integration_Polls_For_ActivityPub::get_poll_post_id( $post_id );
+
+		$this->assertSame( 'Question', $activity['object']['type'] );
+		$this->assertCount( 2, $activity['object']['oneOf'] );
+		$this->assertSame( 'Yes', $activity['object']['oneOf'][0]['name'] );
+		$this->assertContains( $this->actor, $activity['object']['to'] );
+		$this->assertSame( 'private', get_post_status( $poll_id ) );
+		$this->assertSame( get_permalink( $poll_id ), $activity['object']['id'] );
 	}
 
 	public function test_direct_message_delivery_status_tracks_inbox_result() {

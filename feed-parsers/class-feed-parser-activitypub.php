@@ -81,6 +81,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_filter( 'activitypub_extract_mentions', array( $this, 'activitypub_extract_in_reply_to_mentions' ), 10, 3 );
 		\add_filter( 'mastodon_api_external_mentions_user', array( $this, 'get_external_user' ) );
 		\add_filter( 'activitypub_rest_following', array( $this, 'activitypub_rest_following' ), 10, 2 );
+		\add_filter( 'activitypub_activity_object_types', array( self::class, 'activitypub_object_types' ) );
 
 		\add_action( 'friends_user_post_reaction', array( $this, 'post_reaction' ) );
 		\add_action( 'friends_user_post_undo_reaction', array( $this, 'undo_post_reaction' ) );
@@ -111,6 +112,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_filter( 'mastodon_api_mapback_user_id', array( $this, 'mastodon_api_mapback_user_id' ), 30, 4 );
 		add_filter( 'friends_mastodon_api_username', array( $this, 'friends_mastodon_api_username' ) );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status_add_reblogs' ), 40, 3 );
+		add_filter( 'mastodon_api_status_poll', array( self::class, 'mastodon_api_status_poll' ), 10, 2 );
+		add_filter( 'mastodon_api_poll_vote', array( $this, 'mastodon_api_poll_vote' ), 10, 3 );
 		add_filter( 'mastodon_api_canonical_user_id', array( $this, 'mastodon_api_canonical_user_id' ), 20, 3 );
 		add_filter( 'mastodon_api_valid_user', array( $this, 'mastodon_api_valid_user' ), 15, 2 );
 		add_filter( 'mastodon_api_comment_parent_post_id', array( $this, 'mastodon_api_in_reply_to_id' ), 25 );
@@ -135,7 +138,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		add_action( 'mastodon_api_account', array( $this, 'mastodon_api_account' ), 9, 2 );
 		add_filter( 'mastodon_api_account', array( $this, 'mastodon_api_account_external_user' ), 15, 4 );
 		add_action( 'friends_message_form_accounts', array( $this, 'friends_message_form_accounts' ), 10, 2 );
-		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 6 );
+		add_action( 'friends_send_direct_message', array( $this, 'friends_send_direct_message' ), 20, 7 );
 		add_filter( 'friends_resolve_message_recipient', array( $this, 'resolve_message_recipient' ), 10, 2 );
 		add_action( 'activitypub_pre_send_to_inboxes', array( $this, 'record_direct_message_delivery_targets' ), 10, 3 );
 		add_action( 'activitypub_sent_to_inbox', array( $this, 'record_direct_message_delivery_result' ), 10, 5 );
@@ -377,6 +380,213 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $status;
+	}
+
+	/**
+	 * Normalize an ActivityPub Question for local storage.
+	 *
+	 * @param array $activity ActivityPub object.
+	 * @return array|null Normalized poll data, or null for non-polls.
+	 */
+	public static function normalize_poll( $activity ) {
+		if ( ! is_array( $activity ) || 'Question' !== ( $activity['type'] ?? null ) ) {
+			return null;
+		}
+
+		$multiple = isset( $activity['anyOf'] );
+		$choices  = $multiple ? ( $activity['anyOf'] ?? array() ) : ( $activity['oneOf'] ?? array() );
+		$options  = array();
+		foreach ( (array) $choices as $choice ) {
+			if ( ! is_array( $choice ) || ! isset( $choice['name'] ) ) {
+				continue;
+			}
+			$options[] = array(
+				'title'       => sanitize_text_field( $choice['name'] ),
+				'votes_count' => isset( $choice['replies']['totalItems'] ) ? absint( $choice['replies']['totalItems'] ) : 0,
+			);
+		}
+
+		if ( count( $options ) < 2 ) {
+			return null;
+		}
+
+		return array(
+			'id'           => isset( $activity['id'] ) ? esc_url_raw( $activity['id'] ) : '',
+			'expires_at'   => isset( $activity['endTime'] ) ? sanitize_text_field( $activity['endTime'] ) : null,
+			'closed'       => isset( $activity['closed'] ) ? sanitize_text_field( $activity['closed'] ) : null,
+			'multiple'     => $multiple,
+			'voters_count' => isset( $activity['votersCount'] ) ? absint( $activity['votersCount'] ) : null,
+			'options'      => $options,
+			'voted'        => false,
+			'own_votes'    => array(),
+		);
+	}
+
+	/**
+	 * Normalize a Mastodon poll submission for ActivityPub delivery and storage.
+	 *
+	 * @param array  $poll     Submitted poll data.
+	 * @param string $question Poll question/status text.
+	 * @return array|\WP_Error Normalized poll or validation error.
+	 */
+	public static function normalize_mastodon_poll( $poll, $question ) {
+		$options  = isset( $poll['options'] ) ? array_values( array_filter( array_map( 'sanitize_text_field', (array) $poll['options'] ) ) ) : array();
+		$duration = isset( $poll['expires_in'] ) ? absint( $poll['expires_in'] ) : 0;
+		if ( count( $options ) < 2 || ! $duration ) {
+			return new \WP_Error( 'friends_invalid_poll', __( 'A poll needs at least two options and an expiration time.', 'friends' ), array( 'status' => 422 ) );
+		}
+
+		return array(
+			'id'           => '',
+			'question'     => wp_strip_all_tags( $question ),
+			'expires_at'   => gmdate( 'c', time() + $duration ),
+			'closed'       => null,
+			'multiple'     => ! empty( $poll['multiple'] ),
+			'voters_count' => 0,
+			'options'      => array_map(
+				static function ( $option ) {
+					return array(
+						'title'       => $option,
+						'votes_count' => 0,
+					);
+				},
+				$options
+			),
+			'voted'        => false,
+			'own_votes'    => array(),
+		);
+	}
+
+	/**
+	 * Ensure the ActivityPub plugin accepts Question objects in the outbox.
+	 *
+	 * @param array $types Supported object types.
+	 * @return array Supported object types.
+	 */
+	public static function activitypub_object_types( $types ) {
+		$types[] = 'Question';
+		return array_values( array_unique( $types ) );
+	}
+
+	/**
+	 * Convert stored Friends poll metadata to an EMA entity.
+	 *
+	 * @param mixed $poll    Current poll entity.
+	 * @param int   $post_id Friends post or message ID.
+	 * @return mixed Poll entity or the original value.
+	 */
+	public static function mastodon_api_status_poll( $poll, $post_id ) {
+		if ( $poll || ! class_exists( '\\Enable_Mastodon_Apps\\Entity\\Poll' ) ) {
+			return $poll;
+		}
+
+		$data = get_post_meta( $post_id, 'friends_activitypub_poll', true );
+		if ( ! is_array( $data ) ) {
+			$activitypub = get_post_meta( $post_id, self::SLUG, true );
+			$data = is_array( $activitypub ) && isset( $activitypub['poll'] ) ? $activitypub['poll'] : null;
+		}
+		if ( ! is_array( $data ) || empty( $data['options'] ) ) {
+			return $poll;
+		}
+
+		$entity                = new \Enable_Mastodon_Apps\Entity\Poll();
+		$entity->id            = strval( $post_id );
+		$entity->expires_at    = $data['expires_at'] ?? null;
+		$entity->expired       = ! empty( $data['closed'] ) || ( ! empty( $data['expires_at'] ) && strtotime( $data['expires_at'] ) <= time() );
+		$entity->multiple      = ! empty( $data['multiple'] );
+		$entity->options       = array_values( $data['options'] );
+		$entity->votes_count   = array_sum( wp_list_pluck( $entity->options, 'votes_count' ) );
+		$entity->voters_count  = isset( $data['voters_count'] ) ? $data['voters_count'] : null;
+		$entity->voted         = ! empty( $data['voted'] );
+		$entity->own_votes     = isset( $data['own_votes'] ) ? array_map( 'absint', (array) $data['own_votes'] ) : array();
+		$entity->emojis        = array();
+
+		return $entity;
+	}
+
+	/**
+	 * Federate votes for a remote poll cached by Friends.
+	 *
+	 * @param mixed $result  Current result.
+	 * @param int   $post_id Poll/status post ID.
+	 * @param int[] $choices Selected choices.
+	 * @return mixed Updated poll entity, an error, or the current result.
+	 */
+	public function mastodon_api_poll_vote( $result, $post_id, $choices ) {
+		if ( $result || ! in_array( get_post_type( $post_id ), array( Friends::CPT, Messages::CPT ), true ) ) {
+			return $result;
+		}
+
+		$metadata = get_post_meta( $post_id, self::SLUG, true );
+		$poll = Messages::CPT === get_post_type( $post_id ) ? get_post_meta( $post_id, 'friends_activitypub_poll', true ) : ( $metadata['poll'] ?? null );
+		if ( ! is_array( $poll ) || empty( $poll['id'] ) ) {
+			return $result;
+		}
+		if ( ! empty( $poll['voted'] ) ) {
+			return new \WP_Error( 'friends_poll_already_voted', __( 'You have already voted in this poll.', 'friends' ), array( 'status' => 422 ) );
+		}
+		if ( ! empty( $poll['closed'] ) || ( ! empty( $poll['expires_at'] ) && strtotime( $poll['expires_at'] ) <= time() ) ) {
+			return new \WP_Error( 'friends_poll_expired', __( 'This poll has expired.', 'friends' ), array( 'status' => 422 ) );
+		}
+		if ( empty( $poll['multiple'] ) && 1 !== count( $choices ) ) {
+			return new \WP_Error( 'friends_poll_single_choice', __( 'Choose one option for this poll.', 'friends' ), array( 'status' => 422 ) );
+		}
+
+		$post = get_post( $post_id );
+		$recipient = get_post_meta( $post_id, 'friends_feed_url', true );
+		if ( ! empty( $metadata['attributedTo'] ) ) {
+			$attributed_to = self::get_actor_url_from_attributed_to( $metadata['attributedTo'] );
+			if ( $attributed_to ) {
+				$recipient = $attributed_to;
+			}
+		}
+		if ( ! $recipient && $post ) {
+			$user = User::get_post_author( $post );
+			$feeds = $user instanceof User ? $user->get_feeds() : array();
+			$feed = $feeds ? reset( $feeds ) : null;
+			$recipient = $feed instanceof User_Feed ? $feed->get_url() : null;
+		}
+
+		$actor_id = self::get_activitypub_actor_id( get_current_user_id() );
+		$actor = $this->get_activitypub_actor( $actor_id );
+		if ( ! $recipient || ! $actor || is_wp_error( $actor ) ) {
+			return new \WP_Error( 'friends_poll_vote_delivery', __( 'The poll author could not be resolved.', 'friends' ), array( 'status' => 422 ) );
+		}
+
+		foreach ( $choices as $choice ) {
+			if ( ! isset( $poll['options'][ $choice ] ) ) {
+				return new \WP_Error( 'friends_poll_invalid_choice', __( 'The selected poll option does not exist.', 'friends' ), array( 'status' => 422 ) );
+			}
+			$note = new \Activitypub\Activity\Base_Object();
+			$note->set_type( 'Note' );
+			$note->set_id( home_url( '?friends-poll-vote=' . wp_generate_uuid4() ) );
+			$note->set_name( $poll['options'][ $choice ]['title'] );
+			$note->set_attributed_to( $actor->get_id() );
+			$note->set_in_reply_to( $poll['id'] );
+			$note->set_to( array( $recipient ) );
+
+			$activity = new \Activitypub\Activity\Activity();
+			$activity->set_type( 'Create' );
+			$activity->set_id( $note->get_id() . '#activity' );
+			$activity->set_actor( $actor->get_id() );
+			$activity->set_object( $note );
+			$activity->set_to( array( $recipient ) );
+			$queued = \Activitypub\add_to_outbox( $activity, null, $actor_id, ACTIVITYPUB_CONTENT_VISIBILITY_PRIVATE );
+			if ( ! $queued || is_wp_error( $queued ) ) {
+				return new \WP_Error( 'friends_poll_vote_delivery', __( 'The poll vote could not be queued for delivery.', 'friends' ), array( 'status' => 500 ) );
+			}
+		}
+
+		$poll['voted'] = true;
+		$poll['own_votes'] = array_values( $choices );
+		if ( Messages::CPT === get_post_type( $post_id ) ) {
+			update_post_meta( $post_id, 'friends_activitypub_poll', $poll );
+		} else {
+			$metadata['poll'] = $poll;
+			update_post_meta( $post_id, self::SLUG, $metadata );
+		}
+
+		return self::mastodon_api_status_poll( null, $post_id );
 	}
 
 	/**
@@ -893,7 +1103,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $accounts;
 	}
 
-	public function friends_send_direct_message( $post_id, User $friend_user, $to, $message, $subject = null, $reply_to_post_id = null ) {
+	public function friends_send_direct_message( $post_id, User $friend_user, $to, $message, $subject = null, $reply_to_post_id = null, $poll = null ) {
 		if ( is_wp_error( $post_id ) || ! is_int( $post_id ) ) {
 			return $post_id;
 		}
@@ -939,6 +1149,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$object->set_to( array( $send_to ) );
 		if ( $reply_to_url ) {
 			$object->set_in_reply_to( $reply_to_url );
+		}
+		$poll_id = Integration_Polls_For_ActivityPub::get_poll_post_id( $post_id );
+		if ( $poll_id ) {
+			$poll_transformer = new \Polls_For_ActivityPub\ActivityPub\Transformer\Poll( get_post( $poll_id ) );
+			$object = $poll_transformer->to_object();
+			if ( is_wp_error( $object ) ) {
+				return $object;
+			}
+			$object->set_to( array( $send_to ) );
+			$object->set_cc( array() );
+			if ( $reply_to_url ) {
+				$object->set_in_reply_to( $reply_to_url );
+			}
 		}
 
 		$activity = new \Activitypub\Activity\Activity();
@@ -1197,7 +1420,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$friend_user = $this->create_message_sender_from_actor( $actor_url, $actor );
 			if ( ! is_wp_error( $friend_user ) && $friend_user instanceof User ) {
 				$feed_url = ! empty( $actor['id'] ) && Friends::check_url( $actor['id'] ) ? $actor['id'] : $actor_url;
-				do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $feed_url, $remote_url, $reply_to );
+				do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $feed_url, $remote_url, $reply_to, self::normalize_poll( $object ) );
 				return;
 			}
 
@@ -1222,7 +1445,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return;
 		}
 
-		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $user_feed->get_url(), $remote_url, $reply_to );
+		do_action( 'notify_friend_message_received', $friend_user, $message, $subject, $user_feed->get_url(), $remote_url, $reply_to, self::normalize_poll( $object ) );
 	}
 
 	/**
@@ -3133,6 +3356,17 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( isset( $activity['application'] ) && $activity['application'] ) {
 			$data[ self::SLUG ]['application'] = $activity['application'];
+		}
+
+		$poll = self::normalize_poll( $activity );
+		if ( $poll ) {
+			$existing_post_id = Feed::url_to_postid( $permalink );
+			$existing_meta = $existing_post_id ? get_post_meta( $existing_post_id, self::SLUG, true ) : array();
+			if ( ! empty( $existing_meta['poll']['voted'] ) ) {
+				$poll['voted'] = true;
+				$poll['own_votes'] = $existing_meta['poll']['own_votes'] ?? array();
+			}
+			$data[ self::SLUG ]['poll'] = $poll;
 		}
 
 		if ( ! empty( $activity['attachment'] ) ) {
