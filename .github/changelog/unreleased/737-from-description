@@ -1,0 +1,3 @@
+Type: fixed
+
+Allow direct messages to discoverable ActivityPub accounts without following them first.

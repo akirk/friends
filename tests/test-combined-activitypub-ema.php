@@ -78,6 +78,51 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		return $wp_rest_server->dispatch( $request );
 	}
 
+	public function test_direct_message_to_unknown_actor_creates_inactive_recipient() {
+		$unknown_actor = 'https://mastodon.local/users/unknown-dm-recipient';
+		self::$users[ $unknown_actor ] = array(
+			'id'                => $unknown_actor,
+			'url'               => $unknown_actor,
+			'name'              => 'Unknown DM Recipient',
+			'preferredUsername' => 'unknown-dm-recipient',
+		);
+		self::$users['https://mastodon.local/@unknown-dm-recipient'] = self::$users[ $unknown_actor ];
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+		add_filter(
+			'activitypub_extract_mentions',
+			function () use ( $unknown_actor ) {
+				return array( '@unknown-dm-recipient@mastodon.local' => $unknown_actor );
+			},
+			5
+		);
+		add_filter( 'friends_resolve_message_recipient', array( $parser, 'resolve_message_recipient' ), 10, 2 );
+
+		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
+			null,
+			'@unknown-dm-recipient@mastodon.local Hello by DM.',
+			null,
+			array(),
+			'standard',
+			'direct'
+		);
+
+		$this->assertNotWPError( $status );
+
+		$user_feed = User_Feed::get_by_url( $unknown_actor );
+		$this->assertInstanceOf( User_Feed::class, $user_feed );
+		$this->assertFalse( $user_feed->is_active(), 'Sending a DM must not follow the recipient.' );
+
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_read',
+				'numberposts' => -1,
+			)
+		);
+		$this->assertCount( 1, $messages );
+		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
+	}
+
 	public function test_account_canonical_id() {
 		$this->assertTrue( \has_filter( 'mastodon_api_account' ) );
 
