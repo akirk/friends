@@ -786,7 +786,7 @@ class Messages {
 		$friend_user = false;
 		foreach ( $mentions as $mention ) {
 			$user_feed = User_Feed::get_by_url( $mention );
-			if ( $user_feed ) {
+			if ( $user_feed && ! is_wp_error( $user_feed ) ) {
 				$friend_user = $user_feed->get_friend_user();
 				break;
 			}
@@ -794,7 +794,7 @@ class Messages {
 				$user_feed = User_Feed::get_by_url( $mention );
 				$url = Feed_Parser_ActivityPub::friends_webfinger_resolve( $mention, $mention );
 				$user_feed = User_Feed::get_by_url( $url );
-				if ( $user_feed ) {
+				if ( $user_feed && ! is_wp_error( $user_feed ) ) {
 					$friend_user = $user_feed->get_friend_user();
 					break;
 				}
