@@ -958,6 +958,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 			'name'              => 'Unknown DM Recipient',
 			'preferredUsername' => 'unknown-dm-recipient',
 		);
+		Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
 
 		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
 			null,
