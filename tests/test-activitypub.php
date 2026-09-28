@@ -916,7 +916,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_direct_message_is_added_to_activitypub_outbox() {
-		$post_id = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
+		$post_id = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.', 'Sensitive topic' );
 
 		$this->assertIsInt( $post_id );
 		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
@@ -939,6 +939,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertContains( $this->actor, $activity['to'] );
 		$this->assertContains( $this->actor, $activity['object']['to'] );
 		$this->assertStringContainsString( '@akirk', $activity['object']['content'] );
+		$this->assertSame( 'Sensitive topic', $activity['object']['summary'] );
 
 		// A message that federates as a Tombstone is accepted by the remote but silently dropped.
 		$this->assertSame( 'Note', $activity['object']['type'] );
@@ -1200,6 +1201,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$date = gmdate( \DATE_W3C, time() - 10 );
 		$id = $unknown_actor . '/statuses/direct-message';
 		$content = 'Hello from someone you do not follow.';
+		$summary = 'Sensitive topic';
 
 		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
 		$parser->handle_received_direct_message(
@@ -1215,6 +1217,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 					'attributedTo' => $unknown_actor,
 					'to'           => array( $local_activitypub_id ),
 					'content'      => $content,
+					'summary'      => $summary,
 				),
 			),
 			$local_user
@@ -1235,6 +1238,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertCount( 1, $messages );
 		$this->assertSame( $content, $messages[0]->post_content );
+		$this->assertSame( $summary, $messages[0]->post_title );
 		$this->assertSame( $id, $messages[0]->guid );
 		$this->assertSame( (int) $friend_user->ID, (int) User::get_post_author( $messages[0] )->ID );
 		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );

@@ -936,6 +936,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$object = $transformer->to_object();
 		$object->set_content( $transformer->get_rendered_content() );
 		$object->set_to( array( $send_to ) );
+		if ( $subject ) {
+			$object->set_summary( $subject );
+		}
 		if ( $reply_to_url ) {
 			$object->set_in_reply_to( $reply_to_url );
 		}
@@ -1177,7 +1180,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$reply_to = $object['inReplyTo'];
 		}
 		$message = $object['content'];
-		$subject = null;
+		$subject = isset( $object['summary'] ) ? $object['summary'] : null;
 
 		$friend_user = false;
 		if ( $user_feed && ! is_wp_error( $user_feed ) ) {
