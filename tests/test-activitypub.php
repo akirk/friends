@@ -940,6 +940,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertContains( $this->actor, $activity['object']['to'] );
 		$this->assertStringContainsString( '@akirk', $activity['object']['content'] );
 		$this->assertSame( 'Sensitive topic', $activity['object']['summary'] );
+		$this->assertTrue( $activity['object']['sensitive'] );
 
 		// A message that federates as a Tombstone is accepted by the remote but silently dropped.
 		$this->assertSame( 'Note', $activity['object']['type'] );

@@ -937,6 +937,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$object->set_content( $transformer->get_rendered_content() );
 		$object->set_to( array( $send_to ) );
 		if ( $subject ) {
+			$object->set_sensitive( true );
 			$object->set_summary( $subject );
 		}
 		if ( $reply_to_url ) {
