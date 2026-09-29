@@ -1315,6 +1315,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			// We don't want to insert empty post meta.
 			return true;
 		}
+		if ( self::CONTENT_WARNING_META === $key && is_string( $value ) ) {
+			return true;
+		}
 		return $verdict;
 	}
 
@@ -3052,7 +3055,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 
 		if ( ! empty( $activity['summary'] ) && is_string( $activity['summary'] ) ) {
-			$data['meta'][ self::CONTENT_WARNING_META ] = wp_strip_all_tags( $activity['summary'] );
+			$data[ self::CONTENT_WARNING_META ] = wp_strip_all_tags( $activity['summary'] );
 		}
 
 		// Set author for all posts from attributedTo.
