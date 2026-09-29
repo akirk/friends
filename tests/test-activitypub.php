@@ -143,6 +143,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$date = gmdate( \DATE_W3C, $now++ );
 		$id = $this->actor . '/status/' . $status_id;
 		$content = 'Test ' . $date . ' ' . wp_rand();
+		$content_warning = 'Sensitive topic';
 		$attachment_url = 'https://mastodon.local/files/original/1234.png';
 		$attachment_width = 400;
 		$attachment_height = 600;
@@ -157,6 +158,8 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'attributedTo' => $this->actor,
 				'inReplyTo'    => null,
 				'content'      => $content,
+				'summary'      => $content_warning,
+				'sensitive'    => true,
 				'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
 				'published'    => $date,
 				'attachment'   => array(
@@ -180,6 +183,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
+		$this->assertSame( $content_warning, get_post_meta( $posts[0]->ID, Feed_Parser_ActivityPub::CONTENT_WARNING_META, true ) );
 		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
 
 		// Do another test post, this time with a URL that has an @-id.

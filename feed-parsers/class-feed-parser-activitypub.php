@@ -24,6 +24,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const URL = 'https://www.w3.org/TR/activitypub/';
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_.-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
 	const EXTERNAL_USERNAME = 'external';
+	const CONTENT_WARNING_META = 'friends_content_warning';
 
 	private $activitypub_already_handled = array();
 	private $mapped_usernames = array();
@@ -3049,6 +3050,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'_external_id' => $activity['id'],
 			self::SLUG     => array(),
 		);
+
+		if ( ! empty( $activity['summary'] ) && is_string( $activity['summary'] ) ) {
+			$data['meta'][ self::CONTENT_WARNING_META ] = wp_strip_all_tags( $activity['summary'] );
+		}
 
 		// Set author for all posts from attributedTo.
 		if ( isset( $activity['attributedTo'] ) ) {
