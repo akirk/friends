@@ -24,6 +24,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	const URL = 'https://www.w3.org/TR/activitypub/';
 	const ACTIVITYPUB_USERNAME_REGEXP = '(?:([A-Za-z0-9_.-]+)@((?:[A-Za-z0-9_-]+\.)+[A-Za-z]+))';
 	const EXTERNAL_USERNAME = 'external';
+	const CONTENT_WARNING_META = 'friends_content_warning';
 
 	private $activitypub_already_handled = array();
 	private $mapped_usernames = array();
@@ -936,6 +937,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$object = $transformer->to_object();
 		$object->set_content( $transformer->get_rendered_content() );
 		$object->set_to( array( $send_to ) );
+		if ( $subject ) {
+			$object->set_sensitive( true );
+			$object->set_summary( $subject );
+		}
 		if ( $reply_to_url ) {
 			$object->set_in_reply_to( $reply_to_url );
 		}
@@ -1177,7 +1182,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$reply_to = $object['inReplyTo'];
 		}
 		$message = $object['content'];
-		$subject = null;
+		$subject = isset( $object['summary'] ) ? $object['summary'] : null;
 
 		$friend_user = false;
 		if ( $user_feed && ! is_wp_error( $user_feed ) ) {
@@ -1308,6 +1313,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	public function feed_item_allow_set_metadata( $verdict, $key, $value ) {
 		if ( self::SLUG === $key && ! empty( $value ) ) {
 			// We don't want to insert empty post meta.
+			return true;
+		}
+		if ( self::CONTENT_WARNING_META === $key && is_string( $value ) ) {
 			return true;
 		}
 		return $verdict;
@@ -3045,6 +3053,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'_external_id' => $activity['id'],
 			self::SLUG     => array(),
 		);
+
+		if ( ! empty( $activity['summary'] ) && is_string( $activity['summary'] ) ) {
+			$data[ self::CONTENT_WARNING_META ] = wp_strip_all_tags( $activity['summary'] );
+		}
 
 		// Set author for all posts from attributedTo.
 		if ( isset( $activity['attributedTo'] ) ) {

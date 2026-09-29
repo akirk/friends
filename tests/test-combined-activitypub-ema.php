@@ -78,6 +78,59 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		return $wp_rest_server->dispatch( $request );
 	}
 
+	public function test_direct_message_preserves_spoiler_text() {
+		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
+			null,
+			'@akirk@mastodon.local Hello by DM.',
+			null,
+			array(),
+			'standard',
+			'direct',
+			null,
+			array( 'spoiler_text' => 'Sensitive topic' )
+		);
+
+		$this->assertNotWPError( $status );
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_read',
+				'numberposts' => 1,
+			)
+		);
+		$this->assertCount( 1, $messages );
+		$this->assertSame( 'Sensitive topic', $messages[0]->post_title );
+		$this->assertSame( 'Sensitive topic', $status->spoiler_text );
+	}
+
+	public function test_direct_message_preserves_spoiler_text_from_legacy_request() {
+		$request = new \WP_REST_Request( 'POST', '/api/v1/statuses' );
+		$request->set_param( 'spoiler_text', 'Legacy sensitive topic' );
+
+		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
+			null,
+			'@akirk@mastodon.local Hello by legacy DM.',
+			null,
+			array(),
+			'standard',
+			'direct',
+			null,
+			$request
+		);
+
+		$this->assertNotWPError( $status );
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_read',
+				'numberposts' => 1,
+			)
+		);
+		$this->assertCount( 1, $messages );
+		$this->assertSame( 'Legacy sensitive topic', $messages[0]->post_title );
+		$this->assertSame( 'Legacy sensitive topic', $status->spoiler_text );
+	}
+
 	public function test_account_canonical_id() {
 		$this->assertTrue( \has_filter( 'mastodon_api_account' ) );
 
