@@ -24,6 +24,10 @@
 	white-space: nowrap;
 }
 
+.friends-message-content-warning[hidden] {
+	display: none !important;
+}
+
 .friends-page .friends-content-warning {
 	margin: .5rem 0;
 	border: 1px solid currentColor;
