@@ -12,6 +12,11 @@
 	100% { transform: rotate(360deg); }
 }
 
+.friends-message-content-warning-label {
+	display: inline-block;
+	margin-left: .75rem;
+}
+
 .friends-page .friends-content-warning {
 	margin: .5rem 0;
 	border: 1px solid currentColor;

@@ -37,9 +37,10 @@ class MessageFormTest extends \WP_UnitTestCase {
 	public function test_new_message_has_optional_content_warning() {
 		$html = $this->render_form();
 
-		$this->assertStringContainsString( '>Content warning</label>', $html );
+		$this->assertStringContainsString( 'class="friends-message-content-warning-toggle"', $html );
 		$this->assertStringContainsString( 'name="friends_message_subject"', $html );
 		$this->assertStringContainsString( 'placeholder="Content warning (optional)"', $html );
+		$this->assertStringContainsString( 'id="friends_message_content_warning_new_field" hidden', $html );
 		$this->assertStringContainsString( 'id="friends-send-new-message"', $html );
 	}
 
@@ -50,8 +51,9 @@ class MessageFormTest extends \WP_UnitTestCase {
 			)
 		);
 
-		$this->assertStringContainsString( '>Content warning</label>', $html );
+		$this->assertStringContainsString( 'class="friends-message-content-warning-toggle"', $html );
 		$this->assertStringContainsString( 'id="friends_message_content_warning_42"', $html );
+		$this->assertStringContainsString( 'id="friends_message_content_warning_42_field" hidden', $html );
 		$this->assertStringContainsString( 'name="friends_message_subject" value=""', $html );
 		$this->assertStringNotContainsString( 'id="friends-send-new-message"', $html );
 	}
