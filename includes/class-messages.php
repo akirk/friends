@@ -61,7 +61,7 @@ class Messages {
 		add_filter( 'mastodon_api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 );
 		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 ); // legacy filter.
 		add_filter( 'api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 ); // legacy filter.
-		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 9 );
+		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 8 );
 		add_filter( 'mastodon_api_conversation_mark_read', array( $this, 'mastodon_api_conversation_mark_read' ), 10 );
 		add_filter( 'mastodon_api_conversation_delete', array( $this, 'delete_conversation' ), 10 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status' ), 20, 2 );
@@ -766,7 +766,7 @@ class Messages {
 		return $post_statuses;
 	}
 
-	public function mastodon_api_submit_status( $status, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility, $scheduled_at = null, $request = null ) {
+	public function mastodon_api_submit_status( $status, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility, $scheduled_at = null, $status_data = array() ) {
 		if ( $status instanceof \WP_Error || $status instanceof \Enable_Mastodon_Apps\Entity\Status || 'direct' !== $visibility ) {
 			return $status;
 		}
@@ -841,7 +841,7 @@ class Messages {
 			}
 		}
 
-		$subject = $request instanceof \WP_REST_Request ? $request->get_param( 'spoiler_text' ) : '';
+		$subject = isset( $status_data['spoiler_text'] ) ? $status_data['spoiler_text'] : '';
 		$post_id = $this->send_message( $friend_user, $user_feed->get_url(), $status_text, $subject, $in_reply_to_id );
 
 		if ( ! empty( $media_ids ) ) {

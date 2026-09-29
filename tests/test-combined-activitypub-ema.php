@@ -79,9 +79,6 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 	}
 
 	public function test_direct_message_preserves_spoiler_text() {
-		$request = new \WP_REST_Request( 'POST', '/api/v1/statuses' );
-		$request->set_param( 'spoiler_text', 'Sensitive topic' );
-
 		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
 			null,
 			'@akirk@mastodon.local Hello by DM.',
@@ -90,7 +87,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 			'standard',
 			'direct',
 			null,
-			$request
+			array( 'spoiler_text' => 'Sensitive topic' )
 		);
 
 		$this->assertNotWPError( $status );
