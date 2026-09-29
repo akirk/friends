@@ -5,7 +5,8 @@
  * @package Friends
  */
 
-if ( ! isset( $args['subject'] ) && ! isset( $args['reply_to'] ) ) {
+$is_new_message = ! isset( $args['reply_to'] );
+if ( $is_new_message ) {
 	?>
 	<div class="card mt-2 p-2" id="friends-send-new-message" style="display: none">
 	<?php
@@ -20,6 +21,7 @@ $draft_key = implode(
 		isset( $args['reply_to'] ) ? 'reply-' . absint( $args['reply_to'] ) : 'new',
 	)
 );
+$content_warning_id = 'friends_message_content_warning_' . ( $is_new_message ? 'new' : absint( $args['reply_to'] ) );
 ?>
 <form method="post" class="form-horizontal" data-friends-message-draft-key="<?php echo esc_attr( $draft_key ); ?>">
 	<input type="hidden" name="friends_message_recipient" value="<?php echo esc_attr( $args['friend_user']->user_login ); ?>">
@@ -47,22 +49,14 @@ $draft_key = implode(
 			<?php endif; ?>
 		</div>
 	</div>
-	<?php if ( isset( $args['subject'] ) ) : ?>
-		<input type="hidden" name="friends_message_subject" value="<?php echo esc_attr( $args['subject'] ); ?>">
-	<?php else : ?>
 	<div class="form-group">
 		<div class="col-2 col-sm-12">
-			<label class="form-label" for="subject"><?php esc_html_e( 'Subject', 'friends' ); ?></label>
+			<label class="form-label" for="<?php echo esc_attr( $content_warning_id ); ?>"><?php esc_html_e( 'Content warning', 'friends' ); ?></label>
 		</div>
 		<div class="col-8 col-sm-12">
-			<?php if ( isset( $args['subject'] ) && $args['subject'] ) : ?>
-				<input type="hidden" name="friends_message_subject" value="<?php echo esc_attr( $args['subject'] ); ?>" />
-			<?php else : ?>
-				<input class="form-input" type="text" name="friends_message_subject" value="" placeholder="<?php esc_attr_e( 'Subject (optional)', 'friends' ); ?>" />
-			<?php endif; ?>
+			<input class="form-input" type="text" id="<?php echo esc_attr( $content_warning_id ); ?>" name="friends_message_subject" value="<?php echo isset( $args['subject'] ) ? esc_attr( $args['subject'] ) : ''; ?>" placeholder="<?php esc_attr_e( 'Content warning (optional)', 'friends' ); ?>" />
 		</div>
 	</div>
-	<?php endif; ?>
 
 	<div class="form-group">
 		<div class="col-2 col-sm-12">
@@ -93,7 +87,7 @@ $draft_key = implode(
 	</div>
 </form>
 <?php
-if ( ! isset( $args['subject'] ) ) {
+if ( $is_new_message ) {
 	?>
 	</div>
 	<?php

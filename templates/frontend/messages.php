@@ -278,7 +278,6 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 					'friend_user'       => $selected_friend_user,
 					'redirect_to'       => $selected_url,
 					'reply_to'          => $selected_conversation['id'],
-					'subject'           => get_the_title( $selected_conversation['root_message'] ),
 				);
 
 				$feed_url = get_post_meta( $selected_conversation['root_message']->ID, 'friends_feed_url', true );
