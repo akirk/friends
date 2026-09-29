@@ -74,10 +74,11 @@ $has_content_warning = ! empty( $args['subject'] );
 	<div class="form-group">
 		<div class="col-2 col-sm-12">
 		</div>
-		<div class="<?php echo esc_attr( ! empty( $args['reply_to'] ) ? 'col-4' : 'col-6' ); ?> col-sm-12">
+		<div class="<?php echo esc_attr( ! empty( $args['reply_to'] ) ? 'col-4' : 'col-6' ); ?> col-sm-12 friends-message-actions">
 			<button class="btn"><?php esc_html_e( 'Send', 'friends' ); ?></button>
 			<label class="form-checkbox friends-message-content-warning-label" for="<?php echo esc_attr( $content_warning_toggle_id ); ?>">
 				<input type="checkbox" id="<?php echo esc_attr( $content_warning_toggle_id ); ?>" class="friends-message-content-warning-toggle" aria-controls="<?php echo esc_attr( $content_warning_id ); ?>_field" aria-expanded="<?php echo $has_content_warning ? 'true' : 'false'; ?>"<?php checked( $has_content_warning ); ?>>
+				<i class="form-icon"></i>
 				<?php esc_html_e( 'Content warning', 'friends' ); ?>
 			</label>
 		</div>

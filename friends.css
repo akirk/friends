@@ -12,9 +12,16 @@
 	100% { transform: rotate(360deg); }
 }
 
-.friends-message-content-warning-label {
-	display: inline-block;
-	margin-left: .75rem;
+.friends-message-actions {
+	align-items: center;
+	display: flex;
+	gap: .75rem;
+}
+
+.friends-message-actions .friends-message-content-warning-label {
+	display: inline-flex;
+	margin: 0;
+	white-space: nowrap;
 }
 
 .friends-page .friends-content-warning {

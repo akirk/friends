@@ -38,6 +38,8 @@ class MessageFormTest extends \WP_UnitTestCase {
 		$html = $this->render_form();
 
 		$this->assertStringContainsString( 'class="friends-message-content-warning-toggle"', $html );
+		$this->assertStringContainsString( '<i class="form-icon"></i>', $html );
+		$this->assertStringContainsString( 'friends-message-actions', $html );
 		$this->assertStringContainsString( 'name="friends_message_subject"', $html );
 		$this->assertStringContainsString( 'placeholder="Content warning (optional)"', $html );
 		$this->assertStringContainsString( 'id="friends_message_content_warning_new_field" hidden', $html );
