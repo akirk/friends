@@ -841,7 +841,14 @@ class Messages {
 			}
 		}
 
-		$subject = isset( $status_data['spoiler_text'] ) ? $status_data['spoiler_text'] : '';
+		if ( is_array( $status_data ) ) {
+			$subject = isset( $status_data['spoiler_text'] ) ? $status_data['spoiler_text'] : '';
+		} elseif ( $status_data instanceof \WP_REST_Request ) {
+			// Compatibility with EMA versions that passed the REST request to this hook.
+			$subject = $status_data->get_param( 'spoiler_text' );
+		} else {
+			$subject = '';
+		}
 		$post_id = $this->send_message( $friend_user, $user_feed->get_url(), $status_text, $subject, $in_reply_to_id );
 
 		if ( ! empty( $media_ids ) ) {
