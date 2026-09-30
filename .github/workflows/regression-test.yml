@@ -87,7 +87,7 @@ jobs:
         run: |
           # Keep the installed dependency versions identical for all three runs.
           git restore --source="$BASE_COMMIT" --worktree -- . ':(exclude)composer.json' ':(exclude)composer.lock'
-          vendor/bin/phpunit --no-coverage
+          vendor/bin/phpunit --no-coverage --log-junit "$RUNNER_TEMP/baseline-results.xml"
 
       - name: Verify PR tests fail against old code
         if: steps.changes.outputs.tests == 'true'
@@ -106,9 +106,19 @@ jobs:
               sys.exit("PHPUnit did not produce a report; this is not a verified regression failure.")
           root = ET.parse(report).getroot()
           failures = root.findall(".//testcase/failure")
-          errors = root.findall(".//testcase/error")
+          # PHPUnit includes existing risky-test warnings as JUnit errors even
+          # when the baseline exits successfully. Reject only new error entries.
+          def error_signatures(tree):
+              return {
+                  (case.get("classname"), case.get("name"), error.get("type"), error.text)
+                  for case in tree.findall(".//testcase")
+                  for error in case.findall("error")
+              }
+
+          baseline = ET.parse(os.path.join(os.environ["RUNNER_TEMP"], "baseline-results.xml")).getroot()
+          errors = error_signatures(root) - error_signatures(baseline)
           if status != 1 or errors or not failures:
-              sys.exit("Expected assertion failures on old code, with no test errors. "
+              sys.exit("Expected assertion failures on old code, with no new test errors. "
                        "For coverage-only changes, add the skip-regression-test PR label.")
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
               summary.write(f"PR tests exposed {len(failures)} assertion failure(s) on old code.\n")
