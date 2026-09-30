@@ -54,6 +54,9 @@ class ActivityPub_Transformer_Message_Test extends \WP_UnitTestCase {
 	 * @param string $expected Expected rendered content without paragraph wrapper.
 	 */
 	public function test_rendered_mentions( $content, $expected ) {
+		if ( ! class_exists( '\\Activitypub\\Transformer\\Post' ) ) {
+			$this->markTestSkipped( 'The ActivityPub plugin is not loaded.' );
+		}
 		require_once dirname( __DIR__ ) . '/feed-parsers/activitypub/class-activitypub-transformer-message.php';
 		$post        = new \WP_Post(
 			(object) array(
