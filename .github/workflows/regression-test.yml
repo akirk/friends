@@ -1,0 +1,115 @@
+name: Regression test validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  regression-test:
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-regression-test') }}
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:lts
+        ports:
+          - 3306
+        env:
+          MYSQL_ROOT_PASSWORD: wordpress
+          MYSQL_DATABASE: wordpress_test
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect test changes
+        id: changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          base=$(git merge-base "$BASE_SHA" HEAD)
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          if git diff --quiet "$base" HEAD -- tests/; then
+            echo "tests=false" >> "$GITHUB_OUTPUT"
+            echo "No test changes; regression validation skipped." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "tests=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout ActivityPub plugin
+        if: steps.changes.outputs.tests == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: Automattic/wordpress-activitypub
+          path: activitypub
+          persist-credentials: false
+
+      - name: Symlink ActivityPub plugin as sibling directory
+        if: steps.changes.outputs.tests == 'true'
+        run: ln -s "$GITHUB_WORKSPACE/activitypub" ../activitypub
+
+      - name: Setup PHP
+        if: steps.changes.outputs.tests == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysql
+          tools: composer
+          coverage: none
+          ini-values: error_reporting=E_ALL, display_errors=On
+
+      - name: Install dependencies
+        if: steps.changes.outputs.tests == 'true'
+        uses: ramsey/composer-install@v4
+        with:
+          composer-options: --ignore-platform-reqs
+
+      - name: Install WordPress test environment
+        if: steps.changes.outputs.tests == 'true'
+        run: |
+          sudo apt-get install subversion
+          sudo service mysql stop
+          bash bin/install-wp-tests.sh wordpress_test root wordpress 127.0.0.1:${{ job.services.mariadb.ports['3306'] }} trunk true
+
+      - name: Verify PR code passes PR tests
+        if: steps.changes.outputs.tests == 'true'
+        run: composer test
+
+      - name: Verify old code passes old tests
+        if: steps.changes.outputs.tests == 'true'
+        env:
+          BASE_COMMIT: ${{ steps.changes.outputs.base }}
+        run: |
+          # Keep the installed dependency versions identical for all three runs.
+          git restore --source="$BASE_COMMIT" --worktree -- . ':(exclude)composer.json' ':(exclude)composer.lock'
+          vendor/bin/phpunit --no-coverage
+
+      - name: Verify PR tests fail against old code
+        if: steps.changes.outputs.tests == 'true'
+        run: |
+          git restore --source=HEAD --worktree -- tests/ phpunit.xml
+          report="$RUNNER_TEMP/regression-results.xml"
+          status=0
+          vendor/bin/phpunit --no-coverage --log-junit "$report" || status=$?
+          python3 - "$report" "$status" <<'PY'
+          import os
+          import sys
+          import xml.etree.ElementTree as ET
+
+          report, status = sys.argv[1], int(sys.argv[2])
+          if not os.path.isfile(report):
+              sys.exit("PHPUnit did not produce a report; this is not a verified regression failure.")
+          root = ET.parse(report).getroot()
+          failures = root.findall(".//testcase/failure")
+          errors = root.findall(".//testcase/error")
+          if status != 1 or errors or not failures:
+              sys.exit("Expected assertion failures on old code, with no test errors. "
+                       "For coverage-only changes, add the skip-regression-test PR label.")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write(f"PR tests exposed {len(failures)} assertion failure(s) on old code.\n")
+          PY
