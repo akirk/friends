@@ -232,11 +232,26 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * EXPLAIN captures the actual SQL without rendering posts.
+	 */
+	public function test_explain_captures_sql_without_rendering() {
+		$this->create_posts( 5 );
+		$result = $this->request_feed( $this->query_vars(), 0, true, null, null, array( 'size' => 0, 'explain' => true ) );
+		$this->assertTrue( $result['success'] );
+		$this->assertSame( '', $result['data']['html'] );
+		$this->assertStringContainsString( 'SELECT', $result['data']['explain']['sql'] );
+		$this->assertStringContainsString( Friends::CPT, $result['data']['explain']['sql'] );
+		$this->assertArrayHasKey( 'plan', $result['data']['explain'] );
+		$this->assertArrayHasKey( 'indexes', $result['data']['explain'] );
+	}
+
+	/**
 	 * Normal feed responses contain no profiling data.
 	 */
 	public function test_profile_is_opt_in() {
 		$result = $this->request_feed( $this->query_vars(), 0, true );
 		$this->assertArrayNotHasKey( 'timings', $result['data'] );
+		$this->assertArrayNotHasKey( 'explain', $result['data'] );
 	}
 
 	/**
@@ -320,6 +335,7 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		if ( null !== $profile ) {
 			$_POST['profile'] = 1;
 			$_POST['profile_size'] = $profile['size'];
+			$_POST['explain'] = ! empty( $profile['explain'] );
 			$_POST['profile_nonce'] = isset( $profile['nonce'] ) ? $profile['nonce'] : wp_create_nonce( 'friends-feed-profile' );
 		}
 		$_REQUEST = array_merge( $_REQUEST, $_POST );

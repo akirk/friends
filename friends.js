@@ -544,6 +544,30 @@
 		return samples;
 	};
 
+	friends.explainFeed = async function () {
+		if ( ! friends.feed_profile_nonce ) {
+			throw new Error( 'Feed profiling requires an administrator account.' );
+		}
+		const result = await wp.ajax.send( 'friends-load-feed', {
+			data: {
+				query_vars: friends.query_vars,
+				qv_sign: friends.qv_sign,
+				page: 0,
+				initial_feed: 1,
+				profile: 1,
+				profile_nonce: friends.feed_profile_nonce,
+				explain: 1,
+			},
+		} );
+		console.log( result.explain.sql );
+		console.table( result.explain.plan );
+		console.table( result.explain.indexes );
+		if ( result.explain.error ) {
+			console.warn( result.explain.error );
+		}
+		return result.explain;
+	};
+
 	function loadInitialFeed() {
 		const $loading = $( '.friends-feed-loading' );
 		if ( ! $loading.length || alreadyLoading ) {
