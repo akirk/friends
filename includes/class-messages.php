@@ -61,7 +61,7 @@ class Messages {
 		add_filter( 'mastodon_api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 );
 		add_filter( 'api_status_context_post_types', array( $this, 'api_status_context_post_types' ), 10, 2 ); // legacy filter.
 		add_filter( 'api_status_context_post_statuses', array( $this, 'api_status_context_post_statuses' ), 10, 2 ); // legacy filter.
-		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 6 );
+		add_filter( 'mastodon_api_submit_status', array( $this, 'mastodon_api_submit_status' ), 9, 8 );
 		add_filter( 'mastodon_api_conversation_mark_read', array( $this, 'mastodon_api_conversation_mark_read' ), 10 );
 		add_filter( 'mastodon_api_conversation_delete', array( $this, 'delete_conversation' ), 10 );
 		add_filter( 'mastodon_api_status', array( $this, 'mastodon_api_status' ), 20, 2 );
@@ -766,7 +766,7 @@ class Messages {
 		return $post_statuses;
 	}
 
-	public function mastodon_api_submit_status( $status, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility ) {
+	public function mastodon_api_submit_status( $status, $status_text, $in_reply_to_id, $media_ids, $post_format, $visibility, $scheduled_at = null, $status_data = array() ) {
 		if ( $status instanceof \WP_Error || $status instanceof \Enable_Mastodon_Apps\Entity\Status || 'direct' !== $visibility ) {
 			return $status;
 		}
@@ -841,7 +841,15 @@ class Messages {
 			}
 		}
 
-		$post_id = $this->send_message( $friend_user, $user_feed->get_url(), $status_text, null, $in_reply_to_id );
+		if ( is_array( $status_data ) ) {
+			$subject = isset( $status_data['spoiler_text'] ) ? $status_data['spoiler_text'] : '';
+		} elseif ( $status_data instanceof \WP_REST_Request ) {
+			// Compatibility with EMA versions that passed the REST request to this hook.
+			$subject = $status_data->get_param( 'spoiler_text' );
+		} else {
+			$subject = '';
+		}
+		$post_id = $this->send_message( $friend_user, $user_feed->get_url(), $status_text, $subject, $in_reply_to_id );
 
 		if ( ! empty( $media_ids ) ) {
 			foreach ( $media_ids as $media_id ) {
@@ -904,6 +912,7 @@ class Messages {
 		}
 		$status->visibility = 'direct';
 		$post = get_post( $post_id );
+		$status->spoiler_text = $post->post_title;
 		if ( $post->post_parent ) {
 			$status->in_reply_to_id = $post->post_parent;
 			$status->in_reply_to_account_id = strval( get_current_user_id() );

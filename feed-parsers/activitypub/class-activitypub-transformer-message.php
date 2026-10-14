@@ -35,6 +35,15 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 		return false;
 	}
 
+	/**
+	 * Direct messages are Mastodon statuses even when they have a subject.
+	 *
+	 * @return string The ActivityStreams object type.
+	 */
+	protected function get_type() {
+		return 'Note';
+	}
+
 	protected function get_in_reply_to() {
 		return $this->in_reply_to;
 	}
