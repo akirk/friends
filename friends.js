@@ -3,6 +3,7 @@
 	const $document = $( document );
 	let alreadySearching = '';
 	let alreadyLoading = false;
+	let initialFeedPending = Boolean( friends.async_feed );
 	const bottomOffsetLoadNext = 2000;
 	let searchResultFocused = false;
 
@@ -231,20 +232,29 @@
 				if ( alreadyLoading ) {
 					return;
 				}
-				wp.ajax.send( 'friends-load-next-page', {
+				wp.ajax.send( friends.async_feed ? 'friends-load-feed' : 'friends-load-next-page', {
 					data: {
 						query_vars: friends.query_vars,
 						page: friends.current_page - 1,
 						qv_sign: friends.qv_sign,
+						initial_feed: 1,
 					},
 					beforeSend() {
 						alreadyLoading = true;
 					},
-					success( newPosts ) {
+					success( result ) {
 						alreadyLoading = false;
+						const newPosts = friends.async_feed ? result.html : result;
+						if ( friends.async_feed ) {
+							friends.current_page = result.page;
+							friends.feed_cursor = result.cursor;
+							friends.feed_cursor_sign = result.cursor_sign;
+							friends.max_page = result.has_more ? result.page + 1 : result.page;
+						}
 						if ( newPosts ) {
 							$( 'section.posts' )
 							.html( newPosts );
+							initializeFeedPosts();
 						}
 					},
 				} );
@@ -492,8 +502,54 @@
 		return false;
 	} );
 
+	function initializeFeedPosts() {
+		fetchMissingLinkPreviews();
+		updateRelativeTimes( document );
+		$document.trigger( 'friends-feed-loaded' );
+	}
+
+	function loadInitialFeed() {
+		const $loading = $( '.friends-feed-loading' );
+		if ( ! $loading.length || alreadyLoading ) {
+			return;
+		}
+		alreadyLoading = true;
+		$loading.attr( 'aria-busy', 'true' );
+		$loading.find( '.loading' ).show();
+		$loading.find( '.friends-feed-retry, .friends-feed-fallback' ).prop( 'hidden', true );
+		$loading.find( '.friends-feed-loading-text' ).text( friends.text_loading );
+		wp.ajax.send( 'friends-load-feed', {
+			data: {
+				query_vars: friends.query_vars,
+				page: Number( friends.current_page ) - 1,
+				qv_sign: friends.qv_sign,
+				initial_feed: 1,
+			},
+			success( result ) {
+				$loading.closest( 'section.posts' ).html( result.html );
+				friends.current_page = result.page;
+				friends.feed_cursor = result.cursor;
+				friends.feed_cursor_sign = result.cursor_sign;
+				friends.max_page = result.has_more ? result.page + 1 : result.page;
+				initialFeedPending = false;
+				initializeFeedPosts();
+			},
+			error() {
+				$loading.attr( 'aria-busy', 'false' );
+				$loading.find( '.loading' ).hide();
+				$loading.find( '.friends-feed-loading-text' ).text( friends.text_feed_load_error );
+				$loading.find( '.friends-feed-retry, .friends-feed-fallback' ).prop( 'hidden', false );
+			},
+		} ).always( function () {
+			alreadyLoading = false;
+		} );
+	}
+
+	$( loadInitialFeed );
+	$document.on( 'click', '.friends-feed-retry', loadInitialFeed );
+
 	function nextPage() {
-		if ( alreadyLoading ) {
+		if ( alreadyLoading || initialFeedPending ) {
 			return;
 		}
 
@@ -501,36 +557,41 @@
 			return;
 		}
 
-		wp.ajax.send( 'friends-load-next-page', {
+		alreadyLoading = true;
+		const $navigation = $( 'section.posts .posts-navigation .nav-previous' );
+		$navigation.addClass( 'loading' );
+		wp.ajax.send( friends.async_feed ? 'friends-load-feed' : 'friends-load-next-page', {
 			data: {
 				query_vars: friends.query_vars,
 				page: friends.current_page,
 				qv_sign: friends.qv_sign,
+				cursor: friends.feed_cursor,
+				cursor_sign: friends.feed_cursor_sign,
 			},
-			beforeSend() {
-				$( 'section.posts .posts-navigation .nav-previous' ).addClass(
-					'loading'
-				);
-				alreadyLoading = true;
-			},
-			success( newPosts ) {
-				$(
-					'section.posts .posts-navigation .nav-previous'
-				).removeClass( 'loading' );
+			success( result ) {
+				const newPosts = friends.async_feed ? result.html : result;
 				if ( newPosts ) {
 					$( 'section.posts > article' ).last().after( newPosts );
-					if (
-						++friends.current_page < friends.max_page &&
-						/<article/.test( newPosts )
-					) {
-						alreadyLoading = false;
-					} else {
-						$( 'section.posts .posts-navigation' ).text(
-							friends.text_no_more_posts
-						);
-					}
 				}
+				if ( friends.async_feed ) {
+					friends.current_page = result.page;
+					friends.feed_cursor = result.cursor;
+					friends.feed_cursor_sign = result.cursor_sign;
+					friends.max_page = result.has_more ? result.page + 1 : result.page;
+				} else {
+					++friends.current_page;
+				}
+				if ( friends.current_page >= friends.max_page || ! /<article/.test( newPosts ) ) {
+					$( 'section.posts .posts-navigation' ).text( friends.text_no_more_posts );
+				}
+				initializeFeedPosts();
 			},
+			error() {
+				$navigation.attr( 'title', friends.text_feed_load_error );
+			},
+		} ).always( function () {
+			$navigation.removeClass( 'loading' );
+			alreadyLoading = false;
 		} );
 	}
 

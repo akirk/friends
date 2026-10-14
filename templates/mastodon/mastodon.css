@@ -2623,3 +2623,29 @@ body.friends-page {
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
+
+/* First feed page loads after the surrounding navigation. */
+.friends-page .friends-feed-loading {
+	padding: 24px;
+	min-height: 120px;
+}
+
+.friends-page .friends-feed-loading [role="status"] {
+	align-items: center;
+	display: flex;
+	gap: 12px;
+}
+
+.friends-page .friends-feed-loading .loading {
+	display: inline-block;
+	min-width: 24px;
+	min-height: 24px;
+}
+
+.friends-page .friends-feed-loading [hidden] {
+	display: none;
+}
+
+.friends-page .friends-feed-fallback {
+	margin-left: 12px;
+}

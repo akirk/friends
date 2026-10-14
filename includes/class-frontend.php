@@ -95,6 +95,9 @@ class Frontend {
 	 */
 	private function register_hooks() {
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
+		add_filter( 'posts_pre_query', array( $this, 'defer_feed_query' ), 10, 2 );
+		add_filter( 'posts_where', array( $this, 'feed_cursor_where' ), 10, 2 );
+		add_filter( 'pre_handle_404', array( $this, 'deferred_feed_status' ), 10, 2 );
 		add_filter( 'pre_get_posts', array( $this, 'exclude_compose_format_from_feed' ), 10 );
 		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 2 );
 		add_filter( 'friends_header_widget_title', array( $this, 'header_widget_title' ) );
@@ -107,6 +110,7 @@ class Frontend {
 		add_action( 'wp_ajax_friends-mention-autocomplete', array( $this, 'ajax_mention_autocomplete' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
 		add_action( 'wp_ajax_friends-load-next-page', array( $this, 'ajax_load_next_page' ) );
+		add_action( 'wp_ajax_friends-load-feed', array( $this, 'ajax_load_feed' ) );
 		add_action( 'wp_ajax_friends-autocomplete', array( $this, 'ajax_autocomplete' ) );
 		add_action( 'wp_ajax_friends-set-widget-open-state', array( $this, 'ajax_set_widget_open_state' ) );
 		add_action( 'wp_ajax_friends-get-post-counts', array( $this, 'ajax_get_post_counts' ) );
@@ -296,6 +300,17 @@ class Frontend {
 			}
 		}
 
+		$theme = $this->get_selected_theme();
+		$this->theme = $theme;
+		do_action( 'friends_load_theme_' . $theme );
+	}
+
+	/**
+	 * Get the theme selected for the current feed before template rendering.
+	 *
+	 * @return string Theme slug.
+	 */
+	private function get_selected_theme() {
 		$theme = 'default';
 		$default_theme = get_user_option( 'friends_frontend_theme', get_current_user_id() );
 		if ( $default_theme ) {
@@ -310,8 +325,79 @@ class Frontend {
 		if ( ! has_action( 'friends_load_theme_' . $theme ) ) {
 			$theme = 'default';
 		}
-		$this->theme = $theme;
-		do_action( 'friends_load_theme_' . $theme );
+		if ( isset( $_GET['friends_theme'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$requested_theme = sanitize_text_field( wp_unslash( $_GET['friends_theme'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			if ( isset( self::get_themes()[ $requested_theme ] ) ) {
+				$theme = $requested_theme;
+			}
+		}
+		return $theme;
+	}
+
+	/**
+	 * Whether the main query will be loaded after the page shell.
+	 *
+	 * @return bool Whether the feed is deferred.
+	 */
+	public function is_feed_deferred() {
+		global $wp_query;
+		return $wp_query && (bool) $wp_query->get( 'friends_async_feed' );
+	}
+
+	/**
+	 * Skip the initial feed SQL query, including its total-row count.
+	 *
+	 * @param array|null $posts Short-circuited posts, if supplied by another filter.
+	 * @param \WP_Query  $query The query being executed.
+	 * @return array|null Posts for the initial page shell.
+	 */
+	public function defer_feed_query( $posts, $query ) {
+		global $wp_query;
+		if ( $wp_query !== $query || ! $query->get( 'friends_async_feed' ) || wp_doing_ajax() ) {
+			return $posts;
+		}
+		$query->set( 'no_found_rows', true );
+		$query->found_posts   = 0;
+		$query->max_num_pages = 0;
+		return array();
+	}
+
+	/**
+	 * Resume a feed after the last visible post without scanning skipped rows.
+	 *
+	 * @param string    $where Existing SQL conditions.
+	 * @param \WP_Query $query Query being executed.
+	 * @return string SQL conditions including the feed cursor.
+	 */
+	public function feed_cursor_where( $where, $query ) {
+		$cursor = $query->get( 'friends_feed_cursor' );
+		if ( ! is_array( $cursor ) || empty( $cursor['id'] ) || empty( $cursor['date'] ) ) {
+			return $where;
+		}
+		global $wpdb;
+		$comparison = 'ASC' === strtoupper( $query->get( 'order' ) ) ? '>' : '<';
+		// The comparison operator is selected from fixed strings above.
+		return $where . $wpdb->prepare(
+			" AND ( {$wpdb->posts}.post_date $comparison %s OR ( {$wpdb->posts}.post_date = %s AND {$wpdb->posts}.ID $comparison %d ) )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$cursor['date'],
+			$cursor['date'],
+			$cursor['id']
+		);
+	}
+
+	/**
+	 * Keep an intentionally empty page shell from becoming a 404 response.
+	 *
+	 * @param bool      $preempt Whether to skip the default 404 handling.
+	 * @param \WP_Query $query The main query.
+	 * @return bool Whether 404 handling has been performed.
+	 */
+	public function deferred_feed_status( $preempt, $query ) {
+		if ( ! $query->get( 'friends_async_feed' ) ) {
+			return $preempt;
+		}
+		status_header( 200 );
+		return true;
 	}
 
 	public function friends_template_paths( $file_paths ) {
@@ -365,7 +451,11 @@ class Frontend {
 		$version = $this->get_asset_version( $file );
 		wp_enqueue_script( $handle, plugins_url( $file, FRIENDS_PLUGIN_FILE ), array( 'common', 'jquery', 'wp-util' ), apply_filters( 'friends_debug_enqueue', $version, $handle, dirname( FRIENDS_PLUGIN_FILE ) . '/' . $file ), true );
 
-		$query_vars = wp_json_encode( $this->get_minimal_query_vars( $wp_query->query_vars ) );
+		$query_vars = $this->get_minimal_query_vars( $wp_query->query_vars );
+		$query_vars['friends_theme']       = $this->theme;
+		$query_vars['friends_post_format'] = $this->post_format;
+		$query_vars['friends_author']      = $this->author ? $this->author->ID : 0;
+		$query_vars = wp_json_encode( $query_vars );
 
 		$variables = array(
 			'emojis_json'            => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
@@ -377,6 +467,7 @@ class Frontend {
 			'text_trash_post'        => __( 'Trash this post', 'friends' ),
 			'text_del_convers'       => __( 'Do you really want to delete this conversation?', 'friends' ),
 			'text_no_more_posts'     => __( 'No more posts available.', 'friends' ),
+			'text_feed_load_error'   => __( 'Could not load the feed. Please try again.', 'friends' ),
 			'text_checking_url'      => __( 'Checking URL.', 'friends' ),
 			'text_refreshed'         => __( 'Refreshed', 'friends' ),
 			'text_refreshing'        => __( 'Refreshing', 'friends' ),
@@ -388,6 +479,7 @@ class Frontend {
 			'refresh_now'            => isset( $_GET['refresh'] ) ? 'true' : 'false', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'query_vars'             => $query_vars,
 			'qv_sign'                => sha1( wp_salt( 'nonce' ) . $query_vars ),
+			'async_feed'             => $this->is_feed_deferred(),
 			'current_page'           => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
 			'max_page'               => $wp_query->max_num_pages,
 		);
@@ -1334,9 +1426,21 @@ class Frontend {
 	}
 
 	/**
-	 * The Ajax function to load more posts for infinite scrolling.
+	 * Load a feed page without counting all matching posts.
 	 */
-	public function ajax_load_next_page() {
+	public function ajax_load_feed() {
+		$this->ajax_load_next_page( true );
+	}
+
+	/**
+	 * The Ajax function to load more posts for infinite scrolling.
+	 *
+	 * @param bool $async_feed Whether to return feed HTML and pagination metadata.
+	 */
+	public function ajax_load_next_page( $async_feed = false ) {
+		if ( ! $this->has_required_priviledges() ) {
+			wp_send_json_error( null, 403 );
+		}
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( ! isset( $_POST['query_vars'] ) || ! isset( $_POST['page'] ) || ! isset( $_POST['qv_sign'] ) ) {
@@ -1345,27 +1449,107 @@ class Frontend {
 		}
 		$query_vars = wp_unslash( $_POST['query_vars'] );
 		// We do have a nonce verification here.
-		if ( sha1( wp_salt( 'nonce' ) . $query_vars ) !== $_POST['qv_sign'] ) {
+		if ( ! is_string( $query_vars ) || ! is_string( $_POST['qv_sign'] ) || ! hash_equals( sha1( wp_salt( 'nonce' ) . $query_vars ), wp_unslash( $_POST['qv_sign'] ) ) ) {
 			wp_send_json_error();
 			exit;
 		}
 
+		$signed_query_vars = $query_vars;
 		$query_vars = json_decode( $query_vars, true );
-		$query_vars['paged'] = intval( $_POST['page'] ) + 1;
+		if ( ! is_array( $query_vars ) ) {
+			wp_send_json_error();
+		}
+		$query_vars['paged'] = max( 1, intval( $_POST['page'] ) + 1 );
+		$initial_feed = $async_feed && ! empty( $_POST['initial_feed'] );
+		$cursor = null;
+		if ( $async_feed && ! $initial_feed && ! empty( $_POST['cursor'] ) ) {
+			$cursor_json = wp_unslash( $_POST['cursor'] );
+			if ( ! is_string( $cursor_json ) || ! isset( $_POST['cursor_sign'] ) || ! is_string( $_POST['cursor_sign'] )
+				|| ! hash_equals( hash_hmac( 'sha256', $signed_query_vars . "\n" . $cursor_json, wp_salt( 'nonce' ) ), wp_unslash( $_POST['cursor_sign'] ) ) ) {
+				wp_send_json_error( null, 400 );
+			}
+			$cursor = json_decode( $cursor_json, true );
+			if ( ! is_array( $cursor ) || ! isset( $cursor['id'], $cursor['date'] ) || ! is_int( $cursor['id'] ) || $cursor['id'] < 1
+				|| ! is_string( $cursor['date'] ) || ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursor['date'] ) ) {
+				wp_send_json_error( null, 400 );
+			}
+		}
 		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
+		switch_to_locale( get_user_locale() );
+		if ( ! empty( $query_vars['friends_theme'] ) && isset( self::get_themes()[ $query_vars['friends_theme'] ] ) ) {
+			$this->theme = $query_vars['friends_theme'];
+			do_action( 'friends_load_theme_' . $this->theme );
+		}
+		$this->post_format = isset( $query_vars['friends_post_format'] ) ? $query_vars['friends_post_format'] : false;
+		$this->author = ! empty( $query_vars['friends_author'] ) ? User::get_user_by_id( $query_vars['friends_author'] ) : false;
+		unset( $query_vars['friends_theme'], $query_vars['friends_post_format'], $query_vars['friends_author'] );
+
+		if ( $async_feed ) {
+			$per_page = isset( $query_vars['posts_per_page'] ) ? intval( $query_vars['posts_per_page'] ) : intval( get_option( 'posts_per_page' ) );
+			$per_page = max( 1, $per_page );
+			$query_vars['offset']         = $cursor ? 0 : ( $query_vars['paged'] - 1 ) * $per_page;
+			if ( $cursor ) {
+				$query_vars['friends_feed_cursor'] = $cursor;
+			}
+			$query_vars['posts_per_page'] = $per_page + 1;
+			$query_vars['no_found_rows']  = true;
+			$query_vars['orderby']        = 'date ID';
+		}
+
 		// We actually want to render the query loop, so we use query_posts.
 		query_posts( $query_vars ); // phpcs:ignore WordPress.WP.DiscouragedFunctions.query_posts_query_posts
+		global $wp_query;
+		$has_more = false;
+		if ( $async_feed && $wp_query->post_count > $per_page ) {
+			$has_more = true;
+			array_pop( $wp_query->posts );
+			$wp_query->post_count = count( $wp_query->posts );
+		}
+		$next_cursor = null;
+		$next_cursor_sign = null;
+		if ( $has_more ) {
+			$last_post = end( $wp_query->posts );
+			$next_cursor = wp_json_encode(
+				array(
+					'date' => $last_post->post_date,
+					'id'   => intval( $last_post->ID ),
+				)
+			);
+			$next_cursor_sign = hash_hmac( 'sha256', $signed_query_vars . "\n" . $next_cursor, wp_salt( 'nonce' ) );
+		}
 		ob_start();
-		if ( have_posts() ) {
+		if ( $initial_feed ) {
+			Friends::template_loader()->get_template_part(
+				'frontend/feed-content',
+				null,
+				array(
+					'friends'     => $this->friends,
+					'friend_user' => $this->author,
+					'post_format' => $this->post_format,
+					'async_feed'  => true,
+					'has_more'    => $has_more,
+				)
+			);
+		} elseif ( have_posts() ) {
 			self::have_posts();
-		} else {
+		} elseif ( ! $async_feed ) {
 			esc_html_e( 'No further posts of your friends could were found.', 'friends' );
 		}
 
-		$posts = ob_get_contents();
-		ob_end_clean();
+		$posts = ob_get_clean();
+		if ( $async_feed ) {
+			wp_send_json_success(
+				array(
+					'html'        => $posts,
+					'has_more'    => $has_more,
+					'page'        => $query_vars['paged'],
+					'cursor'      => $next_cursor,
+					'cursor_sign' => $next_cursor_sign,
+				)
+			);
+		}
 
 		wp_send_json_success( $posts );
 	}
@@ -2430,6 +2614,14 @@ class Frontend {
 			if ( in_array( $order, array( 'ASC', 'DESC' ), true ) ) {
 				$query->set( 'order', $order );
 			}
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( ! $query->is_singular && ! $query->is_feed() && is_user_logged_in() && $this->has_required_priviledges()
+			&& ! isset( $_GET['welcome'] ) && ! isset( $_GET['friends_sync'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			&& in_array( $this->get_selected_theme(), array( 'default', 'mastodon', 'twitter', 'google-reader' ), true ) ) {
+			$query->set( 'friends_async_feed', true );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
