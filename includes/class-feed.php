@@ -729,7 +729,8 @@ class Feed {
 				'post_content'      => force_balance_tags( $item->post_content ),
 				'post_modified_gmt' => $updated_date,
 				'post_status'       => $item->post_status,
-				'guid'              => $item->permalink,
+				// Protect query separators from HTML entity decoding in the GUID filters.
+				'guid'              => esc_attr( $item->permalink ),
 				'comment_count'     => $item->comment_count,
 			);
 
