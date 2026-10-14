@@ -3,6 +3,35 @@ ul.friend-posts img.avatar {
 	margin-right: .3em;
 }
 
+.friends-page .friends-content-warning {
+	margin: .5rem 0;
+	border: 1px solid currentColor;
+	border-radius: .4rem;
+	padding: .6rem .8rem;
+}
+
+.friends-page .friends-content-warning > summary {
+	cursor: pointer;
+	display: flex;
+	gap: .75rem;
+	justify-content: space-between;
+	font-weight: 600;
+}
+
+.friends-page .friends-content-warning-toggle {
+	white-space: nowrap;
+	font-weight: 400;
+	text-decoration: underline;
+}
+
+.friends-page .friends-content-warning[open] .friends-content-warning-toggle {
+	display: none;
+}
+
+.friends-page .friends-content-warning-content {
+	margin-top: .75rem;
+}
+
 .friends-page .wp-block-friends-add-friend-form {
 	max-width: min(100%, 860px);
 }

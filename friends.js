@@ -718,9 +718,28 @@
 
 			if ( subject ) {
 				$( form ).find( 'input[name="friends_message_subject"]:not([type="hidden"])' ).val( subject );
+				$( form ).find( '.friends-message-content-warning' ).prop( 'hidden', false );
+				$( form ).find( '.friends-message-content-warning-toggle' )
+					.prop( 'checked', true )
+					.attr( 'aria-expanded', 'true' );
 			}
 		} );
 	}
+
+	$document.on( 'change', '.friends-message-content-warning-toggle', function () {
+		const form = this.form;
+		const enabled = this.checked;
+		const warning = $( form ).find( '.friends-message-content-warning' );
+		const input = warning.find( 'input[name="friends_message_subject"]' );
+
+		warning.prop( 'hidden', ! enabled );
+		$( this ).attr( 'aria-expanded', enabled ? 'true' : 'false' );
+		if ( enabled ) {
+			input.focus();
+		} else {
+			input.val( '' ).trigger( 'input' );
+		}
+	} );
 
 	$document.on( 'input', 'textarea[name="friends_message_message"], input[name="friends_message_subject"]', function () {
 		const storage = getMessageDraftStorage();

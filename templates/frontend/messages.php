@@ -201,6 +201,7 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 					$is_consecutive = $author_key === $previous_message_author_key;
 					$is_spaced      = $is_consecutive && $previous_message_time && $post_time - $previous_message_time >= $consecutive_message_time_threshold;
 					$delivery       = null;
+					$content_warning = get_the_title( $message );
 					if ( $is_own_message && class_exists( 'Friends\Feed_Parser_ActivityPub' ) ) {
 						$delivery = Friends\Feed_Parser_ActivityPub::get_direct_message_delivery_status( $message );
 					}
@@ -233,8 +234,24 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 							</div>
 							<div class="friends-dm-message-content" title="<?php echo esc_attr( date_i18n( $time_format, $post_time ) ); ?>">
 								<?php
+								if ( $content_warning ) :
+									?>
+									<details class="friends-content-warning">
+										<summary>
+											<span class="friends-content-warning-text"><?php echo esc_html( $content_warning ); ?></span>
+											<span class="friends-content-warning-toggle"><?php esc_html_e( 'Show content', 'friends' ); ?></span>
+										</summary>
+										<div class="friends-content-warning-content">
+									<?php
+								endif;
 								$content = make_clickable( get_the_content( null, false, $message ) );
 								echo wp_kses_post( apply_filters( 'the_content', $content ) );
+								if ( $content_warning ) :
+									?>
+										</div>
+									</details>
+									<?php
+								endif;
 								?>
 							</div>
 							<?php $reactions = Friends\Reactions::get_post_reactions( $message ); ?>
@@ -261,7 +278,6 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 					'friend_user'       => $selected_friend_user,
 					'redirect_to'       => $selected_url,
 					'reply_to'          => $selected_conversation['id'],
-					'subject'           => get_the_title( $selected_conversation['root_message'] ),
 				);
 
 				$feed_url = get_post_meta( $selected_conversation['root_message']->ID, 'friends_feed_url', true );
