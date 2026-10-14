@@ -1,0 +1,3 @@
+Type: fixed
+
+Preserve image attachments and alt text in incoming ActivityPub messages and outgoing Mastodon client DMs.
