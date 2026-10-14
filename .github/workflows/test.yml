@@ -83,12 +83,12 @@ jobs:
         if: ${{ matrix.php < 8.2 }}
         uses: "ramsey/composer-install@v4"
 
-      # For PHP 8.2 and above, we need to install with ignore platform reqs as not all dependencies allow it yet.
+      # Ignore PHP upper bounds, but keep minimum versions and extension requirements.
       - name: Install Composer dependencies for PHP >= 8.2
         if: ${{ matrix.php >= 8.2 }}
         uses: "ramsey/composer-install@v4"
         with:
-          composer-options: --ignore-platform-reqs
+          composer-options: --ignore-platform-req=php+
 
       # Scan the logs for failing tests and surface that information by creating annotations and log file decorations.
       - name: Setup problem matcher to provide annotations for PHPUnit test errors and failures
