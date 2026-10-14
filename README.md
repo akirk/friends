@@ -5,7 +5,7 @@
 - Requires PHP: 7.2
 - Tested up to: 7.0
 - License: GPL-2.0-or-later
-- Stable tag: 4.3.2
+- Stable tag: 4.4.0
 
 A self-hosted social reader for WordPress: follow people via RSS and ActivityPub, with multiple themes and a plugin ecosystem.
 
@@ -77,6 +77,18 @@ Yes — install it for [Chrome](https://chromewebstore.google.com/detail/friends
 8. Followed people are stored as taxonomy terms
 
 ## Changelog
+
+### 4.4.0
+- Prevent duplicate posts when the same feed item is imported concurrently. ([#736])
+- Preserve content warnings when sending and receiving direct messages through Mastodon apps. ([#739])
+- Prevent malformed direct messages caused by replacing mentions inside existing HTML links. ([#740])
+- Prevent PHP deprecation messages when handling ActivityPub actors without a domain in WebFinger lookups. ([#741])
+- Preserve ampersands in imported feed URLs to prevent corrupted links and duplicate posts on newer WordPress versions. ([#742])
+- Resolve boosts of boosts to the original post in Mastodon account responses to prevent client refresh failures and crashes. ([#743])
+- Use the remote username, handle and profile URL for Mastodon accounts on subscriptions with an ActivityPub feed, preventing duplicated domains in client author displays. ([#744])
+- Keep Mastodon boost attachments on the reblogged post only, preventing duplicate media on the outer boost. ([#745])
+- Preserve image attachments and alt text in incoming ActivityPub messages and outgoing Mastodon client DMs. ([#746])
+- Add a Friends 4.4 news entry covering content warnings and more reliable feed imports. ([#747])
 
 ### 4.3.2
 - A mention that links to somebody on another server is no longer mistaken for a mention of a friend who happens to have the same name. ([#721])
@@ -709,3 +721,14 @@ Hoping that this hardening will bring back the plugin to the WordPress.org direc
 [#732]: https://github.com/akirk/friends/pull/732
 [#733]: https://github.com/akirk/friends/pull/733
 [#734]: https://github.com/akirk/friends/pull/734
+
+[#736]: https://github.com/akirk/friends/pull/736
+[#739]: https://github.com/akirk/friends/pull/739
+[#740]: https://github.com/akirk/friends/pull/740
+[#741]: https://github.com/akirk/friends/pull/741
+[#742]: https://github.com/akirk/friends/pull/742
+[#743]: https://github.com/akirk/friends/pull/743
+[#744]: https://github.com/akirk/friends/pull/744
+[#745]: https://github.com/akirk/friends/pull/745
+[#746]: https://github.com/akirk/friends/pull/746
+[#747]: https://github.com/akirk/friends/pull/747
