@@ -46,6 +46,8 @@ function _manually_load_plugin() {
 	$enable_mastodon_apps_plugin = dirname( dirname( __DIR__ ) ) . '/enable-mastodon-apps/enable-mastodon-apps.php'; // phpcs:ignore
 	if ( file_exists( $enable_mastodon_apps_plugin ) ) {
 		require $enable_mastodon_apps_plugin;
+	} elseif ( getenv( 'FRIENDS_TEST_REQUIRE_EMA' ) ) {
+		throw new \RuntimeException( 'composer test:ema requires Enable Mastodon Apps in the sibling enable-mastodon-apps directory.' );
 	}
 
 	require dirname( __DIR__ ) . '/friends.php';
