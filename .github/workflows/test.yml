@@ -52,17 +52,6 @@ jobs:
         if: ${{ matrix.php >= 8.3 }}
         run: ln -s "$GITHUB_WORKSPACE/activitypub" ../activitypub
 
-      - name: Checkout Enable Mastodon Apps plugin
-        if: ${{ matrix.php >= 8.3 }}
-        uses: actions/checkout@v6
-        with:
-          repository: akirk/enable-mastodon-apps
-          path: enable-mastodon-apps
-
-      - name: Symlink Enable Mastodon Apps plugin as sibling directory
-        if: ${{ matrix.php >= 8.3 }}
-        run: ln -s "$GITHUB_WORKSPACE/enable-mastodon-apps" ../enable-mastodon-apps
-
       - name: Setup PHP with tools
         uses: shivammathur/setup-php@v2
         with:
@@ -116,3 +105,24 @@ jobs:
         env:
           WP_MULTISITE: 1
         run: composer test
+
+      - name: Checkout Enable Mastodon Apps plugin
+        if: ${{ matrix.php >= 8.3 }}
+        uses: actions/checkout@v6
+        with:
+          repository: akirk/enable-mastodon-apps
+          path: enable-mastodon-apps
+
+      - name: Symlink Enable Mastodon Apps plugin as sibling directory
+        if: ${{ matrix.php >= 8.3 }}
+        run: ln -s "$GITHUB_WORKSPACE/enable-mastodon-apps" ../enable-mastodon-apps
+
+      - name: Run boost media integration tests
+        if: ${{ matrix.php >= 8.3 }}
+        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts)$/'
+
+      - name: Run multisite boost media integration tests
+        if: ${{ matrix.php >= 8.3 }}
+        env:
+          WP_MULTISITE: 1
+        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts)$/'

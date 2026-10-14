@@ -427,9 +427,8 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			$status = $this->create_mastodon_status( $post_id );
 			$status->media_attachments = array( (object) array( 'id' => 'photo' ) );
 			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
-			$status->account = (object) array(
-				'id' => 'remote-account',
-			);
+			$status->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$status->account->id = 'remote-account';
 			return $status;
 		};
 		add_filter( 'mastodon_api_status', $status_filter, 20, 2 );
@@ -439,11 +438,9 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 				return $account;
 			}
 
-			return (object) array(
-				'id' => strval( $this->administrator_id ),
-				'source' => array(),
-				'fields' => array(),
-			);
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id = strval( $this->administrator_id );
+			return $account;
 		};
 		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
 
@@ -510,8 +507,6 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 
 			return (object) array(
 				'id' => strval( $this->administrator_id ),
-				'source' => array(),
-				'fields' => array(),
 			);
 		};
 		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
