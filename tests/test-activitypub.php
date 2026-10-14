@@ -180,7 +180,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
-		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
+		$image = new \WP_HTML_Tag_Processor( $posts[0]->post_content );
+		$this->assertTrue( $image->next_tag( 'IMG' ) );
+		$this->assertSame( $attachment_url, $image->get_attribute( 'src' ) );
+		$this->assertSame( (string) $attachment_width, $image->get_attribute( 'width' ) );
+		$this->assertSame( (string) $attachment_height, $image->get_attribute( 'height' ) );
 
 		// Do another test post, this time with a URL that has an @-id.
 		$date = gmdate( \DATE_W3C, $now++ );
@@ -313,7 +317,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
-		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
+		$image = new \WP_HTML_Tag_Processor( $posts[0]->post_content );
+		$this->assertTrue( $image->next_tag( 'IMG' ) );
+		$this->assertSame( $attachment_url, $image->get_attribute( 'src' ) );
+		$this->assertSame( (string) $attachment_width, $image->get_attribute( 'width' ) );
+		$this->assertSame( (string) $attachment_height, $image->get_attribute( 'height' ) );
 
 		// Update the post
 		$date = gmdate( \DATE_W3C, $now++ );
@@ -398,7 +406,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT, 'post_status' => 'trash' ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
-		$this->assertStringStartsWith( $content, $posts[0]->post_content );
+		$this->assertXmlStringEqualsXmlString( '<div>' . $content . '</div>', '<div>' . $posts[0]->post_content . '</div>' );
 	}
 
 	public function test_incoming_like_on_direct_message() {
