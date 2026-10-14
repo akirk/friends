@@ -25,16 +25,14 @@ Thank you for considering contributing to the Friends Plugin! We welcome contrib
 
 ## Running tests
 
-After installing the WordPress test environment with `bin/install-wp-tests.sh`, run
-`composer test:setup` to install ActivityPub, then `composer test` for the full suite.
-Run `composer test:ema` for the full suite with ActivityPub and Enable Mastodon Apps.
-Use `WP_MULTISITE=1 composer test:ema` for the multisite integration run.
+`composer test` runs all PHPUnit suites using the existing WordPress test environment
+and any installed sibling ActivityPub or Enable Mastodon Apps checkouts. It does not
+install or change plugins. Tests requiring an unavailable integration remain skipped.
 
-Dependency setup reuses sibling plugin checkouts when present. Otherwise it clones
-ActivityPub and EMA into the ignored `.test-plugins/` directory without updating
-existing checkouts. Set `FRIENDS_TEST_ACTIVITYPUB_REF` or `FRIENDS_TEST_EMA_REF`
-before setup to test a particular branch or tag. Missing EMA is an error for
-`composer test:ema`; integration tests are not silently skipped in that mode.
+Use `composer test -- --testsuite default` for the general suite,
+`composer test -- --testsuite combined-ema` for ActivityPub and EMA together, and
+`composer test -- --testsuite only-ema` for EMA without the ActivityPub hooks.
+Set `WP_MULTISITE=1` for a multisite run. Suite membership is defined in `phpunit.xml`.
 
 ## Coding Guidelines
 

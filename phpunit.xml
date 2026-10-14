@@ -12,6 +12,16 @@
 	<testsuites>
 		<testsuite name="default">
 			<directory prefix="test-" suffix=".php">./tests/</directory>
+			<exclude>./tests/test-combined-activitypub-ema.php</exclude>
+			<exclude>./tests/test-mastodon-api-performance.php</exclude>
+			<exclude>./tests/test-only-ema.php</exclude>
+		</testsuite>
+		<testsuite name="combined-ema">
+			<file>./tests/test-combined-activitypub-ema.php</file>
+			<file>./tests/test-mastodon-api-performance.php</file>
+		</testsuite>
+		<testsuite name="only-ema">
+			<file>./tests/test-only-ema.php</file>
 		</testsuite>
 	</testsuites>
 </phpunit>

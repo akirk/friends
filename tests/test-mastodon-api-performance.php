@@ -7,6 +7,8 @@
 
 namespace Friends;
 
+require_once __DIR__ . '/test-activitypub.php';
+
 /**
  * Test the performance optimizations in the ActivityPub feed parser
  * for the Mastodon API (handle conversion, reblog fast path, account resolution).

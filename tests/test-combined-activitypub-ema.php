@@ -7,6 +7,8 @@
 
 namespace Friends;
 
+require_once __DIR__ . '/test-activitypub.php';
+
 /**
  * Test the Enable Mastodon Apps integration
  */

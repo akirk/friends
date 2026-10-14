@@ -41,17 +41,11 @@ function _manually_load_plugin() {
 		require $activitypub_plugin;
 	} elseif ( file_exists( $activitypub_plugin_alternate ) ) {
 		require $activitypub_plugin_alternate;
-	} elseif ( file_exists( dirname( __DIR__ ) . '/.test-plugins/activitypub/activitypub.php' ) ) {
-		require dirname( __DIR__ ) . '/.test-plugins/activitypub/activitypub.php';
 	}
 
 	$enable_mastodon_apps_plugin = dirname( dirname( __DIR__ ) ) . '/enable-mastodon-apps/enable-mastodon-apps.php'; // phpcs:ignore
 	if ( file_exists( $enable_mastodon_apps_plugin ) ) {
 		require $enable_mastodon_apps_plugin;
-	} elseif ( getenv( 'FRIENDS_TEST_REQUIRE_EMA' ) && file_exists( dirname( __DIR__ ) . '/.test-plugins/enable-mastodon-apps/enable-mastodon-apps.php' ) ) {
-		require dirname( __DIR__ ) . '/.test-plugins/enable-mastodon-apps/enable-mastodon-apps.php';
-	} elseif ( getenv( 'FRIENDS_TEST_REQUIRE_EMA' ) ) {
-		throw new \RuntimeException( 'composer test:ema requires Enable Mastodon Apps; run its dependency setup first.' );
 	}
 
 	require dirname( __DIR__ ) . '/friends.php';
