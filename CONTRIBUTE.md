@@ -23,6 +23,17 @@ Thank you for considering contributing to the Friends Plugin! We welcome contrib
    npm install
    ```
 
+## Running tests
+
+`composer test` runs all PHPUnit suites using the existing WordPress test environment
+and any installed sibling ActivityPub or Enable Mastodon Apps checkouts. It does not
+install or change plugins. Tests requiring an unavailable integration remain skipped.
+
+Use `composer test -- --testsuite default` for the general suite,
+`composer test -- --testsuite combined-ema` for ActivityPub and EMA together, and
+`composer test -- --testsuite only-ema` for EMA without the ActivityPub hooks.
+Set `WP_MULTISITE=1` for a multisite run. Suite membership is defined in `phpunit.xml`.
+
 ## Coding Guidelines
 
 - Follow the existing coding style in the project.

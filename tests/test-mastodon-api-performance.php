@@ -7,6 +7,8 @@
 
 namespace Friends;
 
+require_once __DIR__ . '/test-activitypub.php';
+
 /**
  * Test the performance optimizations in the ActivityPub feed parser
  * for the Mastodon API (handle conversion, reblog fast path, account resolution).
@@ -68,6 +70,7 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
 			fclose( $stderr );
 		}
+		parent::tear_down();
 	}
 
 	/**
@@ -77,12 +80,16 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 		$friend = Subscription::create( 'remote-identity.example', 'subscription', 'https://remote-identity.example' );
 		$actor_uri = 'https://example.social/users/remote';
 		$profile_url = 'https://example.social/@remote';
-		$friend->save_feeds(
+		add_filter( 'friends_host_is_valid', static function ( $valid, $host ) {
+			return in_array( $host, array( 'remote-identity.example', 'example.social' ), true ) ? $host : $valid;
+		}, 10, 2 );
+		$saved_feeds = $friend->save_feeds(
 			array(
 				'https://remote-identity.example/feed/' => array( 'active' => true, 'parser' => 'simplepie' ),
 				$actor_uri => array( 'active' => true, 'parser' => 'activitypub' ),
 			)
 		);
+		$this->assertNotWPError( $saved_feeds );
 		$actor_id = $this->factory->post->create(
 			array(
 				'post_type' => 'ap_actor',

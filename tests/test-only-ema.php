@@ -55,6 +55,10 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		foreach ( $this->unhooked as $unhooked ) {
 			add_filter( $unhooked[0], $unhooked[1], $unhooked[2], $unhooked[3] );
 		}
+		// Fixtures can link two ordinary posts; unlink them before EMA's deletion hooks run.
+		foreach ( $this->posts as $post_id ) {
+			delete_post_meta( $post_id, 'mastodon_reblog_id' );
+		}
 		foreach ( $this->posts as $post_id ) {
 			wp_delete_post( $post_id, true );
 		}
@@ -491,12 +495,12 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 
 			$status = $this->create_mastodon_status( $post_id );
 			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
-			$status->account = (object) array(
-				'id' => 'remote-account',
-			);
+			$status->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$status->account->id = 'remote-account';
 			$original = $this->create_mastodon_status( 123 );
 			$original->content = 'Original content';
-			$original->account = (object) array( 'id' => 'original-author' );
+			$original->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$original->account->id = 'original-author';
 			$original->reblog = null;
 			$middle = $this->create_mastodon_status( 456 );
 			$middle->reblog = $original;
@@ -510,9 +514,9 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 				return $account;
 			}
 
-			return (object) array(
-				'id' => strval( $this->administrator_id ),
-			);
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id = strval( $this->administrator_id );
+			return $account;
 		};
 		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
 

@@ -1257,6 +1257,78 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
 	}
 
+	public function test_direct_message_preserves_attached_images_and_alt_text() {
+		$unknown_actor = 'https://mastodon.local/users/media-dm-sender';
+		self::$users[ $unknown_actor ] = array(
+			'id'                => $unknown_actor,
+			'url'               => $unknown_actor,
+			'name'              => 'Unknown DM Sender',
+			'preferredUsername' => 'media-dm-sender',
+			'icon'              => array(
+				'type' => 'Image',
+				'url'  => $unknown_actor . '.png',
+			),
+		);
+
+		$local_user = get_current_user_id();
+		$local_activitypub_id = $this->mock_local_user_activitypub_metadata( $local_user );
+		$date = gmdate( \DATE_W3C, time() - 10 );
+		$id = $unknown_actor . '/statuses/direct-message';
+		$content = 'Hello from someone you do not follow.';
+
+		$attachments = array();
+		for ( $i = 0; $i < 4; ++$i ) {
+			$attachments[] = array(
+				'type' => 'Document',
+				'mediaType' => 'image/jpeg',
+				'url' => "https://mastodon.local/photo-$i.jpg",
+				'name' => "Photo $i & friends",
+			);
+		}
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+		$parser->handle_received_direct_message(
+			array(
+				'type'   => 'Create',
+				'id'     => $id . '/activity',
+				'actor'  => $unknown_actor,
+				'to'     => array( $local_activitypub_id ),
+				'object' => array(
+					'id'           => $id,
+					'type'         => 'Note',
+					'published'    => $date,
+					'attributedTo' => $unknown_actor,
+					'to'           => array( $local_activitypub_id ),
+					'content'      => $content,
+					'summary'      => 'Photo warning',
+					'attachment'   => $attachments,
+				),
+			),
+			$local_user
+		);
+
+		$user_feed = User_Feed::get_by_url( $unknown_actor );
+		$this->assertInstanceof( User_Feed::class, $user_feed );
+		$this->assertFalse( $user_feed->is_active(), 'Receiving a DM must not follow the sender.' );
+
+		$friend_user = $user_feed->get_friend_user();
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_unread',
+				'numberposts' => -1,
+			)
+		);
+
+		$this->assertCount( 1, $messages );
+		$this->assertSame( 'Photo warning', $messages[0]->post_title );
+		$this->assertStringContainsString( $content, $messages[0]->post_content );
+		$this->assertSame( 4, substr_count( $messages[0]->post_content, '<img ' ) );
+		$this->assertStringContainsString( 'alt="Photo 3 &amp; friends"', $messages[0]->post_content );
+		$this->assertSame( $id, $messages[0]->guid );
+		$this->assertSame( (int) $friend_user->ID, (int) User::get_post_author( $messages[0] )->ID );
+		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
+	}
+
 	public function test_direct_message_from_feed_without_friend_user_is_saved() {
 		$orphan_actor = 'https://mastodon.local/users/orphan-dm-sender';
 		self::$users[ $orphan_actor ] = array(

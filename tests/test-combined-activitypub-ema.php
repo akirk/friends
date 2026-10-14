@@ -7,6 +7,8 @@
 
 namespace Friends;
 
+require_once __DIR__ . '/test-activitypub.php';
+
 /**
  * Test the Enable Mastodon Apps integration
  */
@@ -29,6 +31,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 				'role' => 'administrator',
 			)
 		);
+		add_filter( 'activitypub_extract_mentions', array( $this, 'resolve_fixture_mentions' ), PHP_INT_MAX, 2 );
 		$app = \Enable_Mastodon_Apps\Mastodon_App::save( 'Test App', array( 'https://test' ), 'read write follow push', 'https://mastodon.local' );
 		$oauth = new \Enable_Mastodon_Apps\Mastodon_OAuth();
 		$this->token = wp_generate_password( 128, false );
@@ -43,6 +46,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 	}
 
 	public function tear_down() {
+		remove_filter( 'activitypub_extract_mentions', array( $this, 'resolve_fixture_mentions' ), PHP_INT_MAX );
 
 		foreach ( $this->posts as $post_id ) {
 			wp_delete_post( $post_id, true );
@@ -58,6 +62,13 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 			fclose( $stderr );
 		}
 		parent::tear_down();
+	}
+
+	public function resolve_fixture_mentions( $mentions, $content ) {
+		if ( false !== strpos( $content, '@akirk@mastodon.local' ) ) {
+			$mentions['@akirk@mastodon.local'] = $this->actor;
+		}
+		return $mentions;
 	}
 
 	public function api_request( $method, $endpoint ) {
@@ -77,6 +88,40 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		global $wp_rest_server;
 		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->token;
 		return $wp_rest_server->dispatch( $request );
+	}
+
+	public function test_outgoing_direct_message_preserves_image_alt_text() {
+		$media_id = wp_insert_attachment(
+			array(
+				'post_mime_type' => 'image/jpeg',
+				'post_status' => 'inherit',
+				'guid' => 'https://me.local/photo.jpg',
+			),
+			'photo.jpg'
+		);
+		$this->posts[] = $media_id;
+		wp_update_attachment_metadata( $media_id, array( 'file' => 'photo.jpg', 'width' => 800, 'height' => 400 ) );
+		update_post_meta( $media_id, '_wp_attachment_image_alt', 'A fox & friends' );
+		$request = $this->api_request( 'POST', '/api/v1/statuses' );
+		$request->set_param( 'status', '@akirk@mastodon.local Photo by DM.' );
+		$request->set_param( 'visibility', 'direct' );
+		$request->set_param( 'spoiler_text', 'Photo warning' );
+		$request->set_param( 'media_ids', array( (string) $media_id ) );
+		$mentions = function () {
+			return array( '@akirk@mastodon.local' => $this->actor );
+		};
+		add_filter( 'activitypub_extract_mentions', $mentions, PHP_INT_MAX );
+		try {
+			$response = $this->dispatch_authenticated( $request );
+		} finally {
+			remove_filter( 'activitypub_extract_mentions', $mentions, PHP_INT_MAX );
+		}
+		$this->assertEquals( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$messages = get_posts( array( 'post_type' => Messages::CPT, 'post_status' => 'friends_read', 'numberposts' => -1 ) );
+		$this->assertCount( 1, $messages );
+		$this->assertSame( 'Photo warning', $messages[0]->post_title );
+		$this->posts[] = $messages[0]->ID;
+		$this->assertStringContainsString( 'alt="A fox &amp; friends"', $messages[0]->post_content );
 	}
 
 	public function test_direct_message_preserves_spoiler_text() {

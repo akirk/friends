@@ -46,6 +46,7 @@ class Friends_TestCase_Cache_HTTP extends \WP_UnitTestCase {
 	}
 
 	public function tear_down() {
+		unset( $_SERVER['HTTP_AUTHORIZATION'] );
 		remove_filter( 'friends_host_is_valid', array( get_called_class(), 'friends_host_is_valid' ) );
 		remove_filter( 'pre_http_request', array( get_called_class(), 'pre_http_request' ) );
 		remove_filter( 'http_response', array( get_called_class(), 'http_response' ) );
