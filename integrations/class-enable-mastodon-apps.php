@@ -229,10 +229,25 @@ class Enable_Mastodon_Apps {
 				continue;
 			}
 
+			// Keep the local boost identity, but target the original post when boosting a boost.
+			$original = $reblog;
+			$seen = new \SplObjectStorage();
+			while ( is_object( $original ) && ! empty( $original->reblog ) ) {
+				if ( $seen->contains( $original ) ) {
+					continue 2;
+				}
+				$seen->attach( $original );
+				$original = $original->reblog;
+			}
+			if ( ! is_object( $original ) || empty( $original->id ) ) {
+				continue;
+			}
+
 			$status             = clone $reblog;
 			$status->account    = $account;
-			$status->reblog     = $reblog;
+			$status->reblog     = $original;
 			$status->content    = '';
+			$status->media_attachments = array();
 			$status->url        = null;
 			$status->created_at = self::get_mastodon_api_boosted_at( $post );
 			$status->reblogged  = true;

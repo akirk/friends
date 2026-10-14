@@ -1,0 +1,3 @@
+Type: fixed
+
+Use the remote username, handle and profile URL for Mastodon accounts on subscriptions with an ActivityPub feed, preventing duplicated domains in client author displays.

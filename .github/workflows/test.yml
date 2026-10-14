@@ -83,12 +83,12 @@ jobs:
         if: ${{ matrix.php < 8.2 }}
         uses: "ramsey/composer-install@v4"
 
-      # For PHP 8.2 and above, we need to install with ignore platform reqs as not all dependencies allow it yet.
+      # Ignore PHP upper bounds, but keep minimum versions and extension requirements.
       - name: Install Composer dependencies for PHP >= 8.2
         if: ${{ matrix.php >= 8.2 }}
         uses: "ramsey/composer-install@v4"
         with:
-          composer-options: --ignore-platform-reqs
+          composer-options: --ignore-platform-req=php+
 
       # Scan the logs for failing tests and surface that information by creating annotations and log file decorations.
       - name: Setup problem matcher to provide annotations for PHPUnit test errors and failures
@@ -105,3 +105,24 @@ jobs:
         env:
           WP_MULTISITE: 1
         run: composer test
+
+      - name: Checkout Enable Mastodon Apps plugin
+        if: ${{ matrix.php >= 8.3 }}
+        uses: actions/checkout@v6
+        with:
+          repository: akirk/enable-mastodon-apps
+          path: enable-mastodon-apps
+
+      - name: Symlink Enable Mastodon Apps plugin as sibling directory
+        if: ${{ matrix.php >= 8.3 }}
+        run: ln -s "$GITHUB_WORKSPACE/enable-mastodon-apps" ../enable-mastodon-apps
+
+      - name: Run boost media integration tests
+        if: ${{ matrix.php >= 8.3 }}
+        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts)$/'
+
+      - name: Run multisite boost media integration tests
+        if: ${{ matrix.php >= 8.3 }}
+        env:
+          WP_MULTISITE: 1
+        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts)$/'

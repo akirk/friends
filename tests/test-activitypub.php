@@ -143,6 +143,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$date = gmdate( \DATE_W3C, $now++ );
 		$id = $this->actor . '/status/' . $status_id;
 		$content = 'Test ' . $date . ' ' . wp_rand();
+		$content_warning = 'Sensitive topic';
 		$attachment_url = 'https://mastodon.local/files/original/1234.png';
 		$attachment_width = 400;
 		$attachment_height = 600;
@@ -157,6 +158,8 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				'attributedTo' => $this->actor,
 				'inReplyTo'    => null,
 				'content'      => $content,
+				'summary'      => $content_warning,
+				'sensitive'    => true,
 				'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
 				'published'    => $date,
 				'attachment'   => array(
@@ -180,7 +183,12 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
-		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
+		$this->assertSame( $content_warning, get_post_meta( $posts[0]->ID, 'friends_content_warning', true ) );
+		$image = new \WP_HTML_Tag_Processor( $posts[0]->post_content );
+		$this->assertTrue( $image->next_tag( 'IMG' ) );
+		$this->assertSame( $attachment_url, $image->get_attribute( 'src' ) );
+		$this->assertSame( (string) $attachment_width, $image->get_attribute( 'width' ) );
+		$this->assertSame( (string) $attachment_height, $image->get_attribute( 'height' ) );
 
 		// Do another test post, this time with a URL that has an @-id.
 		$date = gmdate( \DATE_W3C, $now++ );
@@ -313,7 +321,11 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
-		$this->assertStringContainsString( '<img src="' . esc_url( $attachment_url ) . '" width="' . esc_attr( $attachment_width ) . '" height="' . esc_attr( $attachment_height ) . '"', $posts[0]->post_content );
+		$image = new \WP_HTML_Tag_Processor( $posts[0]->post_content );
+		$this->assertTrue( $image->next_tag( 'IMG' ) );
+		$this->assertSame( $attachment_url, $image->get_attribute( 'src' ) );
+		$this->assertSame( (string) $attachment_width, $image->get_attribute( 'width' ) );
+		$this->assertSame( (string) $attachment_height, $image->get_attribute( 'height' ) );
 
 		// Update the post
 		$date = gmdate( \DATE_W3C, $now++ );
@@ -398,7 +410,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT, 'post_status' => 'trash' ) ) );
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
-		$this->assertStringStartsWith( $content, $posts[0]->post_content );
+		$this->assertXmlStringEqualsXmlString( '<div>' . $content . '</div>', '<div>' . $posts[0]->post_content . '</div>' );
 	}
 
 	public function test_incoming_like_on_direct_message() {
@@ -916,7 +928,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 	}
 
 	public function test_direct_message_is_added_to_activitypub_outbox() {
-		$post_id = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.' );
+		$post_id = Friends::get_instance()->messages->send_message( $this->friend, $this->actor, 'Hello by DM.', 'Sensitive topic' );
 
 		$this->assertIsInt( $post_id );
 		$outbox_id = get_post_meta( $post_id, 'activitypub_direct_message_outbox_id', true );
@@ -939,6 +951,8 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertContains( $this->actor, $activity['to'] );
 		$this->assertContains( $this->actor, $activity['object']['to'] );
 		$this->assertStringContainsString( '@akirk', $activity['object']['content'] );
+		$this->assertSame( 'Sensitive topic', $activity['object']['summary'] );
+		$this->assertTrue( $activity['object']['sensitive'] );
 
 		// A message that federates as a Tombstone is accepted by the remote but silently dropped.
 		$this->assertSame( 'Note', $activity['object']['type'] );
@@ -1200,6 +1214,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$date = gmdate( \DATE_W3C, time() - 10 );
 		$id = $unknown_actor . '/statuses/direct-message';
 		$content = 'Hello from someone you do not follow.';
+		$summary = 'Sensitive topic';
 
 		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
 		$parser->handle_received_direct_message(
@@ -1215,6 +1230,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 					'attributedTo' => $unknown_actor,
 					'to'           => array( $local_activitypub_id ),
 					'content'      => $content,
+					'summary'      => $summary,
 				),
 			),
 			$local_user
@@ -1235,6 +1251,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertCount( 1, $messages );
 		$this->assertSame( $content, $messages[0]->post_content );
+		$this->assertSame( $summary, $messages[0]->post_title );
 		$this->assertSame( $id, $messages[0]->guid );
 		$this->assertSame( (int) $friend_user->ID, (int) User::get_post_author( $messages[0] )->ID );
 		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );

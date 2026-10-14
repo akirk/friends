@@ -1,0 +1,3 @@
+Type: fixed
+
+Prevent malformed direct messages caused by replacing mentions inside existing HTML links.

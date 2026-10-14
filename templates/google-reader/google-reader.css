@@ -14,6 +14,35 @@
 	overflow-wrap: break-word;
 }
 
+.friends-page .friends-content-warning {
+	margin: 8px 0;
+	border: 1px solid #ccc;
+	border-radius: 3px;
+	padding: 8px 10px;
+}
+
+.friends-page .friends-content-warning > summary {
+	cursor: pointer;
+	display: flex;
+	gap: 12px;
+	justify-content: space-between;
+	font-weight: 600;
+}
+
+.friends-page .friends-content-warning-toggle {
+	white-space: nowrap;
+	font-weight: 400;
+	text-decoration: underline;
+}
+
+.friends-page .friends-content-warning[open] .friends-content-warning-toggle {
+	display: none;
+}
+
+.friends-page .friends-content-warning-content {
+	margin-top: 10px;
+}
+
 .friends-page *, .friends-page *::before, .friends-page *::after {
 	box-sizing: border-box;
 }

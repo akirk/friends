@@ -1,0 +1,3 @@
+Type: fixed
+
+Preserve content warnings when sending and receiving direct messages through Mastodon apps.

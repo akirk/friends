@@ -57,6 +57,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
 			fclose( $stderr );
 		}
+		parent::tear_down();
 	}
 
 	public function api_request( $method, $endpoint ) {
@@ -121,6 +122,59 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		);
 		$this->assertCount( 1, $messages );
 		$this->assertSame( $unknown_actor, get_post_meta( $messages[0]->ID, 'friends_feed_url', true ) );
+	}
+
+	public function test_direct_message_preserves_spoiler_text() {
+		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
+			null,
+			'@akirk@mastodon.local Hello by DM.',
+			null,
+			array(),
+			'standard',
+			'direct',
+			null,
+			array( 'spoiler_text' => 'Sensitive topic' )
+		);
+
+		$this->assertNotWPError( $status );
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_read',
+				'numberposts' => 1,
+			)
+		);
+		$this->assertCount( 1, $messages );
+		$this->assertSame( 'Sensitive topic', $messages[0]->post_title );
+		$this->assertSame( 'Sensitive topic', $status->spoiler_text );
+	}
+
+	public function test_direct_message_preserves_spoiler_text_from_legacy_request() {
+		$request = new \WP_REST_Request( 'POST', '/api/v1/statuses' );
+		$request->set_param( 'spoiler_text', 'Legacy sensitive topic' );
+
+		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
+			null,
+			'@akirk@mastodon.local Hello by legacy DM.',
+			null,
+			array(),
+			'standard',
+			'direct',
+			null,
+			$request
+		);
+
+		$this->assertNotWPError( $status );
+		$messages = get_posts(
+			array(
+				'post_type'   => Messages::CPT,
+				'post_status' => 'friends_read',
+				'numberposts' => 1,
+			)
+		);
+		$this->assertCount( 1, $messages );
+		$this->assertSame( 'Legacy sensitive topic', $messages[0]->post_title );
+		$this->assertSame( 'Legacy sensitive topic', $status->spoiler_text );
 	}
 
 	public function test_account_canonical_id() {
@@ -240,6 +294,21 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		$account = $statuses[0]->account;
 		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
 		$this->assertEquals( $friend->ID, $re_resolved_account_id );
+
+		$media_status = clone $status;
+		$media_status->reblog = null;
+		$attachment = new \Enable_Mastodon_Apps\Entity\Media_Attachment();
+		$attachment->id = '12345';
+		$attachment->type = 'image';
+		$attachment->url = 'https://example.org/reblog-photo.jpg';
+		$attachment->preview_url = $attachment->url;
+		$media_status->media_attachments = array( $attachment );
+		$parser = Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
+		$media_status = $parser->mastodon_api_status_add_reblogs( $media_status, $post_id );
+
+		$this->assertCount( 0, $media_status->media_attachments );
+		$this->assertCount( 1, $media_status->reblog->media_attachments );
+		$this->assertEquals( 'https://example.org/reblog-photo.jpg', $media_status->reblog->media_attachments[0]->url );
 
 		$this->assertNotEquals( $status->reblog->id, $status->id );
 		$this->assertNotEquals( $status->reblog->account->id, $status->account->id );

@@ -1,0 +1,3 @@
+Type: fixed
+
+Resolve boosts of boosts to the original post in Mastodon account responses to prevent client refresh failures and crashes.
