@@ -187,7 +187,12 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 
 		$media_filter = function ( $status, $filtered_post_id ) use ( $post_id ) {
 			if ( intval( $filtered_post_id ) === intval( $post_id ) ) {
-				$status->media_attachments = array( (object) array( 'url' => 'https://example.org/reblog-photo.jpg' ) );
+				$attachment = new \Enable_Mastodon_Apps\Entity\Media_Attachment();
+				$attachment->id = '12345';
+				$attachment->type = 'image';
+				$attachment->url = 'https://example.org/reblog-photo.jpg';
+				$attachment->preview_url = $attachment->url;
+				$status->media_attachments = array( $attachment );
 			}
 			return $status;
 		};
