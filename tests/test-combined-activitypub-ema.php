@@ -85,9 +85,11 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 				'post_mime_type' => 'image/jpeg',
 				'post_status' => 'inherit',
 				'guid' => 'https://me.local/photo.jpg',
-			)
+			),
+			'photo.jpg'
 		);
 		$this->posts[] = $media_id;
+		wp_update_attachment_metadata( $media_id, array( 'file' => 'photo.jpg', 'width' => 800, 'height' => 400 ) );
 		update_post_meta( $media_id, '_wp_attachment_image_alt', 'A fox & friends' );
 		$request = $this->api_request( 'POST', '/api/v1/statuses' );
 		$request->set_param( 'status', '@akirk@mastodon.local Photo by DM.' );
