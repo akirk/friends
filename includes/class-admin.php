@@ -614,6 +614,11 @@ class Admin {
 			'friends_news_entries',
 			array(
 				array(
+					'version'  => '4.4',
+					'title'    => __( '4.4: Content Warnings', 'friends' ),
+					'template' => 'admin/news-4-4',
+				),
+				array(
 					'version'  => '4.3',
 					'title'    => __( '4.3: Link Previews', 'friends' ),
 					'template' => 'admin/news-4-3',
