@@ -864,10 +864,18 @@
 				post_id: $thread.data( 'id' ),
 			},
 			success() {
-				$( '.friends-dm-conversation.is-selected' )
-					.removeClass( 'is-unread' )
-					.find( '.friends-dm-unread-count' )
-					.remove();
+				const $selected = $( '.friends-dm-conversation.is-selected' );
+				const $latest = $selected.closest( '.friends-dm-user-group' ).children( '.friends-dm-conversation' );
+				$selected.add( $latest ).each( function () {
+					const $row = $( this );
+					const remaining = Math.max( 0, Number( $row.attr( 'data-unread-count' ) ) - Number( $thread.attr( 'data-unread-count' ) ) );
+					$row.attr( 'data-unread-count', remaining ).toggleClass( 'is-unread', remaining > 0 );
+					if ( remaining ) {
+						$row.find( '.friends-dm-unread-count' ).text( remaining.toLocaleString() );
+					} else {
+						$row.find( '.friends-dm-unread-count' ).remove();
+					}
+				} );
 				$thread.data( 'unread', '0' ).attr( 'data-unread', '0' );
 			},
 		} );

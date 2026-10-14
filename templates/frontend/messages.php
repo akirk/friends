@@ -112,6 +112,19 @@ usort(
 	}
 );
 
+$selected_friend_id = isset( $_GET['friend'] ) ? absint( $_GET['friend'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+$conversation_groups = array();
+foreach ( $conversation_rows as $conversation_row ) {
+	$friend_user = $conversation_row['friend_user'];
+	$friend_id   = $friend_user && ! is_wp_error( $friend_user ) ? intval( $friend_user->ID ) : 0;
+	if ( $selected_friend_id && $friend_id !== $selected_friend_id ) {
+		continue;
+	}
+	$group_key = $friend_id ? 'user-' . $friend_id : 'conversation-' . $conversation_row['id'];
+	$conversation_groups[ $group_key ][] = $conversation_row;
+}
+$conversation_rows = array_merge( array(), ...array_values( $conversation_groups ) );
+
 $selected_conversation_id = isset( $_GET['conversation'] ) ? absint( $_GET['conversation'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 $selected_conversation    = null;
 foreach ( $conversation_rows as $conversation_row ) {
@@ -122,6 +135,9 @@ foreach ( $conversation_rows as $conversation_row ) {
 
 Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, $args );
 ?>
+<?php if ( $selected_friend_id ) : ?>
+	<p><a href="<?php echo esc_url( home_url( '/friends/messages/' ) ); ?>"><?php esc_html_e( 'View all messages', 'friends' ); ?></a></p>
+<?php endif; ?>
 <section class="friends-dm-view" aria-label="<?php esc_attr_e( 'Direct Messages', 'friends' ); ?>">
 	<?php if ( empty( $conversation_rows ) ) : ?>
 		<div class="friends-dm-empty">
@@ -130,44 +146,64 @@ Friends\Friends::template_loader()->get_template_part( 'frontend/header', null, 
 		</div>
 	<?php else : ?>
 		<nav id="friends-dm-conversations" class="friends-dm-sidebar" aria-label="<?php esc_attr_e( 'Conversations', 'friends' ); ?>">
-			<?php foreach ( $conversation_rows as $conversation_row ) : ?>
-				<?php
-				$friend_user = $conversation_row['friend_user'];
-				$is_selected = $selected_conversation && $conversation_row['id'] === $selected_conversation['id'];
-				$item_url    = add_query_arg( 'conversation', $conversation_row['id'], home_url( '/friends/messages/' ) ) . '#friends-dm-conversation-' . $conversation_row['id'];
-				?>
-				<a class="friends-dm-conversation<?php echo $is_selected ? ' is-selected' : ''; ?><?php echo $conversation_row['unread_count'] ? ' is-unread' : ''; ?>" href="<?php echo esc_url( $item_url ); ?>">
-					<?php if ( $friend_user && ! is_wp_error( $friend_user ) && $friend_user->get_avatar_url() ) : ?>
-						<img class="avatar" src="<?php echo esc_url( $friend_user->get_avatar_url() ); ?>" alt="" width="40" height="40">
-					<?php else : ?>
-						<?php echo get_avatar( 0, 40, '', '', array( 'class' => 'avatar' ) ); ?>
+			<?php foreach ( $conversation_groups as $conversation_group ) : ?>
+				<div class="friends-dm-user-group">
+					<?php
+					$latest_conversation = reset( $conversation_group );
+					$latest_conversation['unread_count'] = array_sum( array_column( $conversation_group, 'unread_count' ) );
+					Friends\Friends::template_loader()->get_template_part(
+						'frontend/messages/conversation-row',
+						null,
+						array(
+							'conversation' => $latest_conversation,
+							'selected_id'  => $selected_conversation['id'],
+							'friend_id'    => $selected_friend_id,
+						)
+					);
+					?>
+					<?php if ( count( $conversation_group ) > 1 ) : ?>
+						<details class="friends-dm-older-conversations"<?php echo in_array( $selected_conversation['id'], array_column( array_slice( $conversation_group, 1 ), 'id' ), true ) ? ' open' : ''; ?>>
+							<summary>
+							<?php
+								echo esc_html(
+									sprintf(
+									// translators: %s is the number of older conversations.
+										_n( '%s older conversation', '%s older conversations', count( $conversation_group ) - 1, 'friends' ),
+										number_format_i18n( count( $conversation_group ) - 1 )
+									)
+								);
+							?>
+							</summary>
+							<?php foreach ( array_slice( $conversation_group, 1 ) as $older_conversation ) : ?>
+								<?php
+								Friends\Friends::template_loader()->get_template_part(
+									'frontend/messages/conversation-row',
+									null,
+									array(
+										'conversation' => $older_conversation,
+										'selected_id'  => $selected_conversation['id'],
+										'friend_id'    => $selected_friend_id,
+									)
+								);
+								?>
+							<?php endforeach; ?>
+						</details>
 					<?php endif; ?>
-					<span class="friends-dm-conversation-main">
-						<span class="friends-dm-conversation-name">
-							<?php echo esc_html( $friend_user && ! is_wp_error( $friend_user ) ? $friend_user->display_name : __( 'Unknown sender', 'friends' ) ); ?>
-						</span>
-						<span class="friends-dm-conversation-preview"><?php echo esc_html( $conversation_row['preview'] ); ?></span>
-					</span>
-					<span class="friends-dm-conversation-meta">
-						<time data-friends-relative-time="<?php echo esc_attr( $conversation_row['latest_time'] ); ?>" title="<?php echo esc_attr( date_i18n( $time_format, $conversation_row['latest_time'] ) ); ?>">
-							<?php echo esc_html( human_time_diff( $conversation_row['latest_time'] ) ); ?>
-						</time>
-						<?php if ( intval( $conversation_row['latest']->post_author ) === get_current_user_id() ) : ?>
-							<span class="friends-dm-delivery-status friends-dm-delivery-icon<?php echo $conversation_row['latest_delivery'] ? ' is-' . esc_attr( $conversation_row['latest_delivery']['status'] ) : ''; ?>" data-delivery-message-id="<?php echo esc_attr( $conversation_row['latest']->ID ); ?>"<?php echo $conversation_row['latest_delivery'] ? ' title="' . esc_attr( $conversation_row['latest_delivery']['title'] ) . '" aria-label="' . esc_attr( $conversation_row['latest_delivery']['label'] ) . '"' : ' hidden'; ?>></span>
-						<?php endif; ?>
-						<?php if ( $conversation_row['unread_count'] ) : ?>
-							<span class="friends-dm-unread-count"><?php echo esc_html( number_format_i18n( $conversation_row['unread_count'] ) ); ?></span>
-						<?php endif; ?>
-					</span>
-				</a>
+				</div>
 			<?php endforeach; ?>
 		</nav>
 
 		<?php
 		$selected_friend_user = $selected_conversation['friend_user'];
-		$selected_url         = add_query_arg( 'conversation', $selected_conversation['id'], home_url( '/friends/messages/' ) );
+		$selected_url         = add_query_arg(
+			array(
+				'conversation' => $selected_conversation['id'],
+				'friend'       => $selected_friend_id ? $selected_friend_id : false,
+			),
+			home_url( '/friends/messages/' )
+		);
 		?>
-		<article id="friends-dm-conversation-<?php echo esc_attr( $selected_conversation['id'] ); ?>" class="friends-dm-thread" data-id="<?php echo esc_attr( $selected_conversation['id'] ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>" data-unread="<?php echo esc_attr( $selected_conversation['unread_count'] ? '1' : '0' ); ?>">
+		<article id="friends-dm-conversation-<?php echo esc_attr( $selected_conversation['id'] ); ?>" class="friends-dm-thread" data-unread-count="<?php echo esc_attr( $selected_conversation['unread_count'] ); ?>" data-id="<?php echo esc_attr( $selected_conversation['id'] ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-mark-read' ) ); ?>" data-unread="<?php echo esc_attr( $selected_conversation['unread_count'] ? '1' : '0' ); ?>">
 			<header class="friends-dm-thread-header">
 				<a class="friends-dm-back" href="#friends-dm-conversations" aria-label="<?php esc_attr_e( 'Back to conversations', 'friends' ); ?>">
 					<span aria-hidden="true">&larr;</span>
