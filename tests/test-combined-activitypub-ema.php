@@ -57,6 +57,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
 			fclose( $stderr );
 		}
+		parent::tear_down();
 	}
 
 	public function api_request( $method, $endpoint ) {
@@ -167,7 +168,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		$post_id = $friend->insert_post(
 			array(
 				'post_type'    => Friends::CPT,
-				'post_content' => 'Hello, World! <img src="https://example.org/reblog-photo.jpg" width="800" height="400">',
+				'post_content' => 'Hello, World!',
 				'post_status'  => 'publish',
 				'meta_input'   => array(
 					'activitypub' => array(
@@ -184,8 +185,20 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		);
 		$this->posts[] = $post_id;
 
+		$media_filter = function ( $status, $filtered_post_id ) use ( $post_id ) {
+			if ( intval( $filtered_post_id ) === intval( $post_id ) ) {
+				$status->media_attachments = array( (object) array( 'url' => 'https://example.org/reblog-photo.jpg' ) );
+			}
+			return $status;
+		};
+		add_filter( 'mastodon_api_status', $media_filter, 39, 2 );
+
 		$request = $this->api_request( 'GET', '/api/v1/timelines/home' );
-		$response = $this->dispatch_authenticated( $request );
+		try {
+			$response = $this->dispatch_authenticated( $request );
+		} finally {
+			remove_filter( 'mastodon_api_status', $media_filter, 39 );
+		}
 		$statuses = $response->get_data();
 
 		$this->assertNotEmpty( $statuses );

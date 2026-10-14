@@ -68,6 +68,7 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
 			fclose( $stderr );
 		}
+		parent::tear_down();
 	}
 
 	/**

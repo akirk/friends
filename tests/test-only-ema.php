@@ -69,6 +69,7 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
 			fclose( $stderr );
 		}
+		parent::tear_down();
 	}
 
 	public function block_http_requests() {
@@ -440,6 +441,8 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 
 			return (object) array(
 				'id' => strval( $this->administrator_id ),
+				'source' => array(),
+				'fields' => array(),
 			);
 		};
 		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
@@ -507,6 +510,8 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 
 			return (object) array(
 				'id' => strval( $this->administrator_id ),
+				'source' => array(),
+				'fields' => array(),
 			);
 		};
 		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );

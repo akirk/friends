@@ -53,18 +53,6 @@ jobs:
         if: steps.changes.outputs.tests == 'true'
         run: ln -s "$GITHUB_WORKSPACE/activitypub" ../activitypub
 
-      - name: Checkout Enable Mastodon Apps plugin
-        if: steps.changes.outputs.tests == 'true'
-        uses: actions/checkout@v6
-        with:
-          repository: akirk/enable-mastodon-apps
-          path: enable-mastodon-apps
-          persist-credentials: false
-
-      - name: Symlink Enable Mastodon Apps plugin as sibling directory
-        if: steps.changes.outputs.tests == 'true'
-        run: ln -s "$GITHUB_WORKSPACE/enable-mastodon-apps" ../enable-mastodon-apps
-
       - name: Setup PHP
         if: steps.changes.outputs.tests == 'true'
         uses: shivammathur/setup-php@v2
