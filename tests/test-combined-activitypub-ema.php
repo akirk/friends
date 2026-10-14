@@ -89,15 +89,12 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		);
 		$this->posts[] = $media_id;
 		update_post_meta( $media_id, '_wp_attachment_image_alt', 'A fox & friends' );
-		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
-			null,
-			'@akirk@mastodon.local Photo by DM.',
-			null,
-			array( $media_id ),
-			'standard',
-			'direct'
-		);
-		$this->assertNotWPError( $status );
+		$request = $this->api_request( 'POST', '/api/v1/statuses' );
+		$request->set_param( 'status', '@akirk@mastodon.local Photo by DM.' );
+		$request->set_param( 'visibility', 'direct' );
+		$request->set_param( 'media_ids', array( (string) $media_id ) );
+		$response = $this->dispatch_authenticated( $request );
+		$this->assertEquals( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
 		$messages = get_posts( array( 'post_type' => Messages::CPT, 'post_status' => 'friends_read', 'numberposts' => -1 ) );
 		$this->assertCount( 1, $messages );
 		$this->posts[] = $messages[0]->ID;
