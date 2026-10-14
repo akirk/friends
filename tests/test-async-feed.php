@@ -216,6 +216,38 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Profiling compares LIMIT 1 with the normal lookahead query.
+	 */
+	public function test_profile_compares_one_post_and_full_page() {
+		$this->create_posts( 5 );
+		$single = $this->request_feed( $this->query_vars(), 0, true, null, null, array( 'size' => 1 ) );
+		$this->assertTrue( $single['success'] );
+		$this->assertSame( 1, $single['data']['timings']['limit'] );
+		$this->assertSame( 1, $single['data']['timings']['posts'] );
+		$full = $this->request_feed( $this->query_vars(), 0, true, null, null, array( 'size' => 0 ) );
+		$this->assertSame( 3, $full['data']['timings']['limit'] );
+		$this->assertSame( 2, $full['data']['timings']['posts'] );
+		$this->assertGreaterThanOrEqual( 0, $full['data']['timings']['query_ms'] );
+		$this->assertGreaterThanOrEqual( 0, $full['data']['timings']['render_ms'] );
+	}
+
+	/**
+	 * Normal feed responses contain no profiling data.
+	 */
+	public function test_profile_is_opt_in() {
+		$result = $this->request_feed( $this->query_vars(), 0, true );
+		$this->assertArrayNotHasKey( 'timings', $result['data'] );
+	}
+
+	/**
+	 * A signed feed query is insufficient to enable profiling without a nonce.
+	 */
+	public function test_profile_requires_nonce() {
+		$result = $this->request_feed( $this->query_vars(), 0, true, null, null, array( 'size' => 1, 'nonce' => 'invalid' ) );
+		$this->assertNull( $result );
+	}
+
+	/**
 	 * Create dated posts with a deterministic order.
 	 *
 	 * @param int $count Number of posts.
@@ -269,9 +301,11 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	 * @param bool        $initial Whether to include empty states and navigation.
 	 * @param string|null $signature Override the signature for rejection tests.
 	 * @param array|null  $cursor Cursor and signature returned by the previous page.
+	 * @param array|null  $profile Optional profiling size and nonce override.
 	 * @return array JSON response.
 	 */
-	private function request_feed( $vars, $page, $initial = false, $signature = null, $cursor = null ) {
+	private function request_feed( $vars, $page, $initial = false, $signature = null, $cursor = null, $profile = null ) {
+		$previous_request = $_REQUEST;
 		$json = wp_json_encode( $vars );
 		$_POST = array(
 			'query_vars'   => wp_slash( $json ),
@@ -283,6 +317,12 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			$_POST['cursor'] = wp_slash( $cursor['cursor'] );
 			$_POST['cursor_sign'] = $cursor['cursor_sign'];
 		}
+		if ( null !== $profile ) {
+			$_POST['profile'] = 1;
+			$_POST['profile_size'] = $profile['size'];
+			$_POST['profile_nonce'] = isset( $profile['nonce'] ) ? $profile['nonce'] : wp_create_nonce( 'friends-feed-profile' );
+		}
+		$_REQUEST = array_merge( $_REQUEST, $_POST );
 		$handler = function () {
 			return function () {
 				throw new \RuntimeException( 'async-feed-response' );
@@ -302,6 +342,7 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			remove_filter( 'wp_die_ajax_handler', $handler );
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 			$_POST = array();
+			$_REQUEST = $previous_request;
 			while ( is_locale_switched() ) {
 				restore_previous_locale();
 			}

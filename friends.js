@@ -508,6 +508,42 @@
 		$document.trigger( 'friends-feed-loaded' );
 	}
 
+	// Opt-in administrator diagnostics: run await friends.measureFeed() in the console.
+	friends.measureFeed = async function ( runs = 3 ) {
+		if ( ! friends.feed_profile_nonce ) {
+			throw new Error( 'Feed profiling requires an administrator account.' );
+		}
+		const samples = [];
+		const count = Math.min( 5, Math.max( 1, Math.floor( Number( runs ) ) || 3 ) );
+		for ( let run = 1; run <= count; ++run ) {
+			// Alternate the order to reduce the effect of warming caches.
+			const sizes = run % 2 ? [ 1, 0 ] : [ 0, 1 ];
+			for ( const size of sizes ) {
+				const started = performance.now();
+				const result = await wp.ajax.send( 'friends-load-feed', {
+					data: {
+						query_vars: friends.query_vars,
+						qv_sign: friends.qv_sign,
+						page: 0,
+						initial_feed: 1,
+						profile: 1,
+						profile_nonce: friends.feed_profile_nonce,
+						profile_size: size,
+					},
+				} );
+				samples.push( {
+					run,
+					mode: size ? 'One post' : 'Full page',
+					...result.timings,
+					request_ms: Math.round( performance.now() - started ),
+				} );
+			}
+		}
+		console.table( samples );
+		console.info( 'query_ms includes WP_Query filters and cache work; render_ms includes post rendering and its database calls. setup_ms includes PHP/WordPress startup; request_ms also includes network and response handling. Normal caches remain enabled; zero query_db_calls indicates a cached query.' );
+		return samples;
+	};
+
 	function loadInitialFeed() {
 		const $loading = $( '.friends-feed-loading' );
 		if ( ! $loading.length || alreadyLoading ) {

@@ -480,6 +480,7 @@ class Frontend {
 			'query_vars'             => $query_vars,
 			'qv_sign'                => sha1( wp_salt( 'nonce' ) . $query_vars ),
 			'async_feed'             => $this->is_feed_deferred(),
+			'feed_profile_nonce'     => current_user_can( 'manage_options' ) ? wp_create_nonce( 'friends-feed-profile' ) : '',
 			'current_page'           => get_query_var( 'paged' ) ? get_query_var( 'paged' ) : 1,
 			'max_page'               => $wp_query->max_num_pages,
 		);
@@ -1441,6 +1442,14 @@ class Frontend {
 		if ( ! $this->has_required_priviledges() ) {
 			wp_send_json_error( null, 403 );
 		}
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$profile = $async_feed && ! empty( $_POST['profile'] );
+		if ( $profile ) {
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( null, 403 );
+			}
+			check_ajax_referer( 'friends-feed-profile', 'profile_nonce' );
+		}
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( ! isset( $_POST['query_vars'] ) || ! isset( $_POST['page'] ) || ! isset( $_POST['qv_sign'] ) ) {
@@ -1489,18 +1498,29 @@ class Frontend {
 		if ( $async_feed ) {
 			$per_page = isset( $query_vars['posts_per_page'] ) ? intval( $query_vars['posts_per_page'] ) : intval( get_option( 'posts_per_page' ) );
 			$per_page = max( 1, $per_page );
-			$query_vars['offset']         = $cursor ? 0 : ( $query_vars['paged'] - 1 ) * $per_page;
+			// Compare one post with the normal page size without changing the visible feed.
+			if ( $profile ) {
+				$per_page = isset( $_POST['profile_size'] ) && 1 === absint( wp_unslash( $_POST['profile_size'] ) ) ? 1 : $per_page; // phpcs:ignore WordPress.Security.NonceVerification.Missing
+			}
+
+			$query_vars['offset'] = $cursor ? 0 : ( $query_vars['paged'] - 1 ) * $per_page;
 			if ( $cursor ) {
 				$query_vars['friends_feed_cursor'] = $cursor;
 			}
-			$query_vars['posts_per_page'] = $per_page + 1;
+			$query_vars['posts_per_page'] = $profile && 1 === $per_page ? 1 : $per_page + 1;
 			$query_vars['no_found_rows']  = true;
 			$query_vars['orderby']        = 'date ID';
 		}
 
+		global $wpdb;
+		$query_started = microtime( true );
+		$query_db_calls = $wpdb->num_queries;
 		// We actually want to render the query loop, so we use query_posts.
 		query_posts( $query_vars ); // phpcs:ignore WordPress.WP.DiscouragedFunctions.query_posts_query_posts
+		$query_ms = ( microtime( true ) - $query_started ) * 1000;
+		$query_db_calls = $wpdb->num_queries - $query_db_calls;
 		global $wp_query;
+		$rows_fetched = $wp_query->post_count;
 		$has_more = false;
 		if ( $async_feed && $wp_query->post_count > $per_page ) {
 			$has_more = true;
@@ -1519,6 +1539,8 @@ class Frontend {
 			);
 			$next_cursor_sign = hash_hmac( 'sha256', $signed_query_vars . "\n" . $next_cursor, wp_salt( 'nonce' ) );
 		}
+		$render_started = microtime( true );
+		$render_db_calls = $wpdb->num_queries;
 		ob_start();
 		if ( $initial_feed ) {
 			Friends::template_loader()->get_template_part(
@@ -1540,15 +1562,29 @@ class Frontend {
 
 		$posts = ob_get_clean();
 		if ( $async_feed ) {
-			wp_send_json_success(
-				array(
-					'html'        => $posts,
-					'has_more'    => $has_more,
-					'page'        => $query_vars['paged'],
-					'cursor'      => $next_cursor,
-					'cursor_sign' => $next_cursor_sign,
-				)
+			$response = array(
+				'html'        => $posts,
+				'has_more'    => $has_more,
+				'page'        => $query_vars['paged'],
+				'cursor'      => $next_cursor,
+				'cursor_sign' => $next_cursor_sign,
 			);
+			if ( $profile ) {
+				$finished = microtime( true );
+				$request_started = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? floatval( $_SERVER['REQUEST_TIME_FLOAT'] ) : $query_started;
+				$response['timings'] = array(
+					'posts'           => $wp_query->post_count,
+					'rows_fetched'    => $rows_fetched,
+					'limit'           => $query_vars['posts_per_page'],
+					'query_ms'        => round( $query_ms, 1 ),
+					'render_ms'       => round( ( $finished - $render_started ) * 1000, 1 ),
+					'setup_ms'        => round( ( $query_started - $request_started ) * 1000, 1 ),
+					'php_ms'          => round( ( $finished - $request_started ) * 1000, 1 ),
+					'query_db_calls'  => $query_db_calls,
+					'render_db_calls' => $wpdb->num_queries - $render_db_calls,
+				);
+			}
+			wp_send_json_success( $response );
 		}
 
 		wp_send_json_success( $posts );
