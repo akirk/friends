@@ -786,7 +786,7 @@ class Messages {
 		$friend_user = false;
 		foreach ( $mentions as $mention ) {
 			$user_feed = User_Feed::get_by_url( $mention );
-			if ( $user_feed ) {
+			if ( $user_feed && ! is_wp_error( $user_feed ) ) {
 				$friend_user = $user_feed->get_friend_user();
 				break;
 			}
@@ -794,8 +794,26 @@ class Messages {
 				$user_feed = User_Feed::get_by_url( $mention );
 				$url = Feed_Parser_ActivityPub::friends_webfinger_resolve( $mention, $mention );
 				$user_feed = User_Feed::get_by_url( $url );
-				if ( $user_feed ) {
+				if ( $user_feed && ! is_wp_error( $user_feed ) ) {
 					$friend_user = $user_feed->get_friend_user();
+					break;
+				}
+			}
+
+			/**
+			 * Resolve a direct-message recipient that Friends does not know yet.
+			 *
+			 * Integrations may create a non-following identity for a remotely
+			 * discoverable recipient and return its feed here. This keeps recipient
+			 * discovery with the protocol integration that owns the remote identity.
+			 *
+			 * @param User_Feed|false $user_feed The resolved recipient feed, or false.
+			 * @param string          $mention   The extracted recipient identifier.
+			 */
+			$user_feed = apply_filters( 'friends_resolve_message_recipient', false, $mention );
+			if ( $user_feed instanceof User_Feed ) {
+				$friend_user = $user_feed->get_friend_user();
+				if ( $friend_user ) {
 					break;
 				}
 			}
