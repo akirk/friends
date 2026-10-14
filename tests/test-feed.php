@@ -173,7 +173,8 @@ class FeedTest extends \WP_UnitTestCase {
 		$this->assertCount( 1, $new_items );
 		$permalink = 'http://example.org/test?url=with&parameters=that&contain=ampersands';
 		$user = User::get_user_by_id( $this->friend_id );
-		$this->assertArrayHasKey( $permalink, $user->get_remote_post_ids() );
+		$remote_post_ids = $user->get_remote_post_ids();
+		$this->assertArrayHasKey( $permalink, $remote_post_ids, wp_json_encode( $remote_post_ids ) );
 		$this->assertSame( (int) reset( $new_items ), (int) Feed::url_to_postid( $permalink ) );
 
 		// Parse again, there should not be new items.
