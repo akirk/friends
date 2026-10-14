@@ -1,0 +1,3 @@
+Type: fixed
+
+Preserve ampersands in imported feed URLs to prevent corrupted links and duplicate posts on newer WordPress versions.
