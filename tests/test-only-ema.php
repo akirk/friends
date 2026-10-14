@@ -69,6 +69,7 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
 			fclose( $stderr );
 		}
+		parent::tear_down();
 	}
 
 	public function block_http_requests() {
@@ -424,10 +425,82 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			}
 
 			$status = $this->create_mastodon_status( $post_id );
+			$attachment = new \Enable_Mastodon_Apps\Entity\Media_Attachment();
+			$attachment->id = '12345';
+			$attachment->type = 'image';
+			$attachment->url = 'https://example.org/reblog-photo.jpg';
+			$attachment->preview_url = $attachment->url;
+			$status->media_attachments = array( $attachment );
+			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
+			$status->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$status->account->id = 'remote-account';
+			return $status;
+		};
+		add_filter( 'mastodon_api_status', $status_filter, 20, 2 );
+
+		$account_filter = function ( $account, $user_id ) {
+			if ( intval( $user_id ) !== intval( $this->administrator_id ) ) {
+				return $account;
+			}
+
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id = strval( $this->administrator_id );
+			return $account;
+		};
+		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
+
+		$request = $this->api_request( 'GET', '/api/v1/accounts/' . $this->administrator_id . '/statuses' );
+		$request->set_param( 'limit', 20 );
+		$statuses = Enable_Mastodon_Apps::mastodon_api_account_statuses( new \WP_REST_Response( array() ), $request, $this->administrator_id );
+
+		remove_filter( 'mastodon_api_status', $status_filter, 20 );
+		remove_filter( 'mastodon_api_account', $account_filter, 20 );
+
+		$data = $statuses->get_data();
+
+		$this->assertCount( 1, $data );
+		$this->assertCount( 0, $data[0]->media_attachments );
+		$this->assertCount( 1, $data[0]->reblog->media_attachments );
+		$this->assertEquals( '12345', $data[0]->reblog->media_attachments[0]->id );
+		$this->assertEquals( strval( $this->administrator_id ), $data[0]->account->id );
+		$this->assertEquals( strval( $post_id ), $data[0]->reblog->id );
+		$this->assertEquals( '2024-05-02T12:00:00+00:00', $data[0]->created_at->format( \DateTime::ATOM ) );
+	}
+
+	public function test_ema_account_statuses_resolve_boosts_of_boosts() {
+		wp_set_current_user( $this->administrator_id );
+
+		$friend = Subscription::create( 'account-boost.local', 'subscription', 'https://account-boost.local' );
+		$post_id = $friend->insert_post(
+			array(
+				'post_type'     => Friends::CPT,
+				'post_title'    => 'Account Boost Post',
+				'post_status'   => 'publish',
+				'post_date_gmt' => '2024-05-01 10:00:00',
+			)
+		);
+		$this->posts[] = $post_id;
+
+		update_post_meta( $post_id, 'boosted', $this->administrator_id );
+		update_post_meta( $post_id, 'boosted_at', '2024-05-02 12:00:00' );
+
+		$status_filter = function ( $status, $filtered_post_id ) use ( $post_id ) {
+			if ( intval( $filtered_post_id ) !== intval( $post_id ) ) {
+				return $status;
+			}
+
+			$status = $this->create_mastodon_status( $post_id );
 			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
 			$status->account = (object) array(
 				'id' => 'remote-account',
 			);
+			$original = $this->create_mastodon_status( 123 );
+			$original->content = 'Original content';
+			$original->account = (object) array( 'id' => 'original-author' );
+			$original->reblog = null;
+			$middle = $this->create_mastodon_status( 456 );
+			$middle->reblog = $original;
+			$status->reblog = $middle;
 			return $status;
 		};
 		add_filter( 'mastodon_api_status', $status_filter, 20, 2 );
@@ -454,7 +527,11 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertCount( 1, $data );
 		$this->assertEquals( strval( $this->administrator_id ), $data[0]->account->id );
-		$this->assertEquals( strval( $post_id ), $data[0]->reblog->id );
+		$this->assertEquals( strval( $post_id ), $data[0]->id );
+		$this->assertEquals( '123', $data[0]->reblog->id );
+		$this->assertEquals( 'original-author', $data[0]->reblog->account->id );
+		$this->assertEquals( 'Original content', $data[0]->reblog->content );
+		$this->assertNull( $data[0]->reblog->reblog );
 		$this->assertEquals( '2024-05-02T12:00:00+00:00', $data[0]->created_at->format( \DateTime::ATOM ) );
 	}
 

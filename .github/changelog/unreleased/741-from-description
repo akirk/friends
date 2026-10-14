@@ -1,0 +1,3 @@
+Type: fixed
+
+Prevent PHP deprecation messages when handling ActivityPub actors without a domain in WebFinger lookups.

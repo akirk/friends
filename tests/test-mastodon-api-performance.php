@@ -70,6 +70,43 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 		}
 	}
 
+	/**
+	 * RSS posts on mixed subscriptions must use the remote account identity.
+	 */
+	public function test_mixed_subscription_remote_account_identity() {
+		$friend = Subscription::create( 'remote-identity.example', 'subscription', 'https://remote-identity.example' );
+		$actor_uri = 'https://example.social/users/remote';
+		$profile_url = 'https://example.social/@remote';
+		$friend->save_feeds(
+			array(
+				'https://remote-identity.example/feed/' => array( 'active' => true, 'parser' => 'simplepie' ),
+				$actor_uri => array( 'active' => true, 'parser' => 'activitypub' ),
+			)
+		);
+		$actor_id = $this->factory->post->create(
+			array(
+				'post_type' => 'ap_actor',
+				'post_status' => 'publish',
+				'guid' => $actor_uri,
+				'post_content' => wp_json_encode( array( 'id' => $actor_uri, 'type' => 'Person', 'preferredUsername' => 'remote', 'url' => $profile_url ) ),
+				'meta_input' => array( '_activitypub_acct' => 'remote@example.social' ),
+			)
+		);
+		$this->posts[] = $actor_id;
+		$feed = User_Feed::get_by_url( $actor_uri );
+		$this->assertInstanceOf( User_Feed::class, $feed );
+		$feed->set_ap_actor_id( $actor_id );
+		$post_id = $friend->insert_post( array( 'post_type' => Friends::CPT, 'post_status' => 'publish', 'post_content' => 'An RSS post.' ) );
+		$this->posts[] = $post_id;
+		$account = User::mastodon_api_account( null, null, null, get_post( $post_id ) );
+		$this->assertEquals( strval( $actor_id ), $account->id );
+		$this->assertEquals( 'remote', $account->username );
+		$this->assertEquals( 'remote@example.social', $account->acct );
+		$this->assertEquals( $profile_url, $account->url );
+		$this->assertEquals( $actor_uri, $account->uri );
+		wp_delete_term( $friend->get_object_id(), Subscription::TAXONOMY );
+	}
+
 	public function dispatch_authenticated( \WP_REST_Request $request ) {
 		global $wp_rest_server;
 		$_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $this->token;
