@@ -19,7 +19,7 @@
 	"prefer-stable": true,
 	"scripts": {
 		"lint": [
-			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .git"
+			"@php ./vendor/php-parallel-lint/php-parallel-lint/parallel-lint . -e php --exclude vendor --exclude .test-plugins --exclude .git"
 		],
 		"check-cs": [
 			"@php ./vendor/squizlabs/php_codesniffer/bin/phpcs"
@@ -30,7 +30,12 @@
 		"test": [
 			"@php ./vendor/phpunit/phpunit/phpunit --no-coverage"
 		],
+		"test:setup": [
+			"bash bin/install-test-plugins.sh activitypub"
+		],
 		"test:ema": [
+			"@test:setup",
+			"bash bin/install-test-plugins.sh ema",
 			"@putenv FRIENDS_TEST_REQUIRE_EMA=1",
 			"@test"
 		],

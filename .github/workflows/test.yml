@@ -41,17 +41,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Checkout ActivityPub plugin
-        if: ${{ matrix.php >= 8.3 }}
-        uses: actions/checkout@v6
-        with:
-          repository: Automattic/wordpress-activitypub
-          path: activitypub
-
-      - name: Symlink ActivityPub plugin as sibling directory
-        if: ${{ matrix.php >= 8.3 }}
-        run: ln -s "$GITHUB_WORKSPACE/activitypub" ../activitypub
-
       - name: Setup PHP with tools
         uses: shivammathur/setup-php@v2
         with:
@@ -98,6 +87,9 @@ jobs:
       - name: Install the test environment
         run: bash bin/install-wp-tests.sh wordpress_test root wordpress 127.0.0.1:${{ job.services.mariadb.ports[3306] }} ${{ matrix.wordpress }} true
 
+      - name: Set up integration dependencies
+        run: composer test:setup
+
       - name: Run the unit tests
         run: composer test
 
@@ -106,23 +98,10 @@ jobs:
           WP_MULTISITE: 1
         run: composer test
 
-      - name: Checkout Enable Mastodon Apps plugin
-        if: ${{ matrix.php >= 8.3 }}
-        uses: actions/checkout@v6
-        with:
-          repository: akirk/enable-mastodon-apps
-          path: enable-mastodon-apps
-
-      - name: Symlink Enable Mastodon Apps plugin as sibling directory
-        if: ${{ matrix.php >= 8.3 }}
-        run: ln -s "$GITHUB_WORKSPACE/enable-mastodon-apps" ../enable-mastodon-apps
-
       - name: Run the full suite with Enable Mastodon Apps
-        if: ${{ matrix.php >= 8.3 }}
         run: composer test:ema
 
       - name: Run the full multisite suite with Enable Mastodon Apps
-        if: ${{ matrix.php >= 8.3 }}
         env:
           WP_MULTISITE: 1
         run: composer test:ema

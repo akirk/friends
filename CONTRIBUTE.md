@@ -23,6 +23,19 @@ Thank you for considering contributing to the Friends Plugin! We welcome contrib
    npm install
    ```
 
+## Running tests
+
+After installing the WordPress test environment with `bin/install-wp-tests.sh`, run
+`composer test:setup` to install ActivityPub, then `composer test` for the full suite.
+Run `composer test:ema` for the full suite with ActivityPub and Enable Mastodon Apps.
+Use `WP_MULTISITE=1 composer test:ema` for the multisite integration run.
+
+Dependency setup reuses sibling plugin checkouts when present. Otherwise it clones
+ActivityPub and EMA into the ignored `.test-plugins/` directory without updating
+existing checkouts. Set `FRIENDS_TEST_ACTIVITYPUB_REF` or `FRIENDS_TEST_EMA_REF`
+before setup to test a particular branch or tag. Missing EMA is an error for
+`composer test:ema`; integration tests are not silently skipped in that mode.
+
 ## Coding Guidelines
 
 - Follow the existing coding style in the project.
