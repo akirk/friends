@@ -1227,11 +1227,21 @@ class User extends \WP_User {
 				}
 			}
 
+			$account->url = $user->get_local_friends_page_url();
 			if ( $ap_actor_id ) {
 				$account->id       = \strval( $ap_actor_id );
-				$acct              = \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id );
-				$account->username = $acct ? $acct : $user->user_login;
-				$account->acct     = $account->username;
+				$actor             = \Activitypub\Collection\Remote_Actors::get_actor( $ap_actor_id );
+				$acct              = is_wp_error( $actor ) ? \Activitypub\Collection\Remote_Actors::get_acct( $ap_actor_id ) : $actor->get_webfinger();
+				$account->acct     = $acct ? $acct : $user->user_login;
+				$account->username = explode( '@', $account->acct, 2 )[0];
+				if ( ! is_wp_error( $actor ) ) {
+					$actor_uri = $actor->get_id();
+					$actor_url = $actor->get_url();
+					if ( is_string( $actor_uri ) && $actor_uri ) {
+						$account->uri = $actor_uri;
+						$account->url = is_string( $actor_url ) && $actor_url ? $actor_url : $actor_uri;
+					}
+				}
 			} else {
 				$account->id       = apply_filters( 'friends_mastodon_api_username', $user->ID );
 				$account->username = is_string( $account->id ) && ! is_numeric( $account->id ) ? $account->id : $user->user_login;
@@ -1248,7 +1258,6 @@ class User extends \WP_User {
 			} else {
 				$account->last_status_at = new \DateTime( $post->post_date_gmt );
 			}
-			$account->url = $user->get_local_friends_page_url();
 
 			$account->source = array(
 				'privacy'   => 'public',
