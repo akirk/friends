@@ -55,6 +55,10 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		foreach ( $this->unhooked as $unhooked ) {
 			add_filter( $unhooked[0], $unhooked[1], $unhooked[2], $unhooked[3] );
 		}
+		// Fixtures can link two ordinary posts; unlink them before EMA's deletion hooks run.
+		foreach ( $this->posts as $post_id ) {
+			delete_post_meta( $post_id, 'mastodon_reblog_id' );
+		}
 		foreach ( $this->posts as $post_id ) {
 			wp_delete_post( $post_id, true );
 		}
