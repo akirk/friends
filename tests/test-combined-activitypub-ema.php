@@ -93,7 +93,15 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		$request->set_param( 'status', '@akirk@mastodon.local Photo by DM.' );
 		$request->set_param( 'visibility', 'direct' );
 		$request->set_param( 'media_ids', array( (string) $media_id ) );
-		$response = $this->dispatch_authenticated( $request );
+		$mentions = function () {
+			return array( '@akirk@mastodon.local' => $this->actor );
+		};
+		add_filter( 'activitypub_extract_mentions', $mentions, PHP_INT_MAX );
+		try {
+			$response = $this->dispatch_authenticated( $request );
+		} finally {
+			remove_filter( 'activitypub_extract_mentions', $mentions, PHP_INT_MAX );
+		}
 		$this->assertEquals( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
 		$messages = get_posts( array( 'post_type' => Messages::CPT, 'post_status' => 'friends_read', 'numberposts' => -1 ) );
 		$this->assertCount( 1, $messages );
