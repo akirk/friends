@@ -247,6 +247,7 @@ class Enable_Mastodon_Apps {
 			$status->account    = $account;
 			$status->reblog     = $original;
 			$status->content    = '';
+			$status->media_attachments = array();
 			$status->url        = null;
 			$status->created_at = self::get_mastodon_api_boosted_at( $post );
 			$status->reblogged  = true;

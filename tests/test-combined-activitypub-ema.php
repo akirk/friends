@@ -167,7 +167,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		$post_id = $friend->insert_post(
 			array(
 				'post_type'    => Friends::CPT,
-				'post_content' => 'Hello, World!',
+				'post_content' => 'Hello, World! <img src="https://example.org/reblog-photo.jpg" width="800" height="400">',
 				'post_status'  => 'publish',
 				'meta_input'   => array(
 					'activitypub' => array(
@@ -195,6 +195,10 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		$account = $statuses[0]->account;
 		$re_resolved_account_id = apply_filters( 'mastodon_api_mapback_user_id', $account->id );
 		$this->assertEquals( $friend->ID, $re_resolved_account_id );
+
+		$this->assertCount( 0, $status->media_attachments );
+		$this->assertCount( 1, $status->reblog->media_attachments );
+		$this->assertEquals( 'https://example.org/reblog-photo.jpg', $status->reblog->media_attachments[0]->url );
 
 		$this->assertNotEquals( $status->reblog->id, $status->id );
 		$this->assertNotEquals( $status->reblog->account->id, $status->account->id );

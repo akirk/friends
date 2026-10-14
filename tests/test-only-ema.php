@@ -424,6 +424,7 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			}
 
 			$status = $this->create_mastodon_status( $post_id );
+			$status->media_attachments = array( (object) array( 'id' => 'photo' ) );
 			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
 			$status->account = (object) array(
 				'id' => 'remote-account',
@@ -453,6 +454,9 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		$data = $statuses->get_data();
 
 		$this->assertCount( 1, $data );
+		$this->assertCount( 0, $data[0]->media_attachments );
+		$this->assertCount( 1, $data[0]->reblog->media_attachments );
+		$this->assertEquals( 'photo', $data[0]->reblog->media_attachments[0]->id );
 		$this->assertEquals( strval( $this->administrator_id ), $data[0]->account->id );
 		$this->assertEquals( strval( $post_id ), $data[0]->reblog->id );
 		$this->assertEquals( '2024-05-02T12:00:00+00:00', $data[0]->created_at->format( \DateTime::ATOM ) );
