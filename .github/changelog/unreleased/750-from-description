@@ -1,0 +1,3 @@
+Type: changed
+
+Load Friends feeds asynchronously and speed up scrolling with cursor pagination that avoids full-result counts and growing SQL offsets.
