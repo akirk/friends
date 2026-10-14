@@ -510,9 +510,9 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 				return $account;
 			}
 
-			return (object) array(
-				'id' => strval( $this->administrator_id ),
-			);
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id = strval( $this->administrator_id );
+			return $account;
 		};
 		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
 

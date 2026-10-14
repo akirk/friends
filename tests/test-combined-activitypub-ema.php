@@ -31,6 +31,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 				'role' => 'administrator',
 			)
 		);
+		add_filter( 'activitypub_extract_mentions', array( $this, 'resolve_fixture_mentions' ), PHP_INT_MAX, 2 );
 		$app = \Enable_Mastodon_Apps\Mastodon_App::save( 'Test App', array( 'https://test' ), 'read write follow push', 'https://mastodon.local' );
 		$oauth = new \Enable_Mastodon_Apps\Mastodon_OAuth();
 		$this->token = wp_generate_password( 128, false );
@@ -45,6 +46,7 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 	}
 
 	public function tear_down() {
+		remove_filter( 'activitypub_extract_mentions', array( $this, 'resolve_fixture_mentions' ), PHP_INT_MAX );
 
 		foreach ( $this->posts as $post_id ) {
 			wp_delete_post( $post_id, true );
@@ -60,6 +62,13 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 			fclose( $stderr );
 		}
 		parent::tear_down();
+	}
+
+	public function resolve_fixture_mentions( $mentions, $content ) {
+		if ( false !== strpos( $content, '@akirk@mastodon.local' ) ) {
+			$mentions['@akirk@mastodon.local'] = $this->actor;
+		}
+		return $mentions;
 	}
 
 	public function api_request( $method, $endpoint ) {

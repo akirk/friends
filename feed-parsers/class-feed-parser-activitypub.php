@@ -238,7 +238,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( null === $user_id ) {
 			return false;
 		}
-		$cache_key = is_scalar( $user_id ) ? $user_id : '';
+		$cache_key = is_scalar( $user_id ) ? get_current_blog_id() . ':' . wp_cache_get_last_changed( 'terms' ) . ':' . $user_id : '';
 		if ( $cache_key && isset( $user_id_map[ $cache_key ] ) ) {
 			return $user_id_map[ $cache_key ];
 		}
@@ -744,14 +744,15 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 	public function mastodon_api_canonical_user_id( $user_id ) {
 		static $user_id_map = array();
-		if ( ! isset( $user_id_map[ $user_id ] ) && is_string( $user_id ) ) {
+		$cache_key = get_current_blog_id() . ':' . wp_cache_get_last_changed( 'terms' ) . ':' . $user_id;
+		if ( ! isset( $user_id_map[ $cache_key ] ) && is_string( $user_id ) ) {
 			$user_feed = User_Feed::get_by_url( $user_id );
 			if ( $user_feed && ! is_wp_error( $user_feed ) ) {
 				$acct = self::get_actor_acct_from_user_feed( $user_feed );
-				$user_id_map[ $user_id ] = $acct ? $acct : self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+				$user_id_map[ $cache_key ] = $acct ? $acct : self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
 			}
 		}
-		if ( ! isset( $user_id_map[ $user_id ] ) ) {
+		if ( ! isset( $user_id_map[ $cache_key ] ) ) {
 			if ( is_string( $user_id ) && ! is_numeric( $user_id ) ) {
 				$user = User::get_by_username( $user_id );
 			} else {
@@ -764,18 +765,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				foreach ( $user->get_active_feeds() as $user_feed ) {
 					if ( 'activitypub' === $user_feed->get_parser() ) {
 						$acct = self::get_actor_acct_from_user_feed( $user_feed );
-						$user_id_map[ $user_id ] = $acct ? $acct : self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
+						$user_id_map[ $cache_key ] = $acct ? $acct : self::convert_actor_to_mastodon_handle( $user_feed->get_url() );
 						break;
 					}
 				}
 			}
 		}
 
-		if ( ! isset( $user_id_map[ $user_id ] ) ) {
-			$user_id_map[ $user_id ] = $user_id;
+		if ( ! isset( $user_id_map[ $cache_key ] ) ) {
+			$user_id_map[ $cache_key ] = $user_id;
 		}
 
-		return $user_id_map[ $user_id ];
+		return $user_id_map[ $cache_key ];
 	}
 
 	public function mastodon_api_account_following( $following, $user_id ) {
