@@ -119,10 +119,10 @@ jobs:
 
       - name: Run boost media integration tests
         if: ${{ matrix.php >= 8.3 }}
-        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts)$/'
+        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts|test_outgoing_direct_message_preserves_image_alt_text)$/'
 
       - name: Run multisite boost media integration tests
         if: ${{ matrix.php >= 8.3 }}
         env:
           WP_MULTISITE: 1
-        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts)$/'
+        run: composer test -- --filter '/::(test_reblogs|test_ema_account_statuses_include_local_boosts|test_outgoing_direct_message_preserves_image_alt_text)$/'

@@ -1177,7 +1177,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( isset( $object['inReplyTo'] ) ) {
 			$reply_to = $object['inReplyTo'];
 		}
-		$message = $object['content'];
+		$message = $this->append_activity_attachments( $object['content'] ?? '', $object );
 		$subject = null;
 
 		$friend_user = false;
@@ -3020,6 +3020,124 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Preserve attached media in public posts and direct messages.
+	 *
+	 * @param string $content The object's HTML content.
+	 * @param array  $activity The ActivityStreams object.
+	 * @return string Content including the object's attachments.
+	 */
+	private function append_activity_attachments( $content, $activity ) {
+		if ( ! empty( $activity['attachment'] ) ) {
+			foreach ( $activity['attachment'] as $attachment ) {
+				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
+					continue;
+				}
+				if ( ! in_array( $attachment['type'], array( 'Document', 'Image', 'Link' ), true ) ) {
+					continue;
+				}
+
+				if ( empty( $attachment['url'] ) ) {
+					if ( ! empty( $attachment['href'] ) ) {
+						$attachment['url'] = $attachment['href'];
+					}
+				}
+				if ( 'application/x-mpegURL' === $attachment['mediaType'] ) {
+					if ( ! empty( $attachment['tag'] ) ) {
+						$videos = array();
+						foreach ( $attachment['tag'] as $tag ) {
+							if ( strpos( $tag['mediaType'], 'video/' ) === false ) {
+								continue;
+							}
+							if ( empty( $tag['rel'] ) ) {
+								$videos[ $tag['height'] ] = $tag;
+							}
+						}
+
+						if ( ! empty( $videos ) ) {
+							if ( isset( $videos[720] ) ) {
+								$video = $videos[720];
+							} elseif ( isset( $videos[480] ) ) {
+								$video = $videos[480];
+							} elseif ( isset( $videos[360] ) ) {
+								$video = $videos[360];
+							} else {
+								$video = reset( $videos );
+							}
+
+							$content .= PHP_EOL;
+							$content .= '<!-- wp:video -->';
+							$content .= '<figure class="wp-block-video"><video controls="controls"';
+							if ( isset( $video['width'] ) && $video['height'] ) {
+								$content .= ' width="' . esc_attr( $video['width'] ) . '"';
+								$content .= ' height="' . esc_attr( $video['height'] ) . '"';
+							}
+							if ( isset( $activity['icon'] ) && ! empty( $activity['icon'] ) ) {
+								if ( is_array( $activity['icon'] ) ) {
+									$poster = null;
+									// choose the larger icon.
+									foreach ( $activity['icon'] as $icon ) {
+										if ( isset( $icon['width'] ) && isset( $icon['height'] ) && isset( $icon['url'] ) && ( ! $poster || ( $icon['width'] > $poster['width'] && $icon['height'] > $poster['height'] ) ) ) {
+											$poster = $icon;
+										}
+									}
+								} else {
+									$poster = $activity['icon'];
+								}
+								if ( $poster ) {
+									$content .= ' poster="' . esc_url( $poster['url'] ) . '"';
+								}
+							}
+							$content .= ' src="' . esc_url( $video['href'] ) . '" type="' . esc_attr( $video['mediaType'] ) . '"';
+							if ( isset( $activity['duration'] ) ) {
+								$content .= ' duration="' . esc_attr( $activity['duration'] ) . '"';
+							}
+							$content .= '/>';
+							if ( ! empty( $activity['subtitleLanguage'] ) ) {
+								foreach ( $activity['subtitleLanguage'] as $subtitle ) {
+									$type = '';
+									if ( '.vtt' === substr( $subtitle['url'], -4 ) ) {
+										$type = 'text/vtt';
+									}
+									$content .= '<track src="' . esc_url( $subtitle['url'] ) . '" kind="subtitles" srclang="' . esc_attr( $subtitle['identifier'] ) . '" type="' . esc_attr( $type ) . '" label="' . esc_attr( $subtitle['name'] ) . '" />';
+								}
+							}
+							$content .= '</video>';
+							if ( ! empty( $attachment['name'] ) ) {
+								$content .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
+							}
+							$content .= '</figure>';
+							$content .= '<!-- /wp:video -->';
+
+						}
+					}
+				} elseif ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
+					$content .= PHP_EOL;
+					$content .= '<!-- wp:image -->';
+					$content .= '<p><img src="' . esc_url( $attachment['url'] ) . '"';
+					if ( ! empty( $attachment['width'] ) && ! empty( $attachment['height'] ) ) {
+						$content .= ' width="' . esc_attr( $attachment['width'] ) . '"';
+						$content .= ' height="' . esc_attr( $attachment['height'] ) . '"';
+					}
+					$content .= ' alt="' . esc_attr( $attachment['name'] ?? '' ) . '" class="size-full" /></p>';
+					$content .= '<!-- /wp:image -->';
+				} elseif ( strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
+					$content .= PHP_EOL;
+					$content .= '<!-- wp:video -->';
+					$content .= '<figure class="wp-block-video"><video controls src="' . esc_url( $attachment['url'] ) . '" type="' . esc_attr( $attachment['mediaType'] ) . '">';
+					$content .= '</video>';
+					if ( ! empty( $attachment['name'] ) ) {
+						$content .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
+					}
+					$content .= '</figure>';
+					$content .= '<!-- /wp:video -->';
+				}
+			}
+		}
+
+		return $content;
+	}
+
+	/**
 	 * We received a post for a feed, handle it.
 	 *
 	 * @param      array $activity     The object from ActivityPub.
@@ -3103,113 +3221,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$data[ self::SLUG ]['application'] = $activity['application'];
 		}
 
-		if ( ! empty( $activity['attachment'] ) ) {
-			$attachments = array();
-			foreach ( $activity['attachment'] as $attachment ) {
-				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
-					continue;
-				}
-				if ( ! in_array( $attachment['type'], array( 'Document', 'Image', 'Link' ), true ) ) {
-					continue;
-				}
-
-				if ( empty( $attachment['url'] ) ) {
-					if ( ! empty( $attachment['href'] ) ) {
-						$attachment['url'] = $attachment['href'];
-					}
-				}
-				if ( 'application/x-mpegURL' === $attachment['mediaType'] ) {
-					if ( ! empty( $attachment['tag'] ) ) {
-						$videos = array();
-						foreach ( $attachment['tag'] as $tag ) {
-							if ( strpos( $tag['mediaType'], 'video/' ) === false ) {
-								continue;
-							}
-							if ( empty( $tag['rel'] ) ) {
-								$videos[ $tag['height'] ] = $tag;
-							}
-						}
-
-						if ( ! empty( $videos ) ) {
-							if ( isset( $videos[720] ) ) {
-								$video = $videos[720];
-							} elseif ( isset( $videos[480] ) ) {
-								$video = $videos[480];
-							} elseif ( isset( $videos[360] ) ) {
-								$video = $videos[360];
-							} else {
-								$video = reset( $videos );
-							}
-
-							$data['content'] .= PHP_EOL;
-							$data['content'] .= '<!-- wp:video -->';
-							$data['content'] .= '<figure class="wp-block-video"><video controls="controls"';
-							if ( isset( $video['width'] ) && $video['height'] ) {
-								$data['content'] .= ' width="' . esc_attr( $video['width'] ) . '"';
-								$data['content'] .= ' height="' . esc_attr( $video['height'] ) . '"';
-							}
-							if ( isset( $activity['icon'] ) && ! empty( $activity['icon'] ) ) {
-								if ( is_array( $activity['icon'] ) ) {
-									$poster = null;
-									// choose the larger icon.
-									foreach ( $activity['icon'] as $icon ) {
-										if ( isset( $icon['width'] ) && isset( $icon['height'] ) && isset( $icon['url'] ) && ( ! $poster || ( $icon['width'] > $poster['width'] && $icon['height'] > $poster['height'] ) ) ) {
-											$poster = $icon;
-										}
-									}
-								} else {
-									$poster = $activity['icon'];
-								}
-								if ( $poster ) {
-									$data['content'] .= ' poster="' . esc_url( $poster['url'] ) . '"';
-								}
-							}
-							$data['content'] .= ' src="' . esc_url( $video['href'] ) . '" type="' . esc_attr( $video['mediaType'] ) . '"';
-							if ( isset( $activity['duration'] ) ) {
-								$data['content'] .= ' duration="' . esc_attr( $activity['duration'] ) . '"';
-							}
-							$data['content'] .= '/>';
-							if ( ! empty( $activity['subtitleLanguage'] ) ) {
-								foreach ( $activity['subtitleLanguage'] as $subtitle ) {
-									$type = '';
-									if ( '.vtt' === substr( $subtitle['url'], -4 ) ) {
-										$type = 'text/vtt';
-									}
-									$data['content'] .= '<track src="' . esc_url( $subtitle['url'] ) . '" kind="subtitles" srclang="' . esc_attr( $subtitle['identifier'] ) . '" type="' . esc_attr( $type ) . '" label="' . esc_attr( $subtitle['name'] ) . '" />';
-								}
-							}
-							$data['content'] .= '</video>';
-							if ( ! empty( $attachment['name'] ) ) {
-								$data['content'] .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
-							}
-							$data['content'] .= '</figure>';
-							$data['content'] .= '<!-- /wp:video -->';
-
-						}
-					}
-				} elseif ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
-					$data['content'] .= PHP_EOL;
-					$data['content'] .= '<!-- wp:image -->';
-					$data['content'] .= '<p><img src="' . esc_url( $attachment['url'] ) . '"';
-					if ( isset( $attachment['width'] ) && $attachment['height'] ) {
-						$data['content'] .= ' width="' . esc_attr( $attachment['width'] ) . '"';
-						$data['content'] .= ' height="' . esc_attr( $attachment['height'] ) . '"';
-					}
-					$data['content'] .= ' class="size-full" /></p>';
-					$data['content'] .= '<!-- /wp:image -->';
-				} elseif ( strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
-					$data['content'] .= PHP_EOL;
-					$data['content'] .= '<!-- wp:video -->';
-					$data['content'] .= '<figure class="wp-block-video"><video controls src="' . esc_url( $attachment['url'] ) . '" type="' . esc_attr( $attachment['mediaType'] ) . '">';
-					$data['content'] .= '</video>';
-					if ( ! empty( $attachment['name'] ) ) {
-						$data['content'] .= '<figcaption class="wp-element-caption">' . esc_html( $attachment['name'] ) . '</figcaption>';
-					}
-					$data['content'] .= '</figure>';
-					$data['content'] .= '<!-- /wp:video -->';
-				}
-			}
-		}
+		$data['content'] = $this->append_activity_attachments( $data['content'], $activity );
 
 		if ( ! empty( $tags ) && is_array( $tags ) ) {
 			$data['friend_tags'] = $tags;

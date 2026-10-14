@@ -79,6 +79,31 @@ class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
 		return $wp_rest_server->dispatch( $request );
 	}
 
+	public function test_outgoing_direct_message_preserves_image_alt_text() {
+		$media_id = wp_insert_attachment(
+			array(
+				'post_mime_type' => 'image/jpeg',
+				'post_status' => 'inherit',
+				'guid' => 'https://me.local/photo.jpg',
+			)
+		);
+		$this->posts[] = $media_id;
+		update_post_meta( $media_id, '_wp_attachment_image_alt', 'A fox & friends' );
+		$status = Friends::get_instance()->messages->mastodon_api_submit_status(
+			null,
+			'@akirk@mastodon.local Photo by DM.',
+			null,
+			array( $media_id ),
+			'standard',
+			'direct'
+		);
+		$this->assertNotWPError( $status );
+		$messages = get_posts( array( 'post_type' => Messages::CPT, 'post_status' => 'friends_read', 'numberposts' => -1 ) );
+		$this->assertCount( 1, $messages );
+		$this->posts[] = $messages[0]->ID;
+		$this->assertStringContainsString( 'alt="A fox &amp; friends"', $messages[0]->post_content );
+	}
+
 	public function test_account_canonical_id() {
 		$this->assertTrue( \has_filter( 'mastodon_api_account' ) );
 
