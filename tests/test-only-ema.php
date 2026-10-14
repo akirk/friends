@@ -69,6 +69,7 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			fwrite( $stderr, PHP_EOL . \Enable_Mastodon_Apps\Mastodon_API::get_last_error() . PHP_EOL );
 			fclose( $stderr );
 		}
+		parent::tear_down();
 	}
 
 	public function block_http_requests() {
@@ -424,10 +425,15 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			}
 
 			$status = $this->create_mastodon_status( $post_id );
+			$attachment = new \Enable_Mastodon_Apps\Entity\Media_Attachment();
+			$attachment->id = '12345';
+			$attachment->type = 'image';
+			$attachment->url = 'https://example.org/reblog-photo.jpg';
+			$attachment->preview_url = $attachment->url;
+			$status->media_attachments = array( $attachment );
 			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
-			$status->account = (object) array(
-				'id' => 'remote-account',
-			);
+			$status->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$status->account->id = 'remote-account';
 			return $status;
 		};
 		add_filter( 'mastodon_api_status', $status_filter, 20, 2 );
@@ -437,9 +443,9 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 				return $account;
 			}
 
-			return (object) array(
-				'id' => strval( $this->administrator_id ),
-			);
+			$account = new \Enable_Mastodon_Apps\Entity\Account();
+			$account->id = strval( $this->administrator_id );
+			return $account;
 		};
 		add_filter( 'mastodon_api_account', $account_filter, 20, 2 );
 
@@ -453,6 +459,9 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		$data = $statuses->get_data();
 
 		$this->assertCount( 1, $data );
+		$this->assertCount( 0, $data[0]->media_attachments );
+		$this->assertCount( 1, $data[0]->reblog->media_attachments );
+		$this->assertEquals( '12345', $data[0]->reblog->media_attachments[0]->id );
 		$this->assertEquals( strval( $this->administrator_id ), $data[0]->account->id );
 		$this->assertEquals( strval( $post_id ), $data[0]->reblog->id );
 		$this->assertEquals( '2024-05-02T12:00:00+00:00', $data[0]->created_at->format( \DateTime::ATOM ) );

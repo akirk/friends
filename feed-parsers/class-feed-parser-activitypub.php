@@ -296,6 +296,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$status->reblog = clone $status;
 		$status->reblog->account = clone $status->account;
 		$status->reblog->id = \Enable_Mastodon_Apps\Mastodon_API::remap_reblog_id( $status->reblog->id );
+		$status->media_attachments = array();
 
 		$account = false;
 		$friend_user = User::get_post_author( get_post( $post_id ) );

@@ -1,0 +1,3 @@
+Type: fixed
+
+Keep Mastodon boost attachments on the reblogged post only, preventing duplicate media on the outer boost.
