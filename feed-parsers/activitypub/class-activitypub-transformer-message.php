@@ -95,19 +95,38 @@ class ActivityPub_Transformer_Message extends \Activitypub\Transformer\Post {
 
 		$mentions = '';
 		foreach ( $this->get_mentions() as $acct => $to ) {
-			$acct = substr( $acct, 0, strpos( $acct, '@', 1 ) );
+			$domain_position = strpos( $acct, '@', 1 );
+			$short_acct = false === $domain_position ? $acct : substr( $acct, 0, $domain_position );
 			$mention = sprintf(
-				'<a rel="mention" class="u-url mention" href="%s">',
-				esc_url( $to )
+				'<a rel="mention" class="u-url mention" href="%s">%s</a>',
+				esc_url( $to ),
+				esc_html( $short_acct )
 			);
-			if ( strpos( $content, $mention ) !== false ) {
-				continue;
+
+			// Existing links can have any attribute order or omit the mention class.
+			$linked = false;
+			$processor = new \WP_HTML_Tag_Processor( $content );
+			while ( $processor->next_tag( 'A' ) ) {
+				if ( $to === $processor->get_attribute( 'href' ) ) {
+					$linked = true;
+					break;
+				}
 			}
 
-			if ( strpos( $content, $acct ) !== false ) {
-				$content = str_replace( $acct, $mention . esc_html( $acct ) . '</a>', $content );
-			} else {
-				$mentions .= $mention . esc_html( $acct ) . '</a> ';
+			// Replace full handles before short ones, only in unlinked text. Never
+			// rewrite attributes, existing anchors, code, or another actor's handle.
+			$pattern = '/(?<![\w@])(?:' . preg_quote( $acct, '/' ) . '|' . preg_quote( $short_acct, '/' ) . ')(?![\w@-]|\.[\w])/u';
+			$content = \Activitypub\enrich_content_data(
+				$content,
+				$pattern,
+				static function () use ( $mention, &$linked ) {
+					$linked = true;
+					return $mention;
+				}
+			);
+
+			if ( ! $linked ) {
+				$mentions .= $mention . ' ';
 			}
 		}
 
