@@ -480,7 +480,7 @@ class Messages {
 					'terms'    => $args['friend_user']->ID,
 				);
 			$args['existing_messages']->set( 'tax_query', $tax_query );
-			$args['existing_messages']->set( 'posts_per_page', -1 );
+			$args['existing_messages']->set( 'posts_per_page', 1 );
 			if ( ! $args['existing_messages']->get_posts() ) {
 				return;
 			}

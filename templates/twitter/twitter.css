@@ -2542,3 +2542,58 @@ body.friends-page {
 	-webkit-box-orient: vertical;
 	overflow: hidden;
 }
+
+/* Group direct message threads by user. */
+.friends-page .friends-dm-user-group {
+	border-bottom: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.friends-page .friends-dm-user-group > .friends-dm-conversation {
+	border-bottom: none;
+}
+
+.friends-page .friends-dm-older-conversations > summary {
+	align-items: center;
+	color: light-dark(#536471, #71767b);
+	cursor: pointer;
+	display: flex;
+	font-size: 0.85em;
+	gap: 8px;
+	list-style: none;
+	padding: 8px 16px 10px 66px;
+}
+
+.friends-page .friends-dm-older-conversations > summary::-webkit-details-marker {
+	display: none;
+}
+
+.friends-page .friends-dm-older-conversations > summary::marker {
+	content: '';
+}
+
+.friends-page .friends-dm-older-conversations > summary::after {
+	border-bottom: 1.5px solid currentColor;
+	border-right: 1.5px solid currentColor;
+	content: '';
+	flex: 0 0 6px;
+	height: 6px;
+	margin-left: auto;
+	transform: rotate(45deg);
+}
+
+.friends-page .friends-dm-older-conversations[open] > summary::after {
+	transform: rotate(225deg);
+}
+
+.friends-page .friends-dm-older-conversations > summary:hover {
+	background: light-dark(rgba(15,20,25,.04), rgba(231,233,234,.08));
+}
+
+.friends-page .friends-dm-older-conversations > summary:focus-visible {
+	outline: 2px solid currentColor;
+	outline-offset: -2px;
+}
+
+.friends-page .friends-dm-older-conversations .friends-dm-conversation {
+	padding-left: 24px;
+}
