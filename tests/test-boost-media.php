@@ -13,7 +13,7 @@ namespace Friends;
 class Boost_Media_Test extends Friends_TestCase_Cache_HTTP {
 	public function test_local_boost_keeps_media_on_original_status() {
 		$user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
-		wp_set_current_user( $user_id );
+		wp_set_current_user( 0 );
 		$post_id = $this->factory->post->create(
 			array(
 				'post_type' => Friends::CPT,
