@@ -491,12 +491,12 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 
 			$status = $this->create_mastodon_status( $post_id );
 			$status->created_at = new \DateTime( '2024-05-01 10:00:00', new \DateTimeZone( 'UTC' ) );
-			$status->account = (object) array(
-				'id' => 'remote-account',
-			);
+			$status->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$status->account->id = 'remote-account';
 			$original = $this->create_mastodon_status( 123 );
 			$original->content = 'Original content';
-			$original->account = (object) array( 'id' => 'original-author' );
+			$original->account = new \Enable_Mastodon_Apps\Entity\Account();
+			$original->account->id = 'original-author';
 			$original->reblog = null;
 			$middle = $this->create_mastodon_status( 456 );
 			$middle->reblog = $original;
