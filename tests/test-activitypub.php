@@ -183,7 +183,7 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 
 		$this->assertEquals( $post_count + 1, count( $posts ) );
 		$this->assertStringStartsWith( $content, $posts[0]->post_content );
-		$this->assertSame( $content_warning, get_post_meta( $posts[0]->ID, Feed_Parser_ActivityPub::CONTENT_WARNING_META, true ) );
+		$this->assertSame( $content_warning, get_post_meta( $posts[0]->ID, 'friends_content_warning', true ) );
 		$image = new \WP_HTML_Tag_Processor( $posts[0]->post_content );
 		$this->assertTrue( $image->next_tag( 'IMG' ) );
 		$this->assertSame( $attachment_url, $image->get_attribute( 'src' ) );
