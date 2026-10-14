@@ -5504,7 +5504,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					}
 				}
 			}
-			if ( preg_match( '/[^a-zA-Z0-9.-]/', $domain ) ) { // Has invalid characters.
+			if ( empty( $domain ) || preg_match( '/[^a-zA-Z0-9.-]/', $domain ) ) { // Missing domain or has invalid characters.
 				return $metadata;
 			}
 
