@@ -831,7 +831,7 @@ class Messages {
 					);
 					$status_text .= '<!-- wp:image ' . wp_json_encode( $meta_json ) . ' -->' . PHP_EOL;
 					$alt = get_post_meta( $media_id, '_wp_attachment_image_alt', true );
-					if ( '' === $alt ) {
+					if ( ! metadata_exists( 'post', $media_id, '_wp_attachment_image_alt' ) ) {
 						$alt = get_post_field( 'post_excerpt', $media_id );
 					}
 					$status_text .= '<figure class="wp-block-image"><img src="' . esc_url( wp_get_attachment_url( $media_id ) ) . '" alt="' . esc_attr( $alt ) . '" class="wp-image-' . esc_attr( $media_id ) . '"/></figure>' . PHP_EOL;
