@@ -300,7 +300,7 @@ do_action( 'friends_settings_before_form' );
 								<option value="collapsed"<?php selected( $args['frontend_default_view'], 'collapsed' ); ?>><?php esc_html_e( 'Compact mode', 'friends' ); ?></option>
 							</select>
 						</label>
-						<p class="description"><?php esc_html_e( 'The main feed uses this mode. Other pages follow it until you change their mode.', 'friends' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Changing the mode on /friends/ also updates this default. Other pages follow it until you change their mode.', 'friends' ); ?></p>
 						<?php if ( $args['frontend_views'] ) : ?>
 							<ul>
 							<?php foreach ( $args['frontend_views'] as $view => $display_mode ) : ?>
