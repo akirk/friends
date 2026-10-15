@@ -31,6 +31,10 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	public function set_up() {
 		parent::set_up();
 		$frontend = Friends::get_instance()->frontend;
+		$this->assertNotFalse(
+			has_action( 'wp_ajax_friends-load-feed', array( $frontend, 'ajax_load_feed' ) ),
+			'The asynchronous feed endpoint must be registered.'
+		);
 		$frontend->author = false;
 		$frontend->post_format = false;
 		$frontend->template = false;
@@ -51,6 +55,8 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	 * The page shell must not execute the feed SQL or count all matching posts.
 	 */
 	public function test_initial_page_skips_feed_query() {
+		$this->set_permalink_structure( '/%postname%/' );
+		Friends::get_instance()->frontend->add_rewrite_rule();
 		$this->create_posts( 1 );
 		$queries = array();
 		$record = function ( $sql ) use ( &$queries ) {
@@ -75,6 +81,8 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	 * The fallback returns actual posts rather than a loading state.
 	 */
 	public function test_synchronous_fallback() {
+		$this->set_permalink_structure( '/%postname%/' );
+		Friends::get_instance()->frontend->add_rewrite_rule();
 		$this->create_posts( 1 );
 		$_GET['friends_sync'] = '1';
 		try {
