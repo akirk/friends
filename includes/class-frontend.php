@@ -58,7 +58,7 @@ class Frontend {
 	public function ajax_set_display_mode() {
 		$view = isset( $_POST['view'] ) ? sanitize_text_field( wp_unslash( $_POST['view'] ) ) : '';
 		check_ajax_referer( 'friends-display-mode-' . $view );
-		if ( ! $this->has_required_priviledges() ) {
+		if ( ! $this->can_view_feed() ) {
 			wp_send_json_error( null, 403 );
 		}
 		$mode = isset( $_POST['mode'] ) ? sanitize_key( $_POST['mode'] ) : '';
