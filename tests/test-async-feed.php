@@ -263,6 +263,74 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Merge bounded candidates without changing the permitted types or statuses.
+	 */
+	public function test_partitioned_feed_preserves_types_statuses_and_cursor_order() {
+		$this->create_posts( 5 );
+		foreach ( array( Friends::CPT, 'post' ) as $type ) {
+			foreach ( array( 'publish', 'private', 'future' ) as $status ) {
+				$this->factory->post->create(
+					array(
+						'post_type' => $type,
+						'post_author' => get_current_user_id(),
+						'post_status' => $status,
+						'post_date' => 'future' === $status ? '2099-01-01 12:00:00' : '2020-02-01 12:00:00',
+					)
+				);
+			}
+		}
+		foreach ( array( 'DESC', 'ASC' ) as $order ) {
+			$vars = array(
+				'post_type' => array( Friends::CPT, 'post' ),
+				'post_status' => array( 'publish', 'private', 'future' ),
+				'order' => $order,
+				'orderby' => 'date ID',
+				'posts_per_page' => 2,
+			);
+			$reference = new \WP_Query( array_merge( $vars, array( 'posts_per_page' => -1, 'no_found_rows' => true ) ) );
+			$expected_ids = wp_list_pluck( $reference->posts, 'ID' );
+			$received_ids = array();
+			$cursor = null;
+			for ( $page = 0; $page < 20; ++$page ) {
+				$result = $this->request_feed( $vars, $page, false, null, $cursor );
+				$this->assertTrue( $result['success'] );
+				global $wp_query;
+				$this->assertStringContainsString( 'friends_feed_candidates', $wp_query->request );
+				$received_ids = array_merge( $received_ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+				$cursor = $result['data'];
+				if ( ! $cursor['has_more'] ) {
+					break;
+				}
+			}
+			$this->assertSame( $expected_ids, $received_ids );
+			$this->request_feed( $vars, 1, true );
+			$this->assertSame( array_slice( $expected_ids, 2, 2 ), wp_list_pluck( $GLOBALS['wp_query']->posts, 'ID' ) );
+		}
+	}
+
+	/**
+	 * Joined taxonomy queries retain WordPress's original execution path.
+	 */
+	public function test_partition_optimization_skips_taxonomy_joins() {
+		$this->create_posts( 3 );
+		$vars = $this->query_vars();
+		$vars['post_status'] = array( 'publish', 'private', 'future' );
+		$this->request_feed( $vars, 0 );
+		$this->assertStringNotContainsString( 'friends_feed_candidates', $GLOBALS['wp_query']->request );
+	}
+
+	/**
+	 * Do not materialize large candidate sets for deep numbered pages.
+	 */
+	public function test_partition_optimization_skips_deep_offsets() {
+		$vars = $this->query_vars();
+		unset( $vars['tax_query'], $vars['friends_author'] );
+		$vars['post_status'] = array( 'publish', 'private', 'future' );
+		$this->request_feed( $vars, 500, true );
+		$this->assertStringNotContainsString( 'friends_feed_candidates', $GLOBALS['wp_query']->request );
+	}
+
+	/**
 	 * Create dated posts with a deterministic order.
 	 *
 	 * @param int $count Number of posts.

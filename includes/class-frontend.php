@@ -97,6 +97,7 @@ class Frontend {
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
 		add_filter( 'posts_pre_query', array( $this, 'defer_feed_query' ), 10, 2 );
 		add_filter( 'posts_where', array( $this, 'feed_cursor_where' ), 10, 2 );
+		add_filter( 'posts_clauses_request', array( $this, 'feed_partition_clauses' ), 99, 2 );
 		add_filter( 'pre_handle_404', array( $this, 'deferred_feed_status' ), 10, 2 );
 		add_filter( 'pre_get_posts', array( $this, 'exclude_compose_format_from_feed' ), 10 );
 		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 2 );
@@ -383,6 +384,58 @@ class Frontend {
 			$cursor['date'],
 			$cursor['id']
 		);
+	}
+
+	/**
+	 * Fetch small ordered sets per type/status using WordPress's existing index.
+	 *
+	 * The type_status_date index can supply date order when both its leading
+	 * columns are fixed. Merge only each partition's newest candidates instead
+	 * of sorting the complete archive across multiple statuses or post types.
+	 *
+	 * @param array     $clauses Query SQL clauses.
+	 * @param \WP_Query $query The query being executed.
+	 * @return array SQL clauses with a bounded candidate join where applicable.
+	 */
+	public function feed_partition_clauses( $clauses, $query ) {
+		if ( ! $query->get( 'friends_feed_fast' ) || ! $query->get( 'no_found_rows' )
+			|| ! empty( $clauses['join'] ) || ! empty( $clauses['groupby'] ) || ! empty( $clauses['distinct'] ) ) {
+			return $clauses;
+		}
+		global $wpdb;
+		if ( ! in_array( trim( $clauses['fields'] ), array( $wpdb->posts . '.*', $wpdb->posts . '.ID' ), true ) ) {
+			return $clauses;
+		}
+		$order = 'ASC' === strtoupper( $query->get( 'order' ) ) ? 'ASC' : 'DESC';
+		$expected_order = "{$wpdb->posts}.post_date $order, {$wpdb->posts}.ID $order";
+		if ( preg_replace( '/\s+/', ' ', trim( $clauses['orderby'] ) ) !== $expected_order
+			|| ! preg_match( '/^LIMIT\s+(\d+)\s*,\s*(\d+)$/i', trim( $clauses['limits'] ), $limits ) ) {
+			return $clauses;
+		}
+		$candidate_limit = intval( $limits[1] ) + intval( $limits[2] );
+		// Bound materialization; deep numbered pages retain the ordinary query.
+		if ( $candidate_limit < 1 || $candidate_limit > 500 ) {
+			return $clauses;
+		}
+		$types = array_unique( (array) $query->get( 'post_type' ) );
+		$statuses = array_unique( (array) $query->get( 'post_status' ) );
+		$partition_count = count( $types ) * count( $statuses );
+		if ( $partition_count < 2 || $partition_count > 12 || in_array( 'any', $types, true ) || in_array( 'any', $statuses, true ) ) {
+			return $clauses;
+		}
+		$partitions = array();
+		foreach ( $types as $type ) {
+			foreach ( $statuses as $status ) {
+				$conditions = $wpdb->prepare( " AND {$wpdb->posts}.post_type = %s AND {$wpdb->posts}.post_status = %s", $type, $status );
+				$alias = 'friends_feed_partition_' . count( $partitions );
+				$partitions[] = "SELECT ID, post_date FROM ( SELECT {$wpdb->posts}.ID, {$wpdb->posts}.post_date FROM {$wpdb->posts} WHERE 1=1 {$clauses['where']} $conditions ORDER BY {$clauses['orderby']} LIMIT $candidate_limit ) AS $alias";
+			}
+		}
+		$candidates = 'SELECT ID FROM ( ' . implode( ' UNION ALL ', $partitions ) . " ) AS friends_feed_merge ORDER BY post_date $order, ID $order LIMIT $candidate_limit";
+		$clauses['join'] = " INNER JOIN ( $candidates ) AS friends_feed_candidates ON {$wpdb->posts}.ID = friends_feed_candidates.ID";
+		// Every existing condition (including the cursor) is applied inside each partition.
+		$clauses['where'] = '';
+		return $clauses;
 	}
 
 	/**
@@ -1509,6 +1562,7 @@ class Frontend {
 			}
 			$query_vars['posts_per_page'] = $profile && 1 === $per_page ? 1 : $per_page + 1;
 			$query_vars['no_found_rows']  = true;
+			$query_vars['friends_feed_fast'] = true;
 			$query_vars['orderby']        = 'date ID';
 		}
 
