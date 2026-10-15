@@ -18,6 +18,10 @@ class DisplayModeTest extends \WP_UnitTestCase {
 		$user_id = self::factory()->user->create();
 		wp_set_current_user( $user_id );
 		$frontend = Friends::get_instance()->frontend;
+		$this->assertTrue(
+			is_callable( array( $frontend, 'get_display_mode' ) ),
+			'The frontend must resolve the saved display mode for each area.'
+		);
 		$area = new \ReflectionProperty( Frontend::class, 'display_view' );
 		$area->setAccessible( true );
 		$previous = $area->getValue( $frontend );
