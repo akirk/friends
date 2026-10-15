@@ -55,8 +55,6 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	 * The page shell must not execute the feed SQL or count all matching posts.
 	 */
 	public function test_initial_page_skips_feed_query() {
-		$this->set_permalink_structure( '/%postname%/' );
-		Friends::get_instance()->frontend->add_rewrite_rule();
 		$this->create_posts( 1 );
 		$queries = array();
 		$record = function ( $sql ) use ( &$queries ) {
@@ -66,7 +64,8 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			return $sql;
 		};
 		add_filter( 'query', $record );
-		$this->go_to( home_url( '/friends/' ) );
+		// Exercise the Friends route independently of the test site's permalink rules.
+		$this->go_to( home_url( '/?pagename=friends' ) );
 		remove_filter( 'query', $record );
 
 		global $wp_query;
@@ -81,14 +80,12 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	 * The fallback returns actual posts rather than a loading state.
 	 */
 	public function test_synchronous_fallback() {
-		$this->set_permalink_structure( '/%postname%/' );
-		Friends::get_instance()->frontend->add_rewrite_rule();
 		$this->create_posts( 1 );
 		$_GET['friends_sync'] = '1';
 		try {
-			$this->go_to( home_url( '/friends/?friends_sync=1' ) );
+			$this->go_to( home_url( '/?pagename=friends&friends_sync=1' ) );
 			$this->assertFalse( Friends::get_instance()->frontend->is_feed_deferred() );
-			$this->assertTrue( have_posts() );
+			$this->assertTrue( have_posts(), $GLOBALS['wp_query']->request );
 		} finally {
 			unset( $_GET['friends_sync'] );
 		}
