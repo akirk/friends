@@ -33,6 +33,55 @@ class Frontend {
 	private $is_friends_page = false;
 
 	/**
+	 * Current feed area, shared by all pagination pages.
+	 *
+	 * @var string
+	 */
+	private $display_view = 'friends';
+
+	/**
+	 * Get the saved mode for this area, falling back to the main feed.
+	 *
+	 * @return string
+	 */
+	public function get_display_mode() {
+		$views = (array) get_user_option( 'friends_frontend_views' );
+		if ( isset( $views[ $this->display_view ] ) ) {
+			return $views[ $this->display_view ];
+		}
+		return 'collapsed' === get_user_option( 'friends_frontend_default_view' ) ? 'collapsed' : 'expanded';
+	}
+
+	/**
+	 * Save or remove a display preference for the current user.
+	 */
+	public function ajax_set_display_mode() {
+		$view = isset( $_POST['view'] ) ? sanitize_text_field( wp_unslash( $_POST['view'] ) ) : '';
+		check_ajax_referer( 'friends-display-mode-' . $view );
+		if ( ! $this->can_view_feed() ) {
+			wp_send_json_error( null, 403 );
+		}
+		$mode = isset( $_POST['mode'] ) ? sanitize_key( $_POST['mode'] ) : '';
+		if ( ! in_array( $mode, array( 'collapsed', 'expanded', 'remove' ), true ) || ( 'friends' !== $view && 0 !== strpos( $view, 'friends/' ) ) || ( 'friends' === $view && 'remove' === $mode ) ) {
+			wp_send_json_error( null, 400 );
+		}
+		$user_id = get_current_user_id();
+		if ( 'friends' === $view ) {
+			update_user_option( $user_id, 'friends_frontend_default_view', $mode );
+		} else {
+			$views = (array) get_user_option( 'friends_frontend_views' );
+			if ( 'remove' === $mode ) {
+				unset( $views[ $view ] );
+			} else {
+				$views[ $view ] = $mode;
+			}
+			update_user_option( $user_id, 'friends_frontend_views', array_filter( $views ) );
+		}
+		wp_send_json_success();
+	}
+
+
+	/**
 	 * Whether an author is being displayed
 	 *
 	 * @var object|false
@@ -105,6 +154,7 @@ class Frontend {
 		add_filter( 'wp_loaded', array( $this, 'add_rewrite_rule' ) );
 		add_filter( 'init', array( $this, 'register_friends_sidebar' ) );
 		add_action( 'init', array( $this, 'add_theme_supports' ) );
+		add_action( 'wp_ajax_friends-display-mode', array( $this, 'ajax_set_display_mode' ) );
 		add_action( 'wp_ajax_friends_publish', array( $this, 'ajax_frontend_publish_post' ) );
 		add_action( 'wp_ajax_friends-mention-autocomplete', array( $this, 'ajax_mention_autocomplete' ) );
 		add_action( 'wp_ajax_friends-change-post-format', array( $this, 'ajax_change_post_format' ) );
@@ -436,6 +486,8 @@ class Frontend {
 		$variables = array(
 			'emojis_json'            => plugins_url( 'emojis.json', FRIENDS_PLUGIN_FILE ),
 			'ajax_url'               => admin_url( 'admin-ajax.php' ),
+			'display_view'           => $this->display_view,
+			'display_mode_nonce'     => wp_create_nonce( 'friends-display-mode-' . $this->display_view ),
 			'rest_base'              => rest_url( 'friends/v1/' ),
 			'rest_nonce'             => wp_create_nonce( 'wp_rest' ),
 			'text_link_expired'      => __( 'The link has expired. A new link has been generated, please click it again.', 'friends' ),
@@ -1681,7 +1733,7 @@ class Frontend {
 			}
 
 			if ( 'frontend/index' === $this->template ) {
-				$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
+				$args['frontend_default_view'] = $this->get_display_mode();
 
 			}
 			return Friends::template_loader()->get_template_part( $this->template, null, $args, false );
@@ -1708,7 +1760,7 @@ class Frontend {
 			}
 		}
 
-		$args['frontend_default_view'] = get_user_option( 'friends_frontend_default_view', get_current_user_id() );
+		$args['frontend_default_view'] = $this->get_display_mode();
 		$args['blocks-everywhere']     = false;
 
 		if ( isset( $_GET['welcome'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -2269,6 +2321,8 @@ class Frontend {
 			return $query;
 		}
 
+		$this->display_view = preg_replace( '#/page/[0-9]+/?$#', '', trim( $pagename, '/' ) );
+
 		if ( isset( $pagename_parts[0] ) && 'settings' === $pagename_parts[0] ) {
 			wp_safe_redirect( self_admin_url( 'admin.php?page=friends-settings' ) );
 			exit;
@@ -2427,7 +2481,7 @@ class Frontend {
 		$query->set( 'category_name', null );
 		if ( get_option( 'posts_per_page' ) < 20 ) {
 			$query->set( 'posts_per_page', 20 );
-			if ( 'collapsed' === get_user_option( 'friends_frontend_default_view', get_current_user_id() ) && 'status' === $post_format ) {
+			if ( 'collapsed' === $this->get_display_mode() && 'status' === $post_format ) {
 				$query->set( 'posts_per_page', 30 );
 			}
 		}

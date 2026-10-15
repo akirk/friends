@@ -123,6 +123,7 @@
 		} else {
 			$( 'a.toggle-compact' ).text( friends.text_compact_mode );
 		}
+		friends.saveDisplayMode( $( 'section.posts' ).hasClass( 'all-collapsed' ) ? 'collapsed' : 'expanded' );
 		return false;
 	} );
 

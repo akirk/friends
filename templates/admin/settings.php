@@ -290,22 +290,22 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<tr>
-				<th scope="row" rowspan="3"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
+				<th scope="row" rowspan="2"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
 				<td>
 					<fieldset>
-						<label for="frontend-default-view">
-							<span><?php esc_html_e( 'Default view:', 'friends' ); ?></span>
-							<select name="frontend_default_view" id="frontend-default-view">
-								<option value="expanded"<?php selected( $args['frontend_default_view'], 'expanded' ); ?>><?php esc_html_e( 'Expanded mode', 'friends' ); ?></option>
-								<option value="collapsed"<?php selected( $args['frontend_default_view'], 'collapsed' ); ?>><?php esc_html_e( 'Compact mode', 'friends' ); ?></option>
-							</select>
-						</label>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<fieldset>
+						<?php if ( $args['frontend_views'] ) : ?>
+							<div class="friends-display-views">
+							<ul>
+							<?php foreach ( $args['frontend_views'] as $view => $display_mode ) : ?>
+								<li>
+									<a href="<?php echo esc_url( home_url( '/' . $view . '/' ) ); ?>"><?php echo esc_html( '/' . $view . '/' ); ?></a>
+									— <?php echo esc_html( 'collapsed' === $display_mode ? __( 'Compact mode', 'friends' ) : __( 'Expanded mode', 'friends' ) ); ?>
+									<button type="button" class="button-link friends-remove-display-mode" data-view="<?php echo esc_attr( $view ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-display-mode-' . $view ) ); ?>" aria-label="<?php esc_attr_e( 'Remove saved view setting', 'friends' ); ?>">&times;</button>
+								</li>
+							<?php endforeach; ?>
+							</ul>
+							</div>
+						<?php endif; ?>
 						<label for="frontend-theme">
 							<span><?php esc_html_e( 'Main Theme:', 'friends' ); ?></span>
 							<select name="friends_frontend_theme" id="frontend-theme">
