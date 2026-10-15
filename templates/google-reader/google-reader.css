@@ -1818,3 +1818,19 @@
 .friends-page .friends-feed-fallback {
 	margin-left: 12px;
 }
+
+/* Loading and recovery are part of the feed navigation. */
+.friends-page .posts-navigation [hidden],
+.friends-page .friends-feed-status:empty {
+	display: none;
+}
+
+.friends-page .friends-feed-status {
+	padding: 12px 24px;
+	text-align: center;
+}
+
+.friends-page .posts-navigation button:disabled {
+	cursor: wait;
+	opacity: .65;
+}

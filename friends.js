@@ -4,6 +4,10 @@
 	let alreadySearching = '';
 	let alreadyLoading = false;
 	let initialFeedPending = Boolean( friends.async_feed );
+	let feedLoadFailed = false;
+	let feedRetryMode = 'append';
+	let feedRefreshPending = false;
+	const initialFeedPage = Number( friends.current_page );
 	const bottomOffsetLoadNext = 2000;
 	let searchResultFocused = false;
 
@@ -229,10 +233,14 @@
 			const feed_count = feeds.length;
 			let alreadyLoading = false;
 			function update_page() {
+				if ( friends.async_feed ) {
+					loadFeed( 'refresh' );
+					return;
+				}
 				if ( alreadyLoading ) {
 					return;
 				}
-				wp.ajax.send( friends.async_feed ? 'friends-load-feed' : 'friends-load-next-page', {
+				wp.ajax.send( 'friends-load-next-page', {
 					data: {
 						query_vars: friends.query_vars,
 						page: friends.current_page - 1,
@@ -244,13 +252,7 @@
 					},
 					success( result ) {
 						alreadyLoading = false;
-						const newPosts = friends.async_feed ? result.html : result;
-						if ( friends.async_feed ) {
-							friends.current_page = result.page;
-							friends.feed_cursor = result.cursor;
-							friends.feed_cursor_sign = result.cursor_sign;
-							friends.max_page = result.has_more ? result.page + 1 : result.page;
-						}
+						const newPosts = result;
 						if ( newPosts ) {
 							$( 'section.posts' )
 							.html( newPosts );
@@ -494,7 +496,9 @@
 		) {
 			return;
 		}
-		nextPage();
+		if ( ! feedLoadFailed ) {
+			nextPage();
+		}
 	} );
 
 	$( document ).on( 'click', '.nav-previous', function () {
@@ -568,47 +572,102 @@
 		return result.explain;
 	};
 
-	function loadInitialFeed() {
-		const $loading = $( '.friends-feed-loading' );
-		if ( ! $loading.length || alreadyLoading ) {
+	// Initial loading, refresh, and pagination share one request and pagination state.
+	function loadFeed( mode ) {
+		const $feed = $( 'section.posts' );
+		if ( alreadyLoading && mode === 'refresh' ) {
+			feedRefreshPending = true;
+		}
+		if ( ! $feed.length || alreadyLoading ) {
 			return;
 		}
+		const append = mode === 'append';
+		const $loading = $feed.find( '.friends-feed-loading' );
+		const $navigation = $feed.find( '.posts-navigation' );
+		const $button = $navigation.find( 'button' );
+		const restoreFocus = mode !== 'refresh' && ( $loading.find( 'button' ).is( ':focus' ) || $button.is( ':focus' ) );
 		alreadyLoading = true;
+		feedLoadFailed = false;
+		$feed.attr( 'aria-busy', 'true' );
 		$loading.attr( 'aria-busy', 'true' );
 		$loading.find( '.loading' ).show();
 		$loading.find( '.friends-feed-retry, .friends-feed-fallback' ).prop( 'hidden', true );
-		$loading.find( '.friends-feed-loading-text' ).text( friends.text_loading );
-		wp.ajax.send( 'friends-load-feed', {
+		$loading.find( '.friends-feed-loading-text' ).text( friends.text_loading_feed );
+		$button.prop( 'disabled', true ).text( friends.text_loading_feed );
+		$navigation.find( '.friends-feed-status' ).text( '' );
+		return wp.ajax.send( 'friends-load-feed', {
 			data: {
 				query_vars: friends.query_vars,
-				page: Number( friends.current_page ) - 1,
+				page: append ? friends.current_page : ( mode === 'refresh' ? 0 : initialFeedPage - 1 ),
 				qv_sign: friends.qv_sign,
-				initial_feed: 1,
+				initial_feed: append ? 0 : 1,
+				cursor: append ? friends.feed_cursor : '',
+				cursor_sign: append ? friends.feed_cursor_sign : '',
 			},
 			success( result ) {
-				$loading.closest( 'section.posts' ).html( result.html );
+				const $newPosts = $( result.html );
+				if ( append ) {
+					$navigation.before( $newPosts );
+				} else {
+					$feed.html( $newPosts );
+				}
 				friends.current_page = result.page;
 				friends.feed_cursor = result.cursor;
 				friends.feed_cursor_sign = result.cursor_sign;
 				friends.max_page = result.has_more ? result.page + 1 : result.page;
 				initialFeedPending = false;
+				const $currentNavigation = $feed.find( '.posts-navigation' );
+				$currentNavigation.find( '.nav-previous' ).prop( 'hidden', ! result.has_more );
+				$currentNavigation.find( '.friends-feed-status' ).text( result.has_more ? '' : friends.text_no_more_posts );
 				initializeFeedPosts();
+				if ( restoreFocus ) {
+					const $target = $newPosts.filter( 'article' ).first();
+					( $target.length ? $target : $currentNavigation ).attr( 'tabindex', '-1' ).trigger( 'focus' );
+				}
 			},
 			error() {
+				feedLoadFailed = true;
+				feedRetryMode = mode;
+				$navigation.find( '.nav-previous' ).prop( 'hidden', false );
 				$loading.attr( 'aria-busy', 'false' );
 				$loading.find( '.loading' ).hide();
 				$loading.find( '.friends-feed-loading-text' ).text( friends.text_feed_load_error );
 				$loading.find( '.friends-feed-retry, .friends-feed-fallback' ).prop( 'hidden', false );
+				$navigation.find( '.friends-feed-status' ).text( friends.text_feed_load_error );
 			},
 		} ).always( function () {
 			alreadyLoading = false;
+			$feed.attr( 'aria-busy', 'false' );
+			$button.prop( 'disabled', false ).text( feedLoadFailed ? friends.text_retry_feed : friends.text_load_more_posts );
+			if ( feedRefreshPending ) {
+				feedRefreshPending = false;
+				if ( ! feedLoadFailed ) {
+					loadFeed( 'refresh' );
+				}
+			}
 		} );
+	}
+
+	function loadInitialFeed() {
+		if ( $( '.friends-feed-loading' ).length ) {
+			loadFeed( 'initial' );
+		}
 	}
 
 	$( loadInitialFeed );
 	$document.on( 'click', '.friends-feed-retry', loadInitialFeed );
 
 	function nextPage() {
+		if ( friends.async_feed ) {
+			if ( feedLoadFailed ) {
+				loadFeed( feedRetryMode );
+				return;
+			}
+			if ( ! initialFeedPending && friends.current_page < friends.max_page ) {
+				loadFeed( 'append' );
+			}
+			return;
+		}
 		if ( alreadyLoading || initialFeedPending ) {
 			return;
 		}
@@ -620,7 +679,7 @@
 		alreadyLoading = true;
 		const $navigation = $( 'section.posts .posts-navigation .nav-previous' );
 		$navigation.addClass( 'loading' );
-		wp.ajax.send( friends.async_feed ? 'friends-load-feed' : 'friends-load-next-page', {
+		wp.ajax.send( 'friends-load-next-page', {
 			data: {
 				query_vars: friends.query_vars,
 				page: friends.current_page,
@@ -629,18 +688,11 @@
 				cursor_sign: friends.feed_cursor_sign,
 			},
 			success( result ) {
-				const newPosts = friends.async_feed ? result.html : result;
+				const newPosts = result;
 				if ( newPosts ) {
 					$( 'section.posts > article' ).last().after( newPosts );
 				}
-				if ( friends.async_feed ) {
-					friends.current_page = result.page;
-					friends.feed_cursor = result.cursor;
-					friends.feed_cursor_sign = result.cursor_sign;
-					friends.max_page = result.has_more ? result.page + 1 : result.page;
-				} else {
-					++friends.current_page;
-				}
+				++friends.current_page;
 				if ( friends.current_page >= friends.max_page || ! /<article/.test( newPosts ) ) {
 					$( 'section.posts .posts-navigation' ).text( friends.text_no_more_posts );
 				}

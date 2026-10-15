@@ -54,7 +54,8 @@ if ( $show_welcome || ! have_posts() ) {
 	Friends\Frontend::have_posts();
 	if ( empty( $args['async_feed'] ) ) {
 		the_posts_navigation();
-	} elseif ( ! empty( $args['has_more'] ) ) {
-		Friends\Friends::template_loader()->get_template_part( 'frontend/feed-navigation', null, $args );
 	}
+}
+if ( ! empty( $args['async_feed'] ) ) {
+	Friends\Friends::template_loader()->get_template_part( 'frontend/feed-navigation', null, $args );
 }
