@@ -387,6 +387,50 @@ class Frontend {
 	}
 
 	/**
+	 * Turn the status format's membership join into an indexed per-post lookup.
+	 *
+	 * A single term cannot duplicate posts. The scalar lookup also keeps the
+	 * optimizer from starting with the taxonomy and sorting the whole result.
+	 * Other taxonomies, compound filters, and modified joins remain unchanged.
+	 *
+	 * @param array     $clauses Query SQL clauses.
+	 * @param \WP_Query $query Query being executed.
+	 * @return array Clauses suitable for ordered partition lookups when recognized.
+	 */
+	private function feed_status_format_clauses( $clauses, $query ) {
+		if ( $query->get( 's' ) || empty( $query->tax_query->queries ) ) {
+			return $clauses;
+		}
+		$filters = array_filter( $query->tax_query->queries, 'is_array' );
+		$filter = reset( $filters );
+		if ( 1 !== count( $filters ) || ! isset( $filter['taxonomy'], $filter['field'], $filter['terms'] )
+			|| 'post_format' !== $filter['taxonomy'] || 'slug' !== $filter['field']
+			|| array( 'post-format-status' ) !== array_values( (array) $filter['terms'] )
+			|| ( isset( $filter['operator'] ) && 'IN' !== strtoupper( $filter['operator'] ) ) ) {
+			return $clauses;
+		}
+		global $wpdb;
+		$expected_join = "LEFT JOIN {$wpdb->term_relationships} ON ({$wpdb->posts}.ID = {$wpdb->term_relationships}.object_id)";
+		if ( preg_replace( '/\s+/', ' ', trim( $clauses['join'] ) ) !== $expected_join || trim( $clauses['groupby'] ) !== $wpdb->posts . '.ID' ) {
+			return $clauses;
+		}
+		$pattern = '/' . preg_quote( $wpdb->term_relationships, '/' ) . '\.term_taxonomy_id\s+IN\s*\(\s*(\d+)\s*\)/';
+		if ( 1 !== preg_match_all( $pattern, $clauses['where'], $matches ) ) {
+			return $clauses;
+		}
+		if ( false !== strpos( str_replace( $matches[0][0], '', $clauses['where'] ), $wpdb->term_relationships ) ) {
+			return $clauses;
+		}
+		$term_id = absint( $matches[1][0] );
+		$membership = "( SELECT 1 FROM {$wpdb->term_relationships} AS friends_feed_format WHERE friends_feed_format.object_id = {$wpdb->posts}.ID AND friends_feed_format.term_taxonomy_id = $term_id LIMIT 1 ) = 1";
+		$where = str_replace( $matches[0][0], $membership, $clauses['where'] );
+		$clauses['where'] = $where;
+		$clauses['join'] = '';
+		$clauses['groupby'] = '';
+		return $clauses;
+	}
+
+	/**
 	 * Fetch small ordered sets per type/status using WordPress's existing index.
 	 *
 	 * The type_status_date index can supply date order when both its leading
@@ -398,30 +442,34 @@ class Frontend {
 	 * @return array SQL clauses with a bounded candidate join where applicable.
 	 */
 	public function feed_partition_clauses( $clauses, $query ) {
-		if ( ! $query->get( 'friends_feed_fast' ) || ! $query->get( 'no_found_rows' )
-			|| ! empty( $clauses['join'] ) || ! empty( $clauses['groupby'] ) || ! empty( $clauses['distinct'] ) ) {
-			return $clauses;
+		$original_clauses = $clauses;
+		if ( ! $query->get( 'friends_feed_fast' ) || ! $query->get( 'no_found_rows' ) ) {
+			return $original_clauses;
+		}
+		$clauses = $this->feed_status_format_clauses( $clauses, $query );
+		if ( ! empty( $clauses['join'] ) || ! empty( $clauses['groupby'] ) || ! empty( $clauses['distinct'] ) ) {
+			return $original_clauses;
 		}
 		global $wpdb;
 		if ( ! in_array( trim( $clauses['fields'] ), array( $wpdb->posts . '.*', $wpdb->posts . '.ID' ), true ) ) {
-			return $clauses;
+			return $original_clauses;
 		}
 		$order = 'ASC' === strtoupper( $query->get( 'order' ) ) ? 'ASC' : 'DESC';
 		$expected_order = "{$wpdb->posts}.post_date $order, {$wpdb->posts}.ID $order";
 		if ( preg_replace( '/\s+/', ' ', trim( $clauses['orderby'] ) ) !== $expected_order
 			|| ! preg_match( '/^LIMIT\s+(\d+)\s*,\s*(\d+)$/i', trim( $clauses['limits'] ), $limits ) ) {
-			return $clauses;
+			return $original_clauses;
 		}
 		$candidate_limit = intval( $limits[1] ) + intval( $limits[2] );
 		// Bound materialization; deep numbered pages retain the ordinary query.
 		if ( $candidate_limit < 1 || $candidate_limit > 500 ) {
-			return $clauses;
+			return $original_clauses;
 		}
 		$types = array_unique( (array) $query->get( 'post_type' ) );
 		$statuses = array_unique( (array) $query->get( 'post_status' ) );
 		$partition_count = count( $types ) * count( $statuses );
 		if ( $partition_count < 2 || $partition_count > 12 || in_array( 'any', $types, true ) || in_array( 'any', $statuses, true ) ) {
-			return $clauses;
+			return $original_clauses;
 		}
 		$partitions = array();
 		foreach ( $types as $type ) {

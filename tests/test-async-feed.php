@@ -309,6 +309,78 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The status-format filter can use ordered lookups without a taxonomy sort.
+	 */
+	public function test_status_format_preserves_filtered_cursor_results() {
+		foreach ( array( Friends::CPT, 'post' ) as $type ) {
+			foreach ( array( 'publish', 'private', 'future' ) as $status ) {
+				foreach ( array( 'status', 'image' ) as $format ) {
+					$post_id = $this->factory->post->create(
+						array(
+							'post_type' => $type,
+							'post_author' => get_current_user_id(),
+							'post_status' => $status,
+							'post_date' => 'future' === $status ? '2099-01-01 12:00:00' : '2020-02-01 12:00:00',
+						)
+					);
+					wp_set_object_terms( $post_id, 'post-format-' . $format, 'post_format' );
+				}
+			}
+		}
+		foreach ( array( 'ASC', 'DESC' ) as $order ) {
+			$vars = array(
+				'post_type' => array( Friends::CPT, 'post' ),
+				'post_status' => array( 'publish', 'private', 'future' ),
+				'posts_per_page' => 2,
+				'orderby' => 'date ID',
+				'order' => $order,
+				'tax_query' => array( array( 'taxonomy' => 'post_format', 'field' => 'slug', 'terms' => array( 'post-format-status' ) ) ),
+			);
+			$reference = new \WP_Query( array_merge( $vars, array( 'posts_per_page' => -1, 'no_found_rows' => true ) ) );
+			$expected_ids = wp_list_pluck( $reference->posts, 'ID' );
+			$this->assertCount( 6, $expected_ids );
+			$received_ids = array();
+			$cursor = null;
+			for ( $page = 0; $page < 10; ++$page ) {
+				$result = $this->request_feed( $vars, $page, false, null, $cursor );
+				$this->assertTrue( $result['success'] );
+				global $wp_query;
+				$this->assertStringContainsString( 'friends_feed_candidates', $wp_query->request );
+				$this->assertStringContainsString( 'friends_feed_format', $wp_query->request );
+				$this->assertStringNotContainsString( 'LEFT JOIN', $wp_query->request );
+				$this->assertStringNotContainsString( 'GROUP BY', $wp_query->request );
+				$received_ids = array_merge( $received_ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+				$cursor = $result['data'];
+				if ( ! $cursor['has_more'] ) {
+					break;
+				}
+			}
+			$this->assertSame( $expected_ids, $received_ids );
+			$this->request_feed( $vars, 1, true );
+			$this->assertSame( array_slice( $expected_ids, 2, 2 ), wp_list_pluck( $GLOBALS['wp_query']->posts, 'ID' ) );
+			$this->request_feed( $vars, 500, true );
+			$this->assertStringNotContainsString( 'friends_feed_format', $GLOBALS['wp_query']->request );
+			$this->assertStringContainsString( 'LEFT JOIN', $GLOBALS['wp_query']->request );
+		}
+	}
+
+	/**
+	 * A format filter combined with a subscription filter keeps both constraints.
+	 */
+	public function test_status_format_with_subscription_retains_original_query() {
+		$ids = $this->create_posts( 1 );
+		wp_set_object_terms( $ids[0], 'post-format-status', 'post_format' );
+		$vars = $this->query_vars();
+		$vars['post_status'] = array( 'publish', 'private', 'future' );
+		$vars['tax_query'][] = array( 'taxonomy' => 'post_format', 'field' => 'slug', 'terms' => array( 'post-format-status' ) );
+		$this->request_feed( $vars, 0 );
+		global $wp_query;
+		$this->assertSame( $ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+		$this->assertStringNotContainsString( 'friends_feed_format', $wp_query->request );
+		$this->assertStringNotContainsString( 'friends_feed_candidates', $wp_query->request );
+	}
+
+	/**
 	 * Joined taxonomy queries retain WordPress's original execution path.
 	 */
 	public function test_partition_optimization_skips_taxonomy_joins() {
