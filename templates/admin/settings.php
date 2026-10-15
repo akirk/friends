@@ -290,18 +290,13 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<tr>
-				<th scope="row" rowspan="3"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
+				<th scope="row" rowspan="2"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
 				<td>
 					<fieldset>
-						<label for="frontend-default-view">
-							<span><?php esc_html_e( 'Default view:', 'friends' ); ?></span>
-							<select name="frontend_default_view" id="frontend-default-view">
-								<option value="expanded"<?php selected( $args['frontend_default_view'], 'expanded' ); ?>><?php esc_html_e( 'Expanded mode', 'friends' ); ?></option>
-								<option value="collapsed"<?php selected( $args['frontend_default_view'], 'collapsed' ); ?>><?php esc_html_e( 'Compact mode', 'friends' ); ?></option>
-							</select>
-						</label>
-						<p class="description"><?php esc_html_e( 'Changing the mode on /friends/ also updates this default. Other pages follow it until you change their mode.', 'friends' ); ?></p>
 						<?php if ( $args['frontend_views'] ) : ?>
+							<div class="friends-display-views">
+							<p><?php esc_html_e( 'Saved view settings', 'friends' ); ?></p>
+							<p class="description"><?php esc_html_e( 'Remove a setting to use the mode selected on /friends/.', 'friends' ); ?></p>
 							<ul>
 							<?php foreach ( $args['frontend_views'] as $view => $display_mode ) : ?>
 								<li>
@@ -311,13 +306,8 @@ do_action( 'friends_settings_before_form' );
 								</li>
 							<?php endforeach; ?>
 							</ul>
+							</div>
 						<?php endif; ?>
-					</fieldset>
-				</td>
-			</tr>
-			<tr>
-				<td>
-					<fieldset>
 						<label for="frontend-theme">
 							<span><?php esc_html_e( 'Main Theme:', 'friends' ); ?></span>
 							<select name="friends_frontend_theme" id="frontend-theme">

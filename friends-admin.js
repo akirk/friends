@@ -394,7 +394,11 @@ jQuery( document ).on( 'click', '.friends-remove-display-mode', function () {
 		mode: 'remove'
 	} ).done( function ( response ) {
 		if ( response.success ) {
+			const views = button.closest( '.friends-display-views' );
 			button.closest( 'li' ).remove();
+			if ( ! views.find( 'li' ).length ) {
+				views.remove();
+			}
 		}
 	} ).always( function () {
 		button.prop( 'disabled', false );
