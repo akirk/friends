@@ -7,7 +7,7 @@
 
 $fallback_url = add_query_arg( 'friends_sync', '1' );
 ?>
-<div class="friends-feed-loading card columns col-12" aria-busy="true">
+<div class="friends-feed-loading columns col-12" aria-busy="true">
 	<p role="status" aria-live="polite">
 		<span class="loading" aria-hidden="true"></span>
 		<span class="friends-feed-loading-text"><?php esc_html_e( 'Loading feed…', 'friends' ); ?></span>
