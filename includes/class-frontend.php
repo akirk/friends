@@ -96,8 +96,6 @@ class Frontend {
 	private function register_hooks() {
 		add_filter( 'pre_get_posts', array( $this, 'friend_posts_query' ), 2 );
 		add_filter( 'posts_pre_query', array( $this, 'defer_feed_query' ), 10, 2 );
-		add_filter( 'posts_where', array( $this, 'feed_cursor_where' ), 10, 2 );
-		add_filter( 'posts_clauses_request', array( $this, 'feed_partition_clauses' ), 99, 2 );
 		add_filter( 'pre_handle_404', array( $this, 'deferred_feed_status' ), 10, 2 );
 		add_filter( 'pre_get_posts', array( $this, 'exclude_compose_format_from_feed' ), 10 );
 		add_filter( 'post_type_link', array( $this, 'friend_post_link' ), 10, 2 );
@@ -361,129 +359,6 @@ class Frontend {
 		$query->found_posts   = 0;
 		$query->max_num_pages = 0;
 		return array();
-	}
-
-	/**
-	 * Resume a feed after the last visible post without scanning skipped rows.
-	 *
-	 * @param string    $where Existing SQL conditions.
-	 * @param \WP_Query $query Query being executed.
-	 * @return string SQL conditions including the feed cursor.
-	 */
-	public function feed_cursor_where( $where, $query ) {
-		$cursor = $query->get( 'friends_feed_cursor' );
-		if ( ! is_array( $cursor ) || empty( $cursor['id'] ) || empty( $cursor['date'] ) ) {
-			return $where;
-		}
-		global $wpdb;
-		$comparison = 'ASC' === strtoupper( $query->get( 'order' ) ) ? '>' : '<';
-		// The comparison operator is selected from fixed strings above.
-		return $where . $wpdb->prepare(
-			" AND ( {$wpdb->posts}.post_date $comparison %s OR ( {$wpdb->posts}.post_date = %s AND {$wpdb->posts}.ID $comparison %d ) )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-			$cursor['date'],
-			$cursor['date'],
-			$cursor['id']
-		);
-	}
-
-	/**
-	 * Turn the status format's membership join into an indexed per-post lookup.
-	 *
-	 * A single term cannot duplicate posts. The scalar lookup also keeps the
-	 * optimizer from starting with the taxonomy and sorting the whole result.
-	 * Other taxonomies, compound filters, and modified joins remain unchanged.
-	 *
-	 * @param array     $clauses Query SQL clauses.
-	 * @param \WP_Query $query Query being executed.
-	 * @return array Clauses suitable for ordered partition lookups when recognized.
-	 */
-	private function feed_status_format_clauses( $clauses, $query ) {
-		if ( $query->get( 's' ) || empty( $query->tax_query->queries ) ) {
-			return $clauses;
-		}
-		$filters = array_filter( $query->tax_query->queries, 'is_array' );
-		$filter = reset( $filters );
-		if ( 1 !== count( $filters ) || ! isset( $filter['taxonomy'], $filter['field'], $filter['terms'] )
-			|| 'post_format' !== $filter['taxonomy'] || 'slug' !== $filter['field']
-			|| array( 'post-format-status' ) !== array_values( (array) $filter['terms'] )
-			|| ( isset( $filter['operator'] ) && 'IN' !== strtoupper( $filter['operator'] ) ) ) {
-			return $clauses;
-		}
-		global $wpdb;
-		$expected_join = "LEFT JOIN {$wpdb->term_relationships} ON ({$wpdb->posts}.ID = {$wpdb->term_relationships}.object_id)";
-		if ( preg_replace( '/\s+/', ' ', trim( $clauses['join'] ) ) !== $expected_join || trim( $clauses['groupby'] ) !== $wpdb->posts . '.ID' ) {
-			return $clauses;
-		}
-		$pattern = '/' . preg_quote( $wpdb->term_relationships, '/' ) . '\.term_taxonomy_id\s+IN\s*\(\s*(\d+)\s*\)/';
-		if ( 1 !== preg_match_all( $pattern, $clauses['where'], $matches ) ) {
-			return $clauses;
-		}
-		if ( false !== strpos( str_replace( $matches[0][0], '', $clauses['where'] ), $wpdb->term_relationships ) ) {
-			return $clauses;
-		}
-		$term_id = absint( $matches[1][0] );
-		$membership = "( SELECT 1 FROM {$wpdb->term_relationships} AS friends_feed_format WHERE friends_feed_format.object_id = {$wpdb->posts}.ID AND friends_feed_format.term_taxonomy_id = $term_id LIMIT 1 ) = 1";
-		$where = str_replace( $matches[0][0], $membership, $clauses['where'] );
-		$clauses['where'] = $where;
-		$clauses['join'] = '';
-		$clauses['groupby'] = '';
-		return $clauses;
-	}
-
-	/**
-	 * Fetch small ordered sets per type/status using WordPress's existing index.
-	 *
-	 * The type_status_date index can supply date order when both its leading
-	 * columns are fixed. Merge only each partition's newest candidates instead
-	 * of sorting the complete archive across multiple statuses or post types.
-	 *
-	 * @param array     $clauses Query SQL clauses.
-	 * @param \WP_Query $query The query being executed.
-	 * @return array SQL clauses with a bounded candidate join where applicable.
-	 */
-	public function feed_partition_clauses( $clauses, $query ) {
-		$original_clauses = $clauses;
-		if ( ! $query->get( 'friends_feed_fast' ) || ! $query->get( 'no_found_rows' ) ) {
-			return $original_clauses;
-		}
-		$clauses = $this->feed_status_format_clauses( $clauses, $query );
-		if ( ! empty( $clauses['join'] ) || ! empty( $clauses['groupby'] ) || ! empty( $clauses['distinct'] ) ) {
-			return $original_clauses;
-		}
-		global $wpdb;
-		if ( ! in_array( trim( $clauses['fields'] ), array( $wpdb->posts . '.*', $wpdb->posts . '.ID' ), true ) ) {
-			return $original_clauses;
-		}
-		$order = 'ASC' === strtoupper( $query->get( 'order' ) ) ? 'ASC' : 'DESC';
-		$expected_order = "{$wpdb->posts}.post_date $order, {$wpdb->posts}.ID $order";
-		if ( preg_replace( '/\s+/', ' ', trim( $clauses['orderby'] ) ) !== $expected_order
-			|| ! preg_match( '/^LIMIT\s+(\d+)\s*,\s*(\d+)$/i', trim( $clauses['limits'] ), $limits ) ) {
-			return $original_clauses;
-		}
-		$candidate_limit = intval( $limits[1] ) + intval( $limits[2] );
-		// Bound materialization; deep numbered pages retain the ordinary query.
-		if ( $candidate_limit < 1 || $candidate_limit > 500 ) {
-			return $original_clauses;
-		}
-		$types = array_unique( (array) $query->get( 'post_type' ) );
-		$statuses = array_unique( (array) $query->get( 'post_status' ) );
-		$partition_count = count( $types ) * count( $statuses );
-		if ( $partition_count < 2 || $partition_count > 12 || in_array( 'any', $types, true ) || in_array( 'any', $statuses, true ) ) {
-			return $original_clauses;
-		}
-		$partitions = array();
-		foreach ( $types as $type ) {
-			foreach ( $statuses as $status ) {
-				$conditions = $wpdb->prepare( " AND {$wpdb->posts}.post_type = %s AND {$wpdb->posts}.post_status = %s", $type, $status );
-				$alias = 'friends_feed_partition_' . count( $partitions );
-				$partitions[] = "SELECT ID, post_date FROM ( SELECT {$wpdb->posts}.ID, {$wpdb->posts}.post_date FROM {$wpdb->posts} WHERE 1=1 {$clauses['where']} $conditions ORDER BY {$clauses['orderby']} LIMIT $candidate_limit ) AS $alias";
-			}
-		}
-		$candidates = 'SELECT ID FROM ( ' . implode( ' UNION ALL ', $partitions ) . " ) AS friends_feed_merge ORDER BY post_date $order, ID $order LIMIT $candidate_limit";
-		$clauses['join'] = " INNER JOIN ( $candidates ) AS friends_feed_candidates ON {$wpdb->posts}.ID = friends_feed_candidates.ID";
-		// Every existing condition (including the cursor) is applied inside each partition.
-		$clauses['where'] = '';
-		return $clauses;
 	}
 
 	/**
@@ -1487,230 +1362,55 @@ class Frontend {
 		return $themes;
 	}
 	/**
-	 * Handles the post loop on the Friends page.
+	 * Preserve the post-loop entry point used by Friends themes.
 	 */
 	public static function have_posts() {
-		$friends = Friends::get_instance();
-		$known_author = $friends->frontend->author;
-		$known_avatar = null;
-		if ( $known_author instanceof User ) {
-			$known_avatar = $known_author->get_avatar_url();
-		}
-		while ( have_posts() ) {
-			global $post;
-			the_post();
-			$args = array(
-				'friends' => $friends,
-			);
-			$args['item_friend_user'] = User::get_post_author( $post );
-
-			if ( $known_author ) {
-				$args['friend_user'] = $known_author;
-				$args['avatar'] = $known_avatar;
-			} else {
-				$args['friend_user'] = $args['item_friend_user'];
-				$args['avatar'] = $args['friend_user']->get_avatar_url();
-			}
-
-			$read_time = self::calculate_read_time( get_the_content() );
-			if ( $read_time >= 60 ) {
-				$mins = ceil( $read_time / MINUTE_IN_SECONDS );
-				/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
-				$args['read_time'] = sprintf( _n( '%s min', '%s mins', $mins ), $mins ); // phpcs:ignore WordPress.WP.I18n.MissingArgDomain
-			} elseif ( $read_time > 20 ) {
-				/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
-				$args['read_time'] = _x( '< 1 min', 'reading time', 'friends' );
-			}
-
-			Friends::template_loader()->get_template_part(
-				'frontend/parts/content',
-				get_post_format(),
-				$args
-			);
-		}
+		( new Feed_Renderer() )->render_posts();
 	}
 
 	/**
-	 * Load a feed page without counting all matching posts.
+	 * Load an asynchronous feed page.
 	 */
 	public function ajax_load_feed() {
-		$this->ajax_load_next_page( true );
+		( new Feed_Endpoint( $this ) )->serve();
 	}
 
 	/**
-	 * The Ajax function to load more posts for infinite scrolling.
-	 *
-	 * @param bool $async_feed Whether to return feed HTML and pagination metadata.
+	 * Preserve the HTML response used by existing infinite-scroll integrations.
 	 */
-	public function ajax_load_next_page( $async_feed = false ) {
-		if ( ! $this->has_required_priviledges() ) {
-			wp_send_json_error( null, 403 );
-		}
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$profile = $async_feed && ! empty( $_POST['profile'] );
-		if ( $profile ) {
-			if ( ! current_user_can( 'manage_options' ) ) {
-				wp_send_json_error( null, 403 );
-			}
-			check_ajax_referer( 'friends-feed-profile', 'profile_nonce' );
-		}
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		if ( ! isset( $_POST['query_vars'] ) || ! isset( $_POST['page'] ) || ! isset( $_POST['qv_sign'] ) ) {
-			wp_send_json_error();
-			exit;
-		}
-		$query_vars = wp_unslash( $_POST['query_vars'] );
-		// We do have a nonce verification here.
-		if ( ! is_string( $query_vars ) || ! is_string( $_POST['qv_sign'] ) || ! hash_equals( sha1( wp_salt( 'nonce' ) . $query_vars ), wp_unslash( $_POST['qv_sign'] ) ) ) {
-			wp_send_json_error();
-			exit;
-		}
+	public function ajax_load_next_page() {
+		( new Feed_Endpoint( $this ) )->serve_legacy();
+	}
 
-		$signed_query_vars = $query_vars;
-		$query_vars = json_decode( $query_vars, true );
-		if ( ! is_array( $query_vars ) ) {
-			wp_send_json_error();
-		}
-		$query_vars['paged'] = max( 1, intval( $_POST['page'] ) + 1 );
-		$initial_feed = $async_feed && ! empty( $_POST['initial_feed'] );
-		$cursor = null;
-		if ( $async_feed && ! $initial_feed && ! empty( $_POST['cursor'] ) ) {
-			$cursor_json = wp_unslash( $_POST['cursor'] );
-			if ( ! is_string( $cursor_json ) || ! isset( $_POST['cursor_sign'] ) || ! is_string( $_POST['cursor_sign'] )
-				|| ! hash_equals( hash_hmac( 'sha256', $signed_query_vars . "\n" . $cursor_json, wp_salt( 'nonce' ) ), wp_unslash( $_POST['cursor_sign'] ) ) ) {
-				wp_send_json_error( null, 400 );
+	/**
+	 * Apply theme and author context for one feed operation, then restore it.
+	 *
+	 * @param array    $vars Signed query arguments containing rendering context.
+	 * @param callable $callback Operation to execute with that context.
+	 * @return mixed The operation's result.
+	 */
+	public function with_feed_context( $vars, $callback ) {
+		$previous_theme = $this->theme;
+		$previous_author = $this->author;
+		$previous_format = $this->post_format;
+		$switched_locale = switch_to_locale( get_user_locale() );
+		try {
+			if ( ! empty( $vars['friends_theme'] ) && isset( self::get_themes()[ $vars['friends_theme'] ] ) ) {
+				$this->theme = $vars['friends_theme'];
+				do_action( 'friends_load_theme_' . $this->theme );
 			}
-			$cursor = json_decode( $cursor_json, true );
-			if ( ! is_array( $cursor ) || ! isset( $cursor['id'], $cursor['date'] ) || ! is_int( $cursor['id'] ) || $cursor['id'] < 1
-				|| ! is_string( $cursor['date'] ) || ! preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $cursor['date'] ) ) {
-				wp_send_json_error( null, 400 );
+			$this->post_format = isset( $vars['friends_post_format'] ) ? $vars['friends_post_format'] : false;
+			$this->author = ! empty( $vars['friends_author'] ) ? User::get_user_by_id( $vars['friends_author'] ) : false;
+			unset( $vars['friends_theme'], $vars['friends_post_format'], $vars['friends_author'] );
+			return call_user_func( $callback, $vars );
+		} finally {
+			$this->theme = $previous_theme;
+			$this->author = $previous_author;
+			$this->post_format = $previous_format;
+			if ( $switched_locale ) {
+				restore_previous_locale();
 			}
 		}
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-
-		switch_to_locale( get_user_locale() );
-		if ( ! empty( $query_vars['friends_theme'] ) && isset( self::get_themes()[ $query_vars['friends_theme'] ] ) ) {
-			$this->theme = $query_vars['friends_theme'];
-			do_action( 'friends_load_theme_' . $this->theme );
-		}
-		$this->post_format = isset( $query_vars['friends_post_format'] ) ? $query_vars['friends_post_format'] : false;
-		$this->author = ! empty( $query_vars['friends_author'] ) ? User::get_user_by_id( $query_vars['friends_author'] ) : false;
-		unset( $query_vars['friends_theme'], $query_vars['friends_post_format'], $query_vars['friends_author'] );
-
-		if ( $async_feed ) {
-			$per_page = isset( $query_vars['posts_per_page'] ) ? intval( $query_vars['posts_per_page'] ) : intval( get_option( 'posts_per_page' ) );
-			$per_page = max( 1, $per_page );
-			// Compare one post with the normal page size without changing the visible feed.
-			if ( $profile ) {
-				$per_page = isset( $_POST['profile_size'] ) && 1 === absint( wp_unslash( $_POST['profile_size'] ) ) ? 1 : $per_page; // phpcs:ignore WordPress.Security.NonceVerification.Missing
-			}
-
-			$query_vars['offset'] = $cursor ? 0 : ( $query_vars['paged'] - 1 ) * $per_page;
-			if ( $cursor ) {
-				$query_vars['friends_feed_cursor'] = $cursor;
-			}
-			$query_vars['posts_per_page'] = $profile && 1 === $per_page ? 1 : $per_page + 1;
-			$query_vars['no_found_rows']  = true;
-			$query_vars['friends_feed_fast'] = true;
-			$query_vars['orderby']        = 'date ID';
-		}
-
-		global $wpdb;
-		$query_started = microtime( true );
-		$query_db_calls = $wpdb->num_queries;
-		// We actually want to render the query loop, so we use query_posts.
-		query_posts( $query_vars ); // phpcs:ignore WordPress.WP.DiscouragedFunctions.query_posts_query_posts
-		$query_ms = ( microtime( true ) - $query_started ) * 1000;
-		$query_db_calls = $wpdb->num_queries - $query_db_calls;
-		global $wp_query;
-		$feed_sql = $wp_query->request;
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Profiling nonce was checked above.
-		$explain = $profile && ! empty( $_POST['explain'] );
-		$rows_fetched = $wp_query->post_count;
-		$has_more = false;
-		if ( $async_feed && $wp_query->post_count > $per_page ) {
-			$has_more = true;
-			array_pop( $wp_query->posts );
-			$wp_query->post_count = count( $wp_query->posts );
-		}
-		$next_cursor = null;
-		$next_cursor_sign = null;
-		if ( $has_more ) {
-			$last_post = end( $wp_query->posts );
-			$next_cursor = wp_json_encode(
-				array(
-					'date' => $last_post->post_date,
-					'id'   => intval( $last_post->ID ),
-				)
-			);
-			$next_cursor_sign = hash_hmac( 'sha256', $signed_query_vars . "\n" . $next_cursor, wp_salt( 'nonce' ) );
-		}
-		$render_started = microtime( true );
-		$render_db_calls = $wpdb->num_queries;
-		ob_start();
-		if ( ! $explain && $initial_feed ) {
-			Friends::template_loader()->get_template_part(
-				'frontend/feed-content',
-				null,
-				array(
-					'friends'     => $this->friends,
-					'friend_user' => $this->author,
-					'post_format' => $this->post_format,
-					'async_feed'  => true,
-					'has_more'    => $has_more,
-				)
-			);
-		} elseif ( ! $explain && have_posts() ) {
-			self::have_posts();
-		} elseif ( ! $explain && ! $async_feed ) {
-			esc_html_e( 'No further posts of your friends could were found.', 'friends' );
-		}
-
-		$posts = ob_get_clean();
-		if ( $async_feed ) {
-			$response = array(
-				'html'        => $posts,
-				'has_more'    => $has_more,
-				'page'        => $query_vars['paged'],
-				'cursor'      => $next_cursor,
-				'cursor_sign' => $next_cursor_sign,
-			);
-			if ( $profile ) {
-				$finished = microtime( true );
-				$request_started = isset( $_SERVER['REQUEST_TIME_FLOAT'] ) ? floatval( $_SERVER['REQUEST_TIME_FLOAT'] ) : $query_started;
-				$response['timings'] = array(
-					'posts'           => $wp_query->post_count,
-					'rows_fetched'    => $rows_fetched,
-					'limit'           => $query_vars['posts_per_page'],
-					'query_ms'        => round( $query_ms, 1 ),
-					'render_ms'       => round( ( $finished - $render_started ) * 1000, 1 ),
-					'setup_ms'        => round( ( $query_started - $request_started ) * 1000, 1 ),
-					'php_ms'          => round( ( $finished - $request_started ) * 1000, 1 ),
-					'query_db_calls'  => $query_db_calls,
-					'render_db_calls' => $wpdb->num_queries - $render_db_calls,
-				);
-			}
-			if ( $explain ) {
-				$previous_suppression = $wpdb->suppress_errors( true );
-				// Both statements use SQL and table names generated by WordPress, never client SQL.
-				$plan = $wpdb->get_results( 'EXPLAIN ' . $feed_sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-				$plan_error = $wpdb->last_error;
-				$indexes = $wpdb->get_results( "SHOW INDEX FROM {$wpdb->posts}", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-				$index_error = $wpdb->last_error;
-				$wpdb->suppress_errors( $previous_suppression );
-				$response['explain'] = array(
-					'sql'     => $feed_sql,
-					'plan'    => $plan,
-					'indexes' => $indexes,
-					'error'   => $plan_error ? $plan_error : $index_error,
-				);
-			}
-			wp_send_json_success( $response );
-		}
-
-		wp_send_json_success( $posts );
 	}
 
 	/**
@@ -2481,7 +2181,12 @@ class Frontend {
 		exit;
 	}
 
-	private function has_required_priviledges() {
+	/**
+	 * Whether the current user may access the Friends feed.
+	 *
+	 * @return bool Whether feed access is permitted.
+	 */
+	public function can_view_feed() {
 		if ( Friends::is_main_user() ) {
 			return true;
 		}
@@ -2570,7 +2275,7 @@ class Frontend {
 		}
 
 		// Not available for the general public or friends.
-		$viewable = $this->has_required_priviledges() && Friends::on_frontend();
+		$viewable = $this->can_view_feed() && Friends::on_frontend();
 		if ( $query->is_feed() ) {
 			// Feeds can be viewed through extra authentication.
 			if ( isset( $wp_query->query['pagename'] ) ) {
@@ -2777,7 +2482,7 @@ class Frontend {
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if ( ! $query->is_singular && ! $query->is_feed() && is_user_logged_in() && $this->has_required_priviledges()
+		if ( ! $query->is_singular && ! $query->is_feed() && is_user_logged_in() && $this->can_view_feed()
 			&& ! isset( $_GET['welcome'] ) && ! isset( $_GET['friends_sync'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			&& in_array( $this->get_selected_theme(), array( 'default', 'mastodon', 'twitter', 'google-reader' ), true ) ) {
 			$query->set( 'friends_async_feed', true );

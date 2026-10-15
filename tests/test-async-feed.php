@@ -19,6 +19,13 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	private $friend;
 
 	/**
+	 * Last independent feed query observed by the request helper.
+	 *
+	 * @var \WP_Query
+	 */
+	private $feed_query;
+
+	/**
 	 * Prepare an administrator and a subscription.
 	 */
 	public function set_up() {
@@ -92,11 +99,11 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			$this->assertTrue( $result['success'] );
 			$this->assertSame( $page + 1, $result['data']['page'] );
 			$this->assertSame( $page < 2, $result['data']['has_more'] );
-			global $wp_query;
-			$this->assertTrue( $wp_query->get( 'no_found_rows' ) );
-			$this->assertSame( 0, $wp_query->found_posts );
-			$this->assertSame( 0, $wp_query->get( 'offset' ) );
-			$received_ids = array_merge( $received_ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+			$query = $this->feed_query;
+			$this->assertTrue( $query->get( 'no_found_rows' ) );
+			$this->assertSame( 0, $query->found_posts );
+			$this->assertSame( 0, $query->get( 'offset' ) );
+			$received_ids = array_merge( $received_ids, wp_list_pluck( $query->posts, 'ID' ) );
 		}
 		$this->assertSame( array_reverse( $ids ), $received_ids );
 	}
@@ -114,8 +121,8 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		for ( $page = 0; $page < 3; ++$page ) {
 			$result = $this->request_feed( $this->query_vars(), $page, false, null, $cursor );
 			$cursor = $result['data'];
-			global $wp_query;
-			$received_ids = array_merge( $received_ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+			$query = $this->feed_query;
+			$received_ids = array_merge( $received_ids, wp_list_pluck( $query->posts, 'ID' ) );
 		}
 		$this->assertSame( array_reverse( $ids ), $received_ids );
 	}
@@ -132,8 +139,8 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		for ( $page = 0; $page < 3; ++$page ) {
 			$result = $this->request_feed( $vars, $page, false, null, $cursor );
 			$cursor = $result['data'];
-			global $wp_query;
-			$received_ids = array_merge( $received_ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+			$query = $this->feed_query;
+			$received_ids = array_merge( $received_ids, wp_list_pluck( $query->posts, 'ID' ) );
 		}
 		$this->assertSame( $ids, $received_ids );
 	}
@@ -149,9 +156,9 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		);
 		wp_set_object_terms( $new_post, $this->friend->get_term_id(), Subscription::TAXONOMY );
 		$this->request_feed( $this->query_vars(), 1, false, null, $first['data'] );
-		global $wp_query;
-		$this->assertSame( array( $ids[2], $ids[1] ), wp_list_pluck( $wp_query->posts, 'ID' ) );
-		$this->assertSame( 0, $wp_query->get( 'offset' ) );
+		$query = $this->feed_query;
+		$this->assertSame( array( $ids[2], $ids[1] ), wp_list_pluck( $query->posts, 'ID' ) );
+		$this->assertSame( 0, $query->get( 'offset' ) );
 	}
 
 	/**
@@ -160,8 +167,8 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	public function test_direct_page_without_cursor() {
 		$ids = $this->create_posts( 5 );
 		$this->request_feed( $this->query_vars(), 1, true );
-		global $wp_query;
-		$this->assertSame( array( $ids[2], $ids[1] ), wp_list_pluck( $wp_query->posts, 'ID' ) );
+		$query = $this->feed_query;
+		$this->assertSame( array( $ids[2], $ids[1] ), wp_list_pluck( $query->posts, 'ID' ) );
 	}
 
 	/**
@@ -294,9 +301,9 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			for ( $page = 0; $page < 20; ++$page ) {
 				$result = $this->request_feed( $vars, $page, false, null, $cursor );
 				$this->assertTrue( $result['success'] );
-				global $wp_query;
-				$this->assertStringContainsString( 'friends_feed_candidates', $wp_query->request );
-				$received_ids = array_merge( $received_ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+				$query = $this->feed_query;
+				$this->assertStringContainsString( 'friends_feed_candidates', $query->request );
+				$received_ids = array_merge( $received_ids, wp_list_pluck( $query->posts, 'ID' ) );
 				$cursor = $result['data'];
 				if ( ! $cursor['has_more'] ) {
 					break;
@@ -304,7 +311,7 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			}
 			$this->assertSame( $expected_ids, $received_ids );
 			$this->request_feed( $vars, 1, true );
-			$this->assertSame( array_slice( $expected_ids, 2, 2 ), wp_list_pluck( $GLOBALS['wp_query']->posts, 'ID' ) );
+			$this->assertSame( array_slice( $expected_ids, 2, 2 ), wp_list_pluck( $this->feed_query->posts, 'ID' ) );
 		}
 	}
 
@@ -344,12 +351,12 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			for ( $page = 0; $page < 10; ++$page ) {
 				$result = $this->request_feed( $vars, $page, false, null, $cursor );
 				$this->assertTrue( $result['success'] );
-				global $wp_query;
-				$this->assertStringContainsString( 'friends_feed_candidates', $wp_query->request );
-				$this->assertStringContainsString( 'friends_feed_format', $wp_query->request );
-				$this->assertStringNotContainsString( 'LEFT JOIN', $wp_query->request );
-				$this->assertStringNotContainsString( 'GROUP BY', $wp_query->request );
-				$received_ids = array_merge( $received_ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
+				$query = $this->feed_query;
+				$this->assertStringContainsString( 'friends_feed_candidates', $query->request );
+				$this->assertStringContainsString( 'friends_feed_format', $query->request );
+				$this->assertStringNotContainsString( 'LEFT JOIN', $query->request );
+				$this->assertStringNotContainsString( 'GROUP BY', $query->request );
+				$received_ids = array_merge( $received_ids, wp_list_pluck( $query->posts, 'ID' ) );
 				$cursor = $result['data'];
 				if ( ! $cursor['has_more'] ) {
 					break;
@@ -357,10 +364,10 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 			}
 			$this->assertSame( $expected_ids, $received_ids );
 			$this->request_feed( $vars, 1, true );
-			$this->assertSame( array_slice( $expected_ids, 2, 2 ), wp_list_pluck( $GLOBALS['wp_query']->posts, 'ID' ) );
+			$this->assertSame( array_slice( $expected_ids, 2, 2 ), wp_list_pluck( $this->feed_query->posts, 'ID' ) );
 			$this->request_feed( $vars, 500, true );
-			$this->assertStringNotContainsString( 'friends_feed_format', $GLOBALS['wp_query']->request );
-			$this->assertStringContainsString( 'LEFT JOIN', $GLOBALS['wp_query']->request );
+			$this->assertStringNotContainsString( 'friends_feed_format', $this->feed_query->request );
+			$this->assertStringContainsString( 'LEFT JOIN', $this->feed_query->request );
 		}
 	}
 
@@ -374,10 +381,10 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		$vars['post_status'] = array( 'publish', 'private', 'future' );
 		$vars['tax_query'][] = array( 'taxonomy' => 'post_format', 'field' => 'slug', 'terms' => array( 'post-format-status' ) );
 		$this->request_feed( $vars, 0 );
-		global $wp_query;
-		$this->assertSame( $ids, wp_list_pluck( $wp_query->posts, 'ID' ) );
-		$this->assertStringNotContainsString( 'friends_feed_format', $wp_query->request );
-		$this->assertStringNotContainsString( 'friends_feed_candidates', $wp_query->request );
+		$query = $this->feed_query;
+		$this->assertSame( $ids, wp_list_pluck( $query->posts, 'ID' ) );
+		$this->assertStringNotContainsString( 'friends_feed_format', $query->request );
+		$this->assertStringNotContainsString( 'friends_feed_candidates', $query->request );
 	}
 
 	/**
@@ -388,7 +395,7 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		$vars = $this->query_vars();
 		$vars['post_status'] = array( 'publish', 'private', 'future' );
 		$this->request_feed( $vars, 0 );
-		$this->assertStringNotContainsString( 'friends_feed_candidates', $GLOBALS['wp_query']->request );
+		$this->assertStringNotContainsString( 'friends_feed_candidates', $this->feed_query->request );
 	}
 
 	/**
@@ -399,7 +406,7 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		unset( $vars['tax_query'], $vars['friends_author'] );
 		$vars['post_status'] = array( 'publish', 'private', 'future' );
 		$this->request_feed( $vars, 500, true );
-		$this->assertStringNotContainsString( 'friends_feed_candidates', $GLOBALS['wp_query']->request );
+		$this->assertStringNotContainsString( 'friends_feed_candidates', $this->feed_query->request );
 	}
 
 	/**
@@ -449,6 +456,124 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Feed requests leave the caller's query, post, author context, and locale alone.
+	 */
+	public function test_request_restores_callers_context() {
+		$ids = $this->create_posts( 3 );
+		$previous_query = $GLOBALS['wp_query'];
+		$previous_post = get_post( $ids[0] );
+		$GLOBALS['post'] = $previous_post;
+		$frontend = Friends::get_instance()->frontend;
+		$frontend->post_format = 'image';
+		$frontend->author = $this->friend;
+		$locale = get_locale();
+		$result = $this->request_feed( $this->query_vars(), 0, true );
+		$this->assertTrue( $result['success'] );
+		$this->assertSame( $previous_query, $GLOBALS['wp_query'] );
+		$this->assertSame( $previous_post, $GLOBALS['post'] );
+		$this->assertSame( 'image', $frontend->post_format );
+		$this->assertSame( $this->friend, $frontend->author );
+		$this->assertSame( $locale, get_locale() );
+	}
+
+	/**
+	 * The legacy AJAX action still returns HTML rather than feed metadata.
+	 */
+	public function test_legacy_endpoint_preserves_html_response() {
+		$this->create_posts( 3 );
+		$previous_query = $GLOBALS['wp_query'];
+		$result = $this->request_feed( $this->query_vars(), 0, false, null, null, null, 'friends-load-next-page' );
+		$this->assertTrue( $result['success'] );
+		$this->assertIsString( $result['data'] );
+		$this->assertStringContainsString( '<article', $result['data'] );
+		$this->assertSame( $previous_query, $GLOBALS['wp_query'] );
+	}
+
+	/**
+	 * An interrupted feed operation restores the caller's frontend context.
+	 */
+	public function test_frontend_context_is_restored_on_failure() {
+		$frontend = Friends::get_instance()->frontend;
+		$frontend->author = $this->friend;
+		$frontend->post_format = 'image';
+		$locale = get_locale();
+		try {
+			$frontend->with_feed_context( array( 'friends_post_format' => 'status' ), function () {
+				throw new \RuntimeException( 'interrupt-feed-context' );
+			} );
+			$this->fail( 'The feed operation should have been interrupted.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'interrupt-feed-context', $e->getMessage() );
+		}
+		$this->assertSame( $this->friend, $frontend->author );
+		$this->assertSame( 'image', $frontend->post_format );
+		$this->assertSame( $locale, get_locale() );
+	}
+
+	/**
+	 * SQL hooks must not affect nested queries or survive an exception.
+	 */
+	public function test_query_hooks_are_scoped_and_removed_on_failure() {
+		$feed = new Feed_Query();
+		$nested_sql = '';
+		$inside = false;
+		$interrupt = function ( $query ) use ( &$inside, &$nested_sql ) {
+			if ( $inside || ! $query->get( 'friends_feed_fast' ) ) {
+				return;
+			}
+			$inside = true;
+			$nested = new \WP_Query( array(
+				'post_type' => Friends::CPT,
+				'post_status' => array( 'publish', 'private' ),
+				'no_found_rows' => true,
+				'friends_feed_fast' => true,
+				'friends_feed_cursor' => array( 'date' => '2020-01-01 12:00:00', 'id' => 99 ),
+				'orderby' => 'date ID',
+			) );
+			$nested_sql = $nested->request;
+			throw new \RuntimeException( 'interrupt-feed-query' );
+		};
+		add_action( 'pre_get_posts', $interrupt );
+		try {
+			$feed->fetch( array_merge( $this->query_vars(), array( 'paged' => 1 ) ) );
+			$this->fail( 'The query should have been interrupted.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'interrupt-feed-query', $e->getMessage() );
+		} finally {
+			remove_action( 'pre_get_posts', $interrupt );
+		}
+		$this->assertStringNotContainsString( 'friends_feed_candidates', $nested_sql );
+		$this->assertStringNotContainsString( '2020-01-01 12:00:00', $nested_sql );
+		$this->assertFalse( has_filter( 'posts_clauses_request', array( $feed, 'clauses' ) ) );
+	}
+
+	/**
+	 * Rendering exceptions must restore the surrounding loop and output buffers.
+	 */
+	public function test_renderer_restores_loop_on_failure() {
+		$this->create_posts( 1 );
+		$feed = ( new Feed_Query() )->fetch( array_merge( $this->query_vars(), array( 'paged' => 1 ) ) );
+		$previous_query = $GLOBALS['wp_query'];
+		$previous_post = isset( $GLOBALS['post'] ) ? $GLOBALS['post'] : null;
+		$buffer_level = ob_get_level();
+		$interrupt = function () {
+			throw new \RuntimeException( 'interrupt-feed-render' );
+		};
+		add_action( 'the_post', $interrupt );
+		try {
+			( new Feed_Renderer() )->render( $feed['query'] );
+			$this->fail( 'Rendering should have been interrupted.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'interrupt-feed-render', $e->getMessage() );
+		} finally {
+			remove_action( 'the_post', $interrupt );
+		}
+		$this->assertSame( $previous_query, $GLOBALS['wp_query'] );
+		$this->assertSame( $previous_post, isset( $GLOBALS['post'] ) ? $GLOBALS['post'] : null );
+		$this->assertSame( $buffer_level, ob_get_level() );
+	}
+
+	/**
 	 * Invoke the endpoint and capture its JSON response without exiting.
 	 *
 	 * @param array       $vars Query parameters.
@@ -457,10 +582,18 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	 * @param string|null $signature Override the signature for rejection tests.
 	 * @param array|null  $cursor Cursor and signature returned by the previous page.
 	 * @param array|null  $profile Optional profiling size and nonce override.
+	 * @param string      $action AJAX action to exercise.
 	 * @return array JSON response.
 	 */
-	private function request_feed( $vars, $page, $initial = false, $signature = null, $cursor = null, $profile = null ) {
+	private function request_feed( $vars, $page, $initial = false, $signature = null, $cursor = null, $profile = null, $action = 'friends-load-feed' ) {
 		$previous_request = $_REQUEST;
+		$capture_query = function ( $posts, $query ) {
+			if ( $query->get( 'friends_feed_fast' ) ) {
+				$this->feed_query = $query;
+			}
+			return $posts;
+		};
+		add_filter( 'the_posts', $capture_query, 10, 2 );
 		$json = wp_json_encode( $vars );
 		$_POST = array(
 			'query_vars'   => wp_slash( $json ),
@@ -488,13 +621,14 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 		add_filter( 'wp_die_ajax_handler', $handler );
 		ob_start();
 		try {
-			Friends::get_instance()->frontend->ajax_load_feed();
+			do_action( 'wp_ajax_' . $action );
 		} catch ( \RuntimeException $e ) {
 			if ( 'async-feed-response' !== $e->getMessage() ) {
 				throw $e;
 			}
 		} finally {
 			$output = ob_get_clean();
+			remove_filter( 'the_posts', $capture_query );
 			remove_filter( 'wp_die_ajax_handler', $handler );
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 			$_POST = array();
