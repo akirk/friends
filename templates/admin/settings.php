@@ -295,7 +295,6 @@ do_action( 'friends_settings_before_form' );
 					<fieldset>
 						<?php if ( $args['frontend_views'] ) : ?>
 							<div class="friends-display-views">
-							<p><?php esc_html_e( 'View overrides', 'friends' ); ?></p>
 							<ul>
 							<?php foreach ( $args['frontend_views'] as $view => $display_mode ) : ?>
 								<li>
