@@ -219,12 +219,28 @@ class AsyncFeedTest extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Subscribers cannot fetch the private Friends feed.
+	 * Users without feed access cannot fetch the private Friends feed.
 	 */
 	public function test_unauthorized_user_is_rejected() {
-		wp_set_current_user( $this->factory->user->create( array( 'role' => 'subscriber' ) ) );
+		$user_id = $this->factory->user->create( array( 'role' => 'subscriber' ) );
+		if ( is_multisite() ) {
+			remove_user_from_blog( $user_id, get_current_blog_id() );
+		}
+		wp_set_current_user( $user_id );
 		$result = $this->request_feed( $this->query_vars(), 0 );
 		$this->assertFalse( $result['success'] );
+	}
+
+	/**
+	 * Multisite members retain their existing permission to read their site's feed.
+	 */
+	public function test_multisite_member_can_load_feed() {
+		if ( ! is_multisite() ) {
+			$this->markTestSkipped( 'Site membership applies only to multisite.' );
+		}
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'subscriber' ) ) );
+		$result = $this->request_feed( $this->query_vars(), 0 );
+		$this->assertTrue( $result['success'] );
 	}
 
 	/**
