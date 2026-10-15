@@ -382,3 +382,21 @@ jQuery( function ( $ ) {
 		}
 	}, 500 );
 } );
+
+// Remove an area override immediately, restoring the main feed default.
+jQuery( document ).on( 'click', '.friends-remove-display-mode', function () {
+	const button = jQuery( this );
+	button.prop( 'disabled', true );
+	jQuery.post( ajaxurl, {
+		action: 'friends-display-mode',
+		_ajax_nonce: button.data( 'nonce' ),
+		view: button.data( 'view' ),
+		mode: 'remove'
+	} ).done( function ( response ) {
+		if ( response.success ) {
+			button.closest( 'li' ).remove();
+		}
+	} ).always( function () {
+		button.prop( 'disabled', false );
+	} );
+} );

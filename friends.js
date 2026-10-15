@@ -11,6 +11,20 @@
 	const bottomOffsetLoadNext = 2000;
 	let searchResultFocused = false;
 
+	// Serialize saves so rapid toggles always leave the last chosen mode stored.
+	let displayModeSave = jQuery.Deferred().resolve().promise();
+	friends.saveDisplayMode = function ( mode ) {
+		displayModeSave = displayModeSave.then( save, save );
+		function save() {
+			return $.post( friends.ajax_url, {
+				action: 'friends-display-mode',
+				_ajax_nonce: friends.display_mode_nonce,
+				view: friends.display_view,
+				mode: mode
+			} );
+		}
+	};
+
 	function renderLinkPreview( state, preview ) {
 		const link = document.createElement( 'a' );
 		link.className = 'friends-link-preview' + ( preview.image ? '' : ' no-image' );

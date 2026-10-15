@@ -46,6 +46,7 @@
 			$( 'a.toggle-compact').text( friends.text_compact_mode );
 		}
 		$( window ).trigger( 'scroll' );
+		friends.saveDisplayMode( $( 'section.posts' ).hasClass( 'all-collapsed' ) ? 'collapsed' : 'expanded' );
 		return false;
 	} );
 
