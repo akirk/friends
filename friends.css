@@ -3000,3 +3000,45 @@ header.has-header-image {
 		overflow: hidden;
 	}
 }
+
+/* First feed page loads after the surrounding navigation. */
+.friends-page .friends-feed-loading {
+	padding: 24px;
+	min-height: 120px;
+}
+
+.friends-page .friends-feed-loading [role="status"] {
+	align-items: center;
+	display: flex;
+	gap: 12px;
+}
+
+.friends-page .friends-feed-loading .loading {
+	display: inline-block;
+	min-width: 24px;
+	min-height: 24px;
+}
+
+.friends-page .friends-feed-loading [hidden] {
+	display: none;
+}
+
+.friends-page .friends-feed-fallback {
+	margin-left: 12px;
+}
+
+/* Loading and recovery are part of the feed navigation. */
+.friends-page .posts-navigation [hidden],
+.friends-page .friends-feed-status:empty {
+	display: none;
+}
+
+.friends-page .friends-feed-status {
+	padding: 12px 24px;
+	text-align: center;
+}
+
+.friends-page .posts-navigation button:disabled {
+	cursor: wait;
+	opacity: .65;
+}

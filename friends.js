@@ -3,6 +3,11 @@
 	const $document = $( document );
 	let alreadySearching = '';
 	let alreadyLoading = false;
+	let initialFeedPending = Boolean( friends.async_feed );
+	let feedLoadFailed = false;
+	let feedRetryMode = 'append';
+	let feedRefreshPending = false;
+	const initialFeedPage = Number( friends.current_page );
 	const bottomOffsetLoadNext = 2000;
 	let searchResultFocused = false;
 
@@ -228,6 +233,10 @@
 			const feed_count = feeds.length;
 			let alreadyLoading = false;
 			function update_page() {
+				if ( friends.async_feed ) {
+					loadFeed( 'refresh' );
+					return;
+				}
 				if ( alreadyLoading ) {
 					return;
 				}
@@ -236,15 +245,18 @@
 						query_vars: friends.query_vars,
 						page: friends.current_page - 1,
 						qv_sign: friends.qv_sign,
+						initial_feed: 1,
 					},
 					beforeSend() {
 						alreadyLoading = true;
 					},
-					success( newPosts ) {
+					success( result ) {
 						alreadyLoading = false;
+						const newPosts = result;
 						if ( newPosts ) {
 							$( 'section.posts' )
 							.html( newPosts );
+							initializeFeedPosts();
 						}
 					},
 				} );
@@ -484,7 +496,9 @@
 		) {
 			return;
 		}
-		nextPage();
+		if ( ! feedLoadFailed ) {
+			nextPage();
+		}
 	} );
 
 	$( document ).on( 'click', '.nav-previous', function () {
@@ -492,8 +506,169 @@
 		return false;
 	} );
 
+	function initializeFeedPosts() {
+		fetchMissingLinkPreviews();
+		updateRelativeTimes( document );
+		$document.trigger( 'friends-feed-loaded' );
+	}
+
+	// Opt-in administrator diagnostics: run await friends.measureFeed() in the console.
+	friends.measureFeed = async function ( runs = 3 ) {
+		if ( ! friends.feed_profile_nonce ) {
+			throw new Error( 'Feed profiling requires an administrator account.' );
+		}
+		const samples = [];
+		const count = Math.min( 5, Math.max( 1, Math.floor( Number( runs ) ) || 3 ) );
+		for ( let run = 1; run <= count; ++run ) {
+			// Alternate the order to reduce the effect of warming caches.
+			const sizes = run % 2 ? [ 1, 0 ] : [ 0, 1 ];
+			for ( const size of sizes ) {
+				const started = performance.now();
+				const result = await wp.ajax.send( 'friends-load-feed', {
+					data: {
+						query_vars: friends.query_vars,
+						qv_sign: friends.qv_sign,
+						page: 0,
+						initial_feed: 1,
+						profile: 1,
+						profile_nonce: friends.feed_profile_nonce,
+						profile_size: size,
+					},
+				} );
+				samples.push( {
+					run,
+					mode: size ? 'One post' : 'Full page',
+					...result.timings,
+					request_ms: Math.round( performance.now() - started ),
+				} );
+			}
+		}
+		console.table( samples );
+		console.info( 'query_ms includes WP_Query filters and cache work; render_ms includes post rendering and its database calls. setup_ms includes PHP/WordPress startup; request_ms also includes network and response handling. Normal caches remain enabled; zero query_db_calls indicates a cached query.' );
+		return samples;
+	};
+
+	friends.explainFeed = async function () {
+		if ( ! friends.feed_profile_nonce ) {
+			throw new Error( 'Feed profiling requires an administrator account.' );
+		}
+		const result = await wp.ajax.send( 'friends-load-feed', {
+			data: {
+				query_vars: friends.query_vars,
+				qv_sign: friends.qv_sign,
+				page: 0,
+				initial_feed: 1,
+				profile: 1,
+				profile_nonce: friends.feed_profile_nonce,
+				explain: 1,
+			},
+		} );
+		console.log( result.explain.sql );
+		console.table( result.explain.plan );
+		console.table( result.explain.indexes );
+		if ( result.explain.error ) {
+			console.warn( result.explain.error );
+		}
+		return result.explain;
+	};
+
+	// Initial loading, refresh, and pagination share one request and pagination state.
+	function loadFeed( mode ) {
+		const $feed = $( 'section.posts' );
+		if ( alreadyLoading && mode === 'refresh' ) {
+			feedRefreshPending = true;
+		}
+		if ( ! $feed.length || alreadyLoading ) {
+			return;
+		}
+		const append = mode === 'append';
+		const $loading = $feed.find( '.friends-feed-loading' );
+		const $navigation = $feed.find( '.posts-navigation' );
+		const $button = $navigation.find( 'button' );
+		const restoreFocus = mode !== 'refresh' && ( $loading.find( 'button' ).is( ':focus' ) || $button.is( ':focus' ) );
+		alreadyLoading = true;
+		feedLoadFailed = false;
+		$feed.attr( 'aria-busy', 'true' );
+		$loading.attr( 'aria-busy', 'true' );
+		$loading.find( '.loading' ).show();
+		$loading.find( '.friends-feed-retry, .friends-feed-fallback' ).prop( 'hidden', true );
+		$loading.find( '.friends-feed-loading-text' ).text( friends.text_loading_feed );
+		$button.prop( 'disabled', true ).text( friends.text_loading_feed );
+		$navigation.find( '.friends-feed-status' ).text( '' );
+		return wp.ajax.send( 'friends-load-feed', {
+			data: {
+				query_vars: friends.query_vars,
+				page: append ? friends.current_page : ( mode === 'refresh' ? 0 : initialFeedPage - 1 ),
+				qv_sign: friends.qv_sign,
+				initial_feed: append ? 0 : 1,
+				cursor: append ? friends.feed_cursor : '',
+				cursor_sign: append ? friends.feed_cursor_sign : '',
+			},
+			success( result ) {
+				const $newPosts = $( result.html );
+				if ( append ) {
+					$navigation.before( $newPosts );
+				} else {
+					$feed.html( $newPosts );
+				}
+				friends.current_page = result.page;
+				friends.feed_cursor = result.cursor;
+				friends.feed_cursor_sign = result.cursor_sign;
+				friends.max_page = result.has_more ? result.page + 1 : result.page;
+				initialFeedPending = false;
+				const $currentNavigation = $feed.find( '.posts-navigation' );
+				$currentNavigation.find( '.nav-previous' ).prop( 'hidden', ! result.has_more );
+				$currentNavigation.find( '.friends-feed-status' ).text( result.has_more ? '' : friends.text_no_more_posts );
+				initializeFeedPosts();
+				if ( restoreFocus ) {
+					const $target = $newPosts.filter( 'article' ).first();
+					( $target.length ? $target : $currentNavigation ).attr( 'tabindex', '-1' ).trigger( 'focus' );
+				}
+			},
+			error() {
+				feedLoadFailed = true;
+				feedRetryMode = mode;
+				$navigation.find( '.nav-previous' ).prop( 'hidden', false );
+				$loading.attr( 'aria-busy', 'false' );
+				$loading.find( '.loading' ).hide();
+				$loading.find( '.friends-feed-loading-text' ).text( friends.text_feed_load_error );
+				$loading.find( '.friends-feed-retry, .friends-feed-fallback' ).prop( 'hidden', false );
+				$navigation.find( '.friends-feed-status' ).text( friends.text_feed_load_error );
+			},
+		} ).always( function () {
+			alreadyLoading = false;
+			$feed.attr( 'aria-busy', 'false' );
+			$button.prop( 'disabled', false ).text( feedLoadFailed ? friends.text_retry_feed : friends.text_load_more_posts );
+			if ( feedRefreshPending ) {
+				feedRefreshPending = false;
+				if ( ! feedLoadFailed ) {
+					loadFeed( 'refresh' );
+				}
+			}
+		} );
+	}
+
+	function loadInitialFeed() {
+		if ( $( '.friends-feed-loading' ).length ) {
+			loadFeed( 'initial' );
+		}
+	}
+
+	$( loadInitialFeed );
+	$document.on( 'click', '.friends-feed-retry', loadInitialFeed );
+
 	function nextPage() {
-		if ( alreadyLoading ) {
+		if ( friends.async_feed ) {
+			if ( feedLoadFailed ) {
+				loadFeed( feedRetryMode );
+				return;
+			}
+			if ( ! initialFeedPending && friends.current_page < friends.max_page ) {
+				loadFeed( 'append' );
+			}
+			return;
+		}
+		if ( alreadyLoading || initialFeedPending ) {
 			return;
 		}
 
@@ -501,36 +676,34 @@
 			return;
 		}
 
+		alreadyLoading = true;
+		const $navigation = $( 'section.posts .posts-navigation .nav-previous' );
+		$navigation.addClass( 'loading' );
 		wp.ajax.send( 'friends-load-next-page', {
 			data: {
 				query_vars: friends.query_vars,
 				page: friends.current_page,
 				qv_sign: friends.qv_sign,
+				cursor: friends.feed_cursor,
+				cursor_sign: friends.feed_cursor_sign,
 			},
-			beforeSend() {
-				$( 'section.posts .posts-navigation .nav-previous' ).addClass(
-					'loading'
-				);
-				alreadyLoading = true;
-			},
-			success( newPosts ) {
-				$(
-					'section.posts .posts-navigation .nav-previous'
-				).removeClass( 'loading' );
+			success( result ) {
+				const newPosts = result;
 				if ( newPosts ) {
 					$( 'section.posts > article' ).last().after( newPosts );
-					if (
-						++friends.current_page < friends.max_page &&
-						/<article/.test( newPosts )
-					) {
-						alreadyLoading = false;
-					} else {
-						$( 'section.posts .posts-navigation' ).text(
-							friends.text_no_more_posts
-						);
-					}
 				}
+				++friends.current_page;
+				if ( friends.current_page >= friends.max_page || ! /<article/.test( newPosts ) ) {
+					$( 'section.posts .posts-navigation' ).text( friends.text_no_more_posts );
+				}
+				initializeFeedPosts();
 			},
+			error() {
+				$navigation.attr( 'title', friends.text_feed_load_error );
+			},
+		} ).always( function () {
+			$navigation.removeClass( 'loading' );
+			alreadyLoading = false;
 		} );
 	}
 
