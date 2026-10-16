@@ -74,8 +74,8 @@ class Migration {
 			array(
 				'id'            => 'cleanup_unused_activitypub_actors',
 				'version'       => 'unreleased',
-				'title'         => 'Remove Unused ActivityPub Accounts',
-				'description'   => 'Removes cached accounts no longer needed by feeds, posts, relationships, or interactions. Requires the ActivityPub plugin.',
+				'title'         => 'Nominate Cached ActivityPub Accounts for Cleanup',
+				'description'   => 'Nominates existing cached accounts for ActivityPub to clean up. Friends protects subscribed accounts and retained post authors. Requires the proposed ActivityPub cleanup API.',
 				'method'        => 'cleanup_unused_activitypub_actors',
 				'status_option' => 'friends_unused_ap_actors_completed',
 				'batched'       => true,
@@ -3392,8 +3392,8 @@ class Migration {
 	 * @return true|\WP_Error Whether cleanup can run.
 	 */
 	public static function cleanup_unused_activitypub_actors() {
-		if ( ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'delete' ) ) ) {
-			return new \WP_Error( 'activitypub_cleanup_unavailable', __( 'Activate ActivityPub to remove unused accounts.', 'friends' ) );
+		if ( ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
+			return new \WP_Error( 'activitypub_cleanup_unavailable', __( 'This migration requires ActivityPub with the proposed actor cleanup API.', 'friends' ) );
 		}
 		if ( get_option( 'friends_unused_ap_actors_completed' ) ) {
 			return true;
@@ -3412,10 +3412,10 @@ class Migration {
 	}
 
 	/**
-	 * Advance past retained actors while accounting for deletions in each batch.
+	 * Nominate existing actors in batches; ActivityPub owns reference checks and deletion.
 	 */
 	public static function cleanup_unused_activitypub_actors_batch() {
-		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'delete' ) ) ) {
+		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
 			return;
 		}
 
@@ -3448,9 +3448,8 @@ class Migration {
 		}
 
 		foreach ( $ids as $actor_id ) {
-			if ( ! Feed_Parser_ActivityPub::delete_unused_actor( (int) $actor_id ) && get_post( $actor_id ) ) {
-				++$offset;
-			}
+			Feed_Parser_ActivityPub::mark_actor_for_cleanup( (int) $actor_id );
+			++$offset;
 		}
 		update_option( 'friends_unused_ap_actors_offset', $offset, false );
 		update_option( 'friends_unused_ap_actors_processed', (int) get_option( 'friends_unused_ap_actors_processed', 0 ) + count( $ids ), false );

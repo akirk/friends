@@ -465,10 +465,10 @@ class Friends {
 	}
 
 	/**
-	 * Start the actor cleanup once the ActivityPub plugin is available.
+	 * Start candidate nomination once the ActivityPub cleanup API is available.
 	 */
 	public function maybe_cleanup_unused_activitypub_actors() {
-		if ( get_option( 'friends_unused_ap_actors_completed' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'delete' ) ) ) {
+		if ( get_option( 'friends_unused_ap_actors_completed' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
 			return;
 		}
 		require_once __DIR__ . '/class-migration.php';

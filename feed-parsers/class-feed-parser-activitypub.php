@@ -30,6 +30,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private $mapped_usernames = array();
 	private $friends_feed;
 	private $deleted_post_actors = array();
+	private static $referenced_cleanup_actors;
 
 	/**
 	 * Constructor.
@@ -40,6 +41,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$this->friends_feed = $friends_feed;
 		add_action( 'before_delete_post', array( $this, 'remember_deleted_post_actor' ), 10, 2 );
 		add_action( 'deleted_post', array( $this, 'delete_unused_post_actor' ) );
+		add_filter( 'activitypub_remote_actor_is_in_use', array( self::class, 'remote_actor_is_in_use' ), 10, 2 );
+		foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $hook ) {
+			add_action( $hook, array( self::class, 'invalidate_cleanup_actor_references' ), 10, 3 );
+		}
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
@@ -169,7 +174,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
-	 * Remove an unused actor after its cached post has been permanently deleted.
+	 * Nominate an actor after its cached post has been permanently deleted.
 	 *
 	 * @param int $post_id Deleted post ID.
 	 */
@@ -179,7 +184,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		$actor_id = $this->deleted_post_actors[ $post_id ];
 		unset( $this->deleted_post_actors[ $post_id ] );
-		self::delete_unused_actor( $actor_id );
+		self::mark_actor_for_cleanup( $actor_id );
 	}
 
 	/**
@@ -194,146 +199,63 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return true;
 		}
 
-		$page = 1;
-		do {
-			$query = new \WP_Query(
-				array(
-					'post_type'      => Friends::CPT,
-					'post_status'    => array_values( get_post_stati() ),
-					'posts_per_page' => 100,
-					'paged'          => $page++,
-					'orderby'        => 'ID',
-					'order'          => 'ASC',
-					'no_found_rows'  => true,
-				)
-			);
-			foreach ( $query->posts as $post ) {
-				$meta = get_post_meta( $post->ID, self::SLUG, true );
-				$author = isset( $meta['attributedTo'] ) ? $meta['attributedTo'] : array();
-				if ( ! empty( $author['ap_actor_id'] ) && (int) $author['ap_actor_id'] === $actor->ID ) {
-					return true;
+		if ( null === self::$referenced_cleanup_actors ) {
+			self::$referenced_cleanup_actors = array();
+			$page = 1;
+			do {
+				$query = new \WP_Query(
+					array(
+						'post_type'      => Friends::CPT,
+						'post_status'    => array_values( get_post_stati() ),
+						'posts_per_page' => 100,
+						'paged'          => $page++,
+						'orderby'        => 'ID',
+						'order'          => 'ASC',
+						'no_found_rows'  => true,
+					)
+				);
+				foreach ( $query->posts as $post ) {
+					$meta = get_post_meta( $post->ID, self::SLUG, true );
+					$author = isset( $meta['attributedTo'] ) ? $meta['attributedTo'] : array();
+					if ( ! empty( $author['ap_actor_id'] ) ) {
+						self::$referenced_cleanup_actors[ 'id:' . (int) $author['ap_actor_id'] ] = true;
+					}
+					if ( ! empty( $author['id'] ) ) {
+						self::$referenced_cleanup_actors[ 'uri:' . $author['id'] ] = true;
+					}
 				}
-				if ( ! empty( $author['id'] ) && $author['id'] === $actor->guid ) {
-					return true;
-				}
-			}
-			$count = count( $query->posts );
-		} while ( 100 === $count );
-		return false;
+				$count = count( $query->posts );
+			} while ( 100 === $count );
+		}
+		return isset( self::$referenced_cleanup_actors[ 'id:' . $actor->ID ] ) || isset( self::$referenced_cleanup_actors[ 'uri:' . $actor->guid ] );
 	}
 
 	/**
-	 * Delete a cached actor only when no local relationships or content need it.
+	 * Invalidate the request-local reference index when cached author data changes.
 	 *
-	 * @since unreleased
-	 *
-	 * @param int $post_id Remote actor post ID.
-	 * @return bool Whether the actor was deleted.
+	 * @param int|int[] $meta_id Metadata ID or IDs.
+	 * @param int       $post_id Post ID.
+	 * @param string    $key Metadata key.
 	 */
-	public static function delete_unused_actor( $post_id ) {
-		if ( ! $post_id ) {
-			return false;
+	public static function invalidate_cleanup_actor_references( $meta_id, $post_id, $key ) {
+		if ( self::SLUG === $key ) {
+			self::$referenced_cleanup_actors = null;
 		}
-		$post = get_post( $post_id );
-		if ( ! $post || 'ap_actor' !== $post->post_type || ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'delete' ) ) ) {
-			return false;
-		}
-
-		foreach ( array( '_activitypub_following', '_activitypub_followed_by', '_activitypub_followed_by_pending', '_activitypub_blocked_by' ) as $key ) {
-			// Existence matters: the blog actor has user ID zero.
-			if ( \metadata_exists( 'post', $post->ID, $key ) ) {
-				return false;
-			}
-		}
-
-		// Include every status, including trash, and legacy URI-based references.
-		$query = new \WP_Query(
-			array(
-				'post_type'      => array_values( get_post_types() ),
-				'post_status'    => array_values( get_post_stati() ),
-				'posts_per_page' => 1,
-				'fields'         => 'ids',
-				'no_found_rows'  => true,
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'meta_query'     => array(
-					'relation' => 'OR',
-					array(
-						'key'   => '_activitypub_remote_actor_id',
-						'value' => $post->ID,
-					),
-					array(
-						'key'   => '_activitypub_activity_remote_actor',
-						'value' => $post->guid,
-					),
-				),
-			)
-		);
-		if ( $query->posts ) {
-			return false;
-		}
-
-		$comments = get_comments(
-			array(
-				'status'     => 'any',
-				'number'     => 1,
-				'fields'     => 'ids',
-				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				'meta_query' => array(
-					array(
-						'key'   => '_activitypub_remote_actor_id',
-						'value' => $post->ID,
-					),
-				),
-			)
-		);
-		if ( $comments || get_comments(
-			array(
-				'status'     => 'all',
-				'number'     => 1,
-				'fields'     => 'ids',
-				'author_url' => $post->guid,
-			)
-		) ) {
-			return false;
-		}
-
-		// Outgoing activities can still need this actor for delivery or Undo.
-		foreach ( array( $post->guid, str_replace( '/', '\\/', $post->guid ) ) as $uri ) {
-			$query = new \WP_Query(
-				array(
-					'post_type'      => 'ap_outbox',
-					'post_status'    => array_values( get_post_stati() ),
-					'posts_per_page' => 1,
-					'fields'         => 'ids',
-					'no_found_rows'  => true,
-					's'              => $uri,
-					'sentence'       => true,
-					'search_columns' => array( 'post_content' ),
-				)
-			);
-			if ( $query->posts ) {
-				return false;
-			}
-		}
-
-		if ( self::remote_actor_is_in_use( false, $post ) ) {
-			return false;
-		}
-
-		/**
-		 * Whether another plugin still needs a cached remote actor.
-		 *
-		 * @since unreleased
-		 *
-		 * @param bool     $in_use Whether the actor is referenced by an integration.
-		 * @param \WP_Post $post   The cached actor.
-		 */
-		if ( apply_filters( 'friends_remote_actor_is_in_use', false, $post ) ) {
-			return false;
-		}
-
-		return (bool) \Activitypub\Collection\Remote_Actors::delete( $post->ID );
 	}
+
+	/**
+	 * Delegate candidate nomination to ActivityPub when the proposed API exists.
+	 *
+	 * @param int $actor_id Remote actor ID.
+	 * @return bool Whether the actor was nominated.
+	 */
+	public static function mark_actor_for_cleanup( $actor_id ) {
+		if ( ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'mark_for_cleanup' ) ) ) {
+			return false;
+		}
+		return \Activitypub\Collection\Remote_Actors::mark_for_cleanup( $actor_id );
+	}
+
 
 	public function friends_add_friends_input_placeholder() {
 		return __( 'Enter URL or @activitypub@handle.domain', 'friends' );
