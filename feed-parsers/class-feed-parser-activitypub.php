@@ -194,28 +194,32 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			return true;
 		}
 
-		global $wpdb;
-		// Match the existing WordPress serialized metadata format.
-		// phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
-		// Match both integer and string IDs, as well as legacy URI references.
-		$integer_id = '%' . $wpdb->esc_like( serialize( 'ap_actor_id' ) . serialize( (int) $actor->ID ) ) . '%';
-		$string_id  = '%' . $wpdb->esc_like( serialize( 'ap_actor_id' ) . serialize( (string) $actor->ID ) ) . '%';
-		$uri        = '%' . $wpdb->esc_like( serialize( $actor->guid ) ) . '%';
-		// phpcs:enable WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT pm.post_id FROM {$wpdb->postmeta} pm
-				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
-				WHERE p.post_type = %s AND pm.meta_key = %s
-				AND (pm.meta_value LIKE %s OR pm.meta_value LIKE %s OR pm.meta_value LIKE %s) LIMIT 1",
-				Friends::CPT,
-				self::SLUG,
-				$integer_id,
-				$string_id,
-				$uri
-			)
-		);
+		$page = 1;
+		do {
+			$query = new \WP_Query(
+				array(
+					'post_type'      => Friends::CPT,
+					'post_status'    => array_values( get_post_stati() ),
+					'posts_per_page' => 100,
+					'paged'          => $page++,
+					'orderby'        => 'ID',
+					'order'          => 'ASC',
+					'no_found_rows'  => true,
+				)
+			);
+			foreach ( $query->posts as $post ) {
+				$meta = get_post_meta( $post->ID, self::SLUG, true );
+				$author = isset( $meta['attributedTo'] ) ? $meta['attributedTo'] : array();
+				if ( ! empty( $author['ap_actor_id'] ) && (int) $author['ap_actor_id'] === $actor->ID ) {
+					return true;
+				}
+				if ( ! empty( $author['id'] ) && $author['id'] === $actor->guid ) {
+					return true;
+				}
+			}
+			$count = count( $query->posts );
+		} while ( 100 === $count );
+		return false;
 	}
 
 	/**
@@ -242,58 +246,74 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			}
 		}
 
-		global $wpdb;
-
 		// Include every status, including trash, and legacy URI-based references.
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		$referenced = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT post_id FROM {$wpdb->postmeta}
-				WHERE (meta_key = '_activitypub_remote_actor_id' AND meta_value = %s)
-				OR (meta_key = '_activitypub_activity_remote_actor' AND meta_value = %s)
-				LIMIT 1",
-				(string) $post->ID,
-				$post->guid
+		$query = new \WP_Query(
+			array(
+				'post_type'      => array_values( get_post_types() ),
+				'post_status'    => array_values( get_post_stati() ),
+				'posts_per_page' => 1,
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				'meta_query'     => array(
+					'relation' => 'OR',
+					array(
+						'key'   => '_activitypub_remote_actor_id',
+						'value' => $post->ID,
+					),
+					array(
+						'key'   => '_activitypub_activity_remote_actor',
+						'value' => $post->guid,
+					),
+				),
 			)
 		);
-		if ( $referenced ) {
+		if ( $query->posts ) {
 			return false;
 		}
 
-		$referenced = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT comment_id FROM {$wpdb->commentmeta}
-				WHERE meta_key = '_activitypub_remote_actor_id' AND meta_value = %s LIMIT 1",
-				(string) $post->ID
+		$comments = get_comments(
+			array(
+				'status'     => 'any',
+				'number'     => 1,
+				'fields'     => 'ids',
+				// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+				'meta_query' => array(
+					array(
+						'key'   => '_activitypub_remote_actor_id',
+						'value' => $post->ID,
+					),
+				),
 			)
 		);
-		if ( $referenced ) {
-			return false;
-		}
-
-		$referenced = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT comment_ID FROM {$wpdb->comments} WHERE comment_author_url = %s LIMIT 1",
-				$post->guid
+		if ( $comments || get_comments(
+			array(
+				'status'     => 'all',
+				'number'     => 1,
+				'fields'     => 'ids',
+				'author_url' => $post->guid,
 			)
-		);
-		if ( $referenced ) {
+		) ) {
 			return false;
 		}
 
 		// Outgoing activities can still need this actor for delivery or Undo.
-		$referenced = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s
-				AND (post_content LIKE %s OR post_content LIKE %s) LIMIT 1",
-				'ap_outbox',
-				'%' . $wpdb->esc_like( $post->guid ) . '%',
-				'%' . $wpdb->esc_like( \str_replace( '/', '\\/', $post->guid ) ) . '%'
-			)
-		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		if ( $referenced ) {
-			return false;
+		foreach ( array( $post->guid, str_replace( '/', '\\/', $post->guid ) ) as $uri ) {
+			$query = new \WP_Query(
+				array(
+					'post_type'      => 'ap_outbox',
+					'post_status'    => array_values( get_post_stati() ),
+					'posts_per_page' => 1,
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					's'              => $uri,
+					'sentence'       => true,
+					'search_columns' => array( 'post_content' ),
+				)
+			);
+			if ( $query->posts ) {
+				return false;
+			}
 		}
 
 		if ( self::remote_actor_is_in_use( false, $post ) ) {

@@ -3399,11 +3399,9 @@ class Migration {
 			return true;
 		}
 		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) ) {
-			global $wpdb;
-			$stats = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(*) AS total, MAX(ID) AS last_id FROM {$wpdb->posts} WHERE post_type = %s", 'ap_actor' ) );
-			update_option( 'friends_unused_ap_actors_total', (int) $stats->total, false );
-			update_option( 'friends_unused_ap_actors_last_id', (int) $stats->last_id, false );
-			update_option( 'friends_unused_ap_actors_cursor', 0, false );
+			$total = array_sum( (array) wp_count_posts( 'ap_actor' ) );
+			update_option( 'friends_unused_ap_actors_total', $total, false );
+			update_option( 'friends_unused_ap_actors_offset', 0, false );
 			update_option( 'friends_unused_ap_actors_processed', 0, false );
 			update_option( 'friends_unused_ap_actors_in_progress', true, false );
 		}
@@ -3414,37 +3412,47 @@ class Migration {
 	}
 
 	/**
-	 * Scan by ID so deleting actors or retaining a full batch cannot stall cleanup.
+	 * Advance past retained actors while accounting for deletions in each batch.
 	 */
 	public static function cleanup_unused_activitypub_actors_batch() {
 		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'delete' ) ) ) {
 			return;
 		}
 
-		global $wpdb;
 		$batch_size = max( 1, (int) apply_filters( 'friends_unused_ap_actors_batch_size', 50 ) );
-		$ids = $wpdb->get_col(
-			$wpdb->prepare(
-				"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d AND ID <= %d ORDER BY ID ASC LIMIT %d",
-				'ap_actor',
-				(int) get_option( 'friends_unused_ap_actors_cursor', 0 ),
-				(int) get_option( 'friends_unused_ap_actors_last_id', 0 ),
-				$batch_size
-			)
-		);
+		$processed = (int) get_option( 'friends_unused_ap_actors_processed', 0 );
+		$remaining = max( 0, (int) get_option( 'friends_unused_ap_actors_total', 0 ) - $processed );
+		$offset = (int) get_option( 'friends_unused_ap_actors_offset', 0 );
+		$ids = array();
+		if ( $remaining ) {
+			$query = new \WP_Query(
+				array(
+					'post_type'      => 'ap_actor',
+					'post_status'    => array_values( get_post_stati() ),
+					'posts_per_page' => min( $batch_size, $remaining ),
+					'offset'         => $offset,
+					'orderby'        => 'ID',
+					'order'          => 'ASC',
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+				)
+			);
+			$ids = $query->posts;
+		}
 		if ( empty( $ids ) ) {
 			update_option( 'friends_unused_ap_actors_completed', true, false );
 			delete_option( 'friends_unused_ap_actors_in_progress' );
-			delete_option( 'friends_unused_ap_actors_cursor' );
-			delete_option( 'friends_unused_ap_actors_last_id' );
+			delete_option( 'friends_unused_ap_actors_offset' );
 			wp_clear_scheduled_hook( 'friends_cleanup_unused_activitypub_actors_batch' );
 			return;
 		}
 
 		foreach ( $ids as $actor_id ) {
-			Feed_Parser_ActivityPub::delete_unused_actor( (int) $actor_id );
+			if ( ! Feed_Parser_ActivityPub::delete_unused_actor( (int) $actor_id ) && get_post( $actor_id ) ) {
+				++$offset;
+			}
 		}
-		update_option( 'friends_unused_ap_actors_cursor', (int) end( $ids ), false );
+		update_option( 'friends_unused_ap_actors_offset', $offset, false );
 		update_option( 'friends_unused_ap_actors_processed', (int) get_option( 'friends_unused_ap_actors_processed', 0 ) + count( $ids ), false );
 		if ( ! wp_next_scheduled( 'friends_cleanup_unused_activitypub_actors_batch' ) ) {
 			wp_schedule_single_event( time() + 1, 'friends_cleanup_unused_activitypub_actors_batch' );

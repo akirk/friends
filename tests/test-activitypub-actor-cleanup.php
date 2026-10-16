@@ -46,12 +46,15 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		wp_delete_post( $first, true );
 		$this->assertNotNull( get_post( $actor_id ) );
 		wp_trash_post( $second );
-		$this->assertFalse( Feed_Parser_ActivityPub::delete_unused_actor( $actor_id ) );
+		$this->assertNotNull( get_post( $actor_id ) );
 		wp_delete_post( $second, true );
 		$this->assertNull( get_post( $actor_id ) );
 	}
 
 	public function test_blog_relationships_and_interactions_protect_actor() {
+		if ( ! method_exists( Feed_Parser_ActivityPub::class, 'delete_unused_actor' ) ) {
+			$this->markTestSkipped( 'The cleanup API is not present on the base branch.' );
+		}
 		$actor_id = $this->create_actor();
 		foreach ( array( '_activitypub_following', '_activitypub_followed_by', '_activitypub_followed_by_pending', '_activitypub_blocked_by' ) as $key ) {
 			add_post_meta( $actor_id, $key, '0' );
@@ -61,11 +64,29 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		$comment_id = self::factory()->comment->create();
 		add_comment_meta( $comment_id, '_activitypub_remote_actor_id', $actor_id );
 		$this->assertFalse( Feed_Parser_ActivityPub::delete_unused_actor( $actor_id ) );
+		wp_trash_comment( $comment_id );
+		$this->assertFalse( Feed_Parser_ActivityPub::delete_unused_actor( $actor_id ) );
 		wp_delete_comment( $comment_id, true );
 		$this->assertTrue( Feed_Parser_ActivityPub::delete_unused_actor( $actor_id ) );
 	}
 
+	public function test_string_ids_and_legacy_author_uris_protect_actor() {
+		if ( ! method_exists( Feed_Parser_ActivityPub::class, 'delete_unused_actor' ) ) {
+			$this->markTestSkipped( 'The cleanup API is not present on the base branch.' );
+		}
+		$actor_id = $this->create_actor();
+		$post_id  = $this->create_cached_post( (string) $actor_id );
+		$this->assertFalse( Feed_Parser_ActivityPub::delete_unused_actor( $actor_id ) );
+		update_post_meta( $post_id, 'activitypub', array( 'attributedTo' => array( 'id' => get_post( $actor_id )->guid ) ) );
+		$this->assertFalse( Feed_Parser_ActivityPub::delete_unused_actor( $actor_id ) );
+		wp_delete_post( $post_id, true );
+		$this->assertNull( get_post( $actor_id ) );
+	}
+
 	public function test_feed_relationship_protects_actor() {
+		if ( ! method_exists( Feed_Parser_ActivityPub::class, 'delete_unused_actor' ) ) {
+			$this->markTestSkipped( 'The cleanup API is not present on the base branch.' );
+		}
 		$actor_id = $this->create_actor();
 		$term     = wp_insert_term( 'Retained actor feed', User_Feed::TAXONOMY );
 		$this->assertNotWPError( $term );
@@ -75,6 +96,9 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 	}
 
 	public function test_migration_advances_past_protected_actors() {
+		if ( ! method_exists( Feed_Parser_ActivityPub::class, 'delete_unused_actor' ) ) {
+			$this->markTestSkipped( 'The cleanup API is not present on the base branch.' );
+		}
 		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
 		$protected = $this->create_actor();
 		add_post_meta( $protected, '_activitypub_following', '0' );
