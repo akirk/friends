@@ -115,7 +115,7 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		$term = wp_insert_term( 'Retained actor feed', User_Feed::TAXONOMY );
 		$this->assertNotWPError( $term );
 		User_Feed::get_by_id( $term['term_id'] )->set_ap_actor_id( $actor_id );
-		$this->assertFalse( (bool) get_post_meta( $actor_id, '_activitypub_cache_only', true ) );
+		$this->assertTrue( (bool) get_post_meta( $actor_id, '_activitypub_retain', true ) );
 		$this->assertFalse( \Activitypub\Collection\Remote_Actors::set_cache_only( $actor_id, true ) );
 	}
 
@@ -163,7 +163,7 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 			$this->assertSame( get_post( $first )->guid, get_post_meta( $post_id, 'activitypub', true )['attributedTo']['id'] );
 			foreach ( array( $first, $second ) as $actor_id ) {
 				$this->assertNotNull( get_post( $actor_id ) );
-				$this->assertTrue( (bool) get_post_meta( $actor_id, '_activitypub_cache_only', true ) );
+				$this->assertFalse( (bool) get_post_meta( $actor_id, '_activitypub_retain', true ) );
 			}
 		} finally {
 			remove_filter( 'friends_ap_actor_classification_batch_size', $batch_size );
