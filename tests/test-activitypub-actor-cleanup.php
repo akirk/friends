@@ -17,8 +17,8 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 			$this->markTestSkipped( 'ActivityPub is required.' );
 		}
 		Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
-		if ( method_exists( Feed_Parser_ActivityPub::class, 'invalidate_cleanup_actor_references' ) ) {
-			Feed_Parser_ActivityPub::invalidate_cleanup_actor_references( 0, 0, 'activitypub' );
+		if ( class_exists( Activitypub_Actor_Cleanup::class ) ) {
+			Activitypub_Actor_Cleanup::invalidate_references( 0, 0, 'activitypub' );
 		}
 	}
 
@@ -72,10 +72,10 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 			$this->markTestSkipped( 'This case covers ActivityPub without the proposed API.' );
 		}
 		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
-		delete_option( 'friends_unused_ap_actors_completed' );
-		$result = Migration::run_migration( 'cleanup_unused_activitypub_actors' );
+		delete_option( 'friends_ap_actor_nomination_completed' );
+		$result = Migration::run_migration( 'nominate_activitypub_actors' );
 		$this->assertFalse( $result['success'] );
-		$this->assertFalse( (bool) get_option( 'friends_unused_ap_actors_completed' ) );
+		$this->assertFalse( (bool) get_option( 'friends_ap_actor_nomination_completed' ) );
 	}
 
 	public function test_migration_nominates_actors_without_deleting_them() {
@@ -85,26 +85,26 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
 		$first  = $this->create_actor();
 		$second = $this->create_actor();
-		delete_option( 'friends_unused_ap_actors_completed' );
-		delete_option( 'friends_unused_ap_actors_in_progress' );
+		delete_option( 'friends_ap_actor_nomination_completed' );
+		delete_option( 'friends_ap_actor_nomination_in_progress' );
 		$batch_size = function () {
 			return 1;
 		};
-		add_filter( 'friends_unused_ap_actors_batch_size', $batch_size );
+		add_filter( 'friends_ap_actor_nomination_batch_size', $batch_size );
 		try {
-			$result = Migration::run_migration( 'cleanup_unused_activitypub_actors' );
+			$result = Migration::run_migration( 'nominate_activitypub_actors' );
 			$this->assertTrue( $result['success'] );
-			for ( $i = 0; $i < 100 && get_option( 'friends_unused_ap_actors_in_progress' ); ++$i ) {
-				Migration::cleanup_unused_activitypub_actors_batch();
+			for ( $i = 0; $i < 100 && get_option( 'friends_ap_actor_nomination_in_progress' ); ++$i ) {
+				Migration::nominate_activitypub_actors_batch();
 			}
-			$this->assertTrue( (bool) get_option( 'friends_unused_ap_actors_completed' ) );
+			$this->assertTrue( (bool) get_option( 'friends_ap_actor_nomination_completed' ) );
 			foreach ( array( $first, $second ) as $actor_id ) {
 				$this->assertNotNull( get_post( $actor_id ) );
 				$this->assertTrue( has_term( 'candidate', 'ap_actor_cleanup', $actor_id ) );
 			}
 		} finally {
-			remove_filter( 'friends_unused_ap_actors_batch_size', $batch_size );
-			wp_clear_scheduled_hook( 'friends_cleanup_unused_activitypub_actors_batch' );
+			remove_filter( 'friends_ap_actor_nomination_batch_size', $batch_size );
+			wp_clear_scheduled_hook( 'friends_nominate_activitypub_actors_batch' );
 		}
 	}
 }

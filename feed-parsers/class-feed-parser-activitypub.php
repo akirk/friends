@@ -29,8 +29,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private $activitypub_already_handled = array();
 	private $mapped_usernames = array();
 	private $friends_feed;
-	private $deleted_post_actors = array();
-	private static $referenced_cleanup_actors;
 
 	/**
 	 * Constructor.
@@ -39,12 +37,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function __construct( Feed $friends_feed ) {
 		$this->friends_feed = $friends_feed;
-		add_action( 'before_delete_post', array( $this, 'remember_deleted_post_actor' ), 10, 2 );
-		add_action( 'deleted_post', array( $this, 'delete_unused_post_actor' ) );
-		add_filter( 'activitypub_remote_actor_is_in_use', array( self::class, 'remote_actor_is_in_use' ), 10, 2 );
-		foreach ( array( 'added_post_meta', 'updated_post_meta', 'deleted_post_meta' ) as $hook ) {
-			add_action( $hook, array( self::class, 'invalidate_cleanup_actor_references' ), 10, 3 );
-		}
+		require_once __DIR__ . '/../includes/class-activitypub-actor-cleanup.php';
+		new Activitypub_Actor_Cleanup();
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
@@ -151,111 +145,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		// Auto-create Friend subscription when following via ActivityPub plugin.
 		add_action( 'post_activitypub_add_to_outbox', array( $this, 'handle_outbox_follow' ), 10, 4 );
 	}
-
-	/**
-	 * Preserve the actor reference before WordPress deletes the post metadata.
-	 *
-	 * @param int      $post_id Post ID.
-	 * @param \WP_Post $post    Post being deleted.
-	 */
-	public function remember_deleted_post_actor( $post_id, $post ) {
-		if ( Friends::CPT !== $post->post_type ) {
-			return;
-		}
-		$meta = get_post_meta( $post_id, self::SLUG, true );
-		if ( ! empty( $meta['attributedTo']['ap_actor_id'] ) ) {
-			$this->deleted_post_actors[ $post_id ] = (int) $meta['attributedTo']['ap_actor_id'];
-		} elseif ( ! empty( $meta['attributedTo']['id'] ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
-			$actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $meta['attributedTo']['id'] );
-			if ( ! is_wp_error( $actor ) ) {
-				$this->deleted_post_actors[ $post_id ] = $actor->ID;
-			}
-		}
-	}
-
-	/**
-	 * Nominate an actor after its cached post has been permanently deleted.
-	 *
-	 * @param int $post_id Deleted post ID.
-	 */
-	public function delete_unused_post_actor( $post_id ) {
-		if ( ! isset( $this->deleted_post_actors[ $post_id ] ) ) {
-			return;
-		}
-		$actor_id = $this->deleted_post_actors[ $post_id ];
-		unset( $this->deleted_post_actors[ $post_id ] );
-		self::mark_actor_for_cleanup( $actor_id );
-	}
-
-	/**
-	 * Protect actors used by Friends feeds or cached posts, including trashed posts.
-	 *
-	 * @param bool     $in_use Whether another integration needs this actor.
-	 * @param \WP_Post $actor  Remote actor post.
-	 * @return bool Whether Friends still needs the actor.
-	 */
-	public static function remote_actor_is_in_use( $in_use, $actor ) {
-		if ( $in_use || ! is_wp_error( User_Feed::get_by_ap_actor_id( $actor->ID ) ) || ! is_wp_error( User_Feed::get_by_url( $actor->guid ) ) ) {
-			return true;
-		}
-
-		if ( null === self::$referenced_cleanup_actors ) {
-			self::$referenced_cleanup_actors = array();
-			$page = 1;
-			do {
-				$query = new \WP_Query(
-					array(
-						'post_type'      => Friends::CPT,
-						'post_status'    => array_values( get_post_stati() ),
-						'posts_per_page' => 100,
-						'paged'          => $page++,
-						'orderby'        => 'ID',
-						'order'          => 'ASC',
-						'no_found_rows'  => true,
-					)
-				);
-				foreach ( $query->posts as $post ) {
-					$meta = get_post_meta( $post->ID, self::SLUG, true );
-					$author = isset( $meta['attributedTo'] ) ? $meta['attributedTo'] : array();
-					if ( ! empty( $author['ap_actor_id'] ) ) {
-						self::$referenced_cleanup_actors[ 'id:' . (int) $author['ap_actor_id'] ] = true;
-					}
-					if ( ! empty( $author['id'] ) ) {
-						self::$referenced_cleanup_actors[ 'uri:' . $author['id'] ] = true;
-					}
-				}
-				$count = count( $query->posts );
-			} while ( 100 === $count );
-		}
-		return isset( self::$referenced_cleanup_actors[ 'id:' . $actor->ID ] ) || isset( self::$referenced_cleanup_actors[ 'uri:' . $actor->guid ] );
-	}
-
-	/**
-	 * Invalidate the request-local reference index when cached author data changes.
-	 *
-	 * @param int|int[] $meta_id Metadata ID or IDs.
-	 * @param int       $post_id Post ID.
-	 * @param string    $key Metadata key.
-	 */
-	public static function invalidate_cleanup_actor_references( $meta_id, $post_id, $key ) {
-		if ( self::SLUG === $key ) {
-			self::$referenced_cleanup_actors = null;
-		}
-	}
-
-	/**
-	 * Delegate candidate nomination to ActivityPub when the proposed API exists.
-	 *
-	 * @param int $actor_id Remote actor ID.
-	 * @return bool Whether the actor was nominated.
-	 */
-	public static function mark_actor_for_cleanup( $actor_id ) {
-		if ( ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'mark_for_cleanup' ) ) ) {
-			return false;
-		}
-		return \Activitypub\Collection\Remote_Actors::mark_for_cleanup( $actor_id );
-	}
-
 
 	public function friends_add_friends_input_placeholder() {
 		return __( 'Enter URL or @activitypub@handle.domain', 'friends' );

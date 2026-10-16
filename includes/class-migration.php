@@ -72,19 +72,19 @@ class Migration {
 
 		self::register(
 			array(
-				'id'            => 'cleanup_unused_activitypub_actors',
+				'id'            => 'nominate_activitypub_actors',
 				'version'       => 'unreleased',
 				'title'         => 'Nominate Cached ActivityPub Accounts for Cleanup',
 				'description'   => 'Nominates existing cached accounts for ActivityPub to clean up. Friends protects subscribed accounts and retained post authors. Requires the proposed ActivityPub cleanup API.',
-				'method'        => 'cleanup_unused_activitypub_actors',
-				'status_option' => 'friends_unused_ap_actors_completed',
+				'method'        => 'nominate_activitypub_actors',
+				'status_option' => 'friends_ap_actor_nomination_completed',
 				'batched'       => true,
-				'batch_method'  => 'cleanup_unused_activitypub_actors_batch',
-				'cron_hook'     => 'friends_cleanup_unused_activitypub_actors_batch',
+				'batch_method'  => 'nominate_activitypub_actors_batch',
+				'cron_hook'     => 'friends_nominate_activitypub_actors_batch',
 				'progress'      => array(
-					'in_progress' => 'friends_unused_ap_actors_in_progress',
-					'total'       => 'friends_unused_ap_actors_total',
-					'processed'   => 'friends_unused_ap_actors_processed',
+					'in_progress' => 'friends_ap_actor_nomination_in_progress',
+					'total'       => 'friends_ap_actor_nomination_total',
+					'processed'   => 'friends_ap_actor_nomination_processed',
 				),
 			)
 		);
@@ -3391,22 +3391,22 @@ class Migration {
 	 *
 	 * @return true|\WP_Error Whether cleanup can run.
 	 */
-	public static function cleanup_unused_activitypub_actors() {
+	public static function nominate_activitypub_actors() {
 		if ( ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
 			return new \WP_Error( 'activitypub_cleanup_unavailable', __( 'This migration requires ActivityPub with the proposed actor cleanup API.', 'friends' ) );
 		}
-		if ( get_option( 'friends_unused_ap_actors_completed' ) ) {
+		if ( get_option( 'friends_ap_actor_nomination_completed' ) ) {
 			return true;
 		}
-		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) ) {
+		if ( ! get_option( 'friends_ap_actor_nomination_in_progress' ) ) {
 			$total = array_sum( (array) wp_count_posts( 'ap_actor' ) );
-			update_option( 'friends_unused_ap_actors_total', $total, false );
-			update_option( 'friends_unused_ap_actors_offset', 0, false );
-			update_option( 'friends_unused_ap_actors_processed', 0, false );
-			update_option( 'friends_unused_ap_actors_in_progress', true, false );
+			update_option( 'friends_ap_actor_nomination_total', $total, false );
+			update_option( 'friends_ap_actor_nomination_offset', 0, false );
+			update_option( 'friends_ap_actor_nomination_processed', 0, false );
+			update_option( 'friends_ap_actor_nomination_in_progress', true, false );
 		}
-		if ( ! wp_next_scheduled( 'friends_cleanup_unused_activitypub_actors_batch' ) ) {
-			wp_schedule_single_event( time(), 'friends_cleanup_unused_activitypub_actors_batch' );
+		if ( ! wp_next_scheduled( 'friends_nominate_activitypub_actors_batch' ) ) {
+			wp_schedule_single_event( time(), 'friends_nominate_activitypub_actors_batch' );
 		}
 		return true;
 	}
@@ -3414,15 +3414,15 @@ class Migration {
 	/**
 	 * Nominate existing actors in batches; ActivityPub owns reference checks and deletion.
 	 */
-	public static function cleanup_unused_activitypub_actors_batch() {
-		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
+	public static function nominate_activitypub_actors_batch() {
+		if ( ! get_option( 'friends_ap_actor_nomination_in_progress' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
 			return;
 		}
 
-		$batch_size = max( 1, (int) apply_filters( 'friends_unused_ap_actors_batch_size', 50 ) );
-		$processed = (int) get_option( 'friends_unused_ap_actors_processed', 0 );
-		$remaining = max( 0, (int) get_option( 'friends_unused_ap_actors_total', 0 ) - $processed );
-		$offset = (int) get_option( 'friends_unused_ap_actors_offset', 0 );
+		$batch_size = max( 1, (int) apply_filters( 'friends_ap_actor_nomination_batch_size', 50 ) );
+		$processed = (int) get_option( 'friends_ap_actor_nomination_processed', 0 );
+		$remaining = max( 0, (int) get_option( 'friends_ap_actor_nomination_total', 0 ) - $processed );
+		$offset = (int) get_option( 'friends_ap_actor_nomination_offset', 0 );
 		$ids = array();
 		if ( $remaining ) {
 			$query = new \WP_Query(
@@ -3440,21 +3440,21 @@ class Migration {
 			$ids = $query->posts;
 		}
 		if ( empty( $ids ) ) {
-			update_option( 'friends_unused_ap_actors_completed', true, false );
-			delete_option( 'friends_unused_ap_actors_in_progress' );
-			delete_option( 'friends_unused_ap_actors_offset' );
-			wp_clear_scheduled_hook( 'friends_cleanup_unused_activitypub_actors_batch' );
+			update_option( 'friends_ap_actor_nomination_completed', true, false );
+			delete_option( 'friends_ap_actor_nomination_in_progress' );
+			delete_option( 'friends_ap_actor_nomination_offset' );
+			wp_clear_scheduled_hook( 'friends_nominate_activitypub_actors_batch' );
 			return;
 		}
 
 		foreach ( $ids as $actor_id ) {
-			Feed_Parser_ActivityPub::mark_actor_for_cleanup( (int) $actor_id );
+			Activitypub_Actor_Cleanup::nominate( (int) $actor_id );
 			++$offset;
 		}
-		update_option( 'friends_unused_ap_actors_offset', $offset, false );
-		update_option( 'friends_unused_ap_actors_processed', (int) get_option( 'friends_unused_ap_actors_processed', 0 ) + count( $ids ), false );
-		if ( ! wp_next_scheduled( 'friends_cleanup_unused_activitypub_actors_batch' ) ) {
-			wp_schedule_single_event( time() + 1, 'friends_cleanup_unused_activitypub_actors_batch' );
+		update_option( 'friends_ap_actor_nomination_offset', $offset, false );
+		update_option( 'friends_ap_actor_nomination_processed', (int) get_option( 'friends_ap_actor_nomination_processed', 0 ) + count( $ids ), false );
+		if ( ! wp_next_scheduled( 'friends_nominate_activitypub_actors_batch' ) ) {
+			wp_schedule_single_event( time() + 1, 'friends_nominate_activitypub_actors_batch' );
 		}
 	}
 }
