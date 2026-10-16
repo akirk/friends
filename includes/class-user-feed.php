@@ -265,6 +265,9 @@ class User_Feed {
 			}
 		}
 
+		if ( is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+			\Activitypub\Collection\Remote_Actors::set_cache_only( $ap_actor_id, false );
+		}
 		return wp_set_object_terms( absint( $ap_actor_id ), $this->term->term_id, self::TAXONOMY );
 	}
 

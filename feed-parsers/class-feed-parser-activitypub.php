@@ -37,8 +37,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function __construct( Feed $friends_feed ) {
 		$this->friends_feed = $friends_feed;
-		require_once __DIR__ . '/../includes/class-activitypub-actor-cleanup.php';
-		new Activitypub_Actor_Cleanup();
+		add_action( 'admin_init', array( self::class, 'classify_cached_actors' ) );
+		add_action( 'friends_classify_activitypub_actors_batch', array( self::class, 'classify_cached_actors_batch' ) );
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
@@ -1303,6 +1303,19 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		return $friend_user;
 	}
 
+	public static function classify_cached_actors() {
+		if ( get_option( 'friends_ap_actor_classification_completed' ) || ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+			return;
+		}
+		require_once __DIR__ . '/../includes/class-migration.php';
+		Migration::classify_activitypub_actors();
+	}
+
+	public static function classify_cached_actors_batch() {
+		require_once __DIR__ . '/../includes/class-migration.php';
+		Migration::classify_activitypub_actors_batch();
+	}
+
 	public function register_post_meta() {
 		register_post_meta(
 			Friends::CPT,
@@ -1351,6 +1364,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! empty( $author['id'] ) ) {
 			$actor = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $author['id'] );
 			if ( ! is_wp_error( $actor ) ) {
+				if ( get_option( 'friends_ap_actor_uris_backfilled' ) && is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+					\Activitypub\Collection\Remote_Actors::set_cache_only( $actor, true );
+				}
 				return $actor->ID;
 			}
 		}
@@ -3249,6 +3265,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 							'ap_actor_id' => $actor_post->ID,
 							'id'          => $actor_url,
 						);
+						if ( get_option( 'friends_ap_actor_uris_backfilled' ) && is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+							\Activitypub\Collection\Remote_Actors::set_cache_only( $actor_post, true );
+						}
 						$acct = \Activitypub\Collection\Remote_Actors::get_acct( $actor_post->ID );
 						if ( $acct ) {
 							$data[ self::SLUG ]['attributedTo']['acct'] = ltrim( $acct, '@' );

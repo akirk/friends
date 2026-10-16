@@ -18,13 +18,7 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		}
 		Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
 		update_option( 'friends_ap_actor_uris_backfilled', true, false );
-		if ( class_exists( Activitypub_Actor_Cleanup::class ) ) {
-			foreach ( array( 'subscribed_actor_ids', 'feed_slugs' ) as $name ) {
-				$property = new \ReflectionProperty( Activitypub_Actor_Cleanup::class, $name );
-				$property->setAccessible( true );
-				$property->setValue( null, null );
-			}
-		}
+
 	}
 
 	private function create_actor() {
@@ -46,9 +40,6 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		$post_id  = $this->create_cached_post( $actor_id );
 		wp_delete_post( $post_id, true );
 		$this->assertNotNull( get_post( $actor_id ) );
-		if ( is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
-			$this->assertTrue( has_term( 'candidate', 'ap_actor_cleanup', $actor_id ) );
-		}
 	}
 
 	public function test_retained_author_is_recovered_by_uri_after_cache_deletion() {
@@ -56,7 +47,6 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		$post_id = $this->create_cached_post( $actor_id );
 		$meta = get_post_meta( $post_id, 'activitypub', true );
 		$this->assertSame( get_post( $actor_id )->guid, $meta['attributedTo']['id'] );
-		$this->assertFalse( apply_filters( 'activitypub_remote_actor_is_in_use', false, get_post( $actor_id ) ) );
 		$uri = $meta['attributedTo']['id'];
 		wp_delete_post( $actor_id, true );
 		$replacement = self::factory()->post->create( array( 'post_type' => 'ap_actor', 'post_status' => 'publish', 'guid' => $uri ) );
@@ -64,9 +54,6 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		$this->assertSame( $replacement, Feed_Parser_ActivityPub::resolve_actor_id( $meta['attributedTo'] ) );
 		$this->assertSame( $uri, Feed_Parser_ActivityPub::get_actor_url_from_attributed_to( $meta['attributedTo'] ) );
 		wp_delete_post( $post_id, true );
-		if ( is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'mark_for_cleanup' ) ) ) {
-			$this->assertTrue( has_term( 'candidate', 'ap_actor_cleanup', $replacement ) );
-		}
 	}
 
 	public function test_missing_actor_is_fetched_and_cached_again() {
@@ -119,40 +106,32 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		}
 	}
 
-	public function test_cleanup_waits_for_uri_backfill() {
-		delete_option( 'friends_ap_actor_uris_backfilled' );
+	public function test_subscription_is_not_cache_only() {
+		if ( ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+			$this->markTestSkipped( 'Requires the companion ActivityPub draft.' );
+		}
 		$actor_id = $this->create_actor();
-		$this->assertTrue( apply_filters( 'activitypub_remote_actor_is_in_use', false, get_post( $actor_id ) ) );
-	}
-
-	public function test_feed_relationship_protects_actor() {
-		$actor_id = $this->create_actor();
-		$term     = wp_insert_term( 'Retained actor feed', User_Feed::TAXONOMY );
+		\Activitypub\Collection\Remote_Actors::set_cache_only( $actor_id, true );
+		$term = wp_insert_term( 'Retained actor feed', User_Feed::TAXONOMY );
 		$this->assertNotWPError( $term );
-		register_taxonomy_for_object_type( User_Feed::TAXONOMY, 'ap_actor' );
-		wp_set_object_terms( $actor_id, $term['term_id'], User_Feed::TAXONOMY );
-		$actor = get_post( $actor_id );
-		$this->assertTrue( apply_filters( 'activitypub_remote_actor_is_in_use', false, $actor ) );
-		$unsubscribed = get_post( $this->create_actor() );
-		$queries = get_num_queries();
-		$this->assertTrue( apply_filters( 'activitypub_remote_actor_is_in_use', false, $actor ) );
-		$this->assertFalse( apply_filters( 'activitypub_remote_actor_is_in_use', false, $unsubscribed ) );
-		$this->assertSame( $queries, get_num_queries() );
+		User_Feed::get_by_id( $term['term_id'] )->set_ap_actor_id( $actor_id );
+		$this->assertFalse( (bool) get_post_meta( $actor_id, '_activitypub_cache_only', true ) );
+		$this->assertFalse( \Activitypub\Collection\Remote_Actors::set_cache_only( $actor_id, true ) );
 	}
 
 	public function test_missing_api_leaves_migration_pending() {
-		if ( is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
+		if ( is_callable( array( '\Activitypub\Collection\Remote_Actors', 'set_cache_only' ) ) ) {
 			$this->markTestSkipped( 'This case covers ActivityPub without the proposed API.' );
 		}
 		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
-		delete_option( 'friends_ap_actor_nomination_completed' );
-		$result = Migration::run_migration( 'nominate_activitypub_actors' );
+		delete_option( 'friends_ap_actor_classification_completed' );
+		$result = Migration::run_migration( 'classify_activitypub_actors' );
 		$this->assertFalse( $result['success'] );
-		$this->assertFalse( (bool) get_option( 'friends_ap_actor_nomination_completed' ) );
+		$this->assertFalse( (bool) get_option( 'friends_ap_actor_classification_completed' ) );
 	}
 
-	public function test_migration_nominates_actors_without_deleting_them() {
-		if ( ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
+	public function test_migration_backfills_uris_then_classifies_actors() {
+		if ( ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'set_cache_only' ) ) ) {
 			$this->markTestSkipped( 'Requires the companion ActivityPub draft PR.' );
 		}
 		require_once dirname( __DIR__ ) . '/includes/class-migration.php';
@@ -168,27 +147,27 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		}
 		$this->assertArrayNotHasKey( 'id', get_post_meta( $post_id, 'activitypub', true )['attributedTo'] );
 		delete_option( 'friends_ap_actor_uris_backfilled' );
-		delete_option( 'friends_ap_actor_nomination_completed' );
-		delete_option( 'friends_ap_actor_nomination_in_progress' );
+		delete_option( 'friends_ap_actor_classification_completed' );
+		delete_option( 'friends_ap_actor_classification_in_progress' );
 		$batch_size = function () {
 			return 1;
 		};
-		add_filter( 'friends_ap_actor_nomination_batch_size', $batch_size );
+		add_filter( 'friends_ap_actor_classification_batch_size', $batch_size );
 		try {
-			$result = Migration::run_migration( 'nominate_activitypub_actors' );
+			$result = Migration::run_migration( 'classify_activitypub_actors' );
 			$this->assertTrue( $result['success'] );
-			for ( $i = 0; $i < 100 && get_option( 'friends_ap_actor_nomination_in_progress' ); ++$i ) {
-				Migration::nominate_activitypub_actors_batch();
+			for ( $i = 0; $i < 100 && get_option( 'friends_ap_actor_classification_in_progress' ); ++$i ) {
+				Migration::classify_activitypub_actors_batch();
 			}
-			$this->assertTrue( (bool) get_option( 'friends_ap_actor_nomination_completed' ) );
+			$this->assertTrue( (bool) get_option( 'friends_ap_actor_classification_completed' ) );
 			$this->assertSame( get_post( $first )->guid, get_post_meta( $post_id, 'activitypub', true )['attributedTo']['id'] );
 			foreach ( array( $first, $second ) as $actor_id ) {
 				$this->assertNotNull( get_post( $actor_id ) );
-				$this->assertTrue( has_term( 'candidate', 'ap_actor_cleanup', $actor_id ) );
+				$this->assertTrue( (bool) get_post_meta( $actor_id, '_activitypub_cache_only', true ) );
 			}
 		} finally {
-			remove_filter( 'friends_ap_actor_nomination_batch_size', $batch_size );
-			wp_clear_scheduled_hook( 'friends_nominate_activitypub_actors_batch' );
+			remove_filter( 'friends_ap_actor_classification_batch_size', $batch_size );
+			wp_clear_scheduled_hook( 'friends_classify_activitypub_actors_batch' );
 		}
 	}
 }
