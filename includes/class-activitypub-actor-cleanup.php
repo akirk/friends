@@ -14,6 +14,8 @@ namespace Friends;
  */
 class Activitypub_Actor_Cleanup {
 	private $post_actors = array();
+	private static $subscribed_actor_ids;
+	private static $feed_slugs;
 
 	public function __construct() {
 		add_action( 'before_delete_post', array( $this, 'before_delete_post' ), 10, 2 );
@@ -79,9 +81,40 @@ class Activitypub_Actor_Cleanup {
 	 * @return bool Whether the actor must be kept.
 	 */
 	public static function protect_actor( $in_use, $actor ) {
-		return $in_use || ! get_option( 'friends_ap_actor_uris_backfilled' )
-			|| ! is_wp_error( User_Feed::get_by_ap_actor_id( $actor->ID ) )
-			|| ! is_wp_error( User_Feed::get_by_url( $actor->guid ) );
+		if ( $in_use || ! get_option( 'friends_ap_actor_uris_backfilled' ) ) {
+			return true;
+		}
+		if ( null === self::$subscribed_actor_ids ) {
+			self::$subscribed_actor_ids = array_fill_keys(
+				get_posts(
+					array(
+						'post_type'   => 'ap_actor',
+						'post_status' => array_values( get_post_stati() ),
+						'numberposts' => -1,
+						'fields'      => 'ids',
+						// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+						'tax_query'   => array(
+							array(
+								'taxonomy' => User_Feed::TAXONOMY,
+								'operator' => 'EXISTS',
+							),
+						),
+					)
+				),
+				true
+			);
+			// Keep the existing URL fallback for feeds not linked to an actor yet.
+			$slugs = get_terms(
+				array(
+					'taxonomy'   => User_Feed::TAXONOMY,
+					'hide_empty' => false,
+					'fields'     => 'slugs',
+				)
+			);
+			self::$feed_slugs = is_wp_error( $slugs ) ? null : array_fill_keys( $slugs, true );
+		}
+		return null === self::$feed_slugs || isset( self::$subscribed_actor_ids[ $actor->ID ] )
+			|| isset( self::$feed_slugs[ sanitize_title( $actor->guid ) ] );
 	}
 
 	/**

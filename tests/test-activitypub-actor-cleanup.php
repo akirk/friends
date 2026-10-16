@@ -18,6 +18,13 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		}
 		Friends::get_instance()->feed->get_feed_parser( Feed_Parser_ActivityPub::SLUG );
 		update_option( 'friends_ap_actor_uris_backfilled', true, false );
+		if ( class_exists( Activitypub_Actor_Cleanup::class ) ) {
+			foreach ( array( 'subscribed_actor_ids', 'feed_slugs' ) as $name ) {
+				$property = new \ReflectionProperty( Activitypub_Actor_Cleanup::class, $name );
+				$property->setAccessible( true );
+				$property->setValue( null, null );
+			}
+		}
 	}
 
 	private function create_actor() {
@@ -124,7 +131,13 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 		$this->assertNotWPError( $term );
 		register_taxonomy_for_object_type( User_Feed::TAXONOMY, 'ap_actor' );
 		wp_set_object_terms( $actor_id, $term['term_id'], User_Feed::TAXONOMY );
-		$this->assertTrue( apply_filters( 'activitypub_remote_actor_is_in_use', false, get_post( $actor_id ) ) );
+		$actor = get_post( $actor_id );
+		$this->assertTrue( apply_filters( 'activitypub_remote_actor_is_in_use', false, $actor ) );
+		$unsubscribed = get_post( $this->create_actor() );
+		$queries = get_num_queries();
+		$this->assertTrue( apply_filters( 'activitypub_remote_actor_is_in_use', false, $actor ) );
+		$this->assertFalse( apply_filters( 'activitypub_remote_actor_is_in_use', false, $unsubscribed ) );
+		$this->assertSame( $queries, get_num_queries() );
 	}
 
 	public function test_missing_api_leaves_migration_pending() {
