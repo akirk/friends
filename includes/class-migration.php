@@ -44,6 +44,8 @@ class Migration {
 		add_action( 'wp_ajax_friends_get_migration_debug', array( $this, 'ajax_get_migration_debug' ) );
 		add_action( 'wp_ajax_friends_clear_failed_url', array( $this, 'ajax_clear_failed_url' ) );
 		add_action( 'wp_ajax_friends_deactivate_feed_by_url', array( $this, 'ajax_deactivate_feed_by_url' ) );
+		add_action( 'activitypub_before_migrate_actor_retention', array( __CLASS__, 'classify_activitypub_actors' ) );
+		add_filter( 'activitypub_remote_actor_cleanup_ready', array( __CLASS__, 'activitypub_remote_actor_cleanup_ready' ) );
 		add_action( 'friends_classify_activitypub_actors_batch', array( __CLASS__, 'classify_activitypub_actors_batch' ) );
 		add_action( 'friends_convert_friend_users_batch', array( __CLASS__, 'convert_friend_users_batch' ) );
 		add_action( 'friends_link_feeds_as_term_children_batch', array( __CLASS__, 'link_feeds_as_term_children_batch' ) );
@@ -3385,6 +3387,16 @@ class Migration {
 		update_option( 'friends_feeds_term_children_processed', $processed, false );
 
 		wp_schedule_single_event( time() + 1, 'friends_link_feeds_as_term_children_batch' );
+	}
+
+	/**
+	 * Keep ActivityPub cleanup disabled until Friends references are migrated.
+	 *
+	 * @param bool $ready Whether other integrations are ready.
+	 * @return bool Whether Friends and the other integrations are ready.
+	 */
+	public static function activitypub_remote_actor_cleanup_ready( $ready ) {
+		return $ready && get_option( 'friends_ap_actor_uris_backfilled' ) && get_option( 'friends_ap_actor_classification_completed' );
 	}
 
 	/**

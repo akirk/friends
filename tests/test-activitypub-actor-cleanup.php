@@ -170,4 +170,28 @@ class ActivityPubActorCleanupTest extends \WP_UnitTestCase {
 			wp_clear_scheduled_hook( 'friends_classify_activitypub_actors_batch' );
 		}
 	}
+	public function test_ap_migration_starts_friends_classification_and_waits_for_completion() {
+		if ( ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+			$this->markTestSkipped( 'The proposed ActivityPub API is required.' );
+		}
+		delete_option( 'friends_ap_actor_classification_completed' );
+		delete_option( 'friends_ap_actor_classification_in_progress' );
+		delete_option( 'friends_ap_actor_uris_backfilled' );
+		$actor_id = $this->create_actor();
+		$post_id  = $this->create_cached_post( $actor_id );
+		$this->assertFalse( (bool) apply_filters( 'activitypub_remote_actor_cleanup_ready', true ) );
+		do_action( 'activitypub_before_migrate_actor_retention' );
+		$this->assertTrue( (bool) get_option( 'friends_ap_actor_classification_in_progress' ) );
+		$this->assertNotFalse( wp_next_scheduled( 'friends_classify_activitypub_actors_batch' ) );
+		for ( $batch = 0; $batch < 10 && ! get_option( 'friends_ap_actor_classification_completed' ); ++$batch ) {
+			Migration::classify_activitypub_actors_batch();
+		}
+		$this->assertTrue( (bool) apply_filters( 'activitypub_remote_actor_cleanup_ready', true ) );
+		$this->assertFalse( (bool) apply_filters( 'activitypub_remote_actor_cleanup_ready', false ) );
+		$meta = get_post_meta( $post_id, Feed_Parser_ActivityPub::SLUG, true );
+		$this->assertSame( get_post( $actor_id )->guid, $meta['attributedTo']['id'] );
+		do_action( 'activitypub_before_migrate_actor_retention' );
+		$this->assertFalse( (bool) get_option( 'friends_ap_actor_classification_in_progress' ) );
+	}
+
 }
