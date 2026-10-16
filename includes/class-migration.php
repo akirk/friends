@@ -75,7 +75,7 @@ class Migration {
 				'id'            => 'nominate_activitypub_actors',
 				'version'       => 'unreleased',
 				'title'         => 'Nominate Cached ActivityPub Accounts for Cleanup',
-				'description'   => 'Nominates existing cached accounts for ActivityPub to clean up. Friends protects subscribed accounts and retained post authors. Requires the proposed ActivityPub cleanup API.',
+				'description'   => 'Nominates existing cached accounts for ActivityPub to clean up. Backfills durable author URIs first, then protects subscriptions while retained authors can recover deleted cache entries. Requires the proposed ActivityPub cleanup API.',
 				'method'        => 'nominate_activitypub_actors',
 				'status_option' => 'friends_ap_actor_nomination_completed',
 				'batched'       => true,
@@ -3395,11 +3395,15 @@ class Migration {
 		if ( ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'mark_for_cleanup' ) ) ) {
 			return new \WP_Error( 'activitypub_cleanup_unavailable', __( 'This migration requires ActivityPub with the proposed actor cleanup API.', 'friends' ) );
 		}
-		if ( get_option( 'friends_ap_actor_nomination_completed' ) ) {
+		if ( get_option( 'friends_ap_actor_nomination_completed' ) && get_option( 'friends_ap_actor_uris_backfilled' ) ) {
 			return true;
 		}
 		if ( ! get_option( 'friends_ap_actor_nomination_in_progress' ) ) {
+			delete_option( 'friends_ap_actor_nomination_completed' );
 			$total = array_sum( (array) wp_count_posts( 'ap_actor' ) );
+			if ( ! get_option( 'friends_ap_actor_uris_backfilled' ) ) {
+				$total += array_sum( (array) wp_count_posts( Friends::CPT ) );
+			}
 			update_option( 'friends_ap_actor_nomination_total', $total, false );
 			update_option( 'friends_ap_actor_nomination_offset', 0, false );
 			update_option( 'friends_ap_actor_nomination_processed', 0, false );
@@ -3420,24 +3424,26 @@ class Migration {
 		}
 
 		$batch_size = max( 1, (int) apply_filters( 'friends_ap_actor_nomination_batch_size', 50 ) );
-		$processed = (int) get_option( 'friends_ap_actor_nomination_processed', 0 );
-		$remaining = max( 0, (int) get_option( 'friends_ap_actor_nomination_total', 0 ) - $processed );
 		$offset = (int) get_option( 'friends_ap_actor_nomination_offset', 0 );
-		$ids = array();
-		if ( $remaining ) {
-			$query = new \WP_Query(
-				array(
-					'post_type'      => 'ap_actor',
-					'post_status'    => array_values( get_post_stati() ),
-					'posts_per_page' => min( $batch_size, $remaining ),
-					'offset'         => $offset,
-					'orderby'        => 'ID',
-					'order'          => 'ASC',
-					'fields'         => 'ids',
-					'no_found_rows'  => true,
-				)
-			);
-			$ids = $query->posts;
+		$backfill = ! get_option( 'friends_ap_actor_uris_backfilled' );
+		$query = new \WP_Query(
+			array(
+				'post_type'      => $backfill ? Friends::CPT : 'ap_actor',
+				'post_status'    => array_values( get_post_stati() ),
+				'posts_per_page' => $batch_size,
+				'offset'         => $offset,
+				'orderby'        => 'ID',
+				'order'          => 'ASC',
+				'fields'         => 'ids',
+				'no_found_rows'  => true,
+			)
+		);
+		$ids = $query->posts;
+		if ( empty( $ids ) && $backfill ) {
+			update_option( 'friends_ap_actor_uris_backfilled', true, false );
+			update_option( 'friends_ap_actor_nomination_offset', 0, false );
+			wp_schedule_single_event( time() + 1, 'friends_nominate_activitypub_actors_batch' );
+			return;
 		}
 		if ( empty( $ids ) ) {
 			update_option( 'friends_ap_actor_nomination_completed', true, false );
@@ -3448,7 +3454,15 @@ class Migration {
 		}
 
 		foreach ( $ids as $actor_id ) {
-			Activitypub_Actor_Cleanup::nominate( (int) $actor_id );
+			if ( $backfill ) {
+				$meta = get_post_meta( $actor_id, Feed_Parser_ActivityPub::SLUG, true );
+				$prepared = Feed_Parser_ActivityPub::preserve_actor_uri( $meta );
+				if ( $prepared !== $meta ) {
+					update_post_meta( $actor_id, Feed_Parser_ActivityPub::SLUG, $prepared );
+				}
+			} else {
+				Activitypub_Actor_Cleanup::nominate( (int) $actor_id );
+			}
 			++$offset;
 		}
 		update_option( 'friends_ap_actor_nomination_offset', $offset, false );
