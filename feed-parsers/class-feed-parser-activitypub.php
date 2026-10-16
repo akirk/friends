@@ -29,6 +29,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	private $activitypub_already_handled = array();
 	private $mapped_usernames = array();
 	private $friends_feed;
+	private $deleted_post_actors = array();
 
 	/**
 	 * Constructor.
@@ -37,6 +38,8 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function __construct( Feed $friends_feed ) {
 		$this->friends_feed = $friends_feed;
+		add_action( 'before_delete_post', array( $this, 'remember_deleted_post_actor' ), 10, 2 );
+		add_action( 'deleted_post', array( $this, 'delete_unused_post_actor' ) );
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
@@ -142,6 +145,174 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		// Auto-create Friend subscription when following via ActivityPub plugin.
 		add_action( 'post_activitypub_add_to_outbox', array( $this, 'handle_outbox_follow' ), 10, 4 );
+	}
+
+	/**
+	 * Preserve the actor reference before WordPress deletes the post metadata.
+	 *
+	 * @param int      $post_id Post ID.
+	 * @param \WP_Post $post    Post being deleted.
+	 */
+	public function remember_deleted_post_actor( $post_id, $post ) {
+		if ( Friends::CPT !== $post->post_type ) {
+			return;
+		}
+		$meta = get_post_meta( $post_id, self::SLUG, true );
+		if ( ! empty( $meta['attributedTo']['ap_actor_id'] ) ) {
+			$this->deleted_post_actors[ $post_id ] = (int) $meta['attributedTo']['ap_actor_id'];
+		} elseif ( ! empty( $meta['attributedTo']['id'] ) && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
+			$actor = \Activitypub\Collection\Remote_Actors::get_by_uri( $meta['attributedTo']['id'] );
+			if ( ! is_wp_error( $actor ) ) {
+				$this->deleted_post_actors[ $post_id ] = $actor->ID;
+			}
+		}
+	}
+
+	/**
+	 * Remove an unused actor after its cached post has been permanently deleted.
+	 *
+	 * @param int $post_id Deleted post ID.
+	 */
+	public function delete_unused_post_actor( $post_id ) {
+		if ( ! isset( $this->deleted_post_actors[ $post_id ] ) ) {
+			return;
+		}
+		$actor_id = $this->deleted_post_actors[ $post_id ];
+		unset( $this->deleted_post_actors[ $post_id ] );
+		self::delete_unused_actor( $actor_id );
+	}
+
+	/**
+	 * Protect actors used by Friends feeds or cached posts, including trashed posts.
+	 *
+	 * @param bool     $in_use Whether another integration needs this actor.
+	 * @param \WP_Post $actor  Remote actor post.
+	 * @return bool Whether Friends still needs the actor.
+	 */
+	public static function remote_actor_is_in_use( $in_use, $actor ) {
+		if ( $in_use || ! is_wp_error( User_Feed::get_by_ap_actor_id( $actor->ID ) ) || ! is_wp_error( User_Feed::get_by_url( $actor->guid ) ) ) {
+			return true;
+		}
+
+		global $wpdb;
+		// Match the existing WordPress serialized metadata format.
+		// phpcs:disable WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+		// Match both integer and string IDs, as well as legacy URI references.
+		$integer_id = '%' . $wpdb->esc_like( serialize( 'ap_actor_id' ) . serialize( (int) $actor->ID ) ) . '%';
+		$string_id  = '%' . $wpdb->esc_like( serialize( 'ap_actor_id' ) . serialize( (string) $actor->ID ) ) . '%';
+		$uri        = '%' . $wpdb->esc_like( serialize( $actor->guid ) ) . '%';
+		// phpcs:enable WordPress.PHP.DiscouragedPHPFunctions.serialize_serialize
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		return (bool) $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT pm.post_id FROM {$wpdb->postmeta} pm
+				INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+				WHERE p.post_type = %s AND pm.meta_key = %s
+				AND (pm.meta_value LIKE %s OR pm.meta_value LIKE %s OR pm.meta_value LIKE %s) LIMIT 1",
+				Friends::CPT,
+				self::SLUG,
+				$integer_id,
+				$string_id,
+				$uri
+			)
+		);
+	}
+
+	/**
+	 * Delete a cached actor only when no local relationships or content need it.
+	 *
+	 * @since unreleased
+	 *
+	 * @param int $post_id Remote actor post ID.
+	 * @return bool Whether the actor was deleted.
+	 */
+	public static function delete_unused_actor( $post_id ) {
+		if ( ! $post_id ) {
+			return false;
+		}
+		$post = get_post( $post_id );
+		if ( ! $post || 'ap_actor' !== $post->post_type || ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'delete' ) ) ) {
+			return false;
+		}
+
+		foreach ( array( '_activitypub_following', '_activitypub_followed_by', '_activitypub_followed_by_pending', '_activitypub_blocked_by' ) as $key ) {
+			// Existence matters: the blog actor has user ID zero.
+			if ( \metadata_exists( 'post', $post->ID, $key ) ) {
+				return false;
+			}
+		}
+
+		global $wpdb;
+
+		// Include every status, including trash, and legacy URI-based references.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$referenced = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta}
+				WHERE (meta_key = '_activitypub_remote_actor_id' AND meta_value = %s)
+				OR (meta_key = '_activitypub_activity_remote_actor' AND meta_value = %s)
+				LIMIT 1",
+				(string) $post->ID,
+				$post->guid
+			)
+		);
+		if ( $referenced ) {
+			return false;
+		}
+
+		$referenced = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT comment_id FROM {$wpdb->commentmeta}
+				WHERE meta_key = '_activitypub_remote_actor_id' AND meta_value = %s LIMIT 1",
+				(string) $post->ID
+			)
+		);
+		if ( $referenced ) {
+			return false;
+		}
+
+		$referenced = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT comment_ID FROM {$wpdb->comments} WHERE comment_author_url = %s LIMIT 1",
+				$post->guid
+			)
+		);
+		if ( $referenced ) {
+			return false;
+		}
+
+		// Outgoing activities can still need this actor for delivery or Undo.
+		$referenced = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s
+				AND (post_content LIKE %s OR post_content LIKE %s) LIMIT 1",
+				'ap_outbox',
+				'%' . $wpdb->esc_like( $post->guid ) . '%',
+				'%' . $wpdb->esc_like( \str_replace( '/', '\\/', $post->guid ) ) . '%'
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( $referenced ) {
+			return false;
+		}
+
+		if ( self::remote_actor_is_in_use( false, $post ) ) {
+			return false;
+		}
+
+		/**
+		 * Whether another plugin still needs a cached remote actor.
+		 *
+		 * @since unreleased
+		 *
+		 * @param bool     $in_use Whether the actor is referenced by an integration.
+		 * @param \WP_Post $post   The cached actor.
+		 */
+		if ( apply_filters( 'friends_remote_actor_is_in_use', false, $post ) ) {
+			return false;
+		}
+
+		return (bool) \Activitypub\Collection\Remote_Actors::delete( $post->ID );
 	}
 
 	public function friends_add_friends_input_placeholder() {

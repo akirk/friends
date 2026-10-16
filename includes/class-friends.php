@@ -212,6 +212,8 @@ class Friends {
 		add_filter( 'after_setup_theme', array( $this, 'enable_post_formats' ) );
 		add_filter( 'cron_schedules', array( $this, 'add_fifteen_minutes_interval' ) ); // phpcs:ignore WordPressVIPMinimum.Performance.IntervalInSeconds.IntervalInSeconds
 		add_action( 'cron_friends_delete_old_posts', array( $this, 'cron_friends_delete_outdated_posts' ) );
+		add_action( 'admin_init', array( $this, 'maybe_cleanup_unused_activitypub_actors' ) );
+		add_action( 'friends_cleanup_unused_activitypub_actors_batch', array( $this, 'cron_cleanup_unused_activitypub_actors_batch' ) );
 		add_action( 'friends_migrate_post_tags_batch', array( $this, 'cron_migrate_post_tags_batch' ) );
 		add_action( 'friends_migrate_ap_attributed_to_batch', array( $this, 'cron_migrate_ap_attributed_to_batch' ) );
 		add_action( 'friends_link_ap_feeds_batch', array( $this, 'cron_link_ap_feeds_batch' ) );
@@ -460,6 +462,25 @@ class Friends {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Start the actor cleanup once the ActivityPub plugin is available.
+	 */
+	public function maybe_cleanup_unused_activitypub_actors() {
+		if ( get_option( 'friends_unused_ap_actors_completed' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'delete' ) ) ) {
+			return;
+		}
+		require_once __DIR__ . '/class-migration.php';
+		Migration::cleanup_unused_activitypub_actors();
+	}
+
+	/**
+	 * Process the next actor cleanup migration batch.
+	 */
+	public function cron_cleanup_unused_activitypub_actors_batch() {
+		require_once __DIR__ . '/class-migration.php';
+		Migration::cleanup_unused_activitypub_actors_batch();
 	}
 
 	public static function upgrade_plugin() {

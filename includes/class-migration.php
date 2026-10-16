@@ -72,6 +72,25 @@ class Migration {
 
 		self::register(
 			array(
+				'id'            => 'cleanup_unused_activitypub_actors',
+				'version'       => 'unreleased',
+				'title'         => 'Remove Unused ActivityPub Accounts',
+				'description'   => 'Removes cached accounts no longer needed by feeds, posts, relationships, or interactions. Requires the ActivityPub plugin.',
+				'method'        => 'cleanup_unused_activitypub_actors',
+				'status_option' => 'friends_unused_ap_actors_completed',
+				'batched'       => true,
+				'batch_method'  => 'cleanup_unused_activitypub_actors_batch',
+				'cron_hook'     => 'friends_cleanup_unused_activitypub_actors_batch',
+				'progress'      => array(
+					'in_progress' => 'friends_unused_ap_actors_in_progress',
+					'total'       => 'friends_unused_ap_actors_total',
+					'processed'   => 'friends_unused_ap_actors_processed',
+				),
+			)
+		);
+
+		self::register(
+			array(
 				'id'            => 'feed_options_to_user',
 				'version'       => '2.6.0',
 				'title'         => 'Migrate Feed Options',
@@ -475,12 +494,18 @@ class Migration {
 		// Call the migration method.
 		$method = $migration['method'];
 		if ( method_exists( __CLASS__, $method ) ) {
-			self::$method();
+			$result = self::$method();
+			if ( is_wp_error( $result ) ) {
+				return array(
+					'success' => false,
+					'message' => $result->get_error_message(),
+				);
+			}
 
 			// If the method returned without setting the status option
 			// (e.g. nothing to migrate, or required plugin not active),
 			// mark the migration as completed.
-			if ( $migration['status_option'] && ! get_option( $migration['status_option'] ) ) {
+			if ( $migration['status_option'] && ! get_option( $migration['status_option'] ) && ( empty( $migration['progress']['in_progress'] ) || ! get_option( $migration['progress']['in_progress'] ) ) ) {
 				update_option( $migration['status_option'], true, false );
 			}
 
@@ -3359,5 +3384,70 @@ class Migration {
 		update_option( 'friends_feeds_term_children_processed', $processed, false );
 
 		wp_schedule_single_event( time() + 1, 'friends_link_feeds_as_term_children_batch' );
+	}
+
+	/**
+	 * Schedule a resumable scan of existing remote actors.
+	 *
+	 * @return true|\WP_Error Whether cleanup can run.
+	 */
+	public static function cleanup_unused_activitypub_actors() {
+		if ( ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'delete' ) ) ) {
+			return new \WP_Error( 'activitypub_cleanup_unavailable', __( 'Activate ActivityPub to remove unused accounts.', 'friends' ) );
+		}
+		if ( get_option( 'friends_unused_ap_actors_completed' ) ) {
+			return true;
+		}
+		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) ) {
+			global $wpdb;
+			$stats = $wpdb->get_row( $wpdb->prepare( "SELECT COUNT(*) AS total, MAX(ID) AS last_id FROM {$wpdb->posts} WHERE post_type = %s", 'ap_actor' ) );
+			update_option( 'friends_unused_ap_actors_total', (int) $stats->total, false );
+			update_option( 'friends_unused_ap_actors_last_id', (int) $stats->last_id, false );
+			update_option( 'friends_unused_ap_actors_cursor', 0, false );
+			update_option( 'friends_unused_ap_actors_processed', 0, false );
+			update_option( 'friends_unused_ap_actors_in_progress', true, false );
+		}
+		if ( ! wp_next_scheduled( 'friends_cleanup_unused_activitypub_actors_batch' ) ) {
+			wp_schedule_single_event( time(), 'friends_cleanup_unused_activitypub_actors_batch' );
+		}
+		return true;
+	}
+
+	/**
+	 * Scan by ID so deleting actors or retaining a full batch cannot stall cleanup.
+	 */
+	public static function cleanup_unused_activitypub_actors_batch() {
+		if ( ! get_option( 'friends_unused_ap_actors_in_progress' ) || ! is_callable( array( '\Activitypub\Collection\Remote_Actors', 'delete' ) ) ) {
+			return;
+		}
+
+		global $wpdb;
+		$batch_size = max( 1, (int) apply_filters( 'friends_unused_ap_actors_batch_size', 50 ) );
+		$ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_type = %s AND ID > %d AND ID <= %d ORDER BY ID ASC LIMIT %d",
+				'ap_actor',
+				(int) get_option( 'friends_unused_ap_actors_cursor', 0 ),
+				(int) get_option( 'friends_unused_ap_actors_last_id', 0 ),
+				$batch_size
+			)
+		);
+		if ( empty( $ids ) ) {
+			update_option( 'friends_unused_ap_actors_completed', true, false );
+			delete_option( 'friends_unused_ap_actors_in_progress' );
+			delete_option( 'friends_unused_ap_actors_cursor' );
+			delete_option( 'friends_unused_ap_actors_last_id' );
+			wp_clear_scheduled_hook( 'friends_cleanup_unused_activitypub_actors_batch' );
+			return;
+		}
+
+		foreach ( $ids as $actor_id ) {
+			Feed_Parser_ActivityPub::delete_unused_actor( (int) $actor_id );
+		}
+		update_option( 'friends_unused_ap_actors_cursor', (int) end( $ids ), false );
+		update_option( 'friends_unused_ap_actors_processed', (int) get_option( 'friends_unused_ap_actors_processed', 0 ) + count( $ids ), false );
+		if ( ! wp_next_scheduled( 'friends_cleanup_unused_activitypub_actors_batch' ) ) {
+			wp_schedule_single_event( time() + 1, 'friends_cleanup_unused_activitypub_actors_batch' );
+		}
 	}
 }
