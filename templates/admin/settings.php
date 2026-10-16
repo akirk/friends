@@ -300,10 +300,13 @@ do_action( 'friends_settings_before_form' );
 								<li>
 									<a href="<?php echo esc_url( home_url( '/' . $view . '/' ) ); ?>"><?php echo esc_html( '/' . $view . '/' ); ?></a>
 									— <?php echo esc_html( 'collapsed' === $display_mode ? __( 'Compact mode', 'friends' ) : __( 'Expanded mode', 'friends' ) ); ?>
-									<button type="button" class="button-link friends-remove-display-mode" data-view="<?php echo esc_attr( $view ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-display-mode-' . $view ) ); ?>" aria-label="<?php esc_attr_e( 'Remove saved view setting', 'friends' ); ?>">&times;</button>
+									<?php if ( 'friends' !== $view ) : ?>
+										<button type="button" class="button-link friends-remove-display-mode" data-view="<?php echo esc_attr( $view ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( 'friends-display-mode-' . $view ) ); ?>" aria-label="<?php esc_attr_e( 'Remove saved view setting', 'friends' ); ?>">&times;</button>
+									<?php endif; ?>
 								</li>
 							<?php endforeach; ?>
 							</ul>
+							<p class="description"><?php esc_html_e( 'The display mode for /friends/ is the default for all views without a saved setting. Use the compact and expanded mode buttons in the frontend to change the mode for each view.', 'friends' ); ?></p>
 							</div>
 						<?php endif; ?>
 						<label for="frontend-theme">
