@@ -44,6 +44,7 @@ class Migration {
 		add_action( 'wp_ajax_friends_get_migration_debug', array( $this, 'ajax_get_migration_debug' ) );
 		add_action( 'wp_ajax_friends_clear_failed_url', array( $this, 'ajax_clear_failed_url' ) );
 		add_action( 'wp_ajax_friends_deactivate_feed_by_url', array( $this, 'ajax_deactivate_feed_by_url' ) );
+		add_action( 'friends_classify_activitypub_actors_batch', array( __CLASS__, 'classify_activitypub_actors_batch' ) );
 		add_action( 'friends_convert_friend_users_batch', array( __CLASS__, 'convert_friend_users_batch' ) );
 		add_action( 'friends_link_feeds_as_term_children_batch', array( __CLASS__, 'link_feeds_as_term_children_batch' ) );
 

@@ -37,8 +37,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 */
 	public function __construct( Feed $friends_feed ) {
 		$this->friends_feed = $friends_feed;
-		add_action( 'admin_init', array( self::class, 'classify_cached_actors' ) );
-		add_action( 'friends_classify_activitypub_actors_batch', array( self::class, 'classify_cached_actors_batch' ) );
 
 		\add_action( 'init', array( $this, 'register_post_meta' ) );
 		\add_filter( 'feed_item_allow_set_metadata', array( $this, 'feed_item_allow_set_metadata' ), 10, 3 );
@@ -1301,19 +1299,6 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		return $friend_user;
-	}
-
-	public static function classify_cached_actors() {
-		if ( get_option( 'friends_ap_actor_classification_completed' ) || ! is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
-			return;
-		}
-		require_once __DIR__ . '/../includes/class-migration.php';
-		Migration::classify_activitypub_actors();
-	}
-
-	public static function classify_cached_actors_batch() {
-		require_once __DIR__ . '/../includes/class-migration.php';
-		Migration::classify_activitypub_actors_batch();
 	}
 
 	public function register_post_meta() {
