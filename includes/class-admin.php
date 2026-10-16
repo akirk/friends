@@ -1308,7 +1308,10 @@ class Admin {
 					'retention_days_enabled'           => get_option( 'friends_enable_retention_days' ),
 					'retention_number_enabled'         => get_option( 'friends_enable_retention_number' ),
 					'retention_delete_reacted'         => get_option( 'friends_retention_delete_reacted' ),
-					'frontend_views'                   => array_filter( (array) get_user_option( 'friends_frontend_views' ) ),
+					'frontend_views'                   => array_merge(
+						array( 'friends' => 'collapsed' === get_user_option( 'friends_frontend_default_view' ) ? 'collapsed' : 'expanded' ),
+						array_filter( (array) get_user_option( 'friends_frontend_views' ) )
+					),
 					'frontend_theme'                   => get_user_option( 'friends_frontend_theme' ),
 				)
 			)
