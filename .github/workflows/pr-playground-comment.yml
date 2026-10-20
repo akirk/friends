@@ -1,6 +1,7 @@
 name: PR Playground Link
 on:
-  pull_request:
+  # Only update PR metadata; never check out or execute code from the PR.
+  pull_request_target:
     types: [opened, reopened, synchronize]
 
 permissions:
@@ -17,7 +18,8 @@ jobs:
             const markerStart = '<!-- friends-playground-link:start -->';
             const markerEnd = '<!-- friends-playground-link:end -->';
             const branchName = context.payload.pull_request.head.ref;
-            const playgroundUrl = `https://akirk.github.io/playground-step-library/?redir=1&step[0]=setLandingPage&landingPage[0]=/friends/&step[1]=installPlugin&url[1]=github.com/akirk/friends/tree/${branchName}&step[2]=importFriendFeeds&opml[2]=https://alex.kirk.at%20Alex%20Kirk%0Ahttps://adamadam.blog%20Adam%20Zieliński`;
+            const headRepository = context.payload.pull_request.head.repo.full_name;
+            const playgroundUrl = `https://akirk.github.io/playground-step-library/?redir=1&step[0]=setLandingPage&landingPage[0]=/friends/&step[1]=installPlugin&url[1]=github.com/${headRepository}/tree/${branchName}&step[2]=importFriendFeeds&opml[2]=https://alex.kirk.at%20Alex%20Kirk%0Ahttps://adamadam.blog%20Adam%20Zieliński`;
 
             const playgroundSection = [
               markerStart,
