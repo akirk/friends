@@ -15,18 +15,18 @@
 }
 
 .friends-page .friends-content-warning {
-	margin: 8px 0;
-	border: 1px solid #ccc;
-	border-radius: 3px;
-	padding: 8px 10px;
+	margin: 0;
 }
 
 .friends-page .friends-content-warning > summary {
 	cursor: pointer;
-	display: flex;
-	gap: 12px;
-	justify-content: space-between;
-	font-weight: 600;
+	display: block;
+	list-style: none;
+	font-weight: inherit;
+}
+
+.friends-page .friends-content-warning > summary::-webkit-details-marker {
+	display: none;
 }
 
 .friends-page .friends-content-warning-toggle {
@@ -1144,6 +1144,10 @@
 }
 
 /* === Google Reader accordion behavior === */
+.friends-page .posts:not(.all-collapsed) article.card:not(.collapsed) div.teaser {
+	display: none;
+}
+
 /* In all-collapsed mode (default for Google Reader), posts are compact */
 .friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
 .friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,
@@ -1160,8 +1164,15 @@
 	display: inline;
 }
 
-.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser {
-	display: inline;
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser,
+.friends-page .posts article.card.collapsed div.teaser {
+	display: block;
+	flex: 1 1 100%;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	font-size: 12px;
 	color: light-dark(#666, #9aa0a6);
 }

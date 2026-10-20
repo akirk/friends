@@ -14,18 +14,18 @@
 }
 
 .friends-page .friends-content-warning {
-	margin: 8px 0;
-	border: 1px solid light-dark(#cfd9de, #536471);
-	border-radius: 12px;
-	padding: 10px 12px;
+	margin: 0;
 }
 
 .friends-page .friends-content-warning > summary {
 	cursor: pointer;
-	display: flex;
-	gap: 12px;
-	justify-content: space-between;
-	font-weight: 600;
+	display: block;
+	list-style: none;
+	font-weight: inherit;
+}
+
+.friends-page .friends-content-warning > summary::-webkit-details-marker {
+	display: none;
 }
 
 .friends-page .friends-content-warning-toggle {
