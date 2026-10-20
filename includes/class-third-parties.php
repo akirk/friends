@@ -40,6 +40,44 @@ class Third_Parties {
 	 */
 	private function register_hooks() {
 		add_filter( 'wp_sweep_excluded_taxonomies', array( $this, 'wp_sweep_excluded_taxonomies' ) );
+		add_filter( 'socialspec_following', array( $this, 'socialspec_following' ) );
+	}
+
+	/**
+	 * SocialSpec
+	 * Add the followed feeds to /.well-known/following.opml.
+	 *
+	 * Like the public OPML, only feeds with a public RSS or Atom URL are listed.
+	 *
+	 * @param array $outlines The OPML outline attributes.
+	 * @return array
+	 */
+	public function socialspec_following( $outlines ) {
+		foreach ( User_Query::all_associated_users()->get_results() as $friend_user ) {
+			foreach ( $friend_user->get_active_feeds() as $feed ) {
+				switch ( $feed->get_mime_type() ) {
+					case 'application/atom+xml':
+					case 'application/atomxml':
+						$type = 'atom';
+						break;
+					case 'application/rss+xml':
+					case 'application/rssxml':
+						$type = 'rss';
+						break;
+					default:
+						continue 2;
+				}
+
+				$outlines[] = array(
+					'type'    => $type,
+					'text'    => $friend_user->display_name,
+					'htmlUrl' => $friend_user->user_url,
+					'xmlUrl'  => $feed->get_url(),
+				);
+			}
+		}
+
+		return $outlines;
 	}
 
 	/**
