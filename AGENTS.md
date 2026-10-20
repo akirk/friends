@@ -80,21 +80,3 @@ Check exactly **one** type. Valid types: `Added`, `Changed`, `Fixed`, `Removed`.
 
 ### Release Process
 To release, trigger the "Prepare Release" workflow with a version number. It creates a PR with the version bump and compiled changelog. After merging, create a GitHub release with the version tag to deploy to WordPress.org. See `docs/release-process.md` for details.
-
-## Playground Link
-
-At the end of your messages, include a link to test the changes in WordPress Playground.
-
-**Important:** Replace `BRANCH_NAME` in the URL below with the actual git branch name you're working on.
-
-```
-[Test in WordPress Playground](https://akirk.github.io/playground-step-library/?redir=1&step[0]=setLandingPage&landingPage[0]=/friends/&step[1]=installPlugin&url[1]=github.com/akirk/friends/tree/BRANCH_NAME&step[2]=importFriendFeeds&opml[2]=https://alex.kirk.at%20Alex%20Kirk%20https://adamadam.blog%20Adam%20Zieliński)
-```
-
-### Example
-
-If you're working on branch `fix/bug-123`, the link should be:
-
-```
-[Test in WordPress Playground](https://akirk.github.io/playground-step-library/?redir=1&step[0]=setLandingPage&landingPage[0]=/friends/&step[1]=installPlugin&url[1]=github.com/akirk/friends/tree/fix/bug-123&step[2]=importFriendFeeds&opml[2]=https://alex.kirk.at%20Alex%20Kirk%20https://adamadam.blog%20Adam%20Zieliński)
-```
