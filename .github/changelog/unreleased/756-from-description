@@ -1,0 +1,3 @@
+Type: added
+
+Add the followed feeds to the SocialSpec following list at `/.well-known/following.opml`.
