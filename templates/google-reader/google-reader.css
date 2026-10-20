@@ -1144,6 +1144,10 @@
 }
 
 /* === Google Reader accordion behavior === */
+.friends-page .posts:not(.all-collapsed) article.card:not(.collapsed) div.teaser {
+	display: none;
+}
+
 /* In all-collapsed mode (default for Google Reader), posts are compact */
 .friends-page .posts.all-collapsed article.card:not(.uncollapsed) .card-body,
 .friends-page .posts.all-collapsed article.card:not(.uncollapsed) .entry-content,

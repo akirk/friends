@@ -145,5 +145,12 @@ $author_url = apply_filters( 'friends_author_url', $friend_user->get_local_frien
 	</div>
 </header>
 <div class="teaser col-ml-auto">
-	<?php echo wp_kses( str_replace( '/p>', '/p> ', preg_replace( '#<span class="invisible">.*?</span>#', '', get_the_content() ) ), array( 'a' => array( 'href' => array() ) ) ); ?>
+	<?php
+	$content_warning = get_post_meta( get_the_ID(), 'friends_content_warning', true );
+	if ( $content_warning ) {
+		echo esc_html( $content_warning );
+	} else {
+		echo wp_kses( str_replace( '/p>', '/p> ', preg_replace( '#<span class="invisible">.*?</span>#', '', get_the_content() ) ), array( 'a' => array( 'href' => array() ) ) );
+	}
+	?>
 </div>
