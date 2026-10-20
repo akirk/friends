@@ -754,7 +754,7 @@
 			return false;
 		} );
 
-		$( '.friends-reaction-picker' ).on( 'click', 'button', function () {
+		$document.on( 'click', '.friends-reaction-picker button, button.friends-reaction-picker', function () {
 			const $this = $( this );
 			const $picker = $this.closest( '.friends-reaction-picker' );
 			$this.addClass( 'loading' );
@@ -766,6 +766,11 @@
 				},
 				success() {
 					$this.removeClass( 'loading' );
+					if ( $this.is( '.friends-reaction-picker' ) ) {
+						$this.removeClass( 'friends-reaction-picker' ).addClass( 'friends-reaction pressed' );
+						$this.html( $( '<span>' ).text( $this.text().trim() ) ).append( ' 1' );
+						return;
+					}
 					var postId = $picker.data( 'id' );
 					var emoji = $this.data( 'emoji' );
 					var emojiChar = $this.text().trim();
