@@ -1164,8 +1164,15 @@
 	display: inline;
 }
 
-.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser {
-	display: inline;
+.friends-page .posts.all-collapsed article.card:not(.uncollapsed) div.teaser,
+.friends-page .posts article.card.collapsed div.teaser {
+	display: block;
+	flex: 1 1 100%;
+	min-width: 0;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 	font-size: 12px;
 	color: light-dark(#666, #9aa0a6);
 }
