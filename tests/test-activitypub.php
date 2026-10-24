@@ -413,6 +413,57 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertXmlStringEqualsXmlString( '<div>' . $content . '</div>', '<div>' . $posts[0]->post_content . '</div>' );
 	}
 
+	public function test_incoming_mention_of_others_and_local_user() {
+		$this->friend->delete_user_option( 'activitypub_friends_show_replies' );
+		$local_actor_url = get_author_posts_url( get_current_user_id() );
+		$now = time() - 10;
+		$status_id = 123;
+
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
+
+		$post_count = count( $posts );
+
+		// Let's post a new Note through the REST API.
+		$date = gmdate( \DATE_W3C, $now++ );
+		$id = $this->actor . '/status/' . $status_id;
+		$content = '<a rel="mention" class="u-url mention" href="https://example.org/users/abc">@<span>abc</span></a> and <a rel="mention" href="' . esc_url( $local_actor_url ) . '">@local</a> Test ' . $date . ' ' . wp_rand();
+
+		$request = new \WP_REST_Request( 'POST', '/activitypub/1.0/users/' . get_current_user_id() . '/inbox' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'type'   => 'Create',
+					'id'     => $id,
+					'actor'  => $this->actor,
+
+					'object' =>
+					array(
+						'type'         => 'Note',
+						'id'           => $id,
+						'attributedTo' => $this->actor,
+						'inReplyTo'    => null,
+						'content'      => $content,
+						'tag'          => array(
+							array( 'type' => 'Mention', 'href' => 'https://example.org/users/abc', 'name' => '@abc@example.org' ),
+							array( 'type' => 'Mention', 'href' => $local_actor_url, 'name' => '@local' ),
+						),
+						'url'          => 'https://mastodon.local/users/akirk/statuses/' . ( $status_id++ ),
+						'published'    => $date,
+					),
+				)
+			)
+		);
+		$request->set_header( 'Content-type', 'application/json' );
+
+		$response = $this->server->dispatch( $request );
+		$this->assertEquals( 202, $response->get_status() );
+
+		$posts = get_posts( $this->friend->modify_get_posts_args_by_author( array( 'post_type' => Friends::CPT ) ) );
+
+		$this->assertEquals( $post_count + 1, count( $posts ) );
+		$this->assertXmlStringEqualsXmlString( '<div>' . $content . '</div>', '<div>' . $posts[0]->post_content . '</div>' );
+	}
+
 	public function test_incoming_like_on_direct_message() {
 		$message_id = wp_insert_post(
 			array(
