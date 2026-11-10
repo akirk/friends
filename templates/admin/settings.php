@@ -290,7 +290,7 @@ do_action( 'friends_settings_before_form' );
 				</td>
 			</tr>
 			<tr>
-				<th scope="row" rowspan="2"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
+				<th scope="row"><?php esc_html_e( 'Frontend', 'friends' ); ?></th>
 				<td>
 					<fieldset>
 						<?php if ( $args['frontend_views'] ) : ?>
@@ -309,6 +309,13 @@ do_action( 'friends_settings_before_form' );
 							<p class="description"><?php esc_html_e( 'The display mode for /friends/ is the default for all views without a saved setting. Use the compact and expanded mode buttons in the frontend to change the mode for each view.', 'friends' ); ?></p>
 							</div>
 						<?php endif; ?>
+					</fieldset>
+				</td>
+			</tr>
+			<tr id="friends-themes">
+				<th scope="row"><?php esc_html_e( 'Themes', 'friends' ); ?></th>
+				<td>
+					<fieldset>
 						<label for="frontend-theme">
 							<span><?php esc_html_e( 'Main Theme:', 'friends' ); ?></span>
 							<select name="friends_frontend_theme" id="frontend-theme">
@@ -334,6 +341,36 @@ do_action( 'friends_settings_before_form' );
 								<?php endforeach; ?>
 							</table>
 						</details>
+						<h4><?php esc_html_e( 'More themes', 'friends' ); ?></h4>
+						<p class="description"><?php esc_html_e( 'Install and activate these themes as separate plugins, then select them above. Your theme choice applies only to your account.', 'friends' ); ?></p>
+						<ul>
+							<?php
+							$available_themes = Friends\Frontend::get_themes();
+							$external_themes  = array(
+								'asterism'  => array(
+									'name'        => 'Asterism',
+									'url'         => 'https://github.com/pauljacobson/asterism',
+									'description' => __( 'A mobile-first theme based on FediPress, with accessibility and navigation improvements.', 'friends' ),
+								),
+								'fedipress' => array(
+									'name'        => 'FediPress',
+									'url'         => 'https://github.com/alquimidia/fedipress',
+									'description' => __( 'An alternative design for your Friends reader.', 'friends' ),
+								),
+							);
+							foreach ( $external_themes as $theme_slug => $external_theme ) :
+								?>
+								<li>
+									<strong><?php echo esc_html( $external_theme['name'] ); ?></strong>
+									— <?php echo esc_html( $external_theme['description'] ); ?>
+									<?php if ( isset( $available_themes[ $theme_slug ] ) ) : ?>
+										<span><?php esc_html_e( 'Available to select above.', 'friends' ); ?></span>
+									<?php else : ?>
+										<a href="<?php echo esc_url( $external_theme['url'] . '#installation' ); ?>"><?php esc_html_e( 'Installation instructions', 'friends' ); ?></a>
+									<?php endif; ?>
+								</li>
+							<?php endforeach; ?>
+						</ul>
 					</fieldset>
 					<p>
 					<?php
