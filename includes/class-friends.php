@@ -1483,6 +1483,15 @@ class Friends {
 			return;
 		}
 
+		// Replies to local comments keep their own page and show the existing conversation above it.
+		if ( is_callable( array( '\Activitypub\Comment', 'url_to_commentid' ) ) ) {
+			$parent_id = \Activitypub\Comment::url_to_commentid( Conversation::get_parent_url( $post_id ) );
+			$parent = $parent_id ? get_comment( $parent_id ) : null;
+			if ( $parent && self::CPT === get_post_type( $parent->comment_post_ID ) ) {
+				return;
+			}
+		}
+
 		require_once __DIR__ . '/class-migration.php';
 
 		// Create a simple object for the process method.
