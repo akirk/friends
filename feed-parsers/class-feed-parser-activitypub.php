@@ -90,6 +90,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		\add_action( 'friends_get_reaction_display_name', array( $this, 'get_reaction_display_name' ), 10, 2 );
 
 		\add_filter( 'pre_comment_approved', array( $this, 'pre_comment_approved' ), 10, 2 );
+		\add_filter( 'preprocess_comment', array( $this, 'linkify_reply_urls' ) );
 		\add_action( 'wp_insert_comment', array( $this, 'prepare_cached_post_for_comment_federation' ), 5, 2 );
 		\add_action( 'comment_post', array( $this, 'comment_post' ), 10, 3 );
 		\add_action( 'trashed_comment', array( $this, 'trashed_comment' ), 10, 2 );
@@ -4070,6 +4071,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( ! ( $post instanceof \WP_Post ) ) {
 			return;
 		}
+		// Explicitly replying to a hidden post requires restoring it: WordPress rejects comments on trash.
+		if ( $in_reply_to && Friends::CPT === $post->post_type && 'trash' === $post->post_status && current_user_can( 'edit_posts' ) ) {
+			if ( ! wp_untrash_post( $post_id ) ) {
+				$this->show_message_on_frontend( __( 'Could not restore the hidden post for replying.', 'friends' ) );
+				return;
+			}
+		}
 		$user = User::get_post_author( $post );
 		wp_safe_redirect( $user->get_local_friends_page_url( $post_id ) . $append_to_redirect );
 		exit;
@@ -5088,6 +5096,23 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		);
 
 		Logging::log( 'unannounce', $message, $details, self::SLUG, $user_id );
+	}
+
+	/**
+	 * Link plain URLs in local replies before they are stored and federated.
+	 *
+	 * @param array $commentdata The submitted comment data.
+	 * @return array The comment data with clickable URLs.
+	 */
+	public function linkify_reply_urls( $commentdata ) {
+		if ( empty( $commentdata['user_id'] ) || empty( $commentdata['comment_post_ID'] ) || empty( $commentdata['comment_content'] ) ) {
+			return $commentdata;
+		}
+		if ( ! self::post_supports_activitypub( $commentdata['comment_post_ID'] ) || ! user_can( $commentdata['user_id'], 'publish_posts' ) ) {
+			return $commentdata;
+		}
+		$commentdata['comment_content'] = make_clickable( $commentdata['comment_content'] );
+		return $commentdata;
 	}
 
 	/**
