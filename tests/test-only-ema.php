@@ -500,7 +500,7 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 			$original = $this->create_mastodon_status( 123 );
 			$original->content = 'Original content';
 			$original->account = new \Enable_Mastodon_Apps\Entity\Account();
-			$original->account->id = 'original-author';
+			$original->account->id = '789';
 			$original->reblog = null;
 			$middle = $this->create_mastodon_status( 456 );
 			$middle->reblog = $original;
@@ -533,7 +533,7 @@ class Only_EnableMastodonAppsTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertEquals( strval( $this->administrator_id ), $data[0]->account->id );
 		$this->assertEquals( strval( $post_id ), $data[0]->id );
 		$this->assertEquals( '123', $data[0]->reblog->id );
-		$this->assertEquals( 'original-author', $data[0]->reblog->account->id );
+		$this->assertEquals( '789', $data[0]->reblog->account->id );
 		$this->assertEquals( 'Original content', $data[0]->reblog->content );
 		$this->assertNull( $data[0]->reblog->reblog );
 		$this->assertEquals( '2024-05-02T12:00:00+00:00', $data[0]->created_at->format( \DateTime::ATOM ) );
