@@ -23,11 +23,30 @@ class Enable_Mastodon_Apps {
 		add_filter( 'mastodon_api_favourites_args', array( get_called_class(), 'mastodon_api_favourites_args' ), 10, 2 );
 		add_filter( 'mastodon_api_bookmarks_args', array( get_called_class(), 'mastodon_api_bookmarks_args' ), 10, 2 );
 		add_filter( 'mastodon_api_status', array( get_called_class(), 'mastodon_api_status' ), 60, 2 );
+		add_filter( 'mastodon_api_timeline_post_identity', array( self::class, 'timeline_post_identity' ), 10, 2 );
 		add_filter( 'mastodon_api_submit_post_data', array( get_called_class(), 'mastodon_api_submit_post_data' ), 20, 9 );
 		add_filter( 'mastodon_api_get_notifications_query_args', array( get_called_class(), 'mastodon_api_get_notifications_query_args' ), 10, 2 );
 		add_filter( 'mastodon_api_get_notifications_queries', array( get_called_class(), 'mastodon_api_get_notifications_queries' ), 10, 2 );
 		add_filter( 'mastodon_api_account_statuses_excluded_post_types', array( get_called_class(), 'mastodon_api_account_statuses_excluded_post_types' ) );
 		add_filter( 'mastodon_api_account_statuses', array( get_called_class(), 'mastodon_api_account_statuses' ), 10, 3 );
+	}
+
+	/**
+	 * Keep boosts separate from their original object when EMA merges caches.
+	 *
+	 * @param string|false|null $identity Cached object identity.
+	 * @param \WP_Post          $post     Cached post.
+	 * @return string|false|null Object identity, or false for a separate boost event.
+	 */
+	public static function timeline_post_identity( $identity, $post ) {
+		if ( Friends::CPT === $post->post_type ) {
+			$meta = get_post_meta( $post->ID, Feed_Parser_ActivityPub::SLUG, true );
+			if ( ! empty( $meta['reblog'] ) ) {
+				return false;
+			}
+			return $post->guid;
+		}
+		return $identity;
 	}
 
 	public static function mastodon_api_account_follow( $user_id ) {
