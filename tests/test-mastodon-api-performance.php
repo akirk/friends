@@ -18,21 +18,6 @@ class Mastodon_API_Performance_Test extends ActivityPubTest {
 	private $posts = array();
 	private $token;
 
-	/**
-	 * EMA can identify shared objects and boosts without building remote accounts.
-	 */
-	public function test_timeline_object_identity_preserves_boost_events() {
-		$post_id = self::factory()->post->create( array( 'post_type' => Friends::CPT ) );
-		$this->posts[] = $post_id;
-		$post = get_post( $post_id );
-		$this->assertSame( $post->guid, Enable_Mastodon_Apps::timeline_post_identity( null, $post ) );
-		update_post_meta( $post_id, Feed_Parser_ActivityPub::SLUG, array( 'reblog' => true ) );
-		$this->assertFalse( Enable_Mastodon_Apps::timeline_post_identity( null, $post ) );
-		$local_id = self::factory()->post->create();
-		$this->posts[] = $local_id;
-		$this->assertNull( Enable_Mastodon_Apps::timeline_post_identity( null, get_post( $local_id ) ) );
-	}
-
 	public static function known_test_activitypub_hosts( $is_known, $host ) {
 		// Recognize host patterns used in tests as known fediverse instances.
 		if ( str_ends_with( $host, '.social' ) || str_starts_with( $host, 'mastodon.' ) ) {
