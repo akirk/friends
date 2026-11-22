@@ -248,6 +248,10 @@ class REST {
 			return false;
 		}
 
+		if ( 'ap_post' === get_post_type( $post_id ) && ! Activitypub_Reader::can_read( $post_id ) ) {
+			return false;
+		}
+
 		enqueue_embed_scripts();
 		$post = get_post( $post_id );
 		$args = compact( 'post' );
@@ -319,7 +323,8 @@ class REST {
 		$post_id = intval( $request->get_param( 'id' ) );
 		$post    = get_post( $post_id );
 
-		if ( ! $post || ! in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true ) ) {
+		if ( ! $post || ! in_array( $post->post_type, apply_filters( 'friends_frontend_post_types', array() ), true )
+			|| ( 'ap_post' === $post->post_type && ! Activitypub_Reader::can_read( $post_id ) ) ) {
 			return new \WP_Error( 'friends_link_preview_invalid_post', __( 'The requested post is not available.', 'friends' ), array( 'status' => 404 ) );
 		}
 
