@@ -3043,7 +3043,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 		foreach ( array( 'href', 'id', 'url' ) as $key ) {
 			if ( isset( $value[ $key ] ) ) {
-				return self::resolve_activity_url( $value[ $key ] );
+				$url = self::resolve_activity_url( $value[ $key ] );
+				if ( $url ) {
+					return $url;
+				}
 			}
 		}
 		foreach ( $value as $key => $item ) {
@@ -3058,6 +3061,32 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	}
 
 	/**
+	 * Accept a single ActivityStreams object or a list, discarding non-objects.
+	 *
+	 * @param mixed $value Object or list of objects.
+	 * @return array Objects safe to inspect as arrays.
+	 */
+	private static function activity_objects( $value ) {
+		if ( ! is_array( $value ) ) {
+			return array();
+		}
+		if ( isset( $value['type'] ) || isset( $value['url'] ) ) {
+			return array( $value );
+		}
+		return array_filter( $value, 'is_array' );
+	}
+
+	/**
+	 * Discard non-text values instead of coercing remote objects into strings.
+	 *
+	 * @param mixed $value Remote text value.
+	 * @return string Text or an empty string.
+	 */
+	private static function activity_text( $value ) {
+		return is_string( $value ) ? $value : '';
+	}
+
+	/**
 	 * Preserve attached media in public posts and direct messages.
 	 *
 	 * @param string $content The object's HTML content.
@@ -3065,24 +3094,32 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 	 * @return string Content including the object's attachments.
 	 */
 	private function append_activity_attachments( $content, $activity ) {
+		$content = self::activity_text( $content );
 		if ( ! empty( $activity['attachment'] ) ) {
-			foreach ( $activity['attachment'] as $attachment ) {
-				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) ) {
+			foreach ( self::activity_objects( $activity['attachment'] ) as $attachment ) {
+				if ( ! isset( $attachment['type'] ) || ! isset( $attachment['mediaType'] ) || ! is_string( $attachment['mediaType'] ) ) {
 					continue;
 				}
 				if ( ! in_array( $attachment['type'], array( 'Document', 'Image', 'Link' ), true ) ) {
 					continue;
 				}
 
-				if ( empty( $attachment['url'] ) ) {
-					if ( ! empty( $attachment['href'] ) ) {
-						$attachment['url'] = $attachment['href'];
-					}
+				$attachment['url'] = self::resolve_activity_url( $attachment['url'] ?? null );
+				if ( ! $attachment['url'] ) {
+					$attachment['url'] = self::resolve_activity_url( $attachment['href'] ?? null );
+				}
+				$attachment['name'] = self::activity_text( $attachment['name'] ?? null );
+				foreach ( array( 'width', 'height' ) as $dimension ) {
+					$attachment[ $dimension ] = is_numeric( $attachment[ $dimension ] ?? null ) ? max( 0, (int) $attachment[ $dimension ] ) : 0;
 				}
 				if ( 'application/x-mpegURL' === $attachment['mediaType'] ) {
 					if ( ! empty( $attachment['tag'] ) ) {
 						$videos = array();
-						foreach ( $attachment['tag'] as $tag ) {
+						foreach ( self::activity_objects( $attachment['tag'] ) as $tag ) {
+							$tag['href'] = self::resolve_activity_url( $tag['href'] ?? null );
+							foreach ( array( 'width', 'height' ) as $dimension ) {
+								$tag[ $dimension ] = is_numeric( $tag[ $dimension ] ?? null ) ? max( 0, (int) $tag[ $dimension ] ) : 0;
+							}
 							if ( empty( $tag['mediaType'] ) || ! is_string( $tag['mediaType'] ) || 0 !== strpos( $tag['mediaType'], 'video/' ) || empty( $tag['href'] ) || ! is_string( $tag['href'] ) ) {
 								continue;
 							}
@@ -3109,29 +3146,26 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 								$content .= ' width="' . esc_attr( $video['width'] ) . '"';
 								$content .= ' height="' . esc_attr( $video['height'] ) . '"';
 							}
-							if ( isset( $activity['icon'] ) && ! empty( $activity['icon'] ) ) {
-								if ( is_array( $activity['icon'] ) ) {
-									$poster = null;
-									// choose the larger icon.
-									foreach ( $activity['icon'] as $icon ) {
-										if ( isset( $icon['width'] ) && isset( $icon['height'] ) && isset( $icon['url'] ) && ( ! $poster || ( $icon['width'] > $poster['width'] && $icon['height'] > $poster['height'] ) ) ) {
-											$poster = $icon;
-										}
-									}
-								} else {
-									$poster = $activity['icon'];
-								}
-								if ( $poster ) {
-									$content .= ' poster="' . esc_url( $poster['url'] ) . '"';
+							$poster_url = '';
+							$poster_width = 0;
+							foreach ( self::activity_objects( $activity['icon'] ?? null ) as $icon ) {
+								$icon_url = self::resolve_activity_url( $icon['url'] ?? null );
+								$width = is_numeric( $icon['width'] ?? null ) ? (int) $icon['width'] : 0;
+								if ( $icon_url && ( ! $poster_url || $width > $poster_width ) ) {
+									$poster_url = $icon_url;
+									$poster_width = $width;
 								}
 							}
+							if ( $poster_url ) {
+								$content .= ' poster="' . esc_url( $poster_url ) . '"';
+							}
 							$content .= ' src="' . esc_url( $video['href'] ) . '" type="' . esc_attr( $video['mediaType'] ) . '"';
-							if ( isset( $activity['duration'] ) ) {
+							if ( isset( $activity['duration'] ) && is_string( $activity['duration'] ) ) {
 								$content .= ' duration="' . esc_attr( $activity['duration'] ) . '"';
 							}
 							$content .= '>';
 							if ( ! empty( $activity['subtitleLanguage'] ) ) {
-								foreach ( $activity['subtitleLanguage'] as $subtitle ) {
+								foreach ( self::activity_objects( $activity['subtitleLanguage'] ) as $subtitle ) {
 									$subtitle_url = self::resolve_activity_url( $subtitle['url'] ?? null );
 									if ( ! $subtitle_url ) {
 										continue;
@@ -3140,7 +3174,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 									if ( '.vtt' === substr( $subtitle_url, -4 ) ) {
 										$type = 'text/vtt';
 									}
-									$content .= '<track src="' . esc_url( $subtitle_url ) . '" kind="subtitles" srclang="' . esc_attr( $subtitle['identifier'] ) . '" type="' . esc_attr( $type ) . '" label="' . esc_attr( $subtitle['name'] ) . '" />';
+									$content .= '<track src="' . esc_url( $subtitle_url ) . '" kind="subtitles" srclang="' . esc_attr( self::activity_text( $subtitle['identifier'] ?? null ) ) . '" type="' . esc_attr( $type ) . '" label="' . esc_attr( self::activity_text( $subtitle['name'] ?? null ) ) . '" />';
 								}
 							}
 							$content .= '</video>';
@@ -3152,7 +3186,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 						}
 					}
-				} elseif ( strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
+				} elseif ( $attachment['url'] && strpos( $attachment['mediaType'], 'image/' ) === 0 ) {
 					$content .= PHP_EOL;
 					$content .= '<!-- wp:image -->';
 					$content .= '<p><img src="' . esc_url( $attachment['url'] ) . '"';
@@ -3162,7 +3196,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 					}
 					$content .= ' alt="' . esc_attr( $attachment['name'] ?? '' ) . '" class="size-full" /></p>';
 					$content .= '<!-- /wp:image -->';
-				} elseif ( strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
+				} elseif ( $attachment['url'] && strpos( $attachment['mediaType'], 'video/' ) === 0 ) {
 					$content .= PHP_EOL;
 					$content .= '<!-- wp:video -->';
 					$content .= '<figure class="wp-block-video"><video controls src="' . esc_url( $attachment['url'] ) . '" type="' . esc_attr( $attachment['mediaType'] ) . '">';
@@ -3200,7 +3234,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		$data = array(
 			'permalink'    => $permalink,
-			'content'      => $activity['content'],
+			'content'      => self::activity_text( $activity['content'] ?? null ),
 			'post_format'  => $this->map_type_to_post_format( $activity['type'] ),
 			'date'         => $activity['published'],
 			'_external_id' => $activity['id'],
@@ -3218,9 +3252,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$this->log( 'Attributed to ' . $attributed_to, compact( 'meta' ) );
 
 			if ( $meta && ! is_wp_error( $meta ) ) {
-				if ( isset( $meta['name'] ) ) {
+				if ( isset( $meta['name'] ) && is_string( $meta['name'] ) ) {
 					$data['author'] = $meta['name'];
-				} elseif ( isset( $meta['preferredUsername'] ) ) {
+				} elseif ( isset( $meta['preferredUsername'] ) && is_string( $meta['preferredUsername'] ) ) {
 					$data['author'] = $meta['preferredUsername'];
 				}
 

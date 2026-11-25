@@ -175,6 +175,15 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 				),
 			),
 		);
+		if ( 'non-text-metadata' === $shape ) {
+			$activity['object']['attachment'][0]['name'] = array( 'caption' );
+			$activity['object']['attachment'][0]['tag'][0]['height'] = array( 720 );
+			$activity['object']['attachment'][0]['tag'][0]['width'] = array( 1280 );
+			$activity['object']['duration'] = array( 'PT10S' );
+			$activity['object']['icon'] = array( 'type' => 'Image', 'url' => array( 'href' => 'https://mastodon.local/poster.png' ) );
+			$activity['object']['subtitleLanguage'][0]['name'] = array( 'English' );
+			$activity['object']['subtitleLanguage'][0]['identifier'] = array( 'en' );
+		}
 		$parser = Friends::get_instance()->feed->get_feed_parser( 'activitypub' );
 		$error = null;
 		try {
@@ -192,16 +201,86 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( 'https://mastodon.local/video.mp4', $html->get_attribute( 'src' ) );
 		$this->assertTrue( $html->next_tag( 'TRACK' ) );
 		$this->assertSame( 'https://mastodon.local/captions/en.vtt', $html->get_attribute( 'src' ) );
-		$this->assertSame( 'en', $html->get_attribute( 'srclang' ) );
+		$this->assertSame( 'non-text-metadata' === $shape ? '' : 'en', $html->get_attribute( 'srclang' ) );
 	}
 
 	public static function incoming_video_shapes() {
 		return array(
 			'string URLs'             => array( 'scalar' ),
+			'non-text metadata'       => array( 'non-text-metadata' ),
 			'subtitle Link object'    => array( 'subtitle-link' ),
 			'subtitle list'           => array( 'subtitle-list' ),
 			'tag without media type'  => array( 'tag-without-media-type' ),
 			'attributedTo actor list' => array( 'actor-list' ),
+		);
+	}
+
+	/**
+	 * @dataProvider incoming_image_shapes
+	 */
+	public function test_incoming_images_with_non_text_fields( $shape, $direct_message = false ) {
+		$id = $this->actor . '/images/' . $shape;
+		$image = array(
+			'type'      => 'Image',
+			'mediaType' => 'image/png',
+			'url'       => array( 'type' => 'Link', 'href' => 'https://mastodon.local/image.png' ),
+			'name'      => array( 'unexpected' => 'alt text' ),
+			'width'     => array( 640 ),
+			'height'    => array( 480 ),
+		);
+		$attachments = array( $image );
+		if ( 'invalid-media-type' === $shape ) {
+			array_unshift( $attachments, array( 'type' => 'Document', 'mediaType' => array( 'image/png' ) ) );
+		} elseif ( 'invalid-url' === $shape ) {
+			array_unshift( $attachments, array( 'type' => 'Image', 'mediaType' => 'image/png', 'url' => true ) );
+		} elseif ( 'non-object-entries' === $shape ) {
+			$attachments = array( 'invalid', null, 123, $image );
+		} elseif ( 'single-image' === $shape ) {
+			$attachments = $image;
+		}
+		$activity = array(
+			'type'   => 'Create',
+			'actor'  => $this->actor,
+			'object' => array(
+				'type'         => 'Note',
+				'id'           => $id,
+				'content'      => array( 'unexpected' => 'content' ),
+				'published'    => '2026-11-25T09:00:00Z',
+				'attributedTo' => $this->actor,
+				'attachment'   => $attachments,
+			),
+		);
+		$parser = Friends::get_instance()->feed->get_feed_parser( 'activitypub' );
+		$error = null;
+		try {
+			if ( $direct_message ) {
+				$parser->handle_received_direct_message( $activity, get_current_user_id() );
+			} else {
+				$parser->handle_received_create( $activity, get_current_user_id() );
+			}
+		} catch ( \Throwable $exception ) {
+			$error = $exception->getMessage();
+		}
+		$this->assertNull( $error, 'Malformed optional fields must not prevent receiving an image.' );
+		$post_id = $direct_message ? Messages::url_to_postid( $id ) : Feed::url_to_postid( $id );
+		$post = get_post( $post_id );
+		$this->assertInstanceOf( \WP_Post::class, $post );
+		$this->assertStringNotContainsString( 'Array', $post->post_content );
+		$html = new \WP_HTML_Tag_Processor( $post->post_content );
+		$this->assertTrue( $html->next_tag( 'IMG' ) );
+		$this->assertSame( 'https://mastodon.local/image.png', $html->get_attribute( 'src' ) );
+		$this->assertSame( '', $html->get_attribute( 'alt' ) );
+		$this->assertNull( $html->get_attribute( 'width' ) );
+		$this->assertFalse( $html->next_tag( 'IMG' ) );
+	}
+
+	public static function incoming_image_shapes() {
+		return array(
+			'non-text media type' => array( 'invalid-media-type' ),
+			'non-text URL'        => array( 'invalid-url' ),
+			'non-object entries'  => array( 'non-object-entries' ),
+			'single image object' => array( 'single-image' ),
+			'direct message'      => array( 'single-image', true ),
 		);
 	}
 
