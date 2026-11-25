@@ -1,0 +1,3 @@
+Type: fixed
+
+Allow replying to hidden ActivityPub posts by restoring them and make plain URLs clickable in outgoing replies.
