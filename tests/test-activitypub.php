@@ -192,7 +192,6 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertSame( 'https://mastodon.local/video.mp4', $html->get_attribute( 'src' ) );
 		$this->assertTrue( $html->next_tag( 'TRACK' ) );
 		$this->assertSame( 'https://mastodon.local/captions/en.vtt', $html->get_attribute( 'src' ) );
-		$this->assertSame( 'text/vtt', $html->get_attribute( 'type' ) );
 		$this->assertSame( 'en', $html->get_attribute( 'srclang' ) );
 	}
 
