@@ -765,7 +765,7 @@ class Frontend {
 				'parent' => 'friends-menu',
 				'id'     => 'friends-theme',
 				'title'  => esc_html__( 'Theme', 'friends' ),
-				'href'   => admin_url( 'admin.php?page=friends-settings' ),
+				'href'   => admin_url( 'admin.php?page=friends-settings#friends-themes' ),
 			)
 		);
 
