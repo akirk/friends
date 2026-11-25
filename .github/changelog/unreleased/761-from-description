@@ -1,0 +1,3 @@
+Type: fixed
+
+Keep posts mentioning a local user visible when hiding replies to unknown accounts, even when someone else is mentioned first.

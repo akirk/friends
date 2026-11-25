@@ -191,6 +191,19 @@ class Feed_Item {
 					$value = new \WP_Error( 'invalid-key', 'This value cannot be stored in a _feed_rule_transform.' );
 				}
 				break;
+			case '_mention_urls':
+				if ( ! is_array( $value ) ) {
+					return new \WP_Error( 'invalid-mention-urls', 'Mention URLs must be an array.' );
+				}
+				$value = array_values(
+					array_filter(
+						$value,
+						static function ( $url ) {
+							return is_string( $url ) && false !== filter_var( $url, FILTER_VALIDATE_URL );
+						}
+					)
+				);
+				break;
 			case '_is_new':
 				$value = boolval( $value );
 				break;
