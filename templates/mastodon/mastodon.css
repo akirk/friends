@@ -268,7 +268,8 @@ body.friends-page {
 }
 
 /* Compose box in left col */
-.mastodon-compose-form {
+.mastodon-compose-form,
+.friends-page .comments-content .comment-form {
 	margin-bottom: 12px;
 	background: light-dark(#fff, #282c37);
 	border: 1px solid light-dark(#d4dde8, #393f4f);
@@ -311,7 +312,8 @@ body.friends-page {
 
 .mastodon-compose-settings:hover { color: light-dark(#563acc, #c4bbff); text-decoration: none; }
 
-.mastodon-compose-submit {
+.mastodon-compose-submit,
+.friends-page .comments-content .form-submit .submit {
 	background: light-dark(#563acc, #6364ff);
 	color: #fff;
 	border: none;
@@ -323,7 +325,8 @@ body.friends-page {
 	font-family: inherit;
 }
 
-.mastodon-compose-submit:hover { background: light-dark(#4a30b0, #7475ff); }
+.mastodon-compose-submit:hover,
+.friends-page .comments-content .form-submit .submit:hover { background: light-dark(#4a30b0, #7475ff); }
 
 /* @ mention dropdown */
 .mastodon-mention-dropdown {
@@ -896,9 +899,68 @@ body.friends-page {
 	font-size: 14px;
 }
 
-.friends-page .comments-content textarea {
+.friends-page .comments-content .comment-form textarea {
+	display: block;
+	width: 100%;
 	max-width: 100%;
 	box-sizing: border-box;
+	min-height: 120px;
+	padding: 0;
+	background: transparent;
+	border: none;
+	resize: vertical;
+	font: inherit;
+	line-height: 1.5;
+	color: light-dark(#282c37, #dadada);
+}
+
+.friends-page .comments-content .comment-form:focus-within {
+	border-color: light-dark(#563acc, #6364ff);
+}
+
+.friends-page .comments-content .comment-form textarea:focus {
+	outline: 2px solid light-dark(#563acc, #6364ff);
+	outline-offset: 4px;
+}
+
+.friends-page .comments-content .comment-respond {
+	margin-top: 16px;
+}
+
+.friends-page .comments-content .comment-form p {
+	margin: 0 0 12px;
+}
+
+.friends-page .comments-content .comment-form label {
+	display: block;
+	margin-bottom: 8px;
+	font-size: 13px;
+	color: light-dark(#606984, #9baec8);
+}
+
+.friends-page .comments-content .comment-form .form-submit {
+	display: flex;
+	justify-content: flex-end;
+	margin: 6px 0 0;
+	padding-top: 6px;
+	border-top: 1px solid light-dark(#d4dde8, #393f4f);
+}
+
+.friends-page .comments-content .comment-notes,
+.friends-page .comments-content .comment-form-cookies-consent,
+.friends-page .comments-content .akismet_comment_form_privacy_notice {
+	font-size: 12px;
+	line-height: 1.5;
+	color: light-dark(#606984, #9baec8);
+}
+
+.friends-page .comments-content .comment-form-cookies-consent label {
+	display: inline;
+}
+
+.friends-page .comments-content .form-submit .submit:focus-visible {
+	outline: 2px solid light-dark(#563acc, #9b9cff);
+	outline-offset: 3px;
 }
 
 .friends-page .comments-content.closed { display: none; }
