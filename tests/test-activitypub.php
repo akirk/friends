@@ -130,6 +130,82 @@ class ActivityPubTest extends Friends_TestCase_Cache_HTTP {
 		$this->assertStringContainsString( '<img class="activitypub-custom-emoji" src="https://example.com/party.png" alt=":party:" title="party" loading="lazy" />', $html );
 	}
 
+	/**
+	 * @dataProvider incoming_video_shapes
+	 */
+	public function test_incoming_video_links( $shape ) {
+		$id = $this->actor . '/videos/' . $shape;
+		$subtitle_url = 'https://mastodon.local/captions/en.vtt';
+		$attributed_to = $this->actor;
+		$tags = array(
+			array(
+				'type'      => 'Link',
+				'mediaType' => 'video/mp4',
+				'href'      => 'https://mastodon.local/video.mp4',
+				'height'    => 720,
+			),
+		);
+		if ( 'subtitle-link' === $shape ) {
+			$subtitle_url = array( 'type' => 'Link', 'href' => $subtitle_url );
+		} elseif ( 'subtitle-list' === $shape ) {
+			$subtitle_url = array( array( 'type' => 'Link', 'href' => $subtitle_url ) );
+		} elseif ( 'tag-without-media-type' === $shape ) {
+			array_unshift( $tags, array( 'type' => 'Link', 'href' => 'https://mastodon.local/playlist.m3u8' ) );
+		} elseif ( 'actor-list' === $shape ) {
+			$attributed_to = array( array( 'type' => 'Person', 'id' => $this->actor ) );
+		}
+		$activity = array(
+			'type'   => 'Create',
+			'actor'  => $this->actor,
+			'object' => array(
+				'type'             => 'Video',
+				'id'               => $id,
+				'content'          => 'A video with captions.',
+				'published'        => '2026-11-25T09:00:00Z',
+				'attributedTo'     => $attributed_to,
+				'attachment'       => array(
+					array(
+						'type'      => 'Link',
+						'mediaType' => 'application/x-mpegURL',
+						'tag'       => $tags,
+					),
+				),
+				'subtitleLanguage' => array(
+					array( 'url' => $subtitle_url, 'identifier' => 'en', 'name' => 'English' ),
+				),
+			),
+		);
+		$parser = Friends::get_instance()->feed->get_feed_parser( 'activitypub' );
+		$error = null;
+		try {
+			$parser->handle_received_create( $activity, get_current_user_id() );
+		} catch ( \Throwable $exception ) {
+			// Report parsing errors as assertion failures for the regression CI job.
+			$error = $exception->getMessage();
+		}
+		$this->assertNull( $error, 'Incoming video must be cached without a parsing error.' );
+
+		$post = get_post( Feed::url_to_postid( $id ) );
+		$this->assertInstanceOf( \WP_Post::class, $post );
+		$html = new \WP_HTML_Tag_Processor( $post->post_content );
+		$this->assertTrue( $html->next_tag( 'VIDEO' ) );
+		$this->assertSame( 'https://mastodon.local/video.mp4', $html->get_attribute( 'src' ) );
+		$this->assertTrue( $html->next_tag( 'TRACK' ) );
+		$this->assertSame( 'https://mastodon.local/captions/en.vtt', $html->get_attribute( 'src' ) );
+		$this->assertSame( 'text/vtt', $html->get_attribute( 'type' ) );
+		$this->assertSame( 'en', $html->get_attribute( 'srclang' ) );
+	}
+
+	public static function incoming_video_shapes() {
+		return array(
+			'string URLs'             => array( 'scalar' ),
+			'subtitle Link object'    => array( 'subtitle-link' ),
+			'subtitle list'           => array( 'subtitle-list' ),
+			'tag without media type'  => array( 'tag-without-media-type' ),
+			'attributedTo actor list' => array( 'actor-list' ),
+		);
+	}
+
 	public function test_incoming_post() {
 		$this->friend->update_user_option( 'activitypub_friends_show_replies', '1' );
 		$now = time() - 10;
