@@ -142,6 +142,7 @@ class Friends {
 		new Site_Health();
 		new Migration();
 		$this->register_hooks();
+		Activitypub_Reader::init();
 		load_plugin_textdomain( 'friends', false, FRIENDS_PLUGIN_FILE . '/languages/' );
 
 		/**

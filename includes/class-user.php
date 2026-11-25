@@ -50,6 +50,12 @@ class User extends \WP_User {
 	public static function get_post_author( \WP_Post $post ) {
 		static $cache = array();
 
+		if ( 'ap_post' === $post->post_type ) {
+			$feed = User_Feed::get_by_ap_actor_id( (int) get_post_meta( $post->ID, '_activitypub_remote_actor_id', true ) );
+			if ( ! is_wp_error( $feed ) && $feed->get_friend_user() ) {
+				return $feed->get_friend_user();
+			}
+		}
 		$subscriptions = wp_get_object_terms( $post->ID, Subscription::TAXONOMY );
 		if ( empty( $subscriptions ) ) {
 			if ( ! isset( $cache[ 'u_' . $post->post_author ] ) ) {

@@ -27,6 +27,9 @@ class Feed_Query {
 	 * @return array Query, lookahead information, and the next cursor.
 	 */
 	public function fetch( $vars, $cursor = null, $single = false ) {
+		if ( empty( $vars['friends_reader_source'] ) && null !== Activitypub_Reader::actor_id() && isset( $vars['post_type'] ) && in_array( Friends::CPT, (array) $vars['post_type'], true ) ) {
+			return Activitypub_Reader::fetch( $vars, $cursor, $single );
+		}
 		$vars['paged'] = max( 1, isset( $vars['paged'] ) ? intval( $vars['paged'] ) : 1 );
 		$per_page = max( 1, isset( $vars['posts_per_page'] ) ? intval( $vars['posts_per_page'] ) : intval( get_option( 'posts_per_page' ) ) );
 		if ( $single ) {
