@@ -16,6 +16,8 @@ class ConversationTest extends \WP_UnitTestCase {
 	 */
 	public function set_up() {
 		parent::set_up();
+		// Report the missing feature as an assertion failure when validating against old code.
+		$this->assertTrue( class_exists( Conversation::class ), 'Conversation context must be available.' );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 	}
 
