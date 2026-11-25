@@ -98,6 +98,17 @@ class Feed_Renderer {
 				$args['read_time'] = _x( '< 1 min', 'reading time', 'friends' );
 			}
 
+			if ( is_single() && $friends->frontend->can_view_feed() ) {
+				$context = Conversation::get_ancestors( $post->ID );
+				if ( $context ) {
+					Friends::template_loader()->get_template_part(
+						'frontend/parts/conversation-context',
+						null,
+						array( 'context' => $context )
+					);
+				}
+			}
+
 			Friends::template_loader()->get_template_part(
 				'frontend/parts/content',
 				get_post_format(),

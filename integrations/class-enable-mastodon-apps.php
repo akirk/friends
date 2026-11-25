@@ -23,11 +23,30 @@ class Enable_Mastodon_Apps {
 		add_filter( 'mastodon_api_favourites_args', array( get_called_class(), 'mastodon_api_favourites_args' ), 10, 2 );
 		add_filter( 'mastodon_api_bookmarks_args', array( get_called_class(), 'mastodon_api_bookmarks_args' ), 10, 2 );
 		add_filter( 'mastodon_api_status', array( get_called_class(), 'mastodon_api_status' ), 60, 2 );
+		add_filter( 'mastodon_api_timelines_args', array( self::class, 'local_timeline_args' ), 90, 2 );
 		add_filter( 'mastodon_api_submit_post_data', array( get_called_class(), 'mastodon_api_submit_post_data' ), 20, 9 );
 		add_filter( 'mastodon_api_get_notifications_query_args', array( get_called_class(), 'mastodon_api_get_notifications_query_args' ), 10, 2 );
 		add_filter( 'mastodon_api_get_notifications_queries', array( get_called_class(), 'mastodon_api_get_notifications_queries' ), 10, 2 );
 		add_filter( 'mastodon_api_account_statuses_excluded_post_types', array( get_called_class(), 'mastodon_api_account_statuses_excluded_post_types' ) );
 		add_filter( 'mastodon_api_account_statuses', array( get_called_class(), 'mastodon_api_account_statuses' ), 10, 3 );
+	}
+
+	/**
+	 * Cached Friends posts are remote even when older rows have a subscription author.
+	 *
+	 * @param array            $args Timeline query arguments.
+	 * @param \WP_REST_Request $request Timeline request.
+	 * @return array The local timeline arguments.
+	 */
+	public static function local_timeline_args( $args, $request ) {
+		if ( '/enable-mastodon-apps/api/v1/timelines/public' !== $request->get_route() || ! rest_sanitize_boolean( $request->get_param( 'local' ) ) || empty( $args ) ) {
+			return $args;
+		}
+		$args['post_type'] = array_values( array_diff( (array) ( $args['post_type'] ?? array() ), array( Friends::CPT ) ) );
+		if ( ! $args['post_type'] ) {
+			$args['post__in'] = array( 0 );
+		}
+		return $args;
 	}
 
 	public static function mastodon_api_account_follow( $user_id ) {

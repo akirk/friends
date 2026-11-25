@@ -48,6 +48,7 @@ require_once __DIR__ . '/includes/class-feed.php';
 require_once __DIR__ . '/includes/class-frontend.php';
 require_once __DIR__ . '/includes/class-feed-query.php';
 require_once __DIR__ . '/includes/class-feed-renderer.php';
+require_once __DIR__ . '/includes/class-conversation.php';
 require_once __DIR__ . '/includes/class-feed-endpoint.php';
 require_once __DIR__ . '/includes/class-import.php';
 require_once __DIR__ . '/includes/class-link-preview.php';

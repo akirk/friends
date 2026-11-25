@@ -1320,6 +1320,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		if ( self::CONTENT_WARNING_META === $key && is_string( $value ) ) {
 			return true;
 		}
+		if ( Conversation::REPLY_TO_META === $key && is_string( $value ) ) {
+			return true;
+		}
 		return $verdict;
 	}
 
@@ -3240,6 +3243,16 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			'_external_id' => $activity['id'],
 			self::SLUG     => array(),
 		);
+		$data[ Conversation::REPLY_TO_META ] = '';
+		if ( ! empty( $activity['inReplyTo'] ) ) {
+			$reply_to = $activity['inReplyTo'];
+			if ( is_array( $reply_to ) ) {
+				$reply_to = $reply_to['id'] ?? reset( $reply_to );
+			}
+			if ( is_string( $reply_to ) ) {
+				$data[ Conversation::REPLY_TO_META ] = esc_url_raw( $reply_to );
+			}
+		}
 
 		if ( ! empty( $activity['summary'] ) && is_string( $activity['summary'] ) ) {
 			$data[ self::CONTENT_WARNING_META ] = wp_strip_all_tags( $activity['summary'] );
@@ -5428,10 +5441,18 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		$html5 = current_theme_supports( 'html5', 'comment-form' ) ? 'html5' : 'xhtml';
 		$required_attribute = ( $html5 ? ' required' : ' required="required"' );
 		$required_indicator = ' ' . wp_required_field_indicator();
+		$title_reply = __( 'Send a Reply via ActivityPub', 'friends' );
+		if ( Conversation::get_parent_url( $post_id ) ) {
+			$author = get_post_meta( $post_id, 'author', true );
+			if ( $author ) {
+				/* translators: %s: Author of the message being replied to. */
+				$title_reply = sprintf( __( 'Reply to %s', 'friends' ), $author );
+			}
+		}
 
 		\comment_form(
 			array(
-				'title_reply'          => __( 'Send a Reply via ActivityPub', 'friends' ),
+				'title_reply'          => esc_html( $title_reply ),
 				'title_reply_before'   => '<h5 id="reply-title" class="comment-reply-title">',
 				'title_reply_after'    => '</h5>',
 				'logged_in_as'         => '',

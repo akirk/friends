@@ -13,6 +13,21 @@ require_once __DIR__ . '/test-activitypub.php';
  * Test the Enable Mastodon Apps integration
  */
 class Combined_ActivityPub_EnableMastodonApps_Test extends ActivityPubTest {
+	/**
+	 * Legacy cached posts with subscription authors are still remote on the local timeline.
+	 */
+	public function test_local_timeline_excludes_cached_friends_posts() {
+		$args = array( 'post_type' => array( 'post', 'comment', Friends::CPT ) );
+		$request = new \WP_REST_Request( 'GET', '/enable-mastodon-apps/api/v1/timelines/public' );
+		$request->set_param( 'local', true );
+		$local = Enable_Mastodon_Apps::local_timeline_args( $args, $request );
+		$this->assertSame( array( 'post', 'comment' ), $local['post_type'] );
+		$request->set_param( 'local', false );
+		$this->assertSame( $args, Enable_Mastodon_Apps::local_timeline_args( $args, $request ) );
+		$home = new \WP_REST_Request( 'GET', '/enable-mastodon-apps/api/v1/timelines/home' );
+		$this->assertSame( $args, Enable_Mastodon_Apps::local_timeline_args( $args, $home ) );
+	}
+
 	public static $users = array();
 	private $posts = array();
 	private $token;
