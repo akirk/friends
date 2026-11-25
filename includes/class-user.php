@@ -1214,7 +1214,7 @@ class User extends \WP_User {
 			if ( $post instanceof \WP_Post && class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 				$ap_meta = get_post_meta( $post->ID, 'activitypub', true );
 				if ( ! empty( $ap_meta['attributedTo']['ap_actor_id'] ) ) {
-					$ap_actor_id = (int) $ap_meta['attributedTo']['ap_actor_id'];
+					$ap_actor_id = Feed_Parser_ActivityPub::resolve_actor_id( $ap_meta['attributedTo'] );
 				}
 			}
 

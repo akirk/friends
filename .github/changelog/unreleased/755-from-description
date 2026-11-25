@@ -1,0 +1,3 @@
+Type: fixed
+
+Remove unused cached ActivityPub accounts when their cached posts are deleted, and clean up previously accumulated unused accounts.

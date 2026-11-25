@@ -852,8 +852,9 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			$actor = self::convert_actor_to_mastodon_handle( $attributed_to );
 		}
 		$account = new Entity_Account();
-		if ( ! empty( $meta['attributedTo']['ap_actor_id'] ) ) {
-			$account->id = \strval( $meta['attributedTo']['ap_actor_id'] );
+		$actor_id = self::resolve_actor_id( $meta['attributedTo'] );
+		if ( $actor_id ) {
+			$account->id = \strval( $actor_id );
 		} else {
 			$account->id = $attributed_to;
 		}
@@ -1305,11 +1306,56 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 			Friends::CPT,
 			self::SLUG,
 			array(
-				'show_in_rest' => true,
-				'single'       => true,
-				'type'         => 'object',
+				'show_in_rest'      => true,
+				'single'            => true,
+				'type'              => 'object',
+				'sanitize_callback' => array( self::class, 'preserve_actor_uri' ),
 			)
 		);
+	}
+
+	/**
+	 * Retain the durable URI alongside the replaceable cache ID on every save.
+	 *
+	 * @param mixed $meta Post metadata.
+	 * @return mixed Metadata with an actor URI when available.
+	 */
+	public static function preserve_actor_uri( $meta ) {
+		if ( is_array( $meta ) && ! empty( $meta['attributedTo']['ap_actor_id'] ) && empty( $meta['attributedTo']['id'] ) ) {
+			$uri = self::get_actor_url_from_remote_actor_id( $meta['attributedTo']['ap_actor_id'] );
+			if ( $uri ) {
+				$meta['attributedTo']['id'] = $uri;
+			}
+		}
+		return $meta;
+	}
+
+	/**
+	 * Resolve a replaceable actor cache ID, refetching by URI after deletion.
+	 *
+	 * @param array $author Author reference.
+	 * @return int Current actor ID, or zero when unavailable.
+	 */
+	public static function resolve_actor_id( $author ) {
+		if ( ! is_array( $author ) || ! class_exists( '\\Activitypub\\Collection\\Remote_Actors' ) ) {
+			return 0;
+		}
+		if ( ! empty( $author['ap_actor_id'] ) ) {
+			$actor = \Activitypub\Collection\Remote_Actors::get( (int) $author['ap_actor_id'] );
+			if ( $actor ) {
+				return $actor->ID;
+			}
+		}
+		if ( ! empty( $author['id'] ) ) {
+			$actor = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $author['id'] );
+			if ( ! is_wp_error( $actor ) ) {
+				if ( get_option( 'friends_ap_actor_uris_backfilled' ) && is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+					\Activitypub\Collection\Remote_Actors::set_cache_only( $actor, true );
+				}
+				return $actor->ID;
+			}
+		}
+		return 0;
 	}
 
 	public function feed_item_allow_set_metadata( $verdict, $key, $value ) {
@@ -2296,7 +2342,7 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 		}
 
 		if ( ! empty( $attributed_to['ap_actor_id'] ) ) {
-			return self::get_actor_acct_from_remote_actor_id( $attributed_to['ap_actor_id'] );
+			return self::get_actor_acct_from_remote_actor_id( self::resolve_actor_id( $attributed_to ) );
 		}
 
 		return '';
@@ -2353,6 +2399,10 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 
 		if ( ! is_array( $attributed_to ) ) {
 			return $metadata;
+		}
+
+		if ( ! empty( $attributed_to['ap_actor_id'] ) ) {
+			$attributed_to['ap_actor_id'] = self::resolve_actor_id( $attributed_to );
 		}
 
 		// Build a cache key from the attributed_to data.
@@ -3196,7 +3246,13 @@ class Feed_Parser_ActivityPub extends Feed_Parser_V2 {
 				if ( class_exists( '\Activitypub\Collection\Remote_Actors' ) ) {
 					$actor_post = \Activitypub\Collection\Remote_Actors::fetch_by_uri( $actor_url );
 					if ( ! is_wp_error( $actor_post ) && $actor_post instanceof \WP_Post ) {
-						$data[ self::SLUG ]['attributedTo'] = array( 'ap_actor_id' => $actor_post->ID );
+						$data[ self::SLUG ]['attributedTo'] = array(
+							'ap_actor_id' => $actor_post->ID,
+							'id'          => $actor_url,
+						);
+						if ( get_option( 'friends_ap_actor_uris_backfilled' ) && is_callable( array( '\\Activitypub\\Collection\\Remote_Actors', 'set_cache_only' ) ) ) {
+							\Activitypub\Collection\Remote_Actors::set_cache_only( $actor_post, true );
+						}
 						$acct = \Activitypub\Collection\Remote_Actors::get_acct( $actor_post->ID );
 						if ( $acct ) {
 							$data[ self::SLUG ]['attributedTo']['acct'] = ltrim( $acct, '@' );
